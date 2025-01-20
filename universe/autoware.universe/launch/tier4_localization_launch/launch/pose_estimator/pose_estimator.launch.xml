@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="crop_box_filter_measurement_range_param_path" default="$(find-pkg-share autoware_launch)/config/localization/crop_box_filter_measurement_range.param.yaml"/>
+  <arg name="voxel_grid_downsample_filter_param_path" default="$(find-pkg-share autoware_launch)/config/localization/voxel_grid_filter.param.yaml"/>
+  <arg name="random_downsample_filter_param_path" default="$(find-pkg-share autoware_launch)/config/localization/random_downsample_filter.param.yaml"/>
+  <arg name="ndt_scan_matcher_param_path" default="$(find-pkg-share autoware_launch)/config/localization/ndt_scan_matcher.param.yaml"/>
+  <arg name="localization_error_monitor_param_path" default="$(find-pkg-share autoware_launch)/config/localization/localization_error_monitor.param.yaml"/>
+
+
+  <group>
+    <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
+      <arg name="input_map_points_topic" value="/map/pointcloud_map"/>
+      <arg name="input/pointcloud" value="/localization/util/downsample/pointcloud"/>
+      <arg name="input_initial_pose_topic" value="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
+
+      <arg name="output_pose_topic" value="/localization/pose_estimator/pose"/>
+      <arg name="output_pose_with_covariance_topic" value="/localization/pose_estimator/pose_with_covariance"/>
+
+      <arg name="param_file" value="$(var ndt_scan_matcher_param_path)"/>
+    </include>
+  </group>
+</launch>

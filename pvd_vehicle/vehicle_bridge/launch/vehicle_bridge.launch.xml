@@ -1,0 +1,15 @@
+<launch>
+    <arg name="vehicleName" default="Ioniq PHEV"/>
+    <arg name="vehicleID" default="03오_9608"/>
+    <arg name="vehicle_bridge_ns" default="/Vehicle/VehicleBridge"/>
+
+    <group>
+        <push-ros-namespace namespace ="$(var vehicle_bridge_ns)"/>
+        <node pkg="vehicle_bridge" exec="vehicle_to_PVD_Node" name="VehicleDataToPVD" output="screen">
+        </node>
+    </group> 
+</launch>
+
+<!-- <launch>
+    <node pkg = "vehicle_bridge" exec = "vehicle_to_PVD_Node" />
+</launch> -->

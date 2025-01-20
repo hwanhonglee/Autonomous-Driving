@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch> 
+    <arg name="isVehicle" default="true"/>
+    <arg name="isOperator" default="false"/>
+    <arg name="vehicleName" default="IONIQ PHEV"/>
+    <arg name="vehicleID" default="123a4567"/>
+
+    <group ns="/Vehicle/VehicleBridge" if="$(eval isVehicle)">
+
+      <node pkg="vehicle_bridge" exec="VehicleDataToPVD" name="VehicleDataToPVD" output="screen">
+        <param name="vehicleName" value="$(arg vehicleName)" />
+        <param name="vehicleID" value="$(arg vehicleID)" />
+      </node>
+    </group>
+
+</launch>

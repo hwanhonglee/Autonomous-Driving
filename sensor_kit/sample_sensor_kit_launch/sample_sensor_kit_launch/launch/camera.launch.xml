@@ -1,0 +1,30 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <arg name="camera_type" default=""/> <!-- HH_230703 --> <!-- left -->
+
+  <group>
+    <push-ros-namespace namespace="camera"/>
+    <group>
+      <push-ros-namespace namespace="traffic_light"/>
+      <!-- flir camera add --> 
+      <!-- HH_230703 -->
+      <include file="$(find-pkg-share flir_spinnaker_ros2)/launch/blackfly_s.launch.py">
+      </include>
+
+      <!-- (usb_cam_node is assumed to have launched on logging PC) -->
+      <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="screen">
+        <param name="input_topic" value="$(var camera_type)/camera_info"/>
+        <param name="output_topic" value="camera_info"/>
+        <param name="type" value="sensor_msgs/msg/CameraInfo"/>
+        <param name="reliability" value="best_effort"/>
+      </node>
+
+      <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="screen">
+        <param name="input_topic" value="$(var camera_type)/image_raw/compressed"/>
+        <param name="output_topic" value="image_raw/compressed"/>
+        <param name="type" value="sensor_msgs/msg/CompressedImage"/>
+        <param name="reliability" value="best_effort"/>
+      </node>
+    </group>
+  </group>
+</launch>

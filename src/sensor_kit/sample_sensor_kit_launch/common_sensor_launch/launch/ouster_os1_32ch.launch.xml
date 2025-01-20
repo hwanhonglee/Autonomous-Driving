@@ -1,0 +1,26 @@
+<!-- HH_240628 -->
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <arg name="use_concat_filter" default="true"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_mirror_param_file"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+
+  <group>
+    <include file="$(find-pkg-share common_sensor_launch)/launch/ouster_node_container.launch.py">
+      <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+    </include>
+  </group>
+
+  <!-- <group>
+    <push-ros-namespace namespace="sensing/lidar"/>
+    <include file="$(find-pkg-share pointcloud_preprocessor)/launch/pointcloud_preprocessor.launch.xml">
+      <arg name="base_frame" value="base_link"/>
+      <arg name="use_intra_process" value="true"/>
+      <arg name="use_multithread" value="true"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+    </include>
+  </group> -->
+
+</launch>

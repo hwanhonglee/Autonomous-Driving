@@ -1,0 +1,48 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <arg name="host_ip" default="192.168.1.100"/>
+  <arg name="use_concat_filter" default="true"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_mirror_param_file"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+
+  <!-- HH_240625 -->
+  <group>
+    <include file="$(find-pkg-share ouster_ros)/launch/sensor_autoware.launch.xml">
+      <arg name="ouster_ns" value="sensing/lidar/ouster"/> <!-- ouster --> <!-- HH_240625 -->
+      <arg name="sensor_hostname" value="os-122330001086.local"/> <!-- os-122328000033.local in lab --> <!-- HH_240313 --> <!-- "" --> <!-- os-122330001086.local on vehicle -->
+      <arg name="udp_dest" value="192.168.1.100"/> <!-- Modify this IP to where the sensor will send data packets -->
+      <arg name="lidar_port" value="7501"/> <!-- Modify this port according to your setup -->
+      <arg name="imu_port" value="7502"/> <!-- Modify this port according to your setup -->
+      <arg name="udp_profile_lidar" value=""/>  
+      <arg name="lidar_mode" value="512x20"/> <!-- Modify the resolution and rate if needed -->
+      <arg name="timestamp_mode" value="TIME_FROM_ROS_TIME"/> <!-- Modify timestamp mode if needed -->
+      <arg name="ptp_utc_tai_offset" value="-37.0"/> <!-- default -->
+      <arg name="metadata" value=""/> <!-- Modify metadata path if needed -->
+      <arg name="viz" value="false"/> <!-- Set to true if you want to run rviz -->
+      <arg name="rviz_config" value="$(find-pkg-share ouster_ros)/config/viz.rviz"/> <!-- Modify rviz config file path if needed -->
+      <arg name="sensor_frame" value="os_lidar_base_link"/> <!-- Modify sensor frame name if needed -->
+      <arg name="lidar_frame" value="os_lidar"/> <!-- Modify lidar frame name if needed -->
+      <arg name="imu_frame" value="os_imu"/> <!-- Modify imu frame name if needed -->
+      <arg name="point_cloud_frame" value=""/> <!-- Modify point cloud frame if needed -->
+      <arg name="use_system_default_qos" value="false"/> <!-- Modify QoS settings if needed -->
+      <arg name="proc_mask" value="IMG|PCL|IMU|SCAN"/> <!-- Modify processor mask if needed -->
+      <arg name="scan_ring" value="0"/> <!-- Modify scan ring if needed -->
+      <arg name="point_type" value="original"/> <!-- Modify point type if needed -->
+    </include>
+  </group>
+
+  <!-- <group>
+
+    <push-ros-namespace namespace="sensing/lidar"/>
+
+    <include file="$(find-pkg-share sample_sensor_kit_launch)/launch/pointcloud_preprocessor.launch.py">
+      <arg name="base_frame" value="base_link"/>
+      <arg name="use_intra_process" value="true"/>
+      <arg name="use_multithread" value="true"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+    </include>
+
+  </group> -->
+
+</launch>

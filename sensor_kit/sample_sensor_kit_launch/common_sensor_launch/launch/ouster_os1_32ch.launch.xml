@@ -1,0 +1,48 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <arg name="use_concat_filter" default="true"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_mirror_param_file"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+
+  <group>
+    <!-- Include the os_sensor and os_cloud nodes -->
+    <node
+      pkg="ouster_ros"
+      exec="os_sensor"
+      name="os_sensor"
+      output="screen">
+      <param name="sensor_hostname" value="169.254.78.94"/>
+      <param name="udp_dest" value="192.168.1.100"/>
+      <param name="lidar_port" value="7502"/>
+      <param name="imu_port" value="7503"/>
+      <param name="udp_profile_lidar" value="RNG19_RFL8_SIG16_NIR16"/>
+      <param name="lidar_mode" value="1024x20"/>
+      <param name="timestamp_mode" value="TIME_FROM_ROS_TIME"/>
+      <param name="use_system_default_qos" value="false"/>
+      <remap from="points" to="/sensing/lidar/ouster/points"/>
+    </node>
+
+    <node
+      pkg="ouster_ros"
+      exec="os_cloud"
+      name="os_cloud"
+      output="screen">
+      <param name="sensor_frame" value="os_lidar_base_link"/>
+      <param name="lidar_frame" value="os_lidar"/>
+      <param name="imu_frame" value="os_imu"/>
+      <param name="timestamp_mode" value="TIME_FROM_ROS_TIME"/>
+      <param name="ptp_utc_tai_offset" value="-37.0"/>
+      <param name="use_system_default_qos" value="false"/>
+      <param name="proc_mask" value="IMG|PCL|IMU|SCAN"/>
+      <param name="scan_ring" value="0"/>
+      <param name="point_type" value="original"/>
+      <remap from="points" to="/sensing/lidar/ouster/points"/>
+    </node>
+
+    <!-- Include the composable node container -->
+    <include file="$(find-pkg-share common_sensor_launch)/launch/ouster_node_container.launch.py">
+      <arg name="vehicle_mirror_param_file" value="$(arg vehicle_mirror_param_file)"/>
+    </include>
+  </group>
+</launch>

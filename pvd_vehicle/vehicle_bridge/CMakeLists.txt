@@ -1,0 +1,47 @@
+cmake_minimum_required(VERSION 3.5)
+project(vehicle_bridge)
+
+# Set the C++ standard to C++17
+set(CMAKE_CXX_STANDARD 17)
+
+# Find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(pvd_msgs REQUIRED)
+find_package(novatel_gps_msgs REQUIRED)
+find_package(autoware_auto_vehicle_msgs REQUIRED)
+
+# Include directories
+include_directories(
+  include
+  ${ament_INCLUDE_DIRS}
+  ${rclcpp_INCLUDE_DIRS}
+  ${pvd_msgs_INCLUDE_DIRS}
+  ${novatel_gps_msgs_INCLUDE_DIRS}
+  ${autoware_auto_vehicle_msgs_INCLUDE_DIRS}
+)
+
+# Add an executable
+add_executable(vehicle_to_PVD_Node src/vehicle_to_PVD_Node.cpp)
+ament_target_dependencies(vehicle_to_PVD_Node rclcpp pvd_msgs)
+
+# Link against the necessary libraries
+target_link_libraries(vehicle_to_PVD_Node
+  ${rclcpp_LIBRARIES}
+  ${pvd_msgs_LIBRARIES}
+  ${novatel_gps_msgs_LIBRARIES}
+  ${autoware_auto_vehicle_msgs_LIBRARIES}
+)
+
+# Install the executable
+install(TARGETS vehicle_to_PVD_Node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install launch files (if any)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+ )
+
+ament_package()

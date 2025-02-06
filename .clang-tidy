@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+---
+>>>>>>> de2053b (ci: add CI (#5))
 Checks: "
   -*,
   boost-use-to-string,
@@ -41,7 +45,10 @@ Checks: "
   bugprone-terminating-continue,
   bugprone-throw-keyword-missing,
   bugprone-too-small-loop-variable,
+<<<<<<< HEAD
   bugprone-unchecked-optional-access,
+=======
+>>>>>>> de2053b (ci: add CI (#5))
   bugprone-undefined-memory-manipulation,
   bugprone-undelegated-constructor,
   bugprone-unhandled-self-assignment,
@@ -138,7 +145,10 @@ Checks: "
   readability-delete-null-pointer,
   readability-else-after-return,
   readability-function-cognitive-complexity,
+<<<<<<< HEAD
   readability-identifier-naming,
+=======
+>>>>>>> de2053b (ci: add CI (#5))
   readability-inconsistent-declaration-parameter-name,
   readability-isolate-declaration,
   readability-make-member-function-const,
@@ -200,7 +210,13 @@ WarningsAsErrors: "
   readability-misplaced-array-index,
   readability-string-compare"
 
+<<<<<<< HEAD
 HeaderFilterRegex: ^(?!\/usr)(?!\/opt)
+=======
+HeaderFilterRegex: "^(?!\/usr)(?!\/opt)"
+
+AnalyzeTemporaryDtors: false
+>>>>>>> de2053b (ci: add CI (#5))
 
 FormatStyle: none
 
@@ -228,7 +244,11 @@ CheckOptions:
   - key: bugprone-assert-side-effect.CheckFunctionCalls
     value: "0"
   - key: bugprone-dangling-handle.HandleClasses
+<<<<<<< HEAD
     value: std::basic_string_view;std::experimental::basic_string_view
+=======
+    value: "std::basic_string_view;std::experimental::basic_string_view"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: bugprone-dynamic-static-initializers.HeaderFileExtensions
     value: ",h,hh,hpp,hxx"
   - key: bugprone-exception-escape.FunctionsThatShouldNotThrow
@@ -272,25 +292,43 @@ CheckOptions:
   - key: bugprone-unhandled-self-assignment.WarnOnlyIfThisHasSuspiciousField
     value: "1"
   - key: bugprone-unused-return-value.CheckedFunctions
+<<<<<<< HEAD
     value: ::std::async;::std::launder;::std::remove;::std::remove_if;::std::unique;::std::unique_ptr::release;::std::basic_string::empty;::std::vector::empty
   - key: cert-dcl16-c.NewSuffixes
     value: L;LL;LU;LLU
+=======
+    value: "::std::async;::std::launder;::std::remove;::std::remove_if;::std::unique;::std::unique_ptr::release;::std::basic_string::empty;::std::vector::empty"
+  - key: cert-dcl16-c.NewSuffixes
+    value: "L;LL;LU;LLU"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField
     value: "0"
   - key: cppcoreguidelines-explicit-virtual-functions.IgnoreDestructors
     value: "1"
   - key: cppcoreguidelines-macro-usage.AllowedRegexp
+<<<<<<< HEAD
     value: ^DEBUG_*
+=======
+    value: "^DEBUG_*"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: cppcoreguidelines-macro-usage.CheckCapsOnly
     value: "0"
   - key: cppcoreguidelines-macro-usage.IgnoreCommandLineMacros
     value: "1"
   - key: cppcoreguidelines-no-malloc.Allocations
+<<<<<<< HEAD
     value: ::malloc;::calloc
   - key: cppcoreguidelines-no-malloc.Deallocations
     value: ::free
   - key: cppcoreguidelines-no-malloc.Reallocations
     value: ::realloc
+=======
+    value: "::malloc;::calloc"
+  - key: cppcoreguidelines-no-malloc.Deallocations
+    value: "::free"
+  - key: cppcoreguidelines-no-malloc.Reallocations
+    value: "::realloc"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
     value: "1"
   - key: cppcoreguidelines-pro-type-member-init.IgnoreArrays
@@ -330,17 +368,29 @@ CheckOptions:
   - key: modernize-make-shared.IgnoreMacros
     value: "1"
   - key: modernize-make-shared.IncludeStyle
+<<<<<<< HEAD
     value: google
   - key: modernize-make-shared.MakeSmartPtrFunction
     value: std::make_shared
+=======
+    value: "google"
+  - key: modernize-make-shared.MakeSmartPtrFunction
+    value: "std::make_shared"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: modernize-make-shared.MakeSmartPtrFunctionHeader
     value: memory
   - key: modernize-make-unique.IgnoreMacros
     value: "1"
   - key: modernize-make-unique.IncludeStyle
+<<<<<<< HEAD
     value: google
   - key: modernize-make-unique.MakeSmartPtrFunction
     value: std::make_unique
+=======
+    value: "google"
+  - key: modernize-make-unique.MakeSmartPtrFunction
+    value: "std::make_unique"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: modernize-make-unique.MakeSmartPtrFunctionHeader
     value: memory
   - key: modernize-pass-by-value.IncludeStyle
@@ -362,6 +412,7 @@ CheckOptions:
   - key: modernize-use-default-member-init.UseAssignment
     value: "0"
   - key: modernize-use-emplace.ContainersWithPushBack
+<<<<<<< HEAD
     value: ::std::vector;::std::list;::std::deque
   - key: modernize-use-emplace.SmartPointers
     value: ::std::shared_ptr;::std::unique_ptr;::std::auto_ptr;::std::weak_ptr
@@ -369,6 +420,15 @@ CheckOptions:
     value: ::std::make_pair;::std::make_tuple
   - key: modernize-use-emplace.TupleTypes
     value: ::std::pair;::std::tuple
+=======
+    value: "::std::vector;::std::list;::std::deque"
+  - key: modernize-use-emplace.SmartPointers
+    value: "::std::shared_ptr;::std::unique_ptr;::std::auto_ptr;::std::weak_ptr"
+  - key: modernize-use-emplace.TupleMakeFunctions
+    value: "::std::make_pair;::std::make_tuple"
+  - key: modernize-use-emplace.TupleTypes
+    value: "::std::pair;::std::tuple"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: modernize-use-equals-default.IgnoreMacros
     value: "1"
   - key: modernize-use-equals-delete.IgnoreMacros
@@ -394,7 +454,11 @@ CheckOptions:
   - key: modernize-use-using.IgnoreMacros
     value: "1"
   - key: performance-faster-string-find.StringLikeClasses
+<<<<<<< HEAD
     value: std::basic_string
+=======
+    value: "std::basic_string"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: performance-for-range-copy.AllowedTypes
     value: ""
   - key: performance-for-range-copy.WarnOnAllAutoCopies
@@ -404,7 +468,11 @@ CheckOptions:
   - key: performance-inefficient-vector-operation.EnableProto
     value: "0"
   - key: performance-inefficient-vector-operation.VectorLikeClasses
+<<<<<<< HEAD
     value: ::std::vector
+=======
+    value: "::std::vector"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: performance-move-const-arg.CheckTriviallyCopyableMove
     value: "1"
   - key: performance-move-constructor-init.IncludeStyle
@@ -416,13 +484,18 @@ CheckOptions:
   - key: performance-unnecessary-copy-initialization.AllowedTypes
     value: ""
   - key: performance-unnecessary-value-param.AllowedTypes
+<<<<<<< HEAD
     value: .*Ptr;.*SharedFuture
+=======
+    value: ".*Ptr"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: performance-unnecessary-value-param.IncludeStyle
     value: google
   - key: portability-simd-intrinsics.Std
     value: ""
   - key: portability-simd-intrinsics.Suggest
     value: "0"
+<<<<<<< HEAD
   - key: readability-function-cognitive-complexity.IgnoreMacros
     value: "1"
   - key: readability-else-after-return.WarnOnUnfixable
@@ -445,6 +518,10 @@ CheckOptions:
     value: g_
   - key: readability-identifier-naming.ConstexprVariableCase
     value: lower_case
+=======
+  - key: readability-else-after-return.WarnOnUnfixable
+    value: "1"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: readability-inconsistent-declaration-parameter-name.IgnoreMacros
     value: "1"
   - key: readability-inconsistent-declaration-parameter-name.Strict
@@ -452,8 +529,14 @@ CheckOptions:
   - key: readability-redundant-smartptr-get.IgnoreMacros
     value: "1"
   - key: readability-redundant-string-init.StringNames
+<<<<<<< HEAD
     value: ::std::basic_string
   - key: readability-simplify-subscript-expr.Types
     value: ::std::basic_string;::std::basic_string_view;::std::vector;::std::array
+=======
+    value: "::std::basic_string"
+  - key: readability-simplify-subscript-expr.Types
+    value: "::std::basic_string;::std::basic_string_view;::std::vector;::std::array"
+>>>>>>> de2053b (ci: add CI (#5))
   - key: readability-static-accessed-through-instance.NameSpecifierNestingThreshold
     value: "3"

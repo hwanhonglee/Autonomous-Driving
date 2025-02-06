@@ -1,0 +1,13 @@
+std_msgs/Header  header
+Oem7Header       nov_header
+uint8            imu_info
+uint8            imu_type
+uint16           gnss_week
+float64          gnss_week_seconds
+uint8[4]         imu_status
+int32            z_acc
+int32            y_acc
+int32            x_acc
+int32            z_gyro
+int32            y_gyro
+int32            x_gyro

@@ -1,0 +1,54 @@
+ARG ROS_DISTRO
+ARG ROS_ARCH
+
+
+from ${ROS_ARCH}/ros:${ROS_DISTRO}
+
+
+ARG ROS_DISTRO
+ARG ROS=ros-${ROS_DISTRO}
+ARG USR
+
+ARG HOST_USERNAME
+ARG HOST_UID
+ARG HOST_GROUPNAME
+ARG HOST_GID
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y sudo vim nano curl socat python3-pip
+
+RUN if [ "$USR" == "build" ]; then \
+	apt-get install -y git dh-make fakeroot &&\
+        pip3 install bloom nose \
+;fi
+
+RUN --mount=type=bind,source=src,destination=/home/${USR}/tmp/src if [ "$USR" == "build" ]; then \
+        rosdep update --include-eol-distros && rosdep install -i --from-paths /home/${USR}/tmp -y \
+;fi
+
+
+# Uncomment this to support building .debs for new ROS distros, where we are not in the index yet; add distro to yaml.
+#RUN echo "yaml file:///home/build/docker/rosdep.yaml" > /etc/ros/rosdep/sources.list.d/50-local-packages.list
+
+
+# Creates a group in the docker shell with name ${USR} build matching the Host's group
+# Group 1000 may already exist so if the group within the docker shell exists, it's renamed otherwise a new group is created
+RUN if getent group ${HOST_GID}; then \
+        groupmod -n ${USR} $(id -gn ${HOST_GID}); \
+    else \
+        groupadd -g ${HOST_GID} ${USR}; \
+    fi
+
+# Creates a user in the docker shell with name ${USR} build matching the Host's user
+# User 1000 may already exist so if the user within the docker shell exists, it's renamed otherwise a new user is created
+RUN if id ${HOST_UID} &>/dev/null; then \
+        usermod -l ${USR} -d /home/build -m $(id -un ${HOST_UID}); \
+    else \
+        useradd -u ${HOST_UID} -g ${HOST_GID} -G sudo,${USR},dialout -ms /bin/bash ${USR}; \
+    fi
+
+RUN echo "${USR}:${USR}" | chpasswd
+USER ${USR}
+
+CMD "/bin/bash"

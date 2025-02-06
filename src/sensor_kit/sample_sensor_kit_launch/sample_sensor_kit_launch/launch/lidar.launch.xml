@@ -1,0 +1,53 @@
+<launch>
+  <!-- HH_250204 -->
+  <arg name="launch_driver" default="true"/>
+  <arg name="host_ip" default="192.168.2.100"/>
+  <arg name="use_concat_filter" default="false"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_mirror_param_file" default="home/a/autoware/src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/mirror.param.yaml"/>
+  <arg name="pointcloud_container_name" default="hesai_lidar_container"/>
+
+  <group>
+    <push-ros-namespace namespace="lidar"/>
+
+    <!-- HH_250204 --> 
+    <!-- just lidar launch -->
+    <!-- <group>
+      <push-ros-namespace namespace="top"/>
+        <push-ros-namespace namespace="pandar_64"/>
+          <include file="$(find-pkg-share hesai_ros_driver)/launch/start.py"/>
+    </group>  -->
+    
+    <!-- HH_250204 --> 
+    <!-- w/ filtering (by nebula) -->
+    <group>
+      <push-ros-namespace namespace="top"/>
+      <include file="$(find-pkg-share common_sensor_launch)/launch/hesai_Pandar_64.launch.xml">
+        <arg name="launch_driver" value="true"/>
+        <arg name="model" value="Pandar64"/>
+        <arg name="max_range" value="300.0"/>
+        <arg name="min_range" value="0.3"/>
+        <arg name="sensor_frame" value="hesai_top"/>
+        <arg name="return_mode" value="Dual"/>
+        <arg name="sensor_ip" value="192.168.2.101"/>
+        <arg name="host_ip" value="192.168.2.100"/>
+        <arg name="data_port" value="2368"/>
+        <arg name="cloud_min_angle" value="0"/>
+        <arg name="cloud_max_angle" value="360"/>
+        <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)"/>
+        <arg name="container_name" value="pointcloud_container_name"/>
+        <!-- HH_250205 -->
+        <arg name="setup_sensor" value="false"/>
+        <arg name="multicast_ip" value=""/>
+        <arg name="sensor_frame" value="hesai_top"/>
+      </include>
+    </group>
+
+    <include file="$(find-pkg-share sample_sensor_kit_launch)/launch/pointcloud_preprocessor.launch.py">
+      <arg name="base_frame" value="base_link"/>
+      <arg name="use_intra_process" value="true"/>
+      <arg name="use_multithread" value="true"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+    </include>
+  </group>
+</launch>

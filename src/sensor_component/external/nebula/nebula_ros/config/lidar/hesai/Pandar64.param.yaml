@@ -1,0 +1,29 @@
+# HH_250205
+/**:
+  ros__parameters:
+    host_ip: 192.168.2.100
+    sensor_ip: 192.168.2.101
+    multicast_ip: ""
+    data_port: 2368
+    gnss_port: 0
+    packet_mtu_size: 1500
+    launch_hw: true
+    setup_sensor: false # HH_250205 true가 문제 유발
+    frame_id: hesai_top
+    diag_span: 1000
+    min_range: 0.3
+    max_range: 300.0
+    cloud_min_angle: 0
+    cloud_max_angle: 360
+    sync_angle: 0
+    cut_angle: 0.0
+    sensor_model: Pandar64
+    rotation_speed: 600
+    return_mode: Dual
+    ptp_profile: 1588v2
+    ptp_domain: 0
+    ptp_transport_type: udp
+    ptp_switch_type: TSN
+    retry_hw: true
+    dual_return_distance_threshold: 0.1
+    calibration_file: $(find-pkg-share nebula_decoders)/calibration/hesai/$(var sensor_model).csv

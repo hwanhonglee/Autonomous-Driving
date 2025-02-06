@@ -1,0 +1,11 @@
+<launch>
+  <!-- <arg name="interface" default="can0" /> --> <!-- HH_230308 -->
+  <arg name="receiver_interval_sec" default="0.01" />
+  <arg name="sender_timeout_sec" default="0.01" />
+  <arg name="enable_can_fd" default="false" />
+
+  <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_bridge.launch.xml">
+  </include>
+
+  <node pkg="ros2_socketcan" exec="twistController2VCU2EPS2ACC_node" name="twistController2VCU2EPS2ACC_node" output="screen" />
+</launch>

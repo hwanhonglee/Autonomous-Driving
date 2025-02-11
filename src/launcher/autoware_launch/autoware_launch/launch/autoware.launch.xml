@@ -79,9 +79,19 @@
     <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_system_component.launch.xml"/>
   </group>
 
+  <!-- Map -->
+  <group if="$(var launch_map)">
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_map_component.launch.xml"/>
+  </group>
+
   <!-- Sensing -->
   <group if="$(var launch_sensing)">
     <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_sensing_component.launch.xml"/>
+  </group>
+
+  <!-- Localization -->
+  <group if="$(var launch_localization)">
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_localization_component.launch.xml"/>
   </group>
 
   <!-- Tools -->

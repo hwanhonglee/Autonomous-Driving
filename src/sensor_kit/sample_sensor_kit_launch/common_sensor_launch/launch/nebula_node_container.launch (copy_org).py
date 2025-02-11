@@ -135,25 +135,15 @@ def launch_setup(context, *args, **kwargs):
                         "rotation_speed",
                         "packet_mtu_size",
                         "setup_sensor",
-                        # HH_250205
-                        "multicast_ip",
-                        "cut_angle",
-                        "sync_angle",
-                        "ptp_profile",
-                        "ptp_transport_type",
-                        "ptp_switch_type",
-                        "ptp_domain",
-                        "retry_hw",
-                        "diag_span",
                     ),
                 },
             ],
             remappings=[
                 # cSpell:ignore knzo25
                 # TODO(knzo25): fix the remapping once nebula gets updated
-                # ("velodyne_points", "pointcloud_raw_ex"),
+                ("velodyne_points", "pointcloud_raw_ex"),
                 # ("robosense_points", "pointcloud_raw_ex"), #for robosense
-                ("pandar_points", "pointcloud_raw_ex"), # for hesai # _250204
+                # ("pandar_points", "pointcloud_raw_ex"), # for hesai
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         )
@@ -268,9 +258,9 @@ def generate_launch_description():
     add_launch_arg("sensor_model", description="sensor model name")
     add_launch_arg("config_file", "", description="sensor configuration file")
     add_launch_arg("launch_driver", "True", "do launch driver")
-    add_launch_arg("setup_sensor", "False", "configure sensor")
-    add_launch_arg("sensor_ip", "192.168.2.101", "device ip address")
-    add_launch_arg("host_ip", "192.168.2.100", "host ip address")
+    add_launch_arg("setup_sensor", "True", "configure sensor")
+    add_launch_arg("sensor_ip", "192.168.1.201", "device ip address")
+    add_launch_arg("host_ip", "255.255.255.255", "host ip address")
     add_launch_arg("scan_phase", "0.0")
     add_launch_arg("base_frame", "base_link", "base frame id")
     add_launch_arg("min_range", "0.3", "minimum view range for Velodyne sensors")
@@ -310,16 +300,6 @@ def generate_launch_description():
         ),
         description="path to parameter file of ring outlier filter node",
     )
-    # HH_250205
-    add_launch_arg("multicast_ip", "", "multicast_ip")
-    add_launch_arg("cut_angle", "0.0", "cut_angle")
-    add_launch_arg("sync_angle", "0", "sync_angle")
-    add_launch_arg("ptp_profile", "1588v2", "ptp_profile")
-    add_launch_arg("ptp_domain", "0", "ptp_domain")
-    add_launch_arg("ptp_transport_type", "udp", "ptp_transport_type")
-    add_launch_arg("ptp_switch_type", "TSN", "ptp_switch_type")
-    add_launch_arg("retry_hw", "true", "retry_hw")
-    add_launch_arg("diag_span", "1000", "diag_span")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

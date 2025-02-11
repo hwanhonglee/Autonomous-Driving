@@ -175,12 +175,10 @@ void GNSSPoser::callback_nav_sat_fix(
   gnss_base_pose_msg.header.frame_id = map_frame_;
   tf2::toMsg(tf_map2base_link, gnss_base_pose_msg.pose);
 
-  // publish gnss_base_link pose in map frame 
-  // HH_250205 //sensing/gnss/pose
+  // publish gnss_base_link pose in map frame
   pose_pub_->publish(gnss_base_pose_msg);
 
   // publish gnss_base_link pose_cov in map frame
-  // HH_250205 //sensing/gnss/pose_with_covariance
   geometry_msgs::msg::PoseWithCovarianceStamped gnss_base_pose_cov_msg;
   gnss_base_pose_cov_msg.header = gnss_base_pose_msg.header;
   gnss_base_pose_cov_msg.pose.pose = gnss_base_pose_msg.pose;
@@ -206,9 +204,8 @@ void GNSSPoser::callback_nav_sat_fix(
 
   pose_cov_pub_->publish(gnss_base_pose_cov_msg);
 
-  // broadcast map to gnss_base_link  
+  // broadcast map to gnss_base_link
   publish_tf(map_frame_, gnss_base_frame_, gnss_base_pose_msg);
-  // publish_tf("sensor_kit_base_link", gnss_base_frame_, gnss_base_pose_msg); //HH_250205
 }
 
 void GNSSPoser::callback_gnss_ins_orientation_stamped(

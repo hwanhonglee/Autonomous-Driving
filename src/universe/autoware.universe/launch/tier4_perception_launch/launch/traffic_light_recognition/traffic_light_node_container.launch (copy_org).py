@@ -60,7 +60,7 @@ def launch_setup(context, *args, **kwargs):
 
 def create_traffic_light_node_container(namespace, context, *args, **kwargs):
     camera_arguments = {
-        "input/image": f"/sensing/camera/{namespace}/traffic_light/image_raw", # HH_250213
+        "input/image": f"/sensing/camera/{namespace}/image_raw",
         "output/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
         "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",

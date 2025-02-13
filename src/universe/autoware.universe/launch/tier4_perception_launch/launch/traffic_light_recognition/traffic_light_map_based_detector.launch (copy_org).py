@@ -37,7 +37,7 @@ def create_traffic_light_map_based_detector(namespace, context):
     )
 
     arguments = {
-        "input/camera_info": f"/sensing/camera/{namespace}/traffic_light/scamera_info", # HH_250213
+        "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
         "expect/rois": "expect/rois",
         "output/rois": output_rois,
         # This parameter should be configured differently for each camera considering their delay.

@@ -30,7 +30,7 @@ def create_traffic_light_occlusion_predictor(namespace):
     include = PathJoinSubstitution([package, "launch/traffic_light_occlusion_predictor.launch.xml"])
 
     arguments = {
-        "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
+        "input/camera_info": f"/sensing/camera/{namespace}/traffic_light/camera_info", # HH_250213
         "input/cloud": LaunchConfiguration("input/cloud"),
         "input/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
         "input/car/traffic_signals": "classified/car/traffic_signals",

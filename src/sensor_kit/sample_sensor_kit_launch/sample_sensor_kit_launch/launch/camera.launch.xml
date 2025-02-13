@@ -1,26 +1,42 @@
 <launch>
   <arg name="launch_driver" default="true"/>
-  <arg name="camera_type" default="left"/>
+  <arg name="camera_type" default="top"/> <!-- HH_250213 -->
 
   <group>
     <push-ros-namespace namespace="camera"/>
+    <!-- HH_250213 -->
     <group>
-      <push-ros-namespace namespace="traffic_light"/>
+      <push-ros-namespace namespace="camera1"/>
+      <group>
+        <push-ros-namespace namespace="traffic_light"/>         
 
-      <!-- (usb_cam_node is assumed to have launched on logging PC) -->
-      <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log">
-        <param name="input_topic" value="$(var camera_type)/camera_info"/>
-        <param name="output_topic" value="camera_info"/>
-        <param name="type" value="sensor_msgs/msg/CameraInfo"/>
-        <param name="reliability" value="best_effort"/>
-      </node>
+        <include file="$(find-pkg-share lucid_vision_driver)/launch/test_node_container.launch.py">
+        </include>
 
-      <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log">
-        <param name="input_topic" value="$(var camera_type)/image_raw/compressed"/>
-        <param name="output_topic" value="image_raw/compressed"/>
-        <param name="type" value="sensor_msgs/msg/CompressedImage"/>
-        <param name="reliability" value="best_effort"/>
-      </node>
+        <!-- (usb_cam_node is assumed to have launched on logging PC) -->
+        <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log">
+          <param name="input_topic" value="/lucid_vision/camera_$(var camera_type)/camera_info"/>
+          <param name="output_topic" value="camera_info"/>
+          <param name="type" value="sensor_msgs/msg/CameraInfo"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+
+        <!-- HH_250213 -->
+        <node pkg="topic_tools" exec="relay" name="tl_camera_image_relay" output="log">
+          <param name="input_topic" value="/lucid_vision/camera_$(var camera_type)/image"/>
+          <param name="output_topic" value="image_raw"/>
+          <param name="type" value="sensor_msgs/msg/Image"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+
+        <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log">
+          <param name="input_topic" value="/lucid_vision/camera_$(var camera_type)/image_compressed"/>
+          <param name="output_topic" value="image_raw/compressed"/>
+          <param name="type" value="sensor_msgs/msg/CompressedImage"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+    
+      </group>
     </group>
   </group>
 </launch>

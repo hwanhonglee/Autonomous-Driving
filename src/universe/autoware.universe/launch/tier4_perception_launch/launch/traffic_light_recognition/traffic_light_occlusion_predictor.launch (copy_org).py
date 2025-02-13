@@ -18,7 +18,6 @@ from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
-from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import PushRosNamespace
@@ -26,29 +25,23 @@ from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
-def create_traffic_light_map_based_detector(namespace, context):
-    package = FindPackageShare("autoware_traffic_light_map_based_detector")
-    include = PathJoinSubstitution([package, "launch/traffic_light_map_based_detector.launch.xml"])
-
-    output_rois = (
-        "rough/rois"
-        if IfCondition(LaunchConfiguration("enable_fine_detection")).evaluate(context)
-        else f"/perception/traffic_light_recognition/{namespace}/detection/rois"
-    )
+def create_traffic_light_occlusion_predictor(namespace):
+    package = FindPackageShare("autoware_traffic_light_occlusion_predictor")
+    include = PathJoinSubstitution([package, "launch/traffic_light_occlusion_predictor.launch.xml"])
 
     arguments = {
-        "input/camera_info": f"/sensing/camera/{namespace}/traffic_light/scamera_info", # HH_250213
-        "expect/rois": "expect/rois",
-        "output/rois": output_rois,
-        # This parameter should be configured differently for each camera considering their delay.
-        "min_timestamp_offset": "-0.3",
-        "max_timestamp_offset": "0.0",
+        "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
+        "input/cloud": LaunchConfiguration("input/cloud"),
+        "input/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
+        "input/car/traffic_signals": "classified/car/traffic_signals",
+        "input/pedestrian/traffic_signals": "classified/pedestrian/traffic_signals",
+        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
     }.items()
 
     group = GroupAction(
         [
             PushRosNamespace(namespace),
-            PushRosNamespace("detection"),
+            PushRosNamespace("classification"),
             IncludeLaunchDescription(include, launch_arguments=arguments),
         ]
     )
@@ -73,8 +66,7 @@ def launch_setup(context, *args, **kwargs):
 
     # Create containers for all cameras
     traffic_light_recognition_containers = [
-        create_traffic_light_map_based_detector(namespace, context)
-        for namespace in all_camera_namespaces
+        create_traffic_light_occlusion_predictor(namespace) for namespace in all_camera_namespaces
     ]
     return traffic_light_recognition_containers
 
@@ -89,11 +81,7 @@ def generate_launch_description():
         )
 
     add_launch_arg("all_camera_namespaces", "[camera6, camera7]")
-    add_launch_arg(
-        "enable_fine_detection",
-        "True",
-        "If True, output_topic will be for fine detector, otherwise for classifier",
-    )
+    add_launch_arg("input/cloud", "/sensing/lidar/top/pointcloud_raw_ex")
 
     return launch.LaunchDescription(
         [

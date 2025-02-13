@@ -28,7 +28,7 @@ def create_traffic_light_camera_info_relay(namespace):
         package="topic_tools",
         executable="relay",
         name="traffic_light_camera_info_relay",
-        arguments=[f"/sensing/camera/{namespace}/camera_info", "camera_info"],
+        arguments=[f"/sensing/camera/{namespace}/traffic_light/camera_info", "camera_info"], # HH_250213 
     )
 
     group = GroupAction(

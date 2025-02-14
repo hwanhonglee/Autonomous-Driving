@@ -37,7 +37,7 @@ def create_traffic_light_map_based_detector(namespace, context):
     )
 
     arguments = {
-        "input/camera_info": f"/sensing/camera/{namespace}/traffic_light/scamera_info", # HH_250213
+        "input/camera_info": f"/sensing/camera/{namespace}/traffic_light/camera_info", # HH_250213
         "expect/rois": "expect/rois",
         "output/rois": output_rois,
         # This parameter should be configured differently for each camera considering their delay.
@@ -88,7 +88,7 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    add_launch_arg("all_camera_namespaces", "[camera6, camera7]")
+    add_launch_arg("all_camera_namespaces", "[camera1]")
     add_launch_arg(
         "enable_fine_detection",
         "True",

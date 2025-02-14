@@ -13,6 +13,7 @@
   <node pkg="autoware_external_velocity_limit_selector" exec="external_velocity_limit_selector" name="external_velocity_limit_selector" output="screen">
     <param from="$(var common_param_path)"/>
     <param from="$(var param_path)"/>
+    <param name="max_vel" value="30.0"/> <!-- HH_250214 -->
     <remap from="input/velocity_limit_from_api" to="$(var input_velocity_limit_from_api)"/>
     <remap from="input/velocity_limit_from_internal" to="$(var input_velocity_limit_from_internal)"/>
     <remap from="input/velocity_limit_clear_command_from_internal" to="$(var input_velocity_limit_clear_command_from_internal)"/>

@@ -14,7 +14,7 @@ Panels:
         - /Perception1
         - /Perception1/TrafficLight1/MapBasedDetectionResult1
       Splitter Ratio: 0.557669460773468
-    Tree Height: 624
+    Tree Height: 396
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -819,7 +819,7 @@ Visualization Manager:
               Enabled: true
               Name: MapBasedDetectionResult
               Namespaces:
-                beam: true
+                {}
               Topic:
                 Depth: 15
                 Durability Policy: Volatile
@@ -1838,10 +1838,6 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (LaneChangeRight)
                           Namespaces:
-                            lane_change_end_text: true
-                            lane_change_endvirtual_wall: true
-                            lane_change_start_text: true
-                            lane_change_startvirtual_wall: true
                             stop_factor_text: true
                             stop_virtual_wall: true
                           Topic:
@@ -1903,8 +1899,7 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (StartPlanner)
                           Namespaces:
-                            stop_factor_text: true
-                            stop_virtual_wall: true
+                            {}
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -1928,20 +1923,22 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (Crosswalk)
                           Namespaces:
-                            26395_slow_down_factor_text: true
-                            26395_slow_down_virtual_wall: true
-                            26521_slow_down_factor_text: true
-                            26521_slow_down_virtual_wall: true
+                            2384_slow_down_factor_text: true
+                            2384_slow_down_virtual_wall: true
+                            2795_slow_down_factor_text: true
+                            2795_slow_down_virtual_wall: true
+                            4796_slow_down_factor_text: true
+                            4796_slow_down_virtual_wall: true
                             4972_slow_down_factor_text: true
                             4972_slow_down_virtual_wall: true
                             5098_slow_down_factor_text: true
                             5098_slow_down_virtual_wall: true
                             5224_slow_down_factor_text: true
                             5224_slow_down_virtual_wall: true
+                            6894_slow_down_factor_text: true
+                            6894_slow_down_virtual_wall: true
                             7577_slow_down_factor_text: true
                             7577_slow_down_virtual_wall: true
-                            9504_slow_down_factor_text: true
-                            9504_slow_down_virtual_wall: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2025,10 +2022,7 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (StopLine)
                           Namespaces:
-                            27698_stop_factor_text: true
-                            27698_stop_virtual_wall: true
-                            3285_stop_factor_text: true
-                            3285_stop_virtual_wall: true
+                            {}
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2042,12 +2036,12 @@ Visualization Manager:
                           Namespaces:
                             10143_stop_factor_text: true
                             10143_stop_virtual_wall: true
-                            26647_stop_factor_text: true
-                            26647_stop_virtual_wall: true
-                            6831_stop_factor_text: true
-                            6831_stop_virtual_wall: true
-                            8775_stop_factor_text: true
-                            8775_stop_virtual_wall: true
+                            6589_stop_factor_text: true
+                            6589_stop_virtual_wall: true
+                            7937_stop_factor_text: true
+                            7937_stop_virtual_wall: true
+                            9819_stop_factor_text: true
+                            9819_stop_virtual_wall: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2071,8 +2065,7 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (RunOut)
                           Namespaces:
-                            stop_factor_text: true
-                            stop_virtual_wall: true
+                            {}
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2084,7 +2077,12 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (SpeedBump)
                           Namespaces:
-                            {}
+                            35400_slow_down_factor_text: true
+                            35400_slow_down_virtual_wall: true
+                            35401_slow_down_factor_text: true
+                            35401_slow_down_virtual_wall: true
+                            36026_slow_down_factor_text: true
+                            36026_slow_down_virtual_wall: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2580,8 +2578,7 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (MotionVelocitySmoother)
                           Namespaces:
-                            stop_factor_text: true
-                            stop_virtual_wall: true
+                            {}
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2999,8 +2996,7 @@ Visualization Manager:
               Enabled: true
               Name: VirtualWall (AEB)
               Namespaces:
-                stop_factor_text: true
-                stop_virtual_wall: true
+                {}
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -3097,31 +3093,15 @@ Visualization Manager:
                 Debug:
                   Control: true
                   Localization:
-                    EKFPoseHistory: true
-                    NDT pointclouds: true
-                    NDTLoadedPCDMap: true
-                    NDTPoseHistory: true
+                    "": true
                     Value: true
                   Map: true
                   Perception:
                     "": true
                     Value: true
                   Planning:
-                    Objects Of Interest:
-                      AvoidanceByLCLeft: true
-                      AvoidanceByLCRight: true
-                      AvoidanceLeft: true
-                      AvoidanceRight: true
-                      BlindSpot: true
-                      Crosswalk: true
-                      DetectionArea: true
-                      GoalPlanner: true
-                      Intersection: true
-                      LaneChangeLeft: true
-                      LaneChangeRight: true
-                      NoStoppingArea: true
-                      StartPlanner: true
-                      TrafficLight: true
+                    "":
+                      "": true
                       Value: true
                     Value: true
                   Sensing:
@@ -4451,7 +4431,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/XYOrbit
-      Distance: 19.96152687072754
+      Distance: 73.34966278076172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -4466,10 +4446,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.22479747235774994
+      Pitch: 1.5697963237762451
       Target Frame: base_link
       Value: XYOrbit (rviz_default_plugins)
-      Yaw: 3.175401449203491
+      Yaw: 3.065402030944824
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18

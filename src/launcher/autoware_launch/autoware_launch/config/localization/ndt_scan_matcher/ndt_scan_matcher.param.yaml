@@ -26,19 +26,19 @@
       trans_epsilon: 0.01
 
       # The newton line search maximum step length
-      step_size: 0.1
+      step_size: 0.2 # HH_250219 # 0.1
 
       # The ND voxel grid resolution
-      resolution: 2.0
+      resolution: 2.0 # HH_250219 # 2.0
 
       # The number of iterations required to calculate alignment
       max_iterations: 30
 
       # Number of threads used for parallel computing
-      num_threads: 4
+      num_threads: 6 # HH_250311 # 4
 
       regularization:
-        enable: false
+        enable: true # HH_250219 # false
 
         # Regularization scale factor
         scale_factor: 0.01
@@ -86,7 +86,7 @@
 
       # Scan matching score based on no ground LiDAR scan
       no_ground_points:
-        enable: false
+        enable: true # HH_250219 # false
 
         # If lidar_point.z - base_link.z <= this threshold , the point will be removed
         z_margin_for_ground_removal: 0.8

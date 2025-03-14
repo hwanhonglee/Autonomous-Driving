@@ -163,12 +163,6 @@ void ArenaCameraNode::publish_image(std::uint32_t camera_index, const cv::Mat & 
   if (m_camera_info_publisher) {
     auto ci = std::make_unique<sensor_msgs::msg::CameraInfo>(m_camera_info->getCameraInfo());
     ci->header = img_msg.header;
-    // HH_250224 // for roi
-    ci->roi.x_offset = img_msg.width/2; // default:1920
-    ci->roi.y_offset = img_msg.height/2; // default:1200
-    ci->roi.height = img_msg.height; // default:1200
-    ci->roi.width = img_msg.width; // default:1920
-    ci->roi.do_rectify = true; // default:false
     m_camera_info_publisher->publish(std::move(ci));
   }
 }

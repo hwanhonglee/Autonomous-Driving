@@ -1,0 +1,50 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <!-- HH_260810 - Matched the relay source name to the verified Lucid driver's current camera_name value. -->
+  <arg name="camera_type" default="camera"/>
+  <!-- HH_260810 - Disabled the direct raw relay by default so the traffic-light decompressor is the only image_raw publisher. -->
+  <arg name="relay_raw_image" default="false"/>
+
+  <group>
+    <push-ros-namespace namespace="camera"/>
+    <!-- HH_250213 -->
+    <group>
+      <push-ros-namespace namespace="camera1"/> <!-- YS_20250414 -->
+      <group>
+        <push-ros-namespace namespace="traffic_light"/>         
+
+        <!-- HH_260810 - Retained serial 214000332 on PC2 after live CreateDevice, StartStream, and frame-contract validation. -->
+        <include file="$(find-pkg-share lucid_vision_driver)/launch/test_node_container.launch.py" if="$(var launch_driver)">
+        </include>
+
+        <!-- (usb_cam_node is assumed to have launched on logging PC) -->
+        <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log">
+          <!-- HH_260810 - Corrected the camera-info relay to the verified /lucid_vision/camera source namespace. -->
+          <param name="input_topic" value="/lucid_vision/$(var camera_type)/camera_info"/>
+          <param name="output_topic" value="camera_info"/>
+          <param name="type" value="sensor_msgs/msg/CameraInfo"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+
+        <!-- HH_250213 -->
+        <!-- HH_260810 - Conditioned the direct raw relay off by default to prevent a duplicate image_raw publisher. -->
+        <node pkg="topic_tools" exec="relay" name="tl_camera_image_relay" output="log" if="$(var relay_raw_image)">
+          <!-- HH_260810 - Corrected the optional raw-image relay to the verified /lucid_vision/camera source namespace. -->
+          <param name="input_topic" value="/lucid_vision/$(var camera_type)/image"/>
+          <param name="output_topic" value="image_raw"/>
+          <param name="type" value="sensor_msgs/msg/Image"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+
+        <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log">
+          <!-- HH_260810 - Corrected the compressed-image relay to the verified /lucid_vision/camera source namespace. -->
+          <param name="input_topic" value="/lucid_vision/$(var camera_type)/image_compressed"/>
+          <param name="output_topic" value="image_raw/compressed"/>
+          <param name="type" value="sensor_msgs/msg/CompressedImage"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+    
+      </group>
+    </group>
+  </group>
+</launch>

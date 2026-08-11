@@ -1,0 +1,73 @@
+name: health-check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+  schedule:
+    - cron: 0 12 * * *
+  workflow_dispatch:
+
+jobs:
+  label-check:
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/make-sure-label-is-present.yaml@v1
+    with:
+      label: tag:run-health-check
+
+  load-env:
+    needs: label-check
+    if: ${{ needs.label-check.outputs.result == 'true' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/load-env.yaml
+
+  docker-build:
+    needs: load-env
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        name:
+          - no-cuda
+          - cuda
+        include:
+          - name: no-cuda
+            platform: amd64
+            base_image_env: base_image
+            lib_dir: x86_64
+            setup-args: --no-nvidia
+          - name: cuda
+            platform: amd64
+            base_image_env: base_image
+            lib_dir: x86_64
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set git config
+        uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Build 'Autoware'
+        uses: ./.github/actions/docker-build
+        with:
+          name: ${{ matrix.name }}
+          platform: ${{ matrix.platform }}
+          cache-tag-suffix: main
+          build-args: |
+            ROS_DISTRO=${{ needs.load-env.outputs.rosdistro }}
+            BASE_IMAGE=${{ needs.load-env.outputs[format('{0}', matrix.base_image_env)] }}
+            SETUP_ARGS=${{ matrix.setup-args }}
+            LIB_DIR=${{ matrix.lib_dir }}
+
+      - name: Show disk space
+        if: always()
+        run: |
+          df -h

@@ -1,0 +1,23 @@
+diff --git a/topic_tools/src/relay_node.cpp b/topic_tools/src/relay_node.cpp
+index 275e701..bcc9fff 100644
+--- a/topic_tools/src/relay_node.cpp
++++ b/topic_tools/src/relay_node.cpp
+@@ -40,0 +41,3 @@ void RelayNode::process_message(std::shared_ptr<rclcpp::SerializedMessage> msg)
++  // HH_260810 - Prevented an in-flight relay callback from publishing after shutdown invalidated
++  // its context.
++  const auto context = this->get_node_base_interface()->get_context();
+@@ -42 +45,5 @@ void RelayNode::process_message(std::shared_ptr<rclcpp::SerializedMessage> msg)
+-  if (pub_) {
++  if (!pub_ || !rclcpp::ok(context)) {
++    return;
++  }
++
++  try {
+@@ -43,0 +51,7 @@ void RelayNode::process_message(std::shared_ptr<rclcpp::SerializedMessage> msg)
++  } catch (const rclcpp::exceptions::RCLError &) {
++    // HH_260810 - Suppressed only the shutdown race and preserved real publish failures while ROS
++    // is valid.
++    if (!rclcpp::ok(context)) {
++      return;
++    }
++    throw;

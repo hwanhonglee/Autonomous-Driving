@@ -1,0 +1,15 @@
+<launch>
+  <!-- <arg name="interface" default="can0" /> --> <!-- HH_230308 -->
+  <arg name="receiver_interval_sec" default="0.01" />
+  <arg name="sender_timeout_sec" default="0.01" />
+  <arg name="enable_can_fd" default="false" />
+  <!-- HH_260810 - Disabled the physical SocketCAN bridge and control-to-CAN adapter by default on PC1 for stationary no-actuation testing. -->
+  <arg name="enable_physical_can_bridge" default="false" />
+
+  <!-- HH_260810 - Guarded both SocketCAN receive and transmit processes behind explicit physical-bridge opt-in. -->
+  <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_bridge.launch.xml" if="$(var enable_physical_can_bridge)">
+  </include>
+
+  <!-- HH_260810 - Prevented the control-command adapter from publishing CAN frames unless the physical bridge is explicitly enabled. -->
+  <node pkg="ros2_socketcan" exec="twistController2VCU2EPS2ACC_node" name="twistController2VCU2EPS2ACC_node" output="screen" if="$(var enable_physical_can_bridge)" />
+</launch>

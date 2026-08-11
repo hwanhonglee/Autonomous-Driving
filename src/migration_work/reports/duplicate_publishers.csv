@@ -1,0 +1,9 @@
+topic,exclusive owner,allowed publisher count,measured publisher count,evidence,status,notes
+/map/vector_map,PC3,1,0 on isolated PC1 graph,runtime-verified-PC1-subscriber-side,OPEN,subscriber count 8; PC3 source missing
+/localization/kinematic_state,PC3,1,TBD_RUNTIME,runtime-unverified,OPEN,verify freshness
+/localization/acceleration,PC3,1,TBD_RUNTIME,runtime-unverified,OPEN,verify freshness
+/perception/object_recognition/objects,PC2 xor PC4,1,0 on isolated PC1 graph,runtime-verified-PC1-subscriber-side,OPEN,subscriber count 6; mode-selected source missing
+/planning/scenario_planning/trajectory,PC1,1,1 on isolated PC1 graph,runtime-verified-local,PARTIAL,publisher is planning_validator; no samples without inputs
+/system/operation_mode/state,PC1 control deferred,0 in fail-closed phase,0 on isolated PC1 graph,runtime-verified-local,PASS_LOCAL,subscriber count 6; do not assign PC3
+/control/command/control_cmd,PC1 control deferred,0 in fail-closed phase,topic absent in five PC1 cycles,runtime-verified-local,BLOCKED_4PC,no local publisher; no remote actuator subscriber or bridge allowed
+/to_can_bus,forbidden on PC1,0,topic absent in five PC1 Autoware cycles,runtime-verified-local,BLOCKED_4PC,no local frame publisher; remote paths unverified

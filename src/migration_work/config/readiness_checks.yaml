@@ -1,0 +1,162 @@
+# HH_260810 - Added explicit readiness gates; no runtime-unverified gate is treated as PASS.
+schema_version: 1
+mode: stationary_no_actuation
+overall_status: BLOCKED_PC3_LOCALIZATION_TF_AND_PC4_RUNTIME
+
+global:
+  - id: vehicle_stationary_human_confirmation
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: engage_never_called
+    status: pass_observed_acceptance_window
+    evidence: runtime-verified-PC1-PC2-PC3-window
+    blocking: true
+    note: No engage or autonomous-mode call was made during the accepted actual-run_autoware window; external history remains unaudited.
+  - id: physical_can_receive_only_tx_zero
+    status: pass_observed_window
+    evidence: runtime-verified-physical-can-counters-and-processes
+    blocking: true
+    note: can0/can1 were UP at 500 kbit/s for RX testing; sender and adapter were absent and TX packets remained 0. After cleanup can0-can3 were DOWN and vcan0 absent.
+  - id: no_socketcan_sender_or_control_to_can_adapter
+    status: pass_observed_window
+    evidence: runtime-verified-PC1-physical-can-receive-only
+    blocking: true
+  - id: consistent_domain_rmw_nic_policy
+    status: pass_PC1_PC2_PC3_partial
+    evidence: runtime-verified-domain10-data-exchange
+    blocking: true
+    note: PC1 CycloneDDS was pinned to enp0s31f6; PC4 and per-host configuration audit remain.
+  - id: accepted_chrony_topology
+    status: blocked
+    evidence: runtime-verified-PC1-only
+    blocking: true
+    note: PC1 currently selects a public source rather than 192.168.9.7.
+  - id: source_mode_real_pc2_or_virtual_pc4_selected
+    status: pass_real_pc2_observed_window
+    evidence: runtime-verified-single-PC2-objects-publisher
+    blocking: true
+
+PC3:
+  - id: one_vector_map_publisher_with_matching_type_qos
+    status: pass_observed_window
+    evidence: runtime-verified-actual-sample-on-PC1
+    blocking: true
+  - id: localization_kinematic_state_and_acceleration_fresh
+    status: blocked_publisher_count_zero
+    evidence: runtime-verified-domain10-endpoints
+    blocking: true
+  - id: map_to_base_link_tf_resolves_and_is_fresh
+    status: blocked_not_connected
+    evidence: runtime-verified-TF-check
+    blocking: true
+  - id: no_actuator_writer_and_diagnostics_nonfatal
+    status: blocked_diagnostics_not_received
+    evidence: runtime-verified-domain10-diagnostics
+    blocking: true
+    note: Pose fusion and obstacle segmentation were NotReceived; PC3 writer ownership still requires local audit.
+
+PC2:
+  - id: required_PC3_sensor_inputs_ready
+    status: blocked_obstacle_segmentation_not_received
+    evidence: runtime-observed-on-domain10
+    blocking: true
+  - id: physical_camera_ownership_confirmed_if_used
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: perception_containers_loaded_once
+    status: partial_single-official-output-publisher
+    evidence: runtime-verified-from-PC1-graph
+    blocking: true
+  - id: predicted_objects_XOR_publisher_rule
+    status: pass_observed_real_pc2_window
+    evidence: runtime-verified-publisher-1-PC4-absent
+    blocking: true
+
+PC1:
+  - id: local_guard_check_only
+    status: pass
+    evidence: runtime-verified-local-snapshot
+    blocking: true
+    note: This proves only local process and CAN state at one instant.
+  - id: expected_planning_and_API_nodes_once
+    status: pass_actual_run_autoware
+    evidence: runtime-verified-simultaneous-PC1-PC2-PC3
+    blocking: true
+    note: Planning, control, and API were ON; vehicle interface, sender, and adapter were OFF.
+  - id: required_inputs_type_qos_freshness
+    status: blocked_missing_publishers
+    evidence: runtime-verified-simultaneous-PC1-PC2-PC3
+    blocking: true
+    note: Maps and PC2 objects arrived; localization/kinematic_state and acceleration had pub0 and map-to-base_link was unresolved.
+  - id: scenario_planning_trajectory_available
+    status: blocked_no_samples
+    evidence: runtime-verified-actual-run_autoware
+    blocking: true
+    note: Publisher count 1 but no sample in 8 seconds before or after the rejected goal request.
+  - id: control_topics_internal_no_samples
+    status: blocked_no_samples
+    evidence: runtime-verified-actual-run_autoware
+    blocking: true
+  - id: no_local_or_remote_command_actuator_path
+    status: pass_local_blocked_remote
+    evidence: runtime-verified-local-receive-only-and-runtime-unverified-remote
+    blocking: true
+
+PC4:
+  - id: virtual_domain_and_single_bridge_ready
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: bridge_allowlist_and_direction_reviewed
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: logger_before_replay_or_live_source
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: exactly_one_virtual_object_source_when_selected
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: no_control_command_to_actuator_endpoint
+    status: blocked
+    evidence: runtime-unverified
+    blocking: true
+
+integration:
+  - id: duplicate_node_FQN_zero
+    status: pass_PC1_PC2_PC3_window
+    evidence: runtime-verified-174-node-FQN-snapshot
+    blocking: true
+    note: Duplicate FQNs were zero in the simultaneous three-PC graph; PC4 and renamed-function duplication remain unverified.
+  - id: duplicate_exclusive_publishers_zero
+    status: partial_maps_and-objects
+    evidence: runtime-verified-PC1-PC2-PC3-selected-topics
+    blocking: true
+  - id: duplicate_static_tf_zero
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+  - id: physical_command_subscribers_zero
+    status: pass_local_blocked_remote
+    evidence: runtime-verified-no-local-adapter-or-sender
+    blocking: true
+  - id: five_start_stop_cycles
+    status: pass_pc1_local_only
+    evidence: runtime-verified-local-five-cycles
+    blocking: true
+    note: Five isolated PC1 cycles passed; five coordinated four-PC cycles are not run.
+  - id: stationary_ten_minute_stability
+    status: not_run
+    evidence: runtime-unverified
+    blocking: true
+
+cleanup:
+  - id: local_processes_and_links_restored
+    status: pass
+    evidence: runtime-verified-final-snapshot
+    blocking: false
+    note: Both launch aliases were stopped, no local orphan remained, can0-can3 were DOWN, vcan0 was absent, and run_autoware --check-only passed.

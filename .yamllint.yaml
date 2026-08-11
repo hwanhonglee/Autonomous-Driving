@@ -1,0 +1,34 @@
+extends: default
+
+<<<<<<< HEAD
+ignore: |
+  *.param.yaml
+
+rules:
+  braces:
+    level: error
+    max-spaces-inside: 1 # To format with Prettier
+  comments:
+    level: error
+    min-spaces-from-content: 1 # To be compatible with C++ and Python
+  document-start:
+    level: error
+    present: false # Don't need document start markers
+  line-length: disable # Delegate to Prettier
+  truthy:
+    level: error
+    check-keys: false # To allow 'on' of GitHub Actions
+  quoted-strings:
+    level: error
+=======
+rules:
+  comments:
+    min-spaces-from-content: 1 # To be compatible with C++ and Python
+  document-start:
+    present: false # Don't need document start markers
+  line-length: disable # Delegate to Prettier
+  truthy:
+    allowed-values: ["true", "false", "on"] # https://github.com/adrienverge/yamllint/issues/158#issuecomment-536735525
+  quoted-strings:
+>>>>>>> de2053b (ci: add CI (#5))
+    required: only-when-needed # To keep consistent style

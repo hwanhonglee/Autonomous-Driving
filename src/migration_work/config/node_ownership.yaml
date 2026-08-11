@@ -1,0 +1,84 @@
+# HH_260810 - Defined exclusive module, topic, and transform ownership for stationary no-actuation testing.
+schema_version: 1
+mode: stationary_no_actuation
+evidence: source-derived
+runtime_evidence: simultaneous_PC1_PC2_PC3_domain10_partial_PC4_incomplete
+
+pcs:
+  PC1:
+    runtime_evidence: actual_run_autoware_plus_receive_only_can_in_174_node_PC1_PC2_PC3_graph
+    owns:
+      - planning
+      - control_internal_computation
+      - operation_mode_transition_manager
+      - autoware_api
+      - vehicle_domain_rx_test_logger
+      - physical_can_receive_only
+    optional_but_default_off:
+      - rviz
+    forbidden:
+      - vehicle_interface
+      - can_writer
+      - socketcan_sender
+      - control_to_can_adapter
+      - raw_sensor_driver
+      - sensing
+      - perception
+      - map
+      - localization
+      - system_monitor
+  PC2:
+    owns:
+      - perception
+      - gpu_inference
+    conditional:
+      - physically_attached_camera_driver
+    runtime_evidence: map_based_prediction_single_publisher_9_09_Hz_empty_objects_observed_from_PC1
+  PC3:
+    owns:
+      - system
+      - map
+      - localization
+      - tf
+      - common_sensing
+      - physically_attached_lidar_gnss
+      - read_only_vehicle_state
+    forbidden:
+      - actuator_can_writer
+    runtime_evidence: maps_and_vehicle_status_consumers_observed_localization_TF_sensor_freshness_blocked
+  PC4:
+    owns:
+      - virtual_domain
+      - single_domain_bridge
+      - single_virtual_object_source
+      - tx_logger
+    forbidden:
+      - physical_sensor_driver
+      - physical_can_writer
+    runtime_evidence: incomplete
+
+exclusive_topics:
+  /map/vector_map: PC3
+  /localization/kinematic_state: PC3
+  /localization/acceleration: PC3
+  /perception/object_recognition/objects: PC2_xor_PC4
+  /planning/scenario_planning/trajectory: PC1
+  /system/operation_mode/state: PC1_control
+  /control/trajectory_follower/control_cmd: PC1_control_internal_only
+  /control/command/control_cmd: PC1_control_no_actuator_destination_allowed
+  "/vehicle/status/*": PC1_physical_CAN_receive_only
+
+exclusive_transforms:
+  map_to_base_link: PC3
+
+forbidden_processes_on_PC1:
+  - socket_can_sender_can0
+  - twistController2VCU2EPS2ACC_node
+  - planning_simulator
+
+notes:
+  - PC1 planning/control/API ownership was observed in the actual run_autoware path; the simultaneous PC1+PC2+PC3 graph had 174 node FQNs and duplicate FQNs 0.
+  - run_bridge is allowed only in its guarded physical-can0 receive-only profile; sender, control adapter, and vehicle interface remain forbidden.
+  - PC2 and PC4 must never publish /perception/object_recognition/objects in the same run.
+  - PC1 decoded vehicle status was consumed by PC3 at about 50 Hz; this does not authorize CAN transmission.
+  - The planning simulator Domain 110 result is diagnostic-only and excluded from acceptance.

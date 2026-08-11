@@ -1,0 +1,80 @@
+# HH_260810 - Recorded source-derived topic ownership separately from runtime evidence.
+schema_version: 1
+mode_selection_required: true
+allowed_source_modes:
+  - real_pc2
+  - virtual_pc4
+runtime_evidence: simultaneous_PC1_PC2_PC3_domain10_partial_PC4_incomplete
+
+critical_inputs_to_PC1:
+  - topic: /map/vector_map
+    type: autoware_map_msgs/msg/LaneletMapBin
+    owner: PC3
+    required: true
+    runtime_status: PC3_publisher_1_actual_sample_received_on_PC1
+  - topic: /localization/kinematic_state
+    type: nav_msgs/msg/Odometry
+    owner: PC3
+    required: true
+    runtime_status: PC1_observed_publisher_0_blocking
+  - topic: /localization/acceleration
+    type: geometry_msgs/msg/AccelWithCovarianceStamped
+    owner: PC3
+    required: true
+    runtime_status: PC1_observed_publisher_0_blocking
+  - topic: /perception/object_recognition/objects
+    type: autoware_perception_msgs/msg/PredictedObjects
+    owner: PC2_xor_PC4
+    required: true
+    publisher_count_required: 1
+    runtime_status: PC2_map_based_prediction_publisher_1_9_09_Hz_empty_objects
+  - topic: /tf
+    type: tf2_msgs/msg/TFMessage
+    owner: PC3_per_transform
+    required_chain: map_to_base_link
+    runtime_status: map_to_base_link_not_connected_blocking
+
+critical_outputs_from_PC1:
+  - topic: /planning/scenario_planning/trajectory
+    type: autoware_planning_msgs/msg/Trajectory
+    owner: PC1
+    runtime_status: PC1_observed_publisher_1_no_samples_in_8_seconds_actual_run_autoware
+    note: Publisher was /planning/planning_validator; PC3 odometry and map-to-base_link were absent.
+    note: /planning/trajectory is not the current source-defined output.
+  - topic: /system/operation_mode/state
+    type: autoware_adapi_v1_msgs/msg/OperationModeState
+    owner: PC1_control
+    runtime_status: endpoint_present_in_actual_run_autoware_input_readiness_blocked
+  - topic: /control/trajectory_follower/control_cmd
+    type: autoware_control_msgs/msg/Control
+    owner: PC1_control_internal_only
+    runtime_status: PC1_observed_publisher_1_no_samples_in_8_seconds_actual_run_autoware
+  - topic: /control/command/control_cmd
+    type: autoware_control_msgs/msg/Control
+    owner: PC1_control_no_actuator_destination_allowed
+    runtime_status: PC1_observed_publisher_1_no_samples_in_8_seconds_actual_run_autoware
+    physical_subscriber_count_required: 0
+
+physical_can_receive_status:
+  source: PC1_can0_receive_only
+  sender_enabled: false
+  control_adapter_enabled: false
+  measured_can_tx_packets: 0
+  raw_rate: approximately_1_7_kHz
+  topics:
+    /vehicle/status/gear_status: approximately_100_Hz_report_22
+    /vehicle/status/steering_status: approximately_50_Hz_value_0
+    /vehicle/status/velocity_status: approximately_50_Hz_value_0
+    /vehicle/status/control_mode: approximately_50_Hz_mode_4
+
+bridge_policy:
+  owner: PC4
+  instance_count_required: 1
+  allowlist: runtime_unverified
+  forbidden_direction:
+    - vehicle_control_command_to_actuator_capable_endpoint
+  virtual_object_rule: PC2_real_xor_PC4_virtual
+
+unresolved_topic_name_conflict:
+  - /awapi/tmp/virtual_traffic_light_states
+  - /perception/virtual_traffic_light_states

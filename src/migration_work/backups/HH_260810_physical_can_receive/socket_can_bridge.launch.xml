@@ -1,0 +1,31 @@
+<launch>
+  <!-- HH_260810 - Made the interface and ROS bus topics explicit so shared-domain PCs cannot consume one another's CAN transmit topic accidentally. -->
+  <arg name="interface" default="can0" />
+  <arg name="receiver_interval_sec" default="0.01" />
+  <arg name="sender_timeout_sec" default="0.01" />
+  <arg name="enable_can_fd" default="false" />
+  <arg name="from_can_bus_topic" default="/from_can_bus" />
+  <arg name="from_can_bus_fd_topic" default="/from_can_bus_fd" />
+  <arg name="to_can_bus_topic" default="/to_can_bus" />
+  <arg name="to_can_bus_fd_topic" default="/to_can_bus_fd" />
+  <arg name="receiver_node_name" default="socket_can_receiver_can0" />
+  <arg name="sender_node_name" default="socket_can_sender_can0" />
+
+  <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_receiver.launch.py">
+    <arg name="interface" value="$(var interface)" />
+    <arg name="interval_sec" value="$(var receiver_interval_sec)" />
+    <arg name="enable_can_fd" value="$(var enable_can_fd)" />
+    <arg name="from_can_bus_topic" value="$(var from_can_bus_topic)" />
+    <arg name="from_can_bus_fd_topic" value="$(var from_can_bus_fd_topic)" />
+    <arg name="node_name" value="$(var receiver_node_name)" />
+  </include>
+
+  <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_sender.launch.py">
+    <arg name="interface" value="$(var interface)" />
+    <arg name="timeout_sec" value="$(var sender_timeout_sec)" />
+    <arg name="enable_can_fd" value="$(var enable_can_fd)" />
+    <arg name="to_can_bus_topic" value="$(var to_can_bus_topic)" />
+    <arg name="to_can_bus_fd_topic" value="$(var to_can_bus_fd_topic)" />
+    <arg name="node_name" value="$(var sender_node_name)" />
+  </include>
+</launch>

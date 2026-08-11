@@ -77,7 +77,10 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   bp::pipe err_pipe{err_fd[0], err_fd[1]};
   bp::ipstream is_err{std::move(err_pipe)};
 
-  bp::child c("free -tb", bp::std_out > is_out, bp::std_err > is_err);
+  auto child_env = boost::this_process::environment();
+  // HH_260811 - English output keeps the positional parser independent of the host locale.
+  child_env["LC_ALL"] = "C";
+  bp::child c("free -tb", child_env, bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
   if (c.exit_code() != 0) {
     std::ostringstream os;

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- HH_260811 - Keep the u-blox fallback disabled by default and free of persistent receiver writes. -->
+  <arg name="launch_driver" default="false"/>
+  <arg name="param_file" default="$(find-pkg-share autoware_gnss_failover_selector)/config/ublox_fallback_no_persist.param.yaml"/>
+  <arg name="output_fix_topic" default="ublox/nav_sat_fix"/>
+
+  <node if="$(var launch_driver)" pkg="ublox_gps" exec="ublox_gps_node"
+        name="ublox_gps_node" output="both">
+    <param from="$(var param_file)"/>
+    <!-- HH_260811 - Match the preserved driver's private ~/fix publisher so the fallback reaches the selector topic. -->
+    <remap from="~/fix" to="$(var output_fix_topic)"/>
+  </node>
+</launch>

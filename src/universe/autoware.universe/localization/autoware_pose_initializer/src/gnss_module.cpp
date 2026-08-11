@@ -44,7 +44,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose()
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose has not arrived.");
   }
 
-  const auto elapsed = rclcpp::Time(pose_->header.stamp) - clock_->now();
+  // HH_260811 - Compute GNSS pose age in the correct direction so stale poses are rejected.
+  const auto elapsed = clock_->now() - rclcpp::Time(pose_->header.stamp);
   if (timeout_ < elapsed.seconds()) {
     throw component_interface_utils::ServiceException(
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose is out of date.");

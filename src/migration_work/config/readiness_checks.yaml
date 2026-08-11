@@ -1,0 +1,78 @@
+# HH_260810 - Defined evidence gates for progressing from PC3 dry bring-up to live localization.
+schema_version: 1
+audit_date: "2026-08-10"
+
+stages:
+  - name: pc3_hardware_disabled
+    current_result: pass
+    accepted_cycles: 5
+    acceptance_scope: exact_run_autoware_alias_with_sensor_hardware_and_localization_disabled
+    accepted_log_directories:
+      - /home/a/.ros/log/2026-08-10-19-56-09-947244-a-37623
+      - /home/a/.ros/log/2026-08-10-20-00-04-431231-a-39099
+      - /home/a/.ros/log/2026-08-10-20-00-16-066567-a-39672
+      - /home/a/.ros/log/2026-08-10-20-00-58-921599-a-40260
+      - /home/a/.ros/log/2026-08-10-20-01-09-770034-a-40803
+    required_launch_values:
+      launch_sensing_driver: false
+      launch_localization: false
+      launch_vehicle_interface: false
+      launch_mrm: false
+      launch_pointcloud_container: false
+      rviz: false
+    pass_conditions:
+      - map_vector_map_has_one_publisher
+      - map_pointcloud_map_has_one_publisher
+      - exactly_one_sensor_owned_pointcloud_container
+      - no_novatel_process_or_serial_holder
+      - no_udp_listener_on_2368_or_9347
+      - no_mrm_vehicle_interface_can_writer_or_rviz_process
+      - no_command_topic_publisher
+      - clean_ctrl_c_without_orphans_or_aborts
+    resolved_regression:
+      - hesai_decoder_thread_is_explicitly_unblocked_and_joined_on_component_shutdown
+    current_blockers: []
+  - name: pc3_live_sensors
+    current_result: blocked
+    prerequisites:
+      - confirm_hesai_model_and_udp_destination
+      - validate_current_extrinsics_and_calibration
+      - ensure_no_manual_hesai_or_gnss_driver
+      - add_user_a_to_dialout_then_full_logout_login
+      - approve_novatel_receiver_log_reconfiguration
+      - confirm_novatel_fix_and_imu_rates
+    pass_conditions:
+      - exactly_one_hesai_driver_owner
+      - exactly_one_novatel_driver_owner
+      - pointcloud_rate_and_frame_measured
+      - navsatfix_and_imu_rates_measured
+      - packet_drop_and_nic_loss_within_threshold
+  - name: pc3_localization
+    current_result: blocked
+    prerequisites:
+      - /sensing/lidar/top/mirror_cropped/pointcloud_ex
+      - /sensing/imu/imu_data
+      - /sensing/vehicle_velocity_converter/twist_with_covariance
+      - /autoware_orientation
+      - /map/vector_map
+      - /map/pointcloud_map
+      - live_gnss_to_C_track_alignment_validated
+    pass_conditions:
+      - exactly_one_dynamic_map_to_base_link_authority
+      - static_map_to_viewer_present
+      - localization_kinematic_state_rate_measured
+      - gnss_pose_covariance_and_tf_positions_agree
+  - name: four_pc_stationary_integration
+    current_result: blocked
+    prerequisites:
+      - pc1_audit_complete
+      - pc2_audit_complete
+      - pc4_bridge_audit_complete
+      - chrony_clients_verified
+      - cross_pc_topic_contract_measured
+    pass_conditions:
+      - critical_duplicate_publishers_zero
+      - bridge_instance_count_one
+      - physical_actuation_path_zero
+      - five_clean_cycles_per_pc
+      - ten_minute_stationary_stability_pass

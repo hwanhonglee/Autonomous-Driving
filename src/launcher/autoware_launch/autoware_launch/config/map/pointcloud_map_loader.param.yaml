@@ -6,6 +6,7 @@
     enable_selected_load: false
 
     # only used when downsample_whole_load enabled
-    leaf_size: 3.0 # downsample leaf size [m]
+    # HH_260811 - Preserve finer 0.7 m map voxels when downsampled whole-map loading is selected.
+    leaf_size: 0.7 # downsample leaf size [m]
     pcd_paths_or_directory: [$(var pointcloud_map_path)] # Path to the pointcloud map file or directory
     pcd_metadata_path: $(var pointcloud_map_metadata_path) # Path to pointcloud metadata file

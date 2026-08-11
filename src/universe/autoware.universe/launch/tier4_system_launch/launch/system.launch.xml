@@ -18,6 +18,8 @@
 
   <arg name="launch_system_monitor" default="true" description="launch system monitor"/>
   <arg name="launch_dummy_diag_publisher" description="launch dummy diag publisher"/>
+  <!-- HH_260810 - Added an opt-out gate for MRM command publishers during stationary PC3 testing. -->
+  <arg name="launch_mrm" default="true" description="launch MRM command publishers"/>
   <arg name="run_mode" default="online" description="options: online, logging_simulation, planning_simulation"/>
   <arg name="sensor_model" description="sensor model name"/>
 
@@ -79,12 +81,14 @@
     </group>
 
     <!-- MRM Operator -->
-    <group>
+    <!-- HH_260810 - Gated the comfortable-stop operator to suppress its planning command publisher on PC3. -->
+    <group if="$(var launch_mrm)">
       <include file="$(find-pkg-share mrm_comfortable_stop_operator)/launch/mrm_comfortable_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_comfortable_stop_operator_param_path)"/>
       </include>
     </group>
-    <group>
+    <!-- HH_260810 - Gated the emergency-stop operator to suppress actuator-adjacent command publishers on PC3. -->
+    <group if="$(var launch_mrm)">
       <include file="$(find-pkg-share mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_emergency_stop_operator_param_path)"/>
       </include>
@@ -104,7 +108,8 @@
     </group>
 
     <!-- MRM Handler -->
-    <group>
+    <!-- HH_260810 - Gated the MRM handler to keep emergency control, gear, and hazard commands off PC3. -->
+    <group if="$(var launch_mrm)">
       <include file="$(find-pkg-share mrm_handler)/launch/mrm_handler.launch.xml">
         <arg name="config_file" value="$(var mrm_handler_param_path)"/>
       </include>

@@ -1,6 +1,5 @@
 <launch>
-  <!-- Params -->
-  <!-- HH_250204 -->
+  <!-- HH_250204 - Define the field-verified Pandar64 driver and filtering arguments. -->
   <arg name="launch_driver" default="true"/>
   <arg name="model" default="Pandar64"/>
   <arg name="max_range" default="300.0"/>
@@ -8,13 +7,17 @@
   <arg name="sensor_frame" default="hesai_top"/>
   <arg name="return_mode" default="Dual"/>
   <arg name="sensor_ip" default="192.168.2.101"/>
-  <arg name="host_ip" default="192.168.2.100"/>
+  <!-- HH_250321 - Bind UDP reception to PC3's verified sensor-network address. -->
+  <arg name="host_ip" default="192.168.2.150"/>
   <arg name="data_port" default="2368"/>
   <arg name="cloud_min_angle" default="0"/>
   <arg name="cloud_max_angle" default="360"/>
   <arg name="vehicle_mirror_param_file" default="/home/a/autoware/src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/mirror.param.yaml"/>
   <arg name="container_name" default="hesai_lidar_container"/>
-  <!-- HH_250205 -->
+  <!-- HH_260811 - Exposed final frame and topic controls while retaining common-launch defaults. -->
+  <arg name="output_as_sensor_frame" default="true"/>
+  <arg name="output_pointcloud_topic" default="pointcloud_before_sync"/>
+  <!-- HH_250205 - Keep receiver-side sensor setup disabled during normal launches. -->
   <arg name="setup_sensor" default="false"/>
   <arg name="multicast_ip" default=""/>
   <!-- <arg name="use_sim_time" default="false" description="use_sim_time"/> -->
@@ -43,7 +46,10 @@
     <arg name="use_intra_process" value="true"/>
     <arg name="use_multithread" value="true"/>
     <arg name="container_name" value="$(var container_name)"/>
-    <!-- HH_250205 -->
+    <!-- HH_260811 - Forwarded the final pointcloud contract to the Nebula preprocessing container. -->
+    <arg name="output_as_sensor_frame" value="$(var output_as_sensor_frame)"/>
+    <arg name="output_pointcloud_topic" value="$(var output_pointcloud_topic)"/>
+    <!-- HH_250205 - Forward the no-reconfiguration policy to the Nebula container. -->
     <arg name="setup_sensor" value="$(var setup_sensor)"/>
   </include>
 

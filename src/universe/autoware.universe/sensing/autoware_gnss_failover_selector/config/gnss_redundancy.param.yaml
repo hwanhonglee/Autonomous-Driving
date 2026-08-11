@@ -1,0 +1,39 @@
+# HH_260811 - Configure NovAtel-first position failover and strict INS-orientation validity gates.
+gnss_failover_selector:
+  ros__parameters:
+    # A NavSatFix status >= 0 means a valid GNSS fix. NavSatFix cannot
+    # distinguish every OEM7 RTK float/fixed solution; inspect BESTPOS as well.
+    minimum_navsat_status: 0
+    require_known_covariance: false
+    # Negative disables the variance gate. Set a tested bound before production use.
+    max_horizontal_variance_m2: -1.0
+
+    # Arrival-time health and hysteresis. No stale or invalid fix is forwarded.
+    primary_timeout_sec: 1.0
+    fallback_timeout_sec: 2.0
+    primary_failure_hold_sec: 1.0
+    fallback_activation_hold_sec: 1.0
+    primary_recovery_hold_sec: 5.0
+    fallback_failure_hold_sec: 1.0
+    primary_initial_hold_sec: 0.0
+    evaluation_period_sec: 0.1
+    diagnostic_period_sec: 1.0
+
+novatel_inspvax_orientation:
+  ros__parameters:
+    # OEM7 InertialSolutionStatus::INS_SOLUTION_GOOD.
+    required_ins_status: 3
+    # The current WAITING_AZIMUTH / 180 deg solution must fail this gate.
+    max_yaw_rmse_deg: 5.0
+    max_roll_pitch_rmse_deg: 10.0
+    # HH_260811 - Validate future HEADING2 for readiness diagnostics only.
+    dual_heading_required_solution_status: 0
+    dual_heading_allowed_position_types: [50]
+    max_dual_heading_rmse_deg: 5.0
+    max_dual_pitch_rmse_deg: 10.0
+    # INSPVAX is configured at 1 Hz in the restored OEM7 driver.
+    max_input_age_sec: 2.5
+    max_heading2_age_sec: 1.0
+    max_future_stamp_sec: 0.5
+    diagnostic_period_sec: 1.0
+    output_frame: imu_link

@@ -352,6 +352,8 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   formatted_points.height = 1;
   formatted_points.width =
     static_cast<uint32_t>(formatted_points.data.size() / formatted_points.point_step);
+  // HH_260811 - Keep the PointCloud2 row stride consistent with the compact one-row payload.
+  formatted_points.row_step = formatted_points.point_step * formatted_points.width;
   formatted_points.is_bigendian = input->is_bigendian;
   formatted_points.is_dense = input->is_dense;
 

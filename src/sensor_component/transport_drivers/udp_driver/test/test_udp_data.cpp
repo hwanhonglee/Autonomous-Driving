@@ -119,6 +119,10 @@ TEST(UdpDataTest, NonBlockingSendReceiveTest)
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+  // HH_260811 - Receiving packets must not overwrite the configured local bind endpoint.
+  EXPECT_EQ(receiver.host_ip(), ip);
+  EXPECT_EQ(receiver.host_port(), port);
+
   sender.close();
   EXPECT_EQ(sender.isOpen(), false);
   receiver.close();

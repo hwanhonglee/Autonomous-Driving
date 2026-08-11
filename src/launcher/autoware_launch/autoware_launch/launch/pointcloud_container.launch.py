@@ -42,7 +42,8 @@ def generate_launch_description():
         package="glog_component",
         plugin="GlogComponent",
         name="glog_component",
-        namespace="pointcloud_container",
+        # HH_260811 - Match the glog namespace to the host-unique generic container name.
+        namespace=LaunchConfiguration("container_name"),
     )
 
     pointcloud_container = ComposableNodeContainer(

@@ -1,0 +1,89 @@
+# HH_260810 - Recorded verified PC3 endpoints separately from cross-PC candidates.
+schema_version: 1
+audit_date: "2026-08-10"
+ros_domain_id: 10
+rmw_implementation: rmw_cyclonedds_cpp
+
+verified_pc3_runtime:
+  - topic: /map/vector_map
+    type: autoware_map_msgs/msg/LaneletMapBin
+    source_pc: PC3
+    source_node: /map/lanelet2_map_loader
+    publisher_count: 1
+    qos: reliable_transient_local_keep_last_1
+    measured_rate_hz: null
+    status: available_in_hardware_disabled_stage
+  - topic: /map/pointcloud_map
+    type: sensor_msgs/msg/PointCloud2
+    source_pc: PC3
+    source_node: /map/pointcloud_map_loader
+    publisher_count: 1
+    qos: reliable_transient_local_keep_last_1
+    measured_rate_hz: null
+    status: available_in_hardware_disabled_stage
+  - topic: /tf_static
+    type: tf2_msgs/msg/TFMessage
+    source_pc: PC3
+    source_node: /map/vector_map_tf_generator
+    publisher_count: null
+    qos: transient_local
+    measured_rate_hz: null
+    status: map_to_viewer_verified
+  - topic: /sensing/lidar/top/pointcloud_raw_ex
+    type: sensor_msgs/msg/PointCloud2
+    source_pc: PC3
+    source_node: /sensing/lidar/top/hesai_ros_wrapper_node
+    publisher_count: 1
+    qos: best_effort_volatile_keep_last_10
+    measured_rate_hz: 0.0
+    status: endpoint_exists_hardware_driver_disabled
+  - topic: /sensing/gnss/novatel/oem7/fix
+    type: sensor_msgs/msg/NavSatFix
+    source_pc: PC3
+    source_node: /sensing/gnss/novatel/oem7/novatel_oem7_driver
+    publisher_count: 0
+    qos: unmeasured
+    measured_rate_hz: 0.0
+    status: driver_disabled
+  - topic: /sensing/gnss/pose
+    type: geometry_msgs/msg/PoseStamped
+    source_pc: PC3
+    source_node: /sensing/gnss/gnss_poser
+    publisher_count: 1
+    qos: reliable_volatile_keep_last_1
+    measured_rate_hz: 0.0
+    status: no_fix_or_orientation_input
+  - topic: /system/emergency/control_cmd
+    type: autoware_control_msgs/msg/Control
+    source_pc: none_during_stationary_test
+    source_node: null
+    publisher_count: 0
+    qos: null
+    measured_rate_hz: 0.0
+    status: no_actuation_pass
+  - topic: /control/command/control_cmd
+    type: autoware_control_msgs/msg/Control
+    source_pc: PC1_if_enabled
+    source_node: unverified
+    publisher_count_on_pc3_stage: 0
+    qos: null
+    measured_rate_hz: 0.0
+    status: pc3_has_monitor_subscription_only
+
+cross_pc_candidates_pending_integration:
+  - topic: /localization/kinematic_state
+    expected_source_pc: PC3
+    destination_pcs: [PC1, PC4]
+    status: blocked_localization_disabled
+  - topic: /perception/object_recognition/objects
+    expected_source_pc: PC2
+    destination_pcs: [PC1]
+    status: unverified_on_pc2
+  - topic: /planning/scenario_planning/trajectory
+    expected_source_pc: PC1
+    destination_pcs: [PC1]
+    status: unverified_on_pc1
+  - topic: virtual_object_topic
+    expected_source_pc: PC4
+    destination_pcs: [PC1, PC2]
+    status: name_type_direction_unverified

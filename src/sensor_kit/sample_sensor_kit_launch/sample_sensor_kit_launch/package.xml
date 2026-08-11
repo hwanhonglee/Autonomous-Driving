@@ -10,13 +10,23 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <!-- HH_260811 - Select NovAtel first and fail closed when neither GNSS source is healthy. -->
+  <exec_depend>autoware_gnss_failover_selector</exec_depend>
   <exec_depend>autoware_gnss_poser</exec_depend>
+  <!-- HH_260811 - Declare every runtime package included by the active PC3 sensing launch. -->
+  <exec_depend>autoware_imu_corrector</exec_depend>
   <exec_depend>autoware_pointcloud_preprocessor</exec_depend>
   <exec_depend>common_sensor_launch</exec_depend>
+  <exec_depend>individual_params</exec_depend>
+  <exec_depend>novatel_oem7_driver</exec_depend>
+  <!-- HH_260811 - Provide the owned RTCM correction stream for NovAtel and u-blox. -->
+  <exec_depend>pc3_ntrip_client</exec_depend>
   <exec_depend>tamagawa_imu_driver</exec_depend>
+  <!-- HH_260811 - Preserve the legacy PC2 pointcloud input while its launch contract is migrated. -->
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>ublox_gps</exec_depend>
   <exec_depend>usb_cam</exec_depend>
+  <exec_depend>vehicle_velocity_converter</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

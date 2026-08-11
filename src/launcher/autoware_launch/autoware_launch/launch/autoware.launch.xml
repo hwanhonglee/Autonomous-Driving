@@ -5,6 +5,10 @@
   <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
   <arg name="sensor_model" default="sample_sensor_kit" description="sensor model name"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <!-- HH_260811 - Give PC3's otherwise empty generic container a host-unique identity on the shared DDS graph. -->
+  <arg name="generic_pointcloud_container_name" default="pc3_pointcloud_container"/>
+  <!-- HH_260811 - Restored the original default that launches the generic pointcloud container. -->
+  <arg name="launch_pointcloud_container" default="true" description="launch the generic pointcloud container"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
 
   <!-- launch module preset -->
@@ -16,6 +20,7 @@
   <arg name="launch_system" default="true" description="launch system"/>
   <arg name="launch_map" default="true" description="launch map"/>
   <arg name="launch_sensing" default="true" description="launch sensing"/>
+  <!-- HH_260811 - Restored the original full PC3 bring-up defaults for normal run_autoware use. -->
   <arg name="launch_sensing_driver" default="true" description="launch sensing driver"/>
   <arg name="launch_localization" default="true" description="launch localization"/>
   <arg name="launch_perception" default="true" description="launch perception"/>
@@ -26,6 +31,7 @@
   <arg name="use_sim_time" default="false" description="use_sim_time"/>
   <!-- Vehicle -->
   <arg name="vehicle_id" default="$(env VEHICLE_ID default)" description="vehicle specific ID"/>
+  <!-- HH_260811 - Restored the original vehicle-interface default for the normal full launch. -->
   <arg name="launch_vehicle_interface" default="true" description="launch vehicle interface"/>
   <!-- Control -->
   <arg name="check_external_emergency_heartbeat" default="false"/>
@@ -36,10 +42,20 @@
   <arg name="system_run_mode" default="online" description="run mode in system"/>
   <arg name="launch_system_monitor" default="true" description="launch system monitor"/>
   <arg name="launch_dummy_diag_publisher" default="false" description="launch dummy diag publisher"/>
+  <!-- HH_260811 - Restored the system module's original MRM-enabled default. -->
+  <arg name="launch_mrm" default="true" description="launch MRM command publishers"/>
   <arg name="diagnostic_graph_aggregator_graph_path" default="$(find-pkg-share autoware_launch)/config/system/diagnostic_graph_aggregator/autoware-main.yaml" description="diagnostic graph config"/>
+  <!-- HH_260811 - Use a PC3 safety graph that does not require a local MRM command publisher when PC1 owns actuation. -->
+  <arg name="diagnostic_graph_aggregator_graph_path_no_mrm" default="$(find-pkg-share autoware_launch)/config/system/diagnostic_graph_aggregator/autoware-main-pc3-no-mrm.yaml" description="diagnostic graph config used when MRM publishers are disabled"/>
+  <let name="active_diagnostic_graph_aggregator_graph_path" value="$(var diagnostic_graph_aggregator_graph_path)" if="$(var launch_mrm)"/>
+  <let name="active_diagnostic_graph_aggregator_graph_path" value="$(var diagnostic_graph_aggregator_graph_path_no_mrm)" unless="$(var launch_mrm)"/>
   <!-- Tools -->
+  <!-- HH_260811 - Restored the original RViz startup default for visible bring-up status. -->
   <arg name="rviz" default="true" description="launch rviz"/>
   <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
+  <!-- HH_260811 - Keep RViz enabled on every PC while making the PC3 node name unique. -->
+  <arg name="rviz_node_name" default="rviz2_pc3" description="host-unique RViz node name"/>
+  <!-- HH_260811 - Restored the original RViz respawn behavior. -->
   <arg name="rviz_respawn" default="true"/>
   <!-- Perception -->
   <arg name="perception_mode" default="lidar" description="select perception mode. camera_lidar_radar_fusion, camera_lidar_fusion, lidar_radar_fusion, lidar, radar"/>
@@ -57,10 +73,13 @@
   </group>
 
   <!-- Pointcloud container -->
-  <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py">
-    <arg name="use_multithread" value="true"/>
-    <arg name="container_name" value="$(var pointcloud_container_name)"/>
-  </include>
+  <!-- HH_260811 - Keep the restored generic container but isolate its name from PC2 and the sensing-owned container. -->
+  <group if="$(var launch_pointcloud_container)">
+    <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py">
+      <arg name="use_multithread" value="true"/>
+      <arg name="container_name" value="$(var generic_pointcloud_container_name)"/>
+    </include>
+  </group>
 
   <!-- Vehicle -->
   <group if="$(var launch_vehicle)">
@@ -76,7 +95,12 @@
 
   <!-- System -->
   <group if="$(var launch_system)">
-    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_system_component.launch.xml"/>
+    <!-- HH_260810 - Forwarded the stationary-test MRM gate while retaining non-command system services. -->
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_system_component.launch.xml">
+      <arg name="launch_mrm" value="$(var launch_mrm)"/>
+      <!-- HH_260811 - Select the matching diagnostic contract together with the MRM ownership gate. -->
+      <arg name="diagnostic_graph_aggregator_graph_path" value="$(var active_diagnostic_graph_aggregator_graph_path)"/>
+    </include>
   </group>
 
   <!-- Map -->
@@ -91,7 +115,10 @@
 
   <!-- Localization -->
   <group if="$(var launch_localization)">
-    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_localization_component.launch.xml"/>
+    <!-- HH_260810 - Attached localization preprocessing to PC3's sensor-owned pointcloud container. -->
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_localization_component.launch.xml">
+      <arg name="localization_pointcloud_container_name" value="/sensing/lidar/top/pointcloud_preprocessor/$(var pointcloud_container_name)"/>
+    </include>
   </group>
 
   <!-- Tools -->
@@ -99,13 +126,15 @@
     <node
       pkg="rviz2"
       exec="rviz2"
-      name="rviz2"
+      name="$(var rviz_node_name)"
       output="screen"
       args="-d $(var rviz_config) -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png"
       if="$(var rviz)"
       respawn="$(var rviz_respawn)"
     >
       <env name="QT_QPA_PLATFORMTHEME" value="qt5ct"/>
+      <!-- HH_260811 - Prevent Snap-hosted IDE terminals from injecting an incompatible GTK library path into RViz. -->
+      <env name="GTK_PATH" value=""/>
     </node>
   </group>
 </launch>

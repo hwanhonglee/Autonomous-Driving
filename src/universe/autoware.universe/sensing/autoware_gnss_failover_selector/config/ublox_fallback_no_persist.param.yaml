@@ -1,0 +1,17 @@
+# HH_260811 - Use the stable u-blox path without modifying its nonvolatile configuration.
+/**:
+  ros__parameters:
+    # Stable identity observed on PC3 on 2026-08-11.
+    device: /dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00
+    frame_id: gps
+
+    # Passive fallback test mode. Do not load, save, clear, or persist receiver
+    # configuration. This relies on the receiver's existing UBX output setup.
+    config_on_startup: false
+    load.mask: 0
+    load.device: 0
+    save.mask: 0
+    save.device: 0
+    clear_bbr: false
+    save_on_shutdown: false
+    debug: 1

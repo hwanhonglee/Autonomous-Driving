@@ -98,6 +98,15 @@ install(TARGETS nebula_hw_interfaces_continental EXPORT export_nebula_hw_interfa
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+    # HH_260811 - Exercise Hesai teardown with an outstanding hardware-independent UDP receive.
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_add_gtest(test_hesai_hw_interface_shutdown
+        test/test_hesai_hw_interface_shutdown.cpp
+    )
+    target_link_libraries(test_hesai_hw_interface_shutdown
+        nebula_hw_interfaces_hesai
+    )
+
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
 endif()

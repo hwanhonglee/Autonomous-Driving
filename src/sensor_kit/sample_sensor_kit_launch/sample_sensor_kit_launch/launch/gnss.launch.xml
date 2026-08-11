@@ -1,29 +1,69 @@
 <launch>
   <arg name="launch_driver" default="true"/>
-  <!-- HH_250204 --> <!-- Select GNSS -->
-  <arg name="gnss_receiver" default="novatel" description="ublox(default) or novatel(Novatel_pwrpak7_E-1)"/>
+  <!-- HH_250204 - Select NovAtel as the normal PC3 receiver while retaining explicit u-blox mode. -->
+  <arg name="gnss_receiver" default="novatel" description="novatel(default, PwrPak7-E1) or ublox"/>
+  <!-- HH_260811 - Publish a u-blox position fallback while localization remains NovAtel-only. -->
+  <arg name="launch_ublox_fallback" default="true"/>
+  <!-- HH_260811 - Start the owned NTRIP correction client only with the sensing hardware path. -->
+  <arg name="launch_ntrip_client" default="true"/>
+  <!-- HH_260811 - Load live NTRIP credentials from the external mode-0600 user config, not Git. -->
+  <arg name="ntrip_config_file" default="/home/a/.config/pc3_ntrip/ntrip_config.yaml"/>
+  <!-- HH_260810 - Selected the verified NovAtel port using stable USB identity instead of tty enumeration. -->
+  <arg name="oem7_port_name" default="/dev/serial/by-id/usb-NovAtel_Inc._NovAtel_GPS_Receiver_BMHR21430182H-if00-port1"/>
+  <arg name="oem7_port_baud" default="115200"/>
 
   <group>
     <push-ros-namespace namespace="gnss"/>
 
-    <!-- HH_250204 -->
-    <!-- Switch topic name -->
-    <let name="navsatfix_topic_name" value="ublox_gps_node/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)"/>
+    <!-- HH_250204 - Select the raw fix topic that matches the configured GNSS receiver. -->
+    <!-- HH_260811 - Route receiver fixes through distinct raw topics. -->
+    <let name="navsatfix_topic_name" value="ublox/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)"/>
+    <!-- HH_260811 - Keep localization primary-only so a u-blox fallback cannot seed NDT with stale NovAtel orientation. -->
     <let name="navsatfix_topic_name" value="novatel/oem7/fix" if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)"/>
     <let name="orientation_topic_name" value="/autoware_orientation"/>
 
-    <!-- Ublox Driver -->
-    <!-- HH_250204 -->
-    <group if="$(eval &quot; '$(var launch_driver)' and '$(var gnss_receiver)'=='ublox'&quot;)">
-      <include file="$(find-pkg-share ublox_gps)/launch/ublox_gps_node-launch.py"/>
+    <!-- HH_260811 - Launch u-blox fallback with an owned non-persistent configuration. -->
+    <group if="$(var launch_driver)">
+      <group if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)">
+        <include file="$(find-pkg-share autoware_gnss_failover_selector)/launch/ublox_fallback_driver.launch.xml">
+          <arg name="launch_driver" value="true"/>
+          <arg name="output_fix_topic" value="ublox/nav_sat_fix"/>
+        </include>
+      </group>
+      <group if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)">
+        <include file="$(find-pkg-share autoware_gnss_failover_selector)/launch/ublox_fallback_driver.launch.xml">
+          <arg name="launch_driver" value="$(var launch_ublox_fallback)"/>
+          <arg name="output_fix_topic" value="ublox/nav_sat_fix"/>
+        </include>
+      </group>
     </group>
 
-    <!-- Novatel Pwrpak7 E-1 GNSS Driver -->
-    <!-- HH_250204 -->
-    <group if="$(eval &quot;'$(var launch_driver)' and '$(var gnss_receiver)'=='novatel'&quot;)">
-      <include file="$(find-pkg-share novatel_oem7_driver)/launch/oem7_port.launch.py">
-        <arg name="oem7_port_name" value="/dev/ttyUSB1"/>
-        <arg name="oem7_port_baud" value="115200"/>
+    <!-- HH_250204 - Launch the NovAtel PwrPak7-E1 driver when PC3 owns the selected receiver. -->
+    <!-- HH_260810 - Applied the Boolean hardware gate before evaluating the NovAtel selection. -->
+    <group if="$(var launch_driver)">
+      <group if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)">
+        <include file="$(find-pkg-share novatel_oem7_driver)/launch/oem7_port.launch.py">
+          <!-- HH_260810 - Forwarded the stable NovAtel port and historically verified baud rate. -->
+          <arg name="oem7_port_name" value="$(var oem7_port_name)"/>
+          <arg name="oem7_port_baud" value="$(var oem7_port_baud)"/>
+        </include>
+        <!-- HH_260811 - Inject owned NTRIP corrections through the separate NovAtel client. -->
+        <group if="$(var launch_ntrip_client)">
+          <include file="$(find-pkg-share pc3_ntrip_client)/launch/ntrip_client.launch.py">
+            <arg name="config_file" value="$(var ntrip_config_file)"/>
+          </include>
+        </group>
+      </group>
+    </group>
+
+    <!-- HH_260811 - Publish debounced position selection and separately validated NovAtel INS orientation. -->
+    <group if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)">
+      <include file="$(find-pkg-share autoware_gnss_failover_selector)/launch/gnss_redundancy.launch.xml">
+        <arg name="primary_fix_topic" value="novatel/oem7/fix"/>
+        <arg name="fallback_fix_topic" value="ublox/nav_sat_fix"/>
+        <arg name="selected_fix_topic" value="selected/fix"/>
+        <arg name="novatel_inspvax_topic" value="novatel/oem7/inspvax"/>
+        <arg name="orientation_topic" value="$(var orientation_topic_name)"/>
       </include>
     </group>
 

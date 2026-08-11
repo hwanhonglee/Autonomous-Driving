@@ -243,8 +243,14 @@ if(BUILD_TESTING)
     test/test_distortion_corrector_node.cpp
   )
 
+  # HH_260811 - Guard the ring filter output metadata consumed across the multi-PC DDS graph.
+  ament_add_gtest(test_ring_outlier_filter_node
+    test/test_ring_outlier_filter_node.cpp
+  )
+
   target_link_libraries(test_utilities pointcloud_preprocessor_filter)
   target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
+  target_link_libraries(test_ring_outlier_filter_node pointcloud_preprocessor_filter)
 
 
 endif()

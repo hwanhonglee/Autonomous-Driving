@@ -2,11 +2,15 @@
 <launch>
   <arg name="diagnostic_graph_aggregator_param_path" default="$(find-pkg-share diagnostic_graph_aggregator)/config/default.param.yaml"/>
   <arg name="diagnostic_graph_aggregator_graph_path" default="$(find-pkg-share autoware_launch)/config/system/diagnostic_graph_aggregator/autoware-main.yaml"/>
+  <!-- HH_260810 - Added an explicit MRM gate so PC3 diagnostics can run without command publishers. -->
+  <arg name="launch_mrm" default="true"/>
 
   <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml">
     <arg name="run_mode" value="$(var system_run_mode)"/>
     <arg name="launch_system_monitor" value="$(var launch_system_monitor)"/>
     <arg name="launch_dummy_diag_publisher" value="$(var launch_dummy_diag_publisher)"/>
+    <!-- HH_260810 - Forwarded the MRM gate to the shared system launch. -->
+    <arg name="launch_mrm" value="$(var launch_mrm)"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
 
     <arg name="component_state_monitor_topic_path" value="$(find-pkg-share autoware_launch)/config/system/component_state_monitor/topics.yaml"/>

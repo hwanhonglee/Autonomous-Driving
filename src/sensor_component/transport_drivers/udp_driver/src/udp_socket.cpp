@@ -125,12 +125,11 @@ void UdpSocket::asyncSend(std::vector<uint8_t> & buff)
 
 void UdpSocket::asyncReceive(Functor func)
 {
-  boost::asio::ip::udp::endpoint sender_endpoint;
-
   m_func = std::move(func);
   m_udp_socket.async_receive_from(
     boost::asio::buffer(m_recv_buffer),
-    sender_endpoint,
+    // HH_260811 - The endpoint must outlive the asynchronous receive operation.
+    sender_endpoint_,
     [this](boost::system::error_code error, std::size_t bytes_transferred)
     {
       asyncReceiveHandler(error, bytes_transferred);
@@ -176,7 +175,8 @@ void UdpSocket::asyncReceiveHandler(
     m_recv_buffer.resize(m_recv_buffer_size);
     m_udp_socket.async_receive_from(
       boost::asio::buffer(m_recv_buffer),
-      m_host_endpoint,
+      // HH_260811 - Reuse the member endpoint for every receive so callback storage stays valid.
+      sender_endpoint_,
       [this](boost::system::error_code error, std::size_t bytes_tf)
       {
         m_recv_buffer.resize(bytes_tf);

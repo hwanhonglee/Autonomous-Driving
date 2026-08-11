@@ -32,6 +32,8 @@ HesaiHwInterface::HesaiHwInterface()
 
 HesaiHwInterface::~HesaiHwInterface()
 {
+  // HH_260811 - Quiesce the UDP receive thread before its socket and callback state are destroyed.
+  SensorInterfaceStop();
   FinalizeTcpDriver();
 }
 
@@ -207,7 +209,17 @@ void HesaiHwInterface::ReceiveSensorPacketCallback(std::vector<uint8_t> & buffer
 }
 Status HesaiHwInterface::SensorInterfaceStop()
 {
-  return Status::ERROR_1;
+  // HH_260811 - Cancel the pending receive while its endpoint is alive, then join the I/O thread.
+  if (cloud_udp_driver_) {
+    const auto receiver = cloud_udp_driver_->receiver();
+    if (receiver && receiver->isOpen()) {
+      receiver->close();
+    }
+  }
+  if (cloud_io_context_) {
+    cloud_io_context_->waitForExit();
+  }
+  return Status::OK;
 }
 
 Status HesaiHwInterface::GetSensorConfiguration(

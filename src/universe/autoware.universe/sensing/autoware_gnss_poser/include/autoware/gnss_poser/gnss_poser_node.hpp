@@ -94,6 +94,9 @@ private:
   const std::string map_frame_;
   bool received_map_projector_info_ = false;
   bool use_gnss_ins_orientation_;
+  // HH_260811 - Require a fresh validated INS orientation before publishing a GNSS pose.
+  const double gnss_ins_orientation_timeout_sec_;
+  bool received_gnss_ins_orientation_ = false;
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 

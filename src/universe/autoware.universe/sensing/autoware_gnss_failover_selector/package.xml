@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!-- HH_260811 - Register the PC3 GNSS failover and validated NovAtel orientation package. -->
+<package format="3">
+  <name>autoware_gnss_failover_selector</name>
+  <version>0.1.0</version>
+  <!-- HH_260811 - Document HEADING2 readiness separately from INS orientation output. -->
+  <description>Fail-closed GNSS selection, OEM7 HEADING2 readiness, and INS orientation conversion.</description>
+  <maintainer email="hwanhong57@gmail.com">Hwanhong Lee</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>autoware_sensing_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>novatel_oem7_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>ublox_gps</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

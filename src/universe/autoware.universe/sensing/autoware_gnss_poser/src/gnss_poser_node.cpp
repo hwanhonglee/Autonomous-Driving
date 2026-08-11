@@ -20,6 +20,7 @@
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,6 +35,9 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   gnss_base_frame_(declare_parameter<std::string>("gnss_base_frame")),
   map_frame_(declare_parameter<std::string>("map_frame")),
   use_gnss_ins_orientation_(declare_parameter<bool>("use_gnss_ins_orientation")),
+  // HH_260811 - Load the maximum allowed timestamp gap between a fix and INS orientation.
+  gnss_ins_orientation_timeout_sec_(
+    declare_parameter<double>("gnss_ins_orientation_timeout_sec")),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
   gnss_pose_pub_method_(static_cast<int>(declare_parameter<int>("gnss_pose_pub_method")))
@@ -111,6 +115,28 @@ void GNSSPoser::callback_nav_sat_fix(
     return;
   }
 
+  // HH_260811 - Inhibit pose output until the paired INS orientation is present and fresh.
+  if (use_gnss_ins_orientation_) {
+    if (!received_gnss_ins_orientation_) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+        "GNSS INS orientation has not been received. Skipping GNSS pose publication.");
+      return;
+    }
+
+    const auto fix_stamp = rclcpp::Time(nav_sat_fix_msg_ptr->header.stamp);
+    const auto orientation_stamp =
+      rclcpp::Time(msg_gnss_ins_orientation_stamped_->header.stamp);
+    const double stamp_difference_sec = std::abs((fix_stamp - orientation_stamp).seconds());
+    if (stamp_difference_sec > gnss_ins_orientation_timeout_sec_) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+        "GNSS INS orientation is stale (stamp difference " << stamp_difference_sec
+                                                            << " s). Skipping GNSS pose publication.");
+      return;
+    }
+  }
+
   // get position
   geographic_msgs::msg::GeoPoint gps_point;
   gps_point.latitude = nav_sat_fix_msg_ptr->latitude;
@@ -175,7 +201,14 @@ void GNSSPoser::callback_nav_sat_fix(
   gnss_base_pose_msg.header.frame_id = map_frame_;
   tf2::toMsg(tf_map2base_link, gnss_base_pose_msg.pose);
 
-  // publish gnss_base_link pose in map frame 
+  // HH_250211 // HH_250214 // add z
+  // HH_260810 - Applied the existing C_track translation once so pose, covariance, and TF agree.
+  gnss_base_pose_msg.pose.position.x =
+    gnss_base_pose_msg.pose.position.x - 60953.77526469596 - 16.0;
+  gnss_base_pose_msg.pose.position.y =
+    gnss_base_pose_msg.pose.position.y - 65983.92232890474 + 17.0;
+
+  // publish gnss_base_link pose in map frame
   // HH_250205 //sensing/gnss/pose
   pose_pub_->publish(gnss_base_pose_msg);
 
@@ -183,13 +216,9 @@ void GNSSPoser::callback_nav_sat_fix(
   // HH_250205 //sensing/gnss/pose_with_covariance
   geometry_msgs::msg::PoseWithCovarianceStamped gnss_base_pose_cov_msg;
   gnss_base_pose_cov_msg.header = gnss_base_pose_msg.header;
+  // HH_260810 - Copied the already translated shared pose without applying a second offset.
   gnss_base_pose_cov_msg.pose.pose = gnss_base_pose_msg.pose;
-  
-  // HH_250211 // HH_250214 // add z 
-  gnss_base_pose_cov_msg.pose.pose.position.x = gnss_base_pose_msg.pose.position.x - 60966.4679793288;
-  gnss_base_pose_cov_msg.pose.pose.position.y = gnss_base_pose_msg.pose.position.y - 65973.64540576655;
-  gnss_base_pose_cov_msg.pose.pose.position.z = gnss_base_pose_msg.pose.position.z - 15.816125382;
-  
+
   gnss_base_pose_cov_msg.pose.covariance[7 * 0] =
     can_get_covariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[0] : 10.0;
   gnss_base_pose_cov_msg.pose.covariance[7 * 1] =
@@ -212,7 +241,7 @@ void GNSSPoser::callback_nav_sat_fix(
 
   pose_cov_pub_->publish(gnss_base_pose_cov_msg);
 
-  // broadcast map to gnss_base_link  
+  // broadcast map to gnss_base_link
   publish_tf(map_frame_, gnss_base_frame_, gnss_base_pose_msg);
   // publish_tf("sensor_kit_base_link", gnss_base_frame_, gnss_base_pose_msg); //HH_250205
 }
@@ -220,7 +249,39 @@ void GNSSPoser::callback_nav_sat_fix(
 void GNSSPoser::callback_gnss_ins_orientation_stamped(
   const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg)
 {
+  // HH_260811 - Reject non-finite, degenerate, or invalid-uncertainty INS orientations.
+  const auto & orientation = msg->orientation.orientation;
+  const double norm_squared =
+    orientation.x * orientation.x + orientation.y * orientation.y +
+    orientation.z * orientation.z + orientation.w * orientation.w;
+  const bool finite_orientation =
+    std::isfinite(orientation.x) && std::isfinite(orientation.y) &&
+    std::isfinite(orientation.z) && std::isfinite(orientation.w) &&
+    std::isfinite(norm_squared);
+  const bool finite_rmse =
+    std::isfinite(msg->orientation.rmse_rotation_x) &&
+    std::isfinite(msg->orientation.rmse_rotation_y) &&
+    std::isfinite(msg->orientation.rmse_rotation_z) &&
+    msg->orientation.rmse_rotation_x >= 0.0 &&
+    msg->orientation.rmse_rotation_y >= 0.0 &&
+    msg->orientation.rmse_rotation_z >= 0.0;
+
+  if (!finite_orientation || norm_squared < 1.0e-12 || !finite_rmse) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Invalid GNSS INS orientation received. Keeping GNSS pose publication inhibited.");
+    return;
+  }
+
+  // HH_260811 - Normalize each accepted quaternion before enabling GNSS pose publication.
   *msg_gnss_ins_orientation_stamped_ = *msg;
+  const double inverse_norm = 1.0 / std::sqrt(norm_squared);
+  auto & normalized = msg_gnss_ins_orientation_stamped_->orientation.orientation;
+  normalized.x *= inverse_norm;
+  normalized.y *= inverse_norm;
+  normalized.z *= inverse_norm;
+  normalized.w *= inverse_norm;
+  received_gnss_ins_orientation_ = true;
 }
 
 bool GNSSPoser::is_fixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg)

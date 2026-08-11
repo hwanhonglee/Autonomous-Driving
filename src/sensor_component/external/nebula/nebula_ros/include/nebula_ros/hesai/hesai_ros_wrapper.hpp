@@ -53,7 +53,8 @@ class HesaiRosWrapper final : public rclcpp::Node
 
 public:
   explicit HesaiRosWrapper(const rclcpp::NodeOptions & options);
-  ~HesaiRosWrapper() noexcept override = default;
+  // HH_260810 - Added an explicit decoder-thread shutdown to prevent SIGABRT on container exit.
+  ~HesaiRosWrapper() noexcept override;
 
   /// @brief Get current status of this driver
   /// @return Current status

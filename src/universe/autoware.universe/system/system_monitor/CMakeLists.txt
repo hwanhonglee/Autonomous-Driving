@@ -188,6 +188,22 @@ rclcpp_components_register_node(voltage_monitor_lib
 
 # TODO(yunus.caliskan): Port the tests to ROS 2, robustify the tests.
 if(BUILD_TESTING)
+  # HH_260811 - Regress the memory monitor against localized `free` output.
+  add_executable(test_mem_monitor_free
+    test/src/mem_monitor/free_locale.cpp
+  )
+  set_target_properties(test_mem_monitor_free PROPERTIES OUTPUT_NAME free)
+
+  ament_add_ros_isolated_gtest(test_mem_monitor_locale
+    test/src/mem_monitor/test_mem_monitor_locale.cpp
+  )
+  target_include_directories(test_mem_monitor_locale PRIVATE "include")
+  target_link_libraries(test_mem_monitor_locale mem_monitor_lib ${LIBRARIES})
+  target_compile_definitions(test_mem_monitor_locale
+    PRIVATE TEST_FREE_DIRECTORY="$<TARGET_FILE_DIR:test_mem_monitor_free>"
+  )
+  add_dependencies(test_mem_monitor_locale test_mem_monitor_free)
+
   # ament_add_ros_isolated_gtest(test_cpu_monitor
   #   test/src/cpu_monitor/test_${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp
   #   ${CPU_MONITOR_SOURCE}

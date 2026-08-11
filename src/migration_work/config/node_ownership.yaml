@@ -1,0 +1,80 @@
+# HH_260810 - Recorded the source-audited 4-PC ownership policy and PC3 safety gates.
+schema_version: 1
+audit_date: "2026-08-10"
+mode: stationary_no_actuation
+pc3_runtime_status: degraded
+
+ownership:
+  - function: system_monitoring_and_diagnostics
+    owner: PC3
+    pc3_enabled: true
+    verification: staged_runtime_verified
+    notes: MRM command-producing groups are independently disabled.
+  - function: map_loading_and_map_projection
+    owner: PC3
+    pc3_enabled: true
+    verification: staged_runtime_verified
+    notes: Vector and pointcloud maps each had one publisher.
+  - function: static_map_to_viewer_tf
+    owner: PC3
+    pc3_enabled: true
+    verification: staged_runtime_verified
+    notes: The map loader broadcasts map to viewer, not map to base_link.
+  - function: common_lidar_preprocessing
+    owner: PC3
+    pc3_enabled: true
+    verification: staged_runtime_verified
+    notes: One sensor-owned pointcloud container was present.
+  - function: hesai_lidar_hardware_driver
+    owner: PC3
+    pc3_enabled: false
+    verification: hardware_gated
+    notes: Enable only after model, destination port, calibration, and ownership checks pass.
+  - function: novatel_oem7_driver
+    owner: PC3
+    pc3_enabled: false
+    verification: source_restored_and_built_hardware_gated
+    notes: Stable USB by-id port is configured; serial permission and receiver mutation remain gated.
+  - function: localization_and_dynamic_map_to_base_link_tf
+    owner: PC3
+    pc3_enabled: false
+    verification: blocked
+    notes: Requires orientation, vehicle twist, pointcloud, live map alignment, and single TF authority.
+  - function: robot_description_and_sensor_static_tf
+    owner: PC3
+    pc3_enabled: true
+    verification: staged_runtime_verified
+    notes: Vehicle interface remains disabled while robot_state_publisher stays enabled.
+  - function: vehicle_interface_and_physical_command_writer
+    owner: none_during_stationary_test
+    pc3_enabled: false
+    verification: staged_runtime_verified
+    notes: No CAN interface or actuator-capable process was observed.
+  - function: perception
+    owner: PC2
+    pc3_enabled: false
+    verification: pc2_runtime_unverified
+  - function: planning_control_and_api
+    owner: PC1
+    pc3_enabled: false
+    verification: pc1_runtime_unverified
+  - function: rviz
+    owner: PC1_optional_single_instance
+    pc3_enabled: false
+    verification: staged_runtime_verified
+  - function: simulation_source_and_domain_bridge
+    owner: PC4
+    pc3_enabled: false
+    verification: pc4_runtime_unverified
+
+forbidden_on_pc3_stationary_test:
+  - mrm_comfortable_stop_operator
+  - mrm_emergency_stop_operator
+  - mrm_handler
+  - vehicle_interface
+  - can_writer
+  - perception
+  - planning
+  - control
+  - autoware_api
+  - rviz2

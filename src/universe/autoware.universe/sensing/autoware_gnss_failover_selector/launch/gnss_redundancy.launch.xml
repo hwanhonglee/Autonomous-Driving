@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- HH_260811 - Wire independent position failover and fail-closed NovAtel orientation nodes. -->
+  <arg name="param_file" default="$(find-pkg-share autoware_gnss_failover_selector)/config/gnss_redundancy.param.yaml"/>
+  <arg name="primary_fix_topic" default="novatel/oem7/fix"/>
+  <arg name="fallback_fix_topic" default="ublox/nav_sat_fix"/>
+  <arg name="selected_fix_topic" default="selected/fix"/>
+  <arg name="novatel_inspvax_topic" default="novatel/oem7/inspvax"/>
+  <!-- HH_260811 - Route future OEM7 dual-antenna HEADING2 into the readiness monitor. -->
+  <arg name="novatel_heading2_topic" default="novatel/oem7/heading2"/>
+  <arg name="orientation_topic" default="/autoware_orientation"/>
+  <arg name="orientation_source_topic" default="orientation/selected_source"/>
+  <arg name="orientation_valid_topic" default="orientation/valid"/>
+  <arg name="heading2_valid_topic" default="orientation/heading2_valid"/>
+
+  <node pkg="autoware_gnss_failover_selector" exec="gnss_failover_selector"
+        name="gnss_failover_selector" output="both">
+    <param from="$(var param_file)"/>
+    <remap from="~/input/primary" to="$(var primary_fix_topic)"/>
+    <remap from="~/input/fallback" to="$(var fallback_fix_topic)"/>
+    <remap from="~/output/fix" to="$(var selected_fix_topic)"/>
+  </node>
+
+  <node pkg="autoware_gnss_failover_selector" exec="novatel_inspvax_orientation"
+        name="novatel_inspvax_orientation" output="both">
+    <param from="$(var param_file)"/>
+    <remap from="~/input/inspvax" to="$(var novatel_inspvax_topic)"/>
+    <remap from="~/input/heading2" to="$(var novatel_heading2_topic)"/>
+    <remap from="~/output/orientation" to="$(var orientation_topic)"/>
+    <remap from="~/selected_source" to="$(var orientation_source_topic)"/>
+    <remap from="~/valid" to="$(var orientation_valid_topic)"/>
+    <remap from="~/heading2_valid" to="$(var heading2_valid_topic)"/>
+  </node>
+</launch>

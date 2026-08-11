@@ -69,9 +69,14 @@ HesaiRosWrapper::HesaiRosWrapper(const rclcpp::NodeOptions & options)
 
   RCLCPP_DEBUG(get_logger(), "Starting stream");
 
+  // HH_260810 - Accepted a null queue item as the decoder-thread shutdown sentinel.
   decoder_thread_ = std::thread([this]() {
     while (true) {
-      decoder_wrapper_->process_cloud_packet(packet_queue_.pop());
+      auto packet = packet_queue_.pop();
+      if (!packet) {
+        return;
+      }
+      decoder_wrapper_->process_cloud_packet(std::move(packet));
     }
   });
 
@@ -92,6 +97,19 @@ HesaiRosWrapper::HesaiRosWrapper(const rclcpp::NodeOptions & options)
   // once for each declaration
   parameter_event_cb_ = add_on_set_parameters_callback(
     std::bind(&HesaiRosWrapper::on_parameter_change, this, std::placeholders::_1));
+}
+
+HesaiRosWrapper::~HesaiRosWrapper() noexcept
+{
+  // HH_260810 - Stopped packet producers, unblocked the decoder queue, and joined its thread.
+  parameter_event_cb_.reset();
+  packets_sub_.reset();
+  hw_monitor_wrapper_.reset();
+  hw_interface_wrapper_.reset();
+  packet_queue_.push(std::unique_ptr<nebula_msgs::msg::NebulaPacket>{});
+  if (decoder_thread_.joinable()) {
+    decoder_thread_.join();
+  }
 }
 
 nebula::Status HesaiRosWrapper::declare_and_get_sensor_config_params()

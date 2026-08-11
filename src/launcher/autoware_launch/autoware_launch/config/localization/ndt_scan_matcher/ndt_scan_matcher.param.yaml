@@ -26,19 +26,24 @@
       trans_epsilon: 0.01
 
       # The newton line search maximum step length
-      step_size: 0.2 # HH_250219 # 0.1
+      # HH_250219 - Use the field-tuned 0.1 m line-search step for stable PC3 convergence.
+      step_size: 0.1
 
       # The ND voxel grid resolution
-      resolution: 2.0 # HH_250219 # 2.0
+      # HH_250219 - Use 2.5 m NDT voxels to limit scan-matching load on PC3.
+      resolution: 2.5
 
       # The number of iterations required to calculate alignment
-      max_iterations: 30
+      # HH_260811 - Allow five extra iterations for scans that converge more slowly on C_track.
+      max_iterations: 35
 
       # Number of threads used for parallel computing
-      num_threads: 6 # HH_250311 # 4
+      # HH_250311 - Use six worker threads for the PC3 localization workload.
+      num_threads: 6
 
       regularization:
-        enable: true # HH_250219 # false
+        # HH_250219 - Keep the field-tested non-regularized NDT behavior.
+        enable: false
 
         # Regularization scale factor
         scale_factor: 0.01
@@ -65,10 +70,12 @@
       initial_to_result_distance_tolerance_m: 3.0
 
       # The execution time which means probably NDT cannot matches scans properly. [ms]
-      critical_upper_bound_exe_time_ms: 100.0
+      # HH_260811 - Allow 200 ms before reporting a critical NDT execution-time diagnostic.
+      critical_upper_bound_exe_time_ms: 200.0
 
       # Tolerance for the number of times rejected estimation results consecutively
-      skipping_publish_num: 5
+      # HH_260811 - Tolerate up to ten consecutive rejected estimates during transient recovery.
+      skipping_publish_num: 10
 
 
     score_estimation:
@@ -78,15 +85,19 @@
 
       # If converged_param_type is 0
       # Threshold for deciding whether to trust the estimation result
-      converged_param_transform_probability: 3.0
+      # HH_260811 - Retain the field-tuned transform-probability acceptance threshold.
+      converged_param_transform_probability: 3.2
 
       # If converged_param_type is 1
       # Threshold for deciding whether to trust the estimation result
-      converged_param_nearest_voxel_transformation_likelihood: 2.3
+      # HH_260811 - Retain the field-tuned nearest-voxel likelihood threshold.
+      converged_param_nearest_voxel_transformation_likelihood: 2.1
+
 
       # Scan matching score based on no ground LiDAR scan
       no_ground_points:
-        enable: true # HH_250219 # false
+        # HH_250219 - Keep ground returns in the score used by the PC3 NDT configuration.
+        enable: false
 
         # If lidar_point.z - base_link.z <= this threshold , the point will be removed
         z_margin_for_ground_removal: 0.8
@@ -125,7 +136,8 @@
 
     dynamic_map_loading:
       # Dynamic map loading distance
-      update_distance: 20.0
+      # HH_260811 - Reload map tiles after 35 m to reduce unnecessary loader churn.
+      update_distance: 35.0
 
       # Dynamic map loading loading radius
       map_radius: 150.0

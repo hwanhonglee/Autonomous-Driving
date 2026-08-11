@@ -234,7 +234,8 @@ def launch_setup(context, *args, **kwargs):
             name="ring_outlier_filter",
             remappings=[
                 ("input", "rectified/pointcloud_ex"),
-                ("output", "pointcloud_before_sync"),
+                # HH_260811 - Made the final filtered pointcloud topic configurable.
+                ("output", LaunchConfiguration("output_pointcloud_topic")),
             ],
             parameters=[ring_outlier_filter_node_param, ring_outlier_output_frame],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -289,6 +290,12 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "False", "use ROS 2 component container communication")
     add_launch_arg("lidar_container_name", "nebula_node_container")
     add_launch_arg("output_as_sensor_frame", "True", "output final pointcloud in sensor frame")
+    # HH_260811 - Preserved the historical topic as the shared launch default.
+    add_launch_arg(
+        "output_pointcloud_topic",
+        "pointcloud_before_sync",
+        "final filtered pointcloud output topic",
+    )
     add_launch_arg(
         "vehicle_mirror_param_file", description="path to the file of vehicle mirror position yaml"
     )

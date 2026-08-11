@@ -1,47 +1,61 @@
 <launch>
-  <!-- HH_250204 -->
+  <!-- HH_250204 - Keep the PC3 LiDAR driver enabled for normal vehicle bring-up. -->
   <arg name="launch_driver" default="true"/>
-  <arg name="host_ip" default="192.168.2.100"/>
+  <!-- HH_250321 - Bind the LiDAR input to PC3's verified sensor-network address. -->
+  <arg name="host_ip" default="192.168.2.150"/>
   <arg name="use_concat_filter" default="false"/>
   <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
   <arg name="vehicle_mirror_param_file" default="home/a/autoware/src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/mirror.param.yaml"/>
   <arg name="pointcloud_container_name" default="hesai_lidar_container"/>
+  <!-- HH_260811 - Keep the historical PC2 LiDAR input contract during the multi-PC topic migration. -->
+  <arg name="launch_legacy_pointcloud_relay" default="true"/>
 
   <group>
     <push-ros-namespace namespace="lidar"/>
 
-    <!-- HH_250204 --> 
-    <!-- just lidar launch -->
+    <!-- HH_250204 - Preserve the disabled legacy direct-driver block for source comparison. -->
     <!-- <group>
       <push-ros-namespace namespace="top"/>
         <push-ros-namespace namespace="pandar_64"/>
           <include file="$(find-pkg-share hesai_ros_driver)/launch/start.py"/>
     </group>  -->
     
-    <!-- HH_250204 --> 
-    <!-- w/ filtering (by nebula) -->
+    <!-- HH_250204 - Launch Pandar64 through Nebula so the PC3 filtering chain remains active. -->
     <group>
       <push-ros-namespace namespace="top"/>
       <include file="$(find-pkg-share common_sensor_launch)/launch/hesai_Pandar_64.launch.xml">
-        <arg name="launch_driver" value="true"/>
+        <!-- HH_260810 - Propagated the top-level sensing-driver gate so LiDAR hardware access can be disabled. -->
+        <arg name="launch_driver" value="$(var launch_driver)"/>
         <arg name="model" value="Pandar64"/>
         <arg name="max_range" value="300.0"/>
         <arg name="min_range" value="0.3"/>
         <arg name="sensor_frame" value="hesai_top"/>
         <arg name="return_mode" value="Dual"/>
         <arg name="sensor_ip" value="192.168.2.101"/>
-        <arg name="host_ip" value="192.168.2.100"/>
+        <!-- HH_260810 - Reused the launch argument for the verified PC3 sensor-network host address. -->
+        <arg name="host_ip" value="$(var host_ip)"/>
         <arg name="data_port" value="2368"/>
         <arg name="cloud_min_angle" value="0"/>
         <arg name="cloud_max_angle" value="360"/>
         <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)"/>
-        <arg name="container_name" value="pointcloud_container_name"/>
-        <!-- HH_250205 -->
+        <!-- HH_260810 - Corrected the container substitution so sensing creates PC3's sole pointcloud container. -->
+        <arg name="container_name" value="$(var pointcloud_container_name)"/>
+        <!-- HH_260811 - Published the single filtered LiDAR cloud directly on Autoware's standard base_link contract. -->
+        <arg name="output_as_sensor_frame" value="false"/>
+        <arg name="output_pointcloud_topic" value="/sensing/lidar/concatenated/pointcloud"/>
+        <!-- HH_250205 - Do not rewrite the live Pandar64 configuration during startup. -->
         <arg name="setup_sensor" value="false"/>
         <arg name="multicast_ip" value=""/>
         <arg name="sensor_frame" value="hesai_top"/>
       </include>
     </group>
+
+    <!-- HH_260811 - Relay PC3's standard single-LiDAR output to the legacy topic consumed by the current PC2 branch. -->
+    <node pkg="topic_tools" exec="relay" name="pc3_lidar_legacy_relay" output="log" if="$(var launch_legacy_pointcloud_relay)">
+      <param name="input_topic" value="/sensing/lidar/concatenated/pointcloud"/>
+      <param name="output_topic" value="/sensing/lidar/top/pointcloud_before_sync"/>
+      <param name="lazy" value="false"/>
+    </node>
 
     <!-- <include file="$(find-pkg-share sample_sensor_kit_launch)/launch/pointcloud_preprocessor.launch.py">
       <arg name="base_frame" value="base_link"/>

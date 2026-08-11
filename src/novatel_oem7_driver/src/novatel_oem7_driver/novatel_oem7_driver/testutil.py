@@ -102,6 +102,9 @@ class BagEquivalencyTest(unittest.TestCase):
     """
     Verifies that the content of reference and UUT bags are semantically identical.
     """
+
+    # HH_260811 - Require derived tests to opt in topic-by-topic before normalizing legacy frames.
+    expected_frame_ids = {}
     
     def test_bag_equivalency(self,proc_info, proc_output, test_args):
         
@@ -111,5 +114,5 @@ class BagEquivalencyTest(unittest.TestCase):
         uut_bag = os.getcwd() + '/' + test_name + '/' + test_name + '_0.db3'
         ref_bag = test_dir + '/' + test_name + '.db3'
         
-        rosbag_comparison.verify_bag_equivalency(ref_bag, uut_bag)
-
+        rosbag_comparison.verify_bag_equivalency(
+            ref_bag, uut_bag, self.expected_frame_ids)

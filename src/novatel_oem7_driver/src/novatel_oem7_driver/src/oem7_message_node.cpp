@@ -250,7 +250,17 @@ namespace novatel_oem7_driver
                                       ) == std::cv_status::no_timeout)
         {
           rsp = rsp_;
-          break;
+          // HH_260811 - Keep retrying when receiver binary output wakes the ASCII response
+          // waiter; strict initialization must accept only the receiver's exact "OK" reply.
+          if(rsp == "OK")
+          {
+            break;
+          }
+
+          RCLCPP_WARN_STREAM(
+            get_logger(), "AACmd '" << cmd << "': Attempt " << attempt
+                                    << ": received a non-OK response; retrying.");
+          continue;
         }
 
         RCLCPP_ERROR_STREAM(get_logger(), "AACmd '" << cmd << "': Attempt " << attempt << ": timed out waiting for response.");

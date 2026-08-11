@@ -1,0 +1,43 @@
+# HH_260811 - Provide a publishable NTRIP template while keeping live credentials outside Git.
+#
+# THIS TRACKED FILE IS A TEMPLATE ONLY. Do not enter a real username or password here.
+# Create the private runtime copy, restrict its permissions, and edit only that copy:
+#
+#   install -d -m 700 /home/a/.config/pc3_ntrip
+#   install -m 600 config/ntrip_config.yaml /home/a/.config/pc3_ntrip/ntrip_config.yaml
+#
+# Replace every CHANGE_ME value in /home/a/.config/pc3_ntrip/ntrip_config.yaml.
+# Verify caster host, port, mountpoint, receiver port, and vehicle frame for the deployment.
+# The node rejects this unchanged template so placeholder values cannot reach a live connection.
+ntrip:
+  host: CHANGE_ME_NTRIP_CASTER_HOST
+  # 2101 is common but is not universal; use the port assigned by the NTRIP provider.
+  port: 2101
+  mountpoint: CHANGE_ME_NTRIP_MOUNTPOINT
+  username: CHANGE_ME_NTRIP_USERNAME
+  password: CHANGE_ME_NTRIP_PASSWORD
+  protocol_version: "2.0"
+  connect_timeout_sec: 10.0
+  read_timeout_sec: 20.0
+  reconnect_initial_sec: 1.0
+  reconnect_max_sec: 30.0
+
+serial:
+  # Enable only after confirming exclusive ownership of the NovAtel RTCM input port.
+  enabled: true
+  # Configure this USB port in receiver RAM only before the first correction frame.
+  configure_novatel_rtcm_input: true
+  # OEM7 navigation normally uses port1; set this to the stable by-id path for port0.
+  port: CHANGE_ME_NOVATEL_RTCM_PORT0_STABLE_PATH
+  baud: 115200
+  reopen_interval_sec: 5.0
+
+ros:
+  # HH_260811 - Publish rtcm_msgs/Message on every topic for the historical PC3 u-blox driver.
+  # The preserved u-blox fallback subscribes to absolute /rtcm and injects message bytes.
+  rtcm_topics:
+    - /sensing/gnss/novatel/rtcm
+    - /rtcm
+  diagnostics_topic: /diagnostics
+  frame_id: gnss_link
+  diagnostic_period_sec: 1.0

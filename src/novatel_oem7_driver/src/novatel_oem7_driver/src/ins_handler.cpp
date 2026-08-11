@@ -309,16 +309,16 @@ namespace novatel_oem7_driver
 
     const MessageIdRecords& getMessageIds()
     {
+      // HH_260811 - Register each INS message ID once; duplicate RAWIMUSX and INSPVAS
+      // registrations invoked the same handler twice and could duplicate IMU publications.
       static const MessageIdRecords MSG_IDS(
                                       {
                                         {RAWIMUSX_OEM7_MSGID,            MSGFLAG_NONE},
                                         {CORRIMUS_OEM7_MSGID,            MSGFLAG_NONE},
-                                        {RAWIMUSX_OEM7_MSGID,            MSGFLAG_NONE},
                                         {IMURATECORRIMUS_OEM7_MSGID,     MSGFLAG_NONE},
                                         {INSPVAS_OEM7_MSGID,             MSGFLAG_NONE},
                                         {INSPVAX_OEM7_MSGID,             MSGFLAG_NONE},
                                         {INSSTDEV_OEM7_MSGID,            MSGFLAG_NONE},
-                                        {INSPVAS_OEM7_MSGID,             MSGFLAG_NONE},
                                         {INSCONFIG_OEM7_MSGID,           MSGFLAG_STATUS_OR_CONFIG},
                                       }
                                     );

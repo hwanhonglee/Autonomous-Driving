@@ -43,5 +43,8 @@ class ConcurrentTestWorkaround(testutil.ConcurrentTestWorkaround):
 
 @launch_testing.post_shutdown_test()
 class BestposBagEquivalencyTest(testutil.BagEquivalencyTest):
-    pass
-
+    # HH_260811 - Preserve the legacy bag while requiring active BESTPOS outputs on gnss_link.
+    expected_frame_ids = {
+        '/novatel/oem7/fix': 'gnss_link',
+        '/novatel/oem7/gps': 'gnss_link',
+    }

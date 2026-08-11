@@ -107,11 +107,19 @@ def item_gen(item):
         # Ignore methods, etc.
 
 
-def compare_messages(ref_msg, uut_msg):
+def compare_messages(ref_msg, uut_msg, expected_frame_id=None):
     """
     Compares a reference message to a UUT message: 
     fails if the fields are not identical (except for ROS timestamp).
     """
+    # HH_260811 - Assert the configured UUT frame before normalizing a legacy reference bag,
+    # so reference compatibility cannot hide a runtime frame regression.
+    if expected_frame_id is not None:
+        assert uut_msg.header.frame_id == expected_frame_id, (
+            "Expected UUT frame_id '{}', got '{}'".format(
+                expected_frame_id, uut_msg.header.frame_id))
+        ref_msg.header.frame_id = expected_frame_id
+
     # Supress seqno, timestamp
     t = type(ref_msg.header.stamp)
     ref_msg.header.stamp = t()
@@ -155,11 +163,13 @@ def compare_messages(ref_msg, uut_msg):
     
 
 
-def verify_bag_equivalency(ref_bag, uut_bag):
+def verify_bag_equivalency(ref_bag, uut_bag, expected_frame_ids=None):
   """
   Verifies that two bags contain semantically identical sequence of messages.
   """
 
+  # HH_260811 - Limit legacy-frame normalization to topics explicitly listed by each test.
+  expected_frame_ids = expected_frame_ids or {}
   ref_topics = get_topic_list(ref_bag)
   for topic in ref_topics.keys():
       
@@ -170,7 +180,7 @@ def verify_bag_equivalency(ref_bag, uut_bag):
       msgno = 0
       for ref_msg in ref_msgs:
         uut_msg = next(uut_msgs)
-        if not compare_messages(ref_msg, uut_msg):
+        if not compare_messages(ref_msg, uut_msg, expected_frame_ids.get(topic)):
             print("Topic: {} Msg No: {}".format(topic, msgno))
             assert False
             
@@ -198,6 +208,4 @@ def verify_bag_equivalency(ref_bag, uut_bag):
 
 if __name__ == '__main__':
     verify_bag_equivalency(sys.argv[1], sys.argv[2])
-
-
 

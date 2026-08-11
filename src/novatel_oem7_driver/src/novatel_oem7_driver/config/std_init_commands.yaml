@@ -46,6 +46,8 @@ receiver_init_commands:
 # INS Setup Commands - refer to https://docs.novatel.com/OEM7/Content/SPAN_Operation/SPAN_Operation.htm?tocpath=Operation%7CSPAN%20Operation%7C_____0
 # for INS setup help.
 #- "SETINSPROFILE LAND"
+# HH_260811 - Permit single-antenna kinematic heading alignment from 3 km/h (0.833333 m/s).
+- "SETALIGNMENTVEL 0.833333"
 # IMU offsets (SETINSTRANSLATION command). If using SPAN then these must be entered precisely.
 #    * ANT1 is the IMU to Primary GNSS antenna offset and MUST be entered precisely for proper INS
 #       functioning. 
@@ -105,8 +107,6 @@ receiver_init_commands:
 - "LOG GALINAVEPHEMERISB ONNEW"
 - "LOG RANGEB ONTIME 1"
 # - "LOG RANGEB_1 ONTIME 1" # It is recommended to include this log if you are using a dual antenna setup
-
-
 
 
 

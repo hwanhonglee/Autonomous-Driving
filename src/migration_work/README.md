@@ -1,32 +1,43 @@
-# IONIQ EV 308 PC2 v1.1 migration record
+# PC2 Autoware Universe v2.0.0 migration bundle
 
-This directory is the authoritative PC2 migration record for the deployment tagged
-`IONIQ_EV_308_PC2_a`. It was derived from the historical IONIQ EV 307 PC2 Autoware v1.0
-branch and validated on the current PC2 hardware on 2026-08-10 and 2026-08-11 KST.
+Release baseline: 2026-08-12 KST.
 
-Start here:
+This directory contains the source, operating procedures, and reproducible validation tools for
+the PC2 sensing/perception role. Vendored ROS source is flattened into ordinary Git files. Generated
+build/install/log trees, raw runtime logs, backups, and nested Git metadata are intentionally not
+part of the snapshot.
 
-- [`reports/PC2_V1.1_RELEASE_NOTES.md`](reports/PC2_V1.1_RELEASE_NOTES.md): scope, causes,
-  changes, architecture, limitations, and operator procedure.
-- [`reports/PC2_V1.1_TEST_REPORT.md`](reports/PC2_V1.1_TEST_REPORT.md): build and runtime
-  evidence with precise PASS boundaries.
-- [`inventory/PC2_V1.1_ENVIRONMENT.md`](inventory/PC2_V1.1_ENVIRONMENT.md): machine, GPU,
-  ROS, camera, and network inventory.
-- [`reports/PC2_V1.1_FILE_MANIFEST.md`](reports/PC2_V1.1_FILE_MANIFEST.md): committed file
-  purpose and SHA-256 manifest.
-- [`reports/PC2_V1.1_COMPLETE_SOURCE_SNAPSHOT.md`](reports/PC2_V1.1_COMPLETE_SOURCE_SNAPSHOT.md):
-  flattened Git/submodule audit, complete package accounting, and source exclusions.
-- [`inventory/PC2_V1.1_PACKAGE_PATHS.txt`](inventory/PC2_V1.1_PACKAGE_PATHS.txt): every package
-  manifest path included in the Autoware release tree.
-- [`scripts/run_pc2_autoware.sh`](scripts/run_pc2_autoware.sh): the guarded operator entry
-  point behind the `run_autoware` alias.
-- [`scripts/validate_pc2_cycles.sh`](scripts/validate_pc2_cycles.sh): bounded PC2 lifecycle
-  and data-contract validator.
-- [`scripts/build_topic_tools_overlay.sh`](scripts/build_topic_tools_overlay.sh): reproducible
-  user-space relay overlay build.
+Current authoritative documents:
 
-All editable source packages are included as ordinary files, including the flattened topic_tools
-overlay source. Historical reports and generated test artifacts from the working machine were not
-copied wholesale. Several early reports describe a camera-blocked, RViz-off, LiDAR-only state and
-are superseded by the v1.1 documents above. Build trees, extracted binary-package copies, JPEGs,
-rosbag files, bulk ROS logs, backups, and Python caches remain excluded from source control.
+- `reports/PC2_V2.0.0_RELEASE_NOTES.md` — release scope, evidence, and known limits.
+- `reports/PC2_dual_camera_YOLO_TLR_integration.md` — detailed camera/YOLOX/TLR design and tests.
+- `runbooks/PC2_network_and_port_setup.md` — wired, Wi-Fi, DDS, and camera NIC procedures.
+- `scripts/run_pc2_autoware.sh` — guarded PC2 launch entry point.
+- `scripts/validate_pc2_cycles.sh` — bounded lifecycle, payload, safety, and cleanup validator.
+- `scripts/build_topic_tools_overlay.sh` — source-only bootstrap for the shutdown-safe relay overlay.
+
+Additional bounded, read-only field probes are retained as source:
+
+- `scripts/capture_lucid_frame.py` — captures and validates one raw or compressed camera frame.
+- `scripts/probe_can_bridge_graph.py` — inspects CAN bridge endpoint ownership without publishing.
+- `scripts/probe_outdoor_diagnostics.py` — samples outdoor sensing/diagnostic contracts.
+- `scripts/probe_pc2_pc3_flow.py` — measures the PC2/PC3 DDS data-flow contract.
+- `scripts/probe_pc3_localization_inputs.py` — checks PC3 localization prerequisites.
+- `scripts/lucid_interface_audit.cpp` — Arena SDK interface/device discovery source; its compiled
+  binary is intentionally excluded.
+
+Validated locally:
+
+- two Lucid cameras start from `run_autoware` in separate component processes;
+- Windshield camera0 feeds generic YOLOX;
+- Loop Top camera1 feeds the traffic-light-recognition components;
+- RViz starts as part of the same launch;
+- no PC2 control, vehicle-interface, or CAN-writer process starts;
+- guarded shutdown removes PC2 processes, publishers, guard files, and the owned camera route.
+
+Do not claim final TLR semantics or camera-LiDAR fusion until PC3 map/dynamic TF/LiDAR inputs and
+camera-specific intrinsic/extrinsic calibration pass the acceptance gates in the release notes.
+
+Historical single-camera reports, pre-change backups, rollback scripts, raw test logs, and stale
+topic-contract snapshots are intentionally excluded. They describe superseded NIC, frame, RViz,
+fusion, or shutdown states and are not valid v2 operating instructions.

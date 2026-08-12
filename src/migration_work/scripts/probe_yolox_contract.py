@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# HH_260811 - Added a bounded payload probe for the run_autoware camera-to-YOLOX fusion contract.
+# HH_260812 - Validate the uncalibrated Windshield camera-to-2D-YOLOX contract without requiring fusion.
 import argparse
 import time
 
@@ -23,13 +23,23 @@ def header_rate(stamps: set[int]) -> float:
 
 class YoloXContractProbe(Node):
     def __init__(
-        self, topic: str, input_topic: str, width: int, height: int
+        self,
+        topic: str,
+        input_topic: str,
+        width: int,
+        height: int,
+        yolox_node: str,
+        input_publisher_node: str,
+        required_output_subscribers: set[str],
     ) -> None:
         super().__init__("pc2_yolox_contract_probe")
         self.topic = topic
         self.input_topic = input_topic
         self.width = width
         self.height = height
+        self.yolox_node = yolox_node
+        self.input_publisher_node = input_publisher_node
+        self.required_output_subscribers = required_output_subscribers
         self.stamps: set[int] = set()
         self.frames: set[str] = set()
         self.object_counts: list[int] = []
@@ -63,17 +73,11 @@ class YoloXContractProbe(Node):
             self.endpoint_name(endpoint)
             for endpoint in self.get_subscriptions_info_by_topic(self.input_topic)
         )
-        required_output_subscribers = {
-            "/perception/object_recognition/detection/clustering/roi_cluster/roi_pointcloud_fusion",
-            "/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion",
-            "/perception/object_recognition/detection/roi_detected_object_fusion",
-        }
         passed = (
-            output_publishers == ["/tensorrt_yolox"]
-            and required_output_subscribers.issubset(output_subscribers)
-            and "/perception/traffic_light_recognition/camera1/traffic_light_image_decompressor"
-            in input_publishers
-            and "/tensorrt_yolox" in input_subscribers
+            output_publishers == [self.yolox_node]
+            and self.required_output_subscribers.issubset(output_subscribers)
+            and input_publishers == [self.input_publisher_node]
+            and self.yolox_node in input_subscribers
         )
         return (
             passed,
@@ -105,20 +109,49 @@ def main() -> int:
     )
     parser.add_argument(
         "--input-topic",
-        default="/sensing/camera/camera1/traffic_light/image_raw",
+        default="/sensing/camera/camera0/image_raw",
     )
     parser.add_argument("--samples", type=int, default=10)
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--min-rate", type=float, default=5.0)
-    parser.add_argument("--width", type=int, default=1920)
-    parser.add_argument("--height", type=int, default=1200)
+    parser.add_argument("--width", type=int, default=2880)
+    parser.add_argument("--height", type=int, default=1860)
     parser.add_argument(
-        "--frame-id", default="traffic_light_camera/camera_link"
+        "--frame-id", default="camera0/camera_optical_link"
+    )
+    parser.add_argument(
+        "--yolox-node",
+        default="/tensorrt_yolox",
+        help="Expected node that subscribes to the image and publishes the ROI topic.",
+    )
+    parser.add_argument(
+        "--input-publisher-node",
+        default="/sensing/camera/camera0/windshield_image_relay",
+        help="Sole expected publisher node for the normalized Windshield image.",
+    )
+    parser.add_argument(
+        "--required-output-subscriber",
+        action="append",
+        default=None,
+        help="Required permanent ROI subscriber node; may be repeated.",
     )
     args = parser.parse_args()
 
+    required_output_subscribers = set(
+        args.required_output_subscriber
+        or ["/topic_state_monitor_windshield_yolox_rois"]
+    )
+
     rclpy.init()
-    node = YoloXContractProbe(args.topic, args.input_topic, args.width, args.height)
+    node = YoloXContractProbe(
+        args.topic,
+        args.input_topic,
+        args.width,
+        args.height,
+        args.yolox_node,
+        args.input_publisher_node,
+        required_output_subscribers,
+    )
     deadline = time.monotonic() + args.timeout
     try:
         while time.monotonic() < deadline and len(node.stamps) < args.samples:
@@ -151,6 +184,7 @@ def main() -> int:
             f"objects_per_message={min_objects}..{max_objects} "
             f"invalid_rois={node.invalid_rois} "
             f"graph={'PASS' if graph_passed else 'FAIL'} "
+            f"required_output_subscribers={sorted(required_output_subscribers)} "
             f"output_publishers={output_publishers} "
             f"output_subscribers={output_subscribers} "
             f"input_publishers={input_publishers} "

@@ -29,15 +29,9 @@ ros2 launch eagleye_gnss_converter gnss_converter.xml
 
 The parameters are set in `launch/gnss_converter.xml` .
 
-|Name|Type|Description|Default value|
-|:---|:---|:---|:---|
-<<<<<<< HEAD
-|nmea_sentence_topic|bool|Topic name of nmea_msgs/Sentence to subscribe|/navsat/nmea_sentence|
-|pub_fix_topic_name|double|Topic name of sensor_msgs/NavSatFix to publish|/navsat/fix|
-|pub_gga_topic_name|bool|Topic name of nmea_msgs/Gpgga to publish|gnss/gga|
-|pub_rmc_topic_name|bool|Topic name of nmea_msgs/Gprmc to publish|gnss/rmc|
-|output_gga|bool|Whether to output nmea_msgs/Gpgga|false|
-|output_rmc|bool|Whether to output nmea_msgs/Gprmc|false|
-=======
-|nmea_sentence_topic|bool|Topic name of nmea_msgs/Sentence to subscribe|/nmea_sentence|
->>>>>>> 47c9d0b83db1524e6347f2c39333881242678d6b
+|Name|Type|Description|
+|:---|:---|:---|
+|gnss.velocity_source_type|int|Selects the velocity input message type.|
+|gnss.velocity_source_topic|string|Velocity input topic name.|
+|gnss.llh_source_type|int|Selects the latitude/longitude/height input message type.|
+|gnss.llh_source_topic|string|Latitude/longitude/height input topic name.|

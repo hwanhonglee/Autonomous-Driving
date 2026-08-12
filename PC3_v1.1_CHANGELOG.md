@@ -1,6 +1,6 @@
-# PC3 ROS 2 workspace v1.1 changelog
+# PC3 ROS 2 workspace v2.0.0 changelog
 
-<!-- HH_260811 - Record the source-audited PC3 ROS 2 v1.1 release scope and rollback path. -->
+<!-- HH_260812 - Publish the source-audited PC3 ROS 2 update under its canonical semantic-version branch. -->
 
 Date: 2026-08-11
 Maintainer: Hwanhong Lee `<hwanhong57@gmail.com>`
@@ -8,14 +8,15 @@ Maintainer: Hwanhong Lee `<hwanhong57@gmail.com>`
 ## Release identity and historical base
 
 This change set is the PC3 `ros2_ws` half of the source-audited vehicle update.
-It is based on the immutable historical branch and commit below:
+It was developed on a temporary `v1.1` branch for IONIQ EV 308 and is now
+published as canonical v2.0.0. The IONIQ EV 307 baseline is canonical v1.0.0:
 
 ```text
 Repository: hwanhonglee/Autonomous-Driving
-Base branch: h2_i/IONIQ_EV_307/PC3_spectra/ros2_ws/v1.0
+Base branch: IONIQ_EV/PC3/ros2_ws/v1.0.0
 Base commit: 39872d589c5f3d056d2fba6950e0bbca3bde3f32
-Target branch: h2_i/IONIQ_EV_307/PC3_spectra/ros2_ws/v1.1
-Target tag: IONIQ_EV_308_PC3_r
+Target branch: IONIQ_EV/PC3/ros2_ws/v2.0.0
+Historical vehicle-number tag: IONIQ_EV_308_PC3_r
 ```
 
 The independent GitHub branch archive used for comparison is:
@@ -25,10 +26,11 @@ The independent GitHub branch archive used for comparison is:
 SHA-256: ea3f533e16e25c2675181bf2364c451e627739be62ddf0e8b0fe16e98c1e845f
 ```
 
-The old `v1.0` branch and the existing `IONIQ_EV_307_PC3_r` tag must remain
-unchanged. Version `v1.1` is a new sibling branch, not a rename or force update.
-The new `IONIQ_EV_308_PC3_r` tag identifies the reviewed v1.1 ROS 2 workspace
-commit and must not be moved after publication.
+The canonical `v1.0.0` branch preserves the old v1.0 commit unchanged. The
+existing `IONIQ_EV_307_PC3_r` and `IONIQ_EV_308_PC3_r` tags remain unchanged as
+historical vehicle-number aliases. The canonical v2.0.0 branch may contain
+later documentation-only commits and therefore is the authoritative current
+branch identity.
 
 ## Restored NovAtel source provenance
 
@@ -289,8 +291,8 @@ materializing or modifying one of those preserved historical paths.
 ## Rollback
 
 The complete rollback is to stop PC3, switch back to the immutable
-`h2_i/IONIQ_EV_307/PC3_spectra/ros2_ws/v1.0` branch, rebuild the selected packages,
-and restart the vehicle stack in MANUAL/PARK.
+`IONIQ_EV/PC3/ros2_ws/v1.0.0` branch, rebuild the selected packages, and restart
+the vehicle stack in MANUAL/PARK.
 
 For a correction-only rollback:
 

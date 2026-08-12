@@ -671,6 +671,96 @@ These package/group operations cannot be reproduced by a source commit. Record
 them in deployment documentation or an installation script only after a
 separate review; do not commit package caches, DKMS artifacts, or system logs.
 
+### `HH_260812` persistent PC3 route ownership
+
+<!-- HH_260812 - Record the reviewed Netplan template, exact legacy routes, and privileged deployment. -->
+File:
+
+- `migration_work/config/pc3-netplan.yaml`
+
+Before this deployment, `/etc/netplan/config.yaml` assigned a default route and
+DNS server to each systemd-networkd-owned Ethernet link:
+
+| Interface | Static address | Legacy default route | Legacy DNS |
+|---|---|---|---|
+| `enp8s0` | `192.168.9.7/24` | `via 192.168.9.1`, metric `50` | `192.168.9.1` |
+| `enp0s31f6` | `192.168.2.150/24` | `via 192.168.2.1`, metric `100` | `192.168.2.1` |
+
+Those persistent declarations recreated both wired defaults after every boot.
+Operators consequently had to run both `ip route del default` commands and then
+manually start NetworkManager before Wi-Fi could reliably own Internet access.
+
+The reviewed deployment template keeps only these directly connected networks:
+
+```text
+enp0s31f6  192.168.2.150/24  Hesai sensor network
+enp8s0     192.168.9.7/24    PC1-PC3 distributed ROS network
+```
+
+It deliberately defines no wired gateway or DNS server and marks both links
+optional so an unplugged sensor/peer cable does not hold boot completion.
+NetworkManager remains responsible only for Wi-Fi and must be enabled once with
+`systemctl enable --now NetworkManager.service`. The active Wi-Fi DHCP profile
+then owns the sole Internet default route, while systemd-networkd continues to
+own both static Ethernet links.
+
+<!-- HH_260812 - Record the deployed file ownership, rollback copy, and service ownership boundary. -->
+The source template is not applied merely by checking out this repository. Its
+one-time deployment created the root-owned mode-`0600` rollback copy
+`/etc/netplan/config.yaml.pre-HH_260812`, installed the reviewed template as
+root-owned mode-`0600` `/etc/netplan/config.yaml`, ran `netplan generate`, and
+accepted an interactive `netplan try`. This deployment was completed on
+`HH_260812`.
+
+Post-apply ownership is intentionally split. systemd-networkd owns
+`enp0s31f6` and `enp8s0` through the generated
+`/run/systemd/network/10-netplan-*.network` files; NetworkManager reports those
+Ethernet links as unmanaged. NetworkManager is both active and persistently
+enabled, owns Wi-Fi device `wlx200db04a991e`, and has the `Lehong` DHCP profile
+connected with autoconnect enabled. Both wired links report
+`routable (configured)` and `Required For Online: no`, with no wired DNS or
+default-route scope.
+
+<!-- HH_260812 - Record the exact post-apply routes and DNS behavior observed before reboot. -->
+The live main IPv4 route table contains the three connected subnets and exactly
+one Internet default route:
+
+```text
+default via 172.20.10.1 dev wlx200db04a991e proto dhcp metric 600
+172.20.10.0/28 dev wlx200db04a991e proto kernel scope link src 172.20.10.12 metric 600
+192.168.2.0/24 dev enp0s31f6 proto kernel scope link src 192.168.2.150
+192.168.9.0/24 dev enp8s0 proto kernel scope link src 192.168.9.7
+```
+
+Route-resolution checks preserve direct wired reachability while sending public
+traffic through Wi-Fi:
+
+```text
+192.168.2.101 -> enp0s31f6, source 192.168.2.150
+192.168.9.2   -> enp8s0, source 192.168.9.7
+1.1.1.1       -> wlx200db04a991e via 172.20.10.1, source 172.20.10.12
+```
+
+There is one resolver nuance: systemd-resolved has no DNS scope on either wired
+link and learns `172.20.10.1` as the Wi-Fi link DNS server, but
+`/etc/resolv.conf` remains a regular static file rather than a systemd-resolved
+or NetworkManager-managed symlink. It contains `8.8.8.8` and `8.8.4.4`, and
+`resolvectl` therefore reports `resolv.conf mode: foreign`. Consumers that read
+`/etc/resolv.conf` directly continue to use those static Google resolvers. This
+pre-existing resolver-file policy was recorded but not changed as part of route
+ownership repair.
+
+<!-- HH_260812 - Define the cold-boot acceptance criteria for persistent route ownership. -->
+A cold reboot remains the final persistence check. Acceptance requires
+NetworkManager to be `enabled` and `active` without a manual start, the available
+`Lehong` profile to reconnect automatically, both wired addresses and connected
+routes to return under systemd-networkd with `Required For Online: no`, and no
+wired default route or wired DNS scope to reappear. With `Lehong` connected, the
+sole default must again be `via 172.20.10.1 dev wlx200db04a991e metric 600`, and
+the two direct route-resolution checks above must retain their wired interface
+and source-address selections. Passing these checks proves that the three
+previous manual commands are no longer required after boot.
+
 ## 9. Preservation, reports, and commit exclusions
 
 ### Preserved source

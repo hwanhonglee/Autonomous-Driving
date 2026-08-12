@@ -1,0 +1,14 @@
+# HH_260812 - Keep the PC3 sensor and inter-PC Ethernet links as directly connected networks only.
+# Internet access and the default route are owned by the active NetworkManager Wi-Fi connection.
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp8s0:
+      addresses:
+        - 192.168.9.7/24
+      optional: true
+    enp0s31f6:
+      addresses:
+        - 192.168.2.150/24
+      optional: true

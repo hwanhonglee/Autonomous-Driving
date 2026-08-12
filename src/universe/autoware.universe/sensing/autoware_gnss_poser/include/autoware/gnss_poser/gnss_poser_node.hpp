@@ -103,6 +103,11 @@ private:
   const bool allow_position_only_fallback_;
   const double course_heading_min_distance_m_;
   const double position_only_yaw_stddev_rad_;
+  // HH_260812 - Keep the legacy 52SCF0-to-C-track correction configurable per map bundle.
+  const bool projected_position_offset_enabled_;
+  const double projected_position_offset_x_m_;
+  const double projected_position_offset_y_m_;
+  const double projected_position_offset_z_m_;
   bool received_gnss_ins_orientation_ = false;
 
   // HH_260812 - Hold the last useful yaw until motion is sufficient for a course estimate.

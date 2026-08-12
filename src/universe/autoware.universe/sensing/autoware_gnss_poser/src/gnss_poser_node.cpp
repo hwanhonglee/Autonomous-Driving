@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -42,10 +43,32 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   allow_position_only_fallback_(declare_parameter<bool>("allow_position_only_fallback")),
   course_heading_min_distance_m_(declare_parameter<double>("course_heading_min_distance_m")),
   position_only_yaw_stddev_rad_(declare_parameter<double>("position_only_yaw_stddev_rad")),
+  // HH_260812 - Load the calibrated legacy-map translation instead of embedding it in code.
+  projected_position_offset_enabled_(
+    declare_parameter<bool>("projected_position_offset_enabled")),
+  projected_position_offset_x_m_(declare_parameter<double>("projected_position_offset_x_m")),
+  projected_position_offset_y_m_(declare_parameter<double>("projected_position_offset_y_m")),
+  projected_position_offset_z_m_(declare_parameter<double>("projected_position_offset_z_m")),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
   gnss_pose_pub_method_(static_cast<int>(declare_parameter<int>("gnss_pose_pub_method")))
 {
+  // HH_260812 - Reject invalid configured offsets before they can corrupt published map poses.
+  if (
+    !std::isfinite(projected_position_offset_x_m_) ||
+    !std::isfinite(projected_position_offset_y_m_) ||
+    !std::isfinite(projected_position_offset_z_m_))
+  {
+    throw std::invalid_argument("Projected position offsets must be finite.");
+  }
+
+  if (projected_position_offset_enabled_) {
+    RCLCPP_INFO(
+      get_logger(), "Applying projected position offset x=%.9f, y=%.9f, z=%.9f m",
+      projected_position_offset_x_m_, projected_position_offset_y_m_,
+      projected_position_offset_z_m_);
+  }
+
   // HH_260812 - Use a valid identity quaternion for a cold-start position-only seed.
   fallback_orientation_.w = 1.0;
 
@@ -225,12 +248,14 @@ void GNSSPoser::callback_nav_sat_fix(
   gnss_base_pose_msg.header.frame_id = map_frame_;
   tf2::toMsg(tf_map2base_link, gnss_base_pose_msg.pose);
 
-  // HH_250211 // HH_250214 // add z
-  // HH_260810 - Applied the existing C_track translation once so pose, covariance, and TF agree.
-  gnss_base_pose_msg.pose.position.x =
-    gnss_base_pose_msg.pose.position.x - 60953.77526469596 - 16.0;
-  gnss_base_pose_msg.pose.position.y =
-    gnss_base_pose_msg.pose.position.y - 65983.92232890474 + 17.0;
+  // HH_260812 - Apply the calibrated legacy-map translation once to pose, covariance, and TF.
+  // Disable this for a natively georeferenced C-track bundle whose projector origin is already
+  // the C-track origin; otherwise the approximately 61 km/66 km translation would be duplicated.
+  if (projected_position_offset_enabled_) {
+    gnss_base_pose_msg.pose.position.x -= projected_position_offset_x_m_;
+    gnss_base_pose_msg.pose.position.y -= projected_position_offset_y_m_;
+    gnss_base_pose_msg.pose.position.z -= projected_position_offset_z_m_;
+  }
 
   // publish gnss_base_link pose in map frame
   // HH_250205 //sensing/gnss/pose

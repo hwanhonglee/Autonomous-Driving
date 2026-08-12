@@ -37,6 +37,14 @@ If the transformation from `base_link` to the antenna cannot be obtained, it out
 
 ## Assumptions / Known limits
 
+<!-- HH_260812 - Document the two C-track coordinate conventions to prevent double correction. -->
+The PC3 deployment currently uses a legacy C-track bundle whose Lanelet coordinates were projected
+from a `52SCF0` reference. For that bundle, the configured projected-position offset converts the
+GNSS result into the C-track-local coordinates. A bundle whose Lanelet map and projector YAML are
+already georeferenced to the native C-track origin must set
+`projected_position_offset_enabled: false`; combining that bundle with the legacy offset would
+apply the approximately 61 km east / 66 km north translation twice.
+
 ## (Optional) Error detection and handling
 
 ## (Optional) Performance characterization

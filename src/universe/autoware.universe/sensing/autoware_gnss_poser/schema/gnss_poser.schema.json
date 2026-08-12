@@ -5,6 +5,7 @@
   "definitions": {
     "gnss_poser": {
       "type": "object",
+      "$comment": "HH_260812 - Define the configurable legacy-map correction and its safe zero-offset defaults.",
       "properties": {
         "base_frame": {
           "type": "string",
@@ -54,6 +55,26 @@
           "exclusiveMinimum": 0.0,
           "description": "Yaw standard deviation for position-only output. [rad]"
         },
+        "projected_position_offset_enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Subtract a calibrated translation after map projection and antenna-to-base conversion. Disable for a natively georeferenced map bundle."
+        },
+        "projected_position_offset_x_m": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Calibrated projected x translation to subtract. [m]"
+        },
+        "projected_position_offset_y_m": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Calibrated projected y translation to subtract. [m]"
+        },
+        "projected_position_offset_z_m": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Calibrated projected z translation to subtract. [m]"
+        },
         "gnss_pose_pub_method": {
           "type": "integer",
           "default": "0",
@@ -78,6 +99,10 @@
         "allow_position_only_fallback",
         "course_heading_min_distance_m",
         "position_only_yaw_stddev_rad",
+        "projected_position_offset_enabled",
+        "projected_position_offset_x_m",
+        "projected_position_offset_y_m",
+        "projected_position_offset_z_m",
         "gnss_pose_pub_method",
         "buff_epoch"
       ]

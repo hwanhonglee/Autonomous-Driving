@@ -376,11 +376,14 @@ Files:
 The previously existing C-track translation had been applied only to the
 covariance-bearing pose. The plain pose and TF retained unshifted coordinates,
 creating internally inconsistent outputs. The translation is now applied once
-to the shared pose before plain-pose, covariance-pose, and TF publication:
+to the shared pose before plain-pose, covariance-pose, and TF publication. The
+original map-calibrated values were restored on `HH_260812` and moved from C++
+literals into validated parameters:
 
 ```text
-x := x - 60953.77526469596 - 16.0
-y := y - 65983.92232890474 + 17.0
+x := x - projected_position_offset_x_m  # 60966.4679793288
+y := y - projected_position_offset_y_m  # 65973.64540576655
+z := z - projected_position_offset_z_m  # 15.816125382
 ```
 
 When INS orientation is enabled, GNSS pose publication now remains inhibited
@@ -448,12 +451,53 @@ audit added or expanded adjacent English `HH_250204`, `HH_250205`, `HH_250219`,
 `HH_250311`, or `HH_260811` rationale comments while retaining the original
 attribution date where it was available.
 
-No final map-coordinate correction was applied during the offline repair. The
-last live observation showed approximately 7.25 m horizontal and 13 m vertical
-GNSS/kinematic disagreement. The active map projector altitude and the PCD
-ground level also suggest a possible vertical-datum mismatch. Changing the map
-projector blindly could fix one layer while breaking Lanelet alignment, so this
-remains a live acceptance gate.
+<!-- HH_260812 - Record the C-track coordinate audit, recovered offsets, and validation evidence. -->
+### `HH_260812` C-track coordinate correction audit and recovery
+
+The map-coordinate disagreement was traced to two distinct C-track map
+conventions, not to NTRIP or RTK accuracy:
+
+- the active external map under `/home/a/Autoware_Map/C_track` uses a synthetic
+  `52SCF0` projector origin and Lanelet latitude/longitude values generated for
+  that origin;
+- the archived map bundle uses the native C-track (`52SCF60...`) origin and
+  natively georeferenced Lanelet latitude/longitude values.
+
+All 13,172 active Lanelet nodes reproduce their stored local x/y values from
+the active `52SCF0` origin with a mean error below `0.00006 m`. Therefore only
+changing `map_projector_info.yaml` would move the Lanelet map by about 61 km
+east and 66 km north relative to the PCD. The projector YAML, Lanelet map, and
+PCD must always be changed as one map bundle.
+
+The legacy `gnss_poser` subtraction was originally introduced to translate the
+synthetic `52SCF0` projection into C-track-local coordinates. A stopped RTK
+integer sample produced the following evidence:
+
+```text
+current pose before recovery:             (61.536739, -118.539020,   1.094781)
+same sample with original calibrated XYZ: (64.844025, -125.262097, -14.721344)
+PCD road height at recovered XY:                                  -15.15 m
+base_link height above road:                                        0.429 m
+configured wheel radius:                                            0.406 m
+```
+
+The recovered point is inside Lanelet relation `30447`; the pre-recovery point
+was outside every Lanelet and at least `5.094 m` from the nearest boundary.
+The former refactor had changed the calibrated horizontal constants and dropped
+the `15.816125382 m` vertical correction. That regression explains the observed
+horizontal and vertical disagreement.
+
+The correction is now controlled by `projected_position_offset_enabled` and
+three finite-valued offset parameters. The active legacy map enables the exact
+calibrated XYZ values. A native C-track-origin map bundle must set the enable
+flag to `false`, preventing a duplicate 61 km/66 km translation. Pose,
+PoseWithCovariance, and TF continue to consume the same corrected shared pose.
+
+Validation completed with a low-parallel package build, all four registered
+package test targets passing, and a hardware-free Domain-229 projection test.
+The test loaded all three installed offsets and produced the expected corrected
+pose. Final acceptance still requires a fresh `run_autoware` process and live
+NDT/EKF convergence because the prior process predated this build.
 
 ## 6. IMU path
 

@@ -1,6 +1,6 @@
 <!-- HH_260812 - Preserve the complete PC1 change, experiment, incident, and VILS review record. -->
 
-# PC1 work history and VILS review
+# VILS PC1 work history
 
 Status: **AUDITED WORK RECORD — not a driving approval**
 
@@ -28,10 +28,10 @@ The following labels are used throughout:
 
 The final four-file documentation set is:
 
-1. `PC4_DIGITAL_TWIN_VEHICLE_IN_LOOP.md` — shared PC1/PC2/PC3/PC4 contract and opinions;
-2. `PC1_WORK_COMPLETION_RECORD.md` — this PC1 record;
-3. `PC2_WORK_COMPLETION_RECORD.md` — maintained by PC2;
-4. `docs/work_history/PC3_COMPLETE_WORK_HISTORY.md` — maintained by PC3.
+1. `docs/vils/VILS_SHARED_ARCHITECTURE.md` — shared PC1/PC2/PC3/PC4 contract and opinions;
+2. `docs/vils/VILS_PC1_WORK_HISTORY.md` — this PC1 record;
+3. `docs/vils/VILS_PC2_WORK_HISTORY.md` — maintained by PC2;
+4. `docs/vils/VILS_PC3_WORK_HISTORY.md` — maintained by PC3.
 
 The shared contract is authoritative for the intended architecture. This worklog is authoritative
 for the PC1 history and observed evidence.

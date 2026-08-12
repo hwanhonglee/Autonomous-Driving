@@ -1,4 +1,4 @@
-# PC2 source-audited bring-up and perception integration record
+# VILS PC2 work history
 
 Status date: 2026-08-12 KST
 
@@ -578,7 +578,7 @@ Camera/TLR/YOLO evidence and PG-VILS object-injection evidence are independent, 
 sensor-to-actuation end-to-end proof.
 
 The shared architecture and exact PC2 fusion rules are in
-`PC4_DIGITAL_TWIN_VEHICLE_IN_LOOP.md`.
+`VILS_SHARED_ARCHITECTURE.md`.
 
 ## 14. Authoritative PC2 release records
 

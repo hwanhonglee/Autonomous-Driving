@@ -1,6 +1,6 @@
 <!-- HH_260812 - Record the complete PC3 work history, request traceability, evidence, and handoff. -->
 
-# PC3 Complete Work History
+# VILS PC3 work history
 
 ## 1. Purpose and status
 
@@ -800,7 +800,7 @@ control points and the live ego pose.
 
 PC2 owns any real-plus-virtual object fusion and remains the single publisher of
 the official predicted-object output. PC1 continues to consume the official output
-and owns planning/control/CAN policy. The separate VILS document defines the
+and owns planning/control/CAN policy. `VILS_SHARED_ARCHITECTURE.md` defines the
 detailed contract and fault-injection stages.
 
 ## 18. Complete changed-file inventory

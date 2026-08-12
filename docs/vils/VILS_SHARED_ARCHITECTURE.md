@@ -1,6 +1,6 @@
 <!-- HH_260812 - Define the cross-PC vehicle-in-the-loop digital-twin integration contract. -->
 
-# PC4 vehicle-in-the-loop digital twin integration
+# VILS shared architecture
 
 Status: **PROPOSAL — cross-PC review required before implementation**
 
@@ -13,10 +13,10 @@ Applies to: IONIQ EV PC1, PC2, PC3, and the proposed PC4 simulator host
 This file defines the shared VILS architecture. Work performed on each vehicle PC is recorded in
 a separate file so implemented evidence is not confused with the proposed cross-PC design:
 
-- `docs/architecture/PC1_WORK_COMPLETION_RECORD.md` — PC1 command/change/incident/VILS review;
-- `PC2_WORK_COMPLETION_RECORD.md` — PC2 audit, implementation, validation, release, limitations,
+- `docs/vils/VILS_PC1_WORK_HISTORY.md` — PC1 command/change/incident/VILS review;
+- `docs/vils/VILS_PC2_WORK_HISTORY.md` — PC2 audit, implementation, validation, release, limitations,
   and proposed VILS responsibility;
-- `docs/work_history/PC3_COMPLETE_WORK_HISTORY.md` — PC3 sensing/localization/system release and
+- `docs/vils/VILS_PC3_WORK_HISTORY.md` — PC3 sensing/localization/system release and
   VILS handoff.
 
 The documentation set contains this architecture file and exactly three owner-authored PC records.
@@ -528,7 +528,7 @@ at session arm time; a writer or session change is a fault rather than a static 
 #### PC1 owner review and implementation decision
 
 PC1 accepts the VILS architecture only with the following audited constraints. The detailed PC1
-change and incident history is recorded in `PC1_WORK_COMPLETION_RECORD.md`.
+change and incident history is recorded in `VILS_PC1_WORK_HISTORY.md`.
 
 1. PC1 continues to consume one canonical `autoware_perception_msgs/msg/PredictedObjects` stream
    on `/perception/object_recognition/objects`. In hybrid and virtual-only modes, PC2 remains the

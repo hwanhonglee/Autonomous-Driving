@@ -16,6 +16,8 @@
 
 
 #include "arena_camera/arena_camera.h"
+
+#include <algorithm>
 #include <rclcpp/rclcpp.hpp>
 
 ArenaCamera::ArenaCamera(Arena::IDevice * device, CameraSetting & camera_setting)
@@ -90,6 +92,47 @@ void ArenaCamera::acquisition()
               << e.GetDescription() << std::endl;
   } catch (...) {
     std::cerr << "[LUCID WARN] StreamPacketResendEnable failed unknown." << std::endl;
+  }
+
+  // HH_260812 - Preserve the driver's hardware/software binning contract while treating
+  // unsupported GenICam registers as non-fatal for cameras that only allow 1x1 binning.
+  try {
+    GenApi::CIntegerPtr binning_horizontal =
+      m_device->GetNodeMap()->GetNode("BinningHorizontal");
+    if (GenApi::IsWritable(binning_horizontal)) {
+      const auto requested = static_cast<int64_t>(m_horizontal_binning);
+      const auto value = std::clamp(
+        requested, binning_horizontal->GetMin(), binning_horizontal->GetMax());
+      binning_horizontal->SetValue(value);
+      m_reached_horizontal_binning = binning_horizontal->GetValue();
+    } else {
+      m_reached_horizontal_binning = 1;
+      std::cerr << "[LUCID WARN] BinningHorizontal is not writable; software binning may be used."
+                << std::endl;
+    }
+  } catch (const GenICam::GenericException & e) {
+    m_reached_horizontal_binning = 1;
+    std::cerr << "[LUCID WARN] BinningHorizontal setup failed: " << e.GetDescription()
+              << std::endl;
+  }
+
+  try {
+    GenApi::CIntegerPtr binning_vertical =
+      m_device->GetNodeMap()->GetNode("BinningVertical");
+    if (GenApi::IsWritable(binning_vertical)) {
+      const auto requested = static_cast<int64_t>(m_vertical_binning);
+      const auto value =
+        std::clamp(requested, binning_vertical->GetMin(), binning_vertical->GetMax());
+      binning_vertical->SetValue(value);
+      m_reached_vertical_binning = binning_vertical->GetValue();
+    } else {
+      m_reached_vertical_binning = 1;
+      std::cerr << "[LUCID WARN] BinningVertical is not writable; software binning may be used."
+                << std::endl;
+    }
+  } catch (const GenICam::GenericException & e) {
+    m_reached_vertical_binning = 1;
+    std::cerr << "[LUCID WARN] BinningVertical setup failed: " << e.GetDescription() << std::endl;
   }
 
   try {

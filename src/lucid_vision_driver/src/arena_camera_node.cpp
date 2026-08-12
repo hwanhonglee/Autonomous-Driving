@@ -194,14 +194,14 @@ void ArenaCameraNode::publish_image(std::uint32_t camera_index, const cv::Mat & 
     m_compressed_publisher->publish(std::move(img_compressed_msg));
   }
 
-  m_publisher->publish(std::move(img_msg));
-
   if (m_camera_info_publisher) {
     auto ci = std::make_unique<sensor_msgs::msg::CameraInfo>(m_camera_info->getCameraInfo());
-    // HH_260811 - Use the original frame header instead of reading img_msg after it was moved.
+    // HH_260812 - Use the stable local header; img_msg is moved into its publisher below.
     ci->header = header;
     m_camera_info_publisher->publish(std::move(ci));
   }
+
+  m_publisher->publish(std::move(img_msg));
 }
 
 void ArenaCameraNode::init_camera_info(std::string camera_name, std::string camera_info_url)

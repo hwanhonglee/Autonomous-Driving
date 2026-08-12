@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(lucid_vision_driver)
 
-# Default to C++14
+# std::clamp is used by the hardware-binning bounds checks.
 if (NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
 endif ()
 
 set(CMAKE_CXX_FLAGS "-g3 -O3")
@@ -11,7 +11,6 @@ set(CMAKE_CXX_FLAGS "-g3 -O3")
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(ament_lint_auto REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)

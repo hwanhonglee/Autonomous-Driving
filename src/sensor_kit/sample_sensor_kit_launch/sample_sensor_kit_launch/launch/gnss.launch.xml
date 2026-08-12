@@ -1,0 +1,42 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+  <!-- HH_250204 --> <!-- Select GNSS -->
+  <arg name="gnss_receiver" default="novatel" description="ublox(default) or novatel(Novatel_pwrpak7_E-1)"/>
+
+  <group>
+    <push-ros-namespace namespace="gnss"/>
+
+    <!-- HH_250204 -->
+    <!-- Switch topic name -->
+    <let name="navsatfix_topic_name" value="ublox_gps_node/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)"/>
+    <let name="navsatfix_topic_name" value="novatel/oem7/fix" if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)"/>
+    <let name="orientation_topic_name" value="/autoware_orientation"/>
+
+    <!-- Ublox Driver -->
+    <!-- HH_250204 -->
+    <group if="$(eval &quot; '$(var launch_driver)' and '$(var gnss_receiver)'=='ublox'&quot;)">
+      <include file="$(find-pkg-share ublox_gps)/launch/ublox_gps_node-launch.py"/>
+    </group>
+
+    <!-- Novatel Pwrpak7 E-1 GNSS Driver -->
+    <!-- HH_250204 -->
+    <group if="$(eval &quot;'$(var launch_driver)' and '$(var gnss_receiver)'=='novatel'&quot;)">
+      <include file="$(find-pkg-share novatel_oem7_driver)/launch/oem7_port.launch.py">
+        <arg name="oem7_port_name" value="/dev/ttyUSB1"/>
+        <arg name="oem7_port_baud" value="115200"/>
+      </include>
+    </group>
+
+    <!-- NavSatFix to MGRS Pose -->
+    <include file="$(find-pkg-share autoware_gnss_poser)/launch/gnss_poser.launch.xml">
+      <arg name="input_topic_fix" value="$(var navsatfix_topic_name)"/>
+      <arg name="input_topic_orientation" value="$(var orientation_topic_name)"/>
+
+      <arg name="output_topic_gnss_pose" value="pose"/>
+      <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance"/>
+      <arg name="output_topic_gnss_fixed" value="fixed"/>
+
+      <arg name="use_gnss_ins_orientation" value="true"/>
+    </include>
+  </group>
+</launch>

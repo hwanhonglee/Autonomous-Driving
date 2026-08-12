@@ -1,0 +1,57 @@
+<launch>
+  <arg name="launch_driver" default="true"/>
+
+  <!-- HH_260812 - Start one Lucid component_container process per physical camera. -->
+  <include
+    file="$(find-pkg-share lucid_vision_driver)/launch/dual_camera.launch.py"
+    if="$(var launch_driver)"
+  />
+
+  <!-- HH_260812 - Windshield serial 222301529 is camera0 and feeds generic 2D YOLOX. -->
+  <group>
+    <push-ros-namespace namespace="camera"/>
+    <group>
+      <push-ros-namespace namespace="camera0"/>
+
+      <node pkg="topic_tools" exec="relay" name="windshield_camera_info_relay" output="log">
+        <param name="input_topic" value="/lucid_vision/windshield/camera_info"/>
+        <param name="output_topic" value="camera_info"/>
+        <param name="type" value="sensor_msgs/msg/CameraInfo"/>
+        <param name="reliability" value="best_effort"/>
+      </node>
+
+      <node pkg="topic_tools" exec="relay" name="windshield_image_relay" output="log">
+        <param name="input_topic" value="/lucid_vision/windshield/image"/>
+        <param name="output_topic" value="image_raw"/>
+        <param name="type" value="sensor_msgs/msg/Image"/>
+        <param name="reliability" value="best_effort"/>
+      </node>
+    </group>
+  </group>
+
+  <!-- HH_260812 - Loop-top serial 214000332 remains camera1/traffic_light for TLR. -->
+  <group>
+    <push-ros-namespace namespace="camera"/>
+    <group>
+      <push-ros-namespace namespace="camera1"/>
+      <group>
+        <push-ros-namespace namespace="traffic_light"/>
+
+        <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log">
+          <param name="input_topic" value="/lucid_vision/camera/camera_info"/>
+          <param name="output_topic" value="camera_info"/>
+          <param name="type" value="sensor_msgs/msg/CameraInfo"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+
+        <!-- HH_260812 - The TLR decompressor remains the sole image_raw publisher. -->
+        <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log">
+          <param name="input_topic" value="/lucid_vision/camera/image_compressed"/>
+          <param name="output_topic" value="image_raw/compressed"/>
+          <param name="type" value="sensor_msgs/msg/CompressedImage"/>
+          <param name="reliability" value="best_effort"/>
+        </node>
+      </group>
+    </group>
+  </group>
+</launch>

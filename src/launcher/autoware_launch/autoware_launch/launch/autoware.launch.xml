@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Essential parameters -->
+  <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
+  <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
+  <arg name="sensor_model" default="sample_sensor_kit" description="sensor model name"/>
+  <!-- HH_260810 - Assigned perception components to a uniquely named PC2-local container instead of PC3's common-sensing container. -->
+  <arg name="pointcloud_container_name" default="pc2_perception_pointcloud_container"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
+
+  <!-- launch module preset -->
+  <arg name="planning_module_preset" default="default" description="planning module preset"/>
+
+  <!-- Optional parameters -->
+  <!-- Modules to be launched -->
+  <!-- HH_260810 - Set non-PC2 vehicle, system, and map module defaults off to document and enforce this host's perception role. -->
+  <arg name="launch_vehicle" default="false" description="launch vehicle"/>
+  <!-- HH_260810 - Kept system startup off because PC3 owns foundational system services. -->
+  <arg name="launch_system" default="false" description="launch system"/>
+  <!-- HH_260810 - Kept map startup off because PC3 is the single map owner. -->
+  <arg name="launch_map" default="false" description="launch map"/>
+  <!-- HH_260810 - Kept only the verified PC2-owned Lucid camera path enabled while shared sensing remains assigned to PC3. -->
+  <arg name="launch_sensing" default="true" description="launch sensing"/>
+  <arg name="launch_sensing_driver" default="true" description="launch sensing driver"/>
+  <!-- HH_260810 - Set localization off because PC3 owns localization and TF for the four-PC deployment. -->
+  <arg name="launch_localization" default="false" description="launch localization"/>
+  <!-- HH_260810 - Kept perception enabled on PC2 as the selected official object source for this stationary test profile. -->
+  <arg name="launch_perception" default="true" description="launch perception"/>
+  <!-- HH_260811 - Launch the generic camera YOLOX detector from the normalized Lucid image on PC2. -->
+  <arg name="launch_yolox" default="true" description="launch PC2 camera YOLOX"/>
+  <!-- HH_260810 - Set non-PC2 planning, control, and API module defaults off so this launch has no decision or command ownership. -->
+  <arg name="launch_planning" default="false" description="launch planning"/>
+  <!-- HH_260810 - Kept control startup off to enforce the PC2 no-actuation boundary. -->
+  <arg name="launch_control" default="false" description="launch control"/>
+  <!-- HH_260810 - Kept API startup off because PC1 owns the Autoware API. -->
+  <arg name="launch_api" default="false" description="launch api"/>
+  <!-- Global parameters -->
+  <arg name="use_sim_time" default="false" description="use_sim_time"/>
+  <!-- Vehicle -->
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)" description="vehicle specific ID"/>
+  <!-- HH_260810 - Disabled the vehicle interface default to preserve the stationary no-actuation boundary on PC2. -->
+  <arg name="launch_vehicle_interface" default="false" description="launch vehicle interface"/>
+  <!-- Control -->
+  <arg name="check_external_emergency_heartbeat" default="false"/>
+  <!-- Map -->
+  <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
+  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
+  <!-- System -->
+  <arg name="system_run_mode" default="online" description="run mode in system"/>
+  <!-- HH_260810 - Disabled the system-monitor default because PC3 owns system diagnostics. -->
+  <arg name="launch_system_monitor" default="false" description="launch system monitor"/>
+  <arg name="launch_dummy_diag_publisher" default="false" description="launch dummy diag publisher"/>
+  <arg name="diagnostic_graph_aggregator_graph_path" default="$(find-pkg-share autoware_launch)/config/system/diagnostic_graph_aggregator/autoware-main.yaml" description="diagnostic graph config"/>
+  <!-- Tools -->
+  <!-- HH_260811 - Enabled the PC2 RViz display for the outdoor integration test. -->
+  <arg name="rviz" default="true" description="launch rviz"/>
+  <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
+  <!-- HH_260810 - Disabled RViz respawn because RViz is not owned by this PC2 test profile. -->
+  <arg name="rviz_respawn" default="false"/>
+  <!-- Perception -->
+  <!-- HH_260812 - Keep uncalibrated Windshield detections in 2D; opt into fusion only after intrinsic/extrinsic validation. -->
+  <arg name="perception_mode" default="lidar" description="select perception mode. camera_lidar_radar_fusion, camera_lidar_fusion, lidar_radar_fusion, lidar, radar"/>
+  <arg name="traffic_light_recognition/enable_fine_detection" default="true" description="enable traffic light fine detection"/>
+  <!-- Auto mode setting-->
+  <arg name="enable_all_modules_auto_mode" default="false" description="enable all module's auto mode"/>
+  <arg name="is_simulation" default="false" description="Autoware's behavior will change depending on whether this is a simulation or not."/>
+
+  <!-- Global parameters -->
+  <group scoped="false">
+    <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    </include>
+  </group>
+
+  <!-- HH_250213 -->
+  <!-- Sensing -->
+  <!-- <group if="$(var launch_sensing)">
+    <include file="$(find-pkg-share sample_sensor_kit_launch)/launch/sensing.launch.xml">
+      <arg name="launch_sensing_driver" value="$(var launch_sensing_driver)"/>
+    </include>
+  </group> -->
+
+  <!-- Sensing -->
+  <!-- HH_260810 - Retained this sensing include only for the verified PC2-owned Lucid camera; LiDAR, GNSS, IMU, and shared preprocessing stay disabled downstream. -->
+  <group if="$(var launch_sensing)">
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_sensing_component.launch.xml"/>
+  </group>
+
+  <!-- Perception pointcloud container -->
+  <!-- HH_260810 - Added a PC2-owned perception component container so components load locally instead of into PC3's common-sensing container. -->
+  <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py" if="$(var launch_perception)">
+    <arg name="use_multithread" value="true"/>
+    <arg name="container_name" value="$(var pointcloud_container_name)"/>
+  </include>
+
+  <!-- Perception -->
+  <!-- HH_260810 - Kept perception ownership on PC2; PC4 must disable or remap any publisher for the same official object topic. -->
+  <group if="$(var launch_perception)">
+    <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_perception_component.launch.xml">
+      <arg name="data_path" value="$(var data_path)"/>
+      <!-- HH_260812 - Map windshield camera0 into fusion slot 0; loop-top camera1 remains TLR-only. -->
+      <arg name="image_number" value="1"/>
+      <arg name="image_raw0" value="/sensing/camera/camera0/image_raw"/>
+      <arg name="camera_info0" value="/sensing/camera/camera0/camera_info"/>
+      <arg name="detection_rois0" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="all_traffic_light_camera" value="[camera1]"/>
+    </include>
+    <!-- HH_260812 - Run generic 8-class YOLOX on the windshield stream only. -->
+    <include file="$(find-pkg-share autoware_tensorrt_yolox)/launch/yolox_tiny.launch.xml" if="$(var launch_yolox)">
+      <arg name="input/image" value="/sensing/camera/camera0/image_raw"/>
+      <arg name="output/objects" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="model_name" value="yolox-tiny"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="use_decompress" value="false"/>
+    </include>
+    <!-- HH_260812 - Keep lazy YOLOX active and expose rate/timeout diagnostics without unsafe 3D fusion. -->
+    <include file="$(find-pkg-share topic_state_monitor)/launch/topic_state_monitor.launch.xml" if="$(var launch_yolox)">
+      <arg name="node_name_suffix" value="windshield_yolox_rois"/>
+      <arg name="topic" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="topic_type" value="tier4_perception_msgs/msg/DetectedObjectsWithFeature"/>
+      <arg name="diag_name" value="windshield_yolox_rois_status"/>
+      <!-- HH_260812 - A full 2880x1860 YOLO frame measured ~14.7 Hz; warn below 5 Hz. -->
+      <arg name="warn_rate" value="5.0"/>
+      <arg name="error_rate" value="2.0"/>
+      <arg name="timeout" value="1.0"/>
+      <arg name="window_size" value="20"/>
+    </include>
+  </group>
+
+  <!-- Tools -->
+  <group>
+    <node
+      pkg="rviz2"
+      exec="rviz2"
+      name="rviz2"
+      output="screen"
+      args="-d $(var rviz_config) -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png"
+      if="$(var rviz)"
+      respawn="$(var rviz_respawn)"
+    >
+      <env name="QT_QPA_PLATFORMTHEME" value="qt5ct"/>
+    </node>
+  </group>
+</launch>

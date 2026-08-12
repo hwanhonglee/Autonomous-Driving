@@ -2,7 +2,7 @@
 
 > **Historical snapshot:** this report records the 2026-08-10 stationary stage.
 > Current v1.1 behavior, validation, and remaining gates are documented in
-> [`PC3_v1.1_detailed_changes.md`](PC3_v1.1_detailed_changes.md), which supersedes
+> [`PC3_v2.0.0_detailed_changes.md`](PC3_v2.0.0_detailed_changes.md), which supersedes
 > this report where the two records differ. The original content below is
 > preserved for audit and rollback history.
 

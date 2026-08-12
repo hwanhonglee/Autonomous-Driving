@@ -1,0 +1,28 @@
+/**:
+  ros__parameters:
+    camera_name: "camera"
+    # HH_260810 - Matched the active sample sensor-kit URDF and the historical serial-214 camera frame.
+    # HH_260812 - Image coordinates use the optical frame created by the camera URDF macro.
+    frame_id: "traffic_light_camera/camera_optical_link"
+    pixel_format: bgr8
+    # HH_260810 - Bound the loop-top launch to the physically discovered Lucid serial 214000332.
+    serial_no: 214000332
+    # HH_260810 - Used the locally generated 2025-04-23 1920x1200 calibration for the stationary validation; revalidate it after any camera remount.
+    camera_info_url: "package://lucid_vision_driver/config/loop_top_214000332_1920x1200.yaml"
+    fps: 15
+    horizontal_binning: 1 # resize horizontal resolution/horizontal_binning
+    vertical_binning: 1 # resize horizontal resolution/vertical_binning
+    # HH_260810 - The active TLR path consumes raw JPEG; disabled unused per-frame rectification after a measured 15 Hz comparison.
+    enable_rectifying: false
+    enable_compressing: true
+    use_default_device_settings: false
+    # if you use_default_device_settings: true, the following settings are ignored.
+    # ROS driver will use the default device settings of the camera.
+    # HH_260811 - Selected the bounded daylight values measured on the live outdoor doorway scene; auto mode clipped 31.16% of the full frame and 71.85% of the exterior ROI.
+    exposure_auto: false
+    exposure_target: 10000
+    gain_auto: false
+    gain_target: 15
+    gamma_target: 0.7
+    image_horizontal_flip: false
+    image_vertical_flip: false

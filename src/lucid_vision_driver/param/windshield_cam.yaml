@@ -1,0 +1,24 @@
+/**:
+  ros__parameters:
+    # HH_260812 - Serial 222301529 is the physically discovered windshield camera.
+    camera_name: "windshield"
+    frame_id: "camera0/camera_optical_link"
+    pixel_format: bgr8
+    serial_no: 222301529
+    # HH_260812 - This legacy calibration is transport-only until serial-222 is recalibrated.
+    camera_info_url: "package://lucid_vision_driver/config/windshield_222301529_transport_only.yaml"
+    fps: 15
+    horizontal_binning: 1
+    vertical_binning: 1
+    enable_rectifying: false
+    # HH_260812 - YOLOX consumes the native raw stream; avoid an unused JPEG encode.
+    enable_compressing: false
+    # HH_260812 - Apply the requested 15 Hz while retaining automatic exposure/gain.
+    use_default_device_settings: false
+    exposure_auto: true
+    exposure_target: 187
+    gain_auto: true
+    gain_target: 1
+    gamma_target: 1.0
+    image_horizontal_flip: false
+    image_vertical_flip: false

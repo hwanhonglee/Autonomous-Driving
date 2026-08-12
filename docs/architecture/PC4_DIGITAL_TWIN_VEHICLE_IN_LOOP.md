@@ -8,6 +8,20 @@ Date: 2026-08-12
 
 Applies to: IONIQ EV PC1, PC2, PC3, and the proposed PC4 simulator host
 
+## Companion implementation records
+
+This file defines the shared VILS architecture. Work performed on each vehicle PC is recorded in
+a separate file so implemented evidence is not confused with the proposed cross-PC design:
+
+- `PC1_WORK_COMPLETION_RECORD.md` — maintained by the PC1 owner;
+- `PC2_WORK_COMPLETION_RECORD.md` — PC2 audit, implementation, validation, release, limitations,
+  and proposed VILS responsibility;
+- `PC3_WORK_COMPLETION_RECORD.md` — maintained by the PC3 owner.
+
+The intended documentation set contains this architecture file and the three per-PC records. A
+missing PC1 or PC3 record must be supplied by that PC's owner, not reconstructed from PC2
+assumptions.
+
 ## 1. Purpose
 
 This document defines how a PC4 virtual environment can participate in a real-vehicle test

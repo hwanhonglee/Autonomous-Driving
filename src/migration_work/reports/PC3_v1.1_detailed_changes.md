@@ -1,40 +1,46 @@
-# PC3 v1.1 detailed changes
+# PC3 v2.0.0 detailed changes
 
-> **HH_260811 - This is the current PC3 v1.1 release record.** The dated
+> **HH_260812 - This is the canonical PC3 v2.0.0 release record.** The work was
+> originally prepared on a temporary `v1.1` branch and represented the IONIQ
+> EV 308 configuration. It is now published as `IONIQ_EV/PC3/.../v2.0.0`;
+> `v1.0.0` preserves the IONIQ EV 307 baseline. The dated
 > `HH_260810` reports remain preserved as historical stationary-test snapshots,
 > but their runtime conclusions are superseded by this document where the two
 > records differ.
 
 Audit date: 2026-08-11 (Asia/Seoul)
-Host role: PC3 (`spectra`), prepared for the `IONIQ_EV_308_PC3_a/r` release tags
+Host role: PC3 (`spectra`), canonical IONIQ EV v2.0.0 source snapshot
 Scope: system, sensing, map, localization, TF, diagnostics, and visible RViz bring-up
 Actuation rule: do not authorize AUTO until the live localization and command-path gates at the end of this report pass
 
-## Target Git branches
+## Canonical Git branches
 
-The upstream repository is `hwanhonglee/Autonomous-Driving`. The v1.1 work must
-be prepared as two independent branches based on the corresponding v1.0 heads:
+<!-- HH_260812 - Replace vehicle-number and host-name branches with stable PC and semantic-version branches. -->
+The upstream repository is `hwanhonglee/Autonomous-Driving`. The former 307
+`v1.0` and 308 working `v1.1` names are normalized as independent semantic
+release branches:
 
-| Workspace | v1.0 base branch | Audited v1.0 commit | Intended v1.1 branch |
+| Workspace | Canonical v1.0.0 branch (307 baseline) | Audited v1.0.0 commit | Canonical v2.0.0 branch (308/current) |
 |---|---|---|---|
-| `/home/a/autoware` | `h2_i/IONIQ_EV_307/PC3_spectra/autoware_universe/v1.0` | `16ca930f4a8cfa9be7852dd17a7bffcb01d3415d` | `h2_i/IONIQ_EV_307/PC3_spectra/autoware_universe/v1.1` |
-| `/home/a/ros2_ws` | `h2_i/IONIQ_EV_307/PC3_spectra/ros2_ws/v1.0` | `39872d589c5f3d056d2fba6950e0bbca3bde3f32` | `h2_i/IONIQ_EV_307/PC3_spectra/ros2_ws/v1.1` |
+| `/home/a/autoware` | `IONIQ_EV/PC3/autoware_universe/v1.0.0` | `16ca930f4a8cfa9be7852dd17a7bffcb01d3415d` | `IONIQ_EV/PC3/autoware_universe/v2.0.0` |
+| `/home/a/ros2_ws` | `IONIQ_EV/PC3/ros2_ws/v1.0.0` | `39872d589c5f3d056d2fba6950e0bbca3bde3f32` | `IONIQ_EV/PC3/ros2_ws/v2.0.0` |
 
-`v1.1` is a branch-name migration. It is not a request to rewrite XML
+The semantic version applies to release branches. It is not a request to rewrite XML
 declarations such as `<?xml version="1.0"?>` or unrelated ROS package versions.
 
 The current workspaces did not contain repository-level `.git` metadata when
 first audited. They were subsequently initialized in place with the exact v1.0
-commits above as their parents and with the two v1.1 branch names above as their
-local heads. In particular, the remote PC3 `ros2_ws/v1.0` branch contains
-`src/ublox`, while the recreated live workspace does not. The v1.1 commit
+commits above as their parents. Their temporary working `v1.1` branches were
+then normalized to the canonical v2.0.0 names above. In particular, the remote
+PC3 `ros2_ws` v1.0.0 branch contains
+`src/ublox`, while the recreated live workspace does not. The v2.0.0 change set
 preserves that upstream directory in the Git tree and does not record its local
 absence as a deletion.
 
-After the two commits are created, the matching local release tags are
-`IONIQ_EV_308_PC3_a` for the Autoware commit and `IONIQ_EV_308_PC3_r` for the
-ROS 2 workspace commit. The historical `IONIQ_EV_307_PC3_a/r` tags remain
-unchanged.
+The `IONIQ_EV_307_PC3_a/r` and `IONIQ_EV_308_PC3_a/r` tags remain unchanged as
+historical vehicle-number aliases. Canonical branch identity is now expressed
+by v1.0.0 and v2.0.0, so those legacy tags must not be inferred to be movable
+aliases for later v2.0.0 documentation-only commits.
 
 ## Release outcome
 

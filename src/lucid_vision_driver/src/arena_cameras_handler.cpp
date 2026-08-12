@@ -105,14 +105,17 @@ void ArenaCamerasHandler::create_camera_from_settings(CameraSetting & camera_set
       std::cerr << "[LUCID WARN] set_auto_exposure failed." << std::endl;
     }
 
-    try {
-      std::cout << "[LUCID DEBUG] set_exposure_value start" << std::endl;
-      this->set_exposure_value(camera_settings.get_auto_exposure_value());
-      std::cout << "[LUCID DEBUG] set_exposure_value done" << std::endl;
-    } catch (const GenICam::GenericException & e) {
-      std::cerr << "[LUCID WARN] set_exposure_value failed: " << e.GetDescription() << std::endl;
-    } catch (...) {
-      std::cerr << "[LUCID WARN] set_exposure_value failed." << std::endl;
+    // HH_260812 - Manual exposure has no effect in Continuous mode; avoid a misleading warning.
+    if (!camera_settings.get_enable_exposure_auto()) {
+      try {
+        std::cout << "[LUCID DEBUG] set_exposure_value start" << std::endl;
+        this->set_exposure_value(camera_settings.get_auto_exposure_value());
+        std::cout << "[LUCID DEBUG] set_exposure_value done" << std::endl;
+      } catch (const GenICam::GenericException & e) {
+        std::cerr << "[LUCID WARN] set_exposure_value failed: " << e.GetDescription() << std::endl;
+      } catch (...) {
+        std::cerr << "[LUCID WARN] set_exposure_value failed." << std::endl;
+      }
     }
 
     try {
@@ -125,14 +128,17 @@ void ArenaCamerasHandler::create_camera_from_settings(CameraSetting & camera_set
       std::cerr << "[LUCID WARN] set_auto_gain failed." << std::endl;
     }
 
-    try {
-      std::cout << "[LUCID DEBUG] set_gain_value start" << std::endl;
-      this->set_gain_value(camera_settings.get_auto_gain_value());
-      std::cout << "[LUCID DEBUG] set_gain_value done" << std::endl;
-    } catch (const GenICam::GenericException & e) {
-      std::cerr << "[LUCID WARN] set_gain_value failed: " << e.GetDescription() << std::endl;
-    } catch (...) {
-      std::cerr << "[LUCID WARN] set_gain_value failed." << std::endl;
+    // HH_260812 - Manual gain has no effect in Continuous mode; avoid a misleading warning.
+    if (!camera_settings.get_enable_gain_auto()) {
+      try {
+        std::cout << "[LUCID DEBUG] set_gain_value start" << std::endl;
+        this->set_gain_value(camera_settings.get_auto_gain_value());
+        std::cout << "[LUCID DEBUG] set_gain_value done" << std::endl;
+      } catch (const GenICam::GenericException & e) {
+        std::cerr << "[LUCID WARN] set_gain_value failed: " << e.GetDescription() << std::endl;
+      } catch (...) {
+        std::cerr << "[LUCID WARN] set_gain_value failed." << std::endl;
+      }
     }
 
     try {

@@ -1,72 +1,65 @@
-**arena_camera**
+# Lucid Vision camera driver
 
-arena_camera node publishes image data collected from Lucid Vision Labs Triton GigE cameras in /lucid_vision/camera_"X"
-/image_raw topic as a ROS message(
-sensor_msgs/Image). This node can connect to multiple camera devices discovered by Lucid Vision Labs' ArenaSDK. In order
-to use this node, you need to install Lucid Vision Labs' ArenaSDK.
+This ROS 2 component driver publishes images and `CameraInfo` from Lucid Triton GigE cameras
+through the Arena SDK. The PC2 deployment uses two physical cameras and deliberately starts each
+camera in a separate `component_container` process because Arena system ownership is
+process-global in the current implementation.
 
-### Installation
-This camera driver has been tested on ROS2 Galactic(Ubuntu 20.04) and ROS2 Humble(Ubuntu 22.04).
+## Supported PC2 launch
 
-1. Download ArenaSDK from [here](https://thinklucid.com/downloads-hub/).
-2. Install ArenaSDK.
-3. Before connecting to the camera you need to set your IP address, according to the documentation of Triton Cameras your IP
-   address can be set to 169.254.0.1.
+```bash
+source /opt/ros/humble/setup.bash
+source <workspace>/install/setup.bash
+ros2 launch lucid_vision_driver dual_camera.launch.py
+```
 
-4. Clone this driver to <your_workspace>/src/.
+The launch loads these production parameter files:
 
-5. Check the Serial number of devices and change the serial number values in parameter files.
-   (Serial number writes on the box of the camera) The serial number is different for each product.
+- `param/windshield_cam.yaml`: Windshield camera, serial `222301529`, native prefix
+  `/lucid_vision/windshield`, optical frame `camera0/camera_optical_link`.
+- `param/loop_top_cam.yaml`: Loop Top camera, serial `214000332`, native prefix
+  `/lucid_vision/camera`, optical frame `traffic_light_camera/camera_optical_link`.
 
-   If you have only one camera work on this param file :
-   <your_ws>/src/arena_camera/param/lucid_vision_camera.param.yml If you have more than one camera work on this param
-   file :
-   <your_ws>/src/arena_camera/param/multi_camera.param.yml
+The other `config/` and `param/` files are retained as historical or bounded-test inputs. They are
+not loaded by `dual_camera.launch.py` and must not be treated as production calibration or device
+ownership records.
 
-6. Build your code with the following command.
+## External prerequisite
 
-   `colcon build `
+Install a compatible Lucid Arena SDK before building. The SDK is not vendored in this repository;
+`cmake/FindARENA.cmake` locates the system installation.
 
-7. Source the directory and run the executable with following command.
+## Build
 
-   `ros2 launch arena_camera test_node_container.launch.py`
+```bash
+cd <workspace>
+source /opt/ros/humble/setup.bash
+colcon build --packages-select lucid_vision_driver --symlink-install
+source install/setup.bash
+```
 
-   7.1 You can check whether data is flowing or not and what is the rate of it with following commands.
+## Runtime checks
 
-   `ros2 topic hz /lucid_vision/<your_camera>/image_raw`
+```bash
+ros2 topic hz /lucid_vision/windshield/image
+ros2 topic hz /lucid_vision/camera/image_compressed
+ros2 topic echo /lucid_vision/windshield/camera_info --once
+ros2 topic echo /lucid_vision/camera/camera_info --once
+```
 
-8. Open another terminal and run Rviz2 with following command.
-   `rviz2`
+Image publishers use sensor-data QoS, so diagnostic subscribers should request best effort when
+needed. The active Autoware sensor-kit launch normalizes the Windshield stream to camera slot 0
+for generic YOLOX and the Loop Top stream to camera slot 1 for traffic-light recognition.
 
-   8.1 Add the /lucid_vision/<your_camera>/image_raw topic to Display panel. With following "Add">"By topic" section.
+## Camera settings and calibration
 
-   8.2 Set your "Fixed Frame" as "lucid_vision".
+Device serials, frame IDs, acquisition rate, exposure/gain mode, and calibration URLs are defined
+in the active parameter files. Calibration URLs use `package://lucid_vision_driver/...` so the
+workspace path is portable.
 
-   8.3 Set your "Reliability Policy" to "Best Efford".  (Best effort works in UDP, Reliable works in TCP/IP)
+The Windshield calibration file is transport-only and is not approved for metric projection or
+camera-LiDAR fusion. Recalibrate intrinsics and measure the vehicle-frame extrinsic after final
+mounting before enabling 3D fusion. Revalidate the Loop Top calibration after remounting as well.
 
-   8.4 Be sure that the visibility button is checked.
-
-### Camera Settings
-Camera settings can be made in two ways;
-
-1. Use default device settings.
-   1. Change camera settings with LUCID's ArenaView on a Windows computer.
-   2. Load settings to the camera device.
-   3. Run this driver using `use_default_device_settings` parameter as a `true`.
-
-2. Change camera setting with rqt_reconfigure.
-
-   1. Open the terminal and run rqt_reconfigure with the following command.
-   
-      `ros2 run rqt_reconfigure rqt_reconfigure`
-
-   2. Change your camera settings with rqt_reconfigure GUI. Choose your camera from the list and change your settings.
-      Choose desired exposure, gain and gamma values. You can also change the FPS of the image.
-      (You can change your settings with ROS2 parameters too. You can find the parameters in the param file.)
-
-   3. Dump your camera settings with the following command.
-   
-      `ros2 param dump /arena_camera_node --output-dir <your_workspace>/src/arena_camera/param/`
-      
-      Run the camera node with the new param file.
-      `ros2 run arena_camera arena_camera_node_exe --ros-args --params-file <your_workspace>/src/arena_camera/param/arena_camera_node.yaml`
+See `PC2_V2.0.0.md` for the tested hardware mapping, shutdown changes, validation evidence, and
+known limits.

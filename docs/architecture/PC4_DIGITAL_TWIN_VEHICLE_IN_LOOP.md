@@ -384,6 +384,40 @@ scenario.
 - [ ] Keep the canonical `PredictedObjects` publisher count exactly one.
 - [ ] Prove physical output continues through PC4 process kill and cable disconnect.
 
+#### PC2 owner review and implementation decision
+
+PC2 agrees with object-level injection only under the following clarified contract:
+
+1. PC4 sends only PC4-native scenario actors. Real objects optionally mirrored from PC2 into PC4
+   for visualization or evaluation must carry a separate source registry and must never return in
+   the PC4 virtual-actor snapshot. This prevents a physical-object-to-PC4-to-PC2 feedback loop.
+2. The PC4 `TrackedObjects` message is a full snapshot. A UUID absent from a new valid snapshot is
+   deleted. A fresh empty snapshot means no scenario actors; a missing or stale snapshot means a
+   PC4 fault.
+3. PC2 stores only the latest valid PC4 snapshot, aligns or predicts it to the triggering physical
+   timestamp within a measured TTL, and never creates an independent virtual tracklet or holds an
+   actor beyond that TTL.
+4. Fusion is triggered by the physical PC2 stream. When physical and virtual actors associate,
+   the physical UUID, pose, twist, classification, and shape win; only unmatched virtual actors are
+   added. PC2 records provenance in a debug sidecar because the canonical message has no source
+   field.
+5. The PC4 status, not a launch argument, owns session ID and sequence. A session change clears the
+   snapshot, disarms injection, and returns PC2 to shadow mode. Reconnection never re-arms it.
+6. PC4 converts simulator-world coordinates into the approved `map` frame before publication.
+   PC2 rejects all other frames, so PC4 TF does not enter the vehicle domain.
+7. PC3 remains the physical LiDAR owner. Its canonical pointcloud is
+   `/sensing/lidar/concatenated/pointcloud`; the current
+   `/sensing/lidar/top/pointcloud_before_sync` input is a temporary compatibility relay, not PC2
+   sensor ownership.
+8. PC2 will implement `real_only`, `shadow`, `inject_stationary`, and supervised
+   `closed_loop_vils` modes in that order. No injection code is enabled by this architecture-only
+   branch.
+
+Before implementation, PC2 additionally requires the bridge host/IP, simulator source message,
+PC4 status contract, map/projector/transform manifest, PC3 Chrony offset measurements, and the
+exact PC1 loss-to-MRM behavior. DDS writers are bound to the approved node identity and current GID
+at session arm time; a writer or session change is a fault rather than a static forever-GID rule.
+
 ### PC1
 
 - [ ] Continue consuming only `/perception/object_recognition/objects`.

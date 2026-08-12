@@ -18,11 +18,18 @@ readonly PC2_CAMERA_ROUTE_CIDR="169.254.0.11/32"
 readonly PC2_CAMERA_IP="169.254.0.11"
 readonly PC2_CAMERA_IFACE="enp1s0f3"
 readonly PC2_CAMERA_HOST_IP="169.254.0.1"
+readonly PC2_WINDSHIELD_CAMERA_IP="192.168.41.2"
+readonly PC2_WINDSHIELD_CAMERA_IFACE="enp1s0f0"
+readonly PC2_WINDSHIELD_CAMERA_HOST_IP="192.168.41.1"
 readonly PC2_CAMERA_CONTRACT_PROBE="/home/a/autoware/src/migration_work/scripts/probe_camera_contract.py"
-# HH_260811 - Required real YOLOX payloads from the slot consumed by the camera-LiDAR fusion nodes.
+# HH_260812 - Require real Windshield YOLOX payloads while the permanent monitor keeps lazy inference active.
 readonly PC2_YOLOX_CONTRACT_PROBE="/home/a/autoware/src/migration_work/scripts/probe_yolox_contract.py"
 # HH_260810 - Matched the guarded launcher and pinned every validator subprocess to the PC3-reachable DDS NIC.
 readonly PC2_DDS_IFACE="enp0s31f6"
+readonly PC2_DDS_SUBNET_PREFIX="192.168.9."
+readonly PC2_DDS_PREFIX_LENGTH="24"
+readonly PC2_PC1_IP="192.168.9.2"
+readonly PC2_PC3_IP="192.168.9.7"
 readonly PC2_CYCLONEDDS_URI='<CycloneDDS><Domain id="any"><General><Interfaces><NetworkInterface name="enp0s31f6"/></Interfaces><AllowMulticast>true</AllowMulticast></General></Domain></CycloneDDS>'
 readonly PC2_CYCLE_RUN_ID="$(date +%Y%m%d_%H%M%S)"
 readonly PC2_CYCLE_LOG_DIR="/home/a/autoware/src/migration_work/test_logs/live_camera_cycles/${PC2_CYCLE_RUN_ID}"
@@ -59,6 +66,12 @@ readonly -a PC2_OWNED_OUTPUT_TOPICS=(
   /lucid_vision/camera/image
   /lucid_vision/camera/image_compressed
   /lucid_vision/camera/camera_info
+  /lucid_vision/windshield/image
+  /lucid_vision/windshield/image_compressed
+  /lucid_vision/windshield/camera_info
+  /sensing/camera/camera0/image_raw
+  /sensing/camera/camera0/image_raw/compressed
+  /sensing/camera/camera0/camera_info
   /sensing/camera/camera1/traffic_light/image_raw
   /sensing/camera/camera1/traffic_light/image_raw/compressed
   /sensing/camera/camera1/traffic_light/camera_info
@@ -91,6 +104,8 @@ declare -a safety_baseline_counts=()
 forbidden_node_baseline=""
 overall_status=0
 active_wrapper_pid=""
+dds_host_cidr=""
+dds_host_ip=""
 
 mkdir -p "${PC2_CYCLE_LOG_DIR}"
 echo "cycle_run_id=${PC2_CYCLE_RUN_ID} count=${CYCLE_COUNT} require_pc3_inputs=${REQUIRE_PC3_INPUTS} dds_iface=${PC2_DDS_IFACE} log_dir=${PC2_CYCLE_LOG_DIR}"
@@ -139,6 +154,48 @@ subscription_count()
   return 1
 }
 
+# HH_260812 - Mirror the launcher's dynamic wired-address rule without changing the active profile.
+find_dds_host_cidr()
+{
+  local cidr=""
+  local host_ip=""
+  local octet=""
+
+  while read -r cidr; do
+    [[ "${cidr}" == "${PC2_DDS_SUBNET_PREFIX}"*"/${PC2_DDS_PREFIX_LENGTH}" ]] || continue
+    host_ip="${cidr%/*}"
+    octet="${host_ip##*.}"
+    if [[ "${octet}" =~ ^[0-9]+$ ]] && (( octet >= 1 && octet <= 254 )); then
+      printf '%s\n' "${cidr}"
+      return 0
+    fi
+  done < <(ip -o -4 address show dev "${PC2_DDS_IFACE}" scope global 2>/dev/null | awk '{print $4}')
+  return 1
+}
+
+dds_route_get_is_valid()
+{
+  local target_ip="$1"
+  local route_line=""
+
+  [[ -n "${dds_host_ip}" ]] || return 1
+  route_line="$(ip -o -4 route get "${target_ip}" 2>/dev/null)" || return 1
+  [[ " ${route_line} " == *" dev ${PC2_DDS_IFACE} "* ]] &&
+    [[ " ${route_line} " == *" src ${dds_host_ip} "* ]]
+}
+
+camera_route_get_is_valid()
+{
+  local camera_ip="$1"
+  local camera_iface="$2"
+  local camera_host_ip="$3"
+  local route_line=""
+
+  route_line="$(ip -o -4 route get "${camera_ip}" 2>/dev/null)" || return 1
+  [[ " ${route_line} " == *" dev ${camera_iface} "* ]] &&
+    [[ " ${route_line} " == *" src ${camera_host_ip} "* ]]
+}
+
 direct_nodes()
 {
   local output=""
@@ -152,10 +209,85 @@ direct_nodes()
   return 1
 }
 
+# HH_260812 - Bound each readiness poll to one parallel DDS query window instead of
+# multiplying the five-second timeout by every topic. Any failed query remains fail-closed.
+readiness_graph_snapshot()
+{
+  local index=0
+  local query_failed=0
+  local snapshot_dir=""
+  local value=""
+  local -a jobs=()
+  local -a result_files=()
+  local -a query_kinds=(
+    nodes publisher publisher publisher publisher publisher publisher publisher
+    publisher publisher publisher subscription
+  )
+  local -a query_topics=(
+    ""
+    /perception/object_recognition/objects
+    /sensing/camera/camera1/traffic_light/image_raw
+    /lucid_vision/camera/image_compressed
+    /lucid_vision/camera/camera_info
+    /sensing/camera/camera1/traffic_light/camera_info
+    /lucid_vision/windshield/image
+    /lucid_vision/windshield/camera_info
+    /sensing/camera/camera0/image_raw
+    /sensing/camera/camera0/camera_info
+    /perception/object_recognition/detection/rois0
+    /perception/object_recognition/detection/rois0
+  )
+  local -a result_variables=(
+    nodes
+    official_publishers
+    loop_raw_publishers
+    native_compressed_publishers
+    native_info_publishers
+    normalized_info_publishers
+    windshield_native_publishers
+    windshield_native_info_publishers
+    windshield_raw_publishers
+    windshield_info_publishers
+    yolox_publishers
+    yolox_subscriptions
+  )
+
+  snapshot_dir="$(mktemp -d /tmp/pc2-readiness-graph.XXXXXX)" || return 1
+  for index in "${!query_kinds[@]}"; do
+    result_files[index]="${snapshot_dir}/${index}"
+    case "${query_kinds[index]}" in
+      nodes) direct_nodes > "${result_files[index]}" & ;;
+      publisher) publisher_count "${query_topics[index]}" > "${result_files[index]}" & ;;
+      subscription) subscription_count "${query_topics[index]}" > "${result_files[index]}" & ;;
+    esac
+    jobs[index]=$!
+  done
+
+  for index in "${!query_kinds[@]}"; do
+    if ! wait "${jobs[index]}"; then
+      query_failed=1
+    fi
+    value="$(<"${result_files[index]}")"
+    if [[ "${query_kinds[index]}" == "nodes" ]]; then
+      if grep -qx '__GRAPH_QUERY_ERROR__' <<< "${value}"; then
+        query_failed=1
+      fi
+    elif [[ ! "${value}" =~ ^-?[0-9]+$ ]] || (( value < 0 )); then
+      value=-1
+      query_failed=1
+    fi
+    printf -v "${result_variables[index]}" '%s' "${value}"
+  done
+
+  rm -f -- "${result_files[@]}"
+  rmdir -- "${snapshot_dir}" 2>/dev/null || true
+  (( query_failed == 0 ))
+}
+
 # HH_260810 - Selected only namespaces and uniquely named nodes owned by the PC2 sensing/perception launch.
 pc2_owned_nodes()
 {
-  grep -E '^/perception(/|$)|^/sensing/camera(/|$)|^/lucid_vision(/|$)|^/pc2_perception_pointcloud_container$|^/pointcloud_container/glog_component$' || true
+  grep -E '^/perception(/|$)|^/sensing/camera(/|$)|^/lucid_vision(/|$)|^/(sensing/)?(arena_camera_node_(windshield|loop_top)|windshield_camera_container|loop_top_camera_container)$|^/topic_state_monitor_windshield_yolox_rois$|^/pc2_perception_pointcloud_container$|^/pointcloud_container/glog_component$' || true
 }
 
 forbidden_control_vehicle_nodes()
@@ -344,7 +476,9 @@ wait_for_launch_pid()
 {
   local wrapper_pid="$1"
   local attempt
-  for attempt in {1..150}; do
+  # HH_260812 - The launcher's duplicate-publisher preflight performs bounded DDS queries
+  # before writing its child PID; allow that verified preflight up to 60 seconds.
+  for attempt in {1..600}; do
     if [[ -s "${PC2_PID_FILE}" ]]; then
       tr -cd '0-9' < "${PC2_PID_FILE}"
       return 0
@@ -388,6 +522,22 @@ validator_cleanup()
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap validator_cleanup EXIT
+
+# HH_260812 - Fail before any launch cycle if PC1/PC3 would leave the pinned DDS NIC or use another source.
+dds_host_cidr="$(find_dds_host_cidr)" || {
+  echo "No usable ${PC2_DDS_SUBNET_PREFIX}x/${PC2_DDS_PREFIX_LENGTH} address is active on ${PC2_DDS_IFACE}." >&2
+  exit 75
+}
+dds_host_ip="${dds_host_cidr%/*}"
+if ! dds_route_get_is_valid "${PC2_PC1_IP}"; then
+  echo "PC1 DDS path validation failed: $(ip -o -4 route get "${PC2_PC1_IP}" 2>&1 || true)" >&2
+  exit 75
+fi
+if ! dds_route_get_is_valid "${PC2_PC3_IP}"; then
+  echo "PC3 DDS path validation failed: $(ip -o -4 route get "${PC2_PC3_IP}" 2>&1 || true)" >&2
+  exit 75
+fi
+echo "dds_paths=PASS source=${dds_host_cidr} iface=${PC2_DDS_IFACE} pc1=${PC2_PC1_IP} pc3=${PC2_PC3_IP}"
 
 for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   echo "cycle=${cycle} phase=pc3_preflight"
@@ -437,32 +587,53 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   readiness="TIMEOUT"
   nodes=""
   official_publishers=0
-  raw_publishers=0
+  loop_raw_publishers=0
   native_compressed_publishers=0
   native_info_publishers=0
   normalized_info_publishers=0
+  windshield_native_publishers=0
+  windshield_native_info_publishers=0
+  windshield_raw_publishers=0
+  windshield_info_publishers=0
   yolox_publishers=0
   yolox_subscriptions=0
   fusion_components=0
+  yolox_monitor_nodes=0
   traffic_components=0
-  for attempt in {1..90}; do
-    nodes="$(direct_nodes)"
-    official_publishers="$(publisher_count /perception/object_recognition/objects)"
-    raw_publishers="$(publisher_count /sensing/camera/camera1/traffic_light/image_raw)"
-    native_compressed_publishers="$(publisher_count /lucid_vision/camera/image_compressed)"
-    native_info_publishers="$(publisher_count /lucid_vision/camera/camera_info)"
-    normalized_info_publishers="$(publisher_count /sensing/camera/camera1/traffic_light/camera_info)"
-    yolox_publishers="$(publisher_count /perception/object_recognition/detection/rois0)"
-    yolox_subscriptions="$(subscription_count /perception/object_recognition/detection/rois0)"
+  camera_components=0
+  camera_containers=0
+  # HH_260812 - A cold TensorRT start loads the car classifier, fine detector,
+  # pedestrian classifier, and ROI visualizer sequentially in one TLR container.
+  # The measured worst case completed just after 90 s, so keep a bounded 150 s
+  # deadline without misclassifying a successful cold initialization as TIMEOUT.
+  readiness_deadline="$((SECONDS + 150))"
+  readiness_query_valid="FAIL"
+  attempt=0
+  while (( SECONDS < readiness_deadline )); do
+    attempt="$((attempt + 1))"
+    if readiness_graph_snapshot; then
+      readiness_query_valid="PASS"
+    else
+      readiness_query_valid="FAIL"
+      readiness="GRAPH_QUERY_RETRY"
+    fi
     fusion_components="$(grep -Ec '^/perception/object_recognition/detection/(clustering/roi_cluster/roi_pointcloud_fusion|clustering/camera_lidar_fusion/roi_cluster_fusion|roi_detected_object_fusion)$' <<< "${nodes}" || true)"
+    yolox_monitor_nodes="$(grep -Ec '^/topic_state_monitor_windshield_yolox_rois$' <<< "${nodes}" || true)"
     traffic_components="$(grep -Ec '^/perception/traffic_light_recognition/camera1/(detection/traffic_light_fine_detector|classification/car_traffic_light_classifier|classification/pedestrian_traffic_light_classifier|traffic_light_roi_visualizer)$' <<< "${nodes}" || true)"
-    if grep -qx '/pc2_perception_pointcloud_container' <<< "${nodes}" &&
-       (( official_publishers == 1 )) && (( raw_publishers == 1 )) &&
+    camera_components="$(grep -Ec '^/sensing/arena_camera_node_(windshield|loop_top)$' <<< "${nodes}" || true)"
+    camera_containers="$(grep -Ec '^/sensing/(windshield_camera_container|loop_top_camera_container)$' <<< "${nodes}" || true)"
+    if [[ "${readiness_query_valid}" == "PASS" ]] &&
+       grep -qx '/pc2_perception_pointcloud_container' <<< "${nodes}" &&
+       (( official_publishers == 1 )) && (( loop_raw_publishers == 1 )) &&
        (( native_compressed_publishers == 1 )) && (( native_info_publishers == 1 )) &&
        (( normalized_info_publishers == 1 )) &&
-       (( yolox_publishers == 1 )) && (( yolox_subscriptions >= 3 )) &&
-       (( fusion_components == 3 )) &&
-       (( traffic_components == 4 )); then
+       (( windshield_native_publishers == 1 )) &&
+       (( windshield_native_info_publishers == 1 )) &&
+       (( windshield_raw_publishers == 1 )) && (( windshield_info_publishers == 1 )) &&
+       (( yolox_publishers == 1 )) && (( yolox_subscriptions == 1 )) &&
+       (( yolox_monitor_nodes == 1 )) && (( fusion_components == 0 )) &&
+       (( traffic_components == 4 )) &&
+       (( camera_components == 2 )) && (( camera_containers == 2 )); then
       if (( REQUIRE_PC3_INPUTS == 0 )); then
         readiness="PASS"
         break
@@ -480,6 +651,9 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
     }
     sleep 0.5
   done
+  if [[ "${readiness}" == "GRAPH_QUERY_RETRY" ]]; then
+    readiness="GRAPH_QUERY_ERROR"
+  fi
 
   # HH_260810 - Refreshed the remote dependency snapshot at readiness instead of inferring availability from topic names.
   pc3_input_snapshot
@@ -494,7 +668,9 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   duplicate_nodes="$(sort <<< "${pc2_nodes}" | uniq -d | paste -sd, -)"
   native_camera_publishers="$(publisher_count /lucid_vision/camera/image)"
   camera_info_publishers="$(publisher_count /sensing/camera/camera1/traffic_light/camera_info)"
-  raw_subscriptions="$(subscription_count /sensing/camera/camera1/traffic_light/image_raw)"
+  loop_raw_subscriptions="$(subscription_count /sensing/camera/camera1/traffic_light/image_raw)"
+  windshield_native_compressed_publishers="$(publisher_count /lucid_vision/windshield/image_compressed)"
+  windshield_raw_subscriptions="$(subscription_count /sensing/camera/camera0/image_raw)"
   control_vehicle_processes="$(pc2_control_vehicle_process_count "${launch_pid}")"
   safety_publisher_excess_snapshot
   forbidden_node_excess_snapshot "${nodes}" || true
@@ -511,29 +687,62 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   fi
   process_count="$(ps -eo pgid= | awk -v pgid="${launch_pid}" '$1 == pgid {count++} END {print count + 0}')"
   gpu_state="$(nvidia-smi --query-gpu=temperature.gpu,memory.used,utilization.gpu,power.draw --format=csv,noheader,nounits 2>/dev/null | tr -d ' ' || true)"
-  camera_contract="FAIL"
-  camera_contract_detail="not_run"
-  if camera_contract_detail="$(timeout 20s "${PC2_CAMERA_CONTRACT_PROBE}" 2>&1)"; then
-    camera_contract="PASS"
+  loop_camera_contract="FAIL"
+  loop_camera_contract_detail="not_run"
+  if loop_camera_contract_detail="$(
+    timeout 20s "${PC2_CAMERA_CONTRACT_PROBE}" \
+      --frame-id traffic_light_camera/camera_optical_link 2>&1
+  )"; then
+    loop_camera_contract="PASS"
+  fi
+  windshield_camera_contract="FAIL"
+  windshield_camera_contract_detail="not_run"
+  if windshield_camera_contract_detail="$(
+    timeout 20s "${PC2_CAMERA_CONTRACT_PROBE}" \
+      --image-topic /sensing/camera/camera0/image_raw \
+      --info-topic /sensing/camera/camera0/camera_info \
+      --width 2880 --height 1860 \
+      --frame-id camera0/camera_optical_link 2>&1
+  )"; then
+    windshield_camera_contract="PASS"
   fi
   yolox_contract="FAIL"
   yolox_contract_detail="not_run"
-  if yolox_contract_detail="$(timeout 15s "${PC2_YOLOX_CONTRACT_PROBE}" 2>&1)"; then
+  if yolox_contract_detail="$(
+    timeout 15s "${PC2_YOLOX_CONTRACT_PROBE}" \
+      --input-topic /sensing/camera/camera0/image_raw \
+      --width 2880 --height 1860 \
+      --min-rate 5.0 \
+      --frame-id camera0/camera_optical_link \
+      --required-output-subscriber /topic_state_monitor_windshield_yolox_rois 2>&1
+  )"; then
     yolox_contract="PASS"
   fi
   # HH_260811 - Required the launcher's owned /32 to select the camera's physically proven interface.
   camera_lookup="$(ip -o -4 route get "${PC2_CAMERA_IP}" 2>/dev/null || true)"
-  camera_path="FAIL"
-  if [[ " ${camera_lookup} " == *" dev ${PC2_CAMERA_IFACE} "* &&
-        " ${camera_lookup} " == *" src ${PC2_CAMERA_HOST_IP} "* ]]; then
-    camera_path="PASS"
+  loop_camera_path="FAIL"
+  if camera_route_get_is_valid \
+      "${PC2_CAMERA_IP}" "${PC2_CAMERA_IFACE}" "${PC2_CAMERA_HOST_IP}"; then
+    loop_camera_path="PASS"
+  fi
+  windshield_camera_lookup="$(
+    ip -o -4 route get "${PC2_WINDSHIELD_CAMERA_IP}" 2>/dev/null || true
+  )"
+  windshield_camera_path="FAIL"
+  if camera_route_get_is_valid \
+      "${PC2_WINDSHIELD_CAMERA_IP}" \
+      "${PC2_WINDSHIELD_CAMERA_IFACE}" \
+      "${PC2_WINDSHIELD_CAMERA_HOST_IP}"; then
+    windshield_camera_path="PASS"
   fi
   exact_camera_route="$(ip -o -4 route show table main exact "${PC2_CAMERA_ROUTE_CIDR}" 2>/dev/null || true)"
   topic_tools_overlay="$(grep -c 'Using guarded topic_tools 1.1.2 overlay' "${cycle_log}" || true)"
 
-  echo "cycle=${cycle} readiness=${readiness} launch_pid=${launch_pid} processes=${process_count} pc2_nodes=${node_count} domain_nodes=${domain_node_count} duplicate_pc2_nodes=${duplicate_nodes:-none} official_publishers=${official_publishers} raw_publishers=${raw_publishers} raw_subscriptions=${raw_subscriptions} yolox_publishers=${yolox_publishers} yolox_subscriptions=${yolox_subscriptions} fusion_components=${fusion_components}/3 traffic_components=${traffic_components}/4 native_camera_publishers=${native_camera_publishers} native_compressed_publishers=${native_compressed_publishers} native_info_publishers=${native_info_publishers} camera_info_publishers=${camera_info_publishers} camera_contract=${camera_contract} yolox_contract=${yolox_contract} camera_path=${camera_path} exact_camera_route=${exact_camera_route:-none} topic_tools_overlay=${topic_tools_overlay} pc3_inputs=${pc3_inputs_ready} pc3_publishers=${pc3_before_sync_publishers}/${pc3_raw_ex_publishers}/${pc3_vector_map_publishers}/${pc3_pointcloud_map_publishers}/${pc3_tf_publishers}/${pc3_tf_static_publishers} control_vehicle_safety=${control_vehicle_safety} control_vehicle_processes=${control_vehicle_processes} new_safety_publishers=${safety_publisher_excess} safety_publisher_query=${safety_publisher_query_valid} safety_publisher_detail=${safety_publisher_detail} new_forbidden_nodes=${new_forbidden_nodes} forbidden_node_query=${forbidden_node_query_valid} forbidden_node_detail=${new_forbidden_node_detail} control_cmd_publishers=${control_command_publishers} gpu=${gpu_state:-unavailable}"
+  echo "cycle=${cycle} readiness=${readiness} launch_pid=${launch_pid} processes=${process_count} pc2_nodes=${node_count} domain_nodes=${domain_node_count} duplicate_pc2_nodes=${duplicate_nodes:-none} official_publishers=${official_publishers} loop_raw_publishers=${loop_raw_publishers} loop_raw_subscriptions=${loop_raw_subscriptions} windshield_raw_publishers=${windshield_raw_publishers} windshield_raw_subscriptions=${windshield_raw_subscriptions} yolox_publishers=${yolox_publishers} yolox_subscriptions=${yolox_subscriptions} yolox_monitor_nodes=${yolox_monitor_nodes}/1 fusion_components=${fusion_components}/0 traffic_components=${traffic_components}/4 camera_components=${camera_components}/2 camera_containers=${camera_containers}/2 loop_native_publishers=${native_camera_publishers} loop_native_compressed_publishers=${native_compressed_publishers} loop_native_info_publishers=${native_info_publishers} loop_camera_info_publishers=${camera_info_publishers} windshield_native_publishers=${windshield_native_publishers} windshield_native_compressed_publishers=${windshield_native_compressed_publishers} windshield_native_info_publishers=${windshield_native_info_publishers} windshield_camera_info_publishers=${windshield_info_publishers} loop_camera_contract=${loop_camera_contract} windshield_camera_contract=${windshield_camera_contract} yolox_contract=${yolox_contract} loop_camera_path=${loop_camera_path} windshield_camera_path=${windshield_camera_path} exact_loop_camera_route=${exact_camera_route:-none} topic_tools_overlay=${topic_tools_overlay} pc3_inputs=${pc3_inputs_ready} pc3_publishers=${pc3_before_sync_publishers}/${pc3_raw_ex_publishers}/${pc3_vector_map_publishers}/${pc3_pointcloud_map_publishers}/${pc3_tf_publishers}/${pc3_tf_static_publishers} control_vehicle_safety=${control_vehicle_safety} control_vehicle_processes=${control_vehicle_processes} new_safety_publishers=${safety_publisher_excess} safety_publisher_query=${safety_publisher_query_valid} safety_publisher_detail=${safety_publisher_detail} new_forbidden_nodes=${new_forbidden_nodes} forbidden_node_query=${forbidden_node_query_valid} forbidden_node_detail=${new_forbidden_node_detail} control_cmd_publishers=${control_command_publishers} gpu=${gpu_state:-unavailable}"
   echo "cycle=${cycle} camera_lookup=${camera_lookup// /_}"
-  echo "cycle=${cycle} camera_contract_detail=${camera_contract_detail}"
+  echo "cycle=${cycle} windshield_camera_lookup=${windshield_camera_lookup// /_}"
+  echo "cycle=${cycle} loop_camera_contract_detail=${loop_camera_contract_detail}"
+  echo "cycle=${cycle} windshield_camera_contract_detail=${windshield_camera_contract_detail}"
   echo "cycle=${cycle} yolox_contract_detail=${yolox_contract_detail}"
 
   # HH_260810 - Asked only the guarded wrapper to stop; it delivers SIGINT to its exact child process group.
@@ -583,20 +792,30 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   post_gpu_memory="$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | tr -d ' ' || true)"
   route_clear="FAIL"
   [[ -z "$(ip -o -4 route show table main exact "${PC2_CAMERA_ROUTE_CIDR}" 2>/dev/null)" ]] && route_clear="PASS"
+  windshield_path_preserved="FAIL"
+  if camera_route_get_is_valid \
+      "${PC2_WINDSHIELD_CAMERA_IP}" \
+      "${PC2_WINDSHIELD_CAMERA_IFACE}" \
+      "${PC2_WINDSHIELD_CAMERA_HOST_IP}"; then
+    windshield_path_preserved="PASS"
+  fi
   trt_teardown_errors="$(grep -c 'Destroying a runtime before destroying deserialized engines' "${cycle_log}" || true)"
   process_died_events="$(grep -c 'process has died' "${cycle_log}" || true)"
-  camera_memory_errors="$(grep -Ec 'corrupted double-linked list|segmentation fault|\[component_container-1\].*exit code -11|\[component_container-1\].*exit code -6' "${cycle_log}" || true)"
+  camera_memory_errors="$(grep -Ec 'corrupted double-linked list|segmentation fault|\[component_container-[0-9]+\].*exit code -11|\[component_container-[0-9]+\].*exit code -6' "${cycle_log}" || true)"
   relay_shutdown_errors="$(grep -Ec 'get information by topic for publishers.*context is invalid|\[relay-[0-9]+\].*exit code -6' "${cycle_log}" || true)"
   cycle_result="PASS"
   if [[ "${readiness}" != "PASS" ||
-        "${camera_contract}" != "PASS" ||
+        "${loop_camera_contract}" != "PASS" ||
+        "${windshield_camera_contract}" != "PASS" ||
         "${yolox_contract}" != "PASS" ||
-        "${camera_path}" != "PASS" ||
+        "${loop_camera_path}" != "PASS" ||
+        "${windshield_camera_path}" != "PASS" ||
         "${control_vehicle_safety}" != "PASS" ||
         "${group_gone}" != "PASS" ||
         "${files_removed}" != "PASS" ||
         "${graph_clear}" != "PASS" ||
-        "${route_clear}" != "PASS" ]] ||
+        "${route_clear}" != "PASS" ||
+        "${windshield_path_preserved}" != "PASS" ]] ||
      (( topic_tools_overlay != 1 )) ||
      (( trt_teardown_errors != 0 )) ||
      (( process_died_events != 0 )) ||
@@ -609,7 +828,7 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   fi
   [[ "${cycle_result}" == "PASS" ]] || overall_status=1
 
-  echo "cycle=${cycle} result=${cycle_result} shutdown_group=${group_gone} cleanup_files=${files_removed} graph_clear=${graph_clear} route_clear=${route_clear} remaining_pc2_nodes=$(grep -c '^/' <<< "${remaining_pc2_nodes}" || true) remaining_pc2_publishers=${pc2_remaining_publisher_count} remaining_pc2_publisher_query=${pc2_output_query_valid} remaining_pc2_publisher_detail=${pc2_remaining_publisher_detail} remaining_domain_nodes=$(grep -c '^/' <<< "${remaining_domain_nodes}" || true) pc3_inputs_post_stop=${pc3_inputs_post_stop} stop_duration_ms=${stop_duration_ms} post_gpu_memory_mib=${post_gpu_memory:-unavailable} trt_teardown_errors=${trt_teardown_errors} process_died_events=${process_died_events} camera_memory_errors=${camera_memory_errors} relay_shutdown_errors=${relay_shutdown_errors} log=${cycle_log}"
+  echo "cycle=${cycle} result=${cycle_result} shutdown_group=${group_gone} cleanup_files=${files_removed} graph_clear=${graph_clear} loop_route_clear=${route_clear} windshield_path_preserved=${windshield_path_preserved} remaining_pc2_nodes=$(grep -c '^/' <<< "${remaining_pc2_nodes}" || true) remaining_pc2_publishers=${pc2_remaining_publisher_count} remaining_pc2_publisher_query=${pc2_output_query_valid} remaining_pc2_publisher_detail=${pc2_remaining_publisher_detail} remaining_domain_nodes=$(grep -c '^/' <<< "${remaining_domain_nodes}" || true) pc3_inputs_post_stop=${pc3_inputs_post_stop} stop_duration_ms=${stop_duration_ms} post_gpu_memory_mib=${post_gpu_memory:-unavailable} trt_teardown_errors=${trt_teardown_errors} process_died_events=${process_died_events} camera_memory_errors=${camera_memory_errors} relay_shutdown_errors=${relay_shutdown_errors} log=${cycle_log}"
 done
 
 # HH_260810 - Returned a failing status when any required cycle, safety, or cleanup invariant failed.

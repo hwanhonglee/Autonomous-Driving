@@ -58,8 +58,8 @@
   <!-- HH_260810 - Disabled RViz respawn because RViz is not owned by this PC2 test profile. -->
   <arg name="rviz_respawn" default="false"/>
   <!-- Perception -->
-  <!-- HH_260811 - Enabled camera-LiDAR fusion so the PC2 YOLOX output has an operational consumer instead of running only during debug subscriptions. -->
-  <arg name="perception_mode" default="camera_lidar_fusion" description="select perception mode. camera_lidar_radar_fusion, camera_lidar_fusion, lidar_radar_fusion, lidar, radar"/>
+  <!-- HH_260812 - Keep uncalibrated Windshield detections in 2D; opt into fusion only after intrinsic/extrinsic validation. -->
+  <arg name="perception_mode" default="lidar" description="select perception mode. camera_lidar_radar_fusion, camera_lidar_fusion, lidar_radar_fusion, lidar, radar"/>
   <arg name="traffic_light_recognition/enable_fine_detection" default="true" description="enable traffic light fine detection"/>
   <!-- Auto mode setting-->
   <arg name="enable_all_modules_auto_mode" default="false" description="enable all module's auto mode"/>
@@ -99,19 +99,32 @@
   <group if="$(var launch_perception)">
     <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_perception_component.launch.xml">
       <arg name="data_path" value="$(var data_path)"/>
-      <!-- HH_260811 - Mapped the physical camera1 stream into fusion slot 0 because this vehicle has one operational perception camera. -->
+      <!-- HH_260812 - Map windshield camera0 into fusion slot 0; loop-top camera1 remains TLR-only. -->
       <arg name="image_number" value="1"/>
-      <arg name="image_raw0" value="/sensing/camera/camera1/traffic_light/image_raw"/>
-      <arg name="camera_info0" value="/sensing/camera/camera1/traffic_light/camera_info"/>
+      <arg name="image_raw0" value="/sensing/camera/camera0/image_raw"/>
+      <arg name="camera_info0" value="/sensing/camera/camera0/camera_info"/>
       <arg name="detection_rois0" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="all_traffic_light_camera" value="[camera1]"/>
     </include>
-    <!-- HH_260811 - Reused the existing TLR-decompressed image and published into the first active fusion slot. -->
+    <!-- HH_260812 - Run generic 8-class YOLOX on the windshield stream only. -->
     <include file="$(find-pkg-share autoware_tensorrt_yolox)/launch/yolox_tiny.launch.xml" if="$(var launch_yolox)">
-      <arg name="input/image" value="/sensing/camera/camera1/traffic_light/image_raw"/>
+      <arg name="input/image" value="/sensing/camera/camera0/image_raw"/>
       <arg name="output/objects" value="/perception/object_recognition/detection/rois0"/>
       <arg name="model_name" value="yolox-tiny"/>
       <arg name="data_path" value="$(var data_path)"/>
       <arg name="use_decompress" value="false"/>
+    </include>
+    <!-- HH_260812 - Keep lazy YOLOX active and expose rate/timeout diagnostics without unsafe 3D fusion. -->
+    <include file="$(find-pkg-share topic_state_monitor)/launch/topic_state_monitor.launch.xml" if="$(var launch_yolox)">
+      <arg name="node_name_suffix" value="windshield_yolox_rois"/>
+      <arg name="topic" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="topic_type" value="tier4_perception_msgs/msg/DetectedObjectsWithFeature"/>
+      <arg name="diag_name" value="windshield_yolox_rois_status"/>
+      <!-- HH_260812 - A full 2880x1860 YOLO frame measured ~14.7 Hz; warn below 5 Hz. -->
+      <arg name="warn_rate" value="5.0"/>
+      <arg name="error_rate" value="2.0"/>
+      <arg name="timeout" value="1.0"/>
+      <arg name="window_size" value="20"/>
     </include>
   </group>
 

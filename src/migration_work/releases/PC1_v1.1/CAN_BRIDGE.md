@@ -93,6 +93,8 @@ sender는 Domain 10의 전역 `/to_can_bus`를 구독한다. 다른 PC가 같은
 
 converter는 마지막 acceleration/steering 값을 보관하고 timer로 반복 전송한다. upstream control_cmd가 끊겼을 때 일정 시간 후 안전값으로 전환하는 명시적 watchdog이 없다.
 
+2026-08-12 실측에서는 마지막 control command가 약 1시간 이상 오래된 상태에서도 CAN ID `0x630`이 약 33.33 Hz로 계속 송신됐다. payload의 acceleration은 cached `-2.4 m/s²`, steering은 0이었고 cruise=false라 control request byte는 0이었다. 그러나 cruise가 true가 되면 cached 값은 그대로인 채 request byte가 1이 될 수 있으므로, “현재 정차 중” 또는 “upstream topic이 끊김”을 안전 근거로 사용할 수 없다.
+
 ### interface argument typo
 
 `socket_can_bridge.launch.xml`은 child에 `interface1`을 넘기지만 child launch가 선언한 이름은 `interface`다. 현재 can0 동작은 child default에 의존한다. v1.1 기능 patch로 수정하려면 launch parse와 can0 regression을 별도 commit으로 검증해야 한다.

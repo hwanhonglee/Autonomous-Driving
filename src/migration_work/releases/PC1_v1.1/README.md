@@ -85,9 +85,14 @@ GitHub가 인증을 요구할 때 username과 PAT를 직접 입력한다. PAT는
 - [KNOWN_ISSUES.md](KNOWN_ISSUES.md): 현존 결함과 릴리스 게이트
 - [VALIDATION.md](VALIDATION.md): 빌드·테스트·런타임 및 스냅샷 증거
 - [COMMIT_MANIFEST.md](COMMIT_MANIFEST.md): 포함/제외 정책과 branch/tag
+- [ROS2_WS_MANIFEST.sha256](ROS2_WS_MANIFEST.sha256): 독립 `_r` tree의 핵심 파일 checksum
 - [PUBLISH_WITH_TOKEN.md](PUBLISH_WITH_TOKEN.md): direct in-place PAT push 절차
 - [ROLLBACK.md](ROLLBACK.md): v1.0 보존 및 v1.1 롤백 절차
 
 ## 공개 저장소 주의
 
 비밀번호, SSH 키, 토큰, 실제 차량 CAN 로그 원문은 공개하지 않는다. NetworkManager UUID와 NIC MAC 주소도 공개 문서에서는 제외했다. 사설 IP는 분산 ROS 구성 재현에 필요한 범위만 기록했다. 전체 스냅샷 요구는 credential 공개 권한까지 의미하지 않는다.
+
+## 최신 실차 판정
+
+2026-08-12 3-PC 실차 연동에서 localization과 planning/control 체인이 실제로 활성화되고 차량이 AUTO/DRIVE로 움직이는 것까지 확인했다. 그러나 같은 실행에서 PC2 perception stack dropout, NDT/trajectory deviation, MRM EMERGENCY_STOP이 발생했으므로 이는 주행 합격이 아니라 재현된 통합 장애 기록이다. 상세 시간선과 차단 조건은 [VALIDATION.md](VALIDATION.md)와 [KNOWN_ISSUES.md](KNOWN_ISSUES.md)를 정본으로 사용한다.

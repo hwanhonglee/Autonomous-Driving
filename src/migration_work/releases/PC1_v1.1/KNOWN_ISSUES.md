@@ -9,7 +9,7 @@
 
 ## 문제 목록
 
-총 22개를 추적한다. PC1 자체 release blocker 3개, 다른 PC가 소유하지만 통합을 막는 external blocker 2개, open 개선/검증 항목 15개, 전체 snapshot에 들어가지만 안전 승인이 없는 기존 상태 2개다.
+총 26개를 추적한다. PC1 자체 release blocker 4개, 다른 PC가 소유하지만 통합을 막는 external blocker 4개, open 개선/검증 항목 16개, 전체 snapshot에 들어가지만 안전 승인이 없는 기존 상태 2개다.
 
 | ID | 상태 | 문제 | 영향 | 소유/조치 |
 |---|---|---|---|---|
@@ -26,8 +26,8 @@
 | PC1-011 | OPEN | 0x372 dual gear mapping 근거 미첨부 | 잘못된 P/R/N/D report 가능 | 실제 raw frame과 gear lever 상태 표 작성 |
 | PC1-012 | OPEN | 0x386 velocity 단위 불명확 | 주석 m/s와 publish 전 `/3.6`가 충돌 | DBC factor/unit 확인 및 속도 계측 비교 |
 | PC1-013 | OPEN | 0x394 DBC mapping 불일치 주석 | lateral/longitudinal accel과 heading rate가 부정확할 수 있음 | 올바른 DBC와 signal test vector 적용 |
-| PC1-014 | OPEN | ADAPI web server가 Conda Python 3.13을 선택 | Humble rclpy Python 3.10 ABI import 실패, web server 종료 | ROS launch environment에서 conda PATH 분리 |
-| PC1-015 | OPEN | 모든 PC의 `/rviz2` 동일 FQN | duplicate node, UI 자원 낭비와 진단 혼선 | PC1 한 대만 자동 RViz 또는 host별 unique name 정책 |
+| PC1-014 | OPEN | ADAPI web server가 Conda Python 3.13을 선택 | 2026-08-12 Humble rclpy Python 3.10 ABI import 실패와 web server exit 1 실측 | ROS launch environment에서 conda PATH 분리 |
+| PC1-015 | OPEN | 모든 PC의 `/rviz2` 동일 FQN | Domain 10에서 `/rviz2` 3개 실측, duplicate node와 UI 자원/진단 혼선 | PC1 한 대만 자동 RViz 또는 host별 unique name 정책 |
 | PC1-016 | OPEN | legacy `chmod 777` | tty/video/docker socket을 모든 사용자에게 개방 | udev group, docker group, 최소 권한으로 대체 |
 | PC1-017 | OPEN | package 내부 backup/pycache | build/install 시 과거 unsafe launch도 share에 노출 가능 | 전체 snapshot에는 포함; active launch와 구분하고 후속 정리 release에서 archive 정책 적용 |
 | PC1-018 | OPEN | 전체 ros2_socketcan test suite 실패 | release 품질 gate 불완전 | merge-conflict config와 legacy lint 정리 후 재실행 |
@@ -35,6 +35,10 @@
 | PC1-020 | INCLUDED_UNVERIFIED | local RViz config와 missing YOLOX launch | v1.0과 다른 UI/기능 tree가 snapshot에 보존됨 | 포함 사실을 명시하고 파일별 owner 검증; 자동 안전 승인 금지 |
 | PC1-021 | OPEN | Autoware full snapshot 약 546 MiB/8,546 files | 첫 push/clone이 느리고 backup·test data로 repository가 지속 비대해질 수 있음 | v1.1은 요청에 따라 포함; 100 MB/file gate 유지, 차기 release에서 source/history 분리 검토 |
 | PC1-022 | OPEN | nested `autoware_tools` current worktree 평탄화 | upstream HEAD의 tracked file 238개가 이미 삭제 상태여서 완전한 upstream checkout으로 재현되지 않음 | HEAD `a6b16571...`, present 625/deleted 238 기록; 필요 시 별도 검증된 vendor import 수행 |
+| PC1-023 | BLOCKER | 정차 중 CAN 유래 lateral velocity 약 0.00111 m/s | pose initializer의 0.001 m/s/3 s 정차 gate를 넘겨 localization 초기화 거부 | 0x394 DBC와 lateral velocity 산출을 계측 검증; 근거 없이 initializer safety threshold만 완화하지 않음 |
+| PC1-024 | EXTERNAL | PC2 perception/DDS stack 반복 소실 | objects publisher와 59개 perception node가 사라지고 주행 중 hazard/MRM emergency stop 유발 | PC2 process/network/DDS 재발 원인과 supervision 복구, 동일 window 장기 시험 |
+| PC1-025 | EXTERNAL | PC3 NDT pose jump 및 localization 재초기화 | map-to-base/kinematic state dropout, trajectory deviation fault와 MRM emergency stop | NDT initial-to-result distance, map/TF/calibration, sensor timing을 PC3에서 분석하고 재현 시험 |
+| PC1-026 | OPEN | Chrony가 public NTP를 다시 selected | PC별 clock source가 달라 논문 timestamp/latency 비교 재현성 훼손 | 세 PC 공통 source 고정, 수집 직전 tracking/source/offset 기록과 acceptance gate |
 
 ## 전체 snapshot 위험의 해석
 
@@ -61,6 +65,20 @@
 - mrm state `NORMAL/NONE`
 - `/system/operation_mode/availability.autonomous=true`
 - final cmd가 follower cmd를 정상 gate한 결과이며 emergency override가 아님
+
+## localization 정차 판정과 2026-08-12 실측
+
+pose initializer는 vehicle twist의 3차원 선속도 크기가 `0.001 m/s` 미만인 상태가 3초간 유지되어야 정차로 판단한다. 당시 longitudinal display는 0이었지만 `/sensing/vehicle_velocity_converter/twist_with_covariance`의 lateral 성분이 약 `0.00110999995 m/s`여서 초기화가 반복 거부됐다.
+
+PC1 receiver는 CAN `0x394`의 lateral acceleration을 `dt=0.001`로 곱해 lateral velocity를 만들며, 소스 자체에도 DBC index/mapping 불일치가 기록돼 있다. 따라서 단순히 pose initializer threshold를 늘리는 것은 잘못된 CAN 값을 정상으로 승인할 수 있다. 우선 raw frame/DBC/단위를 검증하고, 정차 판정에 사용할 vehicle velocity의 의미를 확정해야 한다.
+
+같은 날 localization은 한 차례 INITIALIZED로 회복한 뒤 약 12~13초간 INITIALIZING으로 회귀했다가 다시 복구했다. 이후 실제 AUTO/DRIVE 구간에서 NDT의 `distance_initial_to_result` 약 3.24 m와 trajectory translation/rotation deviation fault가 관찰됐다. 이는 안정적인 route-to-motion PASS가 아니라 재현 및 원인 분석이 필요한 실차 incident다.
+
+## PC2 dropout과 실차 emergency event
+
+2026-08-12 AUTO/DRIVE 상태에서 PC2 perception node가 약 59개에서 0개로 사라지고 objects stream이 중단됐다가 복구됐다. 같은 구간 hazard가 SINGLE_POINT_FAULT로 전환되고 MRM이 EMERGENCY_STOP으로 동작했다. 차량 속도는 약 2.47 m/s까지 관찰된 뒤 감속하여 정지/PARK로 돌아왔다.
+
+이 기록은 PC1 control 성능의 합격 증거가 아니다. PC2 process/DDS 생존성, PC3 localization 연속성, MRM 동작과 CAN command freshness를 함께 고치고 동일 시간창으로 재시험해야 한다.
 
 ## start_planner 문제 상세
 

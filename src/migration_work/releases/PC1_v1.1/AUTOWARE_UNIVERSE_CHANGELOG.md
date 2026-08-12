@@ -100,4 +100,4 @@ bash src/migration_work/releases/PC1_v1.1/PREPARE_IN_PLACE.sh
 ./push_v1_1.sh
 ```
 
-준비 script는 local commit/tag까지만 만들며 push나 PAT 입력은 수행하지 않는다. `push_v1_1.sh`가 예상 branch/tag와 clean 상태를 확인한 뒤 force 없이 게시한다.
+준비 script는 local commit/tag까지만 만들며 push나 PAT 입력은 수행하지 않는다. 최초 snapshot 이후의 검증 문서는 review branch에서 기존 v1.1을 base로 PR한다. 병합 후 `_a` tag만 예상 old SHA를 확인한 조건부 갱신 대상으로 하며, 307 ref와 다른 tag는 force하지 않는다.

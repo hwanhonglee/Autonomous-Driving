@@ -385,6 +385,9 @@ void SocketCanReceiverNode::receive()
         // HH_250108
         case 916: // 0x394 // Vehicle Longitudinal, Lateral Accel, Heading Rate, Brake Press 
         // !!!! 현재 DBC 파일의 아이디는 일치하지만, 내부 인덱스 등 매핑 요소의 불일치로 인해 값이 정확히 출력되지 않는 문제가 발생하고 있습니다. DBC 파일의 매핑 값을 검토하거나 올바른 DBC 파일을 적용해야 합니다.
+        // HH_260812 - A live test observed a derived lateral velocity of about 0.00111 m/s while
+        // stationary, above pose_initializer's 0.001 m/s stop gate. Validate the 0x394 DBC and
+        // stop-signal semantics instead of weakening localization safety checks without evidence.
         {
           int16_t lateral_acceleration_raw = (frame_msg.data[0] | (frame_msg.data[1] << 8)) & 0x07FF; // 11-bit 마스킹
           double lateral_acceleration = 0.01 * lateral_acceleration_raw - 10.23;

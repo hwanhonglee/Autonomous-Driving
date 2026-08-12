@@ -47,13 +47,13 @@ v1.0 script를 복원하면 already-UP CAN에서 bitrate 설정이 실패할 수
 
 ## tag rollback
 
-공개된 `IONIQ_EV_308_PC1_a` 또는 `IONIQ_EV_308_PC1_r` tag를 다른 commit으로 강제 이동하지 않는다. 문제가 발견되면:
+원칙적으로 공개된 `IONIQ_EV_308_PC1_a` 또는 `IONIQ_EV_308_PC1_r` tag를 다른 commit으로 강제 이동하지 않는다. 단, 최초 `_a` snapshot 직후 발견된 2026-08-12 검증 기록을 v1.1에 포함하기 위해 사용자가 old SHA 확인을 전제로 한 번의 최종 tag 갱신을 명시 승인했다. 이 예외 이후 문제가 발견되면:
 
 1. v1.1 branch에 fix commit 추가
 2. 검증
 3. 새 tag 이름 협의
 
-이미 공유된 tag를 `git tag -f`와 force-push로 바꾸면 실험 재현성이 깨진다.
+이미 공유된 tag를 반복해서 `git tag -f`와 force-push로 바꾸면 실험 재현성이 깨진다. 예외 갱신 전후 SHA를 CHANGELOG와 GitHub ref 기록에 모두 남긴다.
 
 ## rollback 후 검증
 

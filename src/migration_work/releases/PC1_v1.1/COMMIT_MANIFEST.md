@@ -12,7 +12,8 @@ ros2_ws tag:     IONIQ_EV_308_PC1_r
 - 기존 PC1 307 `v1.0` branch와 `IONIQ_EV_307_PC1_a` tag는 보존한다.
 - Autoware v1.1은 기존 307 history를 가져오지 않고 현재 `/home/a/autoware` 파일만 담는 독립 snapshot history로 만든다.
 - 공개 저장소에 PC1 307 ros2_ws 기준 branch가 없으므로 ros2_ws v1.1은 독립 history로 만든다.
-- 두 tag는 각각 검증된 최종 commit에 한 번만 붙인다. 이미 같은 remote tag가 있으면 삭제하거나 force 이동하지 않는다.
+- 기존 307 branch/tag는 절대 이동하지 않는다. 308 `_a` tag는 최초 snapshot `2523b662...`에 이미 공개됐으나, 사용자가 2026-08-12 검증 기록을 포함한 v1.1 최종 커밋으로 한 번 갱신하도록 명시 승인했다. 갱신 전 원격 old SHA를 확인하고, PR 병합 뒤 정확한 새 HEAD로만 조건부 이동한 후 다시 고정한다.
+- `_r` tag는 아직 원격에 없으므로 최초 검증 commit에 생성하며 force가 필요 없다.
 
 ## 사용자가 확정한 snapshot 범위
 
@@ -61,9 +62,9 @@ push_v1_1.sh                    # ros2_ws branch/tag 게시 helper
 
 ## critical-file checksum
 
-`MANIFEST.sha256`은 전체 8천여 파일 manifest가 아니라 다음 핵심 파일 10개의 변조 확인용이다.
+`MANIFEST.sha256`은 전체 8천여 파일 manifest가 아니라 다음 핵심 파일 11개의 변조 확인용이다.
 
-- receiver lifecycle/timeout patch 2개
+- receiver lifecycle/timeout patch 2개와 control-to-CAN converter 1개
 - DDS/ros2_ws payload 4개
 - v1.0과 동일함을 확인한 launch 4개
 
@@ -109,4 +110,4 @@ cd /home/a/ros2_ws
 ./push_v1_1.sh
 ```
 
-helper는 현재 branch, clean/expected state, remote 동일 branch/tag 충돌을 확인해야 한다. GitHub 인증 prompt의 password 자리에 PAT를 입력한다. PAT는 어떤 tracked 파일이나 remote URL에도 기록하지 않는다.
+helper는 현재 branch, clean/expected state와 원격 ref를 확인해야 한다. `_a`의 기존 308 tag 이동은 예상 old SHA가 정확히 일치할 때만 허용하며, `_r`은 정상 최초 push만 허용한다. GitHub CLI 인증은 credential helper를 통해 사용하고 PAT는 어떤 tracked 파일이나 remote URL에도 기록하지 않는다.

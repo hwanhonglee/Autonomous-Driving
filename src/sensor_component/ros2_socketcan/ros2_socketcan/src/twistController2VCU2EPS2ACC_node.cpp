@@ -49,7 +49,10 @@ public:
     pub_ = this->create_publisher<can_msgs::msg::Frame>("to_can_bus", 1);
 
     // HH_240725
-    // Create a timer to publish the throttle command at 10 Hz
+    // Create a 30 ms timer to publish the control command at approximately 33.3 Hz.
+    // HH_260812 - Known release blocker: this timer republishes the cached command even when
+    // /control/command/control_cmd is no longer fresh. Add and validate a command-age watchdog
+    // before treating this bridge as production-safe (see PC1 v1.1 CAN_BRIDGE/KNOWN_ISSUES).
     timer_ = this->create_wall_timer(
       std::chrono::milliseconds(30), // ≈33hz 
       std::bind(&twistController2Vcu2Eps2AccNode::ControlCmdPublish2Controller, this));
@@ -69,6 +72,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // Initialize member variables
+  // HH_260812 - These values persist between callbacks and are encoded every 30 ms. They are
+  // intentionally documented here because the current implementation has no freshness state.
   double throttle_cmd_ = -1.0;
   double steering_cmd_ = 0.0;
   bool cruise_mode_status_ = false;

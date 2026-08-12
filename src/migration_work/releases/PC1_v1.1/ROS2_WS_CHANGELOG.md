@@ -29,6 +29,8 @@ bash src/migration_work/releases/PC1_v1.1/PREPARE_IN_PLACE.sh
 └── push_v1_1.sh                 # branch/tag push helper
 ```
 
+`docs/v1.1/ROS2_WS_MANIFEST.sha256`은 `_r` repository root에서 직접 검증할 수 있는 핵심 파일 경로를 사용한다. Autoware 상대경로를 쓰는 기존 `MANIFEST.sha256`과 혼동하지 않는다.
+
 source와 payload 원본:
 
 | 원본 | ros2_ws 위치 | 역할 |

@@ -9,8 +9,8 @@
 | Source file metadata | receiver cpp가 executable mode로 추적됨 | source tree 정리와 검토 잡음 | receiver hpp/cpp를 0644로 정규화 | 실행 대상과 source metadata 구분 | local mode 확인 |
 | CAN 초기화 스크립트 | 이미 UP인 CAN에 bitrate를 바로 설정하면 실패할 수 있음 | 재실행 순서에 따라 수동 복구 필요 | can0/can1 down → bitrate 500000 → up, strict shell 및 존재 검사 | 동일 명령 반복 실행 가능, 장치 glob 누락으로 중단되지 않음 | `bash -n` 통과, can0/can1 500 kbit/s ERROR-ACTIVE 확인 |
 | DDS NIC 선택 | 다중 NIC에서 CycloneDDS가 192.168.1.11 NIC를 임의 선택 | Domain 10에서 PC2/PC3 node/topic이 0개로 보임 | `cyclonedds_pc1.xml`에서 `enp0s31f6` 고정, shell export와 NM NIC binding | 192.168.9.0/24 차량망에서 원격 map/localization/perception discovery 복구 | 실제 원격 map 샘플 및 후속 3-PC graph 수신 확인 |
-| 릴리스 관리 | 임시 fail-closed 문서와 현재 full bridge 상태가 혼재 | 잘못된 설정을 v1.1로 push할 위험 | final/reverted/pre-existing/unresolved 분리 문서화 | 코드 소유권과 검증 범위를 추적 가능 | 본 감사 문서와 SHA manifest로 확인 |
-| 게시 단위 | 선택 파일 이식/fresh clone 절차를 검토함 | 사용자가 현재 작업공간 전체와 direct push를 요구 | `/home/a/autoware` 전체 snapshot `_a`, ros2_socketcan+ops+docs `_r`, nested Git 평탄화, in-place helper 제공 | 두 작업 directory에서 branch/tag 게시 가능 | 준비 전 546 MiB/8,546 files, 100 MB 초과 0; 최종 local commit/tree 재확인 필요 |
+| 릴리스 관리 | 임시 fail-closed 문서와 현재 full bridge 상태가 혼재 | 잘못된 설정을 v1.1로 push할 위험 | final/reverted/pre-existing/unresolved 분리 및 2026-08-12 실차 incident 문서화 | 코드 소유권, 검증 범위와 재발 조건을 추적 가능 | 본 감사 문서와 SHA manifest로 확인 |
+| 게시 단위 | 선택 파일 이식/fresh clone 절차를 검토함 | 사용자가 현재 작업공간 전체와 direct push를 요구 | `/home/a/autoware` 전체 snapshot `_a`, ros2_socketcan+ops+docs `_r`, nested Git 평탄화, in-place helper 제공 | 두 작업 directory에서 branch/tag 게시 가능 | 최초 `_a` snapshot 8,553 tracked files/537,279,158 bytes, 100 MB 초과 0 |
 
 ## SocketCAN receiver 상세
 
@@ -67,6 +67,6 @@ CycloneDDS가 두 유선 NIC 중 카메라/NPU망을 선택하면 차량 PC망�
 
 ## 릴리스 판정
 
-현재 상태는 `RELEASE_CANDIDATE_WITH_BLOCKERS`이다. receiver build와 로컬 기능은 확인했지만, CAN watchdog/전역 TX topic, `max_vel=36.0`, sample vehicle geometry, MRM heartbeat 및 start_planner safe path 문제를 해결하거나 명시적으로 승인하기 전에는 실차 주행 release PASS로 표시하면 안 된다.
+현재 상태는 `RELEASE_CANDIDATE_WITH_BLOCKERS`이다. receiver build와 로컬 기능은 확인했지만, 2026-08-12 실제 AUTO/DRIVE 구간에서 PC2 dropout, localization/NDT 편차 및 MRM emergency stop이 발생했다. CAN watchdog/전역 TX topic, lateral velocity 정차 판정, `max_vel=36.0`, sample vehicle geometry, MRM heartbeat 및 start_planner safe path 문제를 해결하거나 명시적으로 승인하기 전에는 실차 주행 release PASS로 표시하면 안 된다.
 
 전체 snapshot에는 이번에 새로 수정하지 않은 backup, report, pycache, local RViz/parameter 차이도 포함된다. 따라서 `_a` commit의 모든 diff가 검증된 v1.1 기능 변경이라는 의미는 아니다.

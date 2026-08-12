@@ -15,8 +15,8 @@
 | `autoware.launch.xml` vs v1.0 | PASS | SHA256 `b9129744...`, byte-identical |
 | restored `planning_simulator.launch.xml` vs v1.0 | PASS | SHA256 `a82e5f26...`, byte-identical |
 | restored CAN launch XML vs v1.0 | PASS | top `c577b7ef...`; child `b52011c7...` |
-| `MANIFEST.sha256` | PASS | 10 tracked code/config/baseline entries verified with `sha256sum -c` |
-| full Autoware snapshot inventory | PASS | 준비 전 정책 대상 약 546 MiB, 8,546 regular files; 100 MB 초과 파일 0개 |
+| `MANIFEST.sha256` | PASS | `/home/a/autoware/src` 기준 11개 code/config/baseline entry를 `sha256sum -c`로 검증 |
+| full Autoware snapshot inventory | PASS | 최초 공개 snapshot `2523b662...`: 8,553 tracked files, content 537,279,158 bytes; 100 MB 초과 파일 0개 |
 | nested Git/submodule audit | PASS/PARTIAL | `.gitmodules`/formal gitlink 없음; nested `autoware_tools/.git` 1개 확인, 현재 파일 평탄화 예정 |
 | nested `autoware_tools` completeness | PARTIAL | HEAD `a6b16571...`; 625개 파일 존재, upstream tracked deletion 238개는 현재 absence 그대로 보존 |
 | portable ros2_ws payload | PASS | two shell files `bash -n`, DDS XML `xmllint`, modes 0755 |
@@ -26,6 +26,8 @@
 | full colcon test | PARTIAL/FAIL | 9 test groups 중 6 failure, legacy lint/config 포함 |
 | XML lint | PASS | ros2_socketcan XML 8 files pass |
 | final source/comment rebuild | PASS | `/home/a/autoware/log/build_2026-08-11_19-05-42`; 1 package 성공 |
+| 2026-08-12 evidence-comment rebuild | PASS | `/home/a/autoware/log/build_2026-08-12_14-51-08`; Release, ros2_socketcan 1 package 성공 |
+| 2026-08-12 enabled functional gtest | PASS | `ctest -R '^ros2_socketcan_test$'`: 1/1 target, 0 failure |
 
 ## 전체 test failure 분류
 
@@ -136,6 +138,31 @@ find /home/a/autoware \
 - start_planner safe=false: 최종 trajectory 자체가 전점 velocity 0인 stop path.
 
 따라서 “Auto 전환 성공”만으로 주행 readiness를 판정할 수 없다. 현재 v1.1에 대해 완전한 실차 route-to-motion PASS는 없다.
+
+## 2026-08-12 실차 3-PC 관찰 기록
+
+이 절은 합격 시험이 아니라 실제 문제를 재현한 incident evidence다. 관찰은 read-only ROS/CAN graph와 topic/log 측정으로 수행했으며 Codex가 engage, route, command 또는 CAN frame을 송신하지 않았다.
+
+| 시간대(KST) | 관찰 | 판정 |
+|---|---|---|
+| 약 11:50 | ADAPI web server가 Conda Python 3.13을 선택하여 Humble Python 3.10 `rclpy` ABI import 실패; Domain 10 `/rviz2` 3개 | FAIL, PC1 환경 오염/duplicate FQN |
+| 약 11:54~12:59 | raw GNSS/IMU/LiDAR/vehicle status는 수신되지만 localization은 UNINITIALIZED; lateral velocity 약 0.00111 m/s가 0.001 m/s stop gate 초과 | FAIL, CAN/정차 신호 검증 필요 |
+| 약 13:00 | localization INITIALIZED, map→base_link와 kinematic state 약 40~50 Hz 복구 | 일시 PASS |
+| 약 13:01:52 | localization이 약 12~13초 INITIALIZING으로 회귀한 뒤 재복구 | FAIL, continuity flap |
+| 약 13:02:23 | route/trajectory/control 복구, hazard clear, AUTO/DRIVE와 physical CAN control request 활성 | 기능 체인 활성 확인, 안전 합격 아님 |
+| 약 13:04:49 | PC2 perception stack/objects stream 소실 후 복구 | FAIL, remote-stack flap |
+| 약 13:05:32 | NDT/trajectory deviation fault, MRM EMERGENCY_STOP; 차량 속도 약 2.47 m/s까지 관찰 | CRITICAL FAIL |
+| 약 13:06:32 | 차량 속도 0/PARK 복귀 | 정지 확인; release gate는 여전히 FAIL |
+
+같은 실행의 Chrony 확인에서는 public source `211.108.117.211`이 selected였고 PC3 `192.168.9.7`은 후보 source였다. 따라서 이 실행은 다중 PC timing/latency 논문 데이터 acceptance로 사용할 수 없다.
+
+추가 CAN 증거:
+
+- command callback이 끊긴 상태에서도 converter는 마지막 `-2.4 m/s²`, steering 0 명령을 CAN ID `0x630`으로 약 33.33 Hz 계속 송신했다.
+- 당시 control request byte는 cruise=false일 때 0이었지만, cruise=true가 되면 같은 cached command에 request bit가 붙을 수 있다.
+- 실제 AUTO 구간에는 fresh control command와 steering command가 CAN에 반영됐다. 즉 현재 bridge는 관찰 전용이 아니라 실제 actuator-capable path다.
+
+이 결과로 PC1-001, PC1-002, PC1-023~026을 release blocker로 유지한다. 다음 주행 전에는 물리 차량을 확보한 상태에서 PC2/PC3 연속성, localization jump, MRM, command timeout과 공통 clock source를 각각 독립 시험해야 한다.
 
 ## direct in-place 준비 후 필수 재검증
 

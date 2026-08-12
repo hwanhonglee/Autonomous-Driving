@@ -31,7 +31,7 @@ bash src/migration_work/releases/PC1_v1.1/PREPARE_IN_PLACE.sh
 - 각 디렉터리에 경로/branch/tag를 검증하는 `push_v1_1.sh` 설치
 - 두 최종 commit과 lightweight `_a`/`_r` tag를 로컬에 생성하되 push/PAT 사용은 하지 않음
 
-준비 스크립트가 오류를 내면 push 단계로 넘어가지 않는다. 특히 기존 remote branch/tag, secret 후보, 100 MB 초과 파일 또는 예상하지 않은 repository 상태를 임의로 우회하지 않는다.
+준비 스크립트가 오류를 내면 push 단계로 넘어가지 않는다. 특히 secret 후보, 100 MB 초과 파일 또는 예상하지 않은 repository 상태를 임의로 우회하지 않는다. 이미 공개된 308 `_a` ref는 본 문서의 예상 old SHA와 일치할 때만 검토 PR/최종 tag 절차로 갱신한다.
 
 ## 2. 준비 결과 확인
 
@@ -94,7 +94,7 @@ Username for 'https://github.com': <GitHub username>
 Password for 'https://<username>@github.com': <personal access token>
 ```
 
-helper는 준비 단계에서 최종 commit에 붙인 `IONIQ_EV_308_PC1_a` tag와 308 PC1 Autoware branch를 함께 push하고 확인한다. 같은 remote branch 또는 tag가 이미 있으면 덮어쓰거나 tag를 이동하지 않고 중단해야 한다.
+Autoware의 최신 변경은 먼저 review branch에서 기존 308 PC1 Autoware v1.1 branch를 base로 Draft PR을 만든다. PR 병합 전 `IONIQ_EV_308_PC1_a`는 최초 snapshot `2523b662...`에 유지한다. 병합 후 원격 tag가 여전히 그 old SHA인지 확인하고, 사용자가 승인한 한 번의 조건부 tag 갱신으로 최종 v1.1 HEAD를 가리키게 한다. 307 ref는 변경하지 않는다.
 
 ## 5. ros2_ws push
 

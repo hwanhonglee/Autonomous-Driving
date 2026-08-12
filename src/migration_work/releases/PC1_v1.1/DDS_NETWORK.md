@@ -68,7 +68,7 @@ NetworkManager에서도 차량망 profile을 `enp0s31f6`, 카메라/NPU profile�
 
 ## 시간 동기화
 
-2026-08-11 감사 시 Chrony selected source는 `192.168.9.7`이고 reach 377이었다. 이전 snapshot에서는 public NTP가 선택된 적이 있으므로 논문 데이터 수집 직전에 다음을 다시 기록해야 한다.
+2026-08-11 감사 시 Chrony selected source는 `192.168.9.7`이고 reach 377이었다. 그러나 2026-08-12 실차 연동 중에는 public source `211.108.117.211`이 다시 selected 되고 PC3 `192.168.9.7`은 후보 source로만 남았다. 따라서 설정 파일에 PC3가 적혀 있다는 사실만으로 공통 clock topology를 증명할 수 없으며, 논문 데이터 수집 직전에 다음을 다시 기록해야 한다.
 
 ```bash
 chronyc -n tracking

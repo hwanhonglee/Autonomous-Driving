@@ -37,6 +37,8 @@ ownership are excluded from the PC2 launch.
 - Vendor the patched ROS 2 Humble `topic_tools` 1.1.2 source as ordinary files and add a source
   bootstrap script; generated overlay files are intentionally not committed.
 - Record the current wired/Wi-Fi/DDS/camera NIC layout and safe NetworkManager procedures.
+- Retain bounded read-only camera, CAN-graph, outdoor, PC2/PC3-flow, localization-input, and Arena
+  interface probe sources while excluding their generated binaries and raw outputs.
 
 ## Validation
 
@@ -58,6 +60,15 @@ migration_work/test_logs/live_camera_cycles/20260812_145512/cycle_1.log
 
 The raw runtime log is not committed; the measured evidence and SHA are preserved in
 `PC2_dual_camera_YOLO_TLR_integration.md`.
+
+## Evidence retention policy
+
+The v2 snapshot keeps current source, authoritative release documents, the network runbook, and
+bounded diagnostic probes. It intentionally excludes pre-v2 single-camera reports, rollback
+scripts that depend on omitted backups, raw test logs/images, package binaries, and generated
+build/install trees. Those historical files contain superseded claims such as zero camera
+publishers, RViz disabled, non-optical camera frames, the old NIC layout, enabled uncalibrated
+fusion, or unresolved shutdown failures; including them as current v2 guidance would be unsafe.
 
 ## Known limits
 

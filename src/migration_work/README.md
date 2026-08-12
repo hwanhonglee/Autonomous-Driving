@@ -16,6 +16,16 @@ Current authoritative documents:
 - `scripts/validate_pc2_cycles.sh` — bounded lifecycle, payload, safety, and cleanup validator.
 - `scripts/build_topic_tools_overlay.sh` — source-only bootstrap for the shutdown-safe relay overlay.
 
+Additional bounded, read-only field probes are retained as source:
+
+- `scripts/capture_lucid_frame.py` — captures and validates one raw or compressed camera frame.
+- `scripts/probe_can_bridge_graph.py` — inspects CAN bridge endpoint ownership without publishing.
+- `scripts/probe_outdoor_diagnostics.py` — samples outdoor sensing/diagnostic contracts.
+- `scripts/probe_pc2_pc3_flow.py` — measures the PC2/PC3 DDS data-flow contract.
+- `scripts/probe_pc3_localization_inputs.py` — checks PC3 localization prerequisites.
+- `scripts/lucid_interface_audit.cpp` — Arena SDK interface/device discovery source; its compiled
+  binary is intentionally excluded.
+
 Validated locally:
 
 - two Lucid cameras start from `run_autoware` in separate component processes;
@@ -27,3 +37,7 @@ Validated locally:
 
 Do not claim final TLR semantics or camera-LiDAR fusion until PC3 map/dynamic TF/LiDAR inputs and
 camera-specific intrinsic/extrinsic calibration pass the acceptance gates in the release notes.
+
+Historical single-camera reports, pre-change backups, rollback scripts, raw test logs, and stale
+topic-contract snapshots are intentionally excluded. They describe superseded NIC, frame, RViz,
+fusion, or shutdown states and are not valid v2 operating instructions.

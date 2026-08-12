@@ -6,6 +6,10 @@
 
     gnss_pose_timeout: 3.0 # [sec]
     stop_check_duration: 3.0 # [sec]
+    # HH_260812 - Retain the upstream default unless a vehicle profile explicitly overrides it.
+    stop_check_velocity_threshold: 0.001 # [m/s]
+    # HH_260812 - Preserve upstream acceptance unless a vehicle profile enables strict matching.
+    reject_unreliable_initial_pose: false
     pose_error_threshold: 5.0 # [m]
     pose_error_check_enabled: false # check initial pose error with gnss
     ekf_enabled: $(var ekf_enabled)

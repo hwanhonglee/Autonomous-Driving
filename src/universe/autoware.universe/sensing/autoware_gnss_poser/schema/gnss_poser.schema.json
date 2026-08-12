@@ -26,6 +26,34 @@
           "default": "true",
           "description": "use Gnss-Ins orientation"
         },
+        "gnss_ins_orientation_timeout_sec": {
+          "type": "number",
+          "default": 1.5,
+          "minimum": 0.0,
+          "description": "Maximum timestamp difference between a fix and INS attitude. [s]"
+        },
+        "gnss_ins_orientation_fix_frame": {
+          "type": "string",
+          "default": "gnss_link",
+          "description": "Fix frame allowed to use the INS attitude."
+        },
+        "allow_position_only_fallback": {
+          "type": "boolean",
+          "default": true,
+          "description": "Publish a broad-yaw position seed when primary INS attitude is unavailable."
+        },
+        "course_heading_min_distance_m": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0.0,
+          "description": "Minimum displacement before updating fallback course heading. [m]"
+        },
+        "position_only_yaw_stddev_rad": {
+          "type": "number",
+          "default": 3.1622776601683795,
+          "exclusiveMinimum": 0.0,
+          "description": "Yaw standard deviation for position-only output. [rad]"
+        },
         "gnss_pose_pub_method": {
           "type": "integer",
           "default": "0",
@@ -45,6 +73,11 @@
         "gnss_base_frame",
         "map_frame",
         "use_gnss_ins_orientation",
+        "gnss_ins_orientation_timeout_sec",
+        "gnss_ins_orientation_fix_frame",
+        "allow_position_only_fallback",
+        "course_heading_min_distance_m",
+        "position_only_yaw_stddev_rad",
         "gnss_pose_pub_method",
         "buff_epoch"
       ]

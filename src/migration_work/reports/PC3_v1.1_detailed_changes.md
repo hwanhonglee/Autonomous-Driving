@@ -158,14 +158,14 @@ The launch now:
   primary mode;
 - publishes the arbitration result on `/sensing/gnss/selected/fix`;
 - derives `/autoware_orientation` only from validated NovAtel `INSPVAX`;
-- feeds `autoware_gnss_poser` directly from the primary NovAtel fix.
+- feeds `autoware_gnss_poser` from the selected best-available position.
 
-The last point is intentional. A u-blox fix has a different antenna frame and
-does not provide the paired NovAtel INS orientation. Feeding a fallback position
-to `gnss_poser` with stale NovAtel attitude could seed NDT incorrectly. The
-selected fallback topic therefore remains available for health monitoring and
-future calibrated integration, while localization initialization remains
-primary-only and fail-closed.
+HH_260812 - The selected fix frame now gates attitude use: only `gnss_link` can
+consume validated NovAtel INS orientation. A u-blox `gps`-frame fix is emitted
+as a degraded position seed with broad yaw variance, and PC3 initialization
+accepts it only when NDT/YabLoc reports a reliable map alignment. This retains
+fallback availability without combining antennas or presenting inferred yaw as
+measured attitude.
 
 Runtime dependencies for GNSS, IMU correction, Hesai/common sensing, NTRIP,
 u-blox, `topic_tools`, and velocity conversion were made explicit in
@@ -770,6 +770,72 @@ repository-wide test suite.
 No physical serial, NTRIP caster, CAN actuation, or LiDAR sensor was contacted by
 the final offline regression runs. The NTRIP end-to-end test uses a local fake
 caster and pseudo-terminal; the Hesai teardown test uses loopback UDP.
+
+## 10.1 HH_260812 live localization and degraded-GNSS corrections
+
+HH_260812 - Record the exact live initialization blocker and the bounded fixes
+added after the first v1.1 snapshot.
+
+The 2026-08-12 live PC3 run proved that NTRIP was not the reason localization
+remained uninitialized. The external mode-0600 NTRIP configuration was loaded,
+the caster TCP session was established, CRC-valid RTCM3 was arriving, and
+NovAtel reported RTK integer solutions. The pose initializer instead rejected
+every automatic request with `The vehicle is not stopped.` PC1 was publishing
+zero longitudinal speed but a constant `0.00110999995 m/s` lateral value. The
+unchanged upstream stop checker requires all three linear components to remain
+below `0.001 m/s`, so this 1.11 mm/s stationary CAN noise blocked activation.
+
+The correction leaves the shared `VehicleStopCheckerBase` source, class layout,
+ABI, and original 1 mm/s rule byte-for-byte unchanged. Only the pose initializer
+input applies a configurable three-axis norm deadband: speeds below `0.005 m/s`
+are normalized to zero before the existing checker, while the three continuous
+stopped seconds remain mandatory. A regression test proves that 1.11 mm/s is
+normalized, that a sample exactly at 5 mm/s is retained, and that diagonal
+motion whose norm exceeds 5 mm/s is also retained.
+
+GNSS behavior now follows a best-available hierarchy:
+
+1. selected NovAtel fix with fresh validated `INS_SOLUTION_GOOD` attitude;
+2. selected NovAtel position with identity/held/course yaw and 10 rad^2 yaw
+   variance when INS is missing or stale;
+3. u-blox position fallback after selector hysteresis when NovAtel itself is
+   invalid or absent.
+
+NovAtel attitude is applied only when the selected fix frame is `gnss_link`.
+The u-blox `gps` frame therefore cannot inherit stale NovAtel attitude. Fallback
+course yaw is updated only after at least 1 m of displacement; otherwise the
+last validated yaw, or identity at cold start, is retained. Pose initialization
+also rejects an explicit unreliable NDT/YabLoc alignment on PC3 instead of
+activating EKF from an untrusted degraded seed.
+
+The u-blox launch now remaps both the preserved driver's private `~/fix` and the
+Ubuntu binary's relative `fix` name to `ublox/nav_sat_fix`. The 158 tracked
+historical u-blox files were restored into the live `ros2_ws` worktree and all
+four overlay packages (`ublox_serialization`, `ublox_msgs`, `ublox_gps`, and
+`ublox`) built successfully. The sourced `ublox_gps` prefix is now
+`/home/a/ros2_ws/install/ublox_gps`, whose absolute `/rtcm`
+`rtcm_msgs/msg/Message` callback forwards corrections to `Gps::sendRtcm`.
+
+Post-correction validation passed:
+
+- six affected Autoware packages built and installed sequentially with one
+  worker, followed by an ABI-compatible incremental rebuild;
+- GNSS failover contracts: 20/20 passed;
+- stationary-noise deadband regression: 1/1 passed;
+- pose-initializer existing unit tests: 3/3 passed;
+- hardware-free GNSS position-only output produced a valid quaternion with
+  exactly 10 rad^2 yaw variance;
+- hardware-free source binding proved that a `gps`-frame fix cannot consume
+  NovAtel attitude, while a `gnss_link` fix consumes it with its measured
+  covariance;
+- `VehicleStopCheckerBase` has no source diff from the v1.1 snapshot after the
+  PC3-only deadband design replaced the earlier ABI-changing prototype;
+- all four preserved u-blox overlay packages built and the overlay prefix was
+  selected.
+
+The running Autoware processes predate these installed binaries and parameters.
+No live localization service, driver, serial port, or vehicle state was changed
+during the patch. A controlled full PC3 restart is required before acceptance.
 
 ## 11. Current unresolved live gates
 

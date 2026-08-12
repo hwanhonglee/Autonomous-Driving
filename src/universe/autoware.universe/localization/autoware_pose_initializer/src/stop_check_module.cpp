@@ -14,10 +14,13 @@
 
 #include "stop_check_module.hpp"
 
+#include <autoware/pose_initializer/stop_check_utils.hpp>
+
 namespace autoware::pose_initializer
 {
-StopCheckModule::StopCheckModule(rclcpp::Node * node, double buffer_duration)
-: VehicleStopCheckerBase(node, buffer_duration)
+StopCheckModule::StopCheckModule(
+  rclcpp::Node * node, double buffer_duration, double stop_velocity_threshold)
+: VehicleStopCheckerBase(node, buffer_duration), stop_velocity_threshold_(stop_velocity_threshold)
 {
   sub_twist_ = node->create_subscription<TwistWithCovarianceStamped>(
     "stop_check_twist", 1, std::bind(&StopCheckModule::on_twist, this, std::placeholders::_1));
@@ -28,6 +31,7 @@ void StopCheckModule::on_twist(TwistWithCovarianceStamped::ConstSharedPtr msg)
   TwistStamped twist;
   twist.header = msg->header;
   twist.twist = msg->twist.twist;
-  addTwist(twist);
+  // HH_260812 - Remove the measured stationary CAN noise before the unchanged stop checker.
+  addTwist(apply_stop_velocity_deadband(twist, stop_velocity_threshold_));
 }
 }  // namespace autoware::pose_initializer

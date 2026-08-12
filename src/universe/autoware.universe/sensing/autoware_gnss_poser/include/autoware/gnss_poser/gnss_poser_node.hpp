@@ -37,6 +37,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <optional>
 #include <string>
 
 namespace autoware::gnss_poser
@@ -94,9 +95,19 @@ private:
   const std::string map_frame_;
   bool received_map_projector_info_ = false;
   bool use_gnss_ins_orientation_;
-  // HH_260811 - Require a fresh validated INS orientation before publishing a GNSS pose.
+  // HH_260811 - Limit the age of an INS orientation before it is considered stale.
   const double gnss_ins_orientation_timeout_sec_;
+  // HH_260812 - Apply NovAtel INS attitude only to fixes from the configured primary frame.
+  const std::string gnss_ins_orientation_fix_frame_;
+  // HH_260812 - Permit a position-only seed when validated INS attitude is unavailable.
+  const bool allow_position_only_fallback_;
+  const double course_heading_min_distance_m_;
+  const double position_only_yaw_stddev_rad_;
   bool received_gnss_ins_orientation_ = false;
+
+  // HH_260812 - Hold the last useful yaw until motion is sufficient for a course estimate.
+  std::optional<geometry_msgs::msg::Point> course_reference_position_;
+  geometry_msgs::msg::Quaternion fallback_orientation_;
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 

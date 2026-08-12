@@ -18,8 +18,8 @@
     <!-- HH_250204 - Select the raw fix topic that matches the configured GNSS receiver. -->
     <!-- HH_260811 - Route receiver fixes through distinct raw topics. -->
     <let name="navsatfix_topic_name" value="ublox/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)"/>
-    <!-- HH_260811 - Keep localization primary-only so a u-blox fallback cannot seed NDT with stale NovAtel orientation. -->
-    <let name="navsatfix_topic_name" value="novatel/oem7/fix" if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)"/>
+    <!-- HH_260812 - Feed the selected best-available position while GNSS poser gates INS by source frame. -->
+    <let name="navsatfix_topic_name" value="selected/fix" if="$(eval &quot;'$(var gnss_receiver)'=='novatel'&quot;)"/>
     <let name="orientation_topic_name" value="/autoware_orientation"/>
 
     <!-- HH_260811 - Launch u-blox fallback with an owned non-persistent configuration. -->

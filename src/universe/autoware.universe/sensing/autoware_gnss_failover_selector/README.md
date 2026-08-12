@@ -34,29 +34,29 @@ gate. Invalid and stale messages are never forwarded.
 
 ## Integration
 
-HH_260811 - Document the active primary-only localization safety boundary separately
-from the published position failover output.
+HH_260812 - Document the best-available position path and source-bound INS attitude policy.
 
 Launch both receiver drivers in separate topic namespaces, include
 `gnss_redundancy.launch.xml` inside the existing `sensing/gnss` namespace, and
-publish the selector result on `selected/fix`. The active PC3 sample launch does
-not feed that selector result into `autoware_gnss_poser`: when NovAtel is
-selected, the poser receives `novatel/oem7/fix` directly together with
-`/autoware_orientation`. This prevents a u-blox position from being paired with
-stale or unrelated NovAtel attitude during localization initialization.
+publish the selector result on `selected/fix`. The active PC3 sample launch feeds
+that result to `autoware_gnss_poser`. Fresh validated NovAtel INS attitude is
+used only when the selected fix frame is `gnss_link`; a u-blox `gps`-frame fix
+can never be paired with stale or unrelated NovAtel attitude.
 
-Consequently, u-blox is currently a position-only fallback output for monitoring
-or separately reviewed consumers; it is not yet a localization fallback. A
-future localization fallback requires a validated u-blox orientation/heading
-policy and measured antenna transform before changing the poser input.
+When validated primary attitude is unavailable, GNSS poser still publishes a
+position seed. It starts with identity yaw (or holds the last validated yaw),
+updates course heading only after 1 m of displacement, and reports 10 rad^2 yaw
+variance. This gives NDT a best-effort initialization path without presenting
+fallback yaw as measured attitude. NDT reliability remains the final acceptance
+gate. The u-blox antenna transform is still unmeasured, so its position fallback
+is degraded and must not be described as centimeter-level vehicle pose.
 
 The active topic contract inside the `sensing/gnss` namespace is:
 
 ```text
 novatel/oem7/fix       -> selector primary
 ublox/nav_sat_fix      -> selector fallback
-selected/fix           -> position-only failover output, not localization
-novatel/oem7/fix       -> autoware_gnss_poser fix in NovAtel mode
+selected/fix           -> autoware_gnss_poser best-available position
 novatel/oem7/inspvax   -> INSPVAX orientation adapter
 novatel/oem7/heading2  -> diagnostic-only dual readiness monitor
 /autoware_orientation  -> autoware_gnss_poser orientation
@@ -106,9 +106,10 @@ path rather than a correction-injection path. After building, verify that
 `ros2 pkg prefix ublox_gps` resolves under the PC3 `ros2_ws/install` overlay,
 not `/opt/ros/humble`, before testing RTK.
 
-The preserved driver publishes NavSatFix on its private `~/fix` topic. The
-fallback launch therefore remaps `~/fix` explicitly to
-`ublox/nav_sat_fix`; remapping plain `fix` does not match that private topic.
+The preserved driver publishes NavSatFix on its private `~/fix` topic, while
+the Ubuntu Humble binary publishes the relative `fix` topic. The fallback
+launch remaps both names to `ublox/nav_sat_fix`, so either installed driver
+reaches the selector without changing its public output contract.
 
 `NavSatFix.status == STATUS_GBAS_FIX` does not prove OEM7 RTK integer-fixed:
 the restored OEM7 driver maps several differential, RTK-float, and RTK-fixed

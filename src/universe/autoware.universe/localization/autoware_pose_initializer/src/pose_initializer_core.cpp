@@ -39,6 +39,8 @@ PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
 
   output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
+  // HH_260812 - Make unreliable NDT/YabLoc rejection selectable for compatibility.
+  reject_unreliable_initial_pose_ = declare_parameter<bool>("reject_unreliable_initial_pose");
 
   diagnostics_pose_reliable_ = std::make_unique<autoware::localization_util::DiagnosticsModule>(
     this, "pose_initializer_status");
@@ -59,7 +61,10 @@ PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
     stop_check_duration_ = declare_parameter<double>("stop_check_duration");
-    stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
+    // HH_260812 - Apply a configurable noise floor only to pose-initialization stop checks.
+    const auto stop_velocity_threshold = declare_parameter<double>("stop_check_velocity_threshold");
+    stop_check_ =
+      std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0, stop_velocity_threshold);
   }
   if (declare_parameter<bool>("pose_error_check_enabled")) {
     pose_error_check_ = std::make_unique<PoseErrorCheckModule>(this);
@@ -198,6 +203,13 @@ void PoseInitializer::on_initialize(
           diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
       }
       diagnostics_pose_reliable_->publish(this->now());
+
+      // HH_260812 - Do not activate localization from a degraded GNSS seed unless map matching
+      // confirms a reliable pose.
+      if (!reliable && reject_unreliable_initial_pose_) {
+        throw ServiceException(
+          Initialize::Service::Response::ERROR_ESTIMATION, "Initial pose alignment is unreliable.");
+      }
 
       pose.pose.covariance = output_pose_covariance_;
       pub_reset_->publish(pose);

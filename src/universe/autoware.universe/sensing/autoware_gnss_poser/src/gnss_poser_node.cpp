@@ -36,12 +36,19 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   map_frame_(declare_parameter<std::string>("map_frame")),
   use_gnss_ins_orientation_(declare_parameter<bool>("use_gnss_ins_orientation")),
   // HH_260811 - Load the maximum allowed timestamp gap between a fix and INS orientation.
-  gnss_ins_orientation_timeout_sec_(
-    declare_parameter<double>("gnss_ins_orientation_timeout_sec")),
+  gnss_ins_orientation_timeout_sec_(declare_parameter<double>("gnss_ins_orientation_timeout_sec")),
+  // HH_260812 - Keep NovAtel attitude bound to the primary receiver frame during failover.
+  gnss_ins_orientation_fix_frame_(declare_parameter<std::string>("gnss_ins_orientation_fix_frame")),
+  allow_position_only_fallback_(declare_parameter<bool>("allow_position_only_fallback")),
+  course_heading_min_distance_m_(declare_parameter<double>("course_heading_min_distance_m")),
+  position_only_yaw_stddev_rad_(declare_parameter<double>("position_only_yaw_stddev_rad")),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
   gnss_pose_pub_method_(static_cast<int>(declare_parameter<int>("gnss_pose_pub_method")))
 {
+  // HH_260812 - Use a valid identity quaternion for a cold-start position-only seed.
+  fallback_orientation_.w = 1.0;
+
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_sub(
@@ -115,25 +122,31 @@ void GNSSPoser::callback_nav_sat_fix(
     return;
   }
 
-  // HH_260811 - Inhibit pose output until the paired INS orientation is present and fresh.
+  // HH_260812 - Prefer fresh primary INS attitude, but retain a position-only initialization path.
+  bool use_fresh_gnss_ins_orientation = false;
   if (use_gnss_ins_orientation_) {
-    if (!received_gnss_ins_orientation_) {
+    const bool primary_fix_frame =
+      gnss_ins_orientation_fix_frame_.empty() ||
+      nav_sat_fix_msg_ptr->header.frame_id == gnss_ins_orientation_fix_frame_;
+    if (received_gnss_ins_orientation_ && primary_fix_frame) {
+      const auto fix_stamp = rclcpp::Time(nav_sat_fix_msg_ptr->header.stamp);
+      const auto orientation_stamp = rclcpp::Time(msg_gnss_ins_orientation_stamped_->header.stamp);
+      const double stamp_difference_sec = std::abs((fix_stamp - orientation_stamp).seconds());
+      use_fresh_gnss_ins_orientation = stamp_difference_sec <= gnss_ins_orientation_timeout_sec_;
+    }
+
+    if (!use_fresh_gnss_ins_orientation && !allow_position_only_fallback_) {
       RCLCPP_WARN_STREAM_THROTTLE(
         this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-        "GNSS INS orientation has not been received. Skipping GNSS pose publication.");
+        "Fresh primary GNSS INS orientation is unavailable. Skipping GNSS pose publication.");
       return;
     }
 
-    const auto fix_stamp = rclcpp::Time(nav_sat_fix_msg_ptr->header.stamp);
-    const auto orientation_stamp =
-      rclcpp::Time(msg_gnss_ins_orientation_stamped_->header.stamp);
-    const double stamp_difference_sec = std::abs((fix_stamp - orientation_stamp).seconds());
-    if (stamp_difference_sec > gnss_ins_orientation_timeout_sec_) {
+    if (!use_fresh_gnss_ins_orientation) {
       RCLCPP_WARN_STREAM_THROTTLE(
         this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-        "GNSS INS orientation is stale (stamp difference " << stamp_difference_sec
-                                                            << " s). Skipping GNSS pose publication.");
-      return;
+        "Fresh primary GNSS INS orientation is unavailable. Publishing a position-only GNSS "
+        "pose with broad yaw uncertainty.");
     }
   }
 
@@ -170,12 +183,23 @@ void GNSSPoser::callback_nav_sat_fix(
 
   // calc gnss antenna orientation
   geometry_msgs::msg::Quaternion orientation;
-  if (use_gnss_ins_orientation_) {
+  if (use_fresh_gnss_ins_orientation) {
     orientation = msg_gnss_ins_orientation_stamped_->orientation.orientation;
+    // HH_260812 - Retain the last validated yaw across a short INS outage.
+    fallback_orientation_ = orientation;
+    course_reference_position_ = gnss_antenna_pose.position;
   } else {
-    static auto prev_position = gnss_antenna_pose.position;
-    orientation = get_quaternion_by_position_difference(gnss_antenna_pose.position, prev_position);
-    prev_position = gnss_antenna_pose.position;
+    if (!course_reference_position_) {
+      course_reference_position_ = gnss_antenna_pose.position;
+    }
+    const double delta_x = gnss_antenna_pose.position.x - course_reference_position_->x;
+    const double delta_y = gnss_antenna_pose.position.y - course_reference_position_->y;
+    if (std::hypot(delta_x, delta_y) >= course_heading_min_distance_m_) {
+      fallback_orientation_ = get_quaternion_by_position_difference(
+        gnss_antenna_pose.position, *course_reference_position_);
+      course_reference_position_ = gnss_antenna_pose.position;
+    }
+    orientation = fallback_orientation_;
   }
 
   gnss_antenna_pose.orientation = orientation;
@@ -226,7 +250,7 @@ void GNSSPoser::callback_nav_sat_fix(
   gnss_base_pose_cov_msg.pose.covariance[7 * 2] =
     can_get_covariance(*nav_sat_fix_msg_ptr) ? nav_sat_fix_msg_ptr->position_covariance[8] : 10.0;
 
-  if (use_gnss_ins_orientation_) {
+  if (use_fresh_gnss_ins_orientation) {
     gnss_base_pose_cov_msg.pose.covariance[7 * 3] =
       std::pow(msg_gnss_ins_orientation_stamped_->orientation.rmse_rotation_x, 2);
     gnss_base_pose_cov_msg.pose.covariance[7 * 4] =
@@ -236,7 +260,8 @@ void GNSSPoser::callback_nav_sat_fix(
   } else {
     gnss_base_pose_cov_msg.pose.covariance[7 * 3] = 0.1;
     gnss_base_pose_cov_msg.pose.covariance[7 * 4] = 0.1;
-    gnss_base_pose_cov_msg.pose.covariance[7 * 5] = 1.0;
+    // HH_260812 - Make yaw uncertainty explicit so NDT searches instead of trusting fallback yaw.
+    gnss_base_pose_cov_msg.pose.covariance[7 * 5] = std::pow(position_only_yaw_stddev_rad_, 2);
   }
 
   pose_cov_pub_->publish(gnss_base_pose_cov_msg);
@@ -251,20 +276,16 @@ void GNSSPoser::callback_gnss_ins_orientation_stamped(
 {
   // HH_260811 - Reject non-finite, degenerate, or invalid-uncertainty INS orientations.
   const auto & orientation = msg->orientation.orientation;
-  const double norm_squared =
-    orientation.x * orientation.x + orientation.y * orientation.y +
-    orientation.z * orientation.z + orientation.w * orientation.w;
-  const bool finite_orientation =
-    std::isfinite(orientation.x) && std::isfinite(orientation.y) &&
-    std::isfinite(orientation.z) && std::isfinite(orientation.w) &&
-    std::isfinite(norm_squared);
+  const double norm_squared = orientation.x * orientation.x + orientation.y * orientation.y +
+                              orientation.z * orientation.z + orientation.w * orientation.w;
+  const bool finite_orientation = std::isfinite(orientation.x) && std::isfinite(orientation.y) &&
+                                  std::isfinite(orientation.z) && std::isfinite(orientation.w) &&
+                                  std::isfinite(norm_squared);
   const bool finite_rmse =
     std::isfinite(msg->orientation.rmse_rotation_x) &&
     std::isfinite(msg->orientation.rmse_rotation_y) &&
-    std::isfinite(msg->orientation.rmse_rotation_z) &&
-    msg->orientation.rmse_rotation_x >= 0.0 &&
-    msg->orientation.rmse_rotation_y >= 0.0 &&
-    msg->orientation.rmse_rotation_z >= 0.0;
+    std::isfinite(msg->orientation.rmse_rotation_z) && msg->orientation.rmse_rotation_x >= 0.0 &&
+    msg->orientation.rmse_rotation_y >= 0.0 && msg->orientation.rmse_rotation_z >= 0.0;
 
   if (!finite_orientation || norm_squared < 1.0e-12 || !finite_rmse) {
     RCLCPP_WARN_STREAM_THROTTLE(

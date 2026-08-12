@@ -33,6 +33,8 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   add_testcase(test/test_copy_vector_to_array.cpp)
+  # HH_260812 - Regress the PC3-only three-axis stationary velocity deadband.
+  add_testcase(test/test_stop_check_utils.cpp)
 endif()
 
 ament_auto_package(

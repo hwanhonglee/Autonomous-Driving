@@ -5,6 +5,11 @@
     map_frame: map
     buff_epoch: 1
     use_gnss_ins_orientation: true
-    # HH_260811 - Reject a GNSS fix when its paired INS orientation is missing or stale.
+    # HH_260811 - Limit how long a validated INS orientation can be paired with a fix.
     gnss_ins_orientation_timeout_sec: 1.5
+    # HH_260812 - Use INS only for NovAtel fixes and degrade to a broad-yaw position seed.
+    gnss_ins_orientation_fix_frame: gnss_link
+    allow_position_only_fallback: true
+    course_heading_min_distance_m: 1.0
+    position_only_yaw_stddev_rad: 3.1622776601683795
     gnss_pose_pub_method: 0

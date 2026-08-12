@@ -10,5 +10,7 @@
     <param from="$(var param_file)"/>
     <!-- HH_260811 - Match the preserved driver's private ~/fix publisher so the fallback reaches the selector topic. -->
     <remap from="~/fix" to="$(var output_fix_topic)"/>
+    <!-- HH_260812 - Also match the relative fix publisher used by the Ubuntu Humble driver. -->
+    <remap from="fix" to="$(var output_fix_topic)"/>
   </node>
 </launch>

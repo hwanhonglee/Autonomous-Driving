@@ -51,6 +51,17 @@
           "default": "3.0",
           "minimum": 0.0
         },
+        "stop_check_velocity_threshold": {
+          "type": "number",
+          "description": "The three-axis speed threshold used by the stop check. [m/s]",
+          "default": "0.001",
+          "exclusiveMinimum": 0.0
+        },
+        "reject_unreliable_initial_pose": {
+          "type": "boolean",
+          "description": "If true, do not activate localization when the alignment service reports an unreliable pose.",
+          "default": false
+        },
         "ekf_enabled": {
           "type": "string",
           "description": "If true, EKF localizer is activated.",
@@ -86,6 +97,8 @@
         "user_defined_initial_pose",
         "gnss_pose_timeout",
         "stop_check_duration",
+        "stop_check_velocity_threshold",
+        "reject_unreliable_initial_pose",
         "pose_error_threshold",
         "ekf_enabled",
         "gnss_enabled",

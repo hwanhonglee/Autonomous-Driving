@@ -63,6 +63,8 @@ private:
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
   std::unique_ptr<autoware::localization_util::DiagnosticsModule> diagnostics_pose_reliable_;
   double stop_check_duration_;
+  // HH_260812 - Keep PC3 uninitialized when map alignment explicitly reports unreliable.
+  bool reject_unreliable_initial_pose_;
 
   void change_node_trigger(bool flag, bool need_spin = false);
   void set_user_defined_initial_pose(

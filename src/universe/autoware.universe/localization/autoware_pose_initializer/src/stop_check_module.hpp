@@ -26,12 +26,14 @@ namespace autoware::pose_initializer
 class StopCheckModule : public autoware::motion_utils::VehicleStopCheckerBase
 {
 public:
-  StopCheckModule(rclcpp::Node * node, double buffer_duration);
+  // HH_260812 - Accept the PC3-specific noise threshold without weakening other stop checkers.
+  StopCheckModule(rclcpp::Node * node, double buffer_duration, double stop_velocity_threshold);
 
 private:
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr sub_twist_;
+  double stop_velocity_threshold_;
   void on_twist(TwistWithCovarianceStamped::ConstSharedPtr msg);
 };
 }  // namespace autoware::pose_initializer

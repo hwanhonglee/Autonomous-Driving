@@ -6,6 +6,10 @@
 
     gnss_pose_timeout: 3.0 # [sec]
     stop_check_duration: 3.0 # [sec]
+    # HH_260812 - Tolerate PC3's measured 1.11 mm/s stationary lateral CAN noise.
+    stop_check_velocity_threshold: 0.005 # [m/s]
+    # HH_260812 - Require NDT/YabLoc to accept a degraded GNSS seed before localization starts.
+    reject_unreliable_initial_pose: true
     pose_error_threshold: 5.0 # [m]
     pose_error_check_enabled: false
     ekf_enabled: $(var ekf_enabled)

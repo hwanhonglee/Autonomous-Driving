@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- HH_260814 - Expose a separately named CAN receive-only profile for parked VILS evidence collection. -->
+  <arg name="interface" default="can0" />
+  <arg name="receiver_interval_sec" default="0.01" />
+  <arg name="enable_can_fd" default="false" />
+  <arg name="use_bus_time" default="false" />
+  <arg name="filters" default="0:0" />
+
+  <!-- HH_260814 - Include only the receiver and deliberately provide no sender or control-adapter action. -->
+  <include file="$(find-pkg-share ros2_socketcan)/launch/socket_can_receiver.launch.py">
+    <arg name="interface" value="$(var interface)" />
+    <arg name="interval_sec" value="$(var receiver_interval_sec)" />
+    <arg name="enable_can_fd" value="$(var enable_can_fd)" />
+    <arg name="use_bus_time" value="$(var use_bus_time)" />
+    <arg name="filters" value="$(var filters)" />
+  </include>
+</launch>

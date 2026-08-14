@@ -1,0 +1,127 @@
+# HH_260814 - Define the read-only PC3 evidence contract for staged four-PC VILS acceptance.
+# cspell:ignore IONIQ VILS vils fuser sourcestats
+schema_version: 1
+status: prototype_evidence_tooling_only
+
+rollback_baselines:
+  autoware:
+    branch: IONIQ_EV/PC3/autoware_universe/v2.0.0
+    commit: 947dda782ce90e1d9768e57ae4337e3cf78eee1b
+  ros2_ws:
+    branch: IONIQ_EV/PC3/ros2_ws/v2.0.0
+    commit: 22f521ffb7ddeae893f377e226091641bb540efc
+
+runtime:
+  ros_domain_id: 10
+  rmw_implementation: rmw_cyclonedds_cpp
+  pc3_authorities:
+    - physical_lidar
+    - gnss_ins
+    - map_bundle
+    - localization
+    - map_to_base_link
+  forbidden_pc3_roles:
+    - pc4_object_subscriber
+    - virtual_object_fuser
+    - pc4_tf_authority
+    - simulator_localization_authority
+    - canonical_perception_publisher
+
+# HH_260814 - Treat the Lanelet2, PCD, projector, map config, and GNSS offset as one atomic convention.
+map_contract:
+  required_files:
+    - lanelet2_map.osm
+    - pointcloud_map.pcd
+    - map_projector_info.yaml
+    - map_config.yaml
+  approval_state: unresolved_until_runtime_manifest_and_control_points
+  allowed_conventions:
+    - name: active_legacy_bundle
+      projector: deployed_synthetic_52SCF0_bundle
+      projected_position_offset_enabled: true
+    - name: native_c_track_bundle
+      projector: native_52SCF60_bundle
+      projected_position_offset_enabled: false
+  forbidden_combination: native_bundle_with_legacy_offset_or_pc4_duplicate_subtraction
+  gnss_offset_config: src/universe/autoware.universe/sensing/autoware_gnss_poser/config/gnss_poser.param.yaml
+  gnss_offset_keys:
+    - projected_position_offset_enabled
+    - projected_position_offset_x_m
+    - projected_position_offset_y_m
+    - projected_position_offset_z_m
+  # HH_260814 - Hash the actual launcher configs because map_config.yaml is ancillary in the current launch.
+  runtime_loader_configs:
+    - src/launcher/autoware_launch/autoware_launch/config/map/pointcloud_map_loader.param.yaml
+    - src/launcher/autoware_launch/autoware_launch/config/map/lanelet2_map_loader.param.yaml
+    - src/launcher/autoware_launch/autoware_launch/config/map/map_tf_generator.param.yaml
+    - src/launcher/autoware_launch/autoware_launch/config/map/map_projection_loader.param.yaml
+  map_config_role: recorded_for_bundle_provenance_but_not_loaded_by_the_current_top_level_launch
+
+# HH_260814 - Capture every PC3 stream required by the shared Stage 1.5 through Stage 4 runbook.
+ros_topics:
+  required_state:
+    - topic: /localization/kinematic_state
+      type: nav_msgs/msg/Odometry
+      expected_frame: map_to_base_link
+    - topic: /localization/acceleration
+      type: geometry_msgs/msg/AccelWithCovarianceStamped
+      expected_frame: base_link_or_runtime_recorded
+      semantic_role: twist_derived_estimate_not_a_direct_physical_accelerometer_measurement
+    - topic: /system/fail_safe/mrm_state
+      type: autoware_adapi_v1_msgs/msg/MrmState
+      expected_frame: none
+  required_sensing:
+    - topic: /sensing/lidar/concatenated/pointcloud
+      type: sensor_msgs/msg/PointCloud2
+      expected_frame: base_link
+    - topic: /sensing/lidar/top/pointcloud_before_sync
+      type: sensor_msgs/msg/PointCloud2
+      expected_frame: runtime_recorded
+  required_maps:
+    - topic: /map/vector_map
+      type: runtime_resolved
+      expected_frame: map
+    - topic: /map/pointcloud_map
+      type: runtime_resolved
+      expected_frame: map
+  required_health:
+    - topic: /diagnostics
+      type: diagnostic_msgs/msg/DiagnosticArray
+      expected_frame: none
+    - topic: /tf
+      type: tf2_msgs/msg/TFMessage
+      expected_frame: map_to_base_link_edge_audited
+    - topic: /tf_static
+      type: tf2_msgs/msg/TFMessage
+      expected_frame: edge_level_authority_audited
+
+# HH_260814 - Keep the proposed PC2 accepted-status policy visibly unimplemented on PC3.
+post_v2_proposals:
+  accepted_pc4_status_to_availability_mrm:
+    status: blocked_pending_owner_review
+    proposed_topic: /perception/pc2/vils/accepted_pc4_status
+    exact_message_type: unresolved
+    exact_consumer_node: unresolved
+    mrm_owner: unresolved_until_live_audit
+    implementation_allowed: false
+
+time_contract:
+  pc3_role: proposed_common_chrony_source
+  accepted_authority: false
+  required_commands:
+    - chronyc tracking
+    - chronyc sources -v
+    - chronyc sourcestats -v
+  acceptance_requires_all_four_hosts: true
+
+evidence:
+  phases:
+    - before
+    - during
+    - after
+  minimum_localization_window_sec: 600
+  require_non_overwriting_run_directory: true
+  require_owner_only_permissions: true
+  require_source_install_config_hashes: true
+  require_map_hashes_each_phase: true
+  require_zero_pc4_authority_on_pc3: true

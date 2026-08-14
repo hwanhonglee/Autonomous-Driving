@@ -1,13 +1,13 @@
-# HH_260812 - Provisional full-resolution intrinsics for transport and 2D YOLO testing only.
-# The 2880x1860 dimensions were measured live on serial 222301529. Recalibrate this
-# physical camera before camera-LiDAR fusion or metric evaluation.
-image_width: 2880
-image_height: 1860
+# HH_260814 - Provisional 2x2-binned intrinsics for transport and 2D YOLO testing only.
+# Values are the former 2880x1860 provisional matrix scaled by exactly 0.5.
+# Recalibrate this physical camera before camera-LiDAR fusion or metric evaluation.
+image_width: 1440
+image_height: 930
 camera_name: windshield
 camera_matrix:
   rows: 3
   cols: 3
-  data: [1406.40531789464, 0.0, 1512.99417616260, 0.0, 1405.74910532466, 956.593577922680, 0.0, 0.0, 1.0]
+  data: [703.20265894732, 0.0, 756.49708808130, 0.0, 702.87455266233, 478.29678896134, 0.0, 0.0, 1.0]
 distortion_model: plumb_bob
 distortion_coefficients:
   rows: 1
@@ -20,4 +20,4 @@ rectification_matrix:
 projection_matrix:
   rows: 3
   cols: 4
-  data: [1406.40531789464, 0.0, 1512.99417616260, 0.0, 0.0, 1405.74910532466, 956.593577922680, 0.0, 0.0, 0.0, 1.0, 0.0]
+  data: [703.20265894732, 0.0, 756.49708808130, 0.0, 0.0, 702.87455266233, 478.29678896134, 0.0, 0.0, 0.0, 1.0, 0.0]

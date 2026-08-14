@@ -16,13 +16,18 @@ ros2 launch lucid_vision_driver dual_camera.launch.py
 The launch loads these production parameter files:
 
 - `param/windshield_cam.yaml`: Windshield camera, serial `222301529`, native prefix
-  `/lucid_vision/windshield`, optical frame `camera0/camera_optical_link`.
+  `/lucid_vision/windshield`, optical frame `camera0/camera_optical_link`, 2x2 binning, and JPEG
+  enabled for the active Autoware relay.
 - `param/loop_top_cam.yaml`: Loop Top camera, serial `214000332`, native prefix
   `/lucid_vision/camera`, optical frame `traffic_light_camera/camera_optical_link`.
 
 The other `config/` and `param/` files are retained as historical or bounded-test inputs. They are
 not loaded by `dual_camera.launch.py` and must not be treated as production calibration or device
 ownership records.
+
+The exact pre-edit `copy_org` files for the 2026-08-14 transport update are retained under
+`archive/runtime_update_20260814/`. They are deliberately outside `config/` and `param/`, so
+`ament_auto_package(INSTALL_TO_SHARE ...)` does not install them as active resources.
 
 ## External prerequisite
 
@@ -41,7 +46,7 @@ source install/setup.bash
 ## Runtime checks
 
 ```bash
-ros2 topic hz /lucid_vision/windshield/image
+ros2 topic hz /lucid_vision/windshield/image_compressed
 ros2 topic hz /lucid_vision/camera/image_compressed
 ros2 topic echo /lucid_vision/windshield/camera_info --once
 ros2 topic echo /lucid_vision/camera/camera_info --once

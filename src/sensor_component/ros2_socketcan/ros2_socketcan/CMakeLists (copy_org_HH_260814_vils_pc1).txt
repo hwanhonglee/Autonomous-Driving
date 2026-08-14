@@ -60,12 +60,7 @@ target_link_libraries(twistController2VCU2EPS2ACC_node
 install(TARGETS
   twistController2VCU2EPS2ACC_node
   DESTINATION lib/${PROJECT_NAME})
-
-# HH_260814 - Install the explicitly named VILS receive-only runner while preserving the full bridge.
-install(PROGRAMS
-  scripts/run_vehicle_status_rx_only.sh
-  DESTINATION lib/${PROJECT_NAME})
-
+  
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -77,15 +72,6 @@ if(BUILD_TESTING)
     test/sanity_checks.cpp)
   target_include_directories(${PROJECT_NAME}_test PUBLIC include)
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-
-  # HH_260814 - Prevent the parked VILS launch from accidentally gaining a sender or control adapter.
-  add_test(
-    NAME ${PROJECT_NAME}_vils_rx_only_launch_static
-    COMMAND ${CMAKE_COMMAND}
-      -DLAUNCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/launch/vehicle_status_rx_only.launch.xml
-      -DRECEIVER_LAUNCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/launch/socket_can_receiver.launch.py
-      -DRUNNER_FILE=${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_vehicle_status_rx_only.sh
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/test/verify_vils_rx_only_launch.cmake)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE

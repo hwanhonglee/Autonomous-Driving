@@ -35,7 +35,8 @@ process-global. The process boundary avoids opening two systems in one process.
 
 - Loop Top uses the 1920x1200 calibration file
   `config/loop_top_214000332_1920x1200.yaml`.
-- Windshield publishes 2880x1860 using
+- Windshield uses 2x2 binning and publishes 1440x930 with JPEG enabled for the inter-process
+  Autoware transport path. Its scaled transport-only CameraInfo is
   `config/windshield_222301529_transport_only.yaml`.
 - CameraInfo URLs use `package://lucid_vision_driver/...`, so checkout location is not hard-coded.
 - The Windshield file is provisional and is not approved for metric projection or 3D fusion.
@@ -48,6 +49,16 @@ process-global. The process boundary avoids opening two systems in one process.
 - Both camera containers completed StopStream, callback deregistration, device destruction, and
   system close, then exited cleanly.
 - Full PC2 guarded cycle started both devices and exited with zero camera-memory/process-died error.
+- In the later four-host bounded field observation, the 1440x930 YOLOX contract returned 10/10
+  samples at 6.574 Hz with zero invalid ROIs. Vehicle power was lost before the coordinated
+  long-duration capture, so this is not a soak or PG-VILS acceptance result.
+- The current package test invocation completed 8 CTest targets with 6 failures from pre-existing
+  lint/schema debt (copyright headers, C++/Python/CMake style, and package format validation).
+  This update therefore claims a successful build and targeted configuration checks, not a
+  test-clean Lucid package.
+
+The three exact pre-edit `copy_org` YAML files are archived under
+`archive/runtime_update_20260814/`; they are not installed as active camera resources.
 
 ## External dependency
 

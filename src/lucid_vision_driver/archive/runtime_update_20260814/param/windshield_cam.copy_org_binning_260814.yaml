@@ -8,10 +8,8 @@
     # HH_260812 - This legacy calibration is transport-only until serial-222 is recalibrated.
     camera_info_url: "package://lucid_vision_driver/config/windshield_222301529_transport_only.yaml"
     fps: 15
-    # HH_260814 - 2x2 binning reduces the 5.4 MP raw/DDS path to one quarter.
-    # Generic YOLOX resizes internally; metric camera-LiDAR fusion remains disabled.
-    horizontal_binning: 2
-    vertical_binning: 2
+    horizontal_binning: 1
+    vertical_binning: 1
     enable_rectifying: false
     # HH_260814 - Use JPEG on the inter-process camera hop. The previous
     # 2880x1860 raw relay saturated CPU/memory copies and reduced YOLOX to ~1 Hz.

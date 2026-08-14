@@ -33,6 +33,6 @@ PC's evidence.
 | PC | Result present on this branch | Note |
 |---|---|---|
 | PC1 | no | Add the PC1-local artifact from `/home/a/pc1_vils_runs/`; do not substitute a remote observation. |
-| PC2 | no | Add the PC2-local artifact from `/home/a/pc2_vils_runs/`; do not substitute a remote observation. |
+| PC2 | yes | `20260814T091155Z-pc2-power-interrupted` (bounded partial evidence; no PC2 rosbag was started). |
 | PC3 | yes | `20260814T091657Z-VILS_PC123_REAL_20260814_1816_R01` |
-| PC4 | no | Add CARLA ground truth and PC4-local adapter/gateway evidence from the PC4 owner. |
+| PC4 | yes | PC4 source evidence and bounded partial result are retained under `PC4/`. |

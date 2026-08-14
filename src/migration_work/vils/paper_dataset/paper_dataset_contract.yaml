@@ -1,0 +1,125 @@
+# HH_260814 - Freeze the distributed source-owner contract for paper-grade VILS acquisition.
+schema_version: 1
+status: prototype_not_yet_vehicle_accepted
+
+dataset_model:
+  acquisition: per_host_local_nvme
+  central_live_all_topic_recording: forbidden
+  merge_method: offline_by_run_id_timestamp_session_sequence_and_checksum
+  common_run_id_required: true
+  aborted_run_continuation: forbidden
+
+hosts:
+  pc1:
+    role: planning_control_vehicle_response
+    root: /home/a/pc1_vils_runs
+    authoritative_artifacts:
+      - canonical_predicted_objects
+      - route_and_trajectory
+      - controller_and_final_control_command
+      - vehicle_status_and_operation_mode
+      - mrm_and_can_counters
+  pc2:
+    role: physical_virtual_validation_fusion
+    root: /home/a/pc2_vils_runs
+    authoritative_artifacts:
+      - physical_objects
+      - raw_pc4_ingress_and_health
+      - validation_decisions
+      - association_and_fusion_provenance
+      - canonical_tracked_and_predicted_objects
+  pc3:
+    role: map_localization_physical_lidar_time_reference
+    root: /home/a/pc3_vils_runs
+    authoritative_artifacts:
+      - active_map_and_config_hashes
+      - gnss_ins_and_localization
+      - map_to_base_link
+      - canonical_lidar_source
+      - diagnostics_and_mrm
+  pc4:
+    role: simulator_ground_truth_virtual_source
+    root: /home/a/pc4_vils_runs
+    authoritative_artifacts:
+      - carla_actor_ground_truth
+      - ego_mirror
+      - detector_tracker_adapter_chain
+      - adapter_tx_and_gateway_events
+      - fault_schedule_and_simulator_load
+
+required_identity:
+  - run_id
+  - scenario_id
+  - condition_id
+  - replicate_id
+  - random_seed
+  - stage
+  - mode
+  - host
+  - boot_id
+  - git_commit_and_dirty_status
+  - installed_binary_and_config_hashes
+  - map_and_transform_hashes
+  - ros_domain_rmw_and_dds_hash
+  - chrony_source_offset_jitter_reach_and_step_events
+
+clock_contract:
+  cross_host_one_way_latency_requires_four_host_acceptance: true
+  preacceptance_metrics:
+    - per_host_monotonic_processing_duration
+    - message_delivery_ratio
+    - duplicate_and_reorder_count
+    - inter_arrival_gap
+  per_event_timestamps:
+    - source_ros_or_simulator_time
+    - sender_clock_realtime_ns
+    - sender_clock_monotonic_raw_ns
+    - receiver_clock_realtime_ns
+    - receiver_clock_monotonic_raw_ns
+
+pc3_profiles:
+  core:
+    record_full_run: true
+    topic_file: pc3_paper_core_topics.txt
+    qos_file: pc3_paper_core_qos.yaml
+    maximum_duration_sec: 3600
+    minimum_free_space_base_gib: 5
+  lidar:
+    record_full_run_when_reproducibility_requires_raw_input: true
+    topic_file: pc3_paper_lidar_topics.txt
+    qos_file: pc3_paper_lidar_qos.yaml
+    maximum_duration_sec: 600
+    minimum_free_space_base_gib: 5
+    conservative_bytes_per_second: 20000000
+    duplicate_relay_recording_on_pc3: false
+
+storage:
+  format: mcap
+  realtime_compression: none
+  split_duration_sec: 60
+  split_size_bytes: 2147483648
+  post_run_compression_only_after_checksum: true
+  pilot_duration_sec: 60
+  required_headroom_fraction: 0.20
+
+ground_truth:
+  virtual_obstacle: carla_server_actor_state_not_detector_output
+  real_ego_operational_reference: pc3_localization
+  real_ego_independent_accuracy_claim_requires_external_reference: true
+  physical_obstacle_accuracy_requires_surveyed_or_independent_reference: true
+  map_alignment_requires_noncollinear_control_points: 3
+
+run_statuses:
+  - COMPLETE_PASS
+  - COMPLETE_FAIL
+  - ABORTED_POWER_LOSS
+  - ABORTED_OPERATOR
+  - CLEANUP_FAIL
+
+formal_statistics:
+  analysis_unit: independent_run_or_predefined_event
+  messages_are_independent_samples: false
+  pilot_minimum_runs_per_condition: 3
+  recommended_formal_floor_per_condition: 10
+  recommended_power_cycle_or_day_blocks: 3
+  final_sample_size_requires_prespecified_power_analysis: true

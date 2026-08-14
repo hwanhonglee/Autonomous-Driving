@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# cspell:ignore CREAT VILS WRONLY closefd etimes getgid gethostname getpid getuid lntup lstart ntrip pousr ppid sourcestats timedatectl vils
 """Create non-overwriting, read-only PC3 VILS evidence snapshots."""
 
 # HH_260814 - Capture map, source, time, network, process, and ROS evidence without changing runtime state.

@@ -1,4 +1,5 @@
 <!-- HH_260814 - Record the PC3 implementation boundary, four-PC handoff, and preflight evidence for staged VILS testing. -->
+<!-- cspell:ignore VILS vils RTCM geofence -->
 # PC3 VILS preflight and cross-PC handoff
 
 Status: **POST-v2 PROTOTYPE; PREPARATION ONLY; NO FOUR-PC VILS PASS**

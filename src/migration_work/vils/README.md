@@ -1,4 +1,5 @@
 <!-- HH_260814 - Document the PC3-only read-only evidence workflow for actual four-PC VILS preparation. -->
+<!-- cspell:ignore VILS vils fuser -->
 # PC3 VILS evidence tooling
 
 Status: **PROTOTYPE; READ-ONLY EVIDENCE TOOLING; NO VEHICLE OR PC4 OBJECT AUTHORITY**

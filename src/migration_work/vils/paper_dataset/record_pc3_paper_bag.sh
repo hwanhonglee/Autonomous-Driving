@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# cspell:ignore CREAT ISLNK ISREG WRONLY fastwrite fdopen fileno getuid isinstance rglob vils
 # HH_260814 - Record a bounded, profile-locked PC3 paper bag without publishing or actuating anything.
 
 set -euo pipefail

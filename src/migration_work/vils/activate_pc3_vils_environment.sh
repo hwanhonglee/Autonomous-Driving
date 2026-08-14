@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# cspell:ignore VILS vils
 # HH_260814 - Activate a dedicated PC3 VILS DDS profile without changing normal shell defaults.
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

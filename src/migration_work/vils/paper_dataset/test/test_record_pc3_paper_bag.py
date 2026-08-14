@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# cspell:ignore getuid vils
 """Hardware-free regression tests for the fail-closed PC3 paper bag recorder."""
 
 # HH_260814 - Exercise recorder integrity gates with fake ros2 and no ROS graph, sensor, or vehicle.

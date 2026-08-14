@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# cspell:ignore VILS vils
 """Hardware-free tests for PC3 paper-run identity and frozen acquisition inputs."""
 
 # HH_260814 - Test validation and exclusive writes without launching ROS, hardware, or vehicle processes.

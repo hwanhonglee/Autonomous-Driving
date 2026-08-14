@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# cspell:ignore CREAT WRONLY gethostname vils
 """Create one non-overwriting PC3 paper-run directory and freeze its acquisition profile."""
 
 # HH_260814 - Add paper trial identity without changing the existing evidence collector or its rollback behavior.

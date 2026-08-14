@@ -1,4 +1,5 @@
 <!-- HH_260814 - Define the distributed, source-owner data-acquisition protocol for the VILS paper. -->
+<!-- cspell:ignore VILS vils -->
 # VILS paper dataset acquisition
 
 Status: **POST-v2 PROTOTYPE; OFFLINE-PREPARED; NOT A COMPLETED VEHICLE DATASET**

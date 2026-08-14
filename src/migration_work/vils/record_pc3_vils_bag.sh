@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# cspell:ignore VILS vils
 # HH_260814 - Record only reviewed PC3 evidence topics into a new compressed bag.
 
 set -euo pipefail

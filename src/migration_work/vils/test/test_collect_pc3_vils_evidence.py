@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# cspell:ignore QUJDRA VILS Vils vils
 """Hardware-free regression tests for PC3 VILS evidence collection."""
 
 # HH_260814 - Verify non-overwrite, map drift, offset parsing, redaction, and finalization offline.

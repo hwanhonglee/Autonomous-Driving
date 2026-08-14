@@ -61,13 +61,6 @@
   <!-- HH_260812 - Keep uncalibrated Windshield detections in 2D; opt into fusion only after intrinsic/extrinsic validation. -->
   <arg name="perception_mode" default="lidar" description="select perception mode. camera_lidar_radar_fusion, camera_lidar_fusion, lidar_radar_fusion, lidar, radar"/>
   <arg name="traffic_light_recognition/enable_fine_detection" default="true" description="enable traffic light fine detection"/>
-  <!-- HH_260810 - Keep PC2 VILS real-only and fail closed until every owner-reviewed contract and mode gate is explicitly enabled. -->
-  <arg name="vils_object_mode" default="real_only" description="PC2 object source mode: real_only, shadow, hybrid_optional, hybrid_required, virtual_only_required"/>
-  <arg name="vils_contract_approved" default="false" description="enable only after the PC4 object and metadata contract is owner approved"/>
-  <arg name="vils_enable_canonical_selection" default="false" description="allow the VILS node to become the sole canonical tracked-object writer"/>
-  <arg name="vils_enable_required_modes" default="false" description="allow required virtual-source modes only after PC1/PC3 fail-safe approval"/>
-  <arg name="vils_param_file" default="$(find-pkg-share autoware_vils_object_integration)/config/vils_object_integration.param.yaml" description="PC2 VILS validation and fusion contract parameters"/>
-  <arg name="vils_provenance_log_path" default="" description="optional append-only PC2 VILS provenance log path"/>
   <!-- Auto mode setting-->
   <arg name="enable_all_modules_auto_mode" default="false" description="enable all module's auto mode"/>
   <arg name="is_simulation" default="false" description="Autoware's behavior will change depending on whether this is a simulation or not."/>
@@ -104,35 +97,8 @@
   <!-- Perception -->
   <!-- HH_260810 - Kept perception ownership on PC2; PC4 must disable or remap any publisher for the same official object topic. -->
   <group if="$(var launch_perception)">
-    <!-- HH_260810 - Resolve the dormant Stage-4 seam only when all applicable canonical and required-mode gates are true. -->
-    <let name="vils_tracker_output" value="/perception/object_recognition/tracking/objects"/>
-    <let
-      name="vils_tracker_output"
-      value="/perception/object_recognition/tracking/pc2_physical_objects"
-      if="$(eval &quot;'$(var vils_object_mode)' in ['hybrid_optional', 'hybrid_required', 'virtual_only_required'] and '$(var vils_enable_canonical_selection)'.lower() == 'true' and '$(var vils_contract_approved)'.lower() == 'true' and ('$(var vils_object_mode)' == 'hybrid_optional' or '$(var vils_enable_required_modes)'.lower() == 'true')&quot;)"
-    />
-    <let name="vils_integration_output" value="/perception/pc2/vils/candidate_tracked_objects"/>
-    <let
-      name="vils_integration_output"
-      value="/perception/object_recognition/tracking/objects"
-      if="$(eval &quot;'$(var vils_object_mode)' in ['hybrid_optional', 'hybrid_required', 'virtual_only_required'] and '$(var vils_enable_canonical_selection)'.lower() == 'true' and '$(var vils_contract_approved)'.lower() == 'true' and ('$(var vils_object_mode)' == 'hybrid_optional' or '$(var vils_enable_required_modes)'.lower() == 'true')&quot;)"
-    />
-    <!-- HH_260810 - Validate and start PC2 source selection before remapping the physical tracker; real_only returns no integration node. -->
-    <include file="$(find-pkg-share autoware_vils_object_integration)/launch/vils_object_integration.launch.py">
-      <arg name="mode" value="$(var vils_object_mode)"/>
-      <arg name="contract_approved" value="$(var vils_contract_approved)"/>
-      <arg name="enable_canonical_selection" value="$(var vils_enable_canonical_selection)"/>
-      <arg name="enable_required_modes" value="$(var vils_enable_required_modes)"/>
-      <arg name="param_file" value="$(var vils_param_file)"/>
-      <arg name="physical_objects_topic" value="$(var vils_tracker_output)"/>
-      <arg name="output_objects_topic" value="$(var vils_integration_output)"/>
-      <arg name="provenance_log_path" value="$(var vils_provenance_log_path)"/>
-    </include>
     <include file="$(find-pkg-share autoware_launch)/launch/components/tier4_perception_component.launch.xml">
       <arg name="data_path" value="$(var data_path)"/>
-      <!-- HH_260810 - Keep the existing tracker and predictor canonical in real_only/shadow, and activate the physical side topic only behind Stage-4 gates. -->
-      <arg name="tracking/output/objects" value="$(var vils_tracker_output)"/>
-      <arg name="prediction/input/objects" value="/perception/object_recognition/tracking/objects"/>
       <!-- HH_260812 - Map windshield camera0 into fusion slot 0; loop-top camera1 remains TLR-only. -->
       <arg name="image_number" value="1"/>
       <arg name="image_raw0" value="/sensing/camera/camera0/image_raw"/>
@@ -146,15 +112,7 @@
       <arg name="output/objects" value="/perception/object_recognition/detection/rois0"/>
       <arg name="model_name" value="yolox-tiny"/>
       <arg name="data_path" value="$(var data_path)"/>
-      <!-- HH_260814 - Decompress the 2x2-binned Windshield JPEG once at the YOLOX input;
-           this replaces the two-process full-resolution raw relay bottleneck. -->
-      <arg name="use_decompress" value="true"/>
-      <!-- HH_260814 - Pin the decompressor config explicitly. A parent launch
-           param_file argument otherwise leaks the VILS YAML into this include. -->
-      <arg
-        name="param_file"
-        value="$(find-pkg-share autoware_image_transport_decompressor)/config/image_transport_decompressor.param.yaml"
-      />
+      <arg name="use_decompress" value="false"/>
     </include>
     <!-- HH_260812 - Keep lazy YOLOX active and expose rate/timeout diagnostics without unsafe 3D fusion. -->
     <include file="$(find-pkg-share topic_state_monitor)/launch/topic_state_monitor.launch.xml" if="$(var launch_yolox)">
@@ -162,7 +120,7 @@
       <arg name="topic" value="/perception/object_recognition/detection/rois0"/>
       <arg name="topic_type" value="tier4_perception_msgs/msg/DetectedObjectsWithFeature"/>
       <arg name="diag_name" value="windshield_yolox_rois_status"/>
-      <!-- HH_260814 - The binned 1440x930 YOLO transport has an 8 Hz diagnostic target. -->
+      <!-- HH_260812 - A full 2880x1860 YOLO frame measured ~14.7 Hz; warn below 5 Hz. -->
       <arg name="warn_rate" value="5.0"/>
       <arg name="error_rate" value="2.0"/>
       <arg name="timeout" value="1.0"/>

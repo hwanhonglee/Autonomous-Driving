@@ -26,9 +26,6 @@
   <arg name="image_raw0" default="/sensing/camera/camera0/image_raw"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info"/>
   <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0"/>
-  <!-- HH_260810 - Carry the PC2 VILS tracker-to-predictor seam through the Autoware component boundary with canonical defaults. -->
-  <arg name="tracking/output/objects" default="/perception/object_recognition/tracking/objects"/>
-  <arg name="prediction/input/objects" default="/perception/object_recognition/tracking/objects"/>
 
   <include file="$(find-pkg-share tier4_perception_launch)/launch/perception.launch.xml">
     <!-- Options to Switch Launch Function/Module -->
@@ -39,9 +36,6 @@
     <arg name="image_raw0" value="$(var image_raw0)"/>
     <arg name="camera_info0" value="$(var camera_info0)"/>
     <arg name="detection_rois0" value="$(var detection_rois0)"/>
-    <!-- HH_260810 - Forward both sides of the dormant Stage-4 junction without adding another predictor. -->
-    <arg name="tracking/output/objects" value="$(var tracking/output/objects)"/>
-    <arg name="prediction/input/objects" value="$(var prediction/input/objects)"/>
     <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
 
     <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>

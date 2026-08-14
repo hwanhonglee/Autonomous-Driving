@@ -1,0 +1,68 @@
+/**:
+  ros__parameters:
+    # HH_260810 - Keep the installed profile non-operational until every owner-reviewed gate is supplied.
+    mode: real_only
+    contract_approved: false
+    enable_canonical_selection: false
+    enable_required_modes: false
+
+    # HH_260810 - Use stable PC2/PC4 topic names while leaving source selection under launch control.
+    topics:
+      physical_objects: /perception/object_recognition/tracking/objects
+      virtual_objects: /perception/pc4/virtual_obstacles/tracked_objects
+      pc4_diagnostics: /diagnostics/pc4/object_adapter
+      output_objects: /perception/pc2/vils/candidate_tracked_objects
+      accepted_status: /perception/pc2/vils/accepted_pc4_status
+      velocity_report: /vehicle/status/velocity_status
+      gear_report: /vehicle/status/gear_status
+      control_mode_report: /vehicle/status/control_mode
+
+    # HH_260810 - Sentinels prevent an accidental Boolean-only promotion from becoming an approved contract.
+    contract:
+      expected_frame_id: map
+      expected_map_digest: __UNAPPROVED__
+      expected_transform_digest: __UNAPPROVED__
+      expected_serialization_contract: __UNAPPROVED__
+      approved_object_publisher_node_fqn: __UNAPPROVED__
+      approved_diagnostic_publisher_node_fqn: __UNAPPROVED__
+      diagnostic_name: __UNAPPROVED__
+      diagnostic_hardware_id: __UNAPPROVED__
+      # HH_260810 - Distinguish an owner-approved zero-actor scenario from a missing PC4 source.
+      allow_empty_snapshot: false
+
+    # HH_260810 - Zero timing values are deliberately invalid until measured Stage 2/3 limits are approved.
+    timing:
+      virtual_ttl_ms: 0
+      metadata_join_timeout_ms: 0
+      max_source_age_sec: 0.0
+      max_future_skew_sec: 0.0
+      max_fusion_skew_sec: 0.0
+      safe_state_timeout_sec: 0.0
+
+    # HH_260810 - Zero content bounds make this default reject every snapshot, including malformed empty contracts.
+    limits:
+      max_objects: 0
+      max_abs_position_m: 0.0
+      max_abs_velocity_mps: 0.0
+      max_abs_acceleration_mps2: 0.0
+      max_covariance: 0.0
+      min_dimension_m: 0.0
+      max_dimension_m: 0.0
+      max_footprint_points: 0
+      max_pending_samples: 0
+
+    # HH_260810 - Association remains disabled until a bounded replay campaign approves the threshold.
+    fusion:
+      association_distance_m: 0.0
+      require_matching_primary_classification: true
+
+    # HH_260810 - Manual arming stays vehicle-state-gated and exact-standstill with the unapproved profile.
+    arming:
+      stationary_velocity_mps: 0.0
+      stationary_yaw_rate_rps: 0.0
+      identity_timeout_sec: 0.0
+      require_safe_vehicle_state: true
+
+    # HH_260810 - An approved contract must provide an explicit append-only evidence destination.
+    evidence:
+      provenance_log_path: ""

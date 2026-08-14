@@ -92,9 +92,6 @@
   <arg name="use_object_validator" default="true" description="use obstacle_pointcloud based object validator"/>
   <arg name="objects_validation_method" default="obstacle_pointcloud" description="options: `obstacle_pointcloud` or `occupancy_grid`"/>
   <arg name="use_perception_online_evaluator" default="false" description="use perception online evaluator"/>
-  <!-- HH_260810 - Expose the tracker-to-predictor seam while retaining the existing canonical topics by default. -->
-  <arg name="tracking/output/objects" default="/perception/object_recognition/tracking/objects"/>
-  <arg name="prediction/input/objects" default="/perception/object_recognition/tracking/objects"/>
 
   <!-- Traffic light recognition parameters -->
   <arg name="use_traffic_light_recognition" default="false"/>
@@ -266,8 +263,6 @@
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
           <arg name="mode" value="$(var mode)"/>
-          <!-- HH_260810 - Forward the dormant PC2 VILS tracker output junction without changing the default graph. -->
-          <arg name="output/objects" value="$(var tracking/output/objects)"/>
           <arg
             name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"
             value="$(var object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path)"
@@ -287,8 +282,6 @@
         <push-ros-namespace namespace="prediction"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/prediction/prediction.launch.xml">
           <arg name="use_vector_map" value="$(var use_vector_map)"/>
-          <!-- HH_260810 - Keep one existing predictor and make its tracked-object input selectable at the launch boundary. -->
-          <arg name="input/objects" value="$(var prediction/input/objects)"/>
         </include>
       </group>
     </group>

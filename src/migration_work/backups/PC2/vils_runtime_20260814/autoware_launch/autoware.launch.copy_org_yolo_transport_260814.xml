@@ -146,15 +146,7 @@
       <arg name="output/objects" value="/perception/object_recognition/detection/rois0"/>
       <arg name="model_name" value="yolox-tiny"/>
       <arg name="data_path" value="$(var data_path)"/>
-      <!-- HH_260814 - Decompress the 2x2-binned Windshield JPEG once at the YOLOX input;
-           this replaces the two-process full-resolution raw relay bottleneck. -->
-      <arg name="use_decompress" value="true"/>
-      <!-- HH_260814 - Pin the decompressor config explicitly. A parent launch
-           param_file argument otherwise leaks the VILS YAML into this include. -->
-      <arg
-        name="param_file"
-        value="$(find-pkg-share autoware_image_transport_decompressor)/config/image_transport_decompressor.param.yaml"
-      />
+      <arg name="use_decompress" value="false"/>
     </include>
     <!-- HH_260812 - Keep lazy YOLOX active and expose rate/timeout diagnostics without unsafe 3D fusion. -->
     <include file="$(find-pkg-share topic_state_monitor)/launch/topic_state_monitor.launch.xml" if="$(var launch_yolox)">
@@ -162,7 +154,7 @@
       <arg name="topic" value="/perception/object_recognition/detection/rois0"/>
       <arg name="topic_type" value="tier4_perception_msgs/msg/DetectedObjectsWithFeature"/>
       <arg name="diag_name" value="windshield_yolox_rois_status"/>
-      <!-- HH_260814 - The binned 1440x930 YOLO transport has an 8 Hz diagnostic target. -->
+      <!-- HH_260812 - A full 2880x1860 YOLO frame measured ~14.7 Hz; warn below 5 Hz. -->
       <arg name="warn_rate" value="5.0"/>
       <arg name="error_rate" value="2.0"/>
       <arg name="timeout" value="1.0"/>

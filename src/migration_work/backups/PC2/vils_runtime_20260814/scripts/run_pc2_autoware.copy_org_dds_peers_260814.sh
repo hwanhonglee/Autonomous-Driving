@@ -12,7 +12,6 @@ readonly PC2_DDS_SUBNET_PREFIX="192.168.9."
 readonly PC2_DDS_PREFIX_LENGTH="24"
 readonly PC2_PC1_IP="192.168.9.2"
 readonly PC2_PC3_IP="192.168.9.7"
-readonly PC2_PC4_IP="192.168.9.12"
 # HH_260811 - Kept the physically proven serial-214 loop-top camera on its dedicated link.
 readonly PC2_CAMERA_IFACE="enp1s0f3"
 readonly PC2_CAMERA_CONNECTION="Lucid Camera Loop Top"
@@ -35,10 +34,8 @@ readonly PC2_MIGRATION_ROOT="$(cd -- "${PC2_SCRIPT_DIR}/.." && pwd)"
 readonly PC2_TOPIC_TOOLS_BUILD_SCRIPT="${PC2_SCRIPT_DIR}/build_topic_tools_overlay.sh"
 readonly PC2_TOPIC_TOOLS_PREFIX="${PC2_MIGRATION_ROOT}/vendor-build/topic_tools-1.1.2-HH_260810/install"
 readonly PC2_TOPIC_TOOLS_RELAY_LIBRARY="${PC2_TOPIC_TOOLS_PREFIX}/lib/librelay_node.so"
-# HH_260814 - Keep multicast, but also seed all vehicle-compute peers. The
-# four-PC field graph intermittently stopped reaching PC2 through multicast
-# alone; this exact peer set restored PC1 and PC3 endpoints in a bounded audit.
-readonly PC2_CYCLONEDDS_URI='<CycloneDDS><Domain id="any"><General><Interfaces><NetworkInterface name="enp0s31f6"/></Interfaces><AllowMulticast>true</AllowMulticast></General><Discovery><Peers><Peer Address="192.168.9.2"/><Peer Address="192.168.9.7"/><Peer Address="192.168.9.12"/></Peers></Discovery></Domain></CycloneDDS>'
+# HH_260810 - Pinned CycloneDDS to the only local interface proven to discover PC3 at 192.168.9.7.
+readonly PC2_CYCLONEDDS_URI='<CycloneDDS><Domain id="any"><General><Interfaces><NetworkInterface name="enp0s31f6"/></Interfaces><AllowMulticast>true</AllowMulticast></General></Domain></CycloneDDS>'
 
 # HH_260810 - Sourced the same ROS, Autoware, and camera overlays used by the original interactive alias.
 source /opt/ros/humble/setup.bash

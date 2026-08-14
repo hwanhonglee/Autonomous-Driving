@@ -701,7 +701,7 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
     timeout 20s "${PC2_CAMERA_CONTRACT_PROBE}" \
       --image-topic /sensing/camera/camera0/image_raw \
       --info-topic /sensing/camera/camera0/camera_info \
-      --width 1440 --height 930 \
+      --width 2880 --height 1860 \
       --frame-id camera0/camera_optical_link 2>&1
   )"; then
     windshield_camera_contract="PASS"
@@ -711,7 +711,7 @@ for ((cycle = 1; cycle <= CYCLE_COUNT; cycle++)); do
   if yolox_contract_detail="$(
     timeout 15s "${PC2_YOLOX_CONTRACT_PROBE}" \
       --input-topic /sensing/camera/camera0/image_raw \
-      --width 1440 --height 930 \
+      --width 2880 --height 1860 \
       --min-rate 5.0 \
       --frame-id camera0/camera_optical_link \
       --required-output-subscriber /topic_state_monitor_windshield_yolox_rois 2>&1

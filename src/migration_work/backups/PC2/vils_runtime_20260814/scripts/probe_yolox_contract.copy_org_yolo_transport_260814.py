@@ -114,8 +114,8 @@ def main() -> int:
     parser.add_argument("--samples", type=int, default=10)
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--min-rate", type=float, default=5.0)
-    parser.add_argument("--width", type=int, default=1440)
-    parser.add_argument("--height", type=int, default=930)
+    parser.add_argument("--width", type=int, default=2880)
+    parser.add_argument("--height", type=int, default=1860)
     parser.add_argument(
         "--frame-id", default="camera0/camera_optical_link"
     )
@@ -126,7 +126,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--input-publisher-node",
-        default="/image_transport_decompressor_node",
+        default="/sensing/camera/camera0/windshield_image_relay",
         help="Sole expected publisher node for the normalized Windshield image.",
     )
     parser.add_argument(

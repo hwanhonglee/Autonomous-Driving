@@ -28,8 +28,8 @@ The complete 549 MiB source evidence remains read-only on PC4 at:
 
 Its `checksums.sha256` file has SHA-256
 `b04ae3dcc9251767c760e776946bde82a404ded5d6c55cd550edd7c10f58aee2`.
-The two rosbag databases total about 536 MiB and are stored in this branch with Git LFS. Their
-adjacent `metadata.yaml` files, exact hashes, and compact measurements are included here as well.
+The two rosbag databases are intentionally not committed to Git because they total about 536 MiB;
+their metadata, exact hashes, and compact measurements are included here.
 
 <!-- HH_260810 - State the supported result before the detailed measurements. -->
 ## Final result
@@ -247,18 +247,15 @@ PC4 sent no remote shutdown command.
 7. Run the full 660 seconds without interruption, at least three independent times.
 8. Report nominal runs separately from controlled power/link fault trials.
 
-<!-- HH_260810 - Index the compact Git evidence and the Git LFS source artifacts. -->
+<!-- HH_260810 - Index the compact Git evidence and the omitted large source artifacts. -->
 ## Files in this PC4 result folder
 
 - `summary.json`: machine-readable result and claim status
 - `metrics.csv`: compact values used in tables and manuscript analysis
 - `source_evidence/`: review copies of small source metadata and PC4 metric records
-- `source_evidence/SOURCE_ARTIFACTS.sha256`: original 65-file manifest, including rosbag hashes
-- `source_evidence/rosbag/domain10_vehicle/`: Domain 10 metadata and Git LFS database
-- `source_evidence/rosbag/domain42_source/`: Domain 42 metadata and Git LFS database
+- `source_evidence/SOURCE_ARTIFACTS.sha256`: original 65-file manifest, including omitted rosbag hashes
 
-The two Git LFS databases remain read-only in the original PC4 evidence root and are published
-with these hashes:
+The two omitted source databases remain available on PC4 with these hashes:
 
 ```text
 39742c96abaa95153a94143714dd6e194b2316ce84293edcb6eab7d39a00d0c4  domain10_vehicle_0.db3

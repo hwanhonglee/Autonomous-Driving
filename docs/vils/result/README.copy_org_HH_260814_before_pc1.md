@@ -32,7 +32,7 @@ PC's evidence.
 
 | PC | Result present on this branch | Note |
 |---|---|---|
-| PC1 | yes | [`20260814T091657Z-VILS_PC123_REAL_20260814_1816_R01`](PC1/20260814T091657Z-VILS_PC123_REAL_20260814_1816_R01/README.md), a recovered PC1-local SQLite bag and analysis package. |
+| PC1 | no | Add the PC1-local artifact from `/home/a/pc1_vils_runs/`; do not substitute a remote observation. |
 | PC2 | yes | `20260814T091155Z-pc2-power-interrupted` (bounded partial evidence; no PC2 rosbag was started). |
 | PC3 | yes | `20260814T091657Z-VILS_PC123_REAL_20260814_1816_R01` |
 | PC4 | yes | `20260814T092321.301564497Z-outdoor_route_aligned_shadow_response-b0fed535-04fb-41f6-85e7-48e04c426867` (bounded partial result; nominal run incomplete) |

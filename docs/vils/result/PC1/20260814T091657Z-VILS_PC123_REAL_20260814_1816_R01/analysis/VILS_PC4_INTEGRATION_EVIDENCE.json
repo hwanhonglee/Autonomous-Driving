@@ -1,0 +1,1104 @@
+{
+  "alignment_csv": {
+    "path": "analysis/VILS_PC4_PC2_ALIGNMENT.csv",
+    "rows": 2252,
+    "stable_object_rows": 2177
+  },
+  "analysis_schema": "vils_pc4_integration_evidence/v1",
+  "bag_directory": "rosbag",
+  "database_integrity": {
+    "pc1_20260814_181555_0.db3": "ok",
+    "pc1_20260814_181555_1.db3": "ok",
+    "pc1_20260814_181555_10.db3": "ok",
+    "pc1_20260814_181555_11.db3": "ok",
+    "pc1_20260814_181555_12.db3": "ok",
+    "pc1_20260814_181555_13.db3": "ok",
+    "pc1_20260814_181555_2.db3": "ok",
+    "pc1_20260814_181555_3.db3": "ok",
+    "pc1_20260814_181555_4.db3": "ok",
+    "pc1_20260814_181555_5.db3": "ok",
+    "pc1_20260814_181555_6.db3": "ok",
+    "pc1_20260814_181555_7.db3": "ok",
+    "pc1_20260814_181555_8.db3": "ok",
+    "pc1_20260814_181555_9.db3": "ok"
+  },
+  "database_sha256": {
+    "pc1_20260814_181555_0.db3": "2bdffdfb34dc3b6be231c9d39c062a26fc80e483c19a3a10c572cc90787ebb97",
+    "pc1_20260814_181555_1.db3": "accb86c24f8f4b6a2160731742098b2851fd1cff54aafa8d9382bc188efc9b7c",
+    "pc1_20260814_181555_10.db3": "be8eb0b1a0bdf4aa90aa189f2f9ab560e9054fe667066cf4b727fb7713c9f9af",
+    "pc1_20260814_181555_11.db3": "0e9e842dbbfd5e2ef47819f2922c7929b392a39e5d345f17e5bafb6124c3a31c",
+    "pc1_20260814_181555_12.db3": "6c22b94c4530a0b46952b2a2c3394e5df7d514f5172b62e3811380fc70de2fb2",
+    "pc1_20260814_181555_13.db3": "b848fdb54246bb6c78d742a99898e25d945c8e298d2360d5b1c4f78a39ed9641",
+    "pc1_20260814_181555_2.db3": "ca93f5e151b32f5367eac31e2549f115800886d9433da970abaef4c6af51f3d6",
+    "pc1_20260814_181555_3.db3": "36a65543f226c936c866f7d80706eeec42409cb49592d69ba9e9d5ec28da47b1",
+    "pc1_20260814_181555_4.db3": "f6e70374e7520c668151145427e31659df676f6a773e1e881132f29c468eab6b",
+    "pc1_20260814_181555_5.db3": "c55544e092f314f55a58cdfae445c5d2d3c1a483af2b06757afc57341abbc9e7",
+    "pc1_20260814_181555_6.db3": "601674f039733e89c31940c8e49076e9614f91e912048638074f480ac8572e91",
+    "pc1_20260814_181555_7.db3": "ba74c0550d0b01b11f5ea6c6e56f43ff35ad099ca65383193a1036b208cdc2e5",
+    "pc1_20260814_181555_8.db3": "959d9b05c4e3164cae7742825f7ea6632371c7f2c1b08157af523706b47a3a8e",
+    "pc1_20260814_181555_9.db3": "bc125a592da127ceb03c118587ece91c24a28642e81aad7ad623a691b4769e57"
+  },
+  "generator": "analyze_vils_pc4_integration_evidence.py",
+  "limitations": [
+    "DB13 is a separately recovered quick_check=ok candidate, not the untouched crash-time DB13; conservative paper results should use DB0-12.",
+    "The PC4 topic name identifies virtual obstacles, but this bag does not contain simulator ground truth or independent source-provenance evidence.",
+    "PC4 adapter diagnostics, PC2 candidate objects, and PC2 accepted-PC4 status topics contain zero recorded messages.",
+    "An exact UUID match is sufficient evidence of identity preservation but its absence is not conclusive because a tracker or fusion stage may reassign UUIDs.",
+    "Nearest XY proximity is supporting evidence only; it cannot prove semantic fusion, object identity, lane occupancy, collision risk, or causal control response.",
+    "Bag-record minus header timestamps are not one-way network latency because four-host clock synchronization was not independently validated.",
+    "The ego comparison is two-dimensional map-frame distance and does not account for object footprint, lane topology, heading, or trajectory intersection.",
+    "High-bandwidth PC3 LiDAR and PC2/PC3/PC4 local resource logs are outside this PC1 dataset."
+  ],
+  "methodology": {
+    "csv_rows": "One row per nonempty PC4 message; all such rows occur in DB0-12",
+    "ego_alignment": "Nearest localization and vehicle velocity messages by record timestamp",
+    "object_comparison": "Euclidean XY distance in the reported map frame",
+    "pc2_alignment": "Nearest PC2 message by SQLite record timestamp",
+    "pc4_object_selection": "Most frequent UUID and primary classification pair",
+    "scope_comparison": "Conservative DB0-12 and extended DB0-13 are reported separately"
+  },
+  "python_version": "3.10.12",
+  "safety": {
+    "record_time_basis": "SQLite messages.timestamp",
+    "ros_usage": "CDR deserialization only; no ROS node, replay, subscription, or publish",
+    "sqlite_open_mode": "mode=ro&immutable=1 with PRAGMA query_only=ON"
+  },
+  "scope_results": {
+    "conservative_db0_12": {
+      "all_pc4_nonempty_comparison": {
+        "canonical": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1675,
+            "max": 367.2539483487946,
+            "mean": 142.4311094096127,
+            "median": 117.0476646791613,
+            "min": 3.340736395178622,
+            "p95": 352.96930079271766
+          },
+          "record_time_delta_ms": {
+            "count": 2252,
+            "max": 78.275921,
+            "mean": 0.0016132917406749315,
+            "median": -0.165122,
+            "min": -71.364155,
+            "p95": 45.81764
+          }
+        },
+        "pc4_nonempty_frames_compared": 2252,
+        "tracker": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1675,
+            "max": 367.2539483487946,
+            "mean": 142.4399604074693,
+            "median": 117.0476646791613,
+            "min": 3.340736395178622,
+            "p95": 352.96930079271766
+          },
+          "record_time_delta_ms": {
+            "count": 2252,
+            "max": 76.412223,
+            "mean": -0.40464771447602127,
+            "median": -0.328197,
+            "min": -97.593276,
+            "p95": 46.974313
+          }
+        }
+      },
+      "bag": {
+        "database_files": [
+          "pc1_20260814_181555_0.db3",
+          "pc1_20260814_181555_1.db3",
+          "pc1_20260814_181555_2.db3",
+          "pc1_20260814_181555_3.db3",
+          "pc1_20260814_181555_4.db3",
+          "pc1_20260814_181555_5.db3",
+          "pc1_20260814_181555_6.db3",
+          "pc1_20260814_181555_7.db3",
+          "pc1_20260814_181555_8.db3",
+          "pc1_20260814_181555_9.db3",
+          "pc1_20260814_181555_10.db3",
+          "pc1_20260814_181555_11.db3",
+          "pc1_20260814_181555_12.db3"
+        ],
+        "duration_s": 780.009476678,
+        "first_record_kst": "2026-08-14T18:15:56.875194+09:00",
+        "first_record_ns": 1786698956875194299,
+        "last_record_kst": "2026-08-14T18:28:56.884671+09:00",
+        "last_record_ns": 1786699736884670977,
+        "message_count": 2064803,
+        "topic_message_counts": {
+          "/api/localization/initialization_state": 1,
+          "/api/operation_mode/state": 20,
+          "/api/routing/state": 1,
+          "/control/command/control_cmd": 25955,
+          "/control/command/emergency_cmd": 25957,
+          "/control/command/gear_cmd": 7799,
+          "/control/command/hazard_lights_cmd": 7799,
+          "/control/command/turn_indicators_cmd": 7798,
+          "/current/brake_press_status": 78008,
+          "/current/cruise_mode_cancel_status": 39021,
+          "/current/cruise_mode_status": 39021,
+          "/current/velocity_status": 0,
+          "/from_can_bus": 1408440,
+          "/localization/acceleration": 38558,
+          "/localization/kinematic_state": 38604,
+          "/perception/object_recognition/objects": 7500,
+          "/perception/object_recognition/tracking/objects": 7527,
+          "/perception/pc4/virtual_obstacles/tracked_objects": 3962,
+          "/planning/mission_planning/route": 1,
+          "/planning/scenario_planning/trajectory": 7754,
+          "/system/emergency/hazard_status": 7774,
+          "/system/fail_safe/mrm_state": 7781,
+          "/tf": 84501,
+          "/tf_static": 2,
+          "/to_can_bus": 26001,
+          "/vehicle/status/control_mode": 39017,
+          "/vehicle/status/gear_status": 77999,
+          "/vehicle/status/hazard_lights_status": 0,
+          "/vehicle/status/steering_status": 39004,
+          "/vehicle/status/turn_indicators_status": 0,
+          "/vehicle/status/velocity_status": 38998
+        }
+      },
+      "ego_minimum_xy_event_all_pc4_nonempty": {
+        "canonical_nearest_xy_distance_m": 5.222149415469596,
+        "canonical_object_count": 10,
+        "control_record_delta_ms": -4.368682,
+        "control_record_ns": 1786699477107776893,
+        "control_target_acceleration_mps2": -1.5,
+        "control_target_velocity_mps": 0.0,
+        "ego_pc4_xy_distance_m": 0.3916993557651718,
+        "ego_record_delta_ms": 0.118312,
+        "ego_record_ns": 1786699477112263887,
+        "ego_x": 50.778211018855,
+        "ego_y": -124.87406753363906,
+        "ego_z": -14.633540066577805,
+        "pc4_label": "CAR",
+        "pc4_label_id": 1,
+        "pc4_record_kst": "2026-08-14T18:24:37.112146+09:00",
+        "pc4_record_ns": 1786699477112145575,
+        "pc4_uuid_hex": "a26a7b22b87f55e893b4681f5302df71",
+        "pc4_x": 50.69159608333537,
+        "pc4_y": -125.25607046327676,
+        "pc4_z": -15.668422430393342,
+        "tracker_nearest_xy_distance_m": 5.222149415469596,
+        "tracker_object_count": 10,
+        "vehicle_longitudinal_velocity_mps": 3.8888888359069824,
+        "velocity_record_delta_ms": 9.356384,
+        "velocity_record_ns": 1786699477121501959
+      },
+      "ego_minimum_xy_event_stable_pc4_object": {
+        "canonical_nearest_xy_distance_m": 5.222149415469596,
+        "canonical_object_count": 10,
+        "control_record_delta_ms": -4.368682,
+        "control_record_ns": 1786699477107776893,
+        "control_target_acceleration_mps2": -1.5,
+        "control_target_velocity_mps": 0.0,
+        "ego_pc4_xy_distance_m": 0.3916993557651718,
+        "ego_record_delta_ms": 0.118312,
+        "ego_record_ns": 1786699477112263887,
+        "ego_x": 50.778211018855,
+        "ego_y": -124.87406753363906,
+        "ego_z": -14.633540066577805,
+        "pc4_label": "CAR",
+        "pc4_label_id": 1,
+        "pc4_record_kst": "2026-08-14T18:24:37.112146+09:00",
+        "pc4_record_ns": 1786699477112145575,
+        "pc4_uuid_hex": "a26a7b22b87f55e893b4681f5302df71",
+        "pc4_x": 50.69159608333537,
+        "pc4_y": -125.25607046327676,
+        "pc4_z": -15.668422430393342,
+        "tracker_nearest_xy_distance_m": 5.222149415469596,
+        "tracker_object_count": 10,
+        "vehicle_longitudinal_velocity_mps": 3.8888888359069824,
+        "velocity_record_delta_ms": 9.356384,
+        "velocity_record_ns": 1786699477121501959
+      },
+      "pc2_canonical_timing": {
+        "effective_rate_hz": 9.61970912808244,
+        "first_record_kst": "2026-08-14T18:15:57.315600+09:00",
+        "first_record_ns": 1786698957315599808,
+        "gaps_over_1_s": [
+          {
+            "duration_s": 41.277664649,
+            "end_kst": "2026-08-14T18:21:32.880057+09:00",
+            "end_ns": 1786699292880057005,
+            "start_kst": "2026-08-14T18:20:51.602392+09:00",
+            "start_ns": 1786699251602392356
+          }
+        ],
+        "last_record_kst": "2026-08-14T18:28:56.861000+09:00",
+        "last_record_ns": 1786699736860999794,
+        "maximum_gap": {
+          "duration_s": 41.277664649,
+          "end_kst": "2026-08-14T18:21:32.880057+09:00",
+          "end_ns": 1786699292880057005,
+          "start_kst": "2026-08-14T18:20:51.602392+09:00",
+          "start_ns": 1786699251602392356
+        },
+        "messages": 7500,
+        "span_s": 779.545399986
+      },
+      "pc2_tracker_timing": {
+        "effective_rate_hz": 9.653108935294823,
+        "first_record_kst": "2026-08-14T18:15:57.215446+09:00",
+        "first_record_ns": 1786698957215446068,
+        "gaps_over_1_s": [
+          {
+            "duration_s": 38.245801754,
+            "end_kst": "2026-08-14T18:21:29.836025+09:00",
+            "end_ns": 1786699289836025104,
+            "start_kst": "2026-08-14T18:20:51.590223+09:00",
+            "start_ns": 1786699251590223350
+          }
+        ],
+        "last_record_kst": "2026-08-14T18:28:56.860641+09:00",
+        "last_record_ns": 1786699736860641253,
+        "maximum_gap": {
+          "duration_s": 38.245801754,
+          "end_kst": "2026-08-14T18:21:29.836025+09:00",
+          "end_ns": 1786699289836025104,
+          "start_kst": "2026-08-14T18:20:51.590223+09:00",
+          "start_ns": 1786699251590223350
+        },
+        "messages": 7527,
+        "span_s": 779.645195185
+      },
+      "pc4": {
+        "bag_record_minus_header_stamp_ms": {
+          "count": 3962,
+          "max": 96.378565,
+          "mean": 46.36848884755174,
+          "median": 60.405319500000004,
+          "min": -9.605557,
+          "p95": 69.826618
+        },
+        "empty_messages": 1710,
+        "first_nonempty_kst": "2026-08-14T18:24:23.331011+09:00",
+        "first_nonempty_ns": 1786699463331011286,
+        "frame_counts": {
+          "map": 3962
+        },
+        "last_nonempty_kst": "2026-08-14T18:28:14.337272+09:00",
+        "last_nonempty_ns": 1786699694337271890,
+        "nonempty_messages": 2252,
+        "nonempty_span_s": 231.006260604,
+        "object_count": {
+          "count": 3962,
+          "max": 1.0,
+          "mean": 0.5683997980817769,
+          "median": 1.0,
+          "min": 0.0,
+          "p95": 1.0
+        },
+        "stable_object": {
+          "available": true,
+          "classification": "CAR",
+          "classification_id": 1,
+          "classification_probability": {
+            "count": 2177,
+            "max": 1.0,
+            "mean": 1.0,
+            "median": 1.0,
+            "min": 1.0,
+            "p95": 1.0
+          },
+          "dimension_statistics": {
+            "x": {
+              "count": 2177,
+              "max": 4.575127332337629,
+              "mean": 4.480489080902396,
+              "median": 4.479514663151278,
+              "min": 4.40647622065692,
+              "p95": 4.54237587929194
+            },
+            "y": {
+              "count": 2177,
+              "max": 2.1508848193727585,
+              "mean": 2.1187204981815015,
+              "median": 2.117660024171049,
+              "min": 2.088898557530345,
+              "p95": 2.140668163402433
+            },
+            "z": {
+              "count": 2177,
+              "max": 1.9595553278923035,
+              "mean": 1.1215302653377177,
+              "median": 1.0454084873199463,
+              "min": 1.0,
+              "p95": 1.4875944256782532
+            }
+          },
+          "duration_s": 218.737685313,
+          "existence_probability": {
+            "count": 2177,
+            "max": 0.9281201362609863,
+            "mean": 0.8621487841728799,
+            "median": 0.89284348487854,
+            "min": 0.3515336513519287,
+            "p95": 0.9104107618331909
+          },
+          "first_pose": {
+            "record_kst": "2026-08-14T18:24:35.599586+09:00",
+            "record_ns": 1786699475599586577,
+            "x": 51.01626083997962,
+            "y": -125.09067582876011,
+            "z": -16.35067210167984
+          },
+          "first_record_kst": "2026-08-14T18:24:35.599586+09:00",
+          "first_record_ns": 1786699475599586577,
+          "frame_counts": {
+            "map": 2177
+          },
+          "last_pose": {
+            "record_kst": "2026-08-14T18:28:14.337272+09:00",
+            "record_ns": 1786699694337271890,
+            "x": 50.76920191761014,
+            "y": -125.26903048324036,
+            "z": -15.62222395422021
+          },
+          "last_record_kst": "2026-08-14T18:28:14.337272+09:00",
+          "last_record_ns": 1786699694337271890,
+          "messages": 2177,
+          "pose_statistics": {
+            "x": {
+              "count": 2177,
+              "max": 51.040414051534555,
+              "mean": 50.725367599835806,
+              "median": 50.71620212082519,
+              "min": 50.64840442361618,
+              "p95": 50.80289180963654
+            },
+            "y": {
+              "count": 2177,
+              "max": -125.08925940182561,
+              "mean": -125.27540024574483,
+              "median": -125.27710137133586,
+              "min": -125.30015303432502,
+              "p95": -125.25667476661448
+            },
+            "z": {
+              "count": 2177,
+              "max": -15.365833182143795,
+              "mean": -15.539243578751693,
+              "median": -15.53123131610541,
+              "min": -16.35067210167984,
+              "p95": -15.440722476479005
+            }
+          },
+          "selection_method": "most frequent (UUID, primary classification label) object occurrence",
+          "uuid_hex": "a26a7b22b87f55e893b4681f5302df71"
+        },
+        "state_transitions": [
+          {
+            "record_kst": "2026-08-14T18:22:18.264470+09:00",
+            "record_ns": 1786699338264469964,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:23.331011+09:00",
+            "record_ns": 1786699463331011286,
+            "state": [
+              "object",
+              "55969a6b32a259b1a7094c1e6f5c7c2e",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:24.630897+09:00",
+            "record_ns": 1786699464630896917,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:25.734837+09:00",
+            "record_ns": 1786699465734837202,
+            "state": [
+              "object",
+              "22d5c349945d592cafd60df5d96caceb",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:29.928475+09:00",
+            "record_ns": 1786699469928474881,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:31.031131+09:00",
+            "record_ns": 1786699471031130665,
+            "state": [
+              "object",
+              "84f5a2d6ab4155a08383b18632e99b96",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:31.884382+09:00",
+            "record_ns": 1786699471884381679,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:33.016177+09:00",
+            "record_ns": 1786699473016177083,
+            "state": [
+              "object",
+              "ab6480590fb75fb09c456abc1e6f63ef",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:33.934227+09:00",
+            "record_ns": 1786699473934227382,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.031117+09:00",
+            "record_ns": 1786699475031117079,
+            "state": [
+              "object",
+              "4675aec11a7f5d49a317a47559b33b39",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.231049+09:00",
+            "record_ns": 1786699475231049256,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.599586+09:00",
+            "record_ns": 1786699475599586577,
+            "state": [
+              "object",
+              "a26a7b22b87f55e893b4681f5302df71",
+              1,
+              "CAR"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:28:14.433868+09:00",
+            "record_ns": 1786699694433867660,
+            "state": [
+              "empty"
+            ]
+          }
+        ],
+        "timing": {
+          "effective_rate_hz": 9.937822568540447,
+          "first_record_kst": "2026-08-14T18:22:18.264470+09:00",
+          "first_record_ns": 1786699338264469964,
+          "gaps_over_1_s": [],
+          "last_record_kst": "2026-08-14T18:28:56.842727+09:00",
+          "last_record_ns": 1786699736842727191,
+          "maximum_gap": {
+            "duration_s": 0.211512413,
+            "end_kst": "2026-08-14T18:24:40.436957+09:00",
+            "end_ns": 1786699480436956855,
+            "start_kst": "2026-08-14T18:24:40.225445+09:00",
+            "start_ns": 1786699480225444442
+          },
+          "messages": 3962,
+          "span_s": 398.578257227
+        }
+      },
+      "scope_definition": "DB0-DB12 crash-surviving original files",
+      "stable_pc4_object_comparison": {
+        "canonical": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1600,
+            "max": 367.2539483487946,
+            "mean": 148.82920887342527,
+            "median": 118.31130344950608,
+            "min": 3.340736395178622,
+            "p95": 353.3395395003177
+          },
+          "record_time_delta_ms": {
+            "count": 2177,
+            "max": 78.275921,
+            "mean": -0.1248075847496555,
+            "median": -0.193166,
+            "min": -71.364155,
+            "p95": 47.413722
+          }
+        },
+        "pc4_nonempty_frames_compared": 2177,
+        "tracker": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1600,
+            "max": 367.2539483487946,
+            "mean": 148.83847735729998,
+            "median": 118.31130344950608,
+            "min": 3.340736395178622,
+            "p95": 353.3395395003177
+          },
+          "record_time_delta_ms": {
+            "count": 2177,
+            "max": 76.412223,
+            "mean": -0.4841099462563159,
+            "median": -0.358619,
+            "min": -97.593276,
+            "p95": 46.996916
+          }
+        }
+      }
+    },
+    "extended_db0_13": {
+      "all_pc4_nonempty_comparison": {
+        "canonical": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1675,
+            "max": 367.2539483487946,
+            "mean": 142.4311094096127,
+            "median": 117.0476646791613,
+            "min": 3.340736395178622,
+            "p95": 352.96930079271766
+          },
+          "record_time_delta_ms": {
+            "count": 2252,
+            "max": 78.275921,
+            "mean": 0.0016132917406749315,
+            "median": -0.165122,
+            "min": -71.364155,
+            "p95": 45.81764
+          }
+        },
+        "pc4_nonempty_frames_compared": 2252,
+        "tracker": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1675,
+            "max": 367.2539483487946,
+            "mean": 142.4399604074693,
+            "median": 117.0476646791613,
+            "min": 3.340736395178622,
+            "p95": 352.96930079271766
+          },
+          "record_time_delta_ms": {
+            "count": 2252,
+            "max": 76.412223,
+            "mean": -0.40464771447602127,
+            "median": -0.328197,
+            "min": -97.593276,
+            "p95": 46.974313
+          }
+        }
+      },
+      "bag": {
+        "database_files": [
+          "pc1_20260814_181555_0.db3",
+          "pc1_20260814_181555_1.db3",
+          "pc1_20260814_181555_2.db3",
+          "pc1_20260814_181555_3.db3",
+          "pc1_20260814_181555_4.db3",
+          "pc1_20260814_181555_5.db3",
+          "pc1_20260814_181555_6.db3",
+          "pc1_20260814_181555_7.db3",
+          "pc1_20260814_181555_8.db3",
+          "pc1_20260814_181555_9.db3",
+          "pc1_20260814_181555_10.db3",
+          "pc1_20260814_181555_11.db3",
+          "pc1_20260814_181555_12.db3",
+          "pc1_20260814_181555_13.db3"
+        ],
+        "duration_s": 825.283893424,
+        "first_record_kst": "2026-08-14T18:15:56.875194+09:00",
+        "first_record_ns": 1786698956875194299,
+        "last_record_kst": "2026-08-14T18:29:42.159088+09:00",
+        "last_record_ns": 1786699782159087723,
+        "message_count": 2184011,
+        "topic_message_counts": {
+          "/api/localization/initialization_state": 2,
+          "/api/operation_mode/state": 20,
+          "/api/routing/state": 1,
+          "/control/command/control_cmd": 27464,
+          "/control/command/emergency_cmd": 27466,
+          "/control/command/gear_cmd": 8251,
+          "/control/command/hazard_lights_cmd": 8251,
+          "/control/command/turn_indicators_cmd": 8250,
+          "/current/brake_press_status": 82536,
+          "/current/cruise_mode_cancel_status": 41286,
+          "/current/cruise_mode_status": 41286,
+          "/current/velocity_status": 0,
+          "/from_can_bus": 1490203,
+          "/localization/acceleration": 40534,
+          "/localization/kinematic_state": 40580,
+          "/perception/object_recognition/objects": 7939,
+          "/perception/object_recognition/tracking/objects": 7966,
+          "/perception/pc4/virtual_obstacles/tracked_objects": 4415,
+          "/planning/mission_planning/route": 1,
+          "/planning/scenario_planning/trajectory": 8207,
+          "/system/emergency/hazard_status": 8227,
+          "/system/fail_safe/mrm_state": 8232,
+          "/tf": 89043,
+          "/tf_static": 2,
+          "/to_can_bus": 27510,
+          "/vehicle/status/control_mode": 41282,
+          "/vehicle/status/gear_status": 82527,
+          "/vehicle/status/hazard_lights_status": 0,
+          "/vehicle/status/steering_status": 41268,
+          "/vehicle/status/turn_indicators_status": 0,
+          "/vehicle/status/velocity_status": 41262
+        }
+      },
+      "ego_minimum_xy_event_all_pc4_nonempty": {
+        "canonical_nearest_xy_distance_m": 5.222149415469596,
+        "canonical_object_count": 10,
+        "control_record_delta_ms": -4.368682,
+        "control_record_ns": 1786699477107776893,
+        "control_target_acceleration_mps2": -1.5,
+        "control_target_velocity_mps": 0.0,
+        "ego_pc4_xy_distance_m": 0.3916993557651718,
+        "ego_record_delta_ms": 0.118312,
+        "ego_record_ns": 1786699477112263887,
+        "ego_x": 50.778211018855,
+        "ego_y": -124.87406753363906,
+        "ego_z": -14.633540066577805,
+        "pc4_label": "CAR",
+        "pc4_label_id": 1,
+        "pc4_record_kst": "2026-08-14T18:24:37.112146+09:00",
+        "pc4_record_ns": 1786699477112145575,
+        "pc4_uuid_hex": "a26a7b22b87f55e893b4681f5302df71",
+        "pc4_x": 50.69159608333537,
+        "pc4_y": -125.25607046327676,
+        "pc4_z": -15.668422430393342,
+        "tracker_nearest_xy_distance_m": 5.222149415469596,
+        "tracker_object_count": 10,
+        "vehicle_longitudinal_velocity_mps": 3.8888888359069824,
+        "velocity_record_delta_ms": 9.356384,
+        "velocity_record_ns": 1786699477121501959
+      },
+      "ego_minimum_xy_event_stable_pc4_object": {
+        "canonical_nearest_xy_distance_m": 5.222149415469596,
+        "canonical_object_count": 10,
+        "control_record_delta_ms": -4.368682,
+        "control_record_ns": 1786699477107776893,
+        "control_target_acceleration_mps2": -1.5,
+        "control_target_velocity_mps": 0.0,
+        "ego_pc4_xy_distance_m": 0.3916993557651718,
+        "ego_record_delta_ms": 0.118312,
+        "ego_record_ns": 1786699477112263887,
+        "ego_x": 50.778211018855,
+        "ego_y": -124.87406753363906,
+        "ego_z": -14.633540066577805,
+        "pc4_label": "CAR",
+        "pc4_label_id": 1,
+        "pc4_record_kst": "2026-08-14T18:24:37.112146+09:00",
+        "pc4_record_ns": 1786699477112145575,
+        "pc4_uuid_hex": "a26a7b22b87f55e893b4681f5302df71",
+        "pc4_x": 50.69159608333537,
+        "pc4_y": -125.25607046327676,
+        "pc4_z": -15.668422430393342,
+        "tracker_nearest_xy_distance_m": 5.222149415469596,
+        "tracker_object_count": 10,
+        "vehicle_longitudinal_velocity_mps": 3.8888888359069824,
+        "velocity_record_delta_ms": 9.356384,
+        "velocity_record_ns": 1786699477121501959
+      },
+      "pc2_canonical_timing": {
+        "effective_rate_hz": 9.624272190535432,
+        "first_record_kst": "2026-08-14T18:15:57.315600+09:00",
+        "first_record_ns": 1786698957315599808,
+        "gaps_over_1_s": [
+          {
+            "duration_s": 41.277664649,
+            "end_kst": "2026-08-14T18:21:32.880057+09:00",
+            "end_ns": 1786699292880057005,
+            "start_kst": "2026-08-14T18:20:51.602392+09:00",
+            "start_ns": 1786699251602392356
+          }
+        ],
+        "last_record_kst": "2026-08-14T18:29:42.105240+09:00",
+        "last_record_ns": 1786699782105240297,
+        "maximum_gap": {
+          "duration_s": 41.277664649,
+          "end_kst": "2026-08-14T18:21:32.880057+09:00",
+          "end_ns": 1786699292880057005,
+          "start_kst": "2026-08-14T18:20:51.602392+09:00",
+          "start_ns": 1786699251602392356
+        },
+        "messages": 7939,
+        "span_s": 824.789640489
+      },
+      "pc2_tracker_timing": {
+        "effective_rate_hz": 9.655837201198644,
+        "first_record_kst": "2026-08-14T18:15:57.215446+09:00",
+        "first_record_ns": 1786698957215446068,
+        "gaps_over_1_s": [
+          {
+            "duration_s": 38.245801754,
+            "end_kst": "2026-08-14T18:21:29.836025+09:00",
+            "end_ns": 1786699289836025104,
+            "start_kst": "2026-08-14T18:20:51.590223+09:00",
+            "start_ns": 1786699251590223350
+          }
+        ],
+        "last_record_kst": "2026-08-14T18:29:42.105078+09:00",
+        "last_record_ns": 1786699782105078529,
+        "maximum_gap": {
+          "duration_s": 38.245801754,
+          "end_kst": "2026-08-14T18:21:29.836025+09:00",
+          "end_ns": 1786699289836025104,
+          "start_kst": "2026-08-14T18:20:51.590223+09:00",
+          "start_ns": 1786699251590223350
+        },
+        "messages": 7966,
+        "span_s": 824.889632461
+      },
+      "pc4": {
+        "bag_record_minus_header_stamp_ms": {
+          "count": 4415,
+          "max": 96.378565,
+          "mean": 47.80482582899207,
+          "median": 61.037967,
+          "min": -9.605557,
+          "p95": 69.893046
+        },
+        "empty_messages": 2163,
+        "first_nonempty_kst": "2026-08-14T18:24:23.331011+09:00",
+        "first_nonempty_ns": 1786699463331011286,
+        "frame_counts": {
+          "map": 4415
+        },
+        "last_nonempty_kst": "2026-08-14T18:28:14.337272+09:00",
+        "last_nonempty_ns": 1786699694337271890,
+        "nonempty_messages": 2252,
+        "nonempty_span_s": 231.006260604,
+        "object_count": {
+          "count": 4415,
+          "max": 1.0,
+          "mean": 0.510079275198188,
+          "median": 1.0,
+          "min": 0.0,
+          "p95": 1.0
+        },
+        "stable_object": {
+          "available": true,
+          "classification": "CAR",
+          "classification_id": 1,
+          "classification_probability": {
+            "count": 2177,
+            "max": 1.0,
+            "mean": 1.0,
+            "median": 1.0,
+            "min": 1.0,
+            "p95": 1.0
+          },
+          "dimension_statistics": {
+            "x": {
+              "count": 2177,
+              "max": 4.575127332337629,
+              "mean": 4.480489080902396,
+              "median": 4.479514663151278,
+              "min": 4.40647622065692,
+              "p95": 4.54237587929194
+            },
+            "y": {
+              "count": 2177,
+              "max": 2.1508848193727585,
+              "mean": 2.1187204981815015,
+              "median": 2.117660024171049,
+              "min": 2.088898557530345,
+              "p95": 2.140668163402433
+            },
+            "z": {
+              "count": 2177,
+              "max": 1.9595553278923035,
+              "mean": 1.1215302653377177,
+              "median": 1.0454084873199463,
+              "min": 1.0,
+              "p95": 1.4875944256782532
+            }
+          },
+          "duration_s": 218.737685313,
+          "existence_probability": {
+            "count": 2177,
+            "max": 0.9281201362609863,
+            "mean": 0.8621487841728799,
+            "median": 0.89284348487854,
+            "min": 0.3515336513519287,
+            "p95": 0.9104107618331909
+          },
+          "first_pose": {
+            "record_kst": "2026-08-14T18:24:35.599586+09:00",
+            "record_ns": 1786699475599586577,
+            "x": 51.01626083997962,
+            "y": -125.09067582876011,
+            "z": -16.35067210167984
+          },
+          "first_record_kst": "2026-08-14T18:24:35.599586+09:00",
+          "first_record_ns": 1786699475599586577,
+          "frame_counts": {
+            "map": 2177
+          },
+          "last_pose": {
+            "record_kst": "2026-08-14T18:28:14.337272+09:00",
+            "record_ns": 1786699694337271890,
+            "x": 50.76920191761014,
+            "y": -125.26903048324036,
+            "z": -15.62222395422021
+          },
+          "last_record_kst": "2026-08-14T18:28:14.337272+09:00",
+          "last_record_ns": 1786699694337271890,
+          "messages": 2177,
+          "pose_statistics": {
+            "x": {
+              "count": 2177,
+              "max": 51.040414051534555,
+              "mean": 50.725367599835806,
+              "median": 50.71620212082519,
+              "min": 50.64840442361618,
+              "p95": 50.80289180963654
+            },
+            "y": {
+              "count": 2177,
+              "max": -125.08925940182561,
+              "mean": -125.27540024574483,
+              "median": -125.27710137133586,
+              "min": -125.30015303432502,
+              "p95": -125.25667476661448
+            },
+            "z": {
+              "count": 2177,
+              "max": -15.365833182143795,
+              "mean": -15.539243578751693,
+              "median": -15.53123131610541,
+              "min": -16.35067210167984,
+              "p95": -15.440722476479005
+            }
+          },
+          "selection_method": "most frequent (UUID, primary classification label) object occurrence",
+          "uuid_hex": "a26a7b22b87f55e893b4681f5302df71"
+        },
+        "state_transitions": [
+          {
+            "record_kst": "2026-08-14T18:22:18.264470+09:00",
+            "record_ns": 1786699338264469964,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:23.331011+09:00",
+            "record_ns": 1786699463331011286,
+            "state": [
+              "object",
+              "55969a6b32a259b1a7094c1e6f5c7c2e",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:24.630897+09:00",
+            "record_ns": 1786699464630896917,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:25.734837+09:00",
+            "record_ns": 1786699465734837202,
+            "state": [
+              "object",
+              "22d5c349945d592cafd60df5d96caceb",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:29.928475+09:00",
+            "record_ns": 1786699469928474881,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:31.031131+09:00",
+            "record_ns": 1786699471031130665,
+            "state": [
+              "object",
+              "84f5a2d6ab4155a08383b18632e99b96",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:31.884382+09:00",
+            "record_ns": 1786699471884381679,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:33.016177+09:00",
+            "record_ns": 1786699473016177083,
+            "state": [
+              "object",
+              "ab6480590fb75fb09c456abc1e6f63ef",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:33.934227+09:00",
+            "record_ns": 1786699473934227382,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.031117+09:00",
+            "record_ns": 1786699475031117079,
+            "state": [
+              "object",
+              "4675aec11a7f5d49a317a47559b33b39",
+              0,
+              "UNKNOWN"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.231049+09:00",
+            "record_ns": 1786699475231049256,
+            "state": [
+              "empty"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:24:35.599586+09:00",
+            "record_ns": 1786699475599586577,
+            "state": [
+              "object",
+              "a26a7b22b87f55e893b4681f5302df71",
+              1,
+              "CAR"
+            ]
+          },
+          {
+            "record_kst": "2026-08-14T18:28:14.433868+09:00",
+            "record_ns": 1786699694433867660,
+            "state": [
+              "empty"
+            ]
+          }
+        ],
+        "timing": {
+          "effective_rate_hz": 9.945835954378186,
+          "first_record_kst": "2026-08-14T18:22:18.264470+09:00",
+          "first_record_ns": 1786699338264469964,
+          "gaps_over_1_s": [],
+          "last_record_kst": "2026-08-14T18:29:42.068291+09:00",
+          "last_record_ns": 1786699782068291005,
+          "maximum_gap": {
+            "duration_s": 0.211512413,
+            "end_kst": "2026-08-14T18:24:40.436957+09:00",
+            "end_ns": 1786699480436956855,
+            "start_kst": "2026-08-14T18:24:40.225445+09:00",
+            "start_ns": 1786699480225444442
+          },
+          "messages": 4415,
+          "span_s": 443.803821041
+        }
+      },
+      "scope_definition": "DB0-DB12 plus separately recovered quick_check=ok DB13 candidate",
+      "stable_pc4_object_comparison": {
+        "canonical": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1600,
+            "max": 367.2539483487946,
+            "mean": 148.82920887342527,
+            "median": 118.31130344950608,
+            "min": 3.340736395178622,
+            "p95": 353.3395395003177
+          },
+          "record_time_delta_ms": {
+            "count": 2177,
+            "max": 78.275921,
+            "mean": -0.1248075847496555,
+            "median": -0.193166,
+            "min": -71.364155,
+            "p95": 47.413722
+          }
+        },
+        "pc4_nonempty_frames_compared": 2177,
+        "tracker": {
+          "aligned_empty_frames": 577,
+          "exact_uuid_match_frames": 0,
+          "nearest_within_0_5_m_frames": 0,
+          "nearest_within_1_m_frames": 0,
+          "nearest_within_2_m_frames": 0,
+          "nearest_xy_distance_m": {
+            "count": 1600,
+            "max": 367.2539483487946,
+            "mean": 148.83847735729998,
+            "median": 118.31130344950608,
+            "min": 3.340736395178622,
+            "p95": 353.3395395003177
+          },
+          "record_time_delta_ms": {
+            "count": 2177,
+            "max": 76.412223,
+            "mean": -0.4841099462563159,
+            "median": -0.358619,
+            "min": -97.593276,
+            "p95": 46.996916
+          }
+        }
+      }
+    }
+  },
+  "vils_evidence_topic_counts": {
+    "/diagnostics/pc4/object_adapter": 0,
+    "/perception/pc2/vils/accepted_pc4_status": 0,
+    "/perception/pc2/vils/candidate_objects": 0
+  }
+}

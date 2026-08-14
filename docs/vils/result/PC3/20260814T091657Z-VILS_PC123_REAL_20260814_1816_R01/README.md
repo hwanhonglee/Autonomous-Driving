@@ -24,9 +24,11 @@ The reconstructed bag opens normally and all published SHA-256 digests pass.
 
 The core bag covers localization initialization, EKF odometry/acceleration, NDT
 scores and timing, selected GNSS, NovAtel BESTPOS/INSPVAX/INSSTDEV/RXSTATUS/IMU,
-RTCM, TF, diagnostics, and MRM. Its raw MCAP is retained on PC3 because it contains
-high-volume diagnostics and precise GNSS trajectory data. This result directory
-publishes its validation report, bag inventory, recovery record, and digests.
+RTCM, TF, diagnostics, and MRM. At the repository owner's explicit request, its
+raw MCAP chunks are published through Git LFS together with the validation report,
+bag inventory, recovery record, and digests. These files expose precise GNSS/INS
+trajectory, TF, timestamps, and hardware diagnostics; public-repository readers
+must treat them as operational traces rather than anonymized research data.
 
 The cross-PC bag is the communication-analysis artifact. It contains PC4 virtual
 tracked objects, PC2 detection/tracking/canonical objects, the planned trajectory,
@@ -86,8 +88,9 @@ PC3 and are not a packet-level delivery ratio.
   by `power_loss_recovery.json`, not rewritten after the interruption.
 - `source_checksums.sha256`: digests for the retained complete local source artifacts.
 - `published_checksums.sha256`: directly verifies every published data artifact.
+- `raw_core/`: complete validated PC3 core MCAP chunks and metadata via Git LFS.
 - `raw_crosslink/`: approved cross-PC MCAP chunks and metadata when Git LFS is used.
 
-The untouched power-loss copy and the complete core MCAP remain under the local PC3
-run directory recorded in `LOCAL_DATA_LOCATION.txt`; that local path is evidence
-provenance, not a portable download URL.
+The untouched power-loss duplicate remains only under the local PC3 run directory
+recorded in `LOCAL_DATA_LOCATION.txt`; that local path is evidence provenance, not
+a portable download URL.

@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>autoware_vils_object_integration</name>
+  <version>0.1.0</version>
+  <description>Fail-closed PC2 acceptance and physical-main fusion boundary for VILS tracked objects.</description>
+  <maintainer email="135099641+hwanhonglee@users.noreply.github.com">hwanhonglee</maintainer>
+  <license>Apache License 2.0</license>
+
+  <!-- HH_260810 - Use the standard Autoware CMake workflow for this Universe perception package. -->
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
+
+  <!-- HH_260810 - Declare every message, runtime, interface, and hashing dependency used directly. -->
+  <depend>autoware_perception_msgs</depend>
+  <depend>autoware_vehicle_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>libssl-dev</depend>
+  <depend>rclcpp</depend>
+  <depend>vils_interfaces</depend>
+
+  <!-- HH_260810 - Python launch is runtime-only; GTest and Autoware lint are test-only. -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>rclpy</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

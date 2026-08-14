@@ -20,12 +20,10 @@
         <param name="reliability" value="best_effort"/>
       </node>
 
-      <!-- HH_260814 - Relay the 2x2-binned 1440x930 Windshield stream as JPEG; YOLOX's
-           decompressor remains the sole normalized image_raw publisher. -->
-      <node pkg="topic_tools" exec="relay" name="windshield_compressed_image_relay" output="log">
-        <param name="input_topic" value="/lucid_vision/windshield/image_compressed"/>
-        <param name="output_topic" value="image_raw/compressed"/>
-        <param name="type" value="sensor_msgs/msg/CompressedImage"/>
+      <node pkg="topic_tools" exec="relay" name="windshield_image_relay" output="log">
+        <param name="input_topic" value="/lucid_vision/windshield/image"/>
+        <param name="output_topic" value="image_raw"/>
+        <param name="type" value="sensor_msgs/msg/Image"/>
         <param name="reliability" value="best_effort"/>
       </node>
     </group>

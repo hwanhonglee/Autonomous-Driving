@@ -1,0 +1,120 @@
+{
+  "change_comment": "HH_260810 - Record the machine-readable PC4 bounded outdoor shadow result.",
+  "schema_version": "vils-result-1.0",
+  "run_id": "20260814T092321.301564497Z-outdoor_route_aligned_shadow_response-b0fed535-04fb-41f6-85e7-48e04c426867",
+  "test_date": "2026-08-14",
+  "timezone": "Asia/Seoul",
+  "capture_host": "PC4",
+  "mode": "outdoor_actual4pc_shadow",
+  "domains": {
+    "vehicle": 10,
+    "pc4_private": 42
+  },
+  "safety": {
+    "pc4_actuation_armed": false,
+    "actual_can_commanded_by_pc4": false
+  },
+  "capture": {
+    "state": "INCOMPLETE",
+    "exit_status": 130,
+    "planned_seconds": 660,
+    "domain42_seconds": 636.012794413,
+    "domain10_seconds": 636.104066779,
+    "domain42_messages": 318318,
+    "domain10_messages": 186115,
+    "domain42_topics": 33,
+    "domain10_topics": 21,
+    "checksum_passed": 65,
+    "checksum_total": 65,
+    "source_manifest_sha256": "b04ae3dcc9251767c760e776946bde82a404ded5d6c55cd550edd7c10f58aee2"
+  },
+  "route_alignment": {
+    "same_goal": true,
+    "same_lanelet_segments": true,
+    "segments": [30447, 28782, 29266, 28789, 35351, 30005],
+    "start_xy_error_m": 0.008142,
+    "start_yaw_error_deg": 0.017167,
+    "start_z_error_m": -1.597399,
+    "map_3d_accepted": false
+  },
+  "adapter": {
+    "snapshot_tx": 7511,
+    "snapshot_observer": 7512,
+    "exact_matches": 7511,
+    "missing": 0,
+    "duplicates": 0,
+    "reorders": 0,
+    "mismatches": 0,
+    "latency_scope": "same_host_monotonic",
+    "latency_us": {
+      "minimum": 195.102,
+      "median": 411.496,
+      "mean": 438.538,
+      "p95": 733.451,
+      "p99": 887.225,
+      "maximum": 3819.334
+    }
+  },
+  "shadow_transport": {
+    "domain42_source": 6331,
+    "domain10_observed": 4834,
+    "exact_matches": 4833,
+    "missing": 1498,
+    "initial_extra": 1,
+    "duplicates": 0,
+    "out_of_order": 0,
+    "overall_match_ratio": 0.763387,
+    "nominal_pdr_valid": false,
+    "missing_cause": "vehicle_power_and_ethernet_outage"
+  },
+  "pc4_causal_response": {
+    "sequence": ["absent", "present", "absent", "present", "absent"],
+    "object_distance_m": 7.000005,
+    "absent_trajectory_messages": 3022,
+    "present_trajectory_messages": 3338,
+    "absent_trajectory_points": 162,
+    "present_trajectory_points": 163,
+    "absent_vmax_mps": 2.7777793407440186,
+    "present_vmax_mps": 0.25001096725463867,
+    "pc4_local_causality_supported": true,
+    "actual_vehicle_causality_supported": false
+  },
+  "actual_domain10": {
+    "healthy_observation_seconds": 378.9,
+    "velocity_samples": 18951,
+    "velocity_max_mps": 16.276041,
+    "tracking_samples": 3807,
+    "prediction_samples": 3808,
+    "trajectory_samples": 3789,
+    "localization_xy_displacement_m": 61.05,
+    "closed_loop_causality": "INCONCLUSIVE"
+  },
+  "chrony": {
+    "capture_host_only": true,
+    "samples": 10,
+    "pc4_synchronized": true,
+    "pc4_abs_max_offset_ms": 1.973268,
+    "vehicle_ntp_source": "192.168.9.102",
+    "vehicle_ntp_reach": 0,
+    "four_host_common_clock": false
+  },
+  "map": {
+    "lanelet_hash_equal": false,
+    "pointcloud_hash_equal": false,
+    "projector_altitude_difference_m": 14.0,
+    "transform_status": "EMPIRICAL_SE2_ROUTE_START_ALIGNED_Z_UNVERIFIED"
+  },
+  "claims": {
+    "capture_integrity": "PASS",
+    "route_2d_alignment": "PASS",
+    "route_3d_alignment": "BLOCKED",
+    "pc4_local_planning_response": "PASS",
+    "connected_window_cdr": "PASS",
+    "pc2_ingress": "NOT_TESTED",
+    "pc2_acceptance": "NOT_TESTED",
+    "actual_pc1_planning_influence": "NOT_TESTED",
+    "four_host_time_sync": "NOT_ESTABLISHED",
+    "nominal_full_run": "INCOMPLETE",
+    "shutdown": "PASS"
+  }
+}

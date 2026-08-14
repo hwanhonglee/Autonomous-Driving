@@ -1,0 +1,14 @@
+claim_id,claim,disposition,evidence,limitation
+PC1-R01,The PC4-namespaced TrackedObjects topic was recorded on vehicle Domain 10 at about 9.94 Hz,SUPPORTED_LIMITED_PROVENANCE,"4415 messages over 443.804 s; frame map","Originating host and simulator ground truth were not independently recorded; cross-host one-way latency not established"
+PC1-R02,A stable PC4 virtual CAR was present for about 218.7 s,SUPPORTED_CONSERVATIVE_WINDOW,"2252 non-empty messages; stable CAR in DB0-12 analysis",No PC4 simulator ground-truth log on PC1
+PC1-R03,PC2 accepted or fused PC4 into canonical objects,NOT_SUPPORTED,"No accepted-status/candidate/adapter-diagnostic topics; no exact UUID and no <=2 m nearest match in conservative comparison",Cannot generalize beyond recorded association comparison
+PC1-R04,PC1 planned or braked because of PC4,NOT_SUPPORTED,"No demonstrated canonical fusion or accepted-source status",Concurrent physical objects and other planner constraints confound causality
+PC1-R05,AEB responded to PC4 predicted objects,NOT_SUPPORTED,"Active AEB configuration uses physical pointcloud and not predicted objects",This run is not an AEB validation
+PC1-R06,Vehicle and command-side 0x630 request transitions were co-recorded,SUPPORTED,"Cruise; control mode; to/from CAN request transitions align",Observational only; not an authority or safety certification
+PC1-R07,Vehicle moved while request signal was active,SUPPORTED,"Maximum recorded speed 16.276 m/s during request-active samples",Does not by itself identify driver or controller causality
+PC1-R08,Four PCs had sub-millisecond synchronized clocks,NOT_SUPPORTED,"PC1 Chrony source was stale/non-selected; root dispersion 18.33-18.62 ms",Remote-host Chrony logs absent
+PC1-R09,PC1 network/GPU/CAN resource metrics were captured,SUPPORTED_LIMITED_WINDOW,"About 157-174 s of complete final-window sidecars",Does not cover the full 825 s bag
+PC1-R10,The full bag ended cleanly,NOT_SUPPORTED,"Power loss truncated DB13 and logger tails",Recovered DB13 is structurally validated but final pages are irrecoverable
+PC1-R11,Named PC2 and PC3 topic streams were co-recorded on PC1,SUPPORTED_ARCHITECTURAL_ATTRIBUTION,"Configured object and localization/TF topic names are present in the PC1 bag","The SQLite bag does not preserve authenticated remote-host ownership; host attribution relies on the configured architecture"
+PC1-R12,The PC1 result belongs to the same acquisition run as the PC3 crosslink result,SUPPORTED_PAYLOAD_LINKAGE,"3110 consecutive PC4-topic CDR payloads are byte-identical and same-order across PC1 and PC3","The shared run ID was assigned retrospectively; this does not establish a common clock or one-way latency"
+PC1-R13,This acquisition completed the frozen formal VILS runbook,NOT_SUPPORTED,"Pre-run shared manifest and multiple required formal gates are absent; power loss interrupted capture","Use as a non-formal communication/behavior dataset, not safety acceptance"

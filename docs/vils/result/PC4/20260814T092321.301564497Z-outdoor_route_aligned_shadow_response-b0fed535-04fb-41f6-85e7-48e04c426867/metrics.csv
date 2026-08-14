@@ -1,0 +1,74 @@
+# HH_260810 - Define compact PC4 result metrics for paper-table generation after comment filtering.
+category,metric,value,unit,status,scope
+# HH_260810 - Record source capture completion and integrity.
+capture,state,INCOMPLETE,,PARTIAL,planned 660 second run
+# HH_260810 - Record the safe interrupt status.
+capture,exit_status,130,,PARTIAL,operator SIGINT after vehicle power loss
+# HH_260810 - Record verified evidence-file integrity.
+capture,checksum_passed,65,file,PASS,65 of 65 source files
+# HH_260810 - Record the private-domain bag duration.
+capture,domain42_duration,636.012794413,s,PASS,PC4 recorder
+# HH_260810 - Record the vehicle-domain observer bag duration.
+capture,domain10_duration,636.104066779,s,PASS,PC4 observer recorder
+# HH_260810 - Record the private-domain bag count.
+capture,domain42_messages,318318,message,PASS,33 topics
+# HH_260810 - Record the vehicle-domain bag count.
+capture,domain10_messages,186115,message,PARTIAL,21 topics with outage
+# HH_260810 - Record two-dimensional route-start alignment.
+route,start_xy_error,0.008142,m,PASS,actual Domain 10 versus PC4 Domain 42
+# HH_260810 - Record route-start yaw alignment.
+route,start_yaw_error,0.017167,deg,PASS,sign-insensitive yaw
+# HH_260810 - Record the unresolved vertical mismatch.
+route,start_z_error,-1.597399,m,BLOCKED,map and height convention differ
+# HH_260810 - Record exact lanelet sequence equality.
+route,ordered_segment_match,1,boolean,PASS,six ordered segment IDs
+# HH_260810 - Record adapter exact serialized delivery.
+adapter,exact_cdr_matches,7511,message,PASS,same-host TX to observer
+# HH_260810 - Record adapter delivery mismatch count.
+adapter,cdr_mismatch,0,message,PASS,same-host TX to observer
+# HH_260810 - Record adapter median latency.
+adapter,publish_observe_median,411.496,us,PASS,same-host monotonic only
+# HH_260810 - Record adapter p95 latency.
+adapter,publish_observe_p95,733.451,us,PASS,same-host monotonic only
+# HH_260810 - Record adapter p99 latency.
+adapter,publish_observe_p99,887.225,us,PASS,same-host monotonic only
+# HH_260810 - Record adapter maximum latency.
+adapter,publish_observe_max,3819.334,us,PASS,same-host monotonic only
+# HH_260810 - Record private-domain source samples.
+shadow,domain42_source,6331,message,PASS,rosbag serialized CDR
+# HH_260810 - Record vehicle-domain observer samples.
+shadow,domain10_observed,4834,message,PARTIAL,rosbag serialized CDR
+# HH_260810 - Record exact cross-domain matches.
+shadow,exact_matches,4833,message,PARTIAL,whole run includes outage
+# HH_260810 - Record outage-associated missing samples.
+shadow,missing,1498,message,PARTIAL,single contiguous power and link outage
+# HH_260810 - Record sequence-order preservation.
+shadow,out_of_order,0,message,PASS,matched serialized CDR
+# HH_260810 - Prevent whole-run outage data from being presented as nominal PDR.
+shadow,nominal_pdr_valid,0,boolean,BLOCKED,vehicle power and Ethernet outage
+# HH_260810 - Record absent-object trajectory points.
+pc4_planning,absent_trajectory_points,162,point,PASS,PC4-local causal comparison
+# HH_260810 - Record present-object trajectory points.
+pc4_planning,present_trajectory_points,163,point,PASS,PC4-local causal comparison
+# HH_260810 - Record absent-object maximum trajectory speed.
+pc4_planning,absent_vmax,2.7777793407440186,m/s,PASS,PC4-local causal comparison
+# HH_260810 - Record present-object maximum trajectory speed.
+pc4_planning,present_vmax,0.25001096725463867,m/s,PASS,PC4-local causal comparison
+# HH_260810 - Record actual observed vehicle speed maximum.
+domain10,vehicle_speed_max,16.276041,m/s,OBSERVED,PC4 Domain 10 observer
+# HH_260810 - Record actual tracking sample count.
+domain10,tracking_samples,3807,message,OBSERVED,PC4 Domain 10 observer
+# HH_260810 - Record actual prediction sample count.
+domain10,prediction_samples,3808,message,OBSERVED,PC4 Domain 10 observer
+# HH_260810 - Record actual trajectory sample count.
+domain10,trajectory_samples,3789,message,OBSERVED,PC4 Domain 10 observer
+# HH_260810 - Record the PC4-only Chrony maximum absolute offset.
+chrony,pc4_abs_max_offset,1.973268,ms,LOCAL_ONLY,not four-host proof
+# HH_260810 - Record failure of the intended vehicle NTP candidate.
+chrony,vehicle_ntp_reach,0,octal,BLOCKED,192.168.9.102 in all ten samples
+# HH_260810 - Record the checksummed NIC receive freeze interval.
+network,rx_zero_growth_interval,152.134508,s,OBSERVED,unplanned outage
+# HH_260810 - Record missing PC2 application ingress evidence.
+claim,pc2_application_ingress,0,boolean,NOT_TESTED,no PC2-local recorder or subscriber
+# HH_260810 - Record missing actual Planning influence evidence.
+claim,actual_pc1_planning_influence,0,boolean,NOT_TESTED,no PC2 validator or fuser

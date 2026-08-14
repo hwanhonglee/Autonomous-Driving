@@ -35,4 +35,4 @@ PC's evidence.
 | PC1 | no | Add the PC1-local artifact from `/home/a/pc1_vils_runs/`; do not substitute a remote observation. |
 | PC2 | yes | `20260814T091155Z-pc2-power-interrupted` (bounded partial evidence; no PC2 rosbag was started). |
 | PC3 | yes | `20260814T091657Z-VILS_PC123_REAL_20260814_1816_R01` |
-| PC4 | yes | `20260814T092321.301564497Z-outdoor_route_aligned_shadow_response-b0fed535-04fb-41f6-85e7-48e04c426867` (bounded partial result; nominal run incomplete) |
+| PC4 | yes | PC4 source evidence and bounded partial result are retained under `PC4/`. |

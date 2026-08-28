@@ -1,0 +1,231 @@
+diff --git a/e2e/autoware_tensorrt_vad/CMakeLists.txt b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+index 88fa4e2..fd34d03 100644
+--- a/e2e/autoware_tensorrt_vad/CMakeLists.txt
++++ b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+@@ -140,6 +140,16 @@ if(TRT_AVAIL AND CUDA_AVAIL)
+     EXECUTABLE vad_node
+   )
+
++  if(BUILD_TESTING)
++    find_package(ament_cmake_gtest REQUIRED)
++    ament_add_gtest(test_layer_norm_precision
++      test/test_layer_norm_precision.cpp
++    )
++    target_link_libraries(test_layer_norm_precision
++      ${PROJECT_NAME}_lib
++    )
++  endif()
++
+   install(
+     TARGETS ${PROJECT_NAME}_cuda_lib
+     DESTINATION lib
+diff --git a/e2e/autoware_tensorrt_vad/lib/networks/net.cpp b/e2e/autoware_tensorrt_vad/lib/networks/net.cpp
+index 211ebf9..eda3d5c 100644
+--- a/e2e/autoware_tensorrt_vad/lib/networks/net.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/networks/net.cpp
+@@ -14,14 +14,49 @@
+
+ #include "../src/networks/net.hpp"
+
++#include <cstddef>
+ #include <memory>
+ #include <string>
++#include <string_view>
+ #include <utility>
+ #include <vector>
+
+ namespace autoware::tensorrt_vad
+ {
+
++namespace
++{
++
++std::size_t force_layer_norm_layers_fp32(nvinfer1::INetworkDefinition & network)
++{
++  std::size_t forced_layers = 0;
++  for (int32_t index = 0; index < network.getNbLayers(); ++index) {
++    auto * layer = network.getLayer(index);
++    if (layer == nullptr) {
++      continue;
++    }
++    const char * layer_name = layer->getName();
++    const std::string_view name = layer_name != nullptr ? layer_name : "";
++    if (!is_layer_norm_related_layer(name, layer->getType())) {
++      continue;
++    }
++
++    layer->setPrecision(nvinfer1::DataType::kFLOAT);
++    for (int32_t output_index = 0; output_index < layer->getNbOutputs(); ++output_index) {
++      auto * output = layer->getOutput(output_index);
++      if (
++        output != nullptr && (output->getType() == nvinfer1::DataType::kFLOAT ||
++                              output->getType() == nvinfer1::DataType::kHALF)) {
++        layer->setOutputType(output_index, nvinfer1::DataType::kFLOAT);
++      }
++    }
++    ++forced_layers;
++  }
++  return forced_layers;
++}
++
++}  // namespace
++
+ // NetworkType utility functions implementation
+ std::string toString(NetworkType type)
+ {
+@@ -37,6 +72,19 @@ std::string toString(NetworkType type)
+   }
+ }
+
++bool is_layer_norm_related_layer(std::string_view layer_name, nvinfer1::LayerType layer_type)
++{
++  return layer_type == nvinfer1::LayerType::kNORMALIZATION ||
++         layer_name.find("/norm/") != std::string_view::npos ||
++         layer_name.find("/norms.") != std::string_view::npos;
++}
++
++bool should_force_layer_norm_fp32(NetworkType network_type, const std::string & precision)
++{
++  return precision == "fp16" &&
++         (network_type == NetworkType::HEAD || network_type == NetworkType::HEAD_NO_PREV);
++}
++
+ std::unique_ptr<autoware::tensorrt_common::TrtCommon> build_engine(
+   const autoware::tensorrt_common::TrtCommonConfig & trt_common_config,
+   const std::vector<autoware::tensorrt_common::NetworkIO> & network_io,
+@@ -47,6 +95,25 @@ std::unique_ptr<autoware::tensorrt_common::TrtCommon> build_engine(
+   auto trt_common = std::make_unique<autoware::tensorrt_common::TrtCommon>(
+     trt_common_config, std::make_shared<autoware::tensorrt_common::Profiler>(),
+     std::vector<std::string>{params.plugins_path});
++  if (should_force_layer_norm_fp32(params.network_type, trt_common_config.precision)) {
++    const auto network = trt_common->getNetwork();
++    const auto builder_config = trt_common->getBuilderConfig();
++    if (network == nullptr || builder_config == nullptr) {
++      params.logger->error("TensorRT network or builder config is unavailable");
++      return nullptr;
++    }
++    const auto forced_layers = force_layer_norm_layers_fp32(*network);
++    if (forced_layers == 0) {
++      params.logger->error("No parsed LayerNorm layers matched the required FP32 precision policy");
++      return nullptr;
++    }
++    // PREFER may fall back to FP16; OBEY makes the layer and output constraints mandatory.
++    builder_config->clearFlag(nvinfer1::BuilderFlag::kPREFER_PRECISION_CONSTRAINTS);
++    builder_config->setFlag(nvinfer1::BuilderFlag::kOBEY_PRECISION_CONSTRAINTS);
++    params.logger->info(
++      "Forced " + std::to_string(forced_layers) +
++      " parsed LayerNorm layers to FP32 inside the FP16 head engine");
++  }
+   auto network_io_ptr =
+     std::make_unique<std::vector<autoware::tensorrt_common::NetworkIO>>(network_io);
+   if (!trt_common->setup(nullptr, std::move(network_io_ptr))) {
+@@ -69,7 +136,7 @@ std::unique_ptr<autoware::tensorrt_common::TrtCommon> Net::init_tensorrt(
+
+   // Build engine using network type name
+   std::string engine_name = toString(network_type_);
+-  EngineBuildParams build_params{engine_name, plugins_path, logger_};
++  EngineBuildParams build_params{engine_name, plugins_path, network_type_, logger_};
+   auto engine = build_engine(trt_common_config, network_io, build_params);
+   if (!engine) {
+     logger_->error("Failed to build " + engine_name + " engine");
+diff --git a/e2e/autoware_tensorrt_vad/src/networks/net.hpp b/e2e/autoware_tensorrt_vad/src/networks/net.hpp
+index bd1ba25..f195851 100644
+--- a/e2e/autoware_tensorrt_vad/src/networks/net.hpp
++++ b/e2e/autoware_tensorrt_vad/src/networks/net.hpp
+@@ -27,6 +27,7 @@
+ #include <map>
+ #include <memory>
+ #include <string>
++#include <string_view>
+ #include <unordered_map>
+ #include <vector>
+
+@@ -40,12 +41,17 @@ struct EngineBuildParams
+ {
+   std::string engine_name;
+   std::string plugins_path;
++  NetworkType network_type;
+   std::shared_ptr<VadLogger> logger;
+ };
+
+ // Helper function to convert NetworkType to string (for backward compatibility)
+ std::string toString(NetworkType type);
+
++bool is_layer_norm_related_layer(std::string_view layer_name, nvinfer1::LayerType layer_type);
++
++bool should_force_layer_norm_fp32(NetworkType network_type, const std::string & precision);
++
+ std::unique_ptr<autoware::tensorrt_common::TrtCommon> build_engine(
+   const autoware::tensorrt_common::TrtCommonConfig & trt_common_config,
+   const std::vector<autoware::tensorrt_common::NetworkIO> & network_io,
+diff --git a/e2e/autoware_tensorrt_vad/test/test_layer_norm_precision.cpp b/e2e/autoware_tensorrt_vad/test/test_layer_norm_precision.cpp
+new file mode 100644
+index 0000000..b803ca7
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_layer_norm_precision.cpp
+@@ -0,0 +1,65 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "networks/net.hpp"
++
++#include <gtest/gtest.h>
++
++#include <string>
++#include <vector>
++
++namespace autoware::tensorrt_vad
++{
++
++TEST(LayerNormPrecision, MatchesOnnxLayerNormDecompositionNames)
++{
++  const std::vector<std::string> matching_names = {
++    "/transformer/can_bus_mlp/norm/ReduceMean",    "/transformer/encoder/layers.0/norms.2/Pow",
++    "/transformer/decoder/layers.1/norms.0/Div",   "/transformer/map_decoder/layers.2/norms.1/Sqrt",
++    "/motion_decoder/layers.0/norms.1/ReduceMean", "/motion_map_decoder/layers.0/norms.1/Mul",
++    "/ego_agent_decoder/layers.0/norms.1/Add",     "/ego_map_decoder/layers.0/norms.1/Sub",
++  };
++
++  for (const auto & name : matching_names) {
++    EXPECT_TRUE(is_layer_norm_related_layer(name, nvinfer1::LayerType::kELEMENTWISE)) << name;
++  }
++
++  EXPECT_TRUE(
++    is_layer_norm_related_layer("/opaque_native_node", nvinfer1::LayerType::kNORMALIZATION));
++}
++
++TEST(LayerNormPrecision, RejectsOtherHeadLayersAndNormalizationWords)
++{
++  const std::vector<std::string> other_names = {
++    "/transformer/encoder/layers.0/attentions.0/Add",
++    "/trajectory/normalized_coordinates/Mul",
++    "/object_head/normalization_factor/Div",
++    "/backbone/normals/Gather",
++  };
++
++  for (const auto & name : other_names) {
++    EXPECT_FALSE(is_layer_norm_related_layer(name, nvinfer1::LayerType::kELEMENTWISE)) << name;
++  }
++}
++
++TEST(LayerNormPrecision, AppliesOnlyToFp16HeadNetworks)
++{
++  EXPECT_TRUE(should_force_layer_norm_fp32(NetworkType::HEAD, "fp16"));
++  EXPECT_TRUE(should_force_layer_norm_fp32(NetworkType::HEAD_NO_PREV, "fp16"));
++  EXPECT_FALSE(should_force_layer_norm_fp32(NetworkType::BACKBONE, "fp16"));
++  EXPECT_FALSE(should_force_layer_norm_fp32(NetworkType::HEAD, "fp32"));
++  EXPECT_FALSE(should_force_layer_norm_fp32(NetworkType::HEAD_NO_PREV, "int8"));
++}
++
++}  // namespace autoware::tensorrt_vad

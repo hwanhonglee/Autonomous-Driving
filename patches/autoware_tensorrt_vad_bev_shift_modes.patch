@@ -1,0 +1,313 @@
+diff --git a/e2e/autoware_tensorrt_vad/CMakeLists.txt b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+--- a/e2e/autoware_tensorrt_vad/CMakeLists.txt
++++ b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+@@ -160,6 +160,12 @@ if(TRT_AVAIL AND CUDA_AVAIL)
+     ament_add_gtest(test_runtime_startup
+       test/test_runtime_startup.cpp
+     )
++    ament_add_gtest(test_bev_shift_contract
++      test/test_bev_shift_contract.cpp
++    )
++    target_link_libraries(test_bev_shift_contract
++      ${PROJECT_NAME}_lib
++    )
+   endif()
+
+   install(
+diff --git a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+--- a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
++++ b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+@@ -71,6 +71,10 @@
+       # Default: 30m forward/back, 16m left/right, 5m vertical range
+       detection_range: [-30.0, -16.0, -0.355, 30.0, 16.0, 4.645]
+
++      # Temporal BEV translation contract. Keep legacy unless running a recorded A/B trial.
++      # Options: legacy, ros_corrected, zero
++      bev_shift_mode: legacy
++
+       # --- Trajectory Output Configuration ---
+       # Time step between trajectory points in seconds
+       # Affects trajectory granularity and planning horizon
+diff --git a/e2e/autoware_tensorrt_vad/lib/input_converter/bev_shift_converter.cpp b/e2e/autoware_tensorrt_vad/lib/input_converter/bev_shift_converter.cpp
+--- a/e2e/autoware_tensorrt_vad/lib/input_converter/bev_shift_converter.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/input_converter/bev_shift_converter.cpp
+@@ -14,16 +14,34 @@
+
+ #include "../src/input_converter/bev_shift_converter.hpp"
+
++#include <stdexcept>
++
+ namespace autoware::tensorrt_vad::vad_interface
+ {
+
++BEVShiftMode parse_bev_shift_mode(const std::string & mode)
++{
++  if (mode == "legacy") {
++    return BEVShiftMode::Legacy;
++  }
++  if (mode == "ros_corrected") {
++    return BEVShiftMode::RosCorrected;
++  }
++  if (mode == "zero") {
++    return BEVShiftMode::Zero;
++  }
++  throw std::invalid_argument(
++    "Unsupported BEV shift mode '" + mode + "'. Expected one of: legacy, ros_corrected, zero");
++}
++
+ InputBEVShiftConverter::InputBEVShiftConverter(
+   const CoordinateTransformer & coordinate_transformer, const VadInterfaceConfig & config)
+ : Converter(coordinate_transformer, config),
+   real_w_(config.detection_range[3] - config.detection_range[0]),
+   real_h_(config.detection_range[4] - config.detection_range[1]),
+   default_delta_x_(0.0f),
+-  default_delta_y_(0.0f)
++  default_delta_y_(0.0f),
++  mode_(parse_bev_shift_mode(config.bev_shift_mode))
+ {
+ }
+
+@@ -38,18 +56,22 @@ ShiftData InputBEVShiftConverter::process_shift(
+     delta_y = can_bus[1] - prev_can_bus[1];  // translation difference
+   }
+
+-  float patch_angle_rad = can_bus[16];  // current patch_angle[rad]
+-
+-  float ego_angle = patch_angle_rad / M_PI * 180.0;
++  if (mode_ == BEVShiftMode::Zero || prev_can_bus.empty()) {
++    return {0.0f, 0.0f};
++  }
+
+-  float translation_length = std::sqrt(delta_x * delta_x + delta_y * delta_y);
+-  float translation_angle = std::atan2(delta_y, delta_x) / M_PI * 180.0;
+-  float bev_angle = ego_angle - translation_angle;
++  const float yaw = can_bus[16];
++  const float forward = std::cos(yaw) * delta_x + std::sin(yaw) * delta_y;
++  const float left = -std::sin(yaw) * delta_x + std::cos(yaw) * delta_y;
+
+-  float shift_y = translation_length * std::cos(bev_angle / 180.0 * M_PI) / real_h_;
+-  float shift_x = translation_length * std::sin(bev_angle / 180.0 * M_PI) / real_w_;
++  if (mode_ == BEVShiftMode::RosCorrected) {
++    // ONNX reference coordinate 0 is ROS x/forward; coordinate 1 is ROS y/left.
++    return {forward / real_w_, left / real_h_};
++  }
+
+-  return {shift_x, shift_y};
++  // Preserve the shipped public-VAD formula for a controlled A/B baseline. It treats
++  // coordinate 0 as right and coordinate 1 as forward.
++  return {-left / real_w_, forward / real_h_};
+ }
+
+ }  // namespace autoware::tensorrt_vad::vad_interface
+diff --git a/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json b/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
+--- a/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
++++ b/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
+@@ -63,6 +63,12 @@
+               "default": [-30.0, -16.0, -0.355, 30.0, 16.0, 4.645],
+               "description": "Detection range [x_min, y_min, z_min, x_max, y_max, z_max] in base_link frame (meters)"
+             },
++            "bev_shift_mode": {
++              "type": "string",
++              "enum": ["legacy", "ros_corrected", "zero"],
++              "default": "legacy",
++              "description": "Temporal BEV translation convention: shipped formula, ROS x-forward/y-left correction, or disabled"
++            },
+             "trajectory_timestep": {
+               "type": "number",
+               "default": 0.5,
+diff --git a/e2e/autoware_tensorrt_vad/src/input_converter/bev_shift_converter.hpp b/e2e/autoware_tensorrt_vad/src/input_converter/bev_shift_converter.hpp
+--- a/e2e/autoware_tensorrt_vad/src/input_converter/bev_shift_converter.hpp
++++ b/e2e/autoware_tensorrt_vad/src/input_converter/bev_shift_converter.hpp
+@@ -18,6 +18,7 @@
+ #include "converter.hpp"
+
+ #include <cmath>
++#include <string>
+ #include <vector>
+
+ namespace autoware::tensorrt_vad::vad_interface
+@@ -26,6 +27,10 @@ namespace autoware::tensorrt_vad::vad_interface
+ using ShiftData = std::vector<float>;
+ using CanBusData = std::vector<float>;
+
++enum class BEVShiftMode { Legacy, RosCorrected, Zero };
++
++BEVShiftMode parse_bev_shift_mode(const std::string & mode);
++
+ /**
+  * @brief InputBEVShiftConverter handles BEV (Bird's Eye View) shift calculation
+  *
+@@ -63,6 +68,7 @@ private:
+   // Default delta values when previous CAN-Bus data is not available
+   float default_delta_x_;
+   float default_delta_y_;
++  BEVShiftMode mode_;
+ };
+
+ }  // namespace autoware::tensorrt_vad::vad_interface
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_interface_config.hpp b/e2e/autoware_tensorrt_vad/src/vad_interface_config.hpp
+--- a/e2e/autoware_tensorrt_vad/src/vad_interface_config.hpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_interface_config.hpp
+@@ -36,6 +36,7 @@ public:
+   int32_t target_image_width;
+   int32_t target_image_height;
+   std::array<float, 6> detection_range;
++  std::string bev_shift_mode;
+   int32_t default_command;
+   std::map<std::string, std::array<float, 3>> map_colors;  // Map type to RGB color
+   std::vector<std::string> class_mapping;  // VAD class index to Autoware class name mapping (array
+@@ -46,12 +47,13 @@ public:
+   // (ROS 2's declare_parameter does not accept std::vector<float> or std::vector<int32_t>)
+   VadInterfaceConfig(
+     int32_t target_image_width_, int32_t target_image_height_,
+-    const std::vector<double> & detection_range_, int32_t default_command_,
+-    const std::vector<std::string> & map_classes_, const std::vector<double> & map_colors_,
+-    const std::vector<std::string> & class_mapping_,
++    const std::vector<double> & detection_range_, const std::string & bev_shift_mode_,
++    int32_t default_command_, const std::vector<std::string> & map_classes_,
++    const std::vector<double> & map_colors_, const std::vector<std::string> & class_mapping_,
+     const std::vector<std::string> & bbox_class_names_)
+   : target_image_width(target_image_width_),
+     target_image_height(target_image_height_),
++    bev_shift_mode(bev_shift_mode_),
+     default_command(default_command_),
+     class_mapping(class_mapping_),
+     bbox_class_names(bbox_class_names_)
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_node.cpp b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+--- a/e2e/autoware_tensorrt_vad/src/vad_node.cpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+@@ -101,6 +101,7 @@ VadNode::VadNode(const rclcpp::NodeOptions & options)
+   vad_interface_config_ = std::make_unique<VadInterfaceConfig>(
+     model_params.target_image_width, model_params.target_image_height,
+     declare_parameter<std::vector<double>>("interface_params.detection_range"),
++    declare_parameter<std::string>("interface_params.bev_shift_mode", "legacy"),
+     declare_parameter<int32_t>("model_params.default_command"),
+     model_params.map_classes,  // From JSON
+     declare_parameter<std::vector<double>>("interface_params.map_colors"),
+diff --git a/e2e/autoware_tensorrt_vad/test/test_bev_shift_contract.cpp b/e2e/autoware_tensorrt_vad/test/test_bev_shift_contract.cpp
+new file mode 100644
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_bev_shift_contract.cpp
+@@ -0,0 +1,122 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "coordinate_transformer.hpp"
++#include "input_converter/bev_shift_converter.hpp"
++#include "vad_interface_config.hpp"
++
++#include <gtest/gtest.h>
++
++#include <cmath>
++#include <stdexcept>
++#include <string>
++
++namespace autoware::tensorrt_vad::vad_interface
++{
++namespace
++{
++
++constexpr float kPi = 3.14159265358979323846f;
++
++VadInterfaceConfig make_config(const std::string & mode)
++{
++  return VadInterfaceConfig(
++    640, 384, {-30.0, -16.0, -0.355, 30.0, 16.0, 4.645}, mode, 3, {}, {}, {}, {});
++}
++
++CanBusData make_can_bus(const float x, const float y, const float yaw)
++{
++  CanBusData can_bus(18, 0.0f);
++  can_bus[0] = x;
++  can_bus[1] = y;
++  can_bus[16] = yaw;
++  return can_bus;
++}
++
++ShiftData shift_for_local_motion(
++  const std::string & mode, const float yaw, const float forward, const float left)
++{
++  const auto config = make_config(mode);
++  const CoordinateTransformer transformer(nullptr);
++  const InputBEVShiftConverter converter(transformer, config);
++  const auto previous = make_can_bus(10.0f, 20.0f, yaw);
++  const float delta_x = std::cos(yaw) * forward - std::sin(yaw) * left;
++  const float delta_y = std::sin(yaw) * forward + std::cos(yaw) * left;
++  const auto current = make_can_bus(10.0f + delta_x, 20.0f + delta_y, yaw);
++  return converter.process_shift(current, previous);
++}
++
++class BEVShiftHeadingTest : public testing::TestWithParam<float>
++{
++};
++
++TEST_P(BEVShiftHeadingTest, RosCorrectedMapsForwardAndLeftToOnnxXY)
++{
++  const float yaw = GetParam();
++  const auto forward = shift_for_local_motion("ros_corrected", yaw, 3.0f, 0.0f);
++  const auto left = shift_for_local_motion("ros_corrected", yaw, 0.0f, 3.2f);
++
++  ASSERT_EQ(forward.size(), 2U);
++  EXPECT_NEAR(forward[0], 3.0f / 60.0f, 1e-6f);
++  EXPECT_NEAR(forward[1], 0.0f, 1e-6f);
++  ASSERT_EQ(left.size(), 2U);
++  EXPECT_NEAR(left[0], 0.0f, 1e-6f);
++  EXPECT_NEAR(left[1], 3.2f / 32.0f, 1e-6f);
++}
++
++TEST_P(BEVShiftHeadingTest, LegacyPreservesRightForwardAxisOrder)
++{
++  const float yaw = GetParam();
++  const auto forward = shift_for_local_motion("legacy", yaw, 3.0f, 0.0f);
++  const auto left = shift_for_local_motion("legacy", yaw, 0.0f, 3.2f);
++
++  ASSERT_EQ(forward.size(), 2U);
++  EXPECT_NEAR(forward[0], 0.0f, 1e-6f);
++  EXPECT_NEAR(forward[1], 3.0f / 32.0f, 1e-6f);
++  ASSERT_EQ(left.size(), 2U);
++  EXPECT_NEAR(left[0], -3.2f / 60.0f, 1e-6f);
++  EXPECT_NEAR(left[1], 0.0f, 1e-6f);
++}
++
++INSTANTIATE_TEST_SUITE_P(
++  YawZeroPlusAndMinusNinety, BEVShiftHeadingTest, testing::Values(0.0f, kPi / 2.0f, -kPi / 2.0f));
++
++TEST(BEVShiftContract, ZeroModeDisablesTranslationAtAnyHeading)
++{
++  const auto shift = shift_for_local_motion("zero", kPi / 3.0f, 2.0f, -1.0f);
++  EXPECT_FLOAT_EQ(shift[0], 0.0f);
++  EXPECT_FLOAT_EQ(shift[1], 0.0f);
++}
++
++TEST(BEVShiftContract, FirstFrameIsZeroForEveryMode)
++{
++  const CoordinateTransformer transformer(nullptr);
++  for (const auto & mode : {"legacy", "ros_corrected", "zero"}) {
++    const auto config = make_config(mode);
++    const InputBEVShiftConverter converter(transformer, config);
++    const auto shift = converter.process_shift(make_can_bus(10.0f, 20.0f, 0.5f), {});
++    EXPECT_FLOAT_EQ(shift[0], 0.0f);
++    EXPECT_FLOAT_EQ(shift[1], 0.0f);
++  }
++}
++
++TEST(BEVShiftContract, RejectsUnknownMode)
++{
++  const auto config = make_config("swapped");
++  const CoordinateTransformer transformer(nullptr);
++  EXPECT_THROW(InputBEVShiftConverter(transformer, config), std::invalid_argument);
++}
++
++}  // namespace
++}  // namespace autoware::tensorrt_vad::vad_interface

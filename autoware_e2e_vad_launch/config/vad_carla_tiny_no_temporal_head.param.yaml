@@ -1,0 +1,10 @@
+# Stateless VAD A/B overlay. It preserves the repeat-screened reliable sync
+# profile so use_temporal_head is the only model-runtime difference.
+/**:
+  ros__parameters:
+    sync_params:
+      frame_buffer_size: 32
+      image_queue_depth: 32
+      image_reliability: reliable
+    model_params:
+      use_temporal_head: false

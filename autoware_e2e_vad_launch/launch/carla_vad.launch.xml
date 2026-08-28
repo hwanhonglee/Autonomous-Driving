@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="map_path" description="CARLA town name or map directory; its basename selects the town"/>
+  <arg name="data_path" description="Directory containing vad/v0.1 model artifacts"/>
+  <arg name="carla_host" default="localhost"/>
+  <arg name="carla_port" default="2000"/>
+  <arg name="carla_timeout" default="20"/>
+  <arg name="spawn_point" default="None" description="CARLA x,y,z,roll,pitch,yaw or None"/>
+  <arg name="spawn_point_reference" default="vehicle_center"/>
+  <arg name="vehicle_model" default="sample_vehicle"/>
+  <arg name="sensor_model" default="carla_sensor_kit"/>
+  <arg name="fixed_delta_seconds" default="0.05"/>
+  <arg name="max_real_delta_seconds" default="0.05"/>
+  <arg name="use_traffic_manager" default="False"/>
+  <arg name="use_light_weight_sensor_mapping" default="False"/>
+  <arg
+    name="use_fast_vad"
+    default="false"
+    description="Use the project 640x360 raw-camera VAD deployment overlay"
+  />
+  <arg
+    name="vad_use_fp16_heads"
+    default="false"
+    description="Experimental FP16 temporal heads for the fast VAD profile"
+  />
+  <arg
+    name="vad_model_override_file"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/vad_carla_tiny_fast.param.yaml"
+  />
+  <arg name="vad_bev_shift_mode" default="legacy"/>
+  <arg name="vad_log_level" default="info" description="ROS log level for the VAD node"/>
+  <arg
+    name="use_vad_imu_acceleration"
+    default="false"
+    description="Feed VAD gravity-inclusive CARLA IMU acceleration without changing controller acceleration"
+  />
+  <arg name="vad_imu_topic" default="/sensing/imu/tamagawa/imu_raw"/>
+  <arg
+    name="vad_imu_acceleration_topic"
+    default="/sensing/imu/vad_acceleration"
+  />
+  <arg name="vad_imu_acceleration_frame" default="base_link"/>
+  <arg name="use_route_manager" default="false"/>
+  <arg name="route_file" default="" description="Route JSON from prepare_carla_route.py"/>
+  <arg
+    name="maneuver_lookahead_m"
+    default="2.0"
+    description="Distance before a route maneuver to select its VAD command"
+  />
+  <arg
+    name="maneuver_exit_lookahead_m"
+    default="2.5"
+    description="Distance before maneuver completion to return to lane follow"
+  />
+  <arg
+    name="controller_stop_offset_m"
+    default="0.49"
+    description="Distance added beyond the goal tolerance for the controller zero-speed point"
+  />
+  <arg
+    name="comfortable_deceleration_mps2"
+    default="1.2"
+    description="Comfortable deceleration used to shape the VAD terminal speed profile"
+  />
+  <arg
+    name="maximum_speed_mps"
+    default="2.5"
+    description="Maximum longitudinal speed applied to the selected VAD trajectory"
+  />
+  <arg
+    name="route_corridor_half_width_m"
+    default="0.5"
+    description="Maximum selected VAD trajectory offset from the CARLA route"
+  />
+  <arg
+    name="turn_inward_corridor_half_width_m"
+    default="0.5"
+    description="Maximum inward route offset while a LEFT or RIGHT VAD command is active"
+  />
+  <arg name="turn_outward_corridor_half_width_m" default="0.5"/>
+  <arg name="left_turn_outward_corridor_half_width_m" default="0.0"/>
+  <arg name="right_turn_outward_corridor_half_width_m" default="0.0"/>
+  <arg name="route_corridor_mode" default="hard"/>
+  <arg name="route_corridor_entry_distance_m" default="0.0"/>
+  <arg name="trajectory_lateral_filter_gain" default="1.0"/>
+  <arg name="left_turn_trajectory_lateral_filter_gain" default="0.0"/>
+  <arg name="right_turn_trajectory_lateral_filter_gain" default="0.0"/>
+  <arg name="trajectory_lateral_filter_activation_threshold_m" default="0.0"/>
+  <arg name="trajectory_lateral_filter_anchor_m" default="2.0"/>
+  <arg name="trajectory_lateral_filter_timeout_sec" default="4.0"/>
+  <arg
+    name="trajectory_geometry_smoothing_strength"
+    default="0.0"
+    description="Opt-in endpoint-fixed Whittaker smoothing strength; zero is an exact no-op"
+  />
+  <arg name="trajectory_geometry_smoothing_interval_m" default="0.25"/>
+  <arg name="trajectory_geometry_smoothing_max_deviation_m" default="0.10"/>
+  <arg name="maximum_lateral_acceleration_mps2" default="0.0"/>
+  <arg name="curvature_speed_preview_m" default="3.0"/>
+  <arg
+    name="sensor_mapping_file"
+    default="$(find-pkg-share autoware_carla_interface)/config/sensor_mapping.yaml"
+    description="Full six-camera mapping is required by VAD"
+  />
+
+  <!-- Publish the vehicle and six-camera TF tree without a physical vehicle interface. -->
+  <include file="$(find-pkg-share tier4_vehicle_launch)/launch/vehicle.launch.xml">
+    <arg name="use_sim_time" value="true"/>
+    <arg name="launch_vehicle_interface" value="false"/>
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
+  </include>
+
+  <!--
+    Universe 0.52.0 already contains the CARLA-specific odometry, acceleration,
+    MPC/PID, command gate, and raw command conversion. The two inherited remaps
+    below complete inputs omitted by its standalone vehicle_cmd_gate wiring.
+  -->
+  <group scoped="false">
+    <set_remap from="/input/operation_mode" to="/system/operation_mode/state"/>
+    <set_remap from="/input/acceleration" to="/localization/acceleration"/>
+    <include file="$(find-pkg-share autoware_carla_interface)/launch/autoware_carla_interface.launch.xml">
+      <arg name="use_e2e_planning" value="true"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="launch_config_pkg" value="autoware_e2e_vad_launch"/>
+      <arg name="host" value="$(var carla_host)"/>
+      <arg name="port" value="$(var carla_port)"/>
+      <arg name="timeout" value="$(var carla_timeout)"/>
+      <arg name="spawn_point" value="$(var spawn_point)"/>
+      <arg name="spawn_point_reference" value="$(var spawn_point_reference)"/>
+      <arg name="map_path" value="$(var map_path)"/>
+      <arg name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
+      <arg name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
+      <arg name="use_traffic_manager" value="$(var use_traffic_manager)"/>
+      <arg
+        name="use_light_weight_sensor_mapping"
+        value="$(var use_light_weight_sensor_mapping)"
+      />
+      <arg name="sensor_mapping_file" value="$(var sensor_mapping_file)"/>
+    </include>
+  </group>
+
+  <!-- Simulation-only operation state consumed by the follower and command gate. -->
+  <node
+    pkg="autoware_carla_interface"
+    exec="carla_operation_mode_publisher"
+    name="carla_operation_mode_publisher"
+    output="screen"
+  >
+    <param name="use_sim_time" value="true"/>
+    <param name="mode" value="AUTONOMOUS"/>
+    <param name="publish_rate_hz" value="10.0"/>
+    <remap from="~/output/state" to="/system/operation_mode/state"/>
+  </node>
+
+  <!-- Minimal Autoware lifecycle state required by the shift decider. -->
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="carla_autoware_state_publisher.py"
+    name="carla_autoware_state_publisher"
+    output="screen"
+  >
+    <param name="use_sim_time" value="true"/>
+  </node>
+
+  <!--
+    The CARLA bridge already converts IMU axes to ROS coordinates. The project
+    calibration keeps tamagawa/imu_link rotation-aligned with base_link, so this
+    VAD-only adapter must not filter the sample or remove its gravity component.
+  -->
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="vad_imu_acceleration_adapter.py"
+    name="vad_imu_acceleration_adapter"
+    output="screen"
+    if="$(var use_vad_imu_acceleration)"
+  >
+    <param name="use_sim_time" value="true"/>
+    <param name="output_frame_id" value="$(var vad_imu_acceleration_frame)"/>
+    <remap from="~/input/imu" to="$(var vad_imu_topic)"/>
+    <remap from="~/output/acceleration" to="$(var vad_imu_acceleration_topic)"/>
+  </node>
+
+  <!-- Baseline keeps the official compressed profile; fast uses raw 640x360. -->
+  <let name="vad_output_trajectory" value="/planning/vad/raw_trajectory" if="$(var use_route_manager)"/>
+  <let name="vad_output_trajectory" value="/planning/trajectory" unless="$(var use_route_manager)"/>
+  <let
+    name="vad_acceleration_input"
+    value="$(var vad_imu_acceleration_topic)"
+    if="$(var use_vad_imu_acceleration)"
+  />
+  <let
+    name="vad_acceleration_input"
+    value="/localization/acceleration"
+    unless="$(var use_vad_imu_acceleration)"
+  />
+  <group unless="$(var use_fast_vad)">
+    <include file="$(find-pkg-share autoware_tensorrt_vad)/launch/vad_carla_tiny.launch.xml">
+      <arg name="log_level" value="$(var vad_log_level)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="acceleration" value="$(var vad_acceleration_input)"/>
+      <arg name="output_trajectory" value="$(var vad_output_trajectory)"/>
+    </include>
+  </group>
+  <group if="$(var use_fast_vad)">
+    <include file="$(find-pkg-share autoware_e2e_vad_launch)/launch/vad_carla_tiny_fast.launch.xml">
+      <arg name="log_level" value="$(var vad_log_level)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="use_fp16_heads" value="$(var vad_use_fp16_heads)"/>
+      <arg name="model_override_file" value="$(var vad_model_override_file)"/>
+      <arg name="bev_shift_mode" value="$(var vad_bev_shift_mode)"/>
+      <arg name="acceleration" value="$(var vad_acceleration_input)"/>
+      <arg name="output_trajectory" value="$(var vad_output_trajectory)"/>
+    </include>
+  </group>
+
+  <!-- Select the route-conditioned VAD branch and add goal deceleration/stop. -->
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="vad_route_manager.py"
+    name="vad_route_manager"
+    output="screen"
+    if="$(var use_route_manager)"
+  >
+    <param name="use_sim_time" value="true"/>
+    <param from="$(find-pkg-share autoware_e2e_vad_launch)/config/vad_route_manager.param.yaml"/>
+    <param name="route_file" value="$(var route_file)"/>
+    <param name="maneuver_lookahead_m" value="$(var maneuver_lookahead_m)"/>
+    <param
+      name="maneuver_exit_lookahead_m"
+      value="$(var maneuver_exit_lookahead_m)"
+    />
+    <param name="controller_stop_offset_m" value="$(var controller_stop_offset_m)"/>
+    <param
+      name="comfortable_deceleration_mps2"
+      value="$(var comfortable_deceleration_mps2)"
+    />
+    <param name="maximum_speed_mps" value="$(var maximum_speed_mps)"/>
+    <param
+      name="route_corridor_half_width_m"
+      value="$(var route_corridor_half_width_m)"
+    />
+    <param
+      name="turn_inward_corridor_half_width_m"
+      value="$(var turn_inward_corridor_half_width_m)"
+    />
+    <param
+      name="turn_outward_corridor_half_width_m"
+      value="$(var turn_outward_corridor_half_width_m)"
+    />
+    <param
+      name="left_turn_outward_corridor_half_width_m"
+      value="$(var left_turn_outward_corridor_half_width_m)"
+    />
+    <param
+      name="right_turn_outward_corridor_half_width_m"
+      value="$(var right_turn_outward_corridor_half_width_m)"
+    />
+    <param name="route_corridor_mode" value="$(var route_corridor_mode)"/>
+    <param
+      name="route_corridor_entry_distance_m"
+      value="$(var route_corridor_entry_distance_m)"
+    />
+    <param
+      name="trajectory_lateral_filter_gain"
+      value="$(var trajectory_lateral_filter_gain)"
+    />
+    <param
+      name="left_turn_trajectory_lateral_filter_gain"
+      value="$(var left_turn_trajectory_lateral_filter_gain)"
+    />
+    <param
+      name="right_turn_trajectory_lateral_filter_gain"
+      value="$(var right_turn_trajectory_lateral_filter_gain)"
+    />
+    <param
+      name="trajectory_lateral_filter_activation_threshold_m"
+      value="$(var trajectory_lateral_filter_activation_threshold_m)"
+    />
+    <param
+      name="trajectory_lateral_filter_anchor_m"
+      value="$(var trajectory_lateral_filter_anchor_m)"
+    />
+    <param
+      name="trajectory_lateral_filter_timeout_sec"
+      value="$(var trajectory_lateral_filter_timeout_sec)"
+    />
+    <param
+      name="trajectory_geometry_smoothing_strength"
+      value="$(var trajectory_geometry_smoothing_strength)"
+    />
+    <param
+      name="trajectory_geometry_smoothing_interval_m"
+      value="$(var trajectory_geometry_smoothing_interval_m)"
+    />
+    <param
+      name="trajectory_geometry_smoothing_max_deviation_m"
+      value="$(var trajectory_geometry_smoothing_max_deviation_m)"
+    />
+    <param
+      name="maximum_lateral_acceleration_mps2"
+      value="$(var maximum_lateral_acceleration_mps2)"
+    />
+    <param
+      name="curvature_speed_preview_m"
+      value="$(var curvature_speed_preview_m)"
+    />
+  </node>
+</launch>

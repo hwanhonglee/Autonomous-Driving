@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<osm version="0.6" generator="route-map-test">
+  <node id="1" lat="0.0" lon="0.0">
+    <tag k="local_x" v="0.0" />
+    <tag k="local_y" v="2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <node id="2" lat="0.0" lon="0.0">
+    <tag k="local_x" v="10.0" />
+    <tag k="local_y" v="2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <node id="3" lat="0.0" lon="0.0">
+    <tag k="local_x" v="0.0" />
+    <tag k="local_y" v="-2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <node id="4" lat="0.0" lon="0.0">
+    <tag k="local_x" v="10.0" />
+    <tag k="local_y" v="-2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <way id="10">
+    <nd ref="1" />
+    <nd ref="2" />
+  </way>
+  <way id="11">
+    <nd ref="3" />
+    <nd ref="4" />
+  </way>
+  <relation id="100">
+    <member type="way" ref="10" role="left" />
+    <member type="way" ref="11" role="right" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+  </relation>
+</osm>

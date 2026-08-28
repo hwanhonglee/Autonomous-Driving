@@ -1,0 +1,156 @@
+diff --git a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+index 8c03c4e..ae506b3 100644
+--- a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
++++ b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+@@ -34,6 +34,7 @@
+
+     <!-- CARLA Interface -->
+     <node pkg="autoware_carla_interface" exec="autoware_carla_interface" name="autoware_carla_interface" output="screen">
++      <param from="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+       <param name="host" value="$(var host)"/>
+       <param name="port" value="$(var port)"/>
+       <param name="timeout" value="$(var timeout)"/>
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+index 6a42da1..c6947f6 100644
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -50,6 +50,8 @@ from .modules.carla_utils import carla_rotation_to_ros_quaternion
+ from .modules.carla_utils import create_cloud
+ from .modules.carla_utils import ros_pose_to_carla_transform
+ from .modules.carla_wrapper import SensorInterface
++from .vehicle_status_conversion import carla_yaw_rate_to_ros
++from .vehicle_status_conversion import fl_wheel_to_virtual_tire_angle
+
+
+ class carla_ros2_interface(object):
+@@ -70,6 +72,14 @@ class carla_ros2_interface(object):
+             "vehicle_type": (rclpy.Parameter.Type.STRING, None),
+             "use_traffic_manager": (rclpy.Parameter.Type.BOOL, None),
+             "max_real_delta_seconds": (rclpy.Parameter.Type.DOUBLE, None),
++            "wheel_base": (rclpy.Parameter.Type.DOUBLE, None),
++            "wheel_tread": (rclpy.Parameter.Type.DOUBLE, None),
++            "enable_stopped_hand_brake": (rclpy.Parameter.Type.BOOL, False),
++            "stopped_hand_brake_velocity_threshold": (rclpy.Parameter.Type.DOUBLE, 0.05),
++            "stopped_hand_brake_service_brake_threshold": (
++                rclpy.Parameter.Type.DOUBLE,
++                0.99,
++            ),
+             # Sensor configuration parameters
+             "sensor_kit_name": (rclpy.Parameter.Type.STRING, ""),  # Empty = use YAML default
+             "sensor_mapping_file": (rclpy.Parameter.Type.STRING, ""),
+@@ -83,6 +93,24 @@ class carla_ros2_interface(object):
+                 self.ros2_node.declare_parameter(param_name, param_type)
+             self.param_values[param_name] = self.ros2_node.get_parameter(param_name).value
+
++        wheel_base = self.param_values["wheel_base"]
++        wheel_tread = self.param_values["wheel_tread"]
++        if not math.isfinite(wheel_base) or wheel_base <= 0.0:
++            raise ValueError("wheel_base must be positive and finite")
++        if not math.isfinite(wheel_tread) or wheel_tread < 0.0:
++            raise ValueError("wheel_tread must be non-negative and finite")
++        hand_brake_velocity = self.param_values["stopped_hand_brake_velocity_threshold"]
++        hand_brake_service_brake = self.param_values[
++            "stopped_hand_brake_service_brake_threshold"
++        ]
++        if not math.isfinite(hand_brake_velocity) or hand_brake_velocity < 0.0:
++            raise ValueError("stopped hand-brake velocity threshold is invalid")
++        if (
++            not math.isfinite(hand_brake_service_brake)
++            or not 0.0 <= hand_brake_service_brake <= 1.0
++        ):
++            raise ValueError("stopped hand-brake service-brake threshold is invalid")
++
+     def _initialize_clock_publisher(self):
+         """Initialize and publish initial clock message."""
+         self.clock_publisher = self.ros2_node.create_publisher(Clock, "/clock", 10)
+@@ -687,11 +715,24 @@ class carla_ros2_interface(object):
+
+             steer_curve = self.physics_control.steering_curve
+             current_vel = self.ego_actor.get_velocity()
++            speed_mps = math.sqrt(
++                current_vel.x * current_vel.x
++                + current_vel.y * current_vel.y
++                + current_vel.z * current_vel.z
++            )
+             max_steer_ratio = numpy.interp(
+                 abs(current_vel.x), [v.x for v in steer_curve], [v.y for v in steer_curve]
+             )
+             out_cmd.steer = self.first_order_steering(-in_cmd.actuation.steer_cmd) * max_steer_ratio
+             out_cmd.brake = in_cmd.actuation.brake_cmd
++            out_cmd.hand_brake = bool(
++                self.param_values["enable_stopped_hand_brake"]
++                and out_cmd.throttle <= 1.0e-6
++                and out_cmd.brake
++                >= self.param_values["stopped_hand_brake_service_brake_threshold"]
++                and speed_mps
++                <= self.param_values["stopped_hand_brake_velocity_threshold"]
++            )
+             self.current_control = out_cmd
+
+     def turn_indicators_callback(self, in_cmd):
+@@ -763,6 +804,10 @@ class carla_ros2_interface(object):
+             [ego_velocity_carla.x, ego_velocity_carla.y, ego_velocity_carla.z]
+         ).reshape(3, 1)
+         ego_velocity = (inv_rot_mat @ vel_vec).T[0]
++        angular_vel_vec = numpy.array(
++            [ego_angular_velocity.x, ego_angular_velocity.y, ego_angular_velocity.z]
++        ).reshape(3, 1)
++        ego_angular_velocity_local = (inv_rot_mat @ angular_vel_vec).T[0]
+
+         out_vel_state = VelocityReport()
+         out_steering_state = SteeringReport()
+@@ -772,11 +787,16 @@ class carla_ros2_interface(object):
+
+         out_vel_state.header = self.get_msg_header(frame_id="base_link")
+         out_vel_state.longitudinal_velocity = ego_velocity[0]
+-        out_vel_state.lateral_velocity = ego_velocity[1]
+-        out_vel_state.heading_rate = ego_transform.transform_vector(ego_angular_velocity).z
++        out_vel_state.lateral_velocity = -ego_velocity[1]
++        out_vel_state.heading_rate = carla_yaw_rate_to_ros(ego_angular_velocity_local[2])
+
+         out_steering_state.stamp = out_vel_state.header.stamp
+-        out_steering_state.steering_tire_angle = -math.radians(steer_angle)
++        fl_angle_rad = -math.radians(steer_angle)
++        out_steering_state.steering_tire_angle = fl_wheel_to_virtual_tire_angle(
++            fl_angle_rad,
++            self.param_values["wheel_base"],
++            self.param_values["wheel_tread"],
++        )
+
+         out_gear_state.stamp = out_vel_state.header.stamp
+         out_gear_state.report = GearReport.DRIVE
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py
+new file mode 100644
+index 0000000..f0bad21
+--- /dev/null
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py
+@@ -0,0 +1,29 @@
++# Copyright 2026
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++
++import math
++
++
++def fl_wheel_to_virtual_tire_angle(fl_angle_rad, wheel_base_m, wheel_tread_m):
++    """Convert the front-left wheel angle to the virtual bicycle tire angle."""
++    if not math.isfinite(wheel_base_m) or wheel_base_m <= 0.0:
++        raise ValueError("wheel_base must be positive and finite")
++    if not math.isfinite(wheel_tread_m) or wheel_tread_m < 0.0:
++        raise ValueError("wheel_tread must be non-negative and finite")
++    if not math.isfinite(fl_angle_rad) or abs(fl_angle_rad) >= math.pi / 2.0:
++        raise ValueError("front-left wheel angle must be finite and within (-pi/2, pi/2)")
++
++    tangent = math.tan(fl_angle_rad)
++    denominator = wheel_base_m + 0.5 * wheel_tread_m * tangent
++    if denominator <= 0.0:
++        raise ValueError("wheel geometry produces an invalid virtual steering radius")
++    return math.atan(wheel_base_m * tangent / denominator)
++
++
++def carla_yaw_rate_to_ros(angular_velocity_z_deg_per_sec):
++    """Convert CARLA clockwise-positive deg/s to ROS counter-clockwise rad/s."""
++    if not math.isfinite(angular_velocity_z_deg_per_sec):
++        raise ValueError("CARLA yaw rate must be finite")
++    return -math.radians(angular_velocity_z_deg_per_sec)

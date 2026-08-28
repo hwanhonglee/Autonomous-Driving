@@ -1,0 +1,319 @@
+diff --git a/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp b/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
+index ad79058..bd7c2c2 100644
+--- a/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
+@@ -26,6 +26,7 @@
+
+ #include <algorithm>
+ #include <cmath>
++#include <iterator>
+ #include <limits>
+ #include <memory>
+ #include <stdexcept>
+@@ -325,10 +326,11 @@ std::optional<std::int64_t> LatestFrameMailbox::pending_source_stamp_ns() const
+
+ SynchronizedFrameBuffer::SynchronizedFrameBuffer(
+   const int32_t num_cameras, std::unique_ptr<SynchronizationStrategy> synchronization_strategy,
+-  const std::size_t max_pending_frames)
++  const std::size_t max_pending_frames, const std::size_t max_vehicle_state_samples)
+ : num_cameras_(num_cameras),
+   anchor_camera_id_(0U),
+   max_pending_frames_(max_pending_frames),
++  max_vehicle_state_samples_(max_vehicle_state_samples),
+   synchronization_strategy_(std::move(synchronization_strategy))
+ {
+   if (num_cameras_ <= 0 || num_cameras_ > 64) {
+@@ -337,6 +339,9 @@ SynchronizedFrameBuffer::SynchronizedFrameBuffer(
+   if (max_pending_frames_ == 0U) {
+     throw std::invalid_argument("Frame buffer capacity must be greater than zero");
+   }
++  if (max_vehicle_state_samples_ == 0U) {
++    throw std::invalid_argument("Vehicle-state buffer capacity must be greater than zero");
++  }
+   if (!synchronization_strategy_) {
+     throw std::invalid_argument("Synchronization strategy must not be null");
+   }
+@@ -388,13 +393,10 @@ void SynchronizedFrameBuffer::set_kinematic_state(
+   if (!msg) {
+     return;
+   }
+-  if (
+-    kinematic_state_ && stamp_to_nanoseconds(msg->header.stamp) <
+-                          stamp_to_nanoseconds(kinematic_state_->header.stamp)) {
+-    ++counters_.rejected_old_kinematic_states;
+-    return;
++  kinematic_states_.insert_or_assign(stamp_to_nanoseconds(msg->header.stamp), msg);
++  while (kinematic_states_.size() > max_vehicle_state_samples_) {
++    kinematic_states_.erase(kinematic_states_.begin());
+   }
+-  kinematic_state_ = msg;
+ }
+
+ void SynchronizedFrameBuffer::set_acceleration(
+@@ -403,13 +405,10 @@ void SynchronizedFrameBuffer::set_acceleration(
+   if (!msg) {
+     return;
+   }
+-  if (
+-    acceleration_ &&
+-    stamp_to_nanoseconds(msg->header.stamp) < stamp_to_nanoseconds(acceleration_->header.stamp)) {
+-    ++counters_.rejected_old_accelerations;
+-    return;
++  accelerations_.insert_or_assign(stamp_to_nanoseconds(msg->header.stamp), msg);
++  while (accelerations_.size() > max_vehicle_state_samples_) {
++    accelerations_.erase(accelerations_.begin());
+   }
+-  acceleration_ = msg;
+ }
+
+ sensor_msgs::msg::Image::ConstSharedPtr SynchronizedFrameBuffer::find_nearest_image(
+@@ -471,13 +470,37 @@ sensor_msgs::msg::Image::ConstSharedPtr SynchronizedFrameBuffer::find_nearest_im
+   return nearest;
+ }
+
++nav_msgs::msg::Odometry::ConstSharedPtr SynchronizedFrameBuffer::find_latest_causal_kinematic_state(
++  const std::int64_t anchor_stamp_ns) const
++{
++  const auto after_anchor = kinematic_states_.upper_bound(anchor_stamp_ns);
++  if (after_anchor == kinematic_states_.begin()) {
++    return nullptr;
++  }
++  return std::prev(after_anchor)->second;
++}
++
++geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr
++SynchronizedFrameBuffer::find_latest_causal_acceleration(const std::int64_t anchor_stamp_ns) const
++{
++  const auto after_anchor = accelerations_.upper_bound(anchor_stamp_ns);
++  if (after_anchor == accelerations_.begin()) {
++    return nullptr;
++  }
++  return std::prev(after_anchor)->second;
++}
++
+ VadInputTopicData SynchronizedFrameBuffer::materialize_exact_frame(
+   const VadInputTopicData & image_frame) const
+ {
+   auto frame = image_frame;
+   frame.camera_infos = camera_infos_;
+-  frame.kinematic_state = kinematic_state_;
+-  frame.acceleration = acceleration_;
++  const auto & anchor_image = frame.images[anchor_camera_id_];
++  if (anchor_image) {
++    const auto anchor_stamp_ns = stamp_to_nanoseconds(anchor_image->header.stamp);
++    frame.kinematic_state = find_latest_causal_kinematic_state(anchor_stamp_ns);
++    frame.acceleration = find_latest_causal_acceleration(anchor_stamp_ns);
++  }
+   return frame;
+ }
+
+@@ -489,8 +512,8 @@ VadInputTopicData SynchronizedFrameBuffer::materialize_approximate_frame(
+     frame.images[camera_id] = find_nearest_image(camera_id, anchor_stamp_ns);
+   }
+   frame.camera_infos = camera_infos_;
+-  frame.kinematic_state = kinematic_state_;
+-  frame.acceleration = acceleration_;
++  frame.kinematic_state = find_latest_causal_kinematic_state(anchor_stamp_ns);
++  frame.acceleration = find_latest_causal_acceleration(anchor_stamp_ns);
+   const auto & anchor_image = frame.images[anchor_camera_id_];
+   if (anchor_image) {
+     frame.stamp = rclcpp::Time(anchor_image->header.stamp);
+@@ -506,8 +529,8 @@ VadInputTopicData SynchronizedFrameBuffer::materialize_approximate_diagnostic_fr
+     frame.images[camera_id] = find_nearest_image_for_diagnostics(camera_id, anchor_stamp_ns);
+   }
+   frame.camera_infos = camera_infos_;
+-  frame.kinematic_state = kinematic_state_;
+-  frame.acceleration = acceleration_;
++  frame.kinematic_state = find_latest_causal_kinematic_state(anchor_stamp_ns);
++  frame.acceleration = find_latest_causal_acceleration(anchor_stamp_ns);
+   const auto & anchor_image = frame.images[anchor_camera_id_];
+   if (anchor_image) {
+     frame.stamp = rclcpp::Time(anchor_image->header.stamp);
+@@ -637,9 +660,15 @@ FrameAssemblyResult SynchronizedFrameBuffer::take_ready_frame()
+     consume_exact_frame(chosen_stamp_ns);
+   }
+
+-  // Vehicle state remains single-use as in the original reset-on-accept behavior.
+-  kinematic_state_.reset();
+-  acceleration_.reset();
++  const auto selected_state_stamp_ns =
++    stamp_to_nanoseconds(result.frame->kinematic_state->header.stamp);
++  kinematic_states_.erase(
++    kinematic_states_.begin(), kinematic_states_.upper_bound(selected_state_stamp_ns));
++  const auto selected_acceleration_stamp_ns =
++    stamp_to_nanoseconds(result.frame->acceleration->header.stamp);
++  accelerations_.erase(
++    accelerations_.begin(), accelerations_.upper_bound(selected_acceleration_stamp_ns));
++
+   last_accepted_source_stamp_ns_ = chosen_stamp_ns;
+   ++counters_.accepted_frames;
+   return result;
+diff --git a/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp b/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
+index de8cc33..e21d605 100644
+--- a/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
++++ b/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
+@@ -243,14 +243,15 @@ private:
+  * and consumption path. Only when no exact slot is ready, a fallback anchors to a front-camera
+  * timestamp and selects each surround camera's deterministically nearest retained image. The
+  * synchronization strategy then enforces the configured tolerance. CameraInfo is cached as static
+- * calibration. Vehicle state remains single-use.
++ * calibration. Recent vehicle-state samples are buffered so each frame consumes the latest causal
++ * sample at or before the front-camera timestamp while retaining future samples for later frames.
+  */
+ class SynchronizedFrameBuffer
+ {
+ public:
+   SynchronizedFrameBuffer(
+     int32_t num_cameras, std::unique_ptr<SynchronizationStrategy> synchronization_strategy,
+-    std::size_t max_pending_frames = 8U);
++    std::size_t max_pending_frames = 8U, std::size_t max_vehicle_state_samples = 64U);
+
+   void set_image(std::size_t camera_id, const sensor_msgs::msg::Image::ConstSharedPtr & msg);
+   void set_camera_info(
+@@ -272,6 +273,10 @@ private:
+     std::size_t camera_id, std::int64_t anchor_stamp_ns) const;
+   sensor_msgs::msg::Image::ConstSharedPtr find_nearest_image_for_diagnostics(
+     std::size_t camera_id, std::int64_t anchor_stamp_ns) const;
++  nav_msgs::msg::Odometry::ConstSharedPtr find_latest_causal_kinematic_state(
++    std::int64_t anchor_stamp_ns) const;
++  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr find_latest_causal_acceleration(
++    std::int64_t anchor_stamp_ns) const;
+   VadInputTopicData materialize_exact_frame(const VadInputTopicData & image_frame) const;
+   VadInputTopicData materialize_approximate_frame(std::int64_t anchor_stamp_ns) const;
+   VadInputTopicData materialize_approximate_diagnostic_frame(std::int64_t anchor_stamp_ns) const;
+@@ -285,11 +290,13 @@ private:
+   int32_t num_cameras_;
+   std::size_t anchor_camera_id_;
+   std::size_t max_pending_frames_;
++  std::size_t max_vehicle_state_samples_;
+   std::map<std::int64_t, VadInputTopicData> pending_frames_;
+   std::vector<std::optional<std::int64_t>> approximate_consumed_watermarks_ns_;
+   std::vector<sensor_msgs::msg::CameraInfo::ConstSharedPtr> camera_infos_;
+-  nav_msgs::msg::Odometry::ConstSharedPtr kinematic_state_;
+-  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr acceleration_;
++  std::map<std::int64_t, nav_msgs::msg::Odometry::ConstSharedPtr> kinematic_states_;
++  std::map<std::int64_t, geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr>
++    accelerations_;
+   std::unique_ptr<SynchronizationStrategy> synchronization_strategy_;
+   std::optional<std::int64_t> last_accepted_source_stamp_ns_;
+   FrameBufferCounters counters_;
+diff --git a/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp b/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp
+index 0a882bd..f9b0551 100644
+--- a/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp
++++ b/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp
+@@ -67,12 +67,13 @@ geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr make_acceleration
+ }
+
+ SynchronizedFrameBuffer make_buffer(
+-  const std::size_t max_pending_frames = 8U, const double camera_sync_tolerance_ms = 1.0)
++  const std::size_t max_pending_frames = 8U, const double camera_sync_tolerance_ms = 1.0,
++  const std::size_t max_vehicle_state_samples = 64U)
+ {
+   return SynchronizedFrameBuffer(
+     camera_count,
+     std::make_unique<FrontCriticalSynchronizationStrategy>(0, 500.0, camera_sync_tolerance_ms),
+-    max_pending_frames);
++    max_pending_frames, max_vehicle_state_samples);
+ }
+
+ void set_camera_infos(SynchronizedFrameBuffer & buffer)
+@@ -202,6 +203,70 @@ TEST(FrameAssembly, RejectsAdjacentTickAndAcceptsMatchingCameraStamp)
+   EXPECT_EQ(buffer.counters().superseded_frames, 1U);
+ }
+
++TEST(FrameAssembly, SelectsLatestCausalVehicleStateDespiteOutOfOrderCallbacks)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t anchor_stamp_ns = 2500000000LL;
++  constexpr std::int64_t future_stamp_ns = anchor_stamp_ns + 50000000LL;
++  constexpr std::int64_t older_causal_stamp_ns = anchor_stamp_ns - 100000000LL;
++  constexpr std::int64_t latest_causal_stamp_ns = anchor_stamp_ns - 50000000LL;
++
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(anchor_stamp_ns));
++  }
++  buffer.set_kinematic_state(make_odometry(future_stamp_ns));
++  buffer.set_acceleration(make_acceleration(future_stamp_ns));
++  buffer.set_kinematic_state(make_odometry(latest_causal_stamp_ns));
++  buffer.set_acceleration(make_acceleration(latest_causal_stamp_ns));
++  buffer.set_kinematic_state(make_odometry(older_causal_stamp_ns));
++  buffer.set_acceleration(make_acceleration(older_causal_stamp_ns));
++
++  const auto result = buffer.take_ready_frame();
++  ASSERT_TRUE(result.frame.has_value());
++  ASSERT_NE(result.frame->kinematic_state, nullptr);
++  ASSERT_NE(result.frame->acceleration, nullptr);
++  EXPECT_EQ(result.frame->kinematic_state->header.stamp, make_stamp(latest_causal_stamp_ns));
++  EXPECT_EQ(result.frame->acceleration->header.stamp, make_stamp(latest_causal_stamp_ns));
++  EXPECT_DOUBLE_EQ(result.status.kinematic_state_delta_ms, 50.0);
++  EXPECT_DOUBLE_EQ(result.status.acceleration_delta_ms, 50.0);
++  EXPECT_EQ(buffer.counters().rejected_old_kinematic_states, 0U);
++  EXPECT_EQ(buffer.counters().rejected_old_accelerations, 0U);
++}
++
++TEST(FrameAssembly, WaitsForCausalVehicleStateAndRetainsFutureSamplesForNextFrame)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t anchor_stamp_ns = 2700000000LL;
++  constexpr std::int64_t future_stamp_ns = anchor_stamp_ns + 50000000LL;
++  constexpr std::int64_t causal_stamp_ns = anchor_stamp_ns - 50000000LL;
++
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(anchor_stamp_ns));
++  }
++  buffer.set_kinematic_state(make_odometry(future_stamp_ns));
++  buffer.set_acceleration(make_acceleration(future_stamp_ns));
++  EXPECT_EQ(buffer.take_ready_frame().status.reason, FrameAssemblyReason::MISSING_KINEMATIC_STATE);
++
++  buffer.set_kinematic_state(make_odometry(causal_stamp_ns));
++  EXPECT_EQ(buffer.take_ready_frame().status.reason, FrameAssemblyReason::MISSING_ACCELERATION);
++  buffer.set_acceleration(make_acceleration(causal_stamp_ns));
++  const auto first = buffer.take_ready_frame();
++  ASSERT_TRUE(first.frame.has_value());
++  EXPECT_EQ(first.frame->kinematic_state->header.stamp, make_stamp(causal_stamp_ns));
++  EXPECT_EQ(first.frame->acceleration->header.stamp, make_stamp(causal_stamp_ns));
++
++  constexpr std::int64_t next_anchor_stamp_ns = anchor_stamp_ns + 100000000LL;
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(next_anchor_stamp_ns));
++  }
++  const auto second = buffer.take_ready_frame();
++  ASSERT_TRUE(second.frame.has_value());
++  EXPECT_EQ(second.frame->kinematic_state->header.stamp, make_stamp(future_stamp_ns));
++  EXPECT_EQ(second.frame->acceleration->header.stamp, make_stamp(future_stamp_ns));
++}
++
+ TEST(FrameAssembly, AcceptsEveryDynamicCallbackPermutationExactlyOnce)
+ {
+   constexpr std::int64_t source_stamp_ns = 3000000000LL;
+@@ -367,6 +432,8 @@ TEST(FrameAssembly, CompleteExactFrameTakesPriorityOverNewerApproximateFrame)
+     buffer.set_image(camera_id, make_image(exact_stamp_ns));
+     buffer.set_image(camera_id, make_image(approximate_anchor_ns + camera_offsets_ns[camera_id]));
+   }
++  buffer.set_kinematic_state(make_odometry(exact_stamp_ns));
++  buffer.set_acceleration(make_acceleration(exact_stamp_ns));
+   buffer.set_kinematic_state(make_odometry(approximate_anchor_ns));
+   buffer.set_acceleration(make_acceleration(approximate_anchor_ns));
+
+@@ -375,15 +442,17 @@ TEST(FrameAssembly, CompleteExactFrameTakesPriorityOverNewerApproximateFrame)
+   EXPECT_EQ(exact.match_kind, FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP);
+   EXPECT_EQ(exact.status.source_stamp_ns, exact_stamp_ns);
+   EXPECT_DOUBLE_EQ(exact.status.image_stamp_span_ms, 0.0);
++  EXPECT_EQ(exact.frame->kinematic_state->header.stamp, make_stamp(exact_stamp_ns));
++  EXPECT_EQ(exact.frame->acceleration->header.stamp, make_stamp(exact_stamp_ns));
+   EXPECT_EQ(buffer.counters().accepted_frames, 1U);
+   EXPECT_EQ(buffer.counters().superseded_frames, 0U);
+
+-  buffer.set_kinematic_state(make_odometry(approximate_anchor_ns));
+-  buffer.set_acceleration(make_acceleration(approximate_anchor_ns));
+   const auto approximate = buffer.take_ready_frame();
+   ASSERT_TRUE(approximate.frame.has_value());
+   EXPECT_EQ(approximate.match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
+   EXPECT_EQ(approximate.status.source_stamp_ns, approximate_anchor_ns);
++  EXPECT_EQ(approximate.frame->kinematic_state->header.stamp, make_stamp(approximate_anchor_ns));
++  EXPECT_EQ(approximate.frame->acceleration->header.stamp, make_stamp(approximate_anchor_ns));
+   EXPECT_EQ(buffer.counters().accepted_frames, 2U);
+   EXPECT_EQ(buffer.pending_frame_count(), 0U);
+ }

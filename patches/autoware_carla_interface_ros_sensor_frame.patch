@@ -1,0 +1,58 @@
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
+index edd94b7..8dda558 100644
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
+@@ -615,9 +615,9 @@ class SensorKitLoader:
+         if "topic_info" in ros_config:
+             topic_info = ros_config["topic_info"]
+
+-        # Convert base_link coordinates to vehicle center if needed
++        # Convert the canonical ROS base_link calibration to a CARLA spawn transform.
+         if transform:
+-            transform = self._carla_baselink_to_vehicle_center_transform(transform)
++            transform = self._ros_baselink_to_vehicle_center_transform(transform)
+
+         config = SensorConfig(
+             sensor_id=mapping.get("id", sensor_name),
+@@ -637,19 +637,19 @@ class SensorKitLoader:
+
+         return config
+
+-    def _carla_baselink_to_vehicle_center_transform(
++    def _ros_baselink_to_vehicle_center_transform(
+         self, baselink_transform: Dict
+     ) -> Dict[str, float]:
+         """
+-        Convert CARLA base_link coordinates to CARLA vehicle center coordinates.
++        Convert ROS base_link coordinates to CARLA vehicle center coordinates.
+
+-        The carla_sensor_kit calibration uses CARLA coordinate conventions (Y-right).
+-        This function applies the wheelbase offset to translate from base_link
+-        (rear axle center) to vehicle center, without coordinate system conversion.
++        Autoware calibration uses ROS coordinates (X-forward, Y-left, Z-up). CARLA uses
++        X-forward, Y-right, Z-up, so this applies both the rear-axle origin offset and the
++        handedness conversion used for the actual sensor actor.
+
+         Args:
+         ----
+-            baselink_transform: Transform dict with x, y, z, roll, pitch, yaw in CARLA coords
++            baselink_transform: Transform dict with x, y, z, roll, pitch, yaw in ROS coords
+
+         Returns
+         -------
+@@ -664,13 +664,11 @@ class SensorKitLoader:
+         pitch = baselink_transform["pitch"]
+         yaw = baselink_transform["yaw"]
+
+-        # Convert location (only wheelbase offset, no coordinate flip)
+-        location = CoordinateTransformer.carla_base_link_to_vehicle_center_location(
++        location = CoordinateTransformer.ros_base_link_to_carla_location(
+             x, y, z, wheelbase=self.wheelbase
+         )
+
+-        # Convert rotation (only unit conversion, no angle negation)
+-        rotation = CoordinateTransformer.carla_rotation_to_carla_rotation(roll, pitch, yaw)
++        rotation = CoordinateTransformer.ros_to_carla_rotation(roll, pitch, yaw)
+
+         return {
+             "x": location.x,

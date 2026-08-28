@@ -1,0 +1,14 @@
+# Temporal RotatePlugin center A/B overlay. This keeps the repeat-screened
+# recommended synchronization and stock FP32 temporal-head precision.
+/**:
+  ros__parameters:
+    sync_params:
+      frame_buffer_size: 32
+      image_queue_depth: 32
+      image_reliability: reliable
+    model_params:
+      nets:
+        head:
+          onnx_path: "$(var model_path)/v0.1/variants/rotate_center_xy_100_53/vad-carla-tiny_head.onnx"
+          engine_path: "$(var model_path)/v0.1/variants/rotate_center_xy_100_53/vad-carla-tiny_head.engine"
+          precision: "fp32"

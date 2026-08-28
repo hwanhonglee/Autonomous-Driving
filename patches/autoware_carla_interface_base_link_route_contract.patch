@@ -1,0 +1,133 @@
+diff --git a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+--- a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
++++ b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+@@ -10,8 +10,13 @@
+     <arg name="timeout" default="20"/>
+     <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
+     <arg name="vehicle_type" default="vehicle.toyota.prius"/>
+     <arg name="spawn_point" default="None" description="location of ego vehicle spawn (default is random), example = [0.2 , 4.1, 0.4, 0., 0., 0.]"/>
++    <arg
++      name="spawn_point_reference"
++      default="vehicle_center"
++      description="Origin represented by spawn_point: vehicle_center or base_link"
++    />
+     <arg name="map_path" default="" description="Autoware map directory path (map name will be extracted for CARLA)"/>
+     <arg name="sync_mode" default="True"/>
+     <arg name="fixed_delta_seconds" default="0.05" description="Time step for CARLA, FPS=1/value"/>
+     <arg name="use_traffic_manager" default="False"/>
+@@ -42,6 +47,7 @@
+       <param name="carla_map" value="$(var carla_map)"/>
+       <param name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
+       <param name="spawn_point" value="$(var spawn_point)"/>
++      <param name="spawn_point_reference" value="$(var spawn_point_reference)"/>
+       <param name="vehicle_type" value="$(var vehicle_type)"/>
+       <param name="use_traffic_manager" value="$(var use_traffic_manager)"/>
+       <param name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+@@ -22,8 +22,9 @@ import carla
+
+ from .carla_ros import carla_ros2_interface
+ from .modules.carla_data_provider import CarlaDataProvider
+ from .modules.carla_data_provider import GameTime
++from .modules.coordinate_transformer import CoordinateTransformer
+ from .modules.carla_wrapper import SensorReceivedNoData
+ from .modules.carla_wrapper import SensorWrapper
+
+
+@@ -74,8 +75,9 @@ class InitializeInterface(object):
+         self.carla_map = self.param_["carla_map"]
+         self.agent_role_name = self.param_["ego_vehicle_role_name"]
+         self.vehicle_type = self.param_["vehicle_type"]
+         self.spawn_point = self.param_["spawn_point"]
++        self.spawn_point_reference = self.param_["spawn_point_reference"]
+         self.use_traffic_manager = self.param_["use_traffic_manager"]
+         self.max_real_delta_seconds = self.param_["max_real_delta_seconds"]
+
+     def _parse_spawn_point(self):
+@@ -91,8 +93,16 @@ class InitializeInterface(object):
+             )  # +2 is used so the car did not stuck on the road when spawned.
+             spawn_point.rotation.roll = float(point_items[3])
+             spawn_point.rotation.pitch = float(point_items[4])
+             spawn_point.rotation.yaw = float(point_items[5])
++            if self.spawn_point_reference == "base_link":
++                spawn_point = CoordinateTransformer.shift_carla_transform_along_local_x(
++                    spawn_point, self.interface.sensor_loader.wheelbase / 2.0
++                )
++            elif self.spawn_point_reference != "vehicle_center":
++                raise ValueError(
++                    "spawn_point_reference must be 'vehicle_center' or 'base_link'"
++                )
+         else:
+             randomize = True
+         return spawn_point, randomize
+
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -51,6 +51,7 @@ from .modules.carla_utils import ros_pose_to_carla_transform
+ from .modules.carla_wrapper import SensorInterface
+ from .vehicle_status_conversion import carla_yaw_rate_to_ros
+ from .vehicle_status_conversion import fl_wheel_to_virtual_tire_angle
++from .vehicle_status_conversion import rear_axle_lateral_velocity
+
+
+ class carla_ros2_interface(object):
+@@ -71,6 +72,7 @@ class carla_ros2_interface(object):
+             "carla_map": (rclpy.Parameter.Type.STRING, None),
+             "ego_vehicle_role_name": (rclpy.Parameter.Type.STRING, None),
+             "spawn_point": (rclpy.Parameter.Type.STRING, None),
++            "spawn_point_reference": (rclpy.Parameter.Type.STRING, "vehicle_center"),
+             "vehicle_type": (rclpy.Parameter.Type.STRING, None),
+             "use_traffic_manager": (rclpy.Parameter.Type.BOOL, None),
+             "max_real_delta_seconds": (rclpy.Parameter.Type.DOUBLE, None),
+@@ -96,6 +98,11 @@ class carla_ros2_interface(object):
+
+         wheel_base = self.param_values["wheel_base"]
+         wheel_tread = self.param_values["wheel_tread"]
++        spawn_point_reference = self.param_values["spawn_point_reference"]
++        if spawn_point_reference not in ("vehicle_center", "base_link"):
++            raise ValueError(
++                "spawn_point_reference must be 'vehicle_center' or 'base_link'"
++            )
+         if not math.isfinite(wheel_base) or wheel_base <= 0.0:
+             raise ValueError("wheel_base must be positive and finite")
+         if not math.isfinite(wheel_tread) or wheel_tread < 0.0:
+@@ -926,8 +933,11 @@ class carla_ros2_interface(object):
+
+         out_vel_state.header = self.get_msg_header(frame_id="base_link")
+         out_vel_state.longitudinal_velocity = ego_velocity[0]
+-        out_vel_state.lateral_velocity = -ego_velocity[1]
+-        out_vel_state.heading_rate = carla_yaw_rate_to_ros(ego_angular_velocity_local[2])
++        heading_rate = carla_yaw_rate_to_ros(ego_angular_velocity_local[2])
++        out_vel_state.lateral_velocity = rear_axle_lateral_velocity(
++            -ego_velocity[1], heading_rate, self.sensor_loader.wheelbase / 2.0
++        )
++        out_vel_state.heading_rate = heading_rate
+
+         out_steering_state.stamp = out_vel_state.header.stamp
+         fl_angle_rad = -math.radians(steer_angle)
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py
+@@ -27,3 +27,19 @@ def carla_yaw_rate_to_ros(angular_velocity_z_deg_per_sec):
+     if not math.isfinite(angular_velocity_z_deg_per_sec):
+         raise ValueError("CARLA yaw rate must be finite")
+     return -math.radians(angular_velocity_z_deg_per_sec)
++
++
++def rear_axle_lateral_velocity(
++    center_lateral_velocity_mps, heading_rate_rad_per_sec, center_to_rear_axle_m
++):
++    """Translate planar lateral velocity from the vehicle center to the rear axle."""
++    values = (
++        center_lateral_velocity_mps,
++        heading_rate_rad_per_sec,
++        center_to_rear_axle_m,
++    )
++    if not all(math.isfinite(value) for value in values):
++        raise ValueError("rear-axle velocity inputs must be finite")
++    if center_to_rear_axle_m < 0.0:
++        raise ValueError("center-to-rear-axle distance must be non-negative")
++    return center_lateral_velocity_mps - center_to_rear_axle_m * heading_rate_rad_per_sec

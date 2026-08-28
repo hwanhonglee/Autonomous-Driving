@@ -1,0 +1,19 @@
+/**:
+  ros__parameters:
+    node_params:
+      use_raw: [true, true, true, true, true, true]
+
+    interface_params:
+      input_image_width: 640
+      input_image_height: 360
+
+    # Experimental: the suffix versions the mixed-precision policy. It preserves
+    # both the FP32 engines and the earlier all-FP16 head engine caches.
+    model_params:
+      nets:
+        head:
+          engine_path: "$(var model_path)/v0.1/vad-carla-tiny_head_fp16_layernorm_fp32.engine"
+          precision: "fp16"
+        head_no_prev:
+          engine_path: "$(var model_path)/v0.1/vad-carla-tiny_head_no_prev_fp16_layernorm_fp32.engine"
+          precision: "fp16"

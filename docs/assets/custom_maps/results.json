@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-28",
+  "planning_architecture": "vad_route_manager_hybrid",
+  "controller": "Autoware MPC lateral plus PID longitudinal",
+  "recommended_terminal_deceleration_mps2": 0.6,
+  "c_track": {
+    "route": "394_to_290_lane_follow",
+    "profile": "recommended",
+    "result": "PASS",
+    "artifact": "artifacts/runs/custom_maps/c_track_full_vad_decel_0p6_v3",
+    "route_length_m": 59.7267587184906,
+    "traveled_distance_m": 58.86762649842108,
+    "maximum_absolute_cte_m": 0.3823765516281128,
+    "maximum_trajectory_correction_m": 0.5628887414932251,
+    "minimum_remaining_distance_m": 0.8578689694404602,
+    "wall_elapsed_sec": 30.271977037999022
+  },
+  "woraksan": {
+    "route": "2_to_8_lanelet_safe_straight",
+    "profile": "recommended_plus_tight_corridor_0p20m",
+    "result": "PASS_3_OF_3",
+    "artifacts": [
+      "artifacts/runs/custom_maps/woraksan_full_vad_tight_corridor_v9",
+      "artifacts/runs/custom_maps/woraksan_full_vad_tight_corridor_v10",
+      "artifacts/runs/custom_maps/woraksan_full_vad_tight_corridor_v11"
+    ],
+    "route_length_m": 35.821016002404896,
+    "maximum_absolute_cte_m": [
+      0.24672575294971466,
+      0.22626857459545135,
+      0.21586354076862335
+    ],
+    "minimum_remaining_distance_m": [
+      0.8088114261627197,
+      0.7337518930435181,
+      0.8125733137130737
+    ],
+    "wall_elapsed_sec": [
+      19.039923022995936,
+      23.44058802100335,
+      23.242866643005982
+    ],
+    "maximum_trajectory_correction_m": [
+      3.7985544204711914,
+      3.579052209854126,
+      3.759732484817505
+    ]
+  },
+  "limits": [
+    "Each map result covers one fixed route, not arbitrary starts and goals.",
+    "The route corridor modifies VAD geometry, so these are hybrid rather than unassisted E2E results.",
+    "Woraksan CARLA-to-Lanelet alignment is a single-anchor empirical transform."
+  ]
+}

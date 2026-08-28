@@ -1,0 +1,16 @@
+# Editable deployment-only VAD settings. This file is loaded after the official
+# carla_tiny and fast-profile parameters; it does not change network weights.
+/**:
+  ros__parameters:
+    interface_params:
+      detection_range: [-30.0, -16.0, -0.355, 30.0, 16.0, 4.645]
+
+    model_params:
+      # Order: Broken, Solid, SolidSolid, Center, TrafficLight, StopSign
+      map_confidence_thresholds: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+      # Order: car, van, truck, bicycle, traffic_sign, traffic_cone,
+      # traffic_light, pedestrian, others
+      object_confidence_thresholds: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.3]
+
+    sync_params:
+      sync_tolerance_ms: 500.0

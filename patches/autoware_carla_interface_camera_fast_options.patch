@@ -1,0 +1,283 @@
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+index 6a42da1..d5fc196 100644
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -306,6 +306,7 @@ class carla_ros2_interface(object):
+         # synchronous tick loop is never blocked by serialization or by
+         # reliable-QoS flow control (see SensorPublishWorker).
+         self._publish_workers = {}
++        self._rejected_camera_bundles = 0
+
+         # ROS-related helpers initialized later
+         self.ros2_node = None
+@@ -323,13 +324,14 @@ class carla_ros2_interface(object):
+     def get_param(self):
+         return self.param_values
+
+-    def checkFrequency(self, sensor):
++    def checkFrequency(self, sensor, timestamp=None):
+         """
+         Return True when publication should be throttled for the sensor.
+
+-        Uses simulation time (self.timestamp) for all sensors to ensure correct throttling in
+-        synchronous mode. Wall-clock timing would cause issues when simulation speed differs from
+-        real-time.
++        Uses simulation time to ensure correct throttling in synchronous mode. Physical sensor
++        dispatch passes the measurement acquisition timestamp; legacy callers fall back to the
++        current bridge tick. Wall-clock timing would be incorrect when simulation speed differs
++        from real-time.
+
+         """
+         # Use sensor registry for all sensors (including legacy ones)
+@@ -337,12 +339,74 @@ class carla_ros2_interface(object):
+         if not config:
+             return False
+
+-        if self.timestamp is None:
++        if timestamp is None:
++            timestamp = self.timestamp
++        if timestamp is None:
+             return False
+
+-        should_publish = self.sensor_registry.should_publish(sensor, self.timestamp)
++        should_publish = self.sensor_registry.should_publish(sensor, timestamp)
+         return not should_publish
+
++    def _measurement_timestamp(self, measurement, *, prefer_frame=False):
++        """Map CARLA acquisition time into the bridge-relative simulation clock."""
++        if prefer_frame:
++            try:
++                measurement_frame = int(measurement.frame)
++                current_frame = int(GameTime.get_frame())
++                fixed_delta = float(self.param_values["fixed_delta_seconds"])
++                current_stamp = float(self.timestamp)
++                if (
++                    measurement_frame >= 0
++                    and current_frame >= measurement_frame
++                    and math.isfinite(fixed_delta)
++                    and fixed_delta > 0.0
++                    and math.isfinite(current_stamp)
++                ):
++                    frame_stamp = current_stamp - (
++                        current_frame - measurement_frame
++                    ) * fixed_delta
++                    if math.isfinite(frame_stamp) and frame_stamp >= 0.0:
++                        return frame_stamp
++            except (AttributeError, KeyError, TypeError, ValueError, OverflowError):
++                pass
++
++        timestamp = getattr(measurement, "timestamp", None)
++        if timestamp is None:
++            return self.timestamp
++        try:
++            timestamp = float(timestamp)
++        except (TypeError, ValueError):
++            return self.timestamp
++        if not math.isfinite(timestamp) or timestamp < 0.0:
++            return self.timestamp
++        carla_now = GameTime.get_carla_time()
++        if self.timestamp is None or not math.isfinite(carla_now):
++            return self.timestamp
++        return self.timestamp - (carla_now - timestamp)
++
++    def _source_controls_cadence(self, sensor):
++        """Return whether CARLA already rate-limits this sensor at its blueprint."""
++        config = self.sensor_registry.get_sensor(sensor)
++        if not config or config.carla_type != "sensor.camera.rgb":
++            return False
++        try:
++            source_period = float(config.parameters.get("sensor_tick", 0.0))
++            requested_period = 1.0 / float(config.frequency_hz)
++            return source_period > 0.0 and source_period + 1.0e-9 >= requested_period
++        except (TypeError, ValueError, ZeroDivisionError):
++            return False
++
++    def _should_publish_measurement(self, sensor, timestamp):
++        """Reject stale physical data before applying source or bridge cadence control."""
++        config = self.sensor_registry.get_sensor(sensor)
++        if not config:
++            return False
++        if timestamp is None or not math.isfinite(timestamp) or timestamp < 0.0:
++            return False
++        if config.last_publish_time is not None and timestamp <= config.last_publish_time:
++            return False
++        return self._source_controls_cadence(sensor) or not self.checkFrequency(sensor, timestamp)
++
+     def get_msg_header(self, frame_id, timestamp=None):
+         """Obtain and modify ROS message header.
+
+@@ -367,6 +410,40 @@ class carla_ros2_interface(object):
+             self._publish_workers[key] = worker
+         worker.submit(fn, args)
+
++    def _publish_camera_bundle(self, camera_measurements):
++        """Convert and publish one complete physical camera frame serially."""
++        for measurement, camera_id, timestamp in camera_measurements:
++            self.camera(measurement, camera_id, timestamp)
++
++    def _queue_camera_bundle(self, camera_measurements, expected_count):
++        """Validate and atomically enqueue a same-frame camera bundle."""
++        stamps = [timestamp for _, _, timestamp in camera_measurements]
++        valid = (
++            len(camera_measurements) == expected_count
++            and expected_count > 0
++            and all(math.isfinite(stamp) and stamp >= 0.0 for stamp in stamps)
++            and max(stamps) - min(stamps) <= 1.0e-6
++        )
++        if not valid:
++            self._rejected_camera_bundles = getattr(self, "_rejected_camera_bundles", 0) + 1
++            if self._rejected_camera_bundles % 100 == 1:
++                span_ms = (
++                    (max(stamps) - min(stamps)) * 1.0e3 if stamps else float("nan")
++                )
++                self.logger.warning(
++                    f"Rejected camera bundle {self._rejected_camera_bundles}: "
++                    f"received={len(camera_measurements)} expected={expected_count} "
++                    f"stamp_span_ms={span_ms:.3f}"
++                )
++            return False
++
++        for _, camera_id, timestamp in camera_measurements:
++            self.sensor_registry.update_sensor_timestamp(camera_id, timestamp)
++        self._submit_to_publish_worker(
++            "camera_bundle", self._publish_camera_bundle, tuple(camera_measurements)
++        )
++        return True
++
+     def lidar(self, carla_lidar_measurement, id_, timestamp=None):
+         """Transform the received lidar measurement into a ROS point cloud message.
+
+@@ -852,7 +929,10 @@ class carla_ros2_interface(object):
+         obj_clock.clock = Time(sec=seconds, nanosec=nanoseconds)
+         self.clock_publisher.publish(obj_clock)
+
+-        # publish data of all sensors
++        # Publish data of all sensors. Cameras are submitted to one bundle worker so overload drops
++        # a complete six-camera frame rather than an arbitrary subset.
++        camera_measurements = []
++        camera_input_count = 0
+         for key, data in input_data.items():
+             # Safely get sensor type with fallback
+             sensor_type = self.id_to_sensor_type_map.get(key)
+@@ -870,20 +950,32 @@ class carla_ros2_interface(object):
+             # gating and registry bookkeeping stay on this thread so the
+             # registry is never accessed concurrently.
+             if sensor_type == "sensor.camera.rgb":
+-                if not self.checkFrequency(key):
+-                    self.sensor_registry.update_sensor_timestamp(key, self.timestamp)
+-                    self._submit_to_publish_worker(key, self.camera, data[1], key, self.timestamp)
++                camera_input_count += 1
++                measurement_timestamp = self._measurement_timestamp(
++                    data[1], prefer_frame=True
++                )
++                if self._should_publish_measurement(key, measurement_timestamp):
++                    camera_measurements.append((data[1], key, measurement_timestamp))
+             elif sensor_type == "sensor.other.gnss":
+                 self.pose()
+             elif sensor_type == "sensor.lidar.ray_cast":
+-                if not self.checkFrequency(key):
+-                    self.sensor_registry.update_sensor_timestamp(key, self.timestamp)
+-                    self._submit_to_publish_worker(key, self.lidar, data[1], key, self.timestamp)
++                measurement_timestamp = self._measurement_timestamp(data[1])
++                if self._should_publish_measurement(key, measurement_timestamp):
++                    self.sensor_registry.update_sensor_timestamp(key, measurement_timestamp)
++                    self._submit_to_publish_worker(
++                        key, self.lidar, data[1], key, measurement_timestamp
++                    )
+             elif sensor_type == "sensor.other.imu":
+                 self.imu(data[1])
+             else:
+                 self.logger.debug(f"No publisher for sensor '{key}' (type={sensor_type})")
+
++        # A zero sensor_tick captures every physics frame; the bridge cadence gate
++        # intentionally leaves intermediate frames empty. Only validate frames selected
++        # for publication so cadence drops are not reported as malformed bundles.
++        if camera_measurements:
++            self._queue_camera_bundle(camera_measurements, camera_input_count)
++
+         # Push turn indicator / hazard lights to CARLA before reading status back.
+         self.apply_light_state()
+
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
+index c6936f1..44dd484 100644
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
+@@ -82,10 +82,15 @@ class CallBack(object):
+ class SensorInterface(object):
+     """Interface for collecting sensor data from CARLA."""
+
++    MAX_PENDING_CAMERA_FRAMES = 8
++
+     def __init__(self):
+         """Initialize sensor interface."""
+         self._sensors_objects = {}
+         self._new_data_buffers = Queue()
++        self._camera_tags = set()
++        self._pending_camera_frames = {}
++        self._last_returned_camera_frame = -1
+         self.tag = ""  # Current sensor tag
+
+     def register_sensor(self, tag, sensor):
+@@ -94,6 +99,8 @@ class SensorInterface(object):
+             raise ValueError(f"Duplicated sensor tag [{tag}]")
+
+         self._sensors_objects[tag] = sensor
++        if getattr(sensor, "type_id", "").startswith("sensor.camera"):
++            self._camera_tags.add(tag)
+
+     def update_sensor(self, tag, data, timestamp):
+         if tag not in self._sensors_objects:
+@@ -110,13 +117,38 @@ class SensorInterface(object):
+         # Non-blocking: get all available data from queue
+         while True:
+             try:
+-                sensor_data = self._new_data_buffers.get(block=False)
+-                data_dict[sensor_data[0]] = (sensor_data[1], sensor_data[2])
++                tag, frame, data = self._new_data_buffers.get(block=False)
++                if tag in self._camera_tags:
++                    if frame <= self._last_returned_camera_frame:
++                        continue
++                    self._pending_camera_frames.setdefault(frame, {})[tag] = (frame, data)
++                else:
++                    data_dict[tag] = (frame, data)
+             except Empty:
+                 # Queue is empty, break and return whatever data we have
+                 break
+
+-        # Return available data immediately (could be partial sensor set)
++        complete_frames = [
++            frame
++            for frame, camera_data in self._pending_camera_frames.items()
++            if self._camera_tags.issubset(camera_data)
++        ]
++        if complete_frames:
++            latest_complete = max(complete_frames)
++            data_dict.update(self._pending_camera_frames[latest_complete])
++            self._last_returned_camera_frame = latest_complete
++            self._pending_camera_frames = {
++                frame: camera_data
++                for frame, camera_data in self._pending_camera_frames.items()
++                if frame > latest_complete
++            }
++        elif len(self._pending_camera_frames) > self.MAX_PENDING_CAMERA_FRAMES:
++            newest_frames = sorted(self._pending_camera_frames)[-self.MAX_PENDING_CAMERA_FRAMES :]
++            self._pending_camera_frames = {
++                frame: self._pending_camera_frames[frame] for frame in newest_frames
++            }
++
++        # Non-camera data remains immediate; cameras are returned only as one physical frame.
+         return data_dict
+
+
+@@ -245,6 +277,11 @@ class SensorWrapper(object):
+         bp.set_attribute("image_size_x", str(spec["image_size_x"]))
+         bp.set_attribute("image_size_y", str(spec["image_size_y"]))
+         bp.set_attribute("fov", str(spec["fov"]))
++        if "sensor_tick" in spec:
++            bp.set_attribute("sensor_tick", str(spec["sensor_tick"]))
++        if "enable_postprocess_effects" in spec:
++            enabled = str(spec["enable_postprocess_effects"]).lower()
++            bp.set_attribute("enable_postprocess_effects", enabled)
+
+     def _configure_lidar_attributes(self, bp, spec):
+         """Configure LiDAR-specific attributes."""

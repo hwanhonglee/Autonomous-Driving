@@ -1,0 +1,43 @@
+diff --git a/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml b/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml
+new file mode 100644
+index 0000000..69ebd9c
+--- /dev/null
++++ b/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml
+@@ -0,0 +1,37 @@
++launch:
++  # Opt-in Smart MPC controller. The package defaults select nominal iLQR
++  # with use_trained_model=false.
++  - arg:
++      name: trajectory_follower_mode
++      default: smart_mpc_trajectory_follower
++
++  # external_cmd selector/converter
++  - arg:
++      name: launch_external_cmd_selector
++      default: "true"
++  - arg:
++      name: launch_external_cmd_converter
++      default: "true"
++
++  # optional control checkers
++  - arg:
++      name: launch_lane_departure_checker
++      default: "true"
++  - arg:
++      name: launch_control_validator
++      default: "true"
++  - arg:
++      name: launch_autonomous_emergency_braking
++      default: "true"
++  - arg:
++      name: launch_collision_detector
++      default: "true"
++  - arg:
++      name: launch_obstacle_collision_checker
++      default: "false"
++  - arg:
++      name: launch_predicted_path_checker
++      default: "false"
++  - arg:
++      name: launch_control_evaluator
++      default: "true"

@@ -1,0 +1,42 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+    command_rate_hz: 20.0
+    state_rate_hz: 20.0
+    status_timeout_wall_s: 0.5
+    startup_timeout_wall_s: 20.0
+    shutdown_brake_wall_s: 1.0
+
+    repeats: 3
+    accel_levels: [0.1, 0.2, 0.3, 0.4]
+    brake_levels: [0.1, 0.2, 0.3, 0.4, 0.6, 0.8]
+    prepare_accel: 0.3
+    prepare_velocity_mps: 2.8
+    coast_before_brake_s: 0.5
+    sample_min_velocity_mps: 0.1
+    sample_max_velocity_mps: 3.0
+    response_settle_s: 0.35
+    minimum_sample_duration_s: 0.5
+    maximum_case_duration_s: 25.0
+
+    stop_velocity_mps: 0.03
+    stop_hold_s: 0.5
+    reset_settle_s: 0.5
+    command_tolerance: 0.025
+    maximum_velocity_mps: 3.2
+    maximum_reverse_velocity_mps: 0.1
+    maximum_settling_reverse_velocity_mps: 0.5
+    maximum_steering_rad: 0.12
+    maximum_sample_displacement_m: 40.0
+    maximum_displacement_m: 50.0
+
+    # Town01 spawn 143. The stable ground pose is measured after CARLA settles.
+    expected_spawn_x_m: 268.586578
+    expected_spawn_y_m: 1.959914
+    maximum_spawn_xy_error_m: 0.5
+    maximum_reset_pose_error_m: 0.25
+    reset_reference_stability_s: 0.75
+    maximum_reset_reference_z_delta_m: 0.01
+    initialpose_interface_z_offset_m: 2.0
+    reset_timeout_s: 5.0
+    reset_stop_hold_s: 0.5

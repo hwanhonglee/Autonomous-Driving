@@ -1,0 +1,80 @@
+# Copy this template outside the tracked tree and replace every placeholder with
+# the measured, rectified real-camera calibration. camera_pose_in_base uses
+# TransformStamped semantics: the camera optical frame pose expressed in base_link.
+schema_version: 1
+base_frame: base_link
+image_width: 640
+image_height: 360
+cameras:
+  - name: CAM_FRONT
+    model_index: 0
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_FRONT/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]
+  - name: CAM_BACK
+    model_index: 1
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_BACK/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]
+  - name: CAM_FRONT_LEFT
+    model_index: 2
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_FRONT_LEFT/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]
+  - name: CAM_BACK_LEFT
+    model_index: 3
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_BACK_LEFT/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]
+  - name: CAM_FRONT_RIGHT
+    model_index: 4
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_FRONT_RIGHT/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]
+  - name: CAM_BACK_RIGHT
+    model_index: 5
+    serial: REPLACE_WITH_CAMERA_SERIAL
+    optical_frame: CAM_BACK_RIGHT/camera_optical_link
+    timestamp_source: hardware_exposure
+    trigger_mode: hardware
+    distortion_model: plumb_bob
+    d: [0, 0, 0, 0, 0]
+    k: [REPLACE_WITH_FX, 0, REPLACE_WITH_CX, 0, REPLACE_WITH_FY, REPLACE_WITH_CY, 0, 0, 1]
+    camera_pose_in_base:
+      translation_xyz: [REPLACE_WITH_X, REPLACE_WITH_Y, REPLACE_WITH_Z]
+      rotation_xyzw: [REPLACE_WITH_QX, REPLACE_WITH_QY, REPLACE_WITH_QZ, REPLACE_WITH_QW]

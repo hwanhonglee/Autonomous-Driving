@@ -1,0 +1,215 @@
+# Edit the session identity, topic names, and calibration provenance before a real capture.
+# This profile records the rectified 640x360 feed consumed by the recommended VAD runtime.
+schema_version: 1
+
+session:
+  source: real_vehicle
+  vehicle_id: REPLACE_WITH_REAL_VEHICLE_ID
+  sensor_rig_id: REPLACE_WITH_REAL_SENSOR_RIG_ID
+  operator_note: ""
+
+model_contract:
+  model_name: vad-carla-tiny
+  camera_order:
+    - CAM_FRONT
+    - CAM_BACK
+    - CAM_FRONT_LEFT
+    - CAM_BACK_LEFT
+    - CAM_FRONT_RIGHT
+    - CAM_BACK_RIGHT
+  base_frame: base_link
+  input_width: 640
+  input_height: 360
+  input_encoding: bgr8
+  rectified_images: true
+  target_width: 640
+  target_height: 384
+  can_bus_dimension: 18
+  map_frame: map
+  acceleration_frame: base_link
+  model_files:
+    param_json:
+      path: data/ml_models/vad/v0.1/vad-carla-tiny.param.json
+      sha256: 03d3187fed3c70f761456afc2e93e18c1765113b1c1580ffa78ab42b10dbd179
+    backbone:
+      path: data/ml_models/vad/v0.1/vad-carla-tiny_backbone.onnx
+      sha256: 04b925f2750fd1c4adf16b5aae9c149d0baa39185e99d141232ebe20bddba4da
+    head:
+      path: data/ml_models/vad/v0.1/vad-carla-tiny_head.onnx
+      sha256: 31f49a592a764ce82bbe6e26d0bfc99dc8a9613628884dc73dd5e67521ff3e9e
+    head_no_prev:
+      path: data/ml_models/vad/v0.1/vad-carla-tiny_head_no_prev.onnx
+      sha256: 6a89d479e0717b1e526f1aa3a1137c631a9ef854e810d0328a035aae11818c2a
+
+validation:
+  minimum_duration_s: 30.0
+  minimum_camera_rate_hz: 10.0
+  minimum_state_rate_hz: 10.0
+  maximum_p99_gap_ms: 250.0
+  maximum_state_delta_ms: 100.0
+  runtime_sync_tolerance_ms: 1.0
+  dataset_sync_tolerance_ms: 20.0
+  minimum_bundle_coverage_percent: 99.0
+  maximum_count_imbalance_percent: 1.0
+  minimum_motion_distance_m: 5.0
+  maximum_command_age_ms: 500.0
+  minimum_command_coverage_percent: 99.0
+  maximum_intrinsic_error: 0.000001
+  maximum_extrinsic_translation_error_m: 0.002
+  maximum_extrinsic_rotation_error_deg: 0.1
+  maximum_ptp_offset_ns: 100000.0
+  maximum_status_age_ms: 1500.0
+  maximum_image_transport_delay_ms: 250.0
+  maximum_device_status_delta_ms: 50.0
+  future_horizon_s: 3.0
+  future_step_s: 0.5
+  require_zero_distortion: true
+  require_reliable_images: true
+  require_transient_local_tf_static: true
+
+cameras:
+  - name: CAM_FRONT
+    model_index: 0
+    image_topic: /sensing/camera/CAM_FRONT/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_FRONT/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_FRONT/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_FRONT/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+  - name: CAM_BACK
+    model_index: 1
+    image_topic: /sensing/camera/CAM_BACK/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_BACK/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_BACK/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_BACK/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+  - name: CAM_FRONT_LEFT
+    model_index: 2
+    image_topic: /sensing/camera/CAM_FRONT_LEFT/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_FRONT_LEFT/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_FRONT_LEFT/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_FRONT_LEFT/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+  - name: CAM_BACK_LEFT
+    model_index: 3
+    image_topic: /sensing/camera/CAM_BACK_LEFT/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_BACK_LEFT/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_BACK_LEFT/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_BACK_LEFT/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+  - name: CAM_FRONT_RIGHT
+    model_index: 4
+    image_topic: /sensing/camera/CAM_FRONT_RIGHT/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_FRONT_RIGHT/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_FRONT_RIGHT/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_FRONT_RIGHT/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+  - name: CAM_BACK_RIGHT
+    model_index: 5
+    image_topic: /sensing/camera/CAM_BACK_RIGHT/image_rect
+    image_type: sensor_msgs/msg/Image
+    camera_info_topic: /sensing/camera/CAM_BACK_RIGHT/camera_info
+    camera_info_type: sensor_msgs/msg/CameraInfo
+    optical_frame: CAM_BACK_RIGHT/camera_optical_link
+    device_info_topic: /sensing/camera/CAM_BACK_RIGHT/device_info
+    device_info_type: diagnostic_msgs/msg/DiagnosticStatus
+
+runtime_topics:
+  kinematic_state:
+    topic: /localization/kinematic_state
+    type: nav_msgs/msg/Odometry
+  acceleration:
+    topic: /localization/acceleration
+    type: geometry_msgs/msg/AccelWithCovarianceStamped
+  tf_static:
+    topic: /tf_static
+    type: tf2_msgs/msg/TFMessage
+
+capture_topics:
+  time_sync_status:
+    topic: /sensing/time_sync/status
+    type: diagnostic_msgs/msg/DiagnosticStatus
+
+# These topics preserve vehicle dynamics, safety interventions, and localization sources.
+# Missing context topics do not block capture, but the validator reports them.
+context_topics:
+  tf:
+    topic: /tf
+    type: tf2_msgs/msg/TFMessage
+  imu:
+    topic: /sensing/imu/imu_data
+    type: sensor_msgs/msg/Imu
+  navsat_fix:
+    topic: /sensing/gnss/pose_with_covariance
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+  velocity_status:
+    topic: /vehicle/status/velocity_status
+    type: autoware_vehicle_msgs/msg/VelocityReport
+  steering_status:
+    topic: /vehicle/status/steering_status
+    type: autoware_vehicle_msgs/msg/SteeringReport
+  actuation_status:
+    topic: /vehicle/status/actuation_status
+    type: tier4_vehicle_msgs/msg/ActuationStatusStamped
+  gear_status:
+    topic: /vehicle/status/gear_status
+    type: autoware_vehicle_msgs/msg/GearReport
+  control_mode:
+    topic: /vehicle/status/control_mode
+    type: autoware_vehicle_msgs/msg/ControlModeReport
+  trajectory_follower_control:
+    topic: /control/trajectory_follower/control_cmd
+    type: autoware_control_msgs/msg/Control
+  gated_control:
+    topic: /control/command/control_cmd
+    type: autoware_control_msgs/msg/Control
+  actuation_command:
+    topic: /control/command/actuation_cmd
+    type: tier4_vehicle_msgs/msg/ActuationCommandStamped
+  planning_trajectory:
+    topic: /planning/trajectory
+    type: autoware_planning_msgs/msg/Trajectory
+  autoware_state:
+    topic: /autoware/state
+    type: autoware_system_msgs/msg/AutowareState
+  operation_mode:
+    topic: /api/operation_mode/state
+    type: autoware_adapi_v1_msgs/msg/OperationModeState
+  manual_intervention:
+    topic: /training/manual_intervention
+    type: std_msgs/msg/Bool
+
+# command plus future ego poses are the minimum raw labels for planning adaptation.
+# Object and vector-map ground truth are additionally required for full joint VAD training.
+label_topics:
+  command:
+    topic: /planning/vad_route/command
+    type: std_msgs/msg/Int8
+    required_for: [planning, multitask]
+  object_ground_truth:
+    topic: /training/ground_truth/objects
+    type: autoware_perception_msgs/msg/TrackedObjects
+    required_for: [multitask]
+  vector_map_ground_truth:
+    topic: /training/ground_truth/vector_map
+    type: autoware_map_msgs/msg/LaneletMapBin
+    required_for: [multitask]
+
+provenance:
+  calibration_file: REPLACE_WITH_CALIBRATION_MANIFEST
+  rectification_config_file: REPLACE_WITH_RECTIFICATION_CONFIG
+  commissioning_file: REPLACE_WITH_COMMISSIONING_MANIFEST
+  ptp_clock_source: REPLACE_WITH_PTP_CLOCK_SOURCE
+  camera_firmware: REPLACE_WITH_CAMERA_FIRMWARE
+  exposure_mode: REPLACE_WITH_EXPOSURE_MODE
+  map_id: REPLACE_WITH_MAP_ID
+  route_id: REPLACE_WITH_ROUTE_ID

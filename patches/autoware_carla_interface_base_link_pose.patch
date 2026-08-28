@@ -1,0 +1,68 @@
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -40,6 +40,7 @@ from tier4_vehicle_msgs.msg import ActuationStatusStamped
+ from transforms3d.euler import euler2quat
+
+ # New modular sensor infrastructure
++from .modules import CoordinateTransformer
+ from .modules import ROSPublisherManager
+ from .modules import SensorKitLoader
+ from .modules import SensorPublishWorker
+@@ -569,8 +570,11 @@ class carla_ros2_interface(object):
+     def initialpose_callback(self, data):
+         """Transform RVIZ initial pose to CARLA (thread-safe)."""
+         pose = data.pose.pose
+-        pose.position.z += 2.0
+         carla_pose_transform = ros_pose_to_carla_transform(pose)
++        carla_pose_transform.location.z += 2.0
++        carla_pose_transform = CoordinateTransformer.shift_carla_transform_along_local_x(
++            carla_pose_transform, self.sensor_loader.wheelbase / 2.0
++        )
+
+         with self._state_lock:
+             if self.ego_actor is not None:
+@@ -605,8 +609,14 @@ class carla_ros2_interface(object):
+                 return
+             ego_transform = self.ego_actor.get_transform()
+
+-        pose_carla.position = carla_location_to_ros_point(ego_transform.location)
+-        pose_carla.orientation = carla_rotation_to_ros_quaternion(ego_transform.rotation)
++        # CARLA locates a vehicle actor at its center, while Autoware base_link and the
++        # sensor calibration are referenced to the rear axle center.
++        base_link_transform = CoordinateTransformer.shift_carla_transform_along_local_x(
++            ego_transform, -self.sensor_loader.wheelbase / 2.0
++        )
++
++        pose_carla.position = carla_location_to_ros_point(base_link_transform.location)
++        pose_carla.orientation = carla_rotation_to_ros_quaternion(base_link_transform.rotation)
+         out_pose_with_cov.header = header
+         out_pose_with_cov.pose.pose = pose_carla
+         out_pose_with_cov.pose.covariance = self._create_gnss_covariance_matrix()
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/coordinate_transformer.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/coordinate_transformer.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/coordinate_transformer.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/coordinate_transformer.py
+@@ -107,8 +107,23 @@ class CoordinateTransformer:
+
+         # Step 2: ROS to CARLA coordinate system
+         return CoordinateTransformer.ros_to_carla_location(x_vc, y_vc, z_vc)
+
++    @staticmethod
++    def shift_carla_transform_along_local_x(
++        transform: carla.Transform, distance: float
++    ) -> carla.Transform:
++        """Return a transform shifted along its local longitudinal axis."""
++        forward = transform.get_forward_vector()
++        return carla.Transform(
++            carla.Location(
++                x=transform.location.x + distance * forward.x,
++                y=transform.location.y + distance * forward.y,
++                z=transform.location.z + distance * forward.z,
++            ),
++            transform.rotation,
++        )
++
+     @staticmethod
+     def ros_to_carla_location(x: float, y: float, z: float) -> carla.Location:
+         """
+         Convert ROS position to CARLA location.

@@ -1,0 +1,192 @@
+schema_version: 1
+suite_id: carla_expert_training_maps_v1
+description: Canonical CARLA maps and runtime bindings for expert-data collection.
+
+server_profiles:
+  packaged_0915:
+    kind: packaged
+    version: 0.9.15-dev-dirty
+    executable: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4.sh
+    project: null
+    python_api: /home/hong/carla-autoware-universe/CARLA_0.9.15/PythonAPI/carla/dist/carla-0.9.15-py3.10-linux-x86_64.egg
+    python_api_sha256: ee7209c5570cb9201e9fbd3cbcefc5b176dd4f6b2289df52bb0bd7dc2c56800b
+  source_editor_0915_4ws:
+    kind: source_editor
+    version: 0.9.15-dev-dirty
+    executable: /home/hong/UnrealEngine_4.26/Engine/Binaries/Linux/UE4Editor
+    project: /home/hong/carla/Unreal/CarlaUE4/CarlaUE4.uproject
+    python_api: /home/hong/carla/PythonAPI/carla/dist/carla-0.9.15-py3.10-linux-x86_64.egg
+    python_api_sha256: 328e90242236b8f0529e6c9526694934bf20c27dc1e7348ba46eaf79061e6617
+
+maps:
+  - id: town01
+    canonical_name: Town01
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town01
+    split: train
+    status: ready
+    reason: Packaged level and OpenDRIVE assets are present and used by the existing E2E routes.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town01.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town01.xodr
+  - id: town02
+    canonical_name: Town02
+    server_profile: null
+    load_name: /Game/Carla/Maps/Town02
+    split: excluded
+    status: unavailable
+    reason: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.
+    level_path: null
+    opendrive_path: null
+  - id: town02_opt
+    canonical_name: Town02_Opt
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town02_Opt
+    split: train
+    status: ready
+    reason: Runtime validation loaded and rendered the packaged optimized Town02 variant successfully.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town02_Opt.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town02_Opt.xodr
+  - id: town03
+    canonical_name: Town03
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town03
+    split: train
+    status: ready
+    reason: Packaged Epic-quality cold-start, strict expert driving, export, and six-camera visual QA passed without client.load_world or source sky edits.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town03.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town03.xodr
+  - id: town04
+    canonical_name: Town04
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town04
+    split: train
+    status: ready
+    reason: Packaged level and OpenDRIVE assets are present; expert collection does not require an Autoware PCD.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town04.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town04.xodr
+  - id: town05
+    canonical_name: Town05
+    server_profile: null
+    load_name: /Game/Carla/Maps/Town05
+    split: excluded
+    status: unavailable
+    reason: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.
+    level_path: null
+    opendrive_path: null
+  - id: town05_opt
+    canonical_name: Town05_Opt
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town05_Opt
+    split: train
+    status: ready
+    reason: Optimized Town05 variant is the isolated runtime-validation candidate after the standard map renderer crash.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town05_Opt.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town05_Opt.xodr
+  - id: town06
+    canonical_name: Town06
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town06
+    split: train
+    status: ready
+    reason: Packaged level and OpenDRIVE assets are present.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town06.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town06.xodr
+  - id: town07
+    canonical_name: Town07
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town07
+    split: train
+    status: ready
+    reason: Packaged rural level and OpenDRIVE assets are present.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town07.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town07.xodr
+  - id: town08
+    canonical_name: Town08
+    server_profile: null
+    load_name: /Game/Carla/Maps/Town08
+    split: excluded
+    status: unavailable
+    reason: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.
+    level_path: null
+    opendrive_path: null
+  - id: town09
+    canonical_name: Town09
+    server_profile: null
+    load_name: /Game/Carla/Maps/Town09
+    split: excluded
+    status: unavailable
+    reason: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.
+    level_path: null
+    opendrive_path: null
+  - id: town10hd
+    canonical_name: Town10HD
+    server_profile: null
+    load_name: /Game/Carla/Maps/Town10HD
+    split: excluded
+    status: unavailable
+    reason: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.
+    level_path: null
+    opendrive_path: null
+  - id: town10hd_opt
+    canonical_name: Town10HD_Opt
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/Town10HD_Opt
+    split: train
+    status: ready
+    reason: Packaged default startup and a clean lane-follow expert episode passed runtime and visual validation.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/Town10HD_Opt.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town10HD.xodr
+  - id: town11
+    canonical_name: Town11
+    server_profile: source_editor_0915_4ws
+    load_name: /Game/Carla/Maps/Town11/Town11
+    split: excluded
+    status: source_editor_required
+    reason: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.
+    level_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town11/Town11.umap
+    opendrive_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town11/OpenDrive/Town11.xodr
+  - id: town12
+    canonical_name: Town12
+    server_profile: source_editor_0915_4ws
+    load_name: /Game/Carla/Maps/Town12/Town12
+    split: train
+    status: source_editor_required
+    reason: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.
+    level_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town12/Town12.umap
+    opendrive_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town12/OpenDrive/Town12.xodr
+  - id: town13
+    canonical_name: Town13
+    server_profile: source_editor_0915_4ws
+    load_name: /Game/Carla/Maps/Town13/Town13
+    split: validation
+    status: source_editor_required
+    reason: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.
+    level_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town13/Town13.umap
+    opendrive_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town13/OpenDrive/Town13.xodr
+  - id: town15
+    canonical_name: Town15
+    server_profile: source_editor_0915_4ws
+    load_name: /Game/Carla/Maps/Town15/Town15
+    split: test
+    status: source_editor_required
+    reason: This additional campus map is held out and requires the complete source-editor asset set.
+    level_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town15/Town15.umap
+    opendrive_path: /home/hong/carla/Unreal/CarlaUE4/Content/Carla/Maps/Town15/OpenDrive/Town15.xodr
+  - id: c_track_1_0_7
+    canonical_name: C_track_1_0_7
+    server_profile: packaged_0915
+    load_name: /Game/Carla/Maps/C_track_1_0_7
+    split: train
+    status: ready
+    reason: Packaged Epic-quality cold-start, strict expert driving, export, and six-camera visual QA passed; Low quality crashes in skeletal-mesh LOD rendering, so use --quality Epic.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/C_track_1_0_7.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr
+  - id: woraksan_1_0_3
+    canonical_name: Woraksan_v1_0_3_parking_lot_hegiht_fit
+    server_profile: packaged_0915
+    load_name: /Game/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit
+    split: train
+    status: ready
+    reason: Packaged Epic-quality cold-start, spawn-4 exclusion, normalized routing, strict expert driving, export, and six-camera visual QA passed.
+    level_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit.umap
+    opendrive_path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/OpenDrive/Woraksan_v1_0_3_parking_lot_hegiht_fit.xodr

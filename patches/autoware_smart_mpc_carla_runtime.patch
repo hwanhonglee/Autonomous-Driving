@@ -1,0 +1,477 @@
+diff --git a/control/autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py b/control/autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py
+index 46b8766..a4e5fd4 100755
+--- a/control/autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py
++++ b/control/autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py
+@@ -26,6 +26,10 @@ from autoware_internal_debug_msgs.msg import Float32MultiArrayStamped
+ from autoware_internal_debug_msgs.msg import Float32Stamped
+ from autoware_planning_msgs.msg import Trajectory
+ from autoware_planning_msgs.msg import TrajectoryPoint
++from autoware_smart_mpc_trajectory_follower.reference_horizon import (
++    DEFAULT_GOAL_STOP_PRESERVE_DISTANCE_M,
++    condition_distant_goal_stop_reference,
++)
+ from autoware_smart_mpc_trajectory_follower.scripts import drive_controller
+ from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
+ from autoware_vehicle_msgs.msg import SteeringReport
+@@ -40,6 +44,7 @@ from nav_msgs.msg import Odometry
+ import numpy as np
+ from rcl_interfaces.msg import ParameterDescriptor
+ import rclpy
++from rclpy.executors import ExternalShutdownException
+ from rclpy.node import Node
+ import scipy
+ import scipy.interpolate
+@@ -76,6 +81,34 @@ class PyMPCTrajectoryFollower(Node):
+             False,
+             ParameterDescriptor(description="Publish MPPI sampling paths as MarkerArray."),
+         )
++        self.enable_reference_horizon_goal_stop_guard = self.declare_parameter(
++            "enable_reference_horizon_goal_stop_guard",
++            False,
++        ).value
++        self.reference_horizon_goal_stop_zero_speed_threshold_mps = self.declare_parameter(
++            "reference_horizon_goal_stop_zero_speed_threshold_mps",
++            0.05,
++        ).value
++        self.reference_horizon_goal_stop_preserve_distance_m = self.declare_parameter(
++            "reference_horizon_goal_stop_preserve_distance_m",
++            DEFAULT_GOAL_STOP_PRESERVE_DISTANCE_M,
++        ).value
++        self.reference_horizon_goal_stop_minimum_speed_mps = self.declare_parameter(
++            "reference_horizon_goal_stop_minimum_speed_mps",
++            1.5,
++        ).value
++        self.reference_horizon_goal_match_tolerance_m = self.declare_parameter(
++            "reference_horizon_goal_match_tolerance_m",
++            2.0,
++        ).value
++        if (
++            self.reference_horizon_goal_stop_zero_speed_threshold_mps < 0.0
++            or self.reference_horizon_goal_stop_preserve_distance_m < 0.0
++            or self.reference_horizon_goal_stop_minimum_speed_mps
++            <= self.reference_horizon_goal_stop_zero_speed_threshold_mps
++            or self.reference_horizon_goal_match_tolerance_m < 0.0
++        ):
++            raise ValueError("invalid reference horizon goal-stop guard parameters")
+
+         self.sub_trajectory_ = self.create_subscription(
+             Trajectory,
+@@ -249,6 +282,30 @@ class PyMPCTrajectoryFollower(Node):
+             1,
+         )
+
++        self.debug_reference_horizon_goal_stop_guard_active_pub_ = self.create_publisher(
++            BoolStamped,
++            "/debug_mpc/reference_horizon_goal_stop_guard_active",
++            1,
++        )
++
++        self.debug_reference_horizon_goal_stop_distance_pub_ = self.create_publisher(
++            Float32Stamped,
++            "/debug_mpc/reference_horizon_goal_stop_distance",
++            1,
++        )
++
++        self.debug_reference_horizon_goal_stop_floored_points_pub_ = self.create_publisher(
++            Float32Stamped,
++            "/debug_mpc/reference_horizon_goal_stop_floored_points",
++            1,
++        )
++
++        self.debug_reference_horizon_goal_stop_guard_reason_pub_ = self.create_publisher(
++            String,
++            "/debug_mpc/reference_horizon_goal_stop_guard_reason",
++            1,
++        )
++
+         self.debug_mpc_max_trajectory_err_pub_ = self.create_publisher(
+             Float32Stamped,
+             "/debug_mpc_max_trajectory_err",
+@@ -288,6 +345,7 @@ class PyMPCTrajectoryFollower(Node):
+         self.last_acc_cmd = 0.0
+         self.last_steer_cmd = 0.0
+         self.past_control_trajectory_mode = 1
++        self.reference_horizon_goal_stop_guard_was_active = False
+
+         self.diagnostic_updater = diagnostic_updater.Updater(self)
+         self.setup_diagnostic_updater()
+@@ -338,8 +396,17 @@ class PyMPCTrajectoryFollower(Node):
+                 self.control_cmd_acc_list.pop(0)
+
+     def timer_callback(self):
+-        if (self._present_trajectory is not None) and (self._present_kinematic_state is not None):
+-            self.control()
++        required_inputs = (
++            self._present_trajectory,
++            self._present_kinematic_state,
++            self._present_acceleration,
++            self._present_steering_status,
++        )
++        if any(message is None for message in required_inputs):
++            return
++        if len(self._present_trajectory.points) < 2:
++            return
++        self.control()
+
+     def control(self):
+         start_ctrl_time = time.time()
+@@ -371,6 +438,7 @@ class PyMPCTrajectoryFollower(Node):
+         trajectory_position = np.array(trajectory_position)
+         trajectory_orientation = np.array(trajectory_orientation)
+         trajectory_longitudinal_velocity = np.array(trajectory_longitudinal_velocity)
++        raw_trajectory_longitudinal_velocity = trajectory_longitudinal_velocity.copy()
+         trajectory_lateral_velocity = np.array(trajectory_lateral_velocity)
+         trajectory_acceleration = np.array(trajectory_acceleration)
+         trajectory_heading_rate = np.array(trajectory_heading_rate)
+@@ -411,6 +479,42 @@ class PyMPCTrajectoryFollower(Node):
+
+         nearestIndex = ((trajectory_position - present_position) ** 2).sum(axis=1).argmin()
+
++        goal_position_xy = None
++        if self._goal_pose is not None:
++            goal_position_xy = (
++                self._goal_pose.pose.position.x,
++                self._goal_pose.pose.position.y,
++            )
++        reference_horizon_goal_stop_guard = condition_distant_goal_stop_reference(
++            trajectory_position[:, :2],
++            trajectory_longitudinal_velocity,
++            nearestIndex,
++            goal_position_xy,
++            enabled=self.enable_reference_horizon_goal_stop_guard,
++            zero_speed_threshold_mps=(
++                self.reference_horizon_goal_stop_zero_speed_threshold_mps
++            ),
++            preserve_distance_m=self.reference_horizon_goal_stop_preserve_distance_m,
++            minimum_speed_mps=self.reference_horizon_goal_stop_minimum_speed_mps,
++            goal_match_tolerance_m=self.reference_horizon_goal_match_tolerance_m,
++        )
++        trajectory_longitudinal_velocity = np.asarray(
++            reference_horizon_goal_stop_guard.velocities
++        )
++        if (
++            reference_horizon_goal_stop_guard.active
++            != self.reference_horizon_goal_stop_guard_was_active
++        ):
++            self.get_logger().info(
++                "reference horizon goal-stop guard: "
++                f"active={reference_horizon_goal_stop_guard.active}, "
++                f"reason={reference_horizon_goal_stop_guard.reason}, "
++                f"stop_distance_m={reference_horizon_goal_stop_guard.stop_distance_m}"
++            )
++            self.reference_horizon_goal_stop_guard_was_active = (
++                reference_horizon_goal_stop_guard.active
++            )
++
+         is_applying_control = False
+         if self._present_operation_mode is not None:
+             if (
+@@ -423,16 +527,11 @@ class PyMPCTrajectoryFollower(Node):
+         position_deviation = np.sqrt(
+             ((trajectory_position[nearestIndex] - present_position) ** 2).sum()
+         )
+-        orientation_deviation = getYaw(present_orientation) - getYaw(
+-            trajectory_orientation[nearestIndex]
++        orientation_delta = (
++            getYaw(present_orientation)[0]
++            - getYaw(trajectory_orientation[nearestIndex])[0]
+         )
+-        while True:
+-            if orientation_deviation > np.pi:
+-                orientation_deviation -= 2.0 * np.pi
+-            if orientation_deviation < (-np.pi):
+-                orientation_deviation += 2.0 * np.pi
+-            if np.abs(orientation_deviation) < np.pi:
+-                break
++        orientation_deviation = np.arctan2(np.sin(orientation_delta), np.cos(orientation_delta))
+         position_deviation_threshold = 2.0
+         orientation_deviation_threshold = 60 * np.pi / 180.0
+
+@@ -441,7 +540,7 @@ class PyMPCTrajectoryFollower(Node):
+         if is_applying_control:
+             if (
+                 position_deviation > position_deviation_threshold
+-                or orientation_deviation > orientation_deviation_threshold
++                or np.abs(orientation_deviation) > orientation_deviation_threshold
+             ):
+                 self.emergency_stop_mode_flag = True
+                 control_state = ControlStatus.EMERGENCY
+@@ -450,7 +549,7 @@ class PyMPCTrajectoryFollower(Node):
+             if (
+                 not (
+                     position_deviation > position_deviation_threshold
+-                    or orientation_deviation > orientation_deviation_threshold
++                    or np.abs(orientation_deviation) > orientation_deviation_threshold
+                 )
+                 and self.stop_mode_reset_request
+             ):
+@@ -671,8 +770,9 @@ class PyMPCTrajectoryFollower(Node):
+         cmd_msg.stamp = cmd_msg.lateral.stamp = cmd_msg.longitudinal.stamp = (
+             self.get_clock().now().to_msg()
+         )
+-        cmd_msg.longitudinal.velocity = trajectory_longitudinal_velocity[nearestIndex]
++        cmd_msg.longitudinal.velocity = raw_trajectory_longitudinal_velocity[nearestIndex]
+         cmd_msg.longitudinal.acceleration = acc_cmd
++        cmd_msg.longitudinal.is_defined_acceleration = True
+         cmd_msg.lateral.steering_tire_angle = steer_cmd
+
+         self.control_cmd_pub_.publish(cmd_msg)
+@@ -743,6 +843,31 @@ class PyMPCTrajectoryFollower(Node):
+             self.debug_mpc_goal_stop_mode_pub_.publish(
+                 BoolStamped(stamp=cmd_msg.stamp, data=self.goal_stop_mode_flag)
+             )
++            self.debug_reference_horizon_goal_stop_guard_active_pub_.publish(
++                BoolStamped(
++                    stamp=cmd_msg.stamp,
++                    data=reference_horizon_goal_stop_guard.active,
++                )
++            )
++            self.debug_reference_horizon_goal_stop_distance_pub_.publish(
++                Float32Stamped(
++                    stamp=cmd_msg.stamp,
++                    data=(
++                        float("nan")
++                        if reference_horizon_goal_stop_guard.stop_distance_m is None
++                        else reference_horizon_goal_stop_guard.stop_distance_m
++                    ),
++                )
++            )
++            self.debug_reference_horizon_goal_stop_floored_points_pub_.publish(
++                Float32Stamped(
++                    stamp=cmd_msg.stamp,
++                    data=float(reference_horizon_goal_stop_guard.floored_points),
++                )
++            )
++            self.debug_reference_horizon_goal_stop_guard_reason_pub_.publish(
++                String(data=reference_horizon_goal_stop_guard.reason)
++            )
+             self.debug_mpc_x_des_pub_.publish(
+                 Float32MultiArrayStamped(stamp=cmd_msg.stamp, data=X_des[:, 0])
+             )
+@@ -876,10 +1001,14 @@ def main(args=None):
+
+     pympc_trajectory_follower = PyMPCTrajectoryFollower()
+
+-    rclpy.spin(pympc_trajectory_follower)
+-
+-    pympc_trajectory_follower.destroy_node()
+-    rclpy.shutdown()
++    try:
++        rclpy.spin(pympc_trajectory_follower)
++    except (KeyboardInterrupt, ExternalShutdownException):
++        pass
++    finally:
++        pympc_trajectory_follower.destroy_node()
++        if rclpy.ok():
++            rclpy.shutdown()
+
+
+ if __name__ == "__main__":
+diff --git a/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/reference_horizon.py b/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/reference_horizon.py
+new file mode 100644
+index 0000000..5b0be98
+--- /dev/null
++++ b/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/reference_horizon.py
+@@ -0,0 +1,187 @@
++# Copyright 2026 The Autoware Contributors
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++from dataclasses import dataclass
++import math
++from typing import Optional
++from typing import Sequence
++
++
++DEFAULT_GOAL_STOP_PRESERVE_DISTANCE_M = 0.5
++
++
++@dataclass(frozen=True)
++class GoalStopGuardResult:
++    velocities: tuple[float, ...]
++    active: bool
++    reason: str
++    stop_distance_m: Optional[float] = None
++    floored_points: int = 0
++    tail_start_index: Optional[int] = None
++
++
++def condition_distant_goal_stop_reference(
++    positions: Sequence[Sequence[float]],
++    velocities: Sequence[float],
++    nearest_index: int,
++    goal_position: Optional[Sequence[float]],
++    *,
++    enabled: bool,
++    zero_speed_threshold_mps: float,
++    preserve_distance_m: float,
++    minimum_speed_mps: float,
++    goal_match_tolerance_m: float,
++) -> GoalStopGuardResult:
++    """Keep a distant terminal stop tail from dominating Smart MPC's time horizon.
++
++    Only the controller's private velocity reference is returned. The input
++    trajectory remains untouched, and the original reference is restored near
++    the stop point so the normal goal-stop behavior remains authoritative.
++    """
++    original = tuple(float(value) for value in velocities)
++    if not enabled:
++        return GoalStopGuardResult(original, False, "disabled")
++
++    if (
++        zero_speed_threshold_mps < 0.0
++        or preserve_distance_m < 0.0
++        or minimum_speed_mps <= zero_speed_threshold_mps
++        or goal_match_tolerance_m < 0.0
++    ):
++        raise ValueError("invalid goal-stop guard configuration")
++
++    if len(positions) != len(original) or len(original) < 2:
++        return GoalStopGuardResult(original, False, "invalid_trajectory")
++    if nearest_index < 0 or nearest_index >= len(original):
++        return GoalStopGuardResult(original, False, "invalid_nearest_index")
++    if goal_position is None or len(goal_position) < 2:
++        return GoalStopGuardResult(original, False, "goal_unavailable")
++
++    try:
++        xy = tuple((float(position[0]), float(position[1])) for position in positions)
++        goal_xy = (float(goal_position[0]), float(goal_position[1]))
++    except (IndexError, TypeError, ValueError):
++        return GoalStopGuardResult(original, False, "invalid_geometry")
++
++    if not all(
++        math.isfinite(value)
++        for position in xy
++        for value in position
++    ) or not all(math.isfinite(value) for value in (*original, *goal_xy)):
++        return GoalStopGuardResult(original, False, "non_finite_input")
++
++    tail_start = len(original)
++    while tail_start > 0 and abs(original[tail_start - 1]) <= zero_speed_threshold_mps:
++        tail_start -= 1
++    if tail_start == len(original):
++        return GoalStopGuardResult(original, False, "no_terminal_zero_tail")
++    if tail_start <= nearest_index:
++        return GoalStopGuardResult(
++            original,
++            False,
++            "at_terminal_stop",
++            stop_distance_m=0.0,
++            tail_start_index=tail_start,
++        )
++
++    final_goal_distance = math.hypot(xy[-1][0] - goal_xy[0], xy[-1][1] - goal_xy[1])
++    stop_goal_distance = math.hypot(
++        xy[tail_start][0] - goal_xy[0], xy[tail_start][1] - goal_xy[1]
++    )
++    if (
++        final_goal_distance > goal_match_tolerance_m
++        or stop_goal_distance > goal_match_tolerance_m
++    ):
++        return GoalStopGuardResult(
++            original,
++            False,
++            "stop_point_goal_mismatch",
++            tail_start_index=tail_start,
++        )
++
++    # Reverse and direction-changing trajectories need their signed velocity
++    # profile intact; this guard is deliberately limited to forward goal stops.
++    if any(
++        value < -zero_speed_threshold_mps
++        for value in original[nearest_index:tail_start]
++    ):
++        return GoalStopGuardResult(
++            original,
++            False,
++            "reverse_trajectory",
++            tail_start_index=tail_start,
++        )
++
++    if any(
++        abs(value) <= zero_speed_threshold_mps
++        for value in original[nearest_index:tail_start]
++    ):
++        return GoalStopGuardResult(
++            original,
++            False,
++            "non_terminal_zero_speed",
++            tail_start_index=tail_start,
++        )
++
++    speed_increase_tolerance_mps = max(zero_speed_threshold_mps, 0.05)
++    if any(
++        following > current + speed_increase_tolerance_mps
++        for current, following in zip(
++            original[nearest_index:tail_start],
++            original[nearest_index + 1 : tail_start],
++        )
++    ):
++        return GoalStopGuardResult(
++            original,
++            False,
++            "non_terminal_deceleration_profile",
++            tail_start_index=tail_start,
++        )
++
++    stop_distance = sum(
++        math.hypot(xy[index + 1][0] - xy[index][0], xy[index + 1][1] - xy[index][1])
++        for index in range(nearest_index, tail_start)
++    )
++    if stop_distance <= preserve_distance_m:
++        return GoalStopGuardResult(
++            original,
++            False,
++            "inside_preserve_distance",
++            stop_distance_m=stop_distance,
++            tail_start_index=tail_start,
++        )
++
++    conditioned = list(original)
++    floored_points = 0
++    for index in range(nearest_index, len(conditioned)):
++        if conditioned[index] < minimum_speed_mps:
++            conditioned[index] = minimum_speed_mps
++            floored_points += 1
++
++    if floored_points == 0:
++        return GoalStopGuardResult(
++            original,
++            False,
++            "no_velocity_below_floor",
++            stop_distance_m=stop_distance,
++            tail_start_index=tail_start,
++        )
++    return GoalStopGuardResult(
++        tuple(conditioned),
++        True,
++        "distant_goal_stop_guarded",
++        stop_distance_m=stop_distance,
++        floored_points=floored_points,
++        tail_start_index=tail_start,
++    )
+diff --git a/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/param/runtime.param.yaml b/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/param/runtime.param.yaml
+new file mode 100644
+index 0000000..d4f0661
+--- /dev/null
++++ b/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/param/runtime.param.yaml
+@@ -0,0 +1,9 @@
++/**:
++  ros__parameters:
++    # Opt-in workaround for a distant terminal zero-speed tail dominating the
++    # Smart MPC time horizon. The normal reference is retained by default.
++    enable_reference_horizon_goal_stop_guard: false
++    reference_horizon_goal_stop_zero_speed_threshold_mps: 0.05
++    reference_horizon_goal_stop_preserve_distance_m: 0.5
++    reference_horizon_goal_stop_minimum_speed_mps: 1.5
++    reference_horizon_goal_match_tolerance_m: 2.0

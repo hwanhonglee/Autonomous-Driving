@@ -1,0 +1,248 @@
+schema_version: 1
+suite_id: custom_autoware_full_maps_v1
+description: Pinned Autoware map bundles for the locally installed C-track and Woraksan CARLA maps.
+
+profiles:
+  c_track_simulation:
+    display_name: C-track 1.0.7 simulation map
+    status: ready
+    canonical_carla_map: /Game/Carla/Maps/C_track_1_0_7
+    target_name: C_track_1_0_7_full
+    selection_reason: Uses the unshifted simulation Lanelet2 map and the matching 64.29M-point cloud; the field-shifted OSM is intentionally excluded.
+    projector:
+      projector_type: Local
+    carla_to_map_transform:
+      kind: xy_yaw_identity_with_vertical_offset
+      x_m: 0.0
+      y_m: 0.0
+      z_m: -15.0
+      yaw_rad: 0.0
+      confidence: empirical_settled_state_vertical_offset
+      source: Settled CARLA state to Lanelet elevation residual; median is approximately -14.943 m.
+    bundle_sources:
+      lanelet2_map:
+        path: /home/hong/camrod_ws/src/lanelet2_maps_(c_track_test).osm
+        sha256: ef207717000e6b7ceaba3cada22fa40aac3516d25214cff7121de73f7725a0f2
+        size_bytes: 2939465
+        provenance: Original, unshifted C-track simulation Lanelet2 export from camrod_ws.
+      pointcloud_map:
+        path: /home/hong/carla-autoware-universe/op_carla/op_agent/autoware-contents/maps/C_track_1_0_7/pointcloud_map.pcd
+        sha256: 3f227f8d0c07377aabe8bf4248ca181f7bd8b3687b329717b3825bf9fcef25b4
+        size_bytes: 771492010
+        provenance: Existing C-track Autoware point cloud; identical duplicates are not copied into this workspace.
+    lanelet2_derivation: null
+    expected:
+      osm_nodes: 13184
+      osm_ways: 1212
+      osm_road_lanelets: 518
+      pcd_points: 64290986
+    reference_assets:
+      roadrunner_scene:
+        path: /home/hong/Documents/RoadRunner/Scenes/C_track_1_0_7.rrscene
+        sha256: 792793c0aa2a84c2cc11ff0b94d781f911291302b4ef861c39c1653dab7d4d54
+        size_bytes: 20623254
+        provenance: Editable RoadRunner scene.
+      roadrunner_fbx:
+        path: /home/hong/Documents/RoadRunner/Exports/C_track_1_0_7.fbx
+        sha256: 486e3fc21808eccd5a9f88b8a47e4ad026afa45ae8cdd83c7e62e5f7819e7b22
+        size_bytes: 378826464
+        provenance: RoadRunner mesh export used for the Unreal import.
+      roadrunner_opendrive:
+        path: /home/hong/Documents/RoadRunner/Exports/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: RoadRunner OpenDRIVE export.
+      unreal_source_level:
+        path: /home/hong/carla/Unreal/CarlaUE4/Content/map_package/Maps/C_track_1_0_7/C_track_1_0_7.umap
+        sha256: ead921f3d846c56cbc00d99f96e70feea586e8f1b3242408aa9c034281cf8259
+        size_bytes: 15698322
+        provenance: Editable CARLA Unreal source level.
+      unreal_source_opendrive:
+        path: /home/hong/carla/Unreal/CarlaUE4/Content/map_package/Maps/C_track_1_0_7/OpenDrive/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: OpenDRIVE registered beside the editable Unreal level.
+      packaged_runtime_level:
+        path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/C_track_1_0_7.umap
+        sha256: d44c26a3e7fae4e05cd01cc12022e96daf7da5b4650797718442b143743e72a7
+        size_bytes: 1473547
+        provenance: Cooked CARLA 0.9.15 runtime level used by the packaged smoke test.
+      packaged_runtime_opendrive:
+        path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: OpenDRIVE used by the packaged CARLA runtime.
+    rejected_alternatives:
+      - id: shifted_field_lanelet
+        paths:
+          - /home/hong/camrod_ws/src/lanelet2_maps_(c_track_test_moved).osm
+        reason: This +3.88 m/+2.62 m field-adjusted map is not coordinate-identical to the CARLA simulation map.
+
+  c_track_simulation_xodr_current:
+    display_name: C-track 1.0.7 current XODR simulation map
+    status: live_hybrid_validated_xy_with_3d_residual
+    canonical_carla_map: /Game/Carla/Maps/C_track_1_0_7
+    target_name: C_track_1_0_7_xodr_full
+    selection_reason: Uses Lanelet2 regenerated from the exact packaged v1.0.7 OpenDRIVE and the Driving Map Set Virtual v1.0.7 point cloud; the incomplete older Lanelet2 geometry is excluded.
+    projector:
+      projector_type: Local
+    carla_to_map_transform:
+      kind: xy_yaw_identity_with_vertical_offset
+      x_m: 0.0
+      y_m: 0.0
+      z_m: -15.0
+      yaw_rad: 0.0
+      confidence: xodr_pcd_global_xy_verified_route_z_empirical
+      source: Packaged XODR and Virtual PCD top-down audit fixed XY/yaw at identity; live CARLA route elevation to XODR/map surface fixes z at -15 m.
+    bundle_sources:
+      lanelet2_map:
+        path: ../../data/generated/xodr_lanelet/c_track_autoware.osm
+        sha256: 1e9cbe9817db82cec5b27b09613a2f9ab2c956dc7e49d3b5363fb803b93afc07
+        size_bytes: 23910054
+        provenance: CommonRoad 0.8.5 conversion of the packaged C-track v1.0.7 XODR, finalized with local coordinates, XODR elevation, and Autoware tags.
+      pointcloud_map:
+        path: /home/hong/Downloads/Driving_Map_Set/Driving Map Set/PCD/Virtual/pointcloud_map (CARLA_C_track_LIOSAM_transform_RoadRunner_C_track_v1_0_7).pcd
+        sha256: 3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75
+        size_bytes: 592046914
+        provenance: User-provided Driving Map Set Virtual point cloud explicitly aligned to RoadRunner C-track v1.0.7.
+    lanelet2_derivation: null
+    expected:
+      osm_nodes: 89579
+      osm_ways: 1785
+      osm_road_lanelets: 395
+      pcd_points: 49337228
+    reference_assets:
+      commonroad_lanelet2_intermediate:
+        path: ../../data/generated/xodr_lanelet/c_track_commonroad.osm
+        sha256: 3bdae5baa555b832c4603a31d4791bcf3f9f21d88e1eb4e956bd6b7f612fda9b
+        size_bytes: 12720983
+        provenance: Reproducible CommonRoad 0.8.5 odrlanelet2 intermediate before Autoware finalization.
+      roadrunner_scene:
+        path: /home/hong/Documents/RoadRunner/Scenes/C_track_1_0_7.rrscene
+        sha256: 792793c0aa2a84c2cc11ff0b94d781f911291302b4ef861c39c1653dab7d4d54
+        size_bytes: 20623254
+        provenance: Editable RoadRunner scene.
+      roadrunner_opendrive:
+        path: /home/hong/Documents/RoadRunner/Exports/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: RoadRunner OpenDRIVE export.
+      unreal_source_opendrive:
+        path: /home/hong/carla/Unreal/CarlaUE4/Content/map_package/Maps/C_track_1_0_7/OpenDrive/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: OpenDRIVE registered beside the editable Unreal level.
+      packaged_runtime_opendrive:
+        path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr
+        sha256: 3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+        size_bytes: 5098475
+        provenance: Exact OpenDRIVE used by the packaged CARLA runtime and Lanelet2 regeneration.
+    rejected_alternatives:
+      - id: supplied_virtual_lanelet_old_geometry
+        paths:
+          - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF0.osm
+          - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF60.osm
+        reason: Both omit the packaged XODR west road extent and have a large global centerline mismatch, so they cannot be paired with the current CARLA road graph.
+      - id: supplied_local_cartesian_utm_projector
+        paths:
+          - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/map_projector_info.yaml
+        reason: Its geodetic origin is stale relative to the authoritative local_x/local_y and Virtual PCD frame; runtime uses projector_type Local.
+
+  woraksan_simulation_current:
+    display_name: Woraksan 1.0.3 current simulation map
+    status: ready_with_single_anchor_alignment
+    canonical_carla_map: /Game/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit
+    target_name: Woraksan_v1_0_3_parking_lot_hegiht_fit_full
+    selection_reason: Uses the current v22 Lanelet2 map and matching 6.94M-point GLIM v2 cloud; the older compact v8 map family is intentionally excluded.
+    projector:
+      projector_type: Local
+    carla_to_map_transform:
+      kind: planar_rigid_with_vertical_offset
+      x_m: 6.979673792021728
+      y_m: 14.34904187519156
+      z_m: -33.0
+      yaw_rad: -0.0488802969776283
+      confidence: single_anchor_empirical_3d
+      source: /home/hong/camrod_ws/src/camrod_carla_adapter/config/woraksan_lane_anchor_alignment.yaml
+    bundle_sources:
+      lanelet2_map:
+        path: /home/hong/camrod_ws/src/lanelet2_maps.osm
+        sha256: 8fa13157b8e956559ad29b1bf49b4357ec6d252b0259debfb40a946b29f24e59
+        size_bytes: 374814
+        provenance: Current Woraksan v22 Lanelet2 map used by camrod_ws.
+      pointcloud_map:
+        path: /home/hong/camrod_ws/src/util/flexcloud/georef_glim_worak_v2_binary.pcd
+        sha256: 89ee95c2052230387eed5154aea6e55dee1918bf2a9a27fff3c01cfcf7045182
+        size_bytes: 111042963
+        provenance: Current Woraksan GLIM v2 point cloud matched to the v22 Lanelet2 map.
+    lanelet2_derivation:
+      schema_version: 1
+      kind: reverse_lanelet_boundary_ways
+      relation_id: "4584"
+      expected_centerline_way_id: "6568"
+      boundary_way_clones:
+        - role: left
+          source_way_id: "2945"
+          derived_way_id: "7000"
+          expected_source_first_node_id: "2928"
+          expected_source_last_node_id: "2940"
+        - role: right
+          source_way_id: "4583"
+          derived_way_id: "7001"
+          expected_source_first_node_id: "4577"
+          expected_source_last_node_id: "4582"
+      expected_output_sha256: 90a9adbfe15c5cc4e8d8982cac2bda55a71367038301c4da75c265b644758903
+      expected_output_size_bytes: 383222
+      provenance: Project-owned topology repair for lanelet 4584; clones its shared boundaries before reversal so relation 2948 and the camrod_ws source remain unchanged.
+    expected:
+      osm_nodes: 1652
+      osm_ways: 238
+      osm_road_lanelets: 54
+      pcd_points: 6940175
+    reference_assets:
+      alignment_config:
+        path: /home/hong/camrod_ws/src/camrod_carla_adapter/config/woraksan_lane_anchor_alignment.yaml
+        sha256: 4857ba70a4a110f8a184c27a776877e5b2579234108c69773032933053ea5fde
+        size_bytes: 714
+        provenance: Single-anchor CARLA chassis-odometry to current Lanelet2-map alignment.
+      roadrunner_scene:
+        path: /home/hong/Documents/RoadRunner/Woraksan/Scenes/Woraksan_v1_0_3_parking_lot_hegiht_fit.rrscene
+        sha256: 815244471dbde920bd5b313200c3aba34e3db375a16a6bb7a0631c3a8cb84f28
+        size_bytes: 3793531
+        provenance: Editable RoadRunner scene.
+      roadrunner_fbx:
+        path: /home/hong/Documents/RoadRunner/Woraksan/Exports/Woraksan_v1_0_3_parking_lot_hegiht_fit.fbx
+        sha256: 47573fa3f6003a4a6fa63d3cf0e2e8f4b76899abfe65cfb562c89fe781af4576
+        size_bytes: 8679712
+        provenance: RoadRunner mesh export used for the Unreal import.
+      roadrunner_opendrive:
+        path: /home/hong/Documents/RoadRunner/Woraksan/Exports/Woraksan_v1_0_3_parking_lot_hegiht_fit.xodr
+        sha256: c272b046c7eb23bb112cb0325ea929f725d009919b3dcb0a306c52887dc22709
+        size_bytes: 615151
+        provenance: RoadRunner OpenDRIVE export.
+      unreal_source_level:
+        path: /home/hong/carla/Unreal/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit.umap
+        sha256: 4226c952b96aea8b603837a4303b8532296989f155f2d44c64bd8a3b73d6f00c
+        size_bytes: 1103957
+        provenance: Editable CARLA Unreal source level.
+      unreal_source_opendrive:
+        path: /home/hong/carla/Unreal/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/OpenDrive/Woraksan_v1_0_3_parking_lot_hegiht_fit.xodr
+        sha256: c272b046c7eb23bb112cb0325ea929f725d009919b3dcb0a306c52887dc22709
+        size_bytes: 615151
+        provenance: OpenDRIVE registered beside the editable Unreal level.
+      packaged_runtime_level:
+        path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit.umap
+        sha256: 7b0f1a449711b6e5885cd52fc687dd00387c21e55564c12cc40875b6f5fdc596
+        size_bytes: 307652
+        provenance: Cooked CARLA 0.9.15 runtime level used by the packaged smoke test.
+      packaged_runtime_opendrive:
+        path: /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/OpenDrive/Woraksan_v1_0_3_parking_lot_hegiht_fit.xodr
+        sha256: c272b046c7eb23bb112cb0325ea929f725d009919b3dcb0a306c52887dc22709
+        size_bytes: 615151
+        provenance: OpenDRIVE used by the packaged CARLA runtime.
+    rejected_alternatives:
+      - id: old_v8_map_family
+        paths:
+          - /home/hong/Documents/RoadRunner/Woraksan/Assets/Maps/lanelet2_maps.osm
+          - /home/hong/Documents/RoadRunner/Woraksan/Assets/Maps/georef_pointcloud_map.pcd
+        reason: The old compact v8 Lanelet2/PCD pair does not cover the current packaged CARLA smoke route.

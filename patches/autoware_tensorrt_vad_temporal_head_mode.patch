@@ -1,0 +1,299 @@
+diff --git a/e2e/autoware_tensorrt_vad/CMakeLists.txt b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+--- a/e2e/autoware_tensorrt_vad/CMakeLists.txt
++++ b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+@@ -157,6 +157,9 @@
+     ament_add_gtest(test_runtime_startup
+       test/test_runtime_startup.cpp
+     )
++    ament_add_gtest(test_temporal_head_policy
++      test/test_temporal_head_policy.cpp
++    )
+     ament_add_gtest(test_bev_shift_contract
+       test/test_bev_shift_contract.cpp
+     )
+diff --git a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+--- a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
++++ b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+@@ -96,6 +96,9 @@
+     # MODEL INFERENCE CONFIGURATION
+     # ==========================================================================
+     model_params:
++      # Use recurrent BEV state after the first frame. Set false only for a stateless A/B trial.
++      use_temporal_head: true
++
+       # --- TensorRT Runtime ---
+       # Path to custom TensorRT plugin library
+       plugins_path: "$(var plugins_path)/plugins/libautoware_tensorrt_plugins.so"
+diff --git a/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json b/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
+--- a/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
++++ b/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json
+@@ -104,6 +104,11 @@
+         "model_params": {
+           "type": "object",
+           "properties": {
++            "use_temporal_head": {
++              "type": "boolean",
++              "default": true,
++              "description": "Use recurrent BEV state after the first frame; false runs head_no_prev independently for every frame"
++            },
+             "plugins_path": {
+               "type": "string",
+               "default": "$(find-pkg-share autoware_tensorrt_plugins)/plugins/libautoware_tensorrt_plugins.so",
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_config.hpp b/e2e/autoware_tensorrt_vad/src/vad_config.hpp
+--- a/e2e/autoware_tensorrt_vad/src/vad_config.hpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_config.hpp
+@@ -38,6 +38,7 @@
+ // NetworkIO configuration parameters
+ struct VadConfig
+ {
++  bool use_temporal_head{true};
+   int32_t num_cameras;
+   int32_t bev_h, bev_w;
+   int32_t bev_feature_dim;
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_model.hpp b/e2e/autoware_tensorrt_vad/src/vad_model.hpp
+--- a/e2e/autoware_tensorrt_vad/src/vad_model.hpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_model.hpp
+@@ -23,6 +23,7 @@
+ #include "networks/postprocess/object_postprocess.hpp"
+ #include "networks/preprocess/multi_camera_preprocess.hpp"
+ #include "ros_vad_logger.hpp"
++#include "temporal_head_policy.hpp"
+ #include "vad_config.hpp"
+
+ #include <autoware/tensorrt_common/tensorrt_common.hpp>
+@@ -36,6 +37,7 @@
+ #include <functional>
+ #include <map>
+ #include <memory>
++#include <mutex>
+ #include <optional>
+ #include <string>
+ #include <unordered_map>
+@@ -65,7 +67,7 @@
+     const autoware::tensorrt_common::TrtCommonConfig & head_no_prev_config,
+     std::shared_ptr<LoggerType> logger)
+   : stream_(nullptr),
+-    is_first_frame_(true),
++    temporal_head_policy_(vad_config.use_temporal_head),
+     vad_config_(vad_config),
+     logger_(std::move(logger)),
+     head_trt_config_(head_config)
+@@ -111,8 +113,10 @@
+   // Main inference API
+   [[nodiscard]] std::optional<VadOutputData> infer(const VadInputData & vad_input_data)
+   {
+-    // Change head name based on whether it's the first frame
+-    const std::string head_name = is_first_frame_ ? "head_no_prev" : "head";
++    // TensorRT contexts, the CUDA stream, and temporal BEV buffers are shared model state.
++    std::lock_guard<std::mutex> lock(inference_mutex_);
++    const auto execution_plan = temporal_head_policy_.plan();
++    const std::string head_name{execution_plan.network_name};
+
+     // Load to bindings. If preprocessing fails the head bindings (including the ping-pong
+     // setTensorAddress) are not refreshed, so we must skip enqueue/postprocess and leave
+@@ -127,7 +131,7 @@
+     // Convert output to VadOutputData
+     VadOutputData output = postprocess(head_name, vad_input_data.command);
+
+-    if (is_first_frame_) {
++    if (execution_plan.prev_bev_action == PrevBevAction::INITIALIZE) {
+       // Transition from "head_no_prev" to "head" with persistent ping-pong buffers.
+       // Capture head_no_prev's BEV output ptr before its bindings get cleared.
+       void * hnp_bev_ptr = nets_["head_no_prev"]->bindings["out.bev_embed"]->ptr;
+@@ -145,11 +149,11 @@
+
+       release_network("head_no_prev");
+       prev_is_a_ = true;  // buffer A holds the latest BEV, used as prev_bev next frame
+-      is_first_frame_ = false;
+-    } else {
++    } else if (execution_plan.prev_bev_action == PrevBevAction::ADVANCE) {
+       // Steady state: the buffer we just wrote to becomes next frame's prev_bev input.
+       prev_is_a_ = !prev_is_a_;
+     }
++    temporal_head_policy_.commit_successful_inference();
+
+     return output;
+   }
+@@ -165,7 +169,7 @@
+   void * bev_buf_b_{nullptr};
+   bool prev_is_a_{true};
+   size_t bev_nbytes_{0};
+-  bool is_first_frame_;
++  TemporalHeadPolicy temporal_head_policy_;
+
+   // Configuration information storage
+   VadConfig vad_config_;
+@@ -173,6 +177,7 @@
+   std::shared_ptr<VadLogger> logger_;
+
+ private:
++  std::mutex inference_mutex_;
+   autoware::tensorrt_common::TrtCommonConfig head_trt_config_;
+   std::unique_ptr<MultiCameraPreprocessor> preprocessor_;
+   std::unique_ptr<MapPostprocessor> map_postprocessor_;
+@@ -187,6 +192,10 @@
+     std::unordered_map<std::string, std::shared_ptr<Net>> nets;
+
+     for (const auto & engine : nets_config) {
++      if (!vad_config.use_temporal_head && engine.name == "head") {
++        logger_->info("Temporal VAD head disabled; skipping head engine initialization");
++        continue;
++      }
+       std::unordered_map<std::string, std::shared_ptr<Tensor>> external_bindings;
+       // reuse memory
+       for (const auto & input_pair : engine.inputs) {
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_node.cpp b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+--- a/e2e/autoware_tensorrt_vad/src/vad_node.cpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+@@ -536,7 +536,12 @@
+     model_params.major_version, model_params.minor_version);
+
+   // Deployment-specific parameters (from YAML)
++  vad_config.use_temporal_head =
++    this->declare_parameter<bool>("model_params.use_temporal_head", true);
+   vad_config.num_cameras = this->get_parameter("node_params.num_cameras").as_int();
++  RCLCPP_INFO(
++    this->get_logger(), "VAD temporal head: %s",
++    vad_config.use_temporal_head ? "enabled" : "disabled (head_no_prev every frame)");
+
+   // Model-specific parameters (from param.json)
+   vad_config.bev_h = model_params.bev_height;
+diff --git a/e2e/autoware_tensorrt_vad/src/temporal_head_policy.hpp b/e2e/autoware_tensorrt_vad/src/temporal_head_policy.hpp
+new file mode 100644
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/src/temporal_head_policy.hpp
+@@ -0,0 +1,66 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#ifndef TEMPORAL_HEAD_POLICY_HPP_
++#define TEMPORAL_HEAD_POLICY_HPP_
++
++#include <string_view>
++
++namespace autoware::tensorrt_vad
++{
++
++enum class PrevBevAction { NONE = 0, INITIALIZE, ADVANCE };
++
++struct HeadExecutionPlan
++{
++  std::string_view network_name;
++  PrevBevAction prev_bev_action;
++};
++
++class TemporalHeadPolicy
++{
++public:
++  explicit constexpr TemporalHeadPolicy(const bool enabled) noexcept : enabled_(enabled) {}
++
++  [[nodiscard]] constexpr HeadExecutionPlan plan() const noexcept
++  {
++    if (!enabled_) {
++      return {"head_no_prev", PrevBevAction::NONE};
++    }
++    if (!temporal_state_initialized_) {
++      return {"head_no_prev", PrevBevAction::INITIALIZE};
++    }
++    return {"head", PrevBevAction::ADVANCE};
++  }
++
++  constexpr void commit_successful_inference() noexcept
++  {
++    if (enabled_) {
++      temporal_state_initialized_ = true;
++    }
++  }
++
++  [[nodiscard]] constexpr bool temporal_state_initialized() const noexcept
++  {
++    return temporal_state_initialized_;
++  }
++
++private:
++  bool enabled_;
++  bool temporal_state_initialized_{false};
++};
++
++}  // namespace autoware::tensorrt_vad
++
++#endif  // TEMPORAL_HEAD_POLICY_HPP_
+diff --git a/e2e/autoware_tensorrt_vad/test/test_temporal_head_policy.cpp b/e2e/autoware_tensorrt_vad/test/test_temporal_head_policy.cpp
+new file mode 100644
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_temporal_head_policy.cpp
+@@ -0,0 +1,63 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "temporal_head_policy.hpp"
++
++#include <gtest/gtest.h>
++
++namespace autoware::tensorrt_vad
++{
++
++TEST(TemporalHeadPolicy, DefaultTemporalModeSeedsThenAdvancesPrevBev)
++{
++  TemporalHeadPolicy policy(true);
++
++  const auto first = policy.plan();
++  EXPECT_EQ(first.network_name, "head_no_prev");
++  EXPECT_EQ(first.prev_bev_action, PrevBevAction::INITIALIZE);
++
++  policy.commit_successful_inference();
++  const auto second = policy.plan();
++  EXPECT_EQ(second.network_name, "head");
++  EXPECT_EQ(second.prev_bev_action, PrevBevAction::ADVANCE);
++  EXPECT_TRUE(policy.temporal_state_initialized());
++}
++
++TEST(TemporalHeadPolicy, StatelessModeNeverInitializesOrAdvancesPrevBev)
++{
++  TemporalHeadPolicy policy(false);
++
++  for (int frame = 0; frame < 3; ++frame) {
++    const auto plan = policy.plan();
++    EXPECT_EQ(plan.network_name, "head_no_prev");
++    EXPECT_EQ(plan.prev_bev_action, PrevBevAction::NONE);
++    policy.commit_successful_inference();
++    EXPECT_FALSE(policy.temporal_state_initialized());
++  }
++}
++
++TEST(TemporalHeadPolicy, FailedInferenceDoesNotConsumeFirstFrameSemantics)
++{
++  TemporalHeadPolicy policy(true);
++
++  const auto before_failure = policy.plan();
++  EXPECT_EQ(before_failure.prev_bev_action, PrevBevAction::INITIALIZE);
++
++  const auto retry = policy.plan();
++  EXPECT_EQ(retry.network_name, "head_no_prev");
++  EXPECT_EQ(retry.prev_bev_action, PrevBevAction::INITIALIZE);
++  EXPECT_FALSE(policy.temporal_state_initialized());
++}
++
++}  // namespace autoware::tensorrt_vad

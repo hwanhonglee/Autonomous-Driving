@@ -1,0 +1,2255 @@
+diff --git a/e2e/autoware_tensorrt_vad/CMakeLists.txt b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+index fd34d0304520a2c8c2eeadd5a02e816ea26920bc..1cca77bb1b447762fa0a52936c903d1a3aaa85a5 100644
+--- a/e2e/autoware_tensorrt_vad/CMakeLists.txt
++++ b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+@@ -148,6 +148,15 @@ if(TRT_AVAIL AND CUDA_AVAIL)
+     target_link_libraries(test_layer_norm_precision
+       ${PROJECT_NAME}_lib
+     )
++    ament_add_gtest(test_frame_assembly
++      test/test_frame_assembly.cpp
++    )
++    target_link_libraries(test_frame_assembly
++      ${PROJECT_NAME}_lib
++    )
++    ament_add_gtest(test_runtime_startup
++      test/test_runtime_startup.cpp
++    )
+   endif()
+
+   install(
+diff --git a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+index 989b7ed39436ec8e32ffdbdf3b628db6e03df0f5..45efd7c7dd570c074779fddb818415fedd8471e8 100644
+--- a/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
++++ b/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml
+@@ -163,6 +163,22 @@
+       # Real hardware: Reduce to 50-100ms for better temporal alignment
+       sync_tolerance_ms: 500.0
+
++      # Maximum timestamp difference between each surround camera and the front camera.
++      # CARLA publishes one exact timestamp for a six-camera bundle; keep this strict so images
++      # from adjacent simulator ticks are never mixed in one VAD inference.
++      camera_sync_tolerance_ms: 1.0
++
++      # Retain eight exact timestamp slots while callbacks from the six topics arrive unevenly.
++      # At CARLA's 5 Hz camera rate this covers 1.6 seconds while bounding retained image memory.
++      frame_buffer_size: 8
++
++      # Keep the same bounded backlog in each image subscription. Depth 1 can overwrite
++      # one camera tick before the other five camera callbacks for that timestamp are serviced.
++      image_queue_depth: 8
++
++      # Use reliable only when every camera image publisher also offers reliable delivery.
++      image_reliability: "best_effort"
++
+ # ==============================================================================
+ # END OF CONFIGURATION
+ # ==============================================================================
+diff --git a/e2e/autoware_tensorrt_vad/lib/data_types.cpp b/e2e/autoware_tensorrt_vad/lib/data_types.cpp
+index ce30fc7f659256e9c0e4bcf043593f123a5ef49e..c4cfa3b314d25959fde6e5aa93637e23ba309c44 100644
+--- a/e2e/autoware_tensorrt_vad/lib/data_types.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/data_types.cpp
+@@ -45,13 +45,10 @@ void VadInputTopicData::reset()
+ {
+   frame_started_ = false;
+
+-  // Reset all images and camera_infos using clear + resize
++  // CameraInfo is calibration data and is cached across image frames.
+   images.clear();
+   images.resize(num_cameras_);
+-  camera_infos.clear();
+-  camera_infos.resize(num_cameras_);
+
+-  // Reset other data
+   kinematic_state = nullptr;
+   acceleration = nullptr;
+ }
+@@ -80,7 +77,6 @@ void VadInputTopicData::set_camera_info(
+   if (camera_id >= camera_infos.size()) {
+     return;  // Invalid camera ID
+   }
+-  ensure_frame_started(msg->header.stamp);
+   camera_infos[camera_id] = msg;
+ }
+
+diff --git a/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp b/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
+index 9c9f0ac12e4894efcdfa9bc0f9c6748b85226723..ad790589e31949c75e3a825279964f45cfda8a0f 100644
+--- a/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp
+@@ -26,29 +26,203 @@
+
+ #include <algorithm>
+ #include <cmath>
++#include <limits>
+ #include <memory>
++#include <stdexcept>
++#include <utility>
+
+ namespace autoware::tensorrt_vad
+ {
++namespace
++{
++
++std::int64_t stamp_to_nanoseconds(const builtin_interfaces::msg::Time & stamp)
++{
++  return static_cast<std::int64_t>(stamp.sec) * 1000000000LL +
++         static_cast<std::int64_t>(stamp.nanosec);
++}
++
++double stamp_delta_ms(std::int64_t lhs, std::int64_t rhs)
++{
++  return std::abs(static_cast<double>(lhs - rhs)) / 1000000.0;
++}
++
++std::int64_t subtract_saturated(const std::int64_t value, const std::int64_t delta)
++{
++  const auto minimum = std::numeric_limits<std::int64_t>::min();
++  return value < minimum + delta ? minimum : value - delta;
++}
++
++std::int64_t add_saturated(const std::int64_t value, const std::int64_t delta)
++{
++  const auto maximum = std::numeric_limits<std::int64_t>::max();
++  return value > maximum - delta ? maximum : value + delta;
++}
++
++std::uint64_t absolute_stamp_delta(const std::int64_t lhs, const std::int64_t rhs)
++{
++  if (lhs >= rhs) {
++    return static_cast<std::uint64_t>(lhs) - static_cast<std::uint64_t>(rhs);
++  }
++  return static_cast<std::uint64_t>(rhs) - static_cast<std::uint64_t>(lhs);
++}
++
++std::uint64_t expected_mask(std::size_t size)
++{
++  if (size >= std::numeric_limits<std::uint64_t>::digits) {
++    return std::numeric_limits<std::uint64_t>::max();
++  }
++  return (std::uint64_t{1} << size) - 1U;
++}
++
++}  // namespace
++
++const char * to_string(const FrameAssemblyReason reason)
++{
++  switch (reason) {
++    case FrameAssemblyReason::READY:
++      return "ready";
++    case FrameAssemblyReason::INVALID_CONFIGURATION:
++      return "invalid_configuration";
++    case FrameAssemblyReason::MISSING_FRONT_IMAGE:
++      return "missing_front_image";
++    case FrameAssemblyReason::MISSING_IMAGES:
++      return "missing_images";
++    case FrameAssemblyReason::MISSING_CAMERA_INFO:
++      return "missing_camera_info";
++    case FrameAssemblyReason::MISSING_KINEMATIC_STATE:
++      return "missing_kinematic_state";
++    case FrameAssemblyReason::MISSING_ACCELERATION:
++      return "missing_acceleration";
++    case FrameAssemblyReason::IMAGE_STAMP_MISMATCH:
++      return "image_stamp_mismatch";
++    case FrameAssemblyReason::KINEMATIC_STATE_STAMP_MISMATCH:
++      return "kinematic_state_stamp_mismatch";
++    case FrameAssemblyReason::ACCELERATION_STAMP_MISMATCH:
++      return "acceleration_stamp_mismatch";
++    case FrameAssemblyReason::DUPLICATE_OR_OLD_FRAME:
++      return "duplicate_or_old_frame";
++    case FrameAssemblyReason::COUNT:
++      return "invalid_reason";
++  }
++  return "invalid_reason";
++}
+
+ FrontCriticalSynchronizationStrategy::FrontCriticalSynchronizationStrategy(
+-  int32_t front_camera_id, double sync_tolerance_ms)
+-: front_camera_id_(front_camera_id), sync_tolerance_ms_(sync_tolerance_ms)
++  const int32_t front_camera_id, const double sync_tolerance_ms,
++  const double camera_sync_tolerance_ms)
++: front_camera_id_(front_camera_id),
++  sync_tolerance_ms_(sync_tolerance_ms),
++  camera_sync_tolerance_ms_(camera_sync_tolerance_ms),
++  camera_sync_tolerance_ns_(0)
+ {
++  if (
++    !std::isfinite(sync_tolerance_ms_) || sync_tolerance_ms_ < 0.0 ||
++    !std::isfinite(camera_sync_tolerance_ms_) || camera_sync_tolerance_ms_ < 0.0) {
++    throw std::invalid_argument("Synchronization tolerances must be finite and non-negative");
++  }
++  constexpr double nanoseconds_per_millisecond = 1000000.0;
++  const auto rounded_maximum_tolerance_ms =
++    static_cast<double>(std::numeric_limits<std::int64_t>::max()) / nanoseconds_per_millisecond;
++  const auto maximum_tolerance_ms = std::nextafter(rounded_maximum_tolerance_ms, 0.0);
++  if (camera_sync_tolerance_ms_ > maximum_tolerance_ms) {
++    throw std::invalid_argument("Camera synchronization tolerance is too large");
++  }
++  camera_sync_tolerance_ns_ = static_cast<std::int64_t>(
++    std::llround(camera_sync_tolerance_ms_ * nanoseconds_per_millisecond));
+ }
+
+-bool FrontCriticalSynchronizationStrategy::is_ready(
++FrameAssemblyStatus FrontCriticalSynchronizationStrategy::evaluate(
+   const VadInputTopicData & vad_input_topic_data) const
+ {
+-  // Check if front camera data exists
++  FrameAssemblyStatus status;
++  const auto camera_count = vad_input_topic_data.images.size();
+   if (
+-    front_camera_id_ >= static_cast<int32_t>(vad_input_topic_data.images.size()) ||
+-    !vad_input_topic_data.images[front_camera_id_]) {
+-    return false;
++    camera_count == 0U || camera_count > std::numeric_limits<std::uint64_t>::digits ||
++    vad_input_topic_data.camera_infos.size() != camera_count || front_camera_id_ < 0 ||
++    static_cast<std::size_t>(front_camera_id_) >= camera_count) {
++    return status;
++  }
++
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    if (vad_input_topic_data.images[camera_id]) {
++      status.image_mask |= std::uint64_t{1} << camera_id;
++    }
++    if (vad_input_topic_data.camera_infos[camera_id]) {
++      status.camera_info_mask |= std::uint64_t{1} << camera_id;
++    }
++  }
++  const auto required_mask = expected_mask(camera_count);
++  status.missing_image_mask = required_mask & ~status.image_mask;
++  status.missing_camera_info_mask = required_mask & ~status.camera_info_mask;
++
++  const auto & front_image = vad_input_topic_data.images[front_camera_id_];
++  if (!front_image) {
++    status.reason = FrameAssemblyReason::MISSING_FRONT_IMAGE;
++    return status;
++  }
++  status.source_stamp_ns = stamp_to_nanoseconds(front_image->header.stamp);
++
++  if (status.missing_image_mask != 0U) {
++    status.reason = FrameAssemblyReason::MISSING_IMAGES;
++    return status;
++  }
++  if (status.missing_camera_info_mask != 0U) {
++    status.reason = FrameAssemblyReason::MISSING_CAMERA_INFO;
++    return status;
++  }
++  if (!vad_input_topic_data.kinematic_state) {
++    status.reason = FrameAssemblyReason::MISSING_KINEMATIC_STATE;
++    return status;
++  }
++  if (!vad_input_topic_data.acceleration) {
++    status.reason = FrameAssemblyReason::MISSING_ACCELERATION;
++    return status;
++  }
++
++  auto minimum_image_stamp_ns = std::numeric_limits<std::int64_t>::max();
++  auto maximum_image_stamp_ns = std::numeric_limits<std::int64_t>::min();
++  bool camera_stamps_match = true;
++  for (const auto & image : vad_input_topic_data.images) {
++    const auto image_stamp_ns = stamp_to_nanoseconds(image->header.stamp);
++    minimum_image_stamp_ns = std::min(minimum_image_stamp_ns, image_stamp_ns);
++    maximum_image_stamp_ns = std::max(maximum_image_stamp_ns, image_stamp_ns);
++    camera_stamps_match =
++      camera_stamps_match &&
++      stamp_delta_ms(image_stamp_ns, status.source_stamp_ns) <= camera_sync_tolerance_ms_;
++  }
++  status.image_stamp_span_ms =
++    static_cast<double>(maximum_image_stamp_ns - minimum_image_stamp_ns) / 1000000.0;
++  if (!camera_stamps_match) {
++    status.reason = FrameAssemblyReason::IMAGE_STAMP_MISMATCH;
++    return status;
+   }
+
+-  // Check if synchronized
+-  return is_synchronized(vad_input_topic_data);
++  const auto kinematic_state_stamp_ns =
++    stamp_to_nanoseconds(vad_input_topic_data.kinematic_state->header.stamp);
++  status.kinematic_state_delta_ms =
++    stamp_delta_ms(kinematic_state_stamp_ns, status.source_stamp_ns);
++  if (status.kinematic_state_delta_ms > sync_tolerance_ms_) {
++    status.reason = FrameAssemblyReason::KINEMATIC_STATE_STAMP_MISMATCH;
++    return status;
++  }
++
++  const auto acceleration_stamp_ns =
++    stamp_to_nanoseconds(vad_input_topic_data.acceleration->header.stamp);
++  status.acceleration_delta_ms = stamp_delta_ms(acceleration_stamp_ns, status.source_stamp_ns);
++  if (status.acceleration_delta_ms > sync_tolerance_ms_) {
++    status.reason = FrameAssemblyReason::ACCELERATION_STAMP_MISMATCH;
++    return status;
++  }
++
++  status.reason = FrameAssemblyReason::READY;
++  return status;
++}
++
++bool FrontCriticalSynchronizationStrategy::is_ready(
++  const VadInputTopicData & vad_input_topic_data) const
++{
++  return evaluate(vad_input_topic_data).ready();
+ }
+
+ bool FrontCriticalSynchronizationStrategy::is_dropped(
+@@ -100,33 +274,391 @@ std::optional<VadInputTopicData> FrontCriticalSynchronizationStrategy::fill_drop
+ bool FrontCriticalSynchronizationStrategy::is_synchronized(
+   const VadInputTopicData & vad_input_topic_data) const
+ {
+-  // Check if essential data exists
+-  if (!vad_input_topic_data.kinematic_state || !vad_input_topic_data.acceleration) {
+-    return false;
++  return evaluate(vad_input_topic_data).ready();
++}
++
++FrameMailboxSubmitResult LatestFrameMailbox::submit(FrameAssemblyResult frame)
++{
++  if (!frame.frame.has_value() || !frame.status.ready()) {
++    ++counters_.rejected_invalid;
++    return FrameMailboxSubmitResult::REJECTED_INVALID;
+   }
+
+-  // Check if front camera exists
++  const auto source_stamp_ns = frame.status.source_stamp_ns;
+   if (
+-    front_camera_id_ >= static_cast<int32_t>(vad_input_topic_data.images.size()) ||
+-    !vad_input_topic_data.images[front_camera_id_]) {
+-    return false;
++    (last_taken_source_stamp_ns_.has_value() && source_stamp_ns <= *last_taken_source_stamp_ns_) ||
++    (pending_frame_.has_value() && source_stamp_ns <= pending_frame_->status.source_stamp_ns)) {
++    ++counters_.rejected_old;
++    return FrameMailboxSubmitResult::REJECTED_OLD;
++  }
++
++  const bool replaces_pending = pending_frame_.has_value();
++  pending_frame_ = std::move(frame);
++  ++counters_.submitted;
++  if (replaces_pending) {
++    ++counters_.coalesced_drops;
++    return FrameMailboxSubmitResult::REPLACED_OLDER_PENDING;
++  }
++  return FrameMailboxSubmitResult::STORED;
++}
++
++std::optional<FrameAssemblyResult> LatestFrameMailbox::take_latest()
++{
++  if (!pending_frame_.has_value()) {
++    return std::nullopt;
++  }
++
++  auto result = std::move(pending_frame_);
++  pending_frame_.reset();
++  last_taken_source_stamp_ns_ = result->status.source_stamp_ns;
++  ++counters_.taken;
++  return result;
++}
++
++std::optional<std::int64_t> LatestFrameMailbox::pending_source_stamp_ns() const
++{
++  if (!pending_frame_.has_value()) {
++    return std::nullopt;
++  }
++  return pending_frame_->status.source_stamp_ns;
++}
++
++SynchronizedFrameBuffer::SynchronizedFrameBuffer(
++  const int32_t num_cameras, std::unique_ptr<SynchronizationStrategy> synchronization_strategy,
++  const std::size_t max_pending_frames)
++: num_cameras_(num_cameras),
++  anchor_camera_id_(0U),
++  max_pending_frames_(max_pending_frames),
++  synchronization_strategy_(std::move(synchronization_strategy))
++{
++  if (num_cameras_ <= 0 || num_cameras_ > 64) {
++    throw std::invalid_argument("Camera count must be in the range [1, 64]");
++  }
++  if (max_pending_frames_ == 0U) {
++    throw std::invalid_argument("Frame buffer capacity must be greater than zero");
++  }
++  if (!synchronization_strategy_) {
++    throw std::invalid_argument("Synchronization strategy must not be null");
++  }
++  anchor_camera_id_ = synchronization_strategy_->anchor_camera_id();
++  if (anchor_camera_id_ >= static_cast<std::size_t>(num_cameras_)) {
++    throw std::invalid_argument("Anchor camera ID is outside the configured camera range");
++  }
++  approximate_consumed_watermarks_ns_.resize(static_cast<std::size_t>(num_cameras_));
++  camera_infos_.resize(static_cast<std::size_t>(num_cameras_));
++}
++
++void SynchronizedFrameBuffer::set_image(
++  const std::size_t camera_id, const sensor_msgs::msg::Image::ConstSharedPtr & msg)
++{
++  if (!msg || camera_id >= static_cast<std::size_t>(num_cameras_)) {
++    return;
+   }
+
+-  // Get timestamps
+-  const auto front_camera_stamp = vad_input_topic_data.images[front_camera_id_]->header.stamp;
+-  const auto kinematic_state_stamp = vad_input_topic_data.kinematic_state->header.stamp;
+-  const auto acceleration_stamp = vad_input_topic_data.acceleration->header.stamp;
++  ++counters_.received_images_by_camera[camera_id];
+
+-  // Calculate time differences in milliseconds
+-  const double front_to_kinematic_diff_ms = std::abs(
+-    (rclcpp::Time(front_camera_stamp) - rclcpp::Time(kinematic_state_stamp)).seconds() * 1000.0);
++  const auto source_stamp_ns = stamp_to_nanoseconds(msg->header.stamp);
++  if (
++    (last_accepted_source_stamp_ns_.has_value() &&
++     source_stamp_ns <= *last_accepted_source_stamp_ns_) ||
++    (approximate_consumed_watermarks_ns_[camera_id].has_value() &&
++     source_stamp_ns <= *approximate_consumed_watermarks_ns_[camera_id])) {
++    ++counters_.rejected_old_images;
++    return;
++  }
+
+-  const double front_to_acceleration_diff_ms = std::abs(
+-    (rclcpp::Time(front_camera_stamp) - rclcpp::Time(acceleration_stamp)).seconds() * 1000.0);
++  auto [frame_it, inserted] = pending_frames_.try_emplace(source_stamp_ns, num_cameras_);
++  (void)inserted;
++  frame_it->second.set_image(camera_id, msg);
++  prune_to_capacity();
++}
+
+-  // Check if all are within tolerance
+-  return (front_to_kinematic_diff_ms <= sync_tolerance_ms_) &&
+-         (front_to_acceleration_diff_ms <= sync_tolerance_ms_);
++void SynchronizedFrameBuffer::set_camera_info(
++  const std::size_t camera_id, const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg)
++{
++  if (!msg || camera_id >= camera_infos_.size()) {
++    return;
++  }
++  camera_infos_[camera_id] = msg;
++}
++
++void SynchronizedFrameBuffer::set_kinematic_state(
++  const nav_msgs::msg::Odometry::ConstSharedPtr & msg)
++{
++  if (!msg) {
++    return;
++  }
++  if (
++    kinematic_state_ && stamp_to_nanoseconds(msg->header.stamp) <
++                          stamp_to_nanoseconds(kinematic_state_->header.stamp)) {
++    ++counters_.rejected_old_kinematic_states;
++    return;
++  }
++  kinematic_state_ = msg;
++}
++
++void SynchronizedFrameBuffer::set_acceleration(
++  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr & msg)
++{
++  if (!msg) {
++    return;
++  }
++  if (
++    acceleration_ &&
++    stamp_to_nanoseconds(msg->header.stamp) < stamp_to_nanoseconds(acceleration_->header.stamp)) {
++    ++counters_.rejected_old_accelerations;
++    return;
++  }
++  acceleration_ = msg;
++}
++
++sensor_msgs::msg::Image::ConstSharedPtr SynchronizedFrameBuffer::find_nearest_image(
++  const std::size_t camera_id, const std::int64_t anchor_stamp_ns) const
++{
++  if (camera_id >= static_cast<std::size_t>(num_cameras_)) {
++    return nullptr;
++  }
++  sensor_msgs::msg::Image::ConstSharedPtr nearest;
++  std::int64_t nearest_stamp_ns = 0;
++  bool has_nearest = false;
++  const auto tolerance_ns = synchronization_strategy_->camera_sync_tolerance_ns();
++  const auto first_stamp_ns = subtract_saturated(anchor_stamp_ns, tolerance_ns);
++  const auto last_stamp_ns = add_saturated(anchor_stamp_ns, tolerance_ns);
++  for (auto frame_it = pending_frames_.lower_bound(first_stamp_ns);
++       frame_it != pending_frames_.end() && frame_it->first <= last_stamp_ns; ++frame_it) {
++    const auto & [slot_stamp_ns, slot] = *frame_it;
++    const auto & image = slot.images[camera_id];
++    if (!image) {
++      continue;
++    }
++    const auto candidate_delta = absolute_stamp_delta(slot_stamp_ns, anchor_stamp_ns);
++    const auto nearest_delta = absolute_stamp_delta(nearest_stamp_ns, anchor_stamp_ns);
++    if (
++      !has_nearest || candidate_delta < nearest_delta ||
++      (candidate_delta == nearest_delta && slot_stamp_ns < nearest_stamp_ns)) {
++      nearest = image;
++      nearest_stamp_ns = slot_stamp_ns;
++      has_nearest = true;
++    }
++  }
++  return nearest;
++}
++
++sensor_msgs::msg::Image::ConstSharedPtr SynchronizedFrameBuffer::find_nearest_image_for_diagnostics(
++  const std::size_t camera_id, const std::int64_t anchor_stamp_ns) const
++{
++  if (camera_id >= static_cast<std::size_t>(num_cameras_)) {
++    return nullptr;
++  }
++  sensor_msgs::msg::Image::ConstSharedPtr nearest;
++  std::int64_t nearest_stamp_ns = 0;
++  bool has_nearest = false;
++  for (const auto & [slot_stamp_ns, slot] : pending_frames_) {
++    const auto & image = slot.images[camera_id];
++    if (!image) {
++      continue;
++    }
++    const auto candidate_delta = absolute_stamp_delta(slot_stamp_ns, anchor_stamp_ns);
++    const auto nearest_delta = absolute_stamp_delta(nearest_stamp_ns, anchor_stamp_ns);
++    if (
++      !has_nearest || candidate_delta < nearest_delta ||
++      (candidate_delta == nearest_delta && slot_stamp_ns < nearest_stamp_ns)) {
++      nearest = image;
++      nearest_stamp_ns = slot_stamp_ns;
++      has_nearest = true;
++    }
++  }
++  return nearest;
++}
++
++VadInputTopicData SynchronizedFrameBuffer::materialize_exact_frame(
++  const VadInputTopicData & image_frame) const
++{
++  auto frame = image_frame;
++  frame.camera_infos = camera_infos_;
++  frame.kinematic_state = kinematic_state_;
++  frame.acceleration = acceleration_;
++  return frame;
++}
++
++VadInputTopicData SynchronizedFrameBuffer::materialize_approximate_frame(
++  const std::int64_t anchor_stamp_ns) const
++{
++  VadInputTopicData frame(num_cameras_);
++  for (std::size_t camera_id = 0; camera_id < static_cast<std::size_t>(num_cameras_); ++camera_id) {
++    frame.images[camera_id] = find_nearest_image(camera_id, anchor_stamp_ns);
++  }
++  frame.camera_infos = camera_infos_;
++  frame.kinematic_state = kinematic_state_;
++  frame.acceleration = acceleration_;
++  const auto & anchor_image = frame.images[anchor_camera_id_];
++  if (anchor_image) {
++    frame.stamp = rclcpp::Time(anchor_image->header.stamp);
++  }
++  return frame;
++}
++
++VadInputTopicData SynchronizedFrameBuffer::materialize_approximate_diagnostic_frame(
++  const std::int64_t anchor_stamp_ns) const
++{
++  VadInputTopicData frame(num_cameras_);
++  for (std::size_t camera_id = 0; camera_id < static_cast<std::size_t>(num_cameras_); ++camera_id) {
++    frame.images[camera_id] = find_nearest_image_for_diagnostics(camera_id, anchor_stamp_ns);
++  }
++  frame.camera_infos = camera_infos_;
++  frame.kinematic_state = kinematic_state_;
++  frame.acceleration = acceleration_;
++  const auto & anchor_image = frame.images[anchor_camera_id_];
++  if (anchor_image) {
++    frame.stamp = rclcpp::Time(anchor_image->header.stamp);
++  }
++  return frame;
++}
++
++FrameAssemblyResult SynchronizedFrameBuffer::find_newest_exact_frame() const
++{
++  FrameAssemblyResult newest_result;
++  bool has_result = false;
++  for (auto frame_it = pending_frames_.crbegin(); frame_it != pending_frames_.crend(); ++frame_it) {
++    auto candidate = materialize_exact_frame(frame_it->second);
++    auto status = synchronization_strategy_->evaluate(candidate);
++    if (!has_result) {
++      newest_result.status = status;
++      has_result = true;
++    }
++    if (status.ready()) {
++      return FrameAssemblyResult{
++        status, std::move(candidate), FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP};
++    }
++  }
++
++  if (!has_result) {
++    VadInputTopicData empty_frame(num_cameras_);
++    newest_result.status =
++      synchronization_strategy_->evaluate(materialize_exact_frame(empty_frame));
++  }
++  return newest_result;
++}
++
++FrameAssemblyResult SynchronizedFrameBuffer::find_newest_approximate_frame() const
++{
++  FrameAssemblyResult newest_diagnostic;
++  for (auto frame_it = pending_frames_.crbegin(); frame_it != pending_frames_.crend(); ++frame_it) {
++    if (!frame_it->second.images[anchor_camera_id_]) {
++      continue;
++    }
++    auto candidate = materialize_approximate_frame(frame_it->first);
++    auto status = synchronization_strategy_->evaluate(candidate);
++    if (status.ready()) {
++      return FrameAssemblyResult{
++        status, std::move(candidate), FrameAssemblyResult::MatchKind::APPROXIMATE};
++    }
++    if (newest_diagnostic.match_kind == FrameAssemblyResult::MatchKind::NONE) {
++      auto diagnostic_candidate = materialize_approximate_diagnostic_frame(frame_it->first);
++      newest_diagnostic.status = synchronization_strategy_->evaluate(diagnostic_candidate);
++      newest_diagnostic.match_kind = FrameAssemblyResult::MatchKind::APPROXIMATE;
++    }
++  }
++  return newest_diagnostic;
++}
++
++FrameAssemblyResult SynchronizedFrameBuffer::find_newest_ready_frame() const
++{
++  auto exact_result = find_newest_exact_frame();
++  if (exact_result.frame.has_value()) {
++    return exact_result;
++  }
++  auto approximate_result = find_newest_approximate_frame();
++  return approximate_result.match_kind == FrameAssemblyResult::MatchKind::APPROXIMATE
++           ? std::move(approximate_result)
++           : exact_result;
++}
++
++void SynchronizedFrameBuffer::prune_to_capacity()
++{
++  while (pending_frames_.size() > max_pending_frames_) {
++    pending_frames_.erase(pending_frames_.begin());
++    ++counters_.capacity_pruned_frames;
++  }
++}
++
++void SynchronizedFrameBuffer::consume_exact_frame(const std::int64_t chosen_stamp_ns)
++{
++  auto erase_end = pending_frames_.upper_bound(chosen_stamp_ns);
++  for (auto frame_it = pending_frames_.begin(); frame_it != erase_end; ++frame_it) {
++    if (frame_it->first != chosen_stamp_ns) {
++      ++counters_.superseded_frames;
++    }
++  }
++  pending_frames_.erase(pending_frames_.begin(), erase_end);
++}
++
++void SynchronizedFrameBuffer::consume_approximate_frame(const FrameAssemblyResult & result)
++{
++  const auto chosen_stamp_ns = result.status.source_stamp_ns;
++  consume_exact_frame(chosen_stamp_ns);
++  for (std::size_t camera_id = 0; camera_id < static_cast<std::size_t>(num_cameras_); ++camera_id) {
++    const auto & selected_image = result.frame->images[camera_id];
++    const auto selected_stamp_ns = stamp_to_nanoseconds(selected_image->header.stamp);
++    approximate_consumed_watermarks_ns_[camera_id] = std::max(chosen_stamp_ns, selected_stamp_ns);
++    if (selected_stamp_ns <= chosen_stamp_ns) {
++      continue;
++    }
++    const auto selected_slot = pending_frames_.find(selected_stamp_ns);
++    if (selected_slot == pending_frames_.end()) {
++      continue;
++    }
++    selected_slot->second.images[camera_id].reset();
++    const bool slot_empty = std::none_of(
++      selected_slot->second.images.begin(), selected_slot->second.images.end(),
++      [](const auto & image) { return image != nullptr; });
++    if (slot_empty) {
++      pending_frames_.erase(selected_slot);
++    }
++  }
++}
++
++FrameAssemblyStatus SynchronizedFrameBuffer::evaluate() const
++{
++  return find_newest_ready_frame().status;
++}
++
++FrameAssemblyResult SynchronizedFrameBuffer::take_ready_frame()
++{
++  auto result = find_newest_ready_frame();
++  if (!result.frame.has_value()) {
++    return result;
++  }
++
++  const auto chosen_stamp_ns = result.status.source_stamp_ns;
++  if (result.match_kind == FrameAssemblyResult::MatchKind::APPROXIMATE) {
++    consume_approximate_frame(result);
++  } else {
++    consume_exact_frame(chosen_stamp_ns);
++  }
++
++  // Vehicle state remains single-use as in the original reset-on-accept behavior.
++  kinematic_state_.reset();
++  acceleration_.reset();
++  last_accepted_source_stamp_ns_ = chosen_stamp_ns;
++  ++counters_.accepted_frames;
++  return result;
++}
++
++std::optional<std::int64_t> SynchronizedFrameBuffer::oldest_pending_source_stamp_ns() const
++{
++  if (pending_frames_.empty()) {
++    return std::nullopt;
++  }
++  return pending_frames_.begin()->first;
++}
++
++std::optional<std::int64_t> SynchronizedFrameBuffer::newest_pending_source_stamp_ns() const
++{
++  if (pending_frames_.empty()) {
++    return std::nullopt;
++  }
++  return pending_frames_.rbegin()->first;
+ }
+
+ }  // namespace autoware::tensorrt_vad
+diff --git a/e2e/autoware_tensorrt_vad/src/data_types.hpp b/e2e/autoware_tensorrt_vad/src/data_types.hpp
+index 8fa33054e38ce1f3183e89d9c41033a49701b021..ad873a33baf8c3053e5816aca4d3442b538931e2 100644
+--- a/e2e/autoware_tensorrt_vad/src/data_types.hpp
++++ b/e2e/autoware_tensorrt_vad/src/data_types.hpp
+@@ -166,7 +166,7 @@ public:
+   // Check if frame is complete
+   bool is_complete() const;
+
+-  // Reset frame data
++  // Reset per-frame data. Camera calibration remains cached.
+   void reset();
+
+   // Setter methods with frame initialization
+diff --git a/e2e/autoware_tensorrt_vad/src/runtime_configuration.hpp b/e2e/autoware_tensorrt_vad/src/runtime_configuration.hpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..13924e15e62c230ba661db1539711a1da7a2a104
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/src/runtime_configuration.hpp
+@@ -0,0 +1,39 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#ifndef RUNTIME_CONFIGURATION_HPP_
++#define RUNTIME_CONFIGURATION_HPP_
++
++#include <stdexcept>
++#include <string>
++
++namespace autoware::tensorrt_vad
++{
++
++enum class ImageReliability { BEST_EFFORT = 0, RELIABLE };
++
++inline ImageReliability parse_image_reliability(const std::string & value)
++{
++  if (value == "best_effort") {
++    return ImageReliability::BEST_EFFORT;
++  }
++  if (value == "reliable") {
++    return ImageReliability::RELIABLE;
++  }
++  throw std::invalid_argument("sync_params.image_reliability must be 'best_effort' or 'reliable'");
++}
++
++}  // namespace autoware::tensorrt_vad
++
++#endif  // RUNTIME_CONFIGURATION_HPP_
+diff --git a/e2e/autoware_tensorrt_vad/src/runtime_startup.hpp b/e2e/autoware_tensorrt_vad/src/runtime_startup.hpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..6b8834cde16b2599ed0e5e298f590244f741341b
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/src/runtime_startup.hpp
+@@ -0,0 +1,47 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#ifndef RUNTIME_STARTUP_HPP_
++#define RUNTIME_STARTUP_HPP_
++
++#include <functional>
++
++namespace autoware::tensorrt_vad
++{
++
++/**
++ * @brief Enforces the VAD runtime startup order.
++ *
++ * TensorRT initialization is deliberately completed before creating sensor subscriptions. This
++ * prevents the standalone single-threaded executor from starting with stale per-camera DDS
++ * backlogs. The worker starts last so a subscription setup exception cannot leave a joinable
++ * thread in a partially constructed node.
++ */
++class VadRuntimeStartup
++{
++public:
++  using Step = std::function<void()>;
++
++  static void run(
++    const Step & initialize_model, const Step & create_subscribers, const Step & start_worker)
++  {
++    initialize_model();
++    create_subscribers();
++    start_worker();
++  }
++};
++
++}  // namespace autoware::tensorrt_vad
++
++#endif  // RUNTIME_STARTUP_HPP_
+diff --git a/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp b/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
+index 20f98f44e6b885f9318def9a0a64672ca64f44b6..de8cc33e2de1e49642a899f45b0aeca27f777dd9 100644
+--- a/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
++++ b/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp
+@@ -22,13 +22,51 @@
+ #include <sensor_msgs/msg/camera_info.hpp>
+ #include <sensor_msgs/msg/image.hpp>
+
++#include <array>
+ #include <cstdint>
++#include <map>
+ #include <memory>
+ #include <optional>
++#include <vector>
+
+ namespace autoware::tensorrt_vad
+ {
+
++enum class FrameAssemblyReason : std::uint8_t {
++  READY = 0,
++  INVALID_CONFIGURATION,
++  MISSING_FRONT_IMAGE,
++  MISSING_IMAGES,
++  MISSING_CAMERA_INFO,
++  MISSING_KINEMATIC_STATE,
++  MISSING_ACCELERATION,
++  IMAGE_STAMP_MISMATCH,
++  KINEMATIC_STATE_STAMP_MISMATCH,
++  ACCELERATION_STAMP_MISMATCH,
++  DUPLICATE_OR_OLD_FRAME,
++  COUNT
++};
++
++constexpr std::size_t frame_assembly_reason_count =
++  static_cast<std::size_t>(FrameAssemblyReason::COUNT);
++
++struct FrameAssemblyStatus
++{
++  FrameAssemblyReason reason{FrameAssemblyReason::INVALID_CONFIGURATION};
++  std::int64_t source_stamp_ns{0};
++  std::uint64_t image_mask{0};
++  std::uint64_t camera_info_mask{0};
++  std::uint64_t missing_image_mask{0};
++  std::uint64_t missing_camera_info_mask{0};
++  double image_stamp_span_ms{0.0};
++  double kinematic_state_delta_ms{0.0};
++  double acceleration_delta_ms{0.0};
++
++  bool ready() const { return reason == FrameAssemblyReason::READY; }
++};
++
++const char * to_string(FrameAssemblyReason reason);
++
+ /**
+  * @brief Abstract base class for synchronization strategies
+  *
+@@ -41,6 +79,21 @@ class SynchronizationStrategy
+ public:
+   virtual ~SynchronizationStrategy() = default;
+
++  /**
++   * @brief Evaluate completeness and timestamp synchronization for one frame bundle
++   */
++  virtual FrameAssemblyStatus evaluate(const VadInputTopicData & vad_input_topic_data) const = 0;
++
++  /**
++   * @brief Camera whose timestamp anchors a synchronized frame
++   */
++  virtual std::size_t anchor_camera_id() const = 0;
++
++  /**
++   * @brief Maximum allowed difference between a surround image and the anchor timestamp
++   */
++  virtual std::int64_t camera_sync_tolerance_ns() const = 0;
++
+   /**
+    * @brief Check if the VadInputTopicData is ready to trigger inference
+    * @param vad_input_topic_data VadInputTopicData in Current frame
+@@ -86,7 +139,15 @@ public:
+    * @param front_camera_id Camera ID for the front camera (anchor topic)
+    * @param sync_tolerance_ms Synchronization tolerance in milliseconds (e.g. 100ms)
+    */
+-  explicit FrontCriticalSynchronizationStrategy(int32_t front_camera_id, double sync_tolerance_ms);
++  explicit FrontCriticalSynchronizationStrategy(
++    int32_t front_camera_id, double sync_tolerance_ms, double camera_sync_tolerance_ms = 1.0);
++
++  FrameAssemblyStatus evaluate(const VadInputTopicData & vad_input_topic_data) const override;
++  std::size_t anchor_camera_id() const override
++  {
++    return static_cast<std::size_t>(front_camera_id_);
++  }
++  std::int64_t camera_sync_tolerance_ns() const override { return camera_sync_tolerance_ns_; }
+
+   // Override virtual functions
+   bool is_ready(const VadInputTopicData & vad_input_topic_data) const override;
+@@ -111,8 +172,127 @@ public:
+   bool is_synchronized(const VadInputTopicData & vad_input_topic_data) const override;
+
+ private:
+-  int32_t front_camera_id_;   ///< Front camera ID (anchor camera)
+-  double sync_tolerance_ms_;  ///< Synchronization tolerance in milliseconds
++  int32_t front_camera_id_;                ///< Front camera ID (anchor camera)
++  double sync_tolerance_ms_;               ///< Vehicle state synchronization tolerance
++  double camera_sync_tolerance_ms_;        ///< Inter-camera timestamp tolerance
++  std::int64_t camera_sync_tolerance_ns_;  ///< Inter-camera timestamp tolerance
++};
++
++struct FrameAssemblyResult
++{
++  enum class MatchKind : std::uint8_t { NONE = 0, EXACT_TIMESTAMP, APPROXIMATE };
++
++  FrameAssemblyStatus status;
++  std::optional<VadInputTopicData> frame;
++  MatchKind match_kind{MatchKind::NONE};
++};
++
++struct FrameBufferCounters
++{
++  std::array<std::uint64_t, 64> received_images_by_camera{};
++  std::uint64_t accepted_frames{0};
++  std::uint64_t capacity_pruned_frames{0};
++  std::uint64_t superseded_frames{0};
++  std::uint64_t rejected_old_images{0};
++  std::uint64_t rejected_old_kinematic_states{0};
++  std::uint64_t rejected_old_accelerations{0};
++};
++
++enum class FrameMailboxSubmitResult : std::uint8_t {
++  STORED = 0,
++  REPLACED_OLDER_PENDING,
++  REJECTED_INVALID,
++  REJECTED_OLD
++};
++
++struct FrameMailboxCounters
++{
++  std::uint64_t submitted{0};
++  std::uint64_t coalesced_drops{0};
++  std::uint64_t rejected_invalid{0};
++  std::uint64_t rejected_old{0};
++  std::uint64_t taken{0};
++};
++
++/**
++ * @brief Single-slot latest-frame mailbox for a slower serial inference worker.
++ *
++ * The caller owns synchronization. A newer complete frame replaces an unconsumed pending frame,
++ * bounding inference input age without allowing concurrent or out-of-order prev_bev updates.
++ */
++class LatestFrameMailbox
++{
++public:
++  FrameMailboxSubmitResult submit(FrameAssemblyResult frame);
++  std::optional<FrameAssemblyResult> take_latest();
++
++  bool has_pending() const { return pending_frame_.has_value(); }
++  std::optional<std::int64_t> pending_source_stamp_ns() const;
++  const FrameMailboxCounters & counters() const { return counters_; }
++
++private:
++  std::optional<FrameAssemblyResult> pending_frame_;
++  std::optional<std::int64_t> last_taken_source_stamp_ns_;
++  FrameMailboxCounters counters_;
++};
++
++/**
++ * @brief Accumulates exact timestamp slots with an optional approximate fallback.
++ *
++ * The caller owns synchronization. Complete exact-timestamp slots always use the legacy selection
++ * and consumption path. Only when no exact slot is ready, a fallback anchors to a front-camera
++ * timestamp and selects each surround camera's deterministically nearest retained image. The
++ * synchronization strategy then enforces the configured tolerance. CameraInfo is cached as static
++ * calibration. Vehicle state remains single-use.
++ */
++class SynchronizedFrameBuffer
++{
++public:
++  SynchronizedFrameBuffer(
++    int32_t num_cameras, std::unique_ptr<SynchronizationStrategy> synchronization_strategy,
++    std::size_t max_pending_frames = 8U);
++
++  void set_image(std::size_t camera_id, const sensor_msgs::msg::Image::ConstSharedPtr & msg);
++  void set_camera_info(
++    std::size_t camera_id, const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg);
++  void set_kinematic_state(const nav_msgs::msg::Odometry::ConstSharedPtr & msg);
++  void set_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr & msg);
++
++  FrameAssemblyStatus evaluate() const;
++  FrameAssemblyResult take_ready_frame();
++
++  std::size_t pending_frame_count() const { return pending_frames_.size(); }
++  std::optional<std::int64_t> oldest_pending_source_stamp_ns() const;
++  std::optional<std::int64_t> newest_pending_source_stamp_ns() const;
++  std::uint64_t accepted_frame_count() const { return counters_.accepted_frames; }
++  const FrameBufferCounters & counters() const { return counters_; }
++
++private:
++  sensor_msgs::msg::Image::ConstSharedPtr find_nearest_image(
++    std::size_t camera_id, std::int64_t anchor_stamp_ns) const;
++  sensor_msgs::msg::Image::ConstSharedPtr find_nearest_image_for_diagnostics(
++    std::size_t camera_id, std::int64_t anchor_stamp_ns) const;
++  VadInputTopicData materialize_exact_frame(const VadInputTopicData & image_frame) const;
++  VadInputTopicData materialize_approximate_frame(std::int64_t anchor_stamp_ns) const;
++  VadInputTopicData materialize_approximate_diagnostic_frame(std::int64_t anchor_stamp_ns) const;
++  FrameAssemblyResult find_newest_exact_frame() const;
++  FrameAssemblyResult find_newest_approximate_frame() const;
++  FrameAssemblyResult find_newest_ready_frame() const;
++  void prune_to_capacity();
++  void consume_exact_frame(std::int64_t chosen_stamp_ns);
++  void consume_approximate_frame(const FrameAssemblyResult & result);
++
++  int32_t num_cameras_;
++  std::size_t anchor_camera_id_;
++  std::size_t max_pending_frames_;
++  std::map<std::int64_t, VadInputTopicData> pending_frames_;
++  std::vector<std::optional<std::int64_t>> approximate_consumed_watermarks_ns_;
++  std::vector<sensor_msgs::msg::CameraInfo::ConstSharedPtr> camera_infos_;
++  nav_msgs::msg::Odometry::ConstSharedPtr kinematic_state_;
++  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr acceleration_;
++  std::unique_ptr<SynchronizationStrategy> synchronization_strategy_;
++  std::optional<std::int64_t> last_accepted_source_stamp_ns_;
++  FrameBufferCounters counters_;
+ };
+
+ }  // namespace autoware::tensorrt_vad
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_node.cpp b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+index 2c3a43eec9dedd17f10afd87872499b646d925f3..8c8f98eb2dc6e471358e3cb07ea84d87fb97c69b 100644
+--- a/e2e/autoware_tensorrt_vad/src/vad_node.cpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_node.cpp
+@@ -14,6 +14,8 @@
+
+ #include "vad_node.hpp"
+
++#include "runtime_configuration.hpp"
++#include "runtime_startup.hpp"
+ #include "utils/transform_utils.hpp"
+
+ #include <rclcpp_components/register_node_macro.hpp>
+@@ -28,6 +30,7 @@
+ #endif
+
+ #include <algorithm>
++#include <chrono>
+ #include <limits>
+ #include <map>
+ #include <memory>
+@@ -85,8 +88,7 @@ VadNode::VadNode(const rclcpp::NodeOptions & options)
+   tf_buffer_(this->get_clock()),
+   num_cameras_(declare_parameter<int32_t>("node_params.num_cameras")),
+   front_camera_id_(declare_parameter<int32_t>("sync_params.front_camera_id")),
+-  trajectory_timestep_(declare_parameter<double>("interface_params.trajectory_timestep")),
+-  vad_input_topic_data_current_frame_(num_cameras_)
++  trajectory_timestep_(declare_parameter<double>("interface_params.trajectory_timestep"))
+ {
+   // Load model parameters from JSON first
+   std::string model_param_path = this->declare_parameter<std::string>("model_param_path");
+@@ -127,46 +129,81 @@ VadNode::VadNode(const rclcpp::NodeOptions & options)
+   map_points_publisher_ =
+     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/output/map", rclcpp::QoS(1));
+
++  if (front_camera_id_ < 0 || front_camera_id_ >= num_cameras_) {
++    throw std::runtime_error("sync_params.front_camera_id is outside the configured camera range");
++  }
++  const double sync_tolerance_ms = declare_parameter<double>("sync_params.sync_tolerance_ms");
++  const double camera_sync_tolerance_ms =
++    declare_parameter<double>("sync_params.camera_sync_tolerance_ms", 1.0);
++  const auto frame_buffer_size = declare_parameter<int32_t>("sync_params.frame_buffer_size", 8);
++  const auto image_queue_depth = declare_parameter<int32_t>("sync_params.image_queue_depth", 8);
++  const auto image_reliability_name =
++    declare_parameter<std::string>("sync_params.image_reliability", "best_effort");
++  const auto image_reliability = parse_image_reliability(image_reliability_name);
++  if (frame_buffer_size <= 0 || frame_buffer_size > 64) {
++    throw std::runtime_error("sync_params.frame_buffer_size must be in the range [1, 64]");
++  }
++  if (image_queue_depth <= 0 || image_queue_depth > 64) {
++    throw std::runtime_error("sync_params.image_queue_depth must be in the range [1, 64]");
++  }
++  frame_buffer_ = std::make_unique<SynchronizedFrameBuffer>(
++    num_cameras_,
++    std::make_unique<FrontCriticalSynchronizationStrategy>(
++      front_camera_id_, sync_tolerance_ms, camera_sync_tolerance_ms),
++    static_cast<std::size_t>(frame_buffer_size));
++  RCLCPP_INFO(
++    this->get_logger(),
++    "Frame synchronization: camera=%.3f ms, state=%.3f ms, timestamp_slots=%lld, "
++    "image_queue_depth=%lld image_reliability=%s",
++    camera_sync_tolerance_ms, sync_tolerance_ms, static_cast<long long>(frame_buffer_size),
++    static_cast<long long>(image_queue_depth), image_reliability_name.c_str());
++
+   // Create QoS profiles for sensor data (best effort for compatibility with typical sensor topics)
+   auto sensor_qos = rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::BestEffort);
++  auto image_qos =
++    rclcpp::QoS(static_cast<std::size_t>(image_queue_depth))
++      .reliability(
++        image_reliability == ImageReliability::RELIABLE ? rclcpp::ReliabilityPolicy::Reliable
++                                                        : rclcpp::ReliabilityPolicy::BestEffort);
+   auto camera_info_qos = rclcpp::QoS(10).reliability(rclcpp::ReliabilityPolicy::BestEffort);
+   auto reliable_qos = rclcpp::QoS(1).reliability(rclcpp::ReliabilityPolicy::Reliable);
+
+-  // Subscribers for each camera
+-  create_camera_image_subscribers(sensor_qos);
+-
+-  // Subscribers for camera info
+-  create_camera_info_subscribers(camera_info_qos);
+-
+-  // Odometry subscriber (kinematic state is usually reliable)
+-  odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+-    "~/input/kinematic_state", reliable_qos,
+-    std::bind(&VadNode::odometry_callback, this, std::placeholders::_1));
+-
+-  // Acceleration subscriber (sensor data typically uses best effort)
+-  acceleration_sub_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+-    "~/input/acceleration", sensor_qos,
+-    std::bind(&VadNode::acceleration_callback, this, std::placeholders::_1));
+-
+-  // TF static subscriber (transient local for persistence)
+   auto tf_static_qos = rclcpp::QoS(1)
+                          .reliability(rclcpp::ReliabilityPolicy::Reliable)
+                          .durability(rclcpp::DurabilityPolicy::TransientLocal);
+-  tf_static_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
+-    "/tf_static", tf_static_qos,
+-    std::bind(&VadNode::tf_static_callback, this, std::placeholders::_1));
+-
+-  // Initialize synchronization strategy
+-  double sync_tolerance_ms = declare_parameter<double>("sync_params.sync_tolerance_ms");
+-  sync_strategy_ =
+-    std::make_unique<FrontCriticalSynchronizationStrategy>(front_camera_id_, sync_tolerance_ms);
+
+-  // Initialize VAD model on first complete frame
+-  initialize_vad_model();
++  VadRuntimeStartup::run(
++    [this]() { initialize_vad_model(); },
++    [this, &image_qos, &camera_info_qos, &reliable_qos, &sensor_qos, &tf_static_qos]() {
++      create_camera_image_subscribers(image_qos);
++      create_camera_info_subscribers(camera_info_qos);
++      odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
++        "~/input/kinematic_state", reliable_qos,
++        std::bind(&VadNode::odometry_callback, this, std::placeholders::_1));
++      acceleration_sub_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
++        "~/input/acceleration", sensor_qos,
++        std::bind(&VadNode::acceleration_callback, this, std::placeholders::_1));
++      tf_static_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
++        "/tf_static", tf_static_qos,
++        std::bind(&VadNode::tf_static_callback, this, std::placeholders::_1));
++    },
++    [this]() { inference_worker_ = std::thread(&VadNode::inference_worker_loop, this); });
+
+   RCLCPP_INFO_THROTTLE(
+     this->get_logger(), *this->get_clock(), 5000,
+-    "VAD Node has been initialized - VAD model will be initialized after first callback");
++    "VAD Node initialized with a latest-frame serial inference worker");
++}
++
++VadNode::~VadNode()
++{
++  {
++    std::lock_guard<std::mutex> lock(data_mutex_);
++    stop_inference_worker_ = true;
++  }
++  inference_condition_.notify_all();
++  if (inference_worker_.joinable()) {
++    inference_worker_.join();
++  }
+ }
+
+ void VadNode::image_callback(
+@@ -180,11 +217,11 @@ void VadNode::image_callback(
+   const bool processed = process_callback<sensor_msgs::msg::Image>(
+     msg, callback_name,
+     [this, camera_id](const sensor_msgs::msg::Image::ConstSharedPtr & image_msg) {
+-      vad_input_topic_data_current_frame_.set_image(camera_id, image_msg);
++      frame_buffer_->set_image(camera_id, image_msg);
+     });
+
+-  if (processed && static_cast<int32_t>(camera_id) == front_camera_id_) {
+-    anchor_callback();
++  if (processed) {
++    try_enqueue_inference();
+   }
+ }
+
+@@ -196,29 +233,38 @@ void VadNode::camera_info_callback(
+   }
+
+   const std::string callback_name = "camera_info (camera " + std::to_string(camera_id) + ")";
+-  process_callback<sensor_msgs::msg::CameraInfo>(
++  const bool processed = process_callback<sensor_msgs::msg::CameraInfo>(
+     msg, callback_name,
+     [this, camera_id](const sensor_msgs::msg::CameraInfo::ConstSharedPtr & info_msg) {
+-      vad_input_topic_data_current_frame_.set_camera_info(camera_id, info_msg);
++      frame_buffer_->set_camera_info(camera_id, info_msg);
+     });
++  if (processed) {
++    try_enqueue_inference();
++  }
+ }
+
+ void VadNode::odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+ {
+-  process_callback<nav_msgs::msg::Odometry>(
++  const bool processed = process_callback<nav_msgs::msg::Odometry>(
+     msg, "odometry", [this](const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg) {
+-      vad_input_topic_data_current_frame_.set_kinematic_state(odometry_msg);
++      frame_buffer_->set_kinematic_state(odometry_msg);
+     });
++  if (processed) {
++    try_enqueue_inference();
++  }
+ }
+
+ void VadNode::acceleration_callback(
+   const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
+ {
+-  process_callback<geometry_msgs::msg::AccelWithCovarianceStamped>(
++  const bool processed = process_callback<geometry_msgs::msg::AccelWithCovarianceStamped>(
+     msg, "acceleration",
+     [this](const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr & accel_msg) {
+-      vad_input_topic_data_current_frame_.set_acceleration(accel_msg);
++      frame_buffer_->set_acceleration(accel_msg);
+     });
++  if (processed) {
++    try_enqueue_inference();
++  }
+ }
+
+ void VadNode::tf_static_callback(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg)
+@@ -231,55 +277,220 @@ void VadNode::tf_static_callback(const tf2_msgs::msg::TFMessage::ConstSharedPtr
+   RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Received TF static data");
+ }
+
+-void VadNode::anchor_callback()
++void VadNode::try_enqueue_inference()
+ {
+   try {
+-    std::optional<VadInputTopicData> frame_data;
++    FrameAssemblyResult assembly_result;
++    FrameAssemblyStatus status;
++    FrameBufferCounters frame_buffer_counters;
++    FrameMailboxCounters mailbox_counters;
++    FrameMailboxSubmitResult submit_result{FrameMailboxSubmitResult::REJECTED_INVALID};
++    std::uint64_t check_count = 0;
++    std::uint64_t accepted_count = 0;
++    std::uint64_t reason_count = 0;
++    std::uint64_t checks_since_accept = 0;
++    std::uint64_t received_images_min = 0;
++    std::uint64_t received_images_max = 0;
++    std::size_t pending_frame_count = 0U;
++    std::optional<std::int64_t> oldest_pending_source_stamp_ns;
++    std::optional<std::int64_t> newest_pending_source_stamp_ns;
++    bool queued = false;
+     {
+       std::lock_guard<std::mutex> lock(data_mutex_);
+-      if (!sync_strategy_) {
++      if (!frame_buffer_) {
+         RCLCPP_ERROR_THROTTLE(
+-          this->get_logger(), *this->get_clock(), 5000, "Sync strategy not initialized");
++          this->get_logger(), *this->get_clock(), 5000, "Frame buffer not initialized");
+         return;
+       }
+-
+-      if (!sync_strategy_->is_ready(vad_input_topic_data_current_frame_)) {
+-        RCLCPP_DEBUG_THROTTLE(
+-          this->get_logger(), *this->get_clock(), 5000,
+-          "Synchronization strategy indicates data is not ready for inference");
++      if (stop_inference_worker_) {
+         return;
+       }
+
+-      frame_data.emplace(vad_input_topic_data_current_frame_);
+-      vad_input_topic_data_current_frame_.reset();
++      assembly_result = frame_buffer_->take_ready_frame();
++      status = assembly_result.status;
++      ++frame_assembly_check_count_;
++      check_count = frame_assembly_check_count_;
++      const auto reason_index = static_cast<std::size_t>(status.reason);
++      if (reason_index < frame_assembly_reason_counts_.size()) {
++        reason_count = ++frame_assembly_reason_counts_[reason_index];
++      }
++      accepted_count = frame_buffer_->accepted_frame_count();
++      if (assembly_result.frame.has_value()) {
++        last_accepted_check_count_ = check_count;
++        submit_result = inference_mailbox_.submit(std::move(assembly_result));
++        queued = submit_result == FrameMailboxSubmitResult::STORED ||
++                 submit_result == FrameMailboxSubmitResult::REPLACED_OLDER_PENDING;
++      }
++      checks_since_accept = check_count - last_accepted_check_count_;
++      frame_buffer_counters = frame_buffer_->counters();
++      pending_frame_count = frame_buffer_->pending_frame_count();
++      oldest_pending_source_stamp_ns = frame_buffer_->oldest_pending_source_stamp_ns();
++      newest_pending_source_stamp_ns = frame_buffer_->newest_pending_source_stamp_ns();
++      mailbox_counters = inference_mailbox_.counters();
++    }
++
++    const auto received_camera_count = std::min(
++      static_cast<std::size_t>(num_cameras_),
++      frame_buffer_counters.received_images_by_camera.size());
++    if (received_camera_count > 0U) {
++      const auto received_end =
++        frame_buffer_counters.received_images_by_camera.begin() + received_camera_count;
++      const auto [minimum_received, maximum_received] =
++        std::minmax_element(frame_buffer_counters.received_images_by_camera.begin(), received_end);
++      received_images_min = *minimum_received;
++      received_images_max = *maximum_received;
+     }
+
+-    if (!frame_data.has_value()) {
++    if (!status.ready()) {
++      RCLCPP_DEBUG_THROTTLE(
++        this->get_logger(), *this->get_clock(), 2000,
++        "VAD frame rejected: reason=%s source_stamp_ns=%lld image_mask=0x%llx "
++        "camera_info_mask=0x%llx missing_images=0x%llx missing_camera_info=0x%llx "
++        "image_span_ms=%.3f state_delta_ms=%.3f accel_delta_ms=%.3f checks=%llu "
++        "accepted=%llu reason_count=%llu pending_slots=%zu oldest_pending_ns=%lld "
++        "newest_pending_ns=%lld capacity_pruned=%llu superseded=%llu old_images=%llu",
++        to_string(status.reason), static_cast<long long>(status.source_stamp_ns),
++        static_cast<unsigned long long>(status.image_mask),
++        static_cast<unsigned long long>(status.camera_info_mask),
++        static_cast<unsigned long long>(status.missing_image_mask),
++        static_cast<unsigned long long>(status.missing_camera_info_mask),
++        status.image_stamp_span_ms, status.kinematic_state_delta_ms, status.acceleration_delta_ms,
++        static_cast<unsigned long long>(check_count),
++        static_cast<unsigned long long>(accepted_count),
++        static_cast<unsigned long long>(reason_count), pending_frame_count,
++        static_cast<long long>(oldest_pending_source_stamp_ns.value_or(-1)),
++        static_cast<long long>(newest_pending_source_stamp_ns.value_or(-1)),
++        static_cast<unsigned long long>(frame_buffer_counters.capacity_pruned_frames),
++        static_cast<unsigned long long>(frame_buffer_counters.superseded_frames),
++        static_cast<unsigned long long>(frame_buffer_counters.rejected_old_images));
++
++      const bool timestamp_rejected =
++        status.reason == FrameAssemblyReason::IMAGE_STAMP_MISMATCH ||
++        status.reason == FrameAssemblyReason::KINEMATIC_STATE_STAMP_MISMATCH ||
++        status.reason == FrameAssemblyReason::ACCELERATION_STAMP_MISMATCH ||
++        status.reason == FrameAssemblyReason::DUPLICATE_OR_OLD_FRAME;
++      if (timestamp_rejected || checks_since_accept >= 50U) {
++        RCLCPP_WARN_THROTTLE(
++          this->get_logger(), *this->get_clock(), 5000,
++          "VAD frame assembly stalled/rejected: reason=%s source_stamp_ns=%lld "
++          "image_mask=0x%llx camera_info_mask=0x%llx image_span_ms=%.3f "
++          "checks_since_accept=%llu total_accepted=%llu pending_slots=%zu "
++          "capacity_pruned=%llu superseded=%llu received_images_min=%llu "
++          "received_images_max=%llu",
++          to_string(status.reason), static_cast<long long>(status.source_stamp_ns),
++          static_cast<unsigned long long>(status.image_mask),
++          static_cast<unsigned long long>(status.camera_info_mask), status.image_stamp_span_ms,
++          static_cast<unsigned long long>(checks_since_accept),
++          static_cast<unsigned long long>(accepted_count), pending_frame_count,
++          static_cast<unsigned long long>(frame_buffer_counters.capacity_pruned_frames),
++          static_cast<unsigned long long>(frame_buffer_counters.superseded_frames),
++          static_cast<unsigned long long>(received_images_min),
++          static_cast<unsigned long long>(received_images_max));
++      }
+       return;
+     }
+
+-    auto vad_output_topic_data = trigger_inference(std::move(*frame_data));
+-    if (vad_output_topic_data.has_value()) {
+-      publish(vad_output_topic_data.value());
++    if (!queued) {
++      RCLCPP_WARN_THROTTLE(
++        this->get_logger(), *this->get_clock(), 5000,
++        "VAD complete frame rejected by latest-frame mailbox: source_stamp_ns=%lld result=%u "
++        "rejected_old=%llu rejected_invalid=%llu",
++        static_cast<long long>(status.source_stamp_ns), static_cast<unsigned int>(submit_result),
++        static_cast<unsigned long long>(mailbox_counters.rejected_old),
++        static_cast<unsigned long long>(mailbox_counters.rejected_invalid));
++      return;
+     }
++
++    inference_condition_.notify_one();
++    RCLCPP_INFO_THROTTLE(
++      this->get_logger(), *this->get_clock(), 5000,
++      "VAD frame queued: source_stamp_ns=%lld image_mask=0x%llx camera_info_mask=0x%llx "
++      "image_span_ms=%.3f state_delta_ms=%.3f accel_delta_ms=%.3f assembled=%llu "
++      "pending_slots=%zu capacity_pruned=%llu superseded=%llu mailbox_submitted=%llu "
++      "coalesced_drops=%llu received_images_min=%llu received_images_max=%llu "
++      "replaced_pending=%s",
++      static_cast<long long>(status.source_stamp_ns),
++      static_cast<unsigned long long>(status.image_mask),
++      static_cast<unsigned long long>(status.camera_info_mask), status.image_stamp_span_ms,
++      status.kinematic_state_delta_ms, status.acceleration_delta_ms,
++      static_cast<unsigned long long>(accepted_count), pending_frame_count,
++      static_cast<unsigned long long>(frame_buffer_counters.capacity_pruned_frames),
++      static_cast<unsigned long long>(frame_buffer_counters.superseded_frames),
++      static_cast<unsigned long long>(mailbox_counters.submitted),
++      static_cast<unsigned long long>(mailbox_counters.coalesced_drops),
++      static_cast<unsigned long long>(received_images_min),
++      static_cast<unsigned long long>(received_images_max),
++      submit_result == FrameMailboxSubmitResult::REPLACED_OLDER_PENDING ? "true" : "false");
+   } catch (const std::exception & e) {
+     RCLCPP_ERROR_THROTTLE(
+-      this->get_logger(), *this->get_clock(), 5000, "Exception in anchor_callback: %s", e.what());
++      this->get_logger(), *this->get_clock(), 5000, "Exception in frame inference enqueue: %s",
++      e.what());
+   }
+ }
+
+-std::optional<VadOutputTopicData> VadNode::trigger_inference(
+-  VadInputTopicData vad_input_topic_data_current_frame)
++void VadNode::inference_worker_loop()
+ {
+-  if (sync_strategy_->is_dropped(vad_input_topic_data_current_frame)) {
+-    auto filled_data_opt = sync_strategy_->fill_dropped_data(vad_input_topic_data_current_frame);
+-    if (!filled_data_opt) {
+-      // Cannot fill dropped data (front camera unavailable)
+-      return std::nullopt;
++  while (true) {
++    std::optional<FrameAssemblyResult> work;
++    {
++      std::unique_lock<std::mutex> lock(data_mutex_);
++      inference_condition_.wait(
++        lock, [this]() { return stop_inference_worker_ || inference_mailbox_.has_pending(); });
++      if (stop_inference_worker_) {
++        return;
++      }
++      work = inference_mailbox_.take_latest();
++    }
++    if (!work.has_value() || !work->frame.has_value()) {
++      continue;
+     }
+-    vad_input_topic_data_current_frame = std::move(filled_data_opt.value());
++
++    const auto status = work->status;
++    const auto inference_start = std::chrono::steady_clock::now();
++    bool published = false;
++    try {
++      auto vad_output_topic_data = trigger_inference(*work->frame);
++      if (vad_output_topic_data.has_value()) {
++        publish(*vad_output_topic_data);
++        ++published_frame_count_;
++        published = true;
++      }
++    } catch (const std::exception & e) {
++      RCLCPP_ERROR(
++        this->get_logger(), "Exception in serial inference worker for source_stamp_ns=%lld: %s",
++        static_cast<long long>(status.source_stamp_ns), e.what());
++    } catch (...) {
++      RCLCPP_ERROR(
++        this->get_logger(), "Unknown exception in serial inference worker for source_stamp_ns=%lld",
++        static_cast<long long>(status.source_stamp_ns));
++    }
++    const auto inference_duration_ms =
++      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - inference_start)
++        .count();
++
++    FrameMailboxCounters mailbox_counters;
++    std::optional<std::int64_t> pending_source_stamp_ns;
++    {
++      std::lock_guard<std::mutex> lock(data_mutex_);
++      mailbox_counters = inference_mailbox_.counters();
++      pending_source_stamp_ns = inference_mailbox_.pending_source_stamp_ns();
++    }
++    RCLCPP_INFO(
++      this->get_logger(),
++      "VAD inference complete: source_stamp_ns=%lld inference_ms=%.3f published=%s "
++      "published_count=%llu mailbox_taken=%llu coalesced_drops=%llu "
++      "pending_source_stamp_ns=%lld",
++      static_cast<long long>(status.source_stamp_ns), inference_duration_ms,
++      published ? "true" : "false", static_cast<unsigned long long>(published_frame_count_),
++      static_cast<unsigned long long>(mailbox_counters.taken),
++      static_cast<unsigned long long>(mailbox_counters.coalesced_drops),
++      static_cast<long long>(pending_source_stamp_ns.value_or(-1)));
+   }
++}
+
++std::optional<VadOutputTopicData> VadNode::trigger_inference(
++  const VadInputTopicData & vad_input_topic_data_current_frame)
++{
+   if (vad_input_topic_data_current_frame.is_complete()) {
+     // Execute inference
+     auto vad_output_topic_data = execute_inference(vad_input_topic_data_current_frame);
+diff --git a/e2e/autoware_tensorrt_vad/src/vad_node.hpp b/e2e/autoware_tensorrt_vad/src/vad_node.hpp
+index 1cf2ab21511403c6214125cb138204b1096e5111..8fe77d79c0a0dbdaf05986871909cfe9e679e3ec 100644
+--- a/e2e/autoware_tensorrt_vad/src/vad_node.hpp
++++ b/e2e/autoware_tensorrt_vad/src/vad_node.hpp
+@@ -55,13 +55,17 @@
+ #include <tf2_ros/buffer.h>
+ #include <tf2_ros/transform_listener.h>
+
++#include <array>
+ #include <cmath>
++#include <condition_variable>
++#include <cstdint>
+ #include <functional>
+ #include <map>
+ #include <memory>
+ #include <mutex>
+ #include <optional>
+ #include <string>
++#include <thread>
+ #include <tuple>
+ #include <vector>
+
+@@ -72,6 +76,7 @@ class VadNode : public rclcpp::Node
+ {
+ public:
+   explicit VadNode(const rclcpp::NodeOptions & options);
++  ~VadNode() override;
+
+ private:
+   // Config loading function
+@@ -112,7 +117,8 @@ private:
+   void acceleration_callback(
+     const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
+   void tf_static_callback(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
+-  void anchor_callback();
++  void try_enqueue_inference();
++  void inference_worker_loop();
+
+   // Generic callback handler template
+   template <typename MsgType>
+@@ -144,8 +150,8 @@ private:
+   std::unique_ptr<VadInterface> vad_interface_ptr_{};
+   std::unique_ptr<VadInterfaceConfig> vad_interface_config_;
+
+-  // Synchronization strategy
+-  std::unique_ptr<SynchronizationStrategy> sync_strategy_;
++  // Synchronized input frame assembly
++  std::unique_ptr<SynchronizedFrameBuffer> frame_buffer_;
+   int32_t front_camera_id_;
+
+   // trajectory_timestep parameter
+@@ -159,14 +165,21 @@ private:
+     predicted_objects_publisher_;
+   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr map_points_publisher_;
+
+-  // Current frame data accumulation
+-  VadInputTopicData vad_input_topic_data_current_frame_;
++  // Callbacks assemble frames; a single worker consumes only the newest pending frame.
+   mutable std::mutex data_mutex_;
++  std::condition_variable inference_condition_;
++  LatestFrameMailbox inference_mailbox_;
++  std::thread inference_worker_;
++  bool stop_inference_worker_{false};
++  std::array<std::uint64_t, frame_assembly_reason_count> frame_assembly_reason_counts_{};
++  std::uint64_t frame_assembly_check_count_{0};
++  std::uint64_t last_accepted_check_count_{0};
++  std::uint64_t published_frame_count_{0};
+
+   std::optional<VadOutputTopicData> execute_inference(
+     const VadInputTopicData & vad_input_topic_data);
+   std::optional<VadOutputTopicData> trigger_inference(
+-    VadInputTopicData vad_input_topic_data_current_frame);
++    const VadInputTopicData & vad_input_topic_data_current_frame);
+   void publish(const VadOutputTopicData & vad_output_topic_data);
+ };
+ }  // namespace autoware::tensorrt_vad
+diff --git a/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp b/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..0a882bd719d04c745c20ad573f194781701dfc46
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp
+@@ -0,0 +1,603 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "synchronization_strategy.hpp"
++
++#include <gtest/gtest.h>
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <cstdint>
++#include <limits>
++#include <memory>
++#include <vector>
++
++namespace autoware::tensorrt_vad
++{
++namespace
++{
++
++constexpr std::size_t camera_count = 6;
++
++builtin_interfaces::msg::Time make_stamp(const std::int64_t stamp_ns)
++{
++  builtin_interfaces::msg::Time stamp;
++  stamp.sec = static_cast<std::int32_t>(stamp_ns / 1000000000LL);
++  stamp.nanosec = static_cast<std::uint32_t>(stamp_ns % 1000000000LL);
++  return stamp;
++}
++
++sensor_msgs::msg::Image::ConstSharedPtr make_image(const std::int64_t stamp_ns)
++{
++  auto msg = std::make_shared<sensor_msgs::msg::Image>();
++  msg->header.stamp = make_stamp(stamp_ns);
++  return msg;
++}
++
++sensor_msgs::msg::CameraInfo::ConstSharedPtr make_camera_info()
++{
++  return std::make_shared<sensor_msgs::msg::CameraInfo>();
++}
++
++nav_msgs::msg::Odometry::ConstSharedPtr make_odometry(const std::int64_t stamp_ns)
++{
++  auto msg = std::make_shared<nav_msgs::msg::Odometry>();
++  msg->header.stamp = make_stamp(stamp_ns);
++  return msg;
++}
++
++geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr make_acceleration(
++  const std::int64_t stamp_ns)
++{
++  auto msg = std::make_shared<geometry_msgs::msg::AccelWithCovarianceStamped>();
++  msg->header.stamp = make_stamp(stamp_ns);
++  return msg;
++}
++
++SynchronizedFrameBuffer make_buffer(
++  const std::size_t max_pending_frames = 8U, const double camera_sync_tolerance_ms = 1.0)
++{
++  return SynchronizedFrameBuffer(
++    camera_count,
++    std::make_unique<FrontCriticalSynchronizationStrategy>(0, 500.0, camera_sync_tolerance_ms),
++    max_pending_frames);
++}
++
++void set_camera_infos(SynchronizedFrameBuffer & buffer)
++{
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_camera_info(camera_id, make_camera_info());
++  }
++}
++
++void set_dynamic_frame(SynchronizedFrameBuffer & buffer, const std::int64_t stamp_ns)
++{
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(stamp_ns));
++  }
++  buffer.set_kinematic_state(make_odometry(stamp_ns));
++  buffer.set_acceleration(make_acceleration(stamp_ns));
++}
++
++std::vector<FrameAssemblyResult> feed_dynamic_frame_as_callbacks(
++  SynchronizedFrameBuffer & buffer, const std::int64_t stamp_ns)
++{
++  std::vector<FrameAssemblyResult> complete_frames;
++  const auto capture_if_ready = [&buffer, &complete_frames]() {
++    auto result = buffer.take_ready_frame();
++    if (result.frame.has_value()) {
++      complete_frames.push_back(std::move(result));
++    }
++  };
++
++  buffer.set_kinematic_state(make_odometry(stamp_ns));
++  capture_if_ready();
++  for (const auto camera_id : std::array<std::size_t, camera_count>{0, 2, 4, 1, 3, 5}) {
++    buffer.set_image(camera_id, make_image(stamp_ns));
++    capture_if_ready();
++  }
++  buffer.set_acceleration(make_acceleration(stamp_ns));
++  capture_if_ready();
++  return complete_frames;
++}
++
++}  // namespace
++
++TEST(FrameAssembly, DoesNotConsumeIncompleteFrameAndCachesCameraInfo)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t first_stamp_ns = 1000000000LL;
++  buffer.set_kinematic_state(make_odometry(first_stamp_ns));
++  buffer.set_acceleration(make_acceleration(first_stamp_ns));
++  for (std::size_t camera_id = 0; camera_id < camera_count - 1; ++camera_id) {
++    buffer.set_image(camera_id, make_image(first_stamp_ns));
++  }
++
++  const auto incomplete = buffer.take_ready_frame();
++  EXPECT_FALSE(incomplete.frame.has_value());
++  EXPECT_EQ(incomplete.status.reason, FrameAssemblyReason::MISSING_IMAGES);
++  EXPECT_EQ(incomplete.status.missing_image_mask, std::uint64_t{1} << (camera_count - 1));
++  EXPECT_EQ(buffer.pending_frame_count(), 1U);
++  EXPECT_EQ(buffer.oldest_pending_source_stamp_ns(), first_stamp_ns);
++  EXPECT_EQ(buffer.newest_pending_source_stamp_ns(), first_stamp_ns);
++
++  buffer.set_image(camera_count - 1, make_image(first_stamp_ns));
++  const auto first_frame = buffer.take_ready_frame();
++  ASSERT_TRUE(first_frame.frame.has_value());
++  EXPECT_EQ(buffer.accepted_frame_count(), 1U);
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++
++  constexpr std::int64_t second_stamp_ns = 1200000000LL;
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(second_stamp_ns));
++  }
++  EXPECT_EQ(buffer.take_ready_frame().status.reason, FrameAssemblyReason::MISSING_KINEMATIC_STATE);
++  buffer.set_kinematic_state(make_odometry(second_stamp_ns));
++  EXPECT_EQ(buffer.take_ready_frame().status.reason, FrameAssemblyReason::MISSING_ACCELERATION);
++  buffer.set_acceleration(make_acceleration(second_stamp_ns));
++  const auto second_frame = buffer.take_ready_frame();
++  ASSERT_TRUE(second_frame.frame.has_value());
++  EXPECT_EQ(second_frame.status.source_stamp_ns, second_stamp_ns);
++  EXPECT_EQ(buffer.accepted_frame_count(), 2U);
++  for (const auto & camera_info : second_frame.frame->camera_infos) {
++    EXPECT_NE(camera_info, nullptr);
++  }
++}
++
++TEST(FrameAssembly, RejectsCameraToleranceThatCannotBeRepresentedAsNanoseconds)
++{
++  constexpr double nanoseconds_per_millisecond = 1000000.0;
++  const auto rounded_limit =
++    static_cast<double>(std::numeric_limits<std::int64_t>::max()) / nanoseconds_per_millisecond;
++  const auto safe_limit = std::nextafter(rounded_limit, 0.0);
++
++  const FrontCriticalSynchronizationStrategy safe_strategy(0, 500.0, safe_limit);
++  EXPECT_LE(safe_strategy.camera_sync_tolerance_ns(), std::numeric_limits<std::int64_t>::max());
++  EXPECT_THROW(
++    FrontCriticalSynchronizationStrategy(0, 500.0, rounded_limit), std::invalid_argument);
++}
++
++TEST(FrameAssembly, RejectsAdjacentTickAndAcceptsMatchingCameraStamp)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t source_stamp_ns = 2000000000LL;
++  buffer.set_kinematic_state(make_odometry(source_stamp_ns));
++  buffer.set_acceleration(make_acceleration(source_stamp_ns));
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    const auto image_stamp_ns = camera_id == 4 ? source_stamp_ns - 200000000LL : source_stamp_ns;
++    buffer.set_image(camera_id, make_image(image_stamp_ns));
++  }
++
++  const auto mixed = buffer.take_ready_frame();
++  EXPECT_FALSE(mixed.frame.has_value());
++  EXPECT_EQ(mixed.status.reason, FrameAssemblyReason::IMAGE_STAMP_MISMATCH);
++  EXPECT_EQ(mixed.status.source_stamp_ns, source_stamp_ns);
++  EXPECT_EQ(mixed.status.missing_image_mask, 0U);
++  EXPECT_DOUBLE_EQ(mixed.status.image_stamp_span_ms, 200.0);
++  EXPECT_EQ(buffer.pending_frame_count(), 2U);
++
++  buffer.set_image(4, make_image(source_stamp_ns));
++  const auto repaired = buffer.take_ready_frame();
++  ASSERT_TRUE(repaired.frame.has_value());
++  for (const auto & image : repaired.frame->images) {
++    EXPECT_EQ(image->header.stamp, make_stamp(source_stamp_ns));
++  }
++  EXPECT_EQ(repaired.match_kind, FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP);
++  EXPECT_EQ(buffer.accepted_frame_count(), 1U);
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++  EXPECT_EQ(buffer.counters().superseded_frames, 1U);
++}
++
++TEST(FrameAssembly, AcceptsEveryDynamicCallbackPermutationExactlyOnce)
++{
++  constexpr std::int64_t source_stamp_ns = 3000000000LL;
++  std::array<std::size_t, camera_count + 2> callback_order{0, 1, 2, 3, 4, 5, 6, 7};
++  std::size_t permutation_count = 0;
++  do {
++    auto buffer = make_buffer();
++    set_camera_infos(buffer);
++    std::size_t accepted_in_permutation = 0;
++
++    for (std::size_t callback_index = 0; callback_index < callback_order.size(); ++callback_index) {
++      const auto callback_id = callback_order[callback_index];
++      if (callback_id < camera_count) {
++        buffer.set_image(callback_id, make_image(source_stamp_ns));
++      } else if (callback_id == camera_count) {
++        buffer.set_kinematic_state(make_odometry(source_stamp_ns));
++      } else {
++        buffer.set_acceleration(make_acceleration(source_stamp_ns));
++      }
++
++      const auto result = buffer.take_ready_frame();
++      if (result.frame.has_value()) {
++        ++accepted_in_permutation;
++        EXPECT_EQ(result.match_kind, FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP);
++        EXPECT_EQ(callback_index, callback_order.size() - 1);
++      }
++    }
++
++    EXPECT_EQ(accepted_in_permutation, 1U);
++    EXPECT_EQ(buffer.accepted_frame_count(), 1U);
++    EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++    ++permutation_count;
++  } while (std::next_permutation(callback_order.begin(), callback_order.end()));
++
++  EXPECT_EQ(permutation_count, 40320U);
++}
++
++TEST(FrameAssembly, CombinesJitteredCamerasAroundFrontAnchorForEveryCallbackPermutation)
++{
++  constexpr std::int64_t anchor_stamp_ns = 3500000000LL;
++  constexpr std::array<std::int64_t, camera_count> camera_offsets_ns{
++    0LL, -800000LL, 400000LL, -200000LL, 1000000LL, 750000LL};
++  std::array<std::size_t, camera_count + 2> callback_order{0, 1, 2, 3, 4, 5, 6, 7};
++  std::size_t permutation_count = 0;
++
++  do {
++    auto buffer = make_buffer();
++    set_camera_infos(buffer);
++    std::optional<FrameAssemblyResult> accepted;
++
++    for (std::size_t callback_index = 0; callback_index < callback_order.size(); ++callback_index) {
++      const auto callback_id = callback_order[callback_index];
++      if (callback_id < camera_count) {
++        buffer.set_image(callback_id, make_image(anchor_stamp_ns + camera_offsets_ns[callback_id]));
++      } else if (callback_id == camera_count) {
++        buffer.set_kinematic_state(make_odometry(anchor_stamp_ns));
++      } else {
++        buffer.set_acceleration(make_acceleration(anchor_stamp_ns));
++      }
++
++      auto result = buffer.take_ready_frame();
++      if (result.frame.has_value()) {
++        EXPECT_FALSE(accepted.has_value());
++        EXPECT_EQ(callback_index, callback_order.size() - 1U);
++        accepted = std::move(result);
++      }
++    }
++
++    ASSERT_TRUE(accepted.has_value());
++    ASSERT_TRUE(accepted->frame.has_value());
++    EXPECT_EQ(accepted->match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
++    EXPECT_EQ(accepted->status.source_stamp_ns, anchor_stamp_ns);
++    EXPECT_DOUBLE_EQ(accepted->status.image_stamp_span_ms, 1.8);
++    for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++      ASSERT_NE(accepted->frame->images[camera_id], nullptr);
++      EXPECT_EQ(
++        accepted->frame->images[camera_id]->header.stamp,
++        make_stamp(anchor_stamp_ns + camera_offsets_ns[camera_id]));
++    }
++    EXPECT_EQ(buffer.accepted_frame_count(), 1U);
++    EXPECT_EQ(buffer.pending_frame_count(), 0U);
++    ++permutation_count;
++  } while (std::next_permutation(callback_order.begin(), callback_order.end()));
++
++  EXPECT_EQ(permutation_count, 40320U);
++}
++
++TEST(FrameAssembly, SelectsEarlierImageDeterministicallyWhenDeltasTie)
++{
++  constexpr std::int64_t anchor_stamp_ns = 3700000000LL;
++  constexpr std::int64_t half_tolerance_ns = 500000LL;
++
++  const auto run_with_order = [&](const bool earlier_first) {
++    auto buffer = make_buffer();
++    set_camera_infos(buffer);
++    for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++      if (camera_id != 1U) {
++        buffer.set_image(camera_id, make_image(anchor_stamp_ns));
++      }
++    }
++    const auto earlier = make_image(anchor_stamp_ns - half_tolerance_ns);
++    const auto later = make_image(anchor_stamp_ns + half_tolerance_ns);
++    buffer.set_image(1U, earlier_first ? earlier : later);
++    EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++    buffer.set_image(1U, earlier_first ? later : earlier);
++    EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++    buffer.set_kinematic_state(make_odometry(anchor_stamp_ns));
++    EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++    buffer.set_acceleration(make_acceleration(anchor_stamp_ns));
++    return buffer.take_ready_frame();
++  };
++
++  const auto earlier_first = run_with_order(true);
++  const auto later_first = run_with_order(false);
++  ASSERT_TRUE(earlier_first.frame.has_value());
++  ASSERT_TRUE(later_first.frame.has_value());
++  EXPECT_EQ(earlier_first.match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
++  EXPECT_EQ(later_first.match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
++  EXPECT_EQ(
++    earlier_first.frame->images[1]->header.stamp, make_stamp(anchor_stamp_ns - half_tolerance_ns));
++  EXPECT_EQ(
++    later_first.frame->images[1]->header.stamp, make_stamp(anchor_stamp_ns - half_tolerance_ns));
++}
++
++TEST(FrameAssembly, RejectsJustOutsideToleranceAndAcceptsInclusiveBoundary)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t anchor_stamp_ns = 3900000000LL;
++  constexpr std::int64_t tolerance_ns = 1000000LL;
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    const auto stamp_ns = camera_id == 4U ? anchor_stamp_ns + tolerance_ns + 1LL : anchor_stamp_ns;
++    buffer.set_image(camera_id, make_image(stamp_ns));
++  }
++  buffer.set_kinematic_state(make_odometry(anchor_stamp_ns));
++  buffer.set_acceleration(make_acceleration(anchor_stamp_ns));
++
++  const auto outside = buffer.take_ready_frame();
++  EXPECT_FALSE(outside.frame.has_value());
++  EXPECT_EQ(outside.status.reason, FrameAssemblyReason::IMAGE_STAMP_MISMATCH);
++  EXPECT_EQ(outside.status.image_mask, (std::uint64_t{1} << camera_count) - 1U);
++  EXPECT_EQ(outside.status.missing_image_mask, 0U);
++  EXPECT_DOUBLE_EQ(outside.status.image_stamp_span_ms, 1.000001);
++
++  buffer.set_image(4U, make_image(anchor_stamp_ns + tolerance_ns));
++  const auto boundary = buffer.take_ready_frame();
++  ASSERT_TRUE(boundary.frame.has_value());
++  EXPECT_EQ(boundary.match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
++  EXPECT_EQ(boundary.status.source_stamp_ns, anchor_stamp_ns);
++  EXPECT_EQ(boundary.frame->images[4]->header.stamp, make_stamp(anchor_stamp_ns + tolerance_ns));
++}
++
++TEST(FrameAssembly, CompleteExactFrameTakesPriorityOverNewerApproximateFrame)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t exact_stamp_ns = 4100000000LL;
++  constexpr std::int64_t approximate_anchor_ns = exact_stamp_ns + 200000000LL;
++  constexpr std::array<std::int64_t, camera_count> camera_offsets_ns{
++    0LL, -800000LL, 400000LL, -200000LL, 1000000LL, 750000LL};
++
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(exact_stamp_ns));
++    buffer.set_image(camera_id, make_image(approximate_anchor_ns + camera_offsets_ns[camera_id]));
++  }
++  buffer.set_kinematic_state(make_odometry(approximate_anchor_ns));
++  buffer.set_acceleration(make_acceleration(approximate_anchor_ns));
++
++  const auto exact = buffer.take_ready_frame();
++  ASSERT_TRUE(exact.frame.has_value());
++  EXPECT_EQ(exact.match_kind, FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP);
++  EXPECT_EQ(exact.status.source_stamp_ns, exact_stamp_ns);
++  EXPECT_DOUBLE_EQ(exact.status.image_stamp_span_ms, 0.0);
++  EXPECT_EQ(buffer.counters().accepted_frames, 1U);
++  EXPECT_EQ(buffer.counters().superseded_frames, 0U);
++
++  buffer.set_kinematic_state(make_odometry(approximate_anchor_ns));
++  buffer.set_acceleration(make_acceleration(approximate_anchor_ns));
++  const auto approximate = buffer.take_ready_frame();
++  ASSERT_TRUE(approximate.frame.has_value());
++  EXPECT_EQ(approximate.match_kind, FrameAssemblyResult::MatchKind::APPROXIMATE);
++  EXPECT_EQ(approximate.status.source_stamp_ns, approximate_anchor_ns);
++  EXPECT_EQ(buffer.counters().accepted_frames, 2U);
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++}
++
++TEST(FrameAssembly, RejectsDuplicateSourceFrameAndAcceptsNewerFrame)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  constexpr std::int64_t first_stamp_ns = 4000000000LL;
++  set_dynamic_frame(buffer, first_stamp_ns);
++  ASSERT_TRUE(buffer.take_ready_frame().frame.has_value());
++
++  set_dynamic_frame(buffer, first_stamp_ns);
++  const auto duplicate = buffer.take_ready_frame();
++  EXPECT_FALSE(duplicate.frame.has_value());
++  EXPECT_EQ(duplicate.status.reason, FrameAssemblyReason::MISSING_FRONT_IMAGE);
++  EXPECT_EQ(buffer.accepted_frame_count(), 1U);
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++  EXPECT_EQ(buffer.counters().rejected_old_images, camera_count);
++
++  constexpr std::int64_t second_stamp_ns = 4200000000LL;
++  set_dynamic_frame(buffer, second_stamp_ns);
++  const auto newer = buffer.take_ready_frame();
++  ASSERT_TRUE(newer.frame.has_value());
++  EXPECT_EQ(newer.status.source_stamp_ns, second_stamp_ns);
++  EXPECT_EQ(buffer.accepted_frame_count(), 2U);
++}
++
++TEST(FrameAssembly, ToleranceOneExactPathPreservesFramesAcrossInterleavedFutureCallbacks)
++{
++  auto buffer = make_buffer(32U, 1.0);
++  set_camera_infos(buffer);
++  constexpr std::int64_t base_stamp_ns = 5000000000LL;
++  constexpr std::int64_t period_ns = 200000000LL;
++  constexpr std::size_t frame_count = 12U;
++  std::vector<std::int64_t> accepted_stamps;
++
++  const auto take_if_ready = [&]() {
++    auto result = buffer.take_ready_frame();
++    if (result.frame.has_value()) {
++      EXPECT_EQ(result.match_kind, FrameAssemblyResult::MatchKind::EXACT_TIMESTAMP);
++      EXPECT_DOUBLE_EQ(result.status.image_stamp_span_ms, 0.0);
++      accepted_stamps.push_back(result.status.source_stamp_ns);
++    }
++  };
++
++  for (std::size_t frame_index = 0; frame_index < frame_count; ++frame_index) {
++    const auto current_stamp_ns =
++      base_stamp_ns + static_cast<std::int64_t>(frame_index) * period_ns;
++    buffer.set_kinematic_state(make_odometry(current_stamp_ns));
++    take_if_ready();
++    buffer.set_acceleration(make_acceleration(current_stamp_ns));
++    take_if_ready();
++    for (std::size_t camera_id = 0; camera_id < camera_count - 1U; ++camera_id) {
++      buffer.set_image(camera_id, make_image(current_stamp_ns));
++      take_if_ready();
++    }
++    if (frame_index > 0U) {
++      buffer.set_image(camera_count - 1U, make_image(current_stamp_ns - period_ns));
++      take_if_ready();
++    }
++  }
++
++  const auto flush_state_stamp_ns =
++    base_stamp_ns + static_cast<std::int64_t>(frame_count) * period_ns;
++  buffer.set_kinematic_state(make_odometry(flush_state_stamp_ns));
++  take_if_ready();
++  buffer.set_acceleration(make_acceleration(flush_state_stamp_ns));
++  take_if_ready();
++  buffer.set_image(
++    camera_count - 1U,
++    make_image(base_stamp_ns + static_cast<std::int64_t>(frame_count - 1U) * period_ns));
++  take_if_ready();
++
++  ASSERT_EQ(accepted_stamps.size(), frame_count);
++  for (std::size_t frame_index = 0; frame_index < frame_count; ++frame_index) {
++    EXPECT_EQ(
++      accepted_stamps[frame_index],
++      base_stamp_ns + static_cast<std::int64_t>(frame_index) * period_ns);
++  }
++  EXPECT_EQ(buffer.counters().accepted_frames, frame_count);
++  EXPECT_EQ(buffer.counters().capacity_pruned_frames, 0U);
++  EXPECT_EQ(buffer.counters().superseded_frames, 0U);
++  EXPECT_EQ(buffer.counters().rejected_old_images, 0U);
++  for (std::size_t camera_id = 0; camera_id < camera_count; ++camera_id) {
++    EXPECT_EQ(buffer.counters().received_images_by_camera[camera_id], frame_count);
++  }
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++}
++
++TEST(FrameAssembly, LatestMailboxBoundsAgeWhenFiveHertzInputFeedsTwoHertzInference)
++{
++  auto buffer = make_buffer();
++  set_camera_infos(buffer);
++  LatestFrameMailbox mailbox;
++
++  constexpr std::int64_t base_stamp_ns = 10000000000LL;
++  constexpr std::int64_t camera_period_ms = 200;
++  constexpr std::int64_t inference_period_ms = 500;
++  constexpr std::int64_t stress_duration_ms = 5000;
++  std::vector<std::int64_t> taken_source_stamps;
++  double maximum_age_at_inference_start_ms = 0.0;
++
++  for (std::int64_t wall_time_ms = 0; wall_time_ms <= stress_duration_ms; wall_time_ms += 100) {
++    if (wall_time_ms % camera_period_ms == 0) {
++      const auto source_stamp_ns = base_stamp_ns + wall_time_ms * 1000000LL;
++      auto assembled = feed_dynamic_frame_as_callbacks(buffer, source_stamp_ns);
++      ASSERT_EQ(assembled.size(), 1U);
++      EXPECT_EQ(assembled.front().status.image_stamp_span_ms, 0.0);
++      const auto submit_result = mailbox.submit(std::move(assembled.front()));
++      EXPECT_TRUE(
++        submit_result == FrameMailboxSubmitResult::STORED ||
++        submit_result == FrameMailboxSubmitResult::REPLACED_OLDER_PENDING);
++    }
++
++    // A serial worker becomes ready for its next frame every 500 ms.
++    if (wall_time_ms % inference_period_ms == 0) {
++      auto work = mailbox.take_latest();
++      ASSERT_TRUE(work.has_value());
++      const auto age_ms =
++        static_cast<double>(
++          base_stamp_ns + wall_time_ms * 1000000LL - work->status.source_stamp_ns) /
++        1000000.0;
++      maximum_age_at_inference_start_ms = std::max(maximum_age_at_inference_start_ms, age_ms);
++      taken_source_stamps.push_back(work->status.source_stamp_ns);
++    }
++  }
++
++  EXPECT_TRUE(std::is_sorted(taken_source_stamps.begin(), taken_source_stamps.end()));
++  EXPECT_EQ(
++    std::adjacent_find(taken_source_stamps.begin(), taken_source_stamps.end()),
++    taken_source_stamps.end());
++  EXPECT_LE(maximum_age_at_inference_start_ms, static_cast<double>(camera_period_ms));
++  EXPECT_LE(maximum_age_at_inference_start_ms + static_cast<double>(inference_period_ms), 700.0);
++  EXPECT_EQ(mailbox.counters().submitted, 26U);
++  EXPECT_EQ(mailbox.counters().taken, 11U);
++  EXPECT_EQ(mailbox.counters().coalesced_drops, 15U);
++  EXPECT_EQ(mailbox.counters().rejected_old, 0U);
++  EXPECT_FALSE(mailbox.has_pending());
++}
++
++TEST(FrameAssembly, ChoosesNewestCompleteFrameFromUnevenOutOfOrderBacklog)
++{
++  auto buffer = make_buffer(8U);
++  set_camera_infos(buffer);
++  constexpr std::int64_t base_stamp_ns = 20000000000LL;
++  constexpr std::int64_t period_ns = 200000000LL;
++  std::array<std::int64_t, 8> source_stamps{};
++  for (std::size_t index = 0; index < source_stamps.size(); ++index) {
++    source_stamps[index] = base_stamp_ns + static_cast<std::int64_t>(index) * period_ns;
++  }
++
++  // Simulate uneven executor service: each camera drains a different timestamp order.
++  const std::array<std::size_t, camera_count> camera_order{0, 3, 1, 5, 2, 4};
++  for (const auto camera_id : camera_order) {
++    for (std::size_t callback_index = 0; callback_index < source_stamps.size(); ++callback_index) {
++      const auto stamp_index =
++        camera_id % 2U == 0U ? callback_index : source_stamps.size() - callback_index - 1U;
++      buffer.set_image(camera_id, make_image(source_stamps[stamp_index]));
++      EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++    }
++  }
++
++  ASSERT_EQ(buffer.pending_frame_count(), source_stamps.size());
++  EXPECT_EQ(buffer.oldest_pending_source_stamp_ns(), source_stamps.front());
++  EXPECT_EQ(buffer.newest_pending_source_stamp_ns(), source_stamps.back());
++
++  buffer.set_kinematic_state(make_odometry(source_stamps.back()));
++  EXPECT_FALSE(buffer.take_ready_frame().frame.has_value());
++  buffer.set_acceleration(make_acceleration(source_stamps.back()));
++  const auto newest = buffer.take_ready_frame();
++  ASSERT_TRUE(newest.frame.has_value());
++  EXPECT_EQ(newest.status.source_stamp_ns, source_stamps.back());
++  EXPECT_DOUBLE_EQ(newest.status.image_stamp_span_ms, 0.0);
++  for (const auto & image : newest.frame->images) {
++    ASSERT_NE(image, nullptr);
++    EXPECT_EQ(image->header.stamp, make_stamp(source_stamps.back()));
++  }
++  for (const auto & camera_info : newest.frame->camera_infos) {
++    EXPECT_NE(camera_info, nullptr);
++  }
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++  EXPECT_EQ(buffer.counters().accepted_frames, 1U);
++  EXPECT_EQ(buffer.counters().superseded_frames, source_stamps.size() - 1U);
++  EXPECT_EQ(buffer.counters().capacity_pruned_frames, 0U);
++}
++
++TEST(FrameAssembly, BoundsTimestampSlotsAndPrunesOldestIncompleteFrames)
++{
++  auto buffer = make_buffer(3U);
++  set_camera_infos(buffer);
++  constexpr std::int64_t base_stamp_ns = 30000000000LL;
++  constexpr std::int64_t period_ns = 200000000LL;
++
++  for (std::size_t index = 0; index < 5U; ++index) {
++    buffer.set_image(0, make_image(base_stamp_ns + static_cast<std::int64_t>(index) * period_ns));
++  }
++  EXPECT_EQ(buffer.pending_frame_count(), 3U);
++  EXPECT_EQ(buffer.counters().capacity_pruned_frames, 2U);
++  EXPECT_EQ(buffer.oldest_pending_source_stamp_ns(), base_stamp_ns + 2 * period_ns);
++  EXPECT_EQ(buffer.newest_pending_source_stamp_ns(), base_stamp_ns + 4 * period_ns);
++
++  const auto newest_stamp_ns = base_stamp_ns + 4 * period_ns;
++  for (std::size_t camera_id = 1; camera_id < camera_count; ++camera_id) {
++    buffer.set_image(camera_id, make_image(newest_stamp_ns));
++  }
++  buffer.set_kinematic_state(make_odometry(newest_stamp_ns));
++  buffer.set_acceleration(make_acceleration(newest_stamp_ns));
++  const auto newest = buffer.take_ready_frame();
++  ASSERT_TRUE(newest.frame.has_value());
++  EXPECT_EQ(newest.status.source_stamp_ns, newest_stamp_ns);
++  EXPECT_EQ(buffer.pending_frame_count(), 0U);
++  EXPECT_EQ(buffer.counters().capacity_pruned_frames, 2U);
++  EXPECT_EQ(buffer.counters().superseded_frames, 2U);
++}
++
++}  // namespace autoware::tensorrt_vad
+diff --git a/e2e/autoware_tensorrt_vad/test/test_runtime_startup.cpp b/e2e/autoware_tensorrt_vad/test/test_runtime_startup.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ab8adf61132c01e8de839b932c0daa04230108e
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_runtime_startup.cpp
+@@ -0,0 +1,80 @@
++// Copyright 2026 TIER IV.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "runtime_configuration.hpp"
++#include "runtime_startup.hpp"
++
++#include <gtest/gtest.h>
++
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++namespace autoware::tensorrt_vad
++{
++
++TEST(VadRuntimeConfiguration, ParsesSupportedImageReliabilityValues)
++{
++  EXPECT_EQ(parse_image_reliability("best_effort"), ImageReliability::BEST_EFFORT);
++  EXPECT_EQ(parse_image_reliability("reliable"), ImageReliability::RELIABLE);
++}
++
++TEST(VadRuntimeConfiguration, RejectsUnsupportedImageReliabilityValue)
++{
++  EXPECT_THROW(parse_image_reliability("system_default"), std::invalid_argument);
++}
++
++TEST(VadRuntimeStartup, InitializesModelBeforeSubscribersAndStartsWorkerLast)
++{
++  bool model_ready = false;
++  bool subscribers_ready = false;
++  bool worker_started = false;
++  std::vector<std::string> order;
++
++  VadRuntimeStartup::run(
++    [&]() {
++      EXPECT_FALSE(subscribers_ready);
++      EXPECT_FALSE(worker_started);
++      model_ready = true;
++      order.emplace_back("model");
++    },
++    [&]() {
++      EXPECT_TRUE(model_ready);
++      EXPECT_FALSE(worker_started);
++      subscribers_ready = true;
++      order.emplace_back("subscribers");
++    },
++    [&]() {
++      EXPECT_TRUE(model_ready);
++      EXPECT_TRUE(subscribers_ready);
++      worker_started = true;
++      order.emplace_back("worker");
++    });
++
++  EXPECT_EQ(order, (std::vector<std::string>{"model", "subscribers", "worker"}));
++}
++
++TEST(VadRuntimeStartup, DoesNotStartWorkerWhenSubscriberCreationFails)
++{
++  bool worker_started = false;
++
++  EXPECT_THROW(
++    VadRuntimeStartup::run(
++      []() {}, []() { throw std::runtime_error("subscriber setup failed"); },
++      [&]() { worker_started = true; }),
++    std::runtime_error);
++  EXPECT_FALSE(worker_started);
++}
++
++}  // namespace autoware::tensorrt_vad

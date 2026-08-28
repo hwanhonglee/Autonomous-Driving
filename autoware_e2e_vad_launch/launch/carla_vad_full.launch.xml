@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!--
+    Full Autoware shell for CARLA + VAD.
+
+    Default topic ownership:
+      /localization/kinematic_state  carla_state_publisher
+      /localization/acceleration     twist2accel
+      /perception/object_recognition/objects  VAD
+      /planning/trajectory           vad_route_manager
+      /control/command/control_cmd   full Autoware control stack
+      /control/command/actuation_cmd CARLA raw command converter
+
+    The conventional module switches below are mutually exclusive ownership
+    boundaries. Enabling conventional localization suppresses CARLA truth state.
+    Enabling conventional planning suppresses both the VAD route manager and the
+    direct VAD trajectory relay. VAD remains active as a shadow-mode publisher on
+    /planning/vad/raw_trajectory in that configuration.
+  -->
+
+  <!-- Required data. map_path must be a complete Autoware map directory. -->
+  <arg
+    name="map_path"
+    description="Complete Autoware map directory containing Lanelet2, PCD, and projector metadata"
+  />
+  <arg name="data_path" description="Directory containing the vad/v0.1 model artifacts"/>
+
+  <!-- CARLA connection and world configuration. -->
+  <arg name="carla_host" default="localhost"/>
+  <arg name="carla_port" default="2100"/>
+  <arg
+    name="carla_map"
+    default="Town01"
+    description="CARLA world name; kept separate because the full Autoware map directory may use a different basename"
+  />
+  <arg name="carla_timeout" default="20"/>
+  <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
+  <arg name="vehicle_type" default="vehicle.toyota.prius"/>
+  <arg name="spawn_point" default="None" description="CARLA x,y,z,roll,pitch,yaw or None"/>
+  <arg name="spawn_point_reference" default="vehicle_center"/>
+  <arg name="sync_mode" default="True"/>
+  <arg name="fixed_delta_seconds" default="0.05"/>
+  <arg name="max_real_delta_seconds" default="0.05"/>
+  <arg name="use_traffic_manager" default="False"/>
+  <arg name="use_light_weight_sensor_mapping" default="False"/>
+  <arg
+    name="sensor_mapping_file"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/sensor_mapping_full.yaml"
+    description="Full six-camera CARLA mapping required by VAD"
+  />
+
+  <!-- Full Autoware shell configuration. -->
+  <arg name="vehicle_model" default="sample_vehicle"/>
+  <arg name="sensor_model" default="carla_sensor_kit"/>
+  <arg
+    name="raw_vehicle_cmd_converter_config"
+    default="$(find-pkg-share autoware_carla_interface)/config/raw_vehicle_cmd_converter.param.yaml"
+    description="Raw vehicle command converter config; the default is the stock CARLA interface profile"
+  />
+  <arg name="planning_module_preset" default="default"/>
+  <arg name="control_module_preset" default="default"/>
+  <arg name="use_lateral_controller_param_override" default="false"/>
+  <arg
+    name="lateral_controller_param_path"
+    default=""
+    description="Opt-in standard controller parameter file; ignored unless its override is enabled"
+  />
+  <arg name="use_longitudinal_controller_param_override" default="false"/>
+  <arg
+    name="longitudinal_controller_param_path"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/pid_carla_vad_no_steer_convergence.param.yaml"
+    description="Simulation-only PID profile; ignored unless its override is enabled"
+  />
+  <arg
+    name="vehicle_cmd_gate_param_path"
+    default="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"
+    description="Opt-in vehicle command gate profile; the default is stock Autoware"
+  />
+  <arg
+    name="smart_mpc_runtime_param_path"
+    default="$(find-pkg-share autoware_smart_mpc_trajectory_follower)/param/runtime.param.yaml"
+    description="Smart MPC runtime parameters; pass the project guard profile explicitly to opt in"
+  />
+  <arg name="system_run_mode" default="planning_simulation"/>
+  <arg name="launch_system_monitor" default="false"/>
+  <arg
+    name="component_state_monitor_topic_path"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/component_state_monitor_vad.yaml"
+    description="Topic-rate and timeout gates for the VAD-owned planning and perception outputs"
+  />
+  <arg
+    name="launch_vad_dummy_diag_publisher"
+    default="true"
+    description="Supply simulation diagnostics for disabled NDT/EKF/segmentation modules; the distinct name avoids collision with the standard system launch argument"
+  />
+  <arg name="rviz" default="true"/>
+  <arg name="rviz_respawn" default="true"/>
+  <arg
+    name="launch_fast_camera_view"
+    default="false"
+    description="Show the fast profile's front raw camera in a separate rqt window"
+  />
+  <arg
+    name="rviz_config"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/rviz/autoware_vad_carla.rviz"
+  />
+
+  <!--
+    Conventional stack ownership switches. Defaults use CARLA ground truth for
+    state, VAD for objects, and VAD for planning. When conventional localization
+    is enabled, initialize it normally; the CARLA truth publisher is suppressed.
+    Conventional planning normally also needs conventional perception enabled.
+  -->
+  <arg name="launch_conventional_localization" default="false"/>
+  <arg name="launch_carla_truth_state_bridge" default="true"/>
+  <arg
+    name="use_carla_map_alignment"
+    default="false"
+    description="Apply an explicit CARLA-world to Autoware-map planar transform and vertical offset to truth odometry"
+  />
+  <arg name="carla_map_alignment_x_m" default="0.0"/>
+  <arg name="carla_map_alignment_y_m" default="0.0"/>
+  <arg name="carla_map_alignment_z_m" default="0.0"/>
+  <arg name="carla_map_alignment_yaw_rad" default="0.0"/>
+  <arg name="launch_conventional_perception" default="false"/>
+  <arg name="launch_conventional_planning" default="false"/>
+  <arg
+    name="configure_aeb_for_vad_objects"
+    default="true"
+    description="Use VAD PredictedObjects for standard AEB when conventional perception is disabled"
+  />
+  <arg
+    name="truth_initial_pose"
+    default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]"
+    description="CARLA start pose as [x,y,z,qx,qy,qz,qw]; run_route_vad_full.sh derives it from route_file"
+  />
+
+  <!-- VAD and route-conditioning configuration. -->
+  <arg name="vad_log_level" default="info"/>
+  <arg
+    name="use_vad_imu_acceleration"
+    default="false"
+    description="Feed VAD gravity-inclusive CARLA IMU acceleration without changing twist2accel/controller topics"
+  />
+  <arg name="vad_imu_topic" default="/sensing/imu/tamagawa/imu_raw"/>
+  <arg
+    name="vad_imu_acceleration_topic"
+    default="/sensing/imu/vad_acceleration"
+  />
+  <arg name="vad_imu_acceleration_frame" default="base_link"/>
+  <arg name="use_fast_vad" default="false"/>
+  <arg name="vad_use_fp16_heads" default="false"/>
+  <arg
+    name="vad_model_override_file"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/vad_carla_tiny_fast.param.yaml"
+  />
+  <arg name="vad_bev_shift_mode" default="legacy"/>
+  <arg name="use_route_manager" default="true"/>
+  <arg
+    name="route_file"
+    default=""
+    description="Route JSON from prepare_carla_route.py; required while use_route_manager is true"
+  />
+  <arg name="maneuver_lookahead_m" default="2.0"/>
+  <arg name="maneuver_exit_lookahead_m" default="2.5"/>
+  <arg name="controller_stop_offset_m" default="0.49"/>
+  <arg name="comfortable_deceleration_mps2" default="1.2"/>
+  <arg name="maximum_speed_mps" default="2.5"/>
+  <arg name="route_corridor_half_width_m" default="0.5"/>
+  <arg name="turn_inward_corridor_half_width_m" default="0.5"/>
+  <arg name="turn_outward_corridor_half_width_m" default="0.5"/>
+  <arg name="left_turn_outward_corridor_half_width_m" default="0.0"/>
+  <arg name="right_turn_outward_corridor_half_width_m" default="0.0"/>
+  <arg name="route_corridor_mode" default="hard"/>
+  <arg name="route_corridor_entry_distance_m" default="0.0"/>
+  <arg name="trajectory_lateral_filter_gain" default="1.0"/>
+  <arg name="left_turn_trajectory_lateral_filter_gain" default="0.0"/>
+  <arg name="right_turn_trajectory_lateral_filter_gain" default="0.0"/>
+  <arg name="trajectory_lateral_filter_activation_threshold_m" default="0.0"/>
+  <arg name="trajectory_lateral_filter_anchor_m" default="2.0"/>
+  <arg name="trajectory_lateral_filter_timeout_sec" default="4.0"/>
+  <arg
+    name="trajectory_geometry_smoothing_strength"
+    default="0.0"
+    description="Opt-in endpoint-fixed Whittaker smoothing strength; zero is an exact no-op"
+  />
+  <arg name="trajectory_geometry_smoothing_interval_m" default="0.25"/>
+  <arg name="trajectory_geometry_smoothing_max_deviation_m" default="0.10"/>
+  <arg name="maximum_lateral_acceleration_mps2" default="0.0"/>
+  <arg name="curvature_speed_preview_m" default="3.0"/>
+
+  <!--
+    The standard mission planner is retained for Autoware API/RViz route state.
+    vad_standard_route_adapter submits the JSON goal to it and checks alignment.
+    VAD maneuver conditioning still reads the JSON route itself. Conventional
+    planning already includes its own mission planner, so this standalone instance
+    is suppressed in that mode.
+  -->
+  <arg
+    name="launch_standard_mission_planner"
+    default="true"
+    description="Expose standard Autoware route/API/RViz state and align its goal with the VAD JSON route"
+  />
+  <arg
+    name="mission_planner_param_path"
+    default="$(find-pkg-share autoware_launch)/config/planning/mission_planning/mission_planner/mission_planner.param.yaml"
+  />
+
+  <!--
+    CARLA bridge owns simulator sensors and raw actuation conversion only.
+    use_e2e_planning=false is essential: its bundled minimal controller/state
+    stack would duplicate the full Autoware control and the truth nodes below.
+  -->
+  <group scoped="true">
+    <include file="$(find-pkg-share autoware_carla_interface)/launch/autoware_carla_interface.launch.xml">
+      <arg name="use_e2e_planning" value="false"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="host" value="$(var carla_host)"/>
+      <arg name="port" value="$(var carla_port)"/>
+      <arg name="timeout" value="$(var carla_timeout)"/>
+      <arg name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
+      <arg name="vehicle_type" value="$(var vehicle_type)"/>
+      <arg name="spawn_point" value="$(var spawn_point)"/>
+      <arg name="spawn_point_reference" value="$(var spawn_point_reference)"/>
+      <!-- The CARLA interface extracts its world name from this basename. -->
+      <arg name="map_path" value="$(var carla_map)"/>
+      <arg name="sync_mode" value="$(var sync_mode)"/>
+      <arg name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
+      <arg name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
+      <arg name="use_traffic_manager" value="$(var use_traffic_manager)"/>
+      <arg
+        name="use_light_weight_sensor_mapping"
+        value="$(var use_light_weight_sensor_mapping)"
+      />
+      <arg name="sensor_mapping_file" value="$(var sensor_mapping_file)"/>
+      <arg
+        name="raw_vehicle_cmd_converter_config"
+        value="$(var raw_vehicle_cmd_converter_config)"
+      />
+    </include>
+  </group>
+
+  <!-- Vehicle, map, sensing, control, API, and RViz remain standard. -->
+  <group scoped="true">
+    <include file="$(find-pkg-share autoware_launch)/launch/autoware.launch.xml">
+      <arg name="map_path" value="$(var map_path)"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="sensor_model" value="$(var sensor_model)"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="planning_module_preset" value="$(var planning_module_preset)"/>
+      <arg name="control_module_preset" value="$(var control_module_preset)"/>
+      <arg name="use_lateral_controller_param_override" value="$(var use_lateral_controller_param_override)"/>
+      <arg name="lateral_controller_param_path" value="$(var lateral_controller_param_path)"/>
+      <arg name="use_longitudinal_controller_param_override" value="$(var use_longitudinal_controller_param_override)"/>
+      <arg name="longitudinal_controller_param_path" value="$(var longitudinal_controller_param_path)"/>
+      <arg name="vehicle_cmd_gate_param_path" value="$(var vehicle_cmd_gate_param_path)"/>
+      <arg name="smart_mpc_runtime_param_path" value="$(var smart_mpc_runtime_param_path)"/>
+      <arg name="launch_vehicle" value="true"/>
+      <arg name="launch_system" value="false"/>
+      <arg name="launch_map" value="true"/>
+      <arg name="launch_sensing" value="true"/>
+      <arg name="launch_sensing_driver" value="false"/>
+      <arg name="launch_localization" value="$(var launch_conventional_localization)"/>
+      <arg name="launch_perception" value="$(var launch_conventional_perception)"/>
+      <arg name="launch_planning" value="$(var launch_conventional_planning)"/>
+      <arg name="launch_control" value="true"/>
+      <arg name="launch_api" value="true"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="launch_vehicle_interface" value="false"/>
+      <arg name="system_run_mode" value="$(var system_run_mode)"/>
+      <arg name="launch_system_monitor" value="$(var launch_system_monitor)"/>
+      <arg name="launch_dummy_diag_publisher" value="false"/>
+      <arg
+        name="diagnostic_graph_aggregator_graph_path"
+        value="$(find-pkg-share autoware_e2e_vad_launch)/config/diagnostic_graph_vad.yaml"
+      />
+      <arg name="traffic_light_recognition/use_high_accuracy_detection" value="false"/>
+      <arg name="rviz" value="false"/>
+      <arg name="rviz_config" value="$(var rviz_config)"/>
+      <arg name="rviz_respawn" value="$(var rviz_respawn)"/>
+      <arg name="is_simulation" value="true"/>
+    </include>
+  </group>
+
+  <!-- Keep the standard system stack while applying VAD-rate-aware freshness gates. -->
+  <include file="$(find-pkg-share autoware_e2e_vad_launch)/launch/system_vad_full_shell.launch.xml">
+    <arg name="use_sim_time" value="true"/>
+    <arg name="system_run_mode" value="$(var system_run_mode)"/>
+    <arg name="launch_system_monitor" value="$(var launch_system_monitor)"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
+    <arg
+      name="component_state_monitor_topic_path"
+      value="$(var component_state_monitor_topic_path)"
+    />
+    <arg
+      name="diagnostic_graph_aggregator_graph_path"
+      value="$(find-pkg-share autoware_e2e_vad_launch)/config/diagnostic_graph_vad.yaml"
+    />
+  </include>
+
+  <group if="$(var rviz)">
+    <include file="$(find-pkg-share autoware_e2e_vad_launch)/launch/vad_visualization.launch.xml">
+      <arg name="use_sim_time" value="true"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="respawn" value="$(var rviz_respawn)"/>
+      <arg name="rviz_config" value="$(var rviz_config)"/>
+    </include>
+    <node
+      pkg="rqt_image_view"
+      exec="rqt_image_view"
+      name="vad_fast_front_camera"
+      args="--clear-config /sensing/camera/CAM_FRONT/image_raw"
+      output="screen"
+      if="$(var launch_fast_camera_view)"
+    />
+  </group>
+
+  <!--
+    The standard planning validator is intentionally absent because VAD owns the
+    trajectory contract. Keep the standard graph intact and satisfy only those
+    validator diagnostics after the project route manager's equivalent checks.
+  -->
+  <node
+    pkg="autoware_dummy_diag_publisher"
+    exec="autoware_dummy_diag_publisher_node"
+    name="vad_dummy_diag_publisher"
+    output="screen"
+    if="$(var launch_vad_dummy_diag_publisher)"
+  >
+    <param
+      from="$(find-pkg-share autoware_e2e_vad_launch)/config/dummy_diag_publisher_vad.param.yaml"
+    />
+    <param name="update_rate" value="10.0"/>
+  </node>
+
+  <!-- Keep standard AEB active without feeding it unsegmented CARLA ground points. -->
+  <group unless="$(var launch_conventional_perception)">
+    <node
+      pkg="autoware_e2e_vad_launch"
+      exec="vad_aeb_configurator.py"
+      name="vad_aeb_configurator"
+      output="screen"
+      if="$(var configure_aeb_for_vad_objects)"
+    >
+      <param name="use_sim_time" value="true"/>
+    </node>
+  </group>
+
+  <!--
+    carla_sensor_kit sensing already owns the vehicle velocity converter. These
+    nodes add only pose/twist fusion and acceleration. The nested conditions make
+    it impossible to start truth odometry beside conventional localization.
+  -->
+  <let
+    name="carla_truth_odometry_topic"
+    value="/localization/kinematic_state_unaligned"
+    if="$(var use_carla_map_alignment)"
+  />
+  <let
+    name="carla_truth_odometry_topic"
+    value="/localization/kinematic_state"
+    unless="$(var use_carla_map_alignment)"
+  />
+  <let
+    name="carla_truth_frame_id"
+    value="carla_map"
+    if="$(var use_carla_map_alignment)"
+  />
+  <let
+    name="carla_truth_frame_id"
+    value="map"
+    unless="$(var use_carla_map_alignment)"
+  />
+  <let
+    name="carla_truth_publish_tf"
+    value="false"
+    if="$(var use_carla_map_alignment)"
+  />
+  <let
+    name="carla_truth_publish_tf"
+    value="true"
+    unless="$(var use_carla_map_alignment)"
+  />
+  <group unless="$(var launch_conventional_localization)">
+    <group if="$(var launch_carla_truth_state_bridge)">
+      <node
+        pkg="autoware_carla_interface"
+        exec="carla_state_publisher"
+        name="carla_state_publisher"
+        output="screen"
+      >
+        <param name="use_sim_time" value="true"/>
+        <param name="frame_id" value="$(var carla_truth_frame_id)"/>
+        <param name="child_frame_id" value="base_link"/>
+        <param name="publish_tf" value="$(var carla_truth_publish_tf)"/>
+        <param name="max_time_diff_sec" value="0.3"/>
+        <remap
+          from="~/input/pose_with_covariance"
+          to="/sensing/gnss/pose_with_covariance"
+        />
+        <remap
+          from="~/input/twist_with_covariance"
+          to="/sensing/vehicle_velocity_converter/twist_with_covariance"
+        />
+        <remap from="~/output/odometry" to="$(var carla_truth_odometry_topic)"/>
+      </node>
+
+      <node
+        pkg="autoware_e2e_vad_launch"
+        exec="carla_map_aligned_odometry.py"
+        name="carla_map_aligned_odometry"
+        output="screen"
+        if="$(var use_carla_map_alignment)"
+      >
+        <param name="use_sim_time" value="true"/>
+        <param name="translation_x_m" value="$(var carla_map_alignment_x_m)"/>
+        <param name="translation_y_m" value="$(var carla_map_alignment_y_m)"/>
+        <param name="translation_z_m" value="$(var carla_map_alignment_z_m)"/>
+        <param name="yaw_rad" value="$(var carla_map_alignment_yaw_rad)"/>
+        <param name="output_frame_id" value="map"/>
+        <param name="output_child_frame_id" value="base_link"/>
+        <param name="publish_tf" value="true"/>
+        <remap
+          from="~/input/odometry"
+          to="/localization/kinematic_state_unaligned"
+        />
+        <remap
+          from="~/output/odometry"
+          to="/localization/kinematic_state"
+        />
+      </node>
+
+      <!-- Ground-truth localization is immediately initialized at the CARLA spawn. -->
+      <include file="$(find-pkg-share autoware_pose_initializer)/launch/pose_initializer.launch.xml">
+        <arg name="user_defined_initial_pose/enable" value="true"/>
+        <arg name="user_defined_initial_pose/pose" value="$(var truth_initial_pose)"/>
+        <arg name="ndt_enabled" value="false"/>
+        <arg name="gnss_enabled" value="false"/>
+        <arg name="ekf_enabled" value="false"/>
+        <arg name="yabloc_enabled" value="false"/>
+        <arg name="stop_check_enabled" value="false"/>
+        <arg
+          name="config_file"
+          value="$(find-pkg-share autoware_launch)/config/localization/pose_initializer.param.yaml"
+        />
+      </include>
+
+      <node
+        pkg="autoware_twist2accel"
+        exec="autoware_twist2accel_node"
+        name="twist2accel"
+        output="screen"
+      >
+        <param name="use_sim_time" value="true"/>
+        <param from="$(find-pkg-share autoware_twist2accel)/config/twist2accel.param.yaml"/>
+        <param name="use_odom" value="false"/>
+        <param name="accel_lowpass_gain" value="0.5"/>
+        <remap
+          from="input/twist"
+          to="/sensing/vehicle_velocity_converter/twist_with_covariance"
+        />
+        <remap from="output/accel" to="/localization/acceleration"/>
+      </node>
+    </group>
+  </group>
+
+  <!--
+    VAD can opt into raw CARLA IMU acceleration while standard localization and
+    control continue to own /localization/acceleration through twist2accel.
+  -->
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="vad_imu_acceleration_adapter.py"
+    name="vad_imu_acceleration_adapter"
+    output="screen"
+    if="$(var use_vad_imu_acceleration)"
+  >
+    <param name="use_sim_time" value="true"/>
+    <param name="output_frame_id" value="$(var vad_imu_acceleration_frame)"/>
+    <remap from="~/input/imu" to="$(var vad_imu_topic)"/>
+    <remap from="~/output/acceleration" to="$(var vad_imu_acceleration_topic)"/>
+  </node>
+
+  <!-- Standalone standard mission planning for API and RViz route interaction. -->
+  <group unless="$(var launch_conventional_planning)">
+    <group if="$(var launch_standard_mission_planner)">
+      <push-ros-namespace namespace="planning"/>
+      <group>
+        <push-ros-namespace namespace="mission_planning"/>
+        <include file="$(find-pkg-share autoware_e2e_vad_launch)/launch/mission_planning_full_shell.launch.xml">
+          <arg
+            name="mission_planner_param_path"
+            value="$(var mission_planner_param_path)"
+          />
+          <arg
+            name="vehicle_param_path"
+            value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"
+          />
+        </include>
+      </group>
+    </group>
+  </group>
+
+  <!-- Populate the familiar Autoware route/state UI from the same JSON goal. -->
+  <group unless="$(var launch_conventional_planning)">
+    <group if="$(var launch_standard_mission_planner)">
+      <node
+        pkg="autoware_e2e_vad_launch"
+        exec="vad_standard_route_adapter.py"
+        name="vad_standard_route_adapter"
+        output="screen"
+        if="$(var use_route_manager)"
+      >
+        <param name="use_sim_time" value="true"/>
+        <param name="route_file" value="$(var route_file)"/>
+      </node>
+    </group>
+  </group>
+
+  <!-- VAD always publishes to private shadow topics, never directly by default. -->
+  <let
+    name="vad_output_objects"
+    value="/perception/vad/objects"
+    if="$(var launch_conventional_perception)"
+  />
+  <let
+    name="vad_output_objects"
+    value="/perception/object_recognition/objects"
+    unless="$(var launch_conventional_perception)"
+  />
+  <let
+    name="vad_acceleration_input"
+    value="$(var vad_imu_acceleration_topic)"
+    if="$(var use_vad_imu_acceleration)"
+  />
+  <let
+    name="vad_acceleration_input"
+    value="/localization/acceleration"
+    unless="$(var use_vad_imu_acceleration)"
+  />
+  <group unless="$(var use_fast_vad)">
+    <include file="$(find-pkg-share autoware_tensorrt_vad)/launch/vad_carla_tiny.launch.xml">
+      <arg name="log_level" value="$(var vad_log_level)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="acceleration" value="$(var vad_acceleration_input)"/>
+      <arg name="output_objects" value="$(var vad_output_objects)"/>
+      <arg name="output_trajectory" value="/planning/vad/raw_trajectory"/>
+      <arg
+        name="output_candidate_trajectories"
+        value="/planning/vad/candidate_trajectories"
+      />
+      <arg name="output_map_points" value="/perception/vad/map_points"/>
+    </include>
+  </group>
+  <group if="$(var use_fast_vad)">
+    <include file="$(find-pkg-share autoware_e2e_vad_launch)/launch/vad_carla_tiny_fast.launch.xml">
+      <arg name="log_level" value="$(var vad_log_level)"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="data_path" value="$(var data_path)"/>
+      <arg name="use_fp16_heads" value="$(var vad_use_fp16_heads)"/>
+      <arg name="model_override_file" value="$(var vad_model_override_file)"/>
+      <arg name="bev_shift_mode" value="$(var vad_bev_shift_mode)"/>
+      <arg name="acceleration" value="$(var vad_acceleration_input)"/>
+      <arg name="output_objects" value="$(var vad_output_objects)"/>
+      <arg name="output_trajectory" value="/planning/vad/raw_trajectory"/>
+      <arg
+        name="output_candidate_trajectories"
+        value="/planning/vad/candidate_trajectories"
+      />
+      <arg name="output_map_points" value="/perception/vad/map_points"/>
+    </include>
+  </group>
+
+  <!-- Exactly one VAD-side owner of /planning/trajectory when planning is off. -->
+  <group unless="$(var launch_conventional_planning)">
+    <node
+      pkg="autoware_e2e_vad_launch"
+      exec="vad_route_manager.py"
+      name="vad_route_manager"
+      output="screen"
+      if="$(var use_route_manager)"
+    >
+      <param name="use_sim_time" value="true"/>
+      <param from="$(find-pkg-share autoware_e2e_vad_launch)/config/vad_route_manager.param.yaml"/>
+      <param name="route_file" value="$(var route_file)"/>
+      <param
+        name="require_standard_route_alignment"
+        value="$(var launch_standard_mission_planner)"
+      />
+      <param name="maneuver_lookahead_m" value="$(var maneuver_lookahead_m)"/>
+      <param
+        name="maneuver_exit_lookahead_m"
+        value="$(var maneuver_exit_lookahead_m)"
+      />
+      <param name="controller_stop_offset_m" value="$(var controller_stop_offset_m)"/>
+      <param
+        name="comfortable_deceleration_mps2"
+        value="$(var comfortable_deceleration_mps2)"
+      />
+      <param name="maximum_speed_mps" value="$(var maximum_speed_mps)"/>
+      <param
+        name="route_corridor_half_width_m"
+        value="$(var route_corridor_half_width_m)"
+      />
+      <param
+        name="turn_inward_corridor_half_width_m"
+        value="$(var turn_inward_corridor_half_width_m)"
+      />
+      <param
+        name="turn_outward_corridor_half_width_m"
+        value="$(var turn_outward_corridor_half_width_m)"
+      />
+      <param
+        name="left_turn_outward_corridor_half_width_m"
+        value="$(var left_turn_outward_corridor_half_width_m)"
+      />
+      <param
+        name="right_turn_outward_corridor_half_width_m"
+        value="$(var right_turn_outward_corridor_half_width_m)"
+      />
+      <param name="route_corridor_mode" value="$(var route_corridor_mode)"/>
+      <param
+        name="route_corridor_entry_distance_m"
+        value="$(var route_corridor_entry_distance_m)"
+      />
+      <param
+        name="trajectory_lateral_filter_gain"
+        value="$(var trajectory_lateral_filter_gain)"
+      />
+      <param
+        name="left_turn_trajectory_lateral_filter_gain"
+        value="$(var left_turn_trajectory_lateral_filter_gain)"
+      />
+      <param
+        name="right_turn_trajectory_lateral_filter_gain"
+        value="$(var right_turn_trajectory_lateral_filter_gain)"
+      />
+      <param
+        name="trajectory_lateral_filter_activation_threshold_m"
+        value="$(var trajectory_lateral_filter_activation_threshold_m)"
+      />
+      <param
+        name="trajectory_lateral_filter_anchor_m"
+        value="$(var trajectory_lateral_filter_anchor_m)"
+      />
+      <param
+        name="trajectory_lateral_filter_timeout_sec"
+        value="$(var trajectory_lateral_filter_timeout_sec)"
+      />
+      <param
+        name="trajectory_geometry_smoothing_strength"
+        value="$(var trajectory_geometry_smoothing_strength)"
+      />
+      <param
+        name="trajectory_geometry_smoothing_interval_m"
+        value="$(var trajectory_geometry_smoothing_interval_m)"
+      />
+      <param
+        name="trajectory_geometry_smoothing_max_deviation_m"
+        value="$(var trajectory_geometry_smoothing_max_deviation_m)"
+      />
+      <param
+        name="maximum_lateral_acceleration_mps2"
+        value="$(var maximum_lateral_acceleration_mps2)"
+      />
+      <param
+        name="curvature_speed_preview_m"
+        value="$(var curvature_speed_preview_m)"
+      />
+    </node>
+
+    <node
+      pkg="topic_tools"
+      exec="relay"
+      name="vad_trajectory_relay"
+      output="log"
+      args="/planning/vad/raw_trajectory /planning/trajectory"
+      unless="$(var use_route_manager)"
+    />
+  </group>
+</launch>

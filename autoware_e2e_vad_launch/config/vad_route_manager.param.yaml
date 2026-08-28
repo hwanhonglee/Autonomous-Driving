@@ -1,0 +1,47 @@
+/**:
+  ros__parameters:
+    maneuver_lookahead_m: 2.0
+    maneuver_exit_lookahead_m: 2.5
+    goal_tolerance_m: 1.0
+    goal_stop_speed_mps: 0.15
+    goal_hold_sec: 1.0
+    controller_stop_offset_m: 0.49
+    comfortable_deceleration_mps2: 1.2
+    maximum_speed_mps: 2.5
+    route_corridor_half_width_m: 0.5
+    turn_inward_corridor_half_width_m: 0.5
+    turn_outward_corridor_half_width_m: 0.5
+    left_turn_outward_corridor_half_width_m: 0.0
+    right_turn_outward_corridor_half_width_m: 0.0
+    # Opt-in post-processing. The legacy hard clamp and no temporal/speed
+    # filtering remain the default until closed-loop CARLA replay is accepted.
+    route_corridor_mode: hard
+    # Preserve raw point zero, then close the hard corridor with a quintic ramp.
+    # Zero keeps the legacy immediate clamp exactly.
+    route_corridor_entry_distance_m: 0.0
+    trajectory_lateral_filter_gain: 1.0
+    left_turn_trajectory_lateral_filter_gain: 0.0
+    right_turn_trajectory_lateral_filter_gain: 0.0
+    trajectory_lateral_filter_activation_threshold_m: 0.0
+    trajectory_lateral_filter_anchor_m: 2.0
+    trajectory_lateral_filter_timeout_sec: 4.0
+    # Endpoint-fixed Whittaker smoothing. A zero strength is an exact no-op;
+    # lambda=100 is the offline 3-bag candidate and remains explicitly opt-in.
+    trajectory_geometry_smoothing_strength: 0.0
+    trajectory_geometry_smoothing_interval_m: 0.25
+    trajectory_geometry_smoothing_max_deviation_m: 0.10
+    maximum_lateral_acceleration_mps2: 0.0
+    curvature_speed_preview_m: 3.0
+    trajectory_resample_interval_m: 0.5
+    max_route_deviation_m: 3.5
+    max_first_point_distance_m: 3.0
+    max_trajectory_segment_m: 10.0
+    max_candidate_age_sec: 2.0
+    # The verified TensorRT fast profile produces about 0.4 Hz. Allow two slow
+    # inference intervals while still failing closed on a sustained dropout.
+    candidate_timeout_sec: 6.0
+    standard_route_alignment_timeout_sec: 2.5
+    route_projection_backtrack_m: 3.0
+    route_projection_forward_m: 80.0
+    allow_legacy_positional_candidates: false
+    require_standard_route_alignment: false

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "town": "Town01",
+    "min_distance": 6.0,
+    "max_distance": 60.0,
+    "preferred_distance": 25.0,
+    "sampling_resolution": 1.0,
+    "max_traces": 5000,
+    "evaluation": {
+      "ready_timeout": 120.0,
+      "service_timeout": 20.0,
+      "engage_timeout": 15.0,
+      "sim_timeout": 180.0,
+      "wall_timeout": 900.0,
+      "stall_timeout": 20.0,
+      "min_progress": 0.5,
+      "max_cte": 2.0,
+      "max_trajectory_correction": 15.0,
+      "data_stale_timeout": 30.0,
+      "report_interval": 10.0,
+      "path_sample_distance": 0.1
+    },
+    "launch_args": [
+      "vad_log_level:=warn"
+    ]
+  },
+  "episodes": [
+    {
+      "name": "town01_lane_follow_clear_noon",
+      "weather": "ClearNoon",
+      "scenario": "lane_follow",
+      "start_index": 143,
+      "goal_index": 145
+    },
+    {
+      "name": "town01_lane_follow_wet_cloudy_noon",
+      "weather": "WetCloudyNoon",
+      "scenario": "lane_follow",
+      "start_index": 143,
+      "goal_index": 145
+    },
+    {
+      "name": "town01_lane_follow_hard_rain_noon",
+      "weather": "HardRainNoon",
+      "scenario": "lane_follow",
+      "start_index": 143,
+      "goal_index": 145
+    },
+    {
+      "name": "town01_straight_clear_noon",
+      "weather": "ClearNoon",
+      "scenario": "straight",
+      "start_index": 229,
+      "goal_index": 103
+    },
+    {
+      "name": "town01_left_clear_noon",
+      "weather": "ClearNoon",
+      "scenario": "left",
+      "start_index": 229,
+      "goal_index": 242,
+      "evaluation": {
+        "sim_timeout": 300.0,
+        "wall_timeout": 1800.0
+      }
+    },
+    {
+      "name": "town01_right_clear_noon",
+      "weather": "ClearNoon",
+      "scenario": "right",
+      "start_index": 235,
+      "goal_index": 58,
+      "evaluation": {
+        "sim_timeout": 300.0,
+        "wall_timeout": 1800.0
+      }
+    }
+  ]
+}

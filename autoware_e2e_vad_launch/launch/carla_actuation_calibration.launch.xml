@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- This launch intentionally excludes Autoware control and the raw command converter. -->
+  <arg name="carla_host" default="localhost"/>
+  <arg name="carla_port" default="2100"/>
+  <arg name="carla_map" default="Town01"/>
+  <arg name="carla_timeout" default="20"/>
+  <arg name="vehicle_model" default="sample_vehicle"/>
+  <arg name="vehicle_type" default="vehicle.toyota.prius"/>
+  <arg name="ego_vehicle_role_name" default="autoware_e2e_calibration"/>
+  <arg
+    name="spawn_point"
+    default="268.586578,-1.959914,0.300000,0.000000,0.000000,179.999634"
+  />
+  <arg name="fixed_delta_seconds" default="0.05"/>
+  <arg name="max_real_delta_seconds" default="0.05"/>
+  <arg
+    name="sensor_mapping_file"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/sensor_mapping_actuation_calibration.yaml"
+  />
+  <arg
+    name="sweep_param_path"
+    default="$(find-pkg-share autoware_e2e_vad_launch)/config/carla_actuation_sweep.param.yaml"
+  />
+  <arg name="output_csv" description="New raw sample CSV path"/>
+  <arg name="summary_json" description="New atomic sweep summary JSON path"/>
+
+  <node
+    pkg="autoware_carla_interface"
+    exec="autoware_carla_interface"
+    name="autoware_carla_interface"
+    output="screen"
+  >
+    <param from="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+    <param name="use_sim_time" value="true"/>
+    <param name="host" value="$(var carla_host)"/>
+    <param name="port" value="$(var carla_port)"/>
+    <param name="timeout" value="$(var carla_timeout)"/>
+    <param name="sync_mode" value="true"/>
+    <param name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
+    <param name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
+    <param name="carla_map" value="$(var carla_map)"/>
+    <param name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
+    <param name="vehicle_type" value="$(var vehicle_type)"/>
+    <param name="spawn_point" value="$(var spawn_point)"/>
+    <param name="use_traffic_manager" value="false"/>
+    <param name="sensor_kit_name" value="carla_sensor_kit_description"/>
+    <param name="sensor_mapping_file" value="$(var sensor_mapping_file)"/>
+    <param name="enable_stopped_hand_brake" value="true"/>
+    <param name="stopped_hand_brake_velocity_threshold" value="0.05"/>
+    <param name="stopped_hand_brake_service_brake_threshold" value="0.99"/>
+  </node>
+
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="carla_actuation_sweep.py"
+    name="carla_actuation_sweep"
+    output="screen"
+  >
+    <param from="$(var sweep_param_path)"/>
+    <param name="output_csv" value="$(var output_csv)"/>
+    <param name="summary_json" value="$(var summary_json)"/>
+  </node>
+</launch>

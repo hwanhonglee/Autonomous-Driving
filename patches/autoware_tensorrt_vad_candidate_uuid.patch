@@ -1,0 +1,13 @@
+diff --git a/e2e/autoware_tensorrt_vad/lib/output_converter/trajectory_converter.cpp b/e2e/autoware_tensorrt_vad/lib/output_converter/trajectory_converter.cpp
+index a01a93b..d7440f3 100644
+--- a/e2e/autoware_tensorrt_vad/lib/output_converter/trajectory_converter.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/output_converter/trajectory_converter.cpp
+@@ -141,7 +141,7 @@ OutputTrajectoryConverter::process_candidate_trajectories(
+
+     // Add GeneratorInfo for each command
+     autoware_internal_planning_msgs::msg::GeneratorInfo generator_info;
+-    generator_info.generator_id = autoware_utils_uuid::generate_uuid();
++    generator_info.generator_id = candidate_trajectory.generator_id;
+     generator_info.generator_name.data = "autoware_tensorrt_vad_cmd_" + std::to_string(command_idx);
+     candidate_trajectories_msg.generator_info.push_back(generator_info);
+   }

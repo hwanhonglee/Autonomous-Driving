@@ -205,6 +205,7 @@ def test_canonical_profiles_pin_the_selected_map_generations():
     assert set(document["profiles"]) == {
         "c_track_simulation",
         "c_track_simulation_xodr_current",
+        "c_track_virtual_lanelet_only_reference",
         "woraksan_simulation_current",
     }
     c_track = document["profiles"]["c_track_simulation"]
@@ -242,6 +243,55 @@ def test_canonical_profiles_pin_the_selected_map_generations():
     assert current_c_track["carla_to_map_transform"]["y_m"] == 0.0
     assert current_c_track["carla_to_map_transform"]["z_m"] == -15.0
     assert current_c_track["carla_to_map_transform"]["yaw_rad"] == 0.0
+
+    lanelet_only = document["profiles"]["c_track_virtual_lanelet_only_reference"]
+    assert lanelet_only["status"] == (
+        "reference_only_limited_xy_coverage_closed_loop_and_z_unvalidated"
+    )
+    assert lanelet_only["target_name"] == "C_track_virtual_lanelet_only_reference"
+    assert lanelet_only["projector"] == {"projector_type": "Local"}
+    assert lanelet_only["lanelet2_derivation"] is None
+    assert lanelet_only["bundle_sources"]["lanelet2_map"] == {
+        "path": "/home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF0.osm",
+        "sha256": "a366b9e7ff36ef900d7160f175e7e0a6edecdaa2177fbe633b2704f032ed4f60",
+        "size_bytes": 2_936_540,
+        "provenance": "Supplied Driving Map Set Virtual v1.0.8 Lanelet2 map in the _52SCF0 geographic frame; runtime uses its local_x/local_y coordinates through the Local projector.",
+    }
+    assert lanelet_only["bundle_sources"]["pointcloud_map"]["sha256"] == (
+        "3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75"
+    )
+    assert lanelet_only["bundle_sources"]["pointcloud_map"]["size_bytes"] == (
+        592_046_914
+    )
+    assert lanelet_only["expected"] == {
+        "osm_nodes": 13_172,
+        "osm_ways": 1_209,
+        "osm_road_lanelets": 518,
+        "pcd_points": 49_337_228,
+    }
+    assert lanelet_only["carla_to_map_transform"] == {
+        "kind": "xy_yaw_identity_reference_only_z_placeholder",
+        "x_m": 0.0,
+        "y_m": 0.0,
+        "z_m": 0.0,
+        "yaw_rad": 0.0,
+        "confidence": "shared_coverage_xy_reference_only_z_unvalidated",
+        "source": "Supplied local_x/local_y geometry and Virtual asset comparison; z=0 is an unvalidated placeholder and must not be used as a calibrated CARLA-to-map vertical transform.",
+    }
+    assert "reference-only alignment" in " ".join(
+        module.alignment_warnings(lanelet_only["carla_to_map_transform"])
+    )
+    assert "91.4 m" in lanelet_only["selection_reason"]
+    assert "no closed-loop or vertical alignment validation" in lanelet_only[
+        "selection_reason"
+    ]
+    assert lanelet_only["reference_assets"]["same_local_geometry_52scf60"] == {
+        "path": "/home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF60.osm",
+        "sha256": "1dd9ec1cd816ad231cfb7fca672a1367d8c74dd573cdc591c2228caee9f1a2ee",
+        "size_bytes": 2_936_461,
+        "provenance": "Alternate supplied geographic frame with the same local_x/local_y geometry and object counts as the selected _52SCF0 reference.",
+    }
+    assert lanelet_only["rejected_alternatives"] == []
 
     woraksan = document["profiles"]["woraksan_simulation_current"]
     assert woraksan["bundle_sources"]["lanelet2_map"]["path"] == (

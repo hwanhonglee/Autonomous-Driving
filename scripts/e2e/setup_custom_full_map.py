@@ -712,6 +712,11 @@ def _inspect_asset(
 def alignment_warnings(alignment: dict[str, Any]) -> list[str]:
     warnings = []
     confidence = alignment["confidence"]
+    if "unvalidated" in confidence or "placeholder" in alignment["kind"]:
+        warnings.append(
+            "reference-only alignment contains an unvalidated placeholder; "
+            "do not use it for closed-loop CARLA driving or LiDAR localization"
+        )
     if "empirical" in confidence or "single_anchor" in confidence:
         warnings.append(
             f"runtime alignment confidence is {confidence}; validate it with multiple 3D anchors"

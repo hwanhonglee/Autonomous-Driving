@@ -9,22 +9,26 @@ Autoware와 섞이지 않도록 기본 ROS domain은 42이며, 새 CARLA는 다�
 기준 문서로 사용한다.** 별도 quick-start 문서를 만들지 않는다. 처음 실행할 때는
 바로 아래 절을 사용하고, 구조와 안전 경계가 필요할 때 뒤의 상세 절을 읽는다.
 
-## C-track Driving Map Set Virtual 최신 검증 (2026-08-28)
+## C-track Driving Map Set Virtual 최신 검증 (2026-08-29)
 
 이번 검증은 사용자가 지정한
 `/home/hong/Downloads/Driving_Map_Set/Driving Map Set`의 **Virtual PCD**를 실제
-Full Autoware map bundle에 사용했다. 다만 같은 폴더의 v1.0.8 Lanelet2 두 개와
-`LocalCartesianUTM` projector는 현재 packaged CARLA C-track과 함께 쓰지 않는다.
-v1.0.8 Lanelet2는 현재 v1.0.7 OpenDRIVE의 서쪽 도로 영역이 빠져 있고 전역
-centerline이 일치하지 않으며, 제공 projector의 geodetic origin을 적용하면
-권위 있는 `local_x/local_y` 및 PCD frame에서 약 `13.2 m`가 이동한다.
+Full Autoware map bundle에 사용했다. 비교 그림의 공통 도로 구간에서는 같은 폴더의
+v1.0.8 **Lanelet-only geometry가 Virtual PCD 차선과 더 가깝게 겹친다.** XODR 파생
+Lanelet2를 현재 실행 bundle에 넣은 이유는 PCD 정합이 더 좋아서가 아니라, packaged
+CARLA v1.0.7의 전체 road topology와 선택 route coverage를 유지하기 위해서다.
+
+제공 Lanelet2 두 개는 현재 v1.0.7 OpenDRIVE의 서쪽 도로 영역을 포함하지 않으므로
+현재의 전체-route CARLA bundle에는 넣지 않고 PCD 정합 reference로 유지한다. 제공된
+`LocalCartesianUTM` projector도 그대로 적용하지 않는다. 해당 geodetic origin을
+적용하면 기준 `local_x/local_y` 및 PCD frame에서 약 `13.2 m`가 이동한다.
 
 따라서 실행 bundle `C_track_1_0_7_xodr_full`은 다음 조합으로 고정했다.
 
 | 항목 | 채택한 기준 |
 |---|---|
 | CARLA 도로 | packaged `C_track_1_0_7.xodr`, RoadRunner/Unreal 원본과 SHA-256 동일 |
-| Lanelet2 | 위 **정확한 v1.0.7 XODR**를 CommonRoad 0.8.5로 변환하고 Autoware tag/elevation을 추가한 파생본 |
+| Lanelet2 | 현재 전체-route 실행은 **정확한 v1.0.7 XODR** 파생본 사용; 제공 Lanelet-only는 PCD 정합 reference로 보존 |
 | PCD | Driving Map Set Virtual의 `pointcloud_map (CARLA_C_track_LIOSAM_transform_RoadRunner_C_track_v1_0_7).pcd` |
 | projector | `Local`; 제공된 `LocalCartesianUTM` 설정은 사용하지 않음 |
 | CARLA -> map | `x=0`, `y=0`, `yaw=0`, `z=-15 m`; 실행 시 `map_bundle.json`이 route/pose에 적용 |
@@ -33,12 +37,28 @@ centerline이 일치하지 않으며, 제공 projector의 geodetic origin을 적
 `49,337,228` points다. 전체 CARLA waypoint와 Lanelet의 평면 오차는
 `p50=0.089 m`, `p95=0.237 m`, `99.7% < 0.5 m`였다. 고정 직진 경로의 정적 오차는
 `p50=0.077 m`, `max=0.250 m`이고, 이전 좌회전 경로의 정적 오차도
-`p50=0.052 m`, `max=0.292 m`였다. 즉 기존에 보였던 큰 평면 offset의 주원인은
-MPC가 아니라 **현재 CARLA 도로와 다른 Lanelet/projector 조합**이었다.
+`p50=0.052 m`, `max=0.292 m`였다. 이 수치는 XODR 파생 Lanelet과 CARLA waypoint의
+상호 일관성을 뜻하며, Virtual PCD에 가장 잘 맞는다는 뜻은 아니다. 비교 그림의
+공통 coverage에서는 Lanelet-only가 시각적으로 더 가깝고, 기존 큰 평면 offset은
+MPC가 아니라 **서로 다른 map generation과 projector를 섞은 것**에서 발생했다.
 
 [PCD/XODR/Lanelet 좌표 비교](docs/assets/c_track_virtual/map_alignment.png)
 
+2026-08-29 기준으로 두 구성을 다음처럼 구분한다.
+
+- `c_track_virtual_lanelet_only_reference`: 제공 `_52SCF0.osm`과 Virtual PCD를 직접
+  묶은 공통 coverage의 시각적/static XY 정합 reference다. XODR보다 서쪽 범위가 약
+  `91.4 m` 짧고, `z=0`은 미검증 placeholder이므로 폐루프나 LiDAR localization
+  결과로 해석하지 않는다. `_52SCF60.osm`은 local geometry가 동일한 provenance
+  reference이며 bundle 입력은 아니다.
+- `c_track_simulation_xodr_current`: XODR-derived Lanelet과 Virtual PCD를 묶어
+  packaged CARLA v1.0.7 전체 topology 및 현재 검증 route를 실행한 profile이다.
+  PCD overlap 우위나 LiDAR localization 완료를 의미하지 않는다.
+
 ### 폐루프 결과와 해석
+
+아래 PASS/HYBRID PASS는 모두 `c_track_simulation_xodr_current` 결과이며
+`c_track_virtual_lanelet_only_reference`에는 적용되지 않는다.
 
 | 경로 | 판정 | 핵심 결과 |
 |---|---|---|
@@ -101,6 +121,22 @@ python3 scripts/e2e/setup_custom_full_map.py \
   setup c_track_simulation_xodr_current
 ```
 
+Lanelet-only와 Virtual PCD의 pinned source를 재확인하려면 다음 명령을 사용한다.
+`setup --dry-run`까지는 파일 검증과 생성 예정 작업만 확인하며, 실제 `setup`도
+symlink와 metadata를 만드는 정적 bundle 작업일 뿐 주행 검증은 아니다.
+
+```bash
+python3 scripts/e2e/setup_custom_full_map.py \
+  inspect c_track_virtual_lanelet_only_reference --json
+python3 scripts/e2e/setup_custom_full_map.py \
+  setup c_track_virtual_lanelet_only_reference --dry-run
+```
+
+이 reference의 서쪽 coverage와 Z를 보완하고 별도 route preflight/폐루프 검증을
+마치기 전에는 `C_track_virtual_lanelet_only_reference`를
+`AUTOWARE_E2E_FULL_MAP_PATH`로 지정하거나 아래 `394 -> 290`, `369 -> 425` 결과를
+재사용하지 않는다.
+
 Terminal A에서 CARLA를 시작한다. C-track은 여섯 camera 사용 시 `Low` renderer
 crash가 재현됐으므로 반드시 `Epic`을 사용한다.
 
@@ -143,10 +179,11 @@ scripts/e2e/run_route_vad_fast.sh --full --visualize \
   trajectory_geometry_smoothing_strength:=10.0 maximum_speed_mps:=2.5
 ```
 
-맵은 실행 중 hot-swap하지 않는다. Autoware를 `Ctrl-C`로 종료하고 CARLA도
-종료한 뒤, 다른 profile을 `setup`, 해당 CARLA level을 `run_carla_map.sh`로
-cold-start하고, 새 bundle을 `AUTOWARE_E2E_FULL_MAP_PATH`에 지정한다. Route JSON의
-`town`도 새 CARLA map과 같아야 preflight를 통과한다.
+폐루프 검증이 완료된 맵도 실행 중 hot-swap하지 않는다. Autoware를 `Ctrl-C`로
+종료하고 CARLA도 종료한 뒤, 실행 가능한 profile을 `setup`, 해당 CARLA level을
+`run_carla_map.sh`로 cold-start하고, 새 bundle을 `AUTOWARE_E2E_FULL_MAP_PATH`에
+지정한다. Route JSON의 `town`도 새 CARLA map과 같아야 preflight를 통과한다.
+`reference_only` 상태인 profile은 이 일반 실행 절차의 대상이 아니다.
 
 ### 남은 3D 제한
 
@@ -157,6 +194,8 @@ Virtual PCD와 packaged XODR는 평면에서는 identity로 정렬되지만 높�
 폐루프가 가능하지만, 이 상태를 실제 LiDAR localization 준비 완료로 해석하면 안 된다.
 실차/PCD localization 전에는 여러 3D anchor 또는 lane graph를 따른 공간 가변 height
 fit을 적용하고, PCD-Lanelet-CARLA Z residual을 다시 측정해야 한다.
+`c_track_virtual_lanelet_only_reference`의 `z=0`은 이 residual을 해결한 값이 아니라
+CLI/metadata 스키마를 위한 명시적 미검증 placeholder다.
 
 ## Custom map Full Autoware + VAD 현재 상태 (2026-08-28)
 
@@ -164,10 +203,12 @@ C-track과 월악산은 CARLA level만 확인한 상태가 아니다. 이 PC의 
 OpenDRIVE, Lanelet2, PCD와 좌표 변환을 묶어 **Full Autoware shell + TensorRT VAD +
 Autoware MPC/PID** 폐루프 주행까지 실행했다. 결과는 순수 goal-conditioned E2E가
 아니라 route command/corridor를 사용하는 `vad_route_manager_hybrid`임을 전제로 한다.
+아래 C-track 행은 위 Virtual PCD 최신 결과가 아니라 64.29M-point PCD를 사용한
+`c_track_simulation` legacy baseline이다.
 
 | 맵/고정 경로 | 실행 profile | 반복 판정 | 최대 route CTE | 목표 잔여 | wall time |
 |---|---|---:|---:|---:|---:|
-| C-track `394 -> 290` | `--recommended` | `1/1 PASS` | `0.382 m` | `0.858 m` | `30.27 s` |
+| C-track `394 -> 290` | `c_track_simulation` + `--recommended` | `1/1 PASS` | `0.382 m` | `0.858 m` | `30.27 s` |
 | 월악산 safe `2 -> 8` | `--recommended --tight-corridor` | `3/3 PASS` | `0.247 / 0.226 / 0.216 m` | `0.809 / 0.734 / 0.813 m` | `19.04 / 23.44 / 23.24 s` |
 
 요약 시각 자료는 한 폴더에 모았다.

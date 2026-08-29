@@ -83,7 +83,7 @@ profiles:
     status: live_hybrid_validated_xy_with_3d_residual
     canonical_carla_map: /Game/Carla/Maps/C_track_1_0_7
     target_name: C_track_1_0_7_xodr_full
-    selection_reason: Uses Lanelet2 regenerated from the exact packaged v1.0.7 OpenDRIVE and the Driving Map Set Virtual v1.0.7 point cloud; the incomplete older Lanelet2 geometry is excluded.
+    selection_reason: Uses Lanelet2 regenerated from the exact packaged v1.0.7 OpenDRIVE to preserve the full packaged CARLA road graph and selected-route coverage with the Driving Map Set Virtual point cloud; this topology-driven selection is not a claim of better PCD overlap than the supplied Lanelet-only geometry.
     projector:
       projector_type: Local
     carla_to_map_transform:
@@ -138,15 +138,56 @@ profiles:
         size_bytes: 5098475
         provenance: Exact OpenDRIVE used by the packaged CARLA runtime and Lanelet2 regeneration.
     rejected_alternatives:
-      - id: supplied_virtual_lanelet_old_geometry
+      - id: supplied_virtual_lanelet_only_reference
         paths:
           - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF0.osm
           - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF60.osm
-        reason: Both omit the packaged XODR west road extent and have a large global centerline mismatch, so they cannot be paired with the current CARLA road graph.
+        reason: Both appear visually closer to the Virtual PCD over their shared coverage than the XODR-derived geometry, but omit the packaged XODR west road extent and do not cover the current full CARLA route graph; retain them as Lanelet-only alignment references rather than selecting them for this bundle.
       - id: supplied_local_cartesian_utm_projector
         paths:
           - /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/map_projector_info.yaml
         reason: Its geodetic origin is stale relative to the authoritative local_x/local_y and Virtual PCD frame; runtime uses projector_type Local.
+
+  c_track_virtual_lanelet_only_reference:
+    display_name: C-track Driving Map Set Virtual Lanelet-only reference
+    status: reference_only_limited_xy_coverage_closed_loop_and_z_unvalidated
+    canonical_carla_map: /Game/Carla/Maps/C_track_1_0_7
+    target_name: C_track_virtual_lanelet_only_reference
+    selection_reason: Directly pairs the supplied v1.0.8 _52SCF0 Lanelet2 geometry with the exact Driving Map Set Virtual point cloud because their overlap is visually closer than the XODR-derived geometry; this reference omits approximately 91.4 m of the packaged XODR west extent and has no closed-loop or vertical alignment validation.
+    projector:
+      projector_type: Local
+    carla_to_map_transform:
+      kind: xy_yaw_identity_reference_only_z_placeholder
+      x_m: 0.0
+      y_m: 0.0
+      z_m: 0.0
+      yaw_rad: 0.0
+      confidence: shared_coverage_xy_reference_only_z_unvalidated
+      source: Supplied local_x/local_y geometry and Virtual asset comparison; z=0 is an unvalidated placeholder and must not be used as a calibrated CARLA-to-map vertical transform.
+    bundle_sources:
+      lanelet2_map:
+        path: /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF0.osm
+        sha256: a366b9e7ff36ef900d7160f175e7e0a6edecdaa2177fbe633b2704f032ed4f60
+        size_bytes: 2936540
+        provenance: Supplied Driving Map Set Virtual v1.0.8 Lanelet2 map in the _52SCF0 geographic frame; runtime uses its local_x/local_y coordinates through the Local projector.
+      pointcloud_map:
+        path: /home/hong/Downloads/Driving_Map_Set/Driving Map Set/PCD/Virtual/pointcloud_map (CARLA_C_track_LIOSAM_transform_RoadRunner_C_track_v1_0_7).pcd
+        sha256: 3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75
+        size_bytes: 592046914
+        provenance: User-provided Driving Map Set Virtual point cloud explicitly aligned to RoadRunner C-track v1.0.7.
+    lanelet2_derivation: null
+    expected:
+      osm_nodes: 13172
+      osm_ways: 1209
+      osm_road_lanelets: 518
+      pcd_points: 49337228
+    reference_assets:
+      same_local_geometry_52scf60:
+        path: /home/hong/Downloads/Driving_Map_Set/Driving Map Set/Lanelet/Virtual/lanelet2_map (C_track_v1.0.8_tl_height_point_height)_52SCF60.osm
+        sha256: 1dd9ec1cd816ad231cfb7fca672a1367d8c74dd573cdc591c2228caee9f1a2ee
+        size_bytes: 2936461
+        provenance: Alternate supplied geographic frame with the same local_x/local_y geometry and object counts as the selected _52SCF0 reference.
+    rejected_alternatives: []
 
   woraksan_simulation_current:
     display_name: Woraksan 1.0.3 current simulation map

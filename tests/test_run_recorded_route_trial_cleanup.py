@@ -46,7 +46,9 @@ def test_trial_uses_isolated_owned_groups_and_explicit_signal_exit() -> None:
     assert "source scripts/e2e/process_group_cleanup.sh" in source
     assert 'stack_pgid="${stack_pid}"' in source
     assert 'recorder_pgid="${recorder_pid}"' in source
+    assert 'desktop_pgid="${desktop_pid}"' in source
     assert "setsid scripts/e2e/record_turn_dynamics.sh" in source
+    assert "setsid ffmpeg" in source
     assert "trap 'on_signal 130' INT" in source
     assert "trap 'on_signal 143' TERM" in source
     assert "pkill" not in source
@@ -57,15 +59,19 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
     assert "--recommended" in source
+    assert "--visualize" in source
     assert "--trajectory-stability" in source
     assert "TRAJECTORY_STABILITY_CANDIDATE=%s" in source
     assert "TIGHT_CORRIDOR_CANDIDATE=%s" in source
     assert "stack_command=(scripts/e2e/run_route_vad_fast.sh --recommended)" in source
+    assert "stack_command+=(--visualize)" in source
     assert "stack_command+=(--tight-corridor)" in source
     assert "vad_carla_tiny_recommended.param.yaml" in source
     assert "sensor_mapping_vad_fast_reliable.yaml" in source
     assert "mpc_carla_recommended.param.yaml" in source
     assert "RECOMMENDED=%s" in source
+    assert "VISUALIZE=%s" in source
+    assert "CAPTURE_DESKTOP=%s" in source
     assert "CLOSED_LOOP_VALIDATION_STATE=%s" in source
     assert "TRAJECTORY_LOGIC_SHA256=%s" in source
     assert "VAD_ROUTE_MANAGER_SHA256=%s" in source
@@ -80,8 +86,49 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "^data: stopping$" in source
     assert "/planning/vad/candidate_trajectories" in source
     assert "autoware_internal_planning_msgs/msg/CandidateTrajectories" in source
+    assert "autoware_rviz_fullscreen.png" in source
+    assert "autoware_rviz_drive.gif" in source
+    assert "desktop_capture.json" in source
+    assert '"capture_started_after_candidate": True' in source
     assert source.count("--no-daemon") >= 2
     assert "ready|stopping" not in source
+
+
+def test_visualize_is_available_to_the_full_profile() -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), "--visualize"],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            key: value
+            for key, value in os.environ.items()
+            if key != "AUTOWARE_E2E_NVIDIA_COMPAT_ROOT"
+        },
+    )
+
+    assert completed.returncode == 2
+    assert "Usage: run_recorded_route_trial.sh" in completed.stderr
+    assert "--visualize requires --recommended" not in completed.stderr
+
+
+def test_desktop_capture_requires_visualization() -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), "--capture-desktop"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "--capture-desktop requires --visualize" in completed.stderr
+
+
+def test_desktop_dimension_probe_does_not_sigpipe_under_pipefail() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "END {print dimensions}" in source
+    assert "awk '/dimensions:/{print $2; exit}'" not in source
 
 
 @pytest.mark.parametrize(

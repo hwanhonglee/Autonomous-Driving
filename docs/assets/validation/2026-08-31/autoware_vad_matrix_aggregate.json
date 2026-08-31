@@ -1,0 +1,571 @@
+{
+  "schema_version": 1,
+  "matrix_id": "autoware_vad_town_straight_turn_v1",
+  "generated_at": "2026-08-31T06:16:12.854242+00:00",
+  "status": "FAILED",
+  "canonical_map_count": 19,
+  "runnable_map_count": 8,
+  "runnable_pass_count": 6,
+  "blocked_map_count": 11,
+  "status_counts": {
+    "BLOCKED": 11,
+    "FAILED": 2,
+    "PASS": 6
+  },
+  "runtime_profile": {
+    "id": "vad_carla_recommended_visualized_v1",
+    "trial_wrapper": "run_recorded_route_trial.sh",
+    "wrapper_options": [
+      "--recommended",
+      "--visualize",
+      "--capture-desktop"
+    ],
+    "ready_timeout_sec": 600,
+    "launch_arguments": [
+      "carla_timeout:=60"
+    ],
+    "carla_quality": "Epic",
+    "carla_arguments": [
+      "-RenderOffScreen",
+      "-nosound"
+    ],
+    "map_lifecycle": "cold_start_owned_process_group",
+    "client_map_loading_allowed": false
+  },
+  "route_contract": {
+    "weather": "ClearNoon",
+    "seed": 0,
+    "pairs_per_seed": 1,
+    "minimum_distance_m": 20.0,
+    "maximum_distance_m": 120.0,
+    "preferred_distance_m": 60.0,
+    "sampling_resolution_m": 1.0,
+    "maximum_endpoint_offset_m": 2.0,
+    "maximum_traces_per_scenario": 5000,
+    "trials": [
+      {
+        "id": "straight",
+        "catalog_scenarios": [
+          "straight"
+        ],
+        "required_road_options": [
+          "STRAIGHT"
+        ],
+        "forbidden_road_options": [
+          "LEFT",
+          "RIGHT",
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      },
+      {
+        "id": "turn",
+        "catalog_scenarios": [
+          "left",
+          "right"
+        ],
+        "require_selected_turn_command": true,
+        "forbidden_road_options": [
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      }
+    ]
+  },
+  "maps": [
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town01",
+      "canonical_name": "Town01",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T04:50:07.660741+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town01/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town01/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town01/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town01/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town02",
+      "canonical_name": "Town02",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.140070+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town02_opt",
+      "canonical_name": "Town02_Opt",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T04:55:04.733204+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town02_opt/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town02_opt/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town02_opt/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town02_opt/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town03",
+      "canonical_name": "Town03",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T05:26:53.219828+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town03/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town03/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town03/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town03/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town04",
+      "canonical_name": "Town04",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T05:29:53.544413+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town04/trials/straight/attempt_002",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town04/trials/straight/attempt_002/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town04/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town04/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town05",
+      "canonical_name": "Town05",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.142902+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town05_opt",
+      "canonical_name": "Town05_Opt",
+      "runnable": true,
+      "status": "FAILED",
+      "stage": "resume_validated",
+      "reason": "Existing trial passed fresh strict validation.",
+      "block_code": null,
+      "updated_at": "2026-08-31T05:34:14.352726+00:00",
+      "trials": {
+        "straight": {
+          "status": "FAILED",
+          "reason": "Trial exit=1 or strict artifact validation failed; see /home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town05_opt/trials/straight/attempt_002.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town05_opt/trials/straight/attempt_002",
+          "validation": null
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town05_opt/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town05_opt/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town06",
+      "canonical_name": "Town06",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T05:14:16.634927+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town06/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town06/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town06/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town06/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town07",
+      "canonical_name": "Town07",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-08-31T05:19:16.072239+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town07/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town07/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town07/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/town07/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town08",
+      "canonical_name": "Town08",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.145081+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town09",
+      "canonical_name": "Town09",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.145627+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town10hd",
+      "canonical_name": "Town10HD",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.146169+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town10hd_opt",
+      "canonical_name": "Town10HD_Opt",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate PCD is generated and aligned.",
+      "block_code": "blocked_missing_pointcloud",
+      "updated_at": "2026-08-31T04:45:24.146709+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate PCD is generated and aligned.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate PCD is generated and aligned.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town11",
+      "canonical_name": "Town11",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.147248+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town12",
+      "canonical_name": "Town12",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.147794+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town13",
+      "canonical_name": "Town13",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.148349+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town15",
+      "canonical_name": "Town15",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-08-31T04:45:24.148931+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "c_track_1_0_7",
+      "canonical_name": "C_track_1_0_7",
+      "runnable": true,
+      "status": "FAILED",
+      "stage": "turn_failed",
+      "reason": "Trial exit=1 or strict artifact validation failed; see /home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/c_track_1_0_7/trials/turn/attempt_003.",
+      "block_code": null,
+      "updated_at": "2026-08-31T06:15:42.307304+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/c_track_1_0_7/trials/straight/attempt_002",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/c_track_1_0_7/trials/straight/attempt_002/matrix_validation.json"
+        },
+        "turn": {
+          "status": "FAILED",
+          "reason": "Trial exit=1 or strict artifact validation failed; see /home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/c_track_1_0_7/trials/turn/attempt_003.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/autoware_vad_town_matrix/maps/c_track_1_0_7/trials/turn/attempt_003",
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "woraksan_1_0_3",
+      "canonical_name": "Woraksan_v1_0_3_parking_lot_hegiht_fit",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+      "block_code": "packaged_runtime_assets_missing",
+      "updated_at": "2026-08-31T04:45:24.150030+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    }
+  ]
+}

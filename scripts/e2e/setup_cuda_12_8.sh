@@ -17,11 +17,23 @@ packages=(
   cuda-driver-dev-12-8
   cuda-nvcc-12-8
   cuda-nvprune-12-8
+  cuda-nvrtc-12-8
+  cuda-nvrtc-dev-12-8
   cuda-nvvm-12-8
+  libcublas-12-8
+  libcublas-dev-12-8
+  libcurand-12-8
+  libcurand-dev-12-8
 )
 
 if [[ -x "${toolkit_root}/bin/nvcc" ]] && \
-  "${toolkit_root}/bin/nvcc" --version | grep -q 'release 12\.8'; then
+  "${toolkit_root}/bin/nvcc" --version | grep -q 'release 12\.8' && \
+  [[ -f "${toolkit_root}/include/curand.h" ]] && \
+  [[ -e "${toolkit_root}/lib64/libcurand.so" ]] && \
+  [[ -f "${toolkit_root}/include/nvrtc.h" ]] && \
+  [[ -e "${toolkit_root}/lib64/libnvrtc.so" ]] && \
+  [[ -f "${toolkit_root}/include/cublasLt.h" ]] && \
+  [[ -e "${toolkit_root}/lib64/libcublasLt.so" ]]; then
   echo "CUDA 12.8 toolchain already prepared: ${toolkit_root}"
   exit 0
 fi
@@ -70,6 +82,21 @@ if ! "${staged_toolkit}/bin/nvcc" --version | grep -q 'release 12\.8'; then
 fi
 if ! grep -Rq 'cudaStreamGetDevice' "${staged_toolkit}/include"; then
   echo "Extracted CUDA headers do not provide cudaStreamGetDevice" >&2
+  exit 1
+fi
+if [[ ! -f "${staged_toolkit}/include/curand.h" ]] || \
+  [[ ! -e "${staged_toolkit}/lib64/libcurand.so" ]]; then
+  echo "Extracted CUDA toolchain does not provide the spconv cuRAND dependency" >&2
+  exit 1
+fi
+if [[ ! -f "${staged_toolkit}/include/nvrtc.h" ]] || \
+  [[ ! -e "${staged_toolkit}/lib64/libnvrtc.so" ]]; then
+  echo "Extracted CUDA toolchain does not provide the spconv NVRTC dependency" >&2
+  exit 1
+fi
+if [[ ! -f "${staged_toolkit}/include/cublasLt.h" ]] || \
+  [[ ! -e "${staged_toolkit}/lib64/libcublasLt.so" ]]; then
+  echo "Extracted CUDA toolchain does not provide the spconv cuBLASLt dependency" >&2
   exit 1
 fi
 

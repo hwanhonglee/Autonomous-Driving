@@ -228,11 +228,54 @@ def test_resume_skips_complete_and_validated_job(tmp_path):
     (job_root / "export" / "manifest.json").write_text(
         json.dumps({"status": "validated"}), encoding="utf-8"
     )
+    (job_root / "preview").mkdir()
+    (job_root / "preview" / "overview.png").write_bytes(b"png")
+    (job_root / "preview" / "drive.gif").write_bytes(b"gif")
 
     plan = module.build_plan(args, manifest, [catalog])
 
     assert plan["jobs"][0]["status"] == "SKIP_RESUME_VALIDATED"
     assert plan["status"] == "COMPLETE"
+
+
+def test_resume_reruns_only_missing_renderer_output(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog")
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+    args.weathers = ("ClearNoon",)
+    args.seeds = (3,)
+    job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
+    (job_root / "episode").mkdir(parents=True)
+    (job_root / "export").mkdir()
+    (job_root / "episode" / "manifest.json").write_text(
+        json.dumps({"status": "complete"}), encoding="utf-8"
+    )
+    (job_root / "export" / "manifest.json").write_text(
+        json.dumps({"status": "validated"}), encoding="utf-8"
+    )
+
+    plan = module.build_plan(args, manifest, [catalog])
+
+    assert plan["jobs"][0]["status"] == "PENDING"
+    assert plan["status"] == "READY"
+    calls = []
+
+    def fake_run(command, _log):
+        stage = Path(command[1]).stem
+        calls.append(stage)
+        assert stage == "render_carla_vad_expert"
+        preview = job_root / "preview"
+        preview.mkdir()
+        (preview / "overview.png").write_bytes(b"png")
+        (preview / "drive.gif").write_bytes(b"gif")
+        return 0
+
+    module.execute_job(plan["jobs"][0], run_logged=fake_run)
+
+    assert calls == ["render_carla_vad_expert"]
+    assert plan["jobs"][0]["status"] == "COMPLETE"
 
 
 def test_execute_job_calls_collector_exporter_renderer_in_order(tmp_path):
@@ -279,6 +322,57 @@ def test_execute_job_calls_collector_exporter_renderer_in_order(tmp_path):
 
     assert calls == ["collector", "exporter", "renderer"]
     assert job["status"] == "COMPLETE"
+
+
+def test_execute_job_refreshes_preview_after_export_is_rebuilt(tmp_path):
+    module = load_module()
+    root = tmp_path / "job"
+    episode = root / "episode"
+    preview = root / "preview"
+    episode.mkdir(parents=True)
+    preview.mkdir()
+    (episode / "manifest.json").write_text(
+        json.dumps({"status": "complete"}), encoding="utf-8"
+    )
+    (preview / "overview.png").write_bytes(b"old-png")
+    (preview / "drive.gif").write_bytes(b"old-gif")
+    job = {
+        "paths": {
+            "root": str(root),
+            "episode": str(episode),
+            "export": str(root / "export"),
+            "preview_png": str(preview / "overview.png"),
+            "preview_gif": str(preview / "drive.gif"),
+        },
+        "commands": {
+            "collector": ["python", "collector.py"],
+            "exporter": ["python", "exporter.py"],
+            "renderer": ["python", "renderer.py"],
+        },
+        "status": "RUNNING",
+        "reason": None,
+    }
+    calls = []
+
+    def fake_run(command, _log):
+        stage = Path(command[1]).stem
+        calls.append(stage)
+        if stage == "exporter":
+            (root / "export").mkdir()
+            (root / "export" / "manifest.json").write_text(
+                json.dumps({"status": "validated"}), encoding="utf-8"
+            )
+        elif stage == "renderer":
+            (preview / "overview.png").write_bytes(b"new-png")
+            (preview / "drive.gif").write_bytes(b"new-gif")
+        else:
+            pytest.fail("valid episode must not be recollected")
+        return 0
+
+    module.execute_job(job, run_logged=fake_run)
+
+    assert calls == ["exporter", "renderer"]
+    assert (preview / "overview.png").read_bytes() == b"new-png"
 
 
 def test_default_mode_is_dry_run_and_output_root_is_required(tmp_path):

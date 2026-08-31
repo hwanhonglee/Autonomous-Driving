@@ -1,2 +1,11 @@
 # HH_260814 - Store approved VILS MCAP evidence as LFS objects instead of bloating Git history.
 docs/vils/result/**/*.mcap filter=lfs diff=lfs merge=lfs -text
+
+# Keep published Autoware/CARLA visual evidence clone-friendly while retaining
+# the exact PNG/GIF bytes verified by each validation SHA256SUMS manifest.
+docs/assets/validation/**/*.png filter=lfs diff=lfs merge=lfs -text
+docs/assets/validation/**/*.gif filter=lfs diff=lfs merge=lfs -text
+
+# A unified-diff blank context line is a single required leading space.
+# Do not report that syntax marker as trailing whitespace in patch fixtures.
+*.patch whitespace=-blank-at-eol

@@ -1,0 +1,161 @@
+schema_version: 1
+matrix_id: autoware_vad_town_straight_turn_v1
+description: >-
+  Reproducible full-stack Autoware VAD validation matrix. Every runnable map
+  uses the same recommended visualized profile and produces separate straight
+  and turn trials. Maps without a locally validated Autoware full-map bundle
+  remain explicit BLOCKED records rather than being mislabeled as VAD tests.
+
+canonical_map_manifest: carla_expert_suite.yaml
+
+runtime_profile:
+  id: vad_carla_recommended_visualized_v1
+  trial_wrapper: run_recorded_route_trial.sh
+  wrapper_options:
+    - --recommended
+    - --visualize
+    - --capture-desktop
+  ready_timeout_sec: 600
+  launch_arguments:
+    - carla_timeout:=60
+  carla_quality: Epic
+  carla_arguments:
+    - -RenderOffScreen
+    - -nosound
+  map_lifecycle: cold_start_owned_process_group
+  client_map_loading_allowed: false
+
+route_contract:
+  weather: ClearNoon
+  seed: 0
+  pairs_per_seed: 1
+  minimum_distance_m: 20.0
+  maximum_distance_m: 120.0
+  preferred_distance_m: 60.0
+  sampling_resolution_m: 1.0
+  maximum_endpoint_offset_m: 2.0
+  maximum_traces_per_scenario: 5000
+  trials:
+    - id: straight
+      catalog_scenarios:
+        - straight
+      required_road_options:
+        - STRAIGHT
+      forbidden_road_options:
+        - LEFT
+        - RIGHT
+        - CHANGELANELEFT
+        - CHANGELANERIGHT
+    - id: turn
+      catalog_scenarios:
+        - left
+        - right
+      require_selected_turn_command: true
+      forbidden_road_options:
+        - CHANGELANELEFT
+        - CHANGELANERIGHT
+
+known_blockers:
+  town10hd_opt:
+    code: blocked_missing_pointcloud
+    reason: >-
+      Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive
+      readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A
+      truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate
+      PCD is generated and aligned.
+  woraksan_1_0_3:
+    code: packaged_runtime_assets_missing
+    reason: >-
+      The canonical manifest entry is retained, but the current packaged CARLA
+      installation lacks the required Woraksan runtime assets and no admitted
+      Autoware full-map bundle is present.
+
+# This allow-list is intentionally explicit. A packaged Town entry means its
+# Lanelet2 + transformed PCD and the exact test routes passed structural/map
+# preflight; it is only an admission candidate, not a VAD execution PASS.
+# Closed-loop PASS can be created only by successful matrix trials.
+validated_full_map_bundles:
+  town01:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town01_full
+    canonical_carla_map: /Game/Carla/Maps/Town01
+    profile: town01
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town02_opt:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town02_Opt_full
+    canonical_carla_map: /Game/Carla/Maps/Town02_Opt
+    profile: town02_opt
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town03:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town03_full
+    canonical_carla_map: /Game/Carla/Maps/Town03
+    profile: town03
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS_WITH_OUTLIERS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town04:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town04_full
+    canonical_carla_map: /Game/Carla/Maps/Town04
+    profile: town04
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS_WITH_OUTLIERS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town05_opt:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town05_Opt_full
+    canonical_carla_map: /Game/Carla/Maps/Town05_Opt
+    profile: town05_opt
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town06:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town06_full
+    canonical_carla_map: /Game/Carla/Maps/Town06
+    profile: town06
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS_WITH_OUTLIERS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town07:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town07_full
+    canonical_carla_map: /Game/Carla/Maps/Town07
+    profile: town07
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  c_track_1_0_7:
+    bundle_schema: custom_map
+    path: ../../data/maps/C_track_1_0_7_xodr_full
+    canonical_carla_map: /Game/Carla/Maps/C_track_1_0_7
+    profile: c_track_simulation_xodr_current
+    accepted_statuses:
+      - live_hybrid_validated_xy_with_3d_residual

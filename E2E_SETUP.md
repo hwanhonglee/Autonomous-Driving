@@ -104,21 +104,27 @@ XODR에서 다시 생성해야 할 때만 첫 번째 명령을 실행한다. `.v
 `requirements-map.txt`의 고정 버전으로 생성한다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /path/to/autoware_e2e
+source scripts/e2e/env.sh
+
+# 원본 Virtual PCD의 현재 호스트 경로를 명시한다. manifest의 hash/size 검증은 유지된다.
+C_TRACK_PCD=/absolute/path/to/c_track_virtual_pointcloud_map.pcd
 
 # 필요할 때만: packaged runtime XODR -> Autoware Local Lanelet2 재생성
 scripts/e2e/build_xodr_lanelet_map.sh --install --force \
   --translation-z-m -15 \
   --json-report data/generated/xodr_lanelet/c_track_finalize.json \
-  /home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr \
+  "$CARLA_ROOT/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr" \
   data/generated/xodr_lanelet/c_track_commonroad.osm \
   data/generated/xodr_lanelet/c_track_autoware.osm
 
 # Virtual PCD hash/구조와 모든 pinned source를 확인하고 bundle 생성
 python3 scripts/e2e/setup_custom_full_map.py \
-  inspect c_track_simulation_xodr_current
+  inspect c_track_simulation_xodr_current \
+  --source "pointcloud_map=$C_TRACK_PCD" --skip-reference-assets
 python3 scripts/e2e/setup_custom_full_map.py \
-  setup c_track_simulation_xodr_current
+  setup c_track_simulation_xodr_current \
+  --source "pointcloud_map=$C_TRACK_PCD" --skip-reference-assets
 ```
 
 Lanelet-only와 Virtual PCD의 pinned source를 재확인하려면 다음 명령을 사용한다.
@@ -141,7 +147,7 @@ Terminal A에서 CARLA를 시작한다. C-track은 여섯 camera 사용 시 `Low
 crash가 재현됐으므로 반드시 `Epic`을 사용한다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /path/to/autoware_e2e
 scripts/e2e/run_carla_map.sh C_track_1_0_7 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
@@ -152,7 +158,7 @@ OSM과 592 MB PCD를 읽는 cold load는 이 PC에서 약 `100 s` 걸렸고 이�
 실행은 훨씬 짧았다. 첫 로드 중 route가 잠시 없다고 바로 실패로 판단하지 않는다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /path/to/autoware_e2e
 source scripts/e2e/env.sh
 export CARLA_PORT=2100
 export AUTOWARE_E2E_FULL_MAP_PATH="$PWD/data/maps/C_track_1_0_7_xodr_full"

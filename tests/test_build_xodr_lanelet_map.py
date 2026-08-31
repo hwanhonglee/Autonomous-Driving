@@ -74,7 +74,7 @@ def test_install_dry_run_prints_plan_without_writing(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert " -m venv " in result.stdout
+    assert " -m venv " in result.stdout or "virtualenv" in result.stdout
     assert "requirements-map.txt" in result.stdout
     assert "--force-overwrite odrlanelet2" in result.stdout
     assert "finalize_xodr_lanelet_map.py" in result.stdout

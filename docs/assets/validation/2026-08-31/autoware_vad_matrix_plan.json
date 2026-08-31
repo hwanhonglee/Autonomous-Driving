@@ -1,0 +1,1013 @@
+{
+  "schema_version": 1,
+  "matrix_id": "autoware_vad_town_straight_turn_v1",
+  "generated_at": "2026-08-31T04:45:24.137239+00:00",
+  "matrix_manifest": "/home/a/autoware_e2e/scripts/e2e/autoware_vad_town_matrix.yaml",
+  "matrix_manifest_sha256": "e8953caa10b9fd9f3fb440058875364f6708c2b8a8ce9b144203393598c30731",
+  "canonical_map_manifest": "/home/a/autoware_e2e/scripts/e2e/carla_expert_suite.yaml",
+  "canonical_map_manifest_sha256": "d11ddf689cb22f5db2946d1fd3941460e6cd84eb9dacba04d52d553dfeb0ff1f",
+  "runtime_profile": {
+    "id": "vad_carla_recommended_visualized_v1",
+    "trial_wrapper": "run_recorded_route_trial.sh",
+    "wrapper_options": [
+      "--recommended",
+      "--visualize",
+      "--capture-desktop"
+    ],
+    "ready_timeout_sec": 600,
+    "launch_arguments": [
+      "carla_timeout:=60"
+    ],
+    "carla_quality": "Epic",
+    "carla_arguments": [
+      "-RenderOffScreen",
+      "-nosound"
+    ],
+    "map_lifecycle": "cold_start_owned_process_group",
+    "client_map_loading_allowed": false
+  },
+  "route_contract": {
+    "weather": "ClearNoon",
+    "seed": 0,
+    "pairs_per_seed": 1,
+    "minimum_distance_m": 20.0,
+    "maximum_distance_m": 120.0,
+    "preferred_distance_m": 60.0,
+    "sampling_resolution_m": 1.0,
+    "maximum_endpoint_offset_m": 2.0,
+    "maximum_traces_per_scenario": 5000,
+    "trials": [
+      {
+        "id": "straight",
+        "catalog_scenarios": [
+          "straight"
+        ],
+        "required_road_options": [
+          "STRAIGHT"
+        ],
+        "forbidden_road_options": [
+          "LEFT",
+          "RIGHT",
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      },
+      {
+        "id": "turn",
+        "catalog_scenarios": [
+          "left",
+          "right"
+        ],
+        "require_selected_turn_command": true,
+        "forbidden_road_options": [
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      }
+    ]
+  },
+  "canonical_map_count": 19,
+  "runnable_map_count": 8,
+  "maps": [
+    {
+      "map_id": "town01",
+      "canonical_name": "Town01",
+      "load_name": "/Game/Carla/Maps/Town01",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town01_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town01_full/map_bundle.json",
+        "metadata_sha256": "1c8a5155ee533d94925f850153f793f809b2a7fecc31cdf335c51cf214d1d0b3",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town01",
+        "canonical_carla_map": "/Game/Carla/Maps/Town01",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "7098b8124b2e6e947237b2f3e0dfb3c8a707898edf48246b1032204c6ccbfaae",
+          "pointcloud_map": "e4cc6e8b24154c4453fc9b58116d5b56652f4407026891d2198b6740902bea6d"
+        },
+        "road_lanelets": 124,
+        "pcd_points": 14714285,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS",
+          "alignment_status": "PASS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/left/town01_left_s0000_p00.json",
+              "route_sha256": "9d57de5c9ef659159530c26fb1a6b3f790a96db32500b3ead1134d55981907ce",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.5048937797546387,
+                  "median": 3.0924532633130715e-08,
+                  "p95": 0.13654764023620103
+                },
+                "nearest_xy_m": {
+                  "max": 0.2935221052673216,
+                  "median": 0.1720243135348317,
+                  "p95": 0.25687608630358283
+                },
+                "pose_count": 72,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/left/town01_left_s0001_p00.json",
+              "route_sha256": "9d57de5c9ef659159530c26fb1a6b3f790a96db32500b3ead1134d55981907ce",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.5048937797546387,
+                  "median": 3.0924532633130715e-08,
+                  "p95": 0.13654764023620103
+                },
+                "nearest_xy_m": {
+                  "max": 0.2935221052673216,
+                  "median": 0.1720243135348317,
+                  "p95": 0.25687608630358283
+                },
+                "pose_count": 72,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/right/town01_right_s0000_p00.json",
+              "route_sha256": "44ee491a69600c3b5e8d2d10e9f6e95b59c7cc65135ccd35da158d65874762b1",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999996687399877,
+                  "median": 1.3356973262129135e-08,
+                  "p95": 5.064798505937054e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.275361726325513,
+                  "median": 0.16621807883030934,
+                  "p95": 0.25502467502271126
+                },
+                "pose_count": 89,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/right/town01_right_s0001_p00.json",
+              "route_sha256": "44ee491a69600c3b5e8d2d10e9f6e95b59c7cc65135ccd35da158d65874762b1",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999996687399877,
+                  "median": 1.3356973262129135e-08,
+                  "p95": 5.064798505937054e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.275361726325513,
+                  "median": 0.16621807883030934,
+                  "p95": 0.25502467502271126
+                },
+                "pose_count": 89,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/straight/town01_straight_s0000_p00.json",
+              "route_sha256": "aa4f640acbb4df08cd313fa6b76f8bd589c0ac13faa7f93f0f4c1e161c35a368",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999997200639544,
+                  "median": 1.1516980795711618e-08,
+                  "p95": 2.3197199928502068e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.25628554355181304,
+                  "median": 0.17526997343463568,
+                  "p95": 0.24729153276645557
+                },
+                "pose_count": 63,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town01/catalog/routes/town01/straight/town01_straight_s0001_p00.json",
+              "route_sha256": "dd0b38649c42a8484a62f92fa69a28de761b26814740529f3bc16a63e6b56c9b",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999994609518865,
+                  "median": 2.131082631413528e-08,
+                  "p95": 4.6509864659830884e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.28061281285731954,
+                  "median": 0.1975538810273768,
+                  "p95": 0.273619011192405
+                },
+                "pose_count": 62,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town02",
+      "canonical_name": "Town02",
+      "load_name": "/Game/Carla/Maps/Town02",
+      "suite_status": "unavailable",
+      "server_profile": null,
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town02_opt",
+      "canonical_name": "Town02_Opt",
+      "load_name": "/Game/Carla/Maps/Town02_Opt",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town02_Opt_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town02_Opt_full/map_bundle.json",
+        "metadata_sha256": "393b61c2e090edeab90f9c1fef94c2001ce285de649fed188f7c8a8928341ff6",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town02_opt",
+        "canonical_carla_map": "/Game/Carla/Maps/Town02_Opt",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "d571e0bd41c960a83d85c73597bc2596cc2d84b8069faef66f363567cbccc8db",
+          "pointcloud_map": "e68a4114431016ec3bdee056a5e6e0957f40460ec72bf788312a60578dfd9b9f"
+        },
+        "road_lanelets": 88,
+        "pcd_points": 6331562,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS",
+          "alignment_status": "PASS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town02_opt/catalog/routes/town02_opt/left/town02_opt_left_s0000_p00.json",
+              "route_sha256": "f3d1b81dbd4bbdbe9fd4080f1c0a9311e0170e386d7e509f43cd2a025500086b",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.5,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.27999992430210113,
+                  "median": 0.22000011503696443,
+                  "p95": 0.22000037184357643
+                },
+                "nearest_xy_m": {
+                  "max": 0.28682629250762604,
+                  "median": 0.1499950343858686,
+                  "p95": 0.24444308400861728
+                },
+                "pose_count": 78,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town02_opt/catalog/routes/town02_opt/right/town02_opt_right_s0000_p00.json",
+              "route_sha256": "b19f53c7c5ef105b6154492f07882d1e075437d4254cf82fba968a26b235b57d",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.5,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.27999993562698366,
+                  "median": 0.2200000739097595,
+                  "p95": 0.22000016790628432
+                },
+                "nearest_xy_m": {
+                  "max": 0.30401663729415446,
+                  "median": 0.24891380761371262,
+                  "p95": 0.25699660877532293
+                },
+                "pose_count": 79,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town02_opt/catalog/routes/town02_opt/straight/town02_opt_straight_s0000_p00.json",
+              "route_sha256": "9230a4bd7ffaef353f5abdfecf4f3bf6c66306cd80d5a4aa325b4b489fc24c20",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.5,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.2799999248981476,
+                  "median": 0.2200000739097595,
+                  "p95": 0.220000259578228
+                },
+                "nearest_xy_m": {
+                  "max": 0.2447824620553995,
+                  "median": 0.22823147651318992,
+                  "p95": 0.24332839607219967
+                },
+                "pose_count": 62,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town03",
+      "canonical_name": "Town03",
+      "load_name": "/Game/Carla/Maps/Town03",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS_WITH_OUTLIERS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town03_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town03_full/map_bundle.json",
+        "metadata_sha256": "7475fac775ae85127cce8a444c637b8f4e743f43c1cb9778281a60d26a0cb04a",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town03",
+        "canonical_carla_map": "/Game/Carla/Maps/Town03",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "ed274b9736a92993bf70b50e99ddfa72f8a5606c4ae59b86bca5dcef20d13165",
+          "pointcloud_map": "51d2f5234ab7936840d7294953f817ff6b479f846e0bd04c62593039a4b56c4a"
+        },
+        "road_lanelets": 417,
+        "pcd_points": 20429831,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS_WITH_GLOBAL_PCD_OUTLIERS",
+          "alignment_status": "PASS_WITH_OUTLIERS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town03/catalog/routes/town03/left/town03_left_s0000_p00.json",
+              "route_sha256": "b4c9766aa3eb7709f87f9743b6e4656da983a203dfab1ef2bfb8b139b3918ba3",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.30559635162353516,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.5039262771606445,
+                  "median": 2.0133124500887334e-07,
+                  "p95": 0.3379910150144856
+                },
+                "nearest_xy_m": {
+                  "max": 0.3081559607488917,
+                  "median": 0.14372527086777864,
+                  "p95": 0.26845532186691706
+                },
+                "pose_count": 66,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town03/catalog/routes/town03/right/town03_right_s0000_p00.json",
+              "route_sha256": "bb5b9691f9c134d77e215b4b204a29cd519ad7fd29809d8743a1576c99080fbc",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.27530714869499207,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.3339579472175007,
+                  "median": 0.0075047939181614575,
+                  "p95": 0.07183110411372035
+                },
+                "nearest_xy_m": {
+                  "max": 0.2968728403131154,
+                  "median": 0.20366797509930573,
+                  "p95": 0.2697418808338327
+                },
+                "pose_count": 80,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town03/catalog/routes/town03/straight/town03_straight_s0000_p00.json",
+              "route_sha256": "56e1fdfa5d8d2469166e7d23cfcb0a9aebfa10b9a06c8b42ae4d9b94d5a9b79e",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.27530714869499207,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.2753071360637708,
+                  "median": 0.01791376894110574,
+                  "p95": 0.08077236094967494
+                },
+                "nearest_xy_m": {
+                  "max": 0.29213618250864576,
+                  "median": 0.1659995565876473,
+                  "p95": 0.25652974786630356
+                },
+                "pose_count": 66,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town04",
+      "canonical_name": "Town04",
+      "load_name": "/Game/Carla/Maps/Town04",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS_WITH_OUTLIERS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town04_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town04_full/map_bundle.json",
+        "metadata_sha256": "4f10091847fc3873e5e5e1f506a3710419b195ae323f4eff3df94cee290c6cbc",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town04",
+        "canonical_carla_map": "/Game/Carla/Maps/Town04",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "41e9149cfc74621d48a4af22b66fca90a12e51792779913106c9ac2ab73019ef",
+          "pointcloud_map": "932bca2499a4d4d1984eef4da4c19848c5293cc8c7837060048be10735e0f4e1"
+        },
+        "road_lanelets": 462,
+        "pcd_points": 28780448,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS_WITH_GLOBAL_PCD_OUTLIERS",
+          "alignment_status": "PASS_WITH_OUTLIERS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town04/catalog/routes/town04/left/town04_left_s0000_p00.json",
+              "route_sha256": "a3d06b3333fcccbfa048b162421655ab3d8c464f3560b1adee80ba03b9dee5a4",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.46235044503974915,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.46235012607993903,
+                  "median": 2.0489096641540527e-08,
+                  "p95": 0.009354431945114178
+                },
+                "nearest_xy_m": {
+                  "max": 0.318189886571238,
+                  "median": 0.17078281761778583,
+                  "p95": 0.2397133614269896
+                },
+                "pose_count": 79,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town04/catalog/routes/town04/right/town04_right_s0000_p00.json",
+              "route_sha256": "66489d8e11acd187ffcdf5fc35f4dc5bc87f2ad87166d044680e81bd8f2d2f7f",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.38041497615814207,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.3804152770726769,
+                  "median": 4.842877388000488e-08,
+                  "p95": 0.09502518195177186
+                },
+                "nearest_xy_m": {
+                  "max": 0.33537696165931447,
+                  "median": 0.23263819952110293,
+                  "p95": 0.2811839434478169
+                },
+                "pose_count": 103,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town04/catalog/routes/town04/straight/town04_straight_s0000_p00.json",
+              "route_sha256": "c8c388fa3da78ba55420064710924dcaccba9abeb1abc5596da477db712e6f18",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.7623504271583557,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.7623500702902675,
+                  "median": 3.5390257835388184e-08,
+                  "p95": 0.0024652406303212054
+                },
+                "nearest_xy_m": {
+                  "max": 0.3781306440990138,
+                  "median": 0.1714666688605132,
+                  "p95": 0.31739861502560734
+                },
+                "pose_count": 63,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town05",
+      "canonical_name": "Town05",
+      "load_name": "/Game/Carla/Maps/Town05",
+      "suite_status": "unavailable",
+      "server_profile": null,
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town05_opt",
+      "canonical_name": "Town05_Opt",
+      "load_name": "/Game/Carla/Maps/Town05_Opt",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town05_Opt_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town05_Opt_full/map_bundle.json",
+        "metadata_sha256": "2121ca2ba35b3f8ee04f8af9f8f41c261ead2fb02668003b0b9948eed079c441",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town05_opt",
+        "canonical_carla_map": "/Game/Carla/Maps/Town05_Opt",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "45cdcfd7eca052969e84c645becdfcbda5b0d9f63002da49d6f22b553fab6ad0",
+          "pointcloud_map": "e75a5d6a3cb1b3c9dd80083e9e169134e0cd1a648bbaf92f0a2b8313963e128d"
+        },
+        "road_lanelets": 486,
+        "pcd_points": 23891122,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS",
+          "alignment_status": "PASS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town05_opt/catalog/routes/town05_opt/left/town05_opt_left_s0000_p00.json",
+              "route_sha256": "52a93317d759c063b48e1c0cbb18d13d135a78950328be87ba24b0aa3117b3cd",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.30001524090766907,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.3000152312965838,
+                  "median": 4.866641982514963e-08,
+                  "p95": 1.0745526562653628e-05
+                },
+                "nearest_xy_m": {
+                  "max": 0.32371460225443777,
+                  "median": 0.03989391855470009,
+                  "p95": 0.24792228003392847
+                },
+                "pose_count": 69,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town05_opt/catalog/routes/town05_opt/right/town05_opt_right_s0000_p00.json",
+              "route_sha256": "32ba7ef5653ac7ffc51b699106de3d62eadd3a51a4892afd0f2616bc077e79ba",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.394549548625971,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.394549496885803,
+                  "median": 4.0978193283081055e-08,
+                  "p95": 0.019112043779181388
+                },
+                "nearest_xy_m": {
+                  "max": 0.26020769083441375,
+                  "median": 0.17919843840702296,
+                  "p95": 0.24319693844753834
+                },
+                "pose_count": 83,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town05_opt/catalog/routes/town05_opt/straight/town05_opt_straight_s0000_p00.json",
+              "route_sha256": "a631cb50d1024c2f660d63106592ed645ef3b2667a999371404dbb54ba516a60",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29998472332954407,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.2999847177459742,
+                  "median": 1.4172218680660032e-08,
+                  "p95": 3.958317947763135e-06
+                },
+                "nearest_xy_m": {
+                  "max": 0.31936195131805245,
+                  "median": 0.2721144552460847,
+                  "p95": 0.30714162087475144
+                },
+                "pose_count": 64,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town06",
+      "canonical_name": "Town06",
+      "load_name": "/Game/Carla/Maps/Town06",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS_WITH_OUTLIERS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town06_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town06_full/map_bundle.json",
+        "metadata_sha256": "e6599a5158d9a4151c8735ec8220a8ebc3b3cbc02ef20c86b5c2d956676829f8",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town06",
+        "canonical_carla_map": "/Game/Carla/Maps/Town06",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "1ebef295a6c26578bcc5be2dd5127d095dcdc2a5efb400e13b06597d06790d60",
+          "pointcloud_map": "3061007f4cacfd8117c6687a20acc2dc170d04b58e7b9b72685ec3f89ee21643"
+        },
+        "road_lanelets": 462,
+        "pcd_points": 34041234,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS_WITH_GLOBAL_PCD_OUTLIERS",
+          "alignment_status": "PASS_WITH_OUTLIERS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town06/catalog/routes/town06/left/town06_left_s0000_p00.json",
+              "route_sha256": "3ec34055a64cf4c2890ea97d9ce674c0d85359a84e3607770120fa03d1d523b9",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999997529434935,
+                  "median": 3.921323974845879e-09,
+                  "p95": 2.2685431528875162e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.31450150806705723,
+                  "median": 0.1727158219578918,
+                  "p95": 0.28723451870224764
+                },
+                "pose_count": 94,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town06/catalog/routes/town06/right/town06_right_s0000_p00.json",
+              "route_sha256": "e635a16fafb108d3d5719014049091205db2dfc28b07ebb9e2e9a3fb489bd825",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.299999982519251,
+                  "median": 1.0363839588110681e-08,
+                  "p95": 1.414161602886211e-07
+                },
+                "nearest_xy_m": {
+                  "max": 0.3184560112244208,
+                  "median": 0.25248847931568486,
+                  "p95": 0.2985297494043416
+                },
+                "pose_count": 82,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town06/catalog/routes/town06/straight/town06_straight_s0000_p00.json",
+              "route_sha256": "be80798b83950c49f092cf8b236ea051534818fb9fc06cced4475d5c1c749acb",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.299999982133616,
+                  "median": 1.7852248454448436e-10,
+                  "p95": 4.323594313353587e-09
+                },
+                "nearest_xy_m": {
+                  "max": 0.2808891797776428,
+                  "median": 0.15451356818243484,
+                  "p95": 0.17646856282844617
+                },
+                "pose_count": 61,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town07",
+      "canonical_name": "Town07",
+      "load_name": "/Game/Carla/Maps/Town07",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Exact straight/turn Lanelet2 + PCD route preflight admitted this packaged Town for execution; this is not yet a VAD PASS. Global alignment status=PASS.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/Town07_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/Town07_full/map_bundle.json",
+        "metadata_sha256": "5f9f17e37c964644f1530510ee401fb42c7dae8735fc9affe9cdc347d9b5a9ef",
+        "status": "full_map_structurally_ready_not_vad_validated",
+        "profile": "town07",
+        "canonical_carla_map": "/Game/Carla/Maps/Town07",
+        "bundle_schema": "packaged_town",
+        "fresh_source_sha256": {
+          "lanelet2_map": "ad88eb62b710b6f9262009f201a01a36ead73d3047c5ca15564db4eafb1cae3b",
+          "pointcloud_map": "a9406e06127cd545e10eb907558054fc8cc4aaa3e666b7b6759c53b25766c11e"
+        },
+        "road_lanelets": 276,
+        "pcd_points": 15450336,
+        "readiness": {
+          "artifact_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/town_full_map_readiness.json",
+          "artifact_sha256": "c5b81b0c2e480300f8343b759b90af659f8e1600a2db4bbeba53365d83e06c0b",
+          "status": "TEST_ROUTES_MAP_PREFLIGHT_PASS",
+          "alignment_status": "PASS",
+          "route_preflight_status": "PASS",
+          "admitted_routes": [
+            {
+              "scenario": "left",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town07/catalog/routes/town07/left/town07_left_s0000_p00.json",
+              "route_sha256": "710fae964526f782b98afa424bb2a28a183253bbede76a64a2066cb76bf4ab04",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.7651259523162842,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.7651259667025163,
+                  "median": 2.148397189530091e-08,
+                  "p95": 0.012977913029491894
+                },
+                "nearest_xy_m": {
+                  "max": 0.3411102476517997,
+                  "median": 0.16547493545420608,
+                  "p95": 0.26946469661540895
+                },
+                "pose_count": 75,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "right",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town07/catalog/routes/town07/right/town07_right_s0000_p00.json",
+              "route_sha256": "c49f1ec8a3d6401a8e9970bfbfb5bf760246b7028ed9fdd85299080afb6bac0c",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.29999996156941283,
+                  "median": 2.89606891083106e-08,
+                  "p95": 5.531079030718567e-06
+                },
+                "nearest_xy_m": {
+                  "max": 0.3018554927372189,
+                  "median": 0.162504786732978,
+                  "p95": 0.2722665907971442
+                },
+                "pose_count": 84,
+                "status": "PASS"
+              }
+            },
+            {
+              "scenario": "straight",
+              "route_path": "/home/a/autoware_e2e/artifacts/validation/2026-08-31/maps/town07/catalog/routes/town07/straight/town07_straight_s0000_p00.json",
+              "route_sha256": "32646b0465b4e064faa31f62e7dba09675778e582dab66b64b75d846239732aa",
+              "maximum_lanelet_distance_m": 0.0,
+              "maximum_vertical_distance_m": 0.29999998211860657,
+              "pointcloud_proximity": {
+                "method": "nearest point in 0.5 m voxel-downsampled transformed bundle PCD",
+                "nearest_abs_z_m": {
+                  "max": 0.2999999784720562,
+                  "median": 5.049377818916565e-09,
+                  "p95": 1.6075929740418778e-08
+                },
+                "nearest_xy_m": {
+                  "max": 0.25430309858843836,
+                  "median": 0.15861420270138255,
+                  "p95": 0.24154130217167258
+                },
+                "pose_count": 63,
+                "status": "PASS"
+              }
+            }
+          ],
+          "scope": "structural Lanelet2 + transformed-PCD + exact-route admission only; not an Autoware VAD execution result"
+        }
+      }
+    },
+    {
+      "map_id": "town08",
+      "canonical_name": "Town08",
+      "load_name": "/Game/Carla/Maps/Town08",
+      "suite_status": "unavailable",
+      "server_profile": null,
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town09",
+      "canonical_name": "Town09",
+      "load_name": "/Game/Carla/Maps/Town09",
+      "suite_status": "unavailable",
+      "server_profile": null,
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town10hd",
+      "canonical_name": "Town10HD",
+      "load_name": "/Game/Carla/Maps/Town10HD",
+      "suite_status": "unavailable",
+      "server_profile": null,
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town10hd_opt",
+      "canonical_name": "Town10HD_Opt",
+      "load_name": "/Game/Carla/Maps/Town10HD_Opt",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "blocked_missing_pointcloud",
+      "reason": "Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate PCD is generated and aligned.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town11",
+      "canonical_name": "Town11",
+      "load_name": "/Game/Carla/Maps/Town11/Town11",
+      "suite_status": "source_editor_required",
+      "server_profile": "source_editor_0915_4ws",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town12",
+      "canonical_name": "Town12",
+      "load_name": "/Game/Carla/Maps/Town12/Town12",
+      "suite_status": "source_editor_required",
+      "server_profile": "source_editor_0915_4ws",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town13",
+      "canonical_name": "Town13",
+      "load_name": "/Game/Carla/Maps/Town13/Town13",
+      "suite_status": "source_editor_required",
+      "server_profile": "source_editor_0915_4ws",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "town15",
+      "canonical_name": "Town15",
+      "load_name": "/Game/Carla/Maps/Town15/Town15",
+      "suite_status": "source_editor_required",
+      "server_profile": "source_editor_0915_4ws",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "validated_full_map_bundle_missing",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+      "full_map_bundle": null
+    },
+    {
+      "map_id": "c_track_1_0_7",
+      "canonical_name": "C_track_1_0_7",
+      "load_name": "/Game/Carla/Maps/C_track_1_0_7",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": true,
+      "status": "PENDING",
+      "block_code": null,
+      "reason": "Live-validated custom full-map bundle admitted for matrix execution.",
+      "full_map_bundle": {
+        "path": "/home/a/autoware_e2e/data/maps/C_track_1_0_7_xodr_full",
+        "metadata_path": "/home/a/autoware_e2e/data/maps/C_track_1_0_7_xodr_full/map_bundle.json",
+        "metadata_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+        "status": "live_hybrid_validated_xy_with_3d_residual",
+        "profile": "c_track_simulation_xodr_current",
+        "canonical_carla_map": "/Game/Carla/Maps/C_track_1_0_7",
+        "bundle_schema": "custom_map",
+        "fresh_source_sha256": {
+          "lanelet2_map": "e260561d319191695802bf5b9b69a37a2a292a234dcfd60491b33fdf4252226c",
+          "pointcloud_map": "3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75"
+        },
+        "road_lanelets": 395,
+        "pcd_points": 49337228,
+        "readiness": null
+      }
+    },
+    {
+      "map_id": "woraksan_1_0_3",
+      "canonical_name": "Woraksan_v1_0_3_parking_lot_hegiht_fit",
+      "load_name": "/Game/map_package/Maps/Woraksan_v1_0_3_parking_lot_hegiht_fit/Woraksan_v1_0_3_parking_lot_hegiht_fit",
+      "suite_status": "ready",
+      "server_profile": "packaged_0915",
+      "runnable": false,
+      "status": "BLOCKED",
+      "block_code": "packaged_runtime_assets_missing",
+      "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+      "full_map_bundle": null
+    }
+  ],
+  "admission_contract_sha256": "84aea83db2e12e57fcb192152cf4b01c1ab941b11c7db876b143c426c6e9c403"
+}

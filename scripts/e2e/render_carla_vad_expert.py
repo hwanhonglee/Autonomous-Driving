@@ -160,9 +160,13 @@ def _draw_camera(
         target_width = right - left
         target_height = bottom - top
         scale = max(target_width / camera.width, target_height / camera.height)
+        # ``Image.Resampling`` was introduced after Ubuntu 22.04's Pillow
+        # 9.0 package.  Keep the validation renderer compatible with both the
+        # platform package and newer Pillow releases.
+        resampling = getattr(Image, "Resampling", Image)
         resized = camera.resize(
             (int(math.ceil(camera.width * scale)), int(math.ceil(camera.height * scale))),
-            Image.Resampling.BILINEAR,
+            resampling.BILINEAR,
         )
         crop_left = max(0, (resized.width - target_width) // 2)
         crop_top = max(0, (resized.height - target_height) // 2)

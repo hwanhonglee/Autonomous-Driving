@@ -705,8 +705,17 @@ def collect_episode(
     _preflight_exclusive(world)
     requested_town = str(route["town"])
     current_town = world.get_map().name.rsplit("/", 1)[-1]
+    map_load_performed = False
     if current_town != requested_town:
+        if not args.allow_map_load:
+            raise CollectionError(
+                f"current CARLA map {current_town!r} does not match route map "
+                f"{requested_town!r}; automatic client map loading is disabled, "
+                "so cold-start CARLA on the required map or pass the explicit "
+                "--allow-map-load opt-in"
+            )
         world = client.load_world(requested_town)
+        map_load_performed = True
         time.sleep(2.0)
         _preflight_exclusive(world)
 
@@ -833,6 +842,8 @@ def collect_episode(
             "client_version": client.get_client_version(),
             "town": carla_map.name.rsplit("/", 1)[-1],
             "weather": weather_name,
+            "client_map_loading_allowed": args.allow_map_load,
+            "client_map_loading_performed": map_load_performed,
             "original_world_settings": _settings_dict(original_settings),
             "capture_world_settings": _settings_dict(world.get_settings()),
             "vehicle_type": args.vehicle_type,
@@ -1028,6 +1039,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--jpeg-quality", type=int, default=95)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--weather")
+    parser.add_argument(
+        "--allow-map-load",
+        action="store_true",
+        help=(
+            "UNSAFE opt-in: permit client.load_world when the running map does not "
+            "match the route; the default requires an exact cold-started map"
+        ),
+    )
     parser.add_argument("--vehicle-type", default="vehicle.toyota.prius")
     parser.add_argument("--role-name", default="autoware_e2e_expert")
     parser.add_argument("--wheelbase-m", type=float, default=WHEELBASE_M)
@@ -1106,6 +1125,7 @@ def run(args: argparse.Namespace) -> Path:
             "command_exit_lookahead_m": args.command_exit_lookahead_m,
             "goal_tolerance_m": args.goal_tolerance_m,
             "stopped_brake_steering_suppressed": not args.allow_stopped_steering,
+            "client_map_loading_allowed": args.allow_map_load,
         },
         "provenance": {
             "source_route": str(route_path),

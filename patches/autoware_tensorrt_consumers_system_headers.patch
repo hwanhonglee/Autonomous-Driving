@@ -1,0 +1,39 @@
+diff --git a/perception/autoware_simpl_prediction/CMakeLists.txt b/perception/autoware_simpl_prediction/CMakeLists.txt
+index ee9630a..9a0a9f5 100644
+--- a/perception/autoware_simpl_prediction/CMakeLists.txt
++++ b/perception/autoware_simpl_prediction/CMakeLists.txt
+@@ -49,7 +49,7 @@ target_include_directories(
+ if(CUDA_AVAILABLE AND TENSORRT_AVAILABLE)
+     target_include_directories(
+         ${PROJECT_NAME}
+-        PUBLIC
++        SYSTEM PUBLIC
+         ${TENSORRT_INCLUDE_DIRS}
+         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+     rclcpp_components_register_node(
+diff --git a/perception/autoware_tensorrt_classifier/CMakeLists.txt b/perception/autoware_tensorrt_classifier/CMakeLists.txt
+index a08d03c..c6476eb 100644
+--- a/perception/autoware_tensorrt_classifier/CMakeLists.txt
++++ b/perception/autoware_tensorrt_classifier/CMakeLists.txt
+@@ -22,6 +22,12 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
+   src/tensorrt_classifier.cpp
+ )
+ 
++# TensorRT is a third-party SDK. Treat its headers as system headers so
++# Autoware's -Werror policy does not promote warnings from the SDK itself.
++target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
++  ${TENSORRT_INCLUDE_DIRS}
++)
++
+ ament_target_dependencies(${PROJECT_NAME}
+   rclcpp
+   OpenCV
+@@ -49,7 +55,7 @@ cuda_add_library(${PROJECT_NAME}_gpu_preprocess
+ )
+ 
+ target_include_directories(${PROJECT_NAME}_gpu_preprocess
+-  PUBLIC
++  SYSTEM PUBLIC
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+     $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+     ${TENSORRT_INCLUDE_DIRS}

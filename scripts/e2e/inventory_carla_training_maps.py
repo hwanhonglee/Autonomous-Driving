@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
+import copy
+import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -15,24 +18,27 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = Path(__file__).with_name("carla_expert_suite.yaml")
 DEFAULT_OUTPUT = ROOT / "artifacts/inventory/carla_training_maps.json"
 
+PATH_VARIABLE_PATTERN = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
+PATH_VARIABLES = ("CARLA_ROOT", "CARLA_SOURCE_ROOT", "UE4_ROOT")
+
 PROFILE_CONTRACT = {
     "packaged_0915": {
         "kind": "packaged",
         "version": "0.9.15-dev-dirty",
-        "executable": "/home/hong/carla-autoware-universe/CARLA_0.9.15/CarlaUE4.sh",
+        "executable": "${CARLA_ROOT}/CarlaUE4.sh",
         "project": None,
-        "python_api": "/home/hong/carla-autoware-universe/CARLA_0.9.15/"
-        "PythonAPI/carla/dist/carla-0.9.15-py3.10-linux-x86_64.egg",
-        "python_api_sha256": "ee7209c5570cb9201e9fbd3cbcefc5b176dd4f6b2289df52bb0bd7dc2c56800b",
+        "python_api": "${CARLA_ROOT}/PythonAPI/carla/dist/"
+        "carla-0.9.15-py3.10-linux-x86_64.egg",
+        "python_api_sha256": "6eb690ef4304b34a919b27a23129273029008c8e95a5f164d52a1bd494a96c3a",
     },
     "source_editor_0915_4ws": {
         "kind": "source_editor",
         "version": "0.9.15-dev-dirty",
-        "executable": "/home/hong/UnrealEngine_4.26/Engine/Binaries/Linux/UE4Editor",
-        "project": "/home/hong/carla/Unreal/CarlaUE4/CarlaUE4.uproject",
-        "python_api": "/home/hong/carla/PythonAPI/carla/dist/"
+        "executable": "${UE4_ROOT}/Engine/Binaries/Linux/UE4Editor",
+        "project": "${CARLA_SOURCE_ROOT}/Unreal/CarlaUE4/CarlaUE4.uproject",
+        "python_api": "${CARLA_SOURCE_ROOT}/PythonAPI/carla/dist/"
         "carla-0.9.15-py3.10-linux-x86_64.egg",
-        "python_api_sha256": "328e90242236b8f0529e6c9526694934bf20c27dc1e7348ba46eaf79061e6617",
+        "python_api_sha256": "ee7209c5570cb9201e9fbd3cbcefc5b176dd4f6b2289df52bb0bd7dc2c56800b",
     },
 }
 MAP_CONTRACT = {
@@ -159,6 +165,95 @@ class ManifestError(RuntimeError):
     pass
 
 
+def _configured_root(variable, candidates, marker):
+    configured = os.environ.get(variable)
+    if configured:
+        path = Path(configured).expanduser()
+        if not path.is_absolute():
+            raise ManifestError(f"{variable} must be an absolute path")
+        return path.resolve()
+    candidates = tuple(Path(candidate).expanduser().resolve() for candidate in candidates)
+    return next(
+        (candidate for candidate in candidates if (candidate / marker).exists()),
+        candidates[0],
+    )
+
+
+def runtime_roots():
+    """Resolve relocatable CARLA roots without depending on a user's home name."""
+    workspace_parent = ROOT.parent
+    home = Path.home()
+    return {
+        "CARLA_ROOT": _configured_root(
+            "CARLA_ROOT",
+            (
+                workspace_parent / "carla-autoware-universe/CARLA_0.9.15",
+                home / "carla-autoware-universe/CARLA_0.9.15",
+                Path("/opt/carla-simulator"),
+                Path("/opt/carla"),
+            ),
+            "CarlaUE4.sh",
+        ),
+        "CARLA_SOURCE_ROOT": _configured_root(
+            "CARLA_SOURCE_ROOT",
+            (workspace_parent / "carla", home / "carla"),
+            "Unreal/CarlaUE4/CarlaUE4.uproject",
+        ),
+        "UE4_ROOT": _configured_root(
+            "UE4_ROOT",
+            (workspace_parent / "UnrealEngine_4.26", home / "UnrealEngine_4.26"),
+            "Engine/Binaries/Linux/UE4Editor",
+        ),
+    }
+
+
+def _expand_path_template(value, roots, label):
+    if value is None:
+        return None
+    _require_nonempty_string(value, label)
+    unknown = set(PATH_VARIABLE_PATTERN.findall(value)) - set(PATH_VARIABLES)
+    if unknown:
+        raise ManifestError(f"{label} contains unknown path variables: {sorted(unknown)}")
+    expanded = value
+    for variable, root in roots.items():
+        expanded = expanded.replace(f"${{{variable}}}", str(root))
+    unresolved = PATH_VARIABLE_PATTERN.findall(expanded)
+    if unresolved:
+        raise ManifestError(f"{label} contains unresolved path variables: {unresolved}")
+    return str(Path(expanded).expanduser())
+
+
+def _resolve_runtime_paths(document, roots):
+    resolved = copy.deepcopy(document)
+    profiles = resolved.get("server_profiles")
+    if isinstance(profiles, dict):
+        for profile_id, profile in profiles.items():
+            if not isinstance(profile, dict):
+                continue
+            for field in ("executable", "project", "python_api"):
+                if field in profile:
+                    profile[field] = _expand_path_template(
+                        profile[field], roots, f"profile {profile_id}.{field}"
+                    )
+    maps = resolved.get("maps")
+    if isinstance(maps, list):
+        for index, map_entry in enumerate(maps):
+            if not isinstance(map_entry, dict):
+                continue
+            for field in ("level_path", "opendrive_path"):
+                if field in map_entry:
+                    map_entry[field] = _expand_path_template(
+                        map_entry[field], roots, f"maps[{index}].{field}"
+                    )
+    return resolved
+
+
+def _resolved_profile_contract(roots):
+    return _resolve_runtime_paths(
+        {"server_profiles": PROFILE_CONTRACT, "maps": []}, roots
+    )["server_profiles"]
+
+
 def _require_mapping(value, label):
     if not isinstance(value, dict):
         raise ManifestError(f"{label} must be a mapping")
@@ -176,10 +271,13 @@ def load_manifest(path=DEFAULT_MANIFEST):
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as error:
         raise ManifestError(f"failed to read {path}: {error}") from error
-    return validate_manifest(document), path
+    roots = runtime_roots()
+    document = _resolve_runtime_paths(document, roots)
+    return validate_manifest(document, roots=roots), path
 
 
-def validate_manifest(document):
+def validate_manifest(document, roots=None):
+    roots = runtime_roots() if roots is None else roots
     document = _require_mapping(document, "manifest")
     required_root = {
         "schema_version",
@@ -198,9 +296,10 @@ def validate_manifest(document):
     _require_nonempty_string(document["description"], "description")
 
     profiles = _require_mapping(document["server_profiles"], "server_profiles")
-    if set(profiles) != set(PROFILE_CONTRACT):
+    expected_profiles = _resolved_profile_contract(roots)
+    if set(profiles) != set(expected_profiles):
         raise ManifestError("server_profiles must contain the two canonical profiles")
-    for profile_id, expected_profile in PROFILE_CONTRACT.items():
+    for profile_id, expected_profile in expected_profiles.items():
         profile = _require_mapping(profiles[profile_id], f"profile {profile_id}")
         if set(profile) != PROFILE_FIELDS:
             raise ManifestError(f"profile {profile_id} has an invalid field set")
@@ -283,6 +382,93 @@ def _canonical_map_name(value):
     elif value.startswith(("Carla/", "map_package/")):
         value = "/Game/" + value
     return value
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while block := stream.read(1024 * 1024):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def collect_static_inventory(manifest):
+    """Report local bindings separately from the canonical suite contract."""
+    profiles = []
+    for profile_id, profile in manifest["server_profiles"].items():
+        executable = Path(profile["executable"])
+        python_api = Path(profile["python_api"])
+        project = Path(profile["project"]) if profile["project"] else None
+        actual_python_api_sha256 = (
+            _sha256_file(python_api) if python_api.is_file() else None
+        )
+        profiles.append(
+            {
+                "id": profile_id,
+                "kind": profile["kind"],
+                "executable": str(executable),
+                "executable_exists": executable.is_file(),
+                "executable_is_runnable": executable.is_file()
+                and os.access(executable, os.X_OK),
+                "project": str(project) if project else None,
+                "project_exists": project.is_file() if project else None,
+                "python_api": str(python_api),
+                "python_api_exists": python_api.is_file(),
+                "python_api_sha256": actual_python_api_sha256,
+                "python_api_sha256_matches": (
+                    actual_python_api_sha256 == profile["python_api_sha256"]
+                    if actual_python_api_sha256 is not None
+                    else None
+                ),
+            }
+        )
+
+    maps = []
+    for entry in manifest["maps"]:
+        level_path = Path(entry["level_path"]) if entry["level_path"] else None
+        opendrive_path = (
+            Path(entry["opendrive_path"]) if entry["opendrive_path"] else None
+        )
+        level_exists = level_path.is_file() if level_path else None
+        opendrive_exists = opendrive_path.is_file() if opendrive_path else None
+        assets_complete = (
+            level_exists and opendrive_exists
+            if entry["status"] != "unavailable"
+            else None
+        )
+        maps.append(
+            {
+                "id": entry["id"],
+                "status": entry["status"],
+                "server_profile": entry["server_profile"],
+                "level_path": str(level_path) if level_path else None,
+                "level_exists": level_exists,
+                "opendrive_path": str(opendrive_path) if opendrive_path else None,
+                "opendrive_exists": opendrive_exists,
+                "assets_complete": assets_complete,
+            }
+        )
+
+    required_maps = [item for item in maps if item["assets_complete"] is not None]
+    return {
+        "success": True,
+        "server_profile_count": len(profiles),
+        "map_count": len(maps),
+        "status_counts": {
+            status: sum(1 for item in manifest["maps"] if item["status"] == status)
+            for status in ("ready", "source_editor_required", "unavailable")
+        },
+        "runtime_roots": {key: str(value) for key, value in runtime_roots().items()},
+        "profiles": profiles,
+        "maps": maps,
+        "asset_binding_counts": {
+            "complete": sum(bool(item["assets_complete"]) for item in required_maps),
+            "missing": sum(not item["assets_complete"] for item in required_maps),
+        },
+        "missing_asset_map_ids": [
+            item["id"] for item in required_maps if not item["assets_complete"]
+        ],
+    }
 
 
 def collect_live_inventory(manifest, host, port, timeout):
@@ -388,15 +574,7 @@ def main(argv=None):
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "manifest": str(manifest_path),
         "suite_id": manifest["suite_id"],
-        "static": {
-            "success": True,
-            "server_profile_count": len(manifest["server_profiles"]),
-            "map_count": len(manifest["maps"]),
-            "status_counts": {
-                status: sum(1 for item in manifest["maps"] if item["status"] == status)
-                for status in ("ready", "source_editor_required", "unavailable")
-            },
-        },
+        "static": collect_static_inventory(manifest),
         "live": None,
     }
     exit_code = 0

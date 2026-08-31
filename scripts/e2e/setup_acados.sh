@@ -110,7 +110,14 @@ if [[ ! -x "${renderer}" ]] || \
 fi
 
 if [[ ! -x "${acados_root}/.venv/bin/python3" ]]; then
-  python3 -m venv "${acados_root}/.venv"
+  if python3 -c 'import ensurepip' >/dev/null 2>&1; then
+    python3 -m venv "${acados_root}/.venv"
+  elif virtualenv_command="$(command -v virtualenv 2>/dev/null)"; then
+    "${virtualenv_command}" --python python3 "${acados_root}/.venv"
+  else
+    echo "Python ensurepip is unavailable and virtualenv is not installed; install python3-venv or virtualenv" >&2
+    exit 1
+  fi
 fi
 
 "${acados_root}/.venv/bin/python3" -m pip install --upgrade pip

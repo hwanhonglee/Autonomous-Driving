@@ -29,6 +29,7 @@ apply_patch_once() {
 }
 
 "${root}/scripts/e2e/apply_autoware_launch_control_override.sh"
+"${root}/scripts/e2e/apply_autoware_launch_vehicle_cmd_gate_override.sh"
 
 apply_patch_once \
   "${root}/src/launcher/autoware_launch" \

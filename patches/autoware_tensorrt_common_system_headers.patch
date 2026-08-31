@@ -1,0 +1,19 @@
+diff --git a/perception/autoware_tensorrt_common/CMakeLists.txt b/perception/autoware_tensorrt_common/CMakeLists.txt
+--- a/perception/autoware_tensorrt_common/CMakeLists.txt
++++ b/perception/autoware_tensorrt_common/CMakeLists.txt
+@@ -35,6 +35,14 @@ target_include_directories(${PROJECT_NAME}
+   PUBLIC
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+     $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
++)
++
++# TensorRT 10.8 provides default virtual method implementations whose named
++# parameters intentionally remain unused.  Treat vendor headers as system
++# headers so the package's -Werror policy continues to cover Autoware code
++# without promoting warnings originating in the TensorRT SDK to errors.
++target_include_directories(${PROJECT_NAME} SYSTEM
++  PUBLIC
+     ${TENSORRT_INCLUDE_DIRS}
+ )
+ 
+ set_target_properties(${PROJECT_NAME}

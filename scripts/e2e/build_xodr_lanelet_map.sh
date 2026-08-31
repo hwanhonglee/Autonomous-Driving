@@ -239,7 +239,13 @@ if [[ "${install}" == true ]]; then
   command -v "${bootstrap_python}" >/dev/null || \
     die "bootstrap Python is not executable: ${bootstrap_python}"
   if [[ ! -e "${venv}" ]]; then
-    install_commands+=("${bootstrap_python}" -m venv "${venv}")
+    if "${bootstrap_python}" -c 'import ensurepip' >/dev/null 2>&1; then
+      install_commands+=("${bootstrap_python}" -m venv "${venv}")
+    elif virtualenv_command="$(command -v virtualenv 2>/dev/null)"; then
+      install_commands+=("${virtualenv_command}" --python "${bootstrap_python}" "${venv}")
+    else
+      die "Python ensurepip is unavailable and virtualenv is not installed; install python3-venv or virtualenv"
+    fi
   elif [[ ! -x "${venv_python}" ]]; then
     die "existing --venv path is not a Python virtualenv: ${venv}"
   fi

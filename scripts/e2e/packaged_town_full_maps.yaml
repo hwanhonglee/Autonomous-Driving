@@ -1,0 +1,238 @@
+schema_version: 1
+suite_id: packaged_carla_0915_autoware_full_maps_v1
+description: >-
+  Pinned Lanelet2 and CARLA HD-map point-cloud inputs for the packaged Town
+  worlds.  CARLA HDMaps are stored in Unreal/CARLA handedness and must be
+  reflected across Y before they are used with ROS map coordinates.
+
+source_contracts:
+  lanelet2:
+    environment: AUTOWARE_E2E_TOWN_LANELET_ROOT
+    candidates:
+      - /home/a/carla-autoware-universe/op_carla/op_agent/autoware-contents/maps
+      - /home/a/carla-autoware-universe/op_carla/op_agent (humble_ok)/autoware-contents/maps
+      - /home/a/carla-autoware-universe/op_carla/op_agent (2023.10_ok)/autoware-contents/maps
+    provenance: >-
+      hwanhonglee/Simulation commit 54a729220a90147d0648c60d76e2cbdd5fec68bf;
+      the selected Town files are clean tracked files in the inspected checkout.
+  carla:
+    environment: CARLA_ROOT
+    candidates:
+      - /home/a/carla-autoware-universe/CARLA_0.9.15
+    provenance: >-
+      Local packaged CARLA 0.9.15 runtime.  OpenDRIVE and cooked-level hashes
+      below bind each bundle to the exact runtime inspected on 2026-08-31.
+
+pointcloud_transform:
+  kind: carla_unreal_to_ros_y_reflection
+  matrix_4x4_row_major: [1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+  command: pcl_transform_point_cloud
+
+maps:
+  - id: town01
+    canonical_carla_map: /Game/Carla/Maps/Town01
+    lanelet_source_town: Town01
+    pcd_source_town: Town01
+    target_name: Town01_full
+    lanelet2:
+      relative_path: Town01/lanelet2_map.osm
+      sha256: 7098b8124b2e6e947237b2f3e0dfb3c8a707898edf48246b1032204c6ccbfaae
+      size_bytes: 3062308
+      nodes: 12904
+      ways: 320
+      road_lanelets: 124
+    pointcloud:
+      relative_path: HDMaps/Town01.pcd
+      sha256: 9afe2ed07fa22668c78057cf21849875fd58b5af58eb0e87b257e1d3460e3637
+      size_bytes: 165458372
+      points: 14714285
+      transformed_sha256: e4cc6e8b24154c4453fc9b58116d5b56652f4407026891d2198b6740902bea6d
+      transformed_size_bytes: 165457920
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town01.umap
+      level_sha256: e48e2a4a3322f614c3fd8d1c066ae239c0368254c5508592a6f4b1830862dd47
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town01.xodr
+      opendrive_sha256: 97a7f6ac67812567e5c8ee0599cd823b23f80f30f3f97c502212e38b72e2b709
+
+  - id: town02_opt
+    canonical_carla_map: /Game/Carla/Maps/Town02_Opt
+    lanelet_source_town: Town02
+    pcd_source_town: Town02
+    target_name: Town02_Opt_full
+    lanelet2:
+      relative_path: Town02/lanelet2_map.osm
+      sha256: d571e0bd41c960a83d85c73597bc2596cc2d84b8069faef66f363567cbccc8db
+      size_bytes: 1409577
+      nodes: 5904
+      ways: 224
+      road_lanelets: 88
+    pointcloud:
+      relative_path: HDMaps/Town02.pcd
+      sha256: 68142208009db22ac662cfe99f2de021e6b2f286cab944b34087e4480371b0ff
+      size_bytes: 65117393
+      points: 6331562
+      transformed_sha256: e68a4114431016ec3bdee056a5e6e0957f40460ec72bf788312a60578dfd9b9f
+      transformed_size_bytes: 65114112
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town02_Opt.umap
+      level_sha256: 72162e08a4f033ee02bf720dbb4e93a457ad6aa097d693f549a4f5cb2a3beaed
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town02_Opt.xodr
+      opendrive_sha256: 953c05f17def231239ffcadba3307628a82d0d335b67b4e29c3098f7aed1dd7d
+
+  - id: town03
+    canonical_carla_map: /Game/Carla/Maps/Town03
+    lanelet_source_town: Town03
+    pcd_source_town: Town03
+    target_name: Town03_full
+    lanelet2:
+      relative_path: Town03/lanelet2_map.osm
+      sha256: ed274b9736a92993bf70b50e99ddfa72f8a5606c4ae59b86bca5dcef20d13165
+      size_bytes: 7035280
+      nodes: 27594
+      ways: 910
+      road_lanelets: 417
+    pointcloud:
+      relative_path: HDMaps/Town03.pcd
+      sha256: 37e5335be3669dfcc14824586817afa5d566ed4866fc49e2ea62ffe2e4184949
+      size_bytes: 235252368
+      points: 20429831
+      transformed_sha256: 51d2f5234ab7936840d7294953f817ff6b479f846e0bd04c62593039a4b56c4a
+      transformed_size_bytes: 235249664
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town03.umap
+      level_sha256: 3409354bb605409012f4153fa7ee1191a4205ad71303eb5873e6ef7a9cea78e4
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town03.xodr
+      opendrive_sha256: abf177bcd9b66cfefb7ac4919f6456815f1384f4229f1343c8a6a90bbb7713c9
+
+  - id: town04
+    canonical_carla_map: /Game/Carla/Maps/Town04
+    lanelet_source_town: Town04
+    pcd_source_town: Town04
+    target_name: Town04_full
+    lanelet2:
+      relative_path: Town04/lanelet2_map.osm
+      sha256: 41e9149cfc74621d48a4af22b66fca90a12e51792779913106c9ac2ab73019ef
+      size_bytes: 7772744
+      nodes: 32770
+      ways: 924
+      road_lanelets: 462
+    pointcloud:
+      relative_path: HDMaps/Town04.pcd
+      sha256: 85e3342e431dd7adf063af17c476cb33f3eeecc73d0ac6087425b1d85be0977a
+      size_bytes: 326113776
+      points: 28780448
+      transformed_sha256: 932bca2499a4d4d1984eef4da4c19848c5293cc8c7837060048be10735e0f4e1
+      transformed_size_bytes: 326111232
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town04.umap
+      level_sha256: 4a33a4bacafbd5dda60784e17cc21f2a557f35c9452046b06ef75cef2b71fb65
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town04.xodr
+      opendrive_sha256: 4dddd1560ab7812b0e89cd4a523d8b6f2b93947eafb496d9eeb83cc772116c85
+
+  - id: town05_opt
+    canonical_carla_map: /Game/Carla/Maps/Town05_Opt
+    lanelet_source_town: Town05
+    pcd_source_town: Town05
+    target_name: Town05_Opt_full
+    lanelet2:
+      relative_path: Town05/lanelet2_map.osm
+      sha256: 45cdcfd7eca052969e84c645becdfcbda5b0d9f63002da49d6f22b553fab6ad0
+      size_bytes: 8570153
+      nodes: 34430
+      ways: 798
+      road_lanelets: 486
+    pointcloud:
+      relative_path: HDMaps/Town05.pcd
+      sha256: 48ee26d4065d9c2175334da4b6458eee86ec8d98fd5d42e7f25fb174a0b43259
+      size_bytes: 270259670
+      points: 23891122
+      transformed_sha256: e75a5d6a3cb1b3c9dd80083e9e169134e0cd1a648bbaf92f0a2b8313963e128d
+      transformed_size_bytes: 270258176
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town05_Opt.umap
+      level_sha256: 89596dd951846a719a7dd71a342a40f090119ff32941337b2f4cf0d4f06a0a82
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town05_Opt.xodr
+      opendrive_sha256: 7edc53b0be840e177598da7a4ed9571146d7b2595ce280d154c90f92e8a48851
+
+  - id: town06
+    canonical_carla_map: /Game/Carla/Maps/Town06
+    lanelet_source_town: Town06
+    pcd_source_town: Town06
+    target_name: Town06_full
+    lanelet2:
+      relative_path: Town06/lanelet2_map.osm
+      sha256: 1ebef295a6c26578bcc5be2dd5127d095dcdc2a5efb400e13b06597d06790d60
+      size_bytes: 3100098
+      nodes: 12642
+      ways: 924
+      road_lanelets: 462
+    pointcloud:
+      relative_path: HDMaps/Town06.pcd
+      sha256: f2c575cdbacf039e30c7145557a9044e57f7bfe471677a9a11d7069907cd939e
+      size_bytes: 383711010
+      points: 34041234
+      transformed_sha256: 3061007f4cacfd8117c6687a20acc2dc170d04b58e7b9b72685ec3f89ee21643
+      transformed_size_bytes: 383709184
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town06.umap
+      level_sha256: e56835b763b9871acc931918e585be2d6e5761c81de411f39e03c480edece271
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town06.xodr
+      opendrive_sha256: a90b613175fa837fdc128ddfaf5ddad25797b128fdbd8cd945974bc21a60496e
+
+  - id: town07
+    canonical_carla_map: /Game/Carla/Maps/Town07
+    lanelet_source_town: Town07
+    pcd_source_town: Town07
+    target_name: Town07_full
+    lanelet2:
+      relative_path: Town07/lanelet2_map.osm
+      sha256: ad88eb62b710b6f9262009f201a01a36ead73d3047c5ca15564db4eafb1cae3b
+      size_bytes: 1690713
+      nodes: 6894
+      ways: 552
+      road_lanelets: 276
+    pointcloud:
+      relative_path: HDMaps/Town07.pcd
+      sha256: 2cbf7674a520e9617f7b48baba551e073049bbb30dd8e8801ac8d20b09bd2b1f
+      size_bytes: 180053701
+      points: 15450336
+      transformed_sha256: a9406e06127cd545e10eb907558054fc8cc4aaa3e666b7b6759c53b25766c11e
+      transformed_size_bytes: 180051968
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town07.umap
+      level_sha256: 05f7e74c4593d8e8a724c759c5e7b327ac0f6e3e36a74af66fc2490dc9fc00a0
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town07.xodr
+      opendrive_sha256: be730652769e993e27f748ba5793dba9e49d299205146a7a8db0bcd17af877bf
+
+  - id: town10hd_opt
+    canonical_carla_map: /Game/Carla/Maps/Town10HD_Opt
+    lanelet_source_town: Town10HD
+    pcd_source_town: null
+    target_name: Town10HD_Opt_full
+    lanelet2:
+      relative_path: Town10HD/lanelet2_map.osm
+      sha256: cdd0a28664bcf9b5bd8867584a6fa6a02fa0f75a7c3dbb901ca216128ef86a17
+      size_bytes: 2248269
+      nodes: 9214
+      ways: 279
+      road_lanelets: 168
+    pointcloud: null
+    runtime:
+      level_relative_path: CarlaUE4/Content/Carla/Maps/Town10HD_Opt.umap
+      level_sha256: 202940de588d6b8f2a2ddae5815bafed342878c928b8fcc1c36374d6823989fc
+      opendrive_relative_path: CarlaUE4/Content/Carla/Maps/OpenDrive/Town10HD.xodr
+      opendrive_sha256: 5d883b799f634030af92be1e9d79d107845540ba04338e8c60e095be1aef7be7
+    blocker: >-
+      No Town10HD/Town10HD_Opt point-cloud map exists anywhere in the inspected
+      /home/a filesystem or in the packaged/source CARLA HDMaps directories.  A
+      CARLA-rendered driving result is possible, but a truthful full Autoware map
+      bundle is blocked until a ROS-coordinate PCD is generated and aligned.  The
+      realistic recovery path on this host is a deterministic synchronous
+      semantic-LiDAR sweep over the full OpenDRIVE waypoint graph (or an Unreal
+      Editor collision-mesh export), world-frame accumulation, static-class
+      filtering, voxelization, Y reflection, and Lanelet2/route alignment QA.  A
+      PCD synthesized only from Lanelet boundaries is not valid localization-map
+      evidence and must not be admitted.  The audited implementation is
+      scripts/e2e/generate_carla_semantic_lidar_map.py; this entry remains blocked
+      until that collector produces COMPLETE_QA_PASS and its output is hash-pinned
+      here.

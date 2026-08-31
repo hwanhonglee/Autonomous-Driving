@@ -730,7 +730,11 @@ def alignment_warnings(alignment: dict[str, Any]) -> list[str]:
 
 
 def inspect_profile(
-    document: dict[str, Any], profile_id: str, manifest_path: Path
+    document: dict[str, Any],
+    profile_id: str,
+    manifest_path: Path,
+    *,
+    inspect_references: bool = True,
 ) -> dict[str, Any]:
     try:
         profile = document["profiles"][profile_id]
@@ -742,10 +746,14 @@ def inspect_profile(
         asset_id: _inspect_asset(asset_id, asset, manifest_path, "bundle_sources")
         for asset_id, asset in profile["bundle_sources"].items()
     }
-    reference_assets = {
-        asset_id: _inspect_asset(asset_id, asset, manifest_path, "reference_assets")
-        for asset_id, asset in profile["reference_assets"].items()
-    }
+    reference_assets = (
+        {
+            asset_id: _inspect_asset(asset_id, asset, manifest_path, "reference_assets")
+            for asset_id, asset in profile["reference_assets"].items()
+        }
+        if inspect_references
+        else {}
+    )
 
     lanelet_source_path = Path(bundle_assets["lanelet2_map"]["resolved_path"])
     lanelet_source = inspect_lanelet2(lanelet_source_path)
@@ -794,6 +802,13 @@ def inspect_profile(
             f"{sorted(opendrive_hashes)}"
         )
 
+    warnings = alignment_warnings(profile["carla_to_map_transform"])
+    if not inspect_references and profile["reference_assets"]:
+        warnings.append(
+            "authoring/provenance reference assets were not inspected; "
+            "bundle source hashes and structure were still validated"
+        )
+
     return {
         "profile_id": profile_id,
         "display_name": profile["display_name"],
@@ -810,7 +825,7 @@ def inspect_profile(
         "lanelet2": lanelet,
         "lanelet2_source": lanelet_source,
         "pcd": pcd,
-        "warnings": alignment_warnings(profile["carla_to_map_transform"]),
+        "warnings": warnings,
     }
 
 
@@ -1077,6 +1092,63 @@ def print_inspection(inspection: dict[str, Any]) -> None:
         print(f"  WARNING: {warning}")
 
 
+def apply_bundle_source_overrides(
+    document: dict[str, Any], profile_id: str, values: list[str]
+) -> dict[str, Any]:
+    """Override only source locations while retaining every pinned asset contract."""
+    if not values:
+        return document
+    try:
+        profile = document["profiles"][profile_id]
+    except KeyError as error:
+        choices = ", ".join(sorted(document["profiles"]))
+        raise BundleError(
+            f"unknown profile {profile_id!r}; choose one of: {choices}"
+        ) from error
+
+    result = copy.deepcopy(document)
+    sources = result["profiles"][profile_id]["bundle_sources"]
+    seen: set[str] = set()
+    for value in values:
+        asset_id, separator, path = value.partition("=")
+        if not separator or not asset_id or not path:
+            raise BundleError(
+                "--source must use ASSET_ID=PATH, for example "
+                "pointcloud_map=/data/maps/custom.pcd"
+            )
+        if asset_id not in sources:
+            choices = ", ".join(sorted(sources))
+            raise BundleError(
+                f"unknown bundle source {asset_id!r}; choose one of: {choices}"
+            )
+        if asset_id in seen:
+            raise BundleError(f"duplicate --source override for {asset_id}")
+        seen.add(asset_id)
+        sources[asset_id]["path"] = path
+    return result
+
+
+def add_inspection_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        metavar="ASSET_ID=PATH",
+        help=(
+            "Override a bundle source location without changing its pinned hash, size, "
+            "or structure; may be repeated"
+        ),
+    )
+    parser.add_argument(
+        "--skip-reference-assets",
+        action="store_true",
+        help=(
+            "Validate runtime Lanelet2/PCD sources but skip optional authoring/provenance "
+            "files that are not required to create the runtime bundle"
+        ),
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -1085,10 +1157,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     inspect_parser = subparsers.add_parser("inspect", help="Validate every pinned source")
     inspect_parser.add_argument("profile")
+    add_inspection_options(inspect_parser)
     inspect_parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
 
     setup_parser = subparsers.add_parser("setup", help="Validate and create a map bundle")
     setup_parser.add_argument("profile")
+    add_inspection_options(setup_parser)
     target_group = setup_parser.add_mutually_exclusive_group()
     target_group.add_argument("--target-root", type=Path, default=DEFAULT_TARGET_ROOT)
     target_group.add_argument("--target-dir", type=Path)
@@ -1115,7 +1189,13 @@ def main(argv: list[str] | None = None) -> int:
                 )
             return 0
 
-        inspection = inspect_profile(document, args.profile, manifest_path)
+        document = apply_bundle_source_overrides(document, args.profile, args.source)
+        inspection = inspect_profile(
+            document,
+            args.profile,
+            manifest_path,
+            inspect_references=not args.skip_reference_assets,
+        )
         if args.command == "inspect":
             if args.json:
                 print(json.dumps(inspection, indent=2, sort_keys=True))

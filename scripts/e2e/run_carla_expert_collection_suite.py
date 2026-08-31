@@ -93,6 +93,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--physics-hz", type=float, default=20.0)
     parser.add_argument("--capture-hz", type=float, default=5.0)
     parser.add_argument("--target-speed-kmh", type=float, default=9.0)
+    parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     parser.add_argument("--server-timeout-sec", type=float, default=30.0)
     parser.add_argument(
         "--map-load-settle-sec",
@@ -130,6 +131,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "physics_hz",
         "capture_hz",
         "target_speed_kmh",
+        "goal_tolerance_m",
         "estimated_jpeg_kib",
         "server_timeout_sec",
     ):
@@ -243,6 +245,19 @@ def _manifest_status(path: Path, expected: str) -> bool:
     return isinstance(payload, dict) and payload.get("status") == expected
 
 
+def _nonempty_file(path: Path) -> bool:
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def _preview_status(paths: Mapping[str, str]) -> bool:
+    return _nonempty_file(Path(paths["preview_png"])) and _nonempty_file(
+        Path(paths["preview_gif"])
+    )
+
+
 def _estimate_job_bytes(args: argparse.Namespace) -> int:
     camera_frames = math.ceil(args.max_duration_sec * args.capture_hz)
     image_bytes = camera_frames * 6 * args.estimated_jpeg_kib * 1024.0
@@ -257,7 +272,7 @@ def _commands_for_job(args: argparse.Namespace, job: Mapping[str, Any]) -> dict[
     export = job["paths"]["export"]
     preview_png = job["paths"]["preview_png"]
     preview_gif = job["paths"]["preview_gif"]
-    return {
+    commands = {
         "collector": [
             python,
             str(args.collector.expanduser().resolve()),
@@ -273,6 +288,8 @@ def _commands_for_job(args: argparse.Namespace, job: Mapping[str, Any]) -> dict[
             str(args.capture_hz),
             "--target-speed-kmh",
             str(args.target_speed_kmh),
+            "--goal-tolerance-m",
+            str(args.goal_tolerance_m),
             "--max-duration-sec",
             str(args.max_duration_sec),
             "--seed",
@@ -301,6 +318,9 @@ def _commands_for_job(args: argparse.Namespace, job: Mapping[str, Any]) -> dict[
             preview_gif,
         ],
     }
+    if getattr(args, "allow_map_load", False):
+        commands["collector"].append("--allow-map-load")
+    return commands
 
 
 def build_plan(
@@ -404,8 +424,14 @@ def build_plan(
                         status, reason = "BLOCKED", blocked_reason
                     elif route_problem:
                         status, reason = "SKIP", route_problem
-                    elif _manifest_status(Path(paths["episode"]) / "manifest.json", "complete") and _manifest_status(
-                        Path(paths["export"]) / "manifest.json", "validated"
+                    elif (
+                        _manifest_status(
+                            Path(paths["episode"]) / "manifest.json", "complete"
+                        )
+                        and _manifest_status(
+                            Path(paths["export"]) / "manifest.json", "validated"
+                        )
+                        and _preview_status(paths)
                     ):
                         status, reason = "SKIP_RESUME_VALIDATED", "episode complete and export validated"
                     else:
@@ -590,16 +616,30 @@ def execute_job(job: dict[str, Any], run_logged=_run_logged) -> None:
     episode_manifest = Path(job["paths"]["episode"]) / "manifest.json"
     export_manifest = Path(job["paths"]["export"]) / "manifest.json"
     stages = (
-        ("collector", episode_manifest, "complete"),
-        ("exporter", export_manifest, "validated"),
-        ("renderer", None, None),
+        (
+            "collector",
+            episode_manifest,
+            "complete",
+            lambda: _manifest_status(episode_manifest, "complete"),
+        ),
+        (
+            "exporter",
+            export_manifest,
+            "validated",
+            lambda: _manifest_status(export_manifest, "validated"),
+        ),
+        ("renderer", None, None, lambda: _preview_status(job["paths"])),
     )
-    for stage, manifest_path, expected_status in stages:
+    upstream_ran = False
+    for stage, manifest_path, expected_status, already_complete in stages:
+        if not upstream_ran and already_complete():
+            continue
         exit_code = run_logged(job["commands"][stage], job_root / "logs" / f"{stage}.log")
         if exit_code != 0:
             raise SuiteError(f"{stage} exited with code {exit_code}")
         if manifest_path is not None and not _manifest_status(manifest_path, expected_status):
             raise SuiteError(f"{stage} did not produce status {expected_status!r}")
+        upstream_ran = True
     if not Path(job["paths"]["preview_png"]).is_file() or not Path(
         job["paths"]["preview_gif"]
     ).is_file():

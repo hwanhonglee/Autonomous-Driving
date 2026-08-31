@@ -5,20 +5,47 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
 
 scripts/e2e/apply_smart_mpc_patches.sh
+scripts/e2e/apply_tensorrt_system_headers_patch.sh
+scripts/e2e/apply_tensorrt_unused_cublas_patch.sh
+scripts/e2e/apply_tensorrt_local_sdk_headers_patch.sh
+scripts/e2e/apply_tensorrt_consumer_system_headers_patch.sh
 
 export AUTOWARE_E2E_SKIP_INSTALL=1
 source scripts/e2e/env.sh
 
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
+if [[ ! "${CMAKE_BUILD_PARALLEL_LEVEL}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "CMAKE_BUILD_PARALLEL_LEVEL must be a positive integer." >&2
+  exit 2
+fi
+export MAKEFLAGS="-j${CMAKE_BUILD_PARALLEL_LEVEL} -l${CMAKE_BUILD_PARALLEL_LEVEL}"
+
 colcon build \
-  --base-paths src autoware_e2e_vad_launch \
+  --base-paths src \
   --symlink-install \
   --executor sequential \
+  --parallel-workers "${COLCON_WORKERS:-2}" \
   --packages-select \
     autoware_smart_mpc_trajectory_follower \
     tier4_control_launch \
     autoware_launch \
-    autoware_e2e_vad_launch \
-  --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+  --cmake-args \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -Dament_cmake_auto_DIR="${AUTOWARE_E2E_AMENT_CMAKE_AUTO_DIR}"
+
+# Keep the data-only project launch package out of the complete source graph;
+# otherwise colcon requires every exec dependency's install marker again.
+colcon build \
+  --base-paths autoware_e2e_vad_launch \
+  --symlink-install \
+  --executor sequential \
+  --parallel-workers "${COLCON_WORKERS:-2}" \
+  --packages-select autoware_e2e_vad_launch \
+  --cmake-args \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -Dament_cmake_auto_DIR="${AUTOWARE_E2E_AMENT_CMAKE_AUTO_DIR}"
 
 unset AUTOWARE_E2E_SKIP_INSTALL
 source scripts/e2e/env.sh

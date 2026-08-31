@@ -480,6 +480,62 @@ def test_source_hash_mismatch_is_actionable(tmp_path: Path):
         module.inspect_profile(document, "fixture", manifest_path)
 
 
+def test_bundle_source_override_changes_only_location_and_keeps_pin(tmp_path: Path):
+    module = load_module()
+    manifest = write_fixture_manifest(tmp_path)
+    document, manifest_path = module.load_manifest(manifest)
+    original = copy.deepcopy(document)
+    alternate = tmp_path / "alternate.pcd"
+    alternate.write_bytes((tmp_path / "source.pcd").read_bytes())
+
+    overridden = module.apply_bundle_source_overrides(
+        document, "fixture", [f"pointcloud_map={alternate}"]
+    )
+    inspection = module.inspect_profile(overridden, "fixture", manifest_path)
+
+    assert document == original
+    assert inspection["bundle_sources"]["pointcloud_map"]["resolved_path"] == str(
+        alternate.resolve()
+    )
+    assert overridden["profiles"]["fixture"]["bundle_sources"]["pointcloud_map"][
+        "sha256"
+    ] == original["profiles"]["fixture"]["bundle_sources"]["pointcloud_map"][
+        "sha256"
+    ]
+
+
+def test_bundle_source_override_rejects_unknown_or_duplicate_ids(tmp_path: Path):
+    module = load_module()
+    document, _ = module.load_manifest(write_fixture_manifest(tmp_path))
+
+    with pytest.raises(module.BundleError, match="unknown bundle source"):
+        module.apply_bundle_source_overrides(document, "fixture", ["unknown=/tmp/a"])
+    with pytest.raises(module.BundleError, match="duplicate --source"):
+        module.apply_bundle_source_overrides(
+            document,
+            "fixture",
+            ["pointcloud_map=/tmp/a", "pointcloud_map=/tmp/b"],
+        )
+
+
+def test_runtime_bundle_can_skip_unavailable_provenance_references(tmp_path: Path):
+    module = load_module()
+    manifest = write_fixture_manifest(tmp_path)
+    document, manifest_path = module.load_manifest(manifest)
+    document["profiles"]["fixture"]["reference_assets"]["roadrunner_opendrive"][
+        "path"
+    ] = "missing-authoring-source.xodr"
+
+    with pytest.raises(module.BundleError, match="source does not exist"):
+        module.inspect_profile(document, "fixture", manifest_path)
+
+    inspection = module.inspect_profile(
+        document, "fixture", manifest_path, inspect_references=False
+    )
+    assert inspection["reference_assets"] == {}
+    assert "reference assets were not inspected" in " ".join(inspection["warnings"])
+
+
 def test_setup_refuses_to_clobber_regular_map_asset(tmp_path: Path):
     module = load_module()
     manifest_path, inspection = inspect_fixture(module, tmp_path)

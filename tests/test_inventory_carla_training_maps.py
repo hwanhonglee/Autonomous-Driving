@@ -81,23 +81,52 @@ def test_unavailable_towns_are_explicitly_excluded():
         assert "unseen" in maps[map_id]["reason"]
 
 
-def test_runtime_validated_variant_asset_bindings_exist():
+def test_runtime_bindings_are_relocatable_and_missing_assets_are_reported(
+    tmp_path, monkeypatch
+):
     module = load_module()
+    carla_root = tmp_path / "carla-package"
+    carla_source_root = tmp_path / "carla-source"
+    ue4_root = tmp_path / "unreal-engine"
+    monkeypatch.setenv("CARLA_ROOT", str(carla_root))
+    monkeypatch.setenv("CARLA_SOURCE_ROOT", str(carla_source_root))
+    monkeypatch.setenv("UE4_ROOT", str(ue4_root))
+
+    town02_level = carla_root / "CarlaUE4/Content/Carla/Maps/Town02_Opt.umap"
+    town02_xodr = (
+        carla_root / "CarlaUE4/Content/Carla/Maps/OpenDrive/Town02_Opt.xodr"
+    )
+    town02_level.parent.mkdir(parents=True)
+    town02_xodr.parent.mkdir(parents=True)
+    town02_level.write_bytes(b"umap")
+    town02_xodr.write_text("<OpenDRIVE/>", encoding="utf-8")
+
     document, _ = module.load_manifest(MANIFEST)
     maps = {entry["id"]: entry for entry in document["maps"]}
 
-    for map_id in (
-        "town02_opt",
-        "town03",
-        "town05_opt",
-        "town10hd_opt",
-        "c_track_1_0_7",
-        "woraksan_1_0_3",
-    ):
-        assert Path(maps[map_id]["level_path"]).is_file()
-        assert Path(maps[map_id]["opendrive_path"]).is_file()
+    assert document["server_profiles"]["packaged_0915"]["executable"] == str(
+        carla_root / "CarlaUE4.sh"
+    )
+    assert maps["town02_opt"]["level_path"] == str(town02_level)
+    assert maps["town02_opt"]["opendrive_path"] == str(town02_xodr)
+    assert maps["town12"]["level_path"].startswith(str(carla_source_root))
     assert maps["town10hd_opt"]["level_path"].endswith("/Town10HD_Opt.umap")
     assert maps["town10hd_opt"]["opendrive_path"].endswith("/Town10HD.xodr")
+
+    static = module.collect_static_inventory(document)
+    static_maps = {entry["id"]: entry for entry in static["maps"]}
+    assert static_maps["town02_opt"]["assets_complete"] is True
+    assert static_maps["woraksan_1_0_3"]["assets_complete"] is False
+    assert "woraksan_1_0_3" in static["missing_asset_map_ids"]
+    assert "/home/hong" not in MANIFEST.read_text(encoding="utf-8")
+
+
+def test_runtime_root_environment_must_be_absolute(monkeypatch):
+    module = load_module()
+    monkeypatch.setenv("CARLA_ROOT", "relative/carla")
+
+    with pytest.raises(module.ManifestError, match="CARLA_ROOT must be an absolute"):
+        module.load_manifest(MANIFEST)
 
 
 def test_validator_rejects_canonical_load_name_drift():
@@ -250,6 +279,10 @@ def test_static_cli_writes_atomic_json_without_carla(tmp_path, monkeypatch):
         "source_editor_required": 4,
         "unavailable": 5,
     }
+    assert len(report["static"]["maps"]) == 19
+    assert report["static"]["runtime_roots"]["CARLA_ROOT"] == str(
+        module.runtime_roots()["CARLA_ROOT"]
+    )
     assert report["live"] is None
     assert not list(output.parent.glob("*.tmp"))
 

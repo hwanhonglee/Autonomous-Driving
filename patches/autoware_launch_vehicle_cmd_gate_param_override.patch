@@ -1,0 +1,44 @@
+diff --git a/autoware_launch/launch/autoware.launch.xml b/autoware_launch/launch/autoware.launch.xml
+--- a/autoware_launch/launch/autoware.launch.xml
++++ b/autoware_launch/launch/autoware.launch.xml
+@@ -31,6 +31,11 @@
+   <arg name="launch_vehicle_interface" default="true" description="launch vehicle interface"/>
+   <!-- Control -->
+   <arg name="check_external_emergency_heartbeat" default="false"/>
++  <arg
++    name="vehicle_cmd_gate_param_path"
++    default="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"
++    description="vehicle command gate parameter file"
++  />
+   <arg name="use_lateral_controller_param_override" default="false"/>
+   <arg
+     name="lateral_controller_param_path"
+@@ -138,7 +143,8 @@
+       <arg name="use_sim_time" value="$(var use_sim_time)"/>
+       <arg name="vehicle_model" value="$(var vehicle_model)"/>
+       <arg name="use_lateral_controller_param_override" value="$(var use_lateral_controller_param_override)"/>
+       <arg name="lateral_controller_param_path" value="$(var lateral_controller_param_path)"/>
+       <arg name="use_longitudinal_controller_param_override" value="$(var use_longitudinal_controller_param_override)"/>
+       <arg name="longitudinal_controller_param_path" value="$(var longitudinal_controller_param_path)"/>
++      <arg name="vehicle_cmd_gate_param_path" value="$(var vehicle_cmd_gate_param_path)"/>
+     </include>
+diff --git a/autoware_launch/launch/components/tier4_control_component.launch.xml b/autoware_launch/launch/components/tier4_control_component.launch.xml
+--- a/autoware_launch/launch/components/tier4_control_component.launch.xml
++++ b/autoware_launch/launch/components/tier4_control_component.launch.xml
+@@ -10,6 +10,7 @@
+   <arg name="use_aeb_autoware_state_check" default="true"/>
+   <arg name="use_sim_time" default="false"/>
+   <arg name="vehicle_model" default="sample_vehicle"/>
++  <arg name="vehicle_cmd_gate_param_path" default="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"/>
+   <arg name="use_lateral_controller_param_override" default="false"/>
+   <arg name="lateral_controller_param_path" default=""/>
+   <arg name="use_longitudinal_controller_param_override" default="false"/>
+@@ -81,7 +82,7 @@
+     <arg name="nearest_search_param_path" value="$(find-pkg-share autoware_launch)/config/control/common/nearest_search.param.yaml"/>
+ 
+     <!-- package param path -->
+-    <arg name="vehicle_cmd_gate_param_path" value="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"/>
++    <arg name="vehicle_cmd_gate_param_path" value="$(var vehicle_cmd_gate_param_path)"/>
+     <arg name="control_command_gate_param_path" value="$(find-pkg-share autoware_launch)/config/control/control_command_gate/control_command_gate.param.yaml"/>
+     <arg name="lane_departure_checker_param_path" value="$(find-pkg-share autoware_launch)/config/control/lane_departure_checker/lane_departure_checker.param.yaml"/>
+     <arg name="control_validator_param_path" value="$(find-pkg-share autoware_launch)/config/control/control_validator/control_validator.param.yaml"/>

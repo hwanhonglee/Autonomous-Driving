@@ -52,7 +52,9 @@ def test_serialize_route_appends_exact_goal_and_recalculates_distances():
     assert len(points) == 3
     assert points[-1]["x"] == 11.0
     assert points[-1]["y"] == 2.0
-    assert points[-1]["z"] == 0.3
+    # Spawn-point clearance Z is not road geometry.  The exact X/Y/yaw goal is
+    # serialized at the final CARLA road-waypoint Z.
+    assert points[-1]["z"] == 0.0
     assert points[-1]["yaw"] == -math.pi / 2.0
     assert points[-1]["distance_m"] == 10.0 + math.sqrt(5.0)
     assert points[-1]["remaining_m"] == 0.0
@@ -69,7 +71,7 @@ def test_serialize_route_normalizes_matching_terminal_without_duplicate():
     points = serialize_route(route, Transform(10.0, 0.0, z=0.3, yaw=45.0))
 
     assert len(points) == 2
-    assert points[-1]["z"] == 0.3
+    assert points[-1]["z"] == 0.0
     assert points[-1]["yaw"] == -math.pi / 4.0
     assert points[-1]["distance_m"] == 10.0
     assert points[-1]["remaining_m"] == 0.0

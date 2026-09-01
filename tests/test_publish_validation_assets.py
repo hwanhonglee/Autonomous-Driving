@@ -7,6 +7,7 @@ import subprocess
 
 from PIL import Image
 import pytest
+import yaml
 
 from scripts.e2e import carla_basicagent_sweep_report as sweep_report
 from scripts.e2e import publish_validation_assets as publisher
@@ -197,7 +198,7 @@ def _write_labeled_vad_trial(
     Image.new("RGB", (320, 180), "green").save(
         directory / "turn_path_control.gif", save_all=True
     )
-    Image.new("RGB", (1280, 720), "navy").save(
+    Image.new("RGB", (1920, 1080), "navy").save(
         directory / "autoware_rviz_fullscreen.png"
     )
     Image.new("RGB", (960, 540), "navy").save(
@@ -211,8 +212,8 @@ def _write_labeled_vad_trial(
             "candidate_topic": "/planning/vad/candidate_trajectories",
             "capture_started_after_candidate": True,
             "display": ":99.0",
-            "source_dimensions": [1280, 720],
-            "png_dimensions": [1280, 720],
+            "source_dimensions": [1920, 1080],
+            "png_dimensions": [1920, 1080],
             "gif_dimensions": [960, 540],
             "png_file": "autoware_rviz_fullscreen.png",
             "gif_file": "autoware_rviz_drive.gif",
@@ -225,46 +226,174 @@ def _write_labeled_vad_trial(
     )
 
 
-def _write_centered_vad_visual_refresh(
-    directory: Path, selected_directory: Path
-) -> None:
-    selected_route = json.loads(
-        (selected_directory / "source_route.json").read_text(encoding="utf-8")
-    )
-    _write_labeled_vad_trial(
-        directory,
-        scenario=selected_route["scenario"],
-        start_spawn_index=selected_route["start_spawn_index"],
-        goal_spawn_index=selected_route["goal_spawn_index"],
-        town=selected_route["town"],
-        captured_at="2026-08-31T05:00:30+00:00",
-    )
-    shutil.copy2(
-        selected_directory / "source_route.json", directory / "source_route.json"
-    )
-    Image.new("RGB", (1280, 720), "yellow").save(
+def _write_centered_capture_evidence(
+    directory: Path,
+    *,
+    speed_contract: dict | None = None,
+    trial_id: str | None = None,
+    scenario: str | None = None,
+) -> dict[str, str]:
+    Image.new("RGB", (1920, 1080), "yellow").save(
         directory / "autoware_rviz_candidate.png"
     )
     (directory / "autoware_rviz_capture.mkv").write_bytes(b"fixture-recording")
     provenance = directory / "rviz_capture_provenance"
     provenance.mkdir(parents=True, exist_ok=True)
     config = provenance / "autoware_vad_carla.rviz"
-    config.write_text("Panels: []\n", encoding="utf-8")
+    shutil.copy2(
+        ROOT / "autoware_e2e_vad_launch/rviz/autoware_vad_carla.rviz",
+        config,
+    )
     config_sha256 = publisher._sha256(config)
     (provenance / "SHA256SUMS").write_text(
         f"{config_sha256}  autoware_vad_carla.rviz\n", encoding="utf-8"
     )
+    runtime_values: dict[str, object] = {
+        "RECOMMENDED": "true",
+        "VISUALIZE": "true",
+        "CAPTURE_DESKTOP": "true",
+        "RVIZ_CAPTURE_CONFIG": str(config.resolve()),
+        "RVIZ_CAPTURE_CONFIG_SHA256": config_sha256,
+    }
+    if speed_contract is not None:
+        assert trial_id in {"straight", "turn"}
+        assert scenario in {"straight", "left", "right"}
+        trial_contract = speed_contract["trials"][trial_id]
+        parameters = speed_contract["route_manager_parameters"]
+        gate = speed_contract["vehicle_cmd_gate"]
+        controller = speed_contract["longitudinal_controller"]
+        speed_provenance = directory / "speed_profile_provenance"
+        speed_provenance.mkdir(exist_ok=True)
+        source_files = {
+            "vehicle_cmd_gate.param.yaml": ROOT
+            / "autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_30kph.param.yaml",
+            "vehicle_cmd_gate.param.yaml.metadata.json": ROOT
+            / "autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_30kph.param.yaml.metadata.json",
+            "longitudinal_controller.param.yaml": ROOT
+            / "autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml",
+            "longitudinal_controller.param.yaml.metadata.json": ROOT
+            / "autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml.metadata.json",
+        }
+        for name, source in source_files.items():
+            shutil.copy2(source, speed_provenance / name)
+        speed_sha256 = {
+            name: publisher._sha256(speed_provenance / name)
+            for name in source_files
+        }
+        (speed_provenance / "SHA256SUMS").write_text(
+            "".join(
+                f"{digest}  {name}\n"
+                for name, digest in speed_sha256.items()
+            ),
+            encoding="utf-8",
+        )
+        (directory / "vad_route_manager.params.yaml").write_text(
+            yaml.safe_dump(
+                {"/vad_route_manager": {"ros__parameters": parameters}}
+            ),
+            encoding="utf-8",
+        )
+        (directory / "vehicle_cmd_gate.params.yaml").write_text(
+            "fixture: vehicle_cmd_gate\n", encoding="utf-8"
+        )
+        (directory / "controller.params.yaml").write_text(
+            "fixture: longitudinal_controller\n", encoding="utf-8"
+        )
+        runtime_values.update(
+            {
+                "VSCODE_SNAP_GUI_ENV_SANITIZED": "false",
+                "SPEED_30KPH": "true",
+                "TIGHT_CORRIDOR_CANDIDATE": "false",
+                "TRAJECTORY_STABILITY_CANDIDATE": "false",
+                "SMART_MPC": "false",
+                "FP16_HEADS": "false",
+                "SPEED_PROFILE_ID": speed_contract["profile_id"],
+                "ROUTE_SCENARIO": scenario,
+                "SPEED_EXPOSURE_MODE": trial_contract["exposure_mode"],
+                "LONGITUDINAL_SPEED_SOURCE": speed_contract[
+                    "longitudinal_speed_source"
+                ],
+                "LONGITUDINAL_ACCELERATION_ROLE": speed_contract[
+                    "longitudinal_acceleration_role"
+                ],
+                "VAD_GEOMETRY_SOURCE": "true",
+                "VAD_VELOCITY_EVALUATED": "false",
+                "VAD_GEOMETRY_EVALUATED": "true",
+                "VAD_CRUISE_VELOCITY_EVALUATED": "false",
+                "VAD_HARD_STOP_SENTINEL_PRESERVED": "true",
+                "VAD_IMU_ACCELERATION_ENABLED": "true",
+                "CLOSED_LOOP_VALIDATION_STATE": speed_contract[
+                    "validation_state"
+                ],
+                "SPEED_LIMIT_SOURCE": gate["speed_limit_source"],
+                "REAL_VEHICLE_READY": "false",
+                "TARGET_SPEED_MPS": speed_contract["target_speed_mps"],
+                "TARGET_SPEED_KPH": 30.0,
+                "MINIMUM_SUSTAINED_SPEED_MPS": trial_contract[
+                    "minimum_sustained_speed_mps"
+                ],
+                "MINIMUM_SUSTAINED_SPEED_SEC": trial_contract[
+                    "minimum_sustained_speed_sec"
+                ],
+                "MAXIMUM_OBSERVED_SPEED_MPS": speed_contract[
+                    "maximum_observed_speed_mps"
+                ],
+                "MAXIMUM_SPEED_SAMPLE_GAP_SEC": speed_contract[
+                    "maximum_speed_sample_gap_sec"
+                ],
+                "MAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2": trial_contract[
+                    "maximum_lateral_acceleration_mps2"
+                ],
+                "MAXIMUM_LONGITUDINAL_ACCELERATION_MPS2": parameters[
+                    "maximum_longitudinal_acceleration_mps2"
+                ],
+                "COMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2": gate[
+                    "longitudinal_acceleration_limit_mps2"
+                ],
+                "MAXIMUM_LATERAL_ACCELERATION_MPS2": parameters[
+                    "maximum_lateral_acceleration_mps2"
+                ],
+                "CONTROLLER_STOP_OFFSET_M": parameters[
+                    "controller_stop_offset_m"
+                ],
+                "MANEUVER_LOOKAHEAD_M": parameters["maneuver_lookahead_m"],
+                "MANEUVER_EXIT_LOOKAHEAD_M": parameters[
+                    "maneuver_exit_lookahead_m"
+                ],
+                "ROUTE_CURVATURE_LOOKAHEAD_M": parameters[
+                    "route_curvature_lookahead_m"
+                ],
+                "CURVATURE_SPEED_PREVIEW_M": parameters[
+                    "curvature_speed_preview_m"
+                ],
+                "MAX_ROUTE_DEVIATION_M": parameters["max_route_deviation_m"],
+                "MAX_CANDIDATE_AGE_SEC": parameters["max_candidate_age_sec"],
+                "CANDIDATE_TIMEOUT_SEC": parameters["candidate_timeout_sec"],
+                "COMFORTABLE_DECELERATION_MPS2": parameters[
+                    "comfortable_deceleration_mps2"
+                ],
+                "LONGITUDINAL_PID_MAX_OUT_MPS2": controller[
+                    "maximum_output_mps2"
+                ],
+                "LONGITUDINAL_PID_MAX_P_EFFORT_MPS2": controller[
+                    "maximum_proportional_effort_mps2"
+                ],
+                "VEHICLE_CMD_GATE_PARAM_SHA256": speed_sha256[
+                    "vehicle_cmd_gate.param.yaml"
+                ],
+                "VEHICLE_CMD_GATE_METADATA_SHA256": speed_sha256[
+                    "vehicle_cmd_gate.param.yaml.metadata.json"
+                ],
+                "LONGITUDINAL_CONTROLLER_PARAM_SHA256": speed_sha256[
+                    "longitudinal_controller.param.yaml"
+                ],
+                "LONGITUDINAL_CONTROLLER_METADATA_SHA256": speed_sha256[
+                    "longitudinal_controller.param.yaml.metadata.json"
+                ],
+            }
+        )
     (directory / "runtime.env").write_text(
-        "\n".join(
-            [
-                "RECOMMENDED=true",
-                "VISUALIZE=true",
-                "CAPTURE_DESKTOP=true",
-                f"RVIZ_CAPTURE_CONFIG={config.resolve()}",
-                f"RVIZ_CAPTURE_CONFIG_SHA256={config_sha256}",
-                "",
-            ]
-        ),
+        "".join(f"{key}={value}\n" for key, value in runtime_values.items()),
         encoding="utf-8",
     )
     capture_path = directory / "desktop_capture.json"
@@ -272,7 +401,7 @@ def _write_centered_vad_visual_refresh(
     capture.update(
         {
             "candidate_observed_at": "2026-08-31T04:59:55+00:00",
-            "candidate_png_dimensions": [1280, 720],
+            "candidate_png_dimensions": [1920, 1080],
             "candidate_png_file": "autoware_rviz_candidate.png",
             "candidate_still_captured_at": "2026-08-31T04:59:57+00:00",
             "recording_file": "autoware_rviz_capture.mkv",
@@ -318,10 +447,60 @@ def _write_centered_vad_visual_refresh(
         }
     )
     _write_json(capture_path, capture)
+    if speed_contract is None:
+        return {}
+    return {
+        "runtime_env_sha256": publisher._sha256(directory / "runtime.env"),
+        "route_manager_parameter_dump_sha256": publisher._sha256(
+            directory / "vad_route_manager.params.yaml"
+        ),
+        "vehicle_cmd_gate_parameter_dump_sha256": publisher._sha256(
+            directory / "vehicle_cmd_gate.params.yaml"
+        ),
+        "longitudinal_controller_parameter_dump_sha256": publisher._sha256(
+            directory / "controller.params.yaml"
+        ),
+        "gate_provenance_sha256": speed_contract["vehicle_cmd_gate"][
+            "parameter_sha256"
+        ],
+        "gate_metadata_sha256": speed_contract["vehicle_cmd_gate"][
+            "metadata_sha256"
+        ],
+        "longitudinal_controller_provenance_sha256": speed_contract[
+            "longitudinal_controller"
+        ]["parameter_sha256"],
+        "longitudinal_controller_metadata_sha256": speed_contract[
+            "longitudinal_controller"
+        ]["metadata_sha256"],
+    }
+
+
+def _write_centered_vad_visual_refresh(
+    directory: Path, selected_directory: Path
+) -> None:
+    selected_route = json.loads(
+        (selected_directory / "source_route.json").read_text(encoding="utf-8")
+    )
+    _write_labeled_vad_trial(
+        directory,
+        scenario=selected_route["scenario"],
+        start_spawn_index=selected_route["start_spawn_index"],
+        goal_spawn_index=selected_route["goal_spawn_index"],
+        town=selected_route["town"],
+        captured_at="2026-08-31T05:00:30+00:00",
+    )
+    shutil.copy2(
+        selected_directory / "source_route.json", directory / "source_route.json"
+    )
+    _write_centered_capture_evidence(directory)
 
 
 def _write_terminal_vad_matrix(
-    artifact_root: Path, snapshot, *, aggregate_status: str = "COMPLETE"
+    artifact_root: Path,
+    snapshot,
+    *,
+    aggregate_status: str = "COMPLETE",
+    runnable_map_ids: frozenset[str] = frozenset({"town01"}),
 ) -> Path:
     matrix_root = artifact_root / "autoware_vad_town_matrix"
     matrix_id = "fixture_straight_turn"
@@ -345,7 +524,7 @@ def _write_terminal_vad_matrix(
     for entry in snapshot["maps"]:
         map_id = entry["map_id"]
         canonical_name = entry["canonical_name"]
-        runnable = map_id == "town01"
+        runnable = map_id in runnable_map_ids
         plan_maps.append(
             {
                 "map_id": map_id,
@@ -425,7 +604,7 @@ def _write_terminal_vad_matrix(
             "matrix_id": matrix_id,
             "generated_at": "2026-08-31T02:00:00+00:00",
             "canonical_map_count": len(plan_maps),
-            "runnable_map_count": 1,
+            "runnable_map_count": len(runnable_map_ids),
             "runtime_profile": runtime_profile,
             "route_contract": route_contract,
             "maps": plan_maps,
@@ -439,16 +618,302 @@ def _write_terminal_vad_matrix(
             "generated_at": "2026-08-31T04:00:00+00:00",
             "status": aggregate_status,
             "canonical_map_count": len(statuses),
-            "runnable_map_count": 1,
-            "runnable_pass_count": 1,
-            "blocked_map_count": len(statuses) - 1,
-            "status_counts": {"BLOCKED": len(statuses) - 1, "PASS": 1},
+            "runnable_map_count": len(runnable_map_ids),
+            "runnable_pass_count": len(runnable_map_ids),
+            "blocked_map_count": len(statuses) - len(runnable_map_ids),
+            "status_counts": {
+                "BLOCKED": len(statuses) - len(runnable_map_ids),
+                "PASS": len(runnable_map_ids),
+            },
             "runtime_profile": runtime_profile,
             "route_contract": route_contract,
             "maps": statuses,
         },
     )
     return matrix_root
+
+
+def _speed_30kph_runtime_profile() -> dict:
+    manifest = yaml.safe_load(
+        (ROOT / "scripts/e2e/autoware_vad_town_matrix.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    return dict(manifest["runtime_profiles"]["speed_30kph"])
+
+
+def _write_speed_profile_evidence(directory: Path) -> dict[str, str]:
+    result_path = directory / "result.json"
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    context = {
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "vad_geometry_evaluated": True,
+        "vad_velocity_evaluated": False,
+    }
+    result["profile_context"] = context
+    result["speed_exposure"] = {"status": "PASS", **context}
+    _write_json(result_path, result)
+    route_path = Path(result["route_file"]).resolve()
+    route = json.loads(route_path.read_text(encoding="utf-8"))
+    bag = directory / "bag"
+    bag.mkdir(exist_ok=True)
+    (bag / "metadata.yaml").write_text(
+        "rosbag2_bagfile_information:\n  version: 9\n", encoding="utf-8"
+    )
+    (bag / "fixture.db3").write_bytes(b"publisher-speed-fixture")
+    bag_files = [
+        {
+            "path": path.relative_to(bag).as_posix(),
+            "size_bytes": path.stat().st_size,
+            "sha256": publisher._sha256(path),
+        }
+        for path in sorted(bag.rglob("*"))
+        if path.is_file()
+    ]
+    bag_manifest = {
+        "schema_version": 1,
+        "root": str(bag.resolve()),
+        "files": bag_files,
+    }
+    bag_manifest["sha256"] = publisher._sha256_json(
+        {"schema_version": 1, "files": bag_files}
+    )
+    trial_id = "straight" if route["scenario"] == "straight" else "turn"
+    identity = {
+        "schema_version": 1,
+        "effective_route": {
+            "path": str(route_path),
+            "sha256": publisher._sha256(route_path),
+            "town": route["town"],
+            "scenario": route["scenario"],
+            "trial_id": trial_id,
+            "route_length_m": route["route_length_m"],
+        },
+        "route_result": {
+            "path": str(result_path.resolve()),
+            "sha256": publisher._sha256(result_path),
+            "success": True,
+            "execution_mode": "full_stack",
+            "profile_context": context,
+        },
+        "rosbag": bag_manifest,
+    }
+    identity["sha256"] = publisher._sha256_json(identity)
+    required_series = [
+        "raw_selected_vad",
+        "explicit_overlaid_planning",
+        "gated_control_command",
+        "actual_odometry",
+    ]
+    _write_json(
+        directory / "speed_profile.json",
+        {
+            "schema_version": 1,
+            "analysis": "carla_speed_source_evidence",
+            "status": "complete",
+            "inputs": {
+                "bag": str(bag.resolve()),
+                "profile_id": publisher.SPEED_30KPH_PROFILE_ID,
+                "longitudinal_speed_source": "explicit_simulation_nominal",
+                "target_speed_mps": 8.333333333333334,
+            },
+            "source_identity": identity,
+            "interpretation": {
+                "cruise_velocity_source": "explicit CARLA simulation profile",
+                "planning_geometry": "VAD route-manager hybrid",
+                "raw_vad_velocity_is_cruise_target": False,
+                "real_vehicle_ready": False,
+            },
+            "outputs": {
+                "json": "speed_profile.json",
+                "plot": "speed_profile.png",
+            },
+            "quality": {"problems": [], "required_series": required_series},
+            "series": {name: [{"time_sec": 0.0, "speed_mps": 0.0}] for name in required_series},
+        },
+    )
+    Image.new("RGB", (640, 360), "purple").save(directory / "speed_profile.png")
+    return {
+        "speed_profile_json_sha256": publisher._sha256(
+            directory / "speed_profile.json"
+        ),
+        "speed_profile_plot_sha256": publisher._sha256(
+            directory / "speed_profile.png"
+        ),
+        "speed_profile_source_identity_sha256": identity["sha256"],
+        "speed_profile_result_sha256": identity["route_result"]["sha256"],
+        "speed_profile_route_sha256": identity["effective_route"]["sha256"],
+        "speed_profile_bag_manifest_sha256": bag_manifest["sha256"],
+    }
+
+
+def _write_speed_lifecycle_evidence(
+    directory: Path, *, map_id: str, trial_id: str, canonical_name: str
+) -> dict:
+    generation_id = f"{map_id}_{trial_id}_{directory.name}"
+    owner_pid = 4242
+    server_log = directory / "carla_server.log"
+    server_log.write_text("fixture CARLA generation completed\n", encoding="utf-8")
+    for file_name, stage, mode in (
+        ("carla_preflight_health.json", "trial_preflight", "running"),
+        ("carla_completion_health.json", "trial_completion", "running"),
+        ("carla_cleanup_health.json", "trial_cleanup", "stopped"),
+    ):
+        health = {
+            "schema_version": 1,
+            "status": "PASS",
+            "stage": stage,
+            "mode": mode,
+            "generation_id": generation_id,
+            "expected_map": canonical_name,
+            "owner_pid": owner_pid,
+            "owner_pgid": owner_pid,
+            "read_only": True,
+        }
+        if mode == "stopped":
+            health["port_released"] = True
+        _write_json(directory / file_name, health)
+    return {
+        "schema_version": 1,
+        "status": "PASS",
+        "lifecycle": "cold_start_owned_process_group_per_trial",
+        "generation_id": generation_id,
+        "expected_map": canonical_name,
+        "owner_pid": owner_pid,
+        "owner_pgid": owner_pid,
+        "server_log": {
+            "path": str(server_log.resolve()),
+            "size_bytes": server_log.stat().st_size,
+            "sha256": publisher._sha256(server_log),
+        },
+        "preflight_health_sha256": publisher._sha256(
+            directory / "carla_preflight_health.json"
+        ),
+        "completion_health_sha256": publisher._sha256(
+            directory / "carla_completion_health.json"
+        ),
+        "cleanup_health_sha256": publisher._sha256(
+            directory / "carla_cleanup_health.json"
+        ),
+        "post_completion_exit_policy": (
+            "completion RPC PASS preserves a completed drive; the next trial "
+            "always receives a new cold-start generation"
+        ),
+    }
+
+
+def _speed_visual_evidence_binding(directory: Path) -> dict:
+    return {
+        "schema_version": 1,
+        "binding": "matrix_validation_sha256_v1",
+        "fullscreen_dimensions": [1920, 1080],
+        "candidate_dimensions": [1920, 1080],
+        "drive_gif_dimensions": [960, 540],
+        "vehicle_centered": True,
+        "target_frame": "base_link",
+        "files": {
+            name: {
+                "size_bytes": (directory / name).stat().st_size,
+                "sha256": publisher._sha256(directory / name),
+            }
+            for name in publisher.SPEED_30KPH_VISUAL_EVIDENCE_NAMES
+        },
+    }
+
+
+def _convert_terminal_matrix_to_speed_30kph(matrix_root: Path) -> None:
+    profile = _speed_30kph_runtime_profile()
+    plan_path = matrix_root / "matrix_plan.json"
+    aggregate_path = matrix_root / "aggregate.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    aggregate = json.loads(aggregate_path.read_text(encoding="utf-8"))
+    plan["runtime_profile_selector"] = "speed_30kph"
+    plan["runtime_profile"] = profile
+    aggregate["runtime_profile_selector"] = "speed_30kph"
+    aggregate["runtime_profile"] = profile
+    rviz_path = ROOT / "autoware_e2e_vad_launch/rviz/autoware_vad_carla.rviz"
+    campaign_contract = {
+        "schema_version": 1,
+        "hash_algorithm": "sha256",
+        "repository_root": ".",
+        "files": [
+            {
+                "path": "autoware_e2e_vad_launch/rviz/autoware_vad_carla.rviz",
+                "sha256": publisher._sha256(rviz_path),
+            }
+        ],
+    }
+    campaign_sha256 = publisher._sha256_json(campaign_contract)
+    admission_sha256 = "a" * 64
+    plan["campaign_execution_contract"] = campaign_contract
+    plan["campaign_execution_contract_sha256"] = campaign_sha256
+    plan["admission_contract_sha256"] = admission_sha256
+    aggregate["campaign_execution_contract_sha256"] = campaign_sha256
+    aggregate["admission_contract_sha256"] = admission_sha256
+    for status in aggregate["maps"]:
+        if status["status"] != "PASS":
+            continue
+        for trial_id, trial in status["trials"].items():
+            attempt = Path(trial["attempt_directory"])
+            validation_path = Path(trial["validation"])
+            validation = json.loads(validation_path.read_text(encoding="utf-8"))
+            validation["runtime_profile_selector"] = "speed_30kph"
+            validation["runtime_profile"] = profile
+            validation["campaign_execution_contract_sha256"] = campaign_sha256
+            validation["admission_contract_sha256"] = admission_sha256
+            if trial_id == "straight":
+                for name in ("aligned_route.json", "source_route.json"):
+                    route_path = attempt / name
+                    route = json.loads(route_path.read_text(encoding="utf-8"))
+                    route.pop("start_spawn_index")
+                    route.pop("goal_spawn_index")
+                    route.update(
+                        {
+                            "endpoint_source": "generated_waypoints",
+                            "endpoint_waypoint_spacing_m": 10.0,
+                            "start_endpoint_index": 11,
+                            "goal_endpoint_index": 22,
+                            "spawn_height_contract": {
+                                "offset_owner": "autoware_carla_interface_bridge",
+                                "bridge_z_offset_m": 2.0,
+                                "catalog_z_offset_m": 0.0,
+                            },
+                        }
+                    )
+                    _write_json(route_path, route)
+            speed_bindings = _write_speed_profile_evidence(attempt)
+            route = json.loads(
+                (attempt / "aligned_route.json").read_text(encoding="utf-8")
+            )
+            validation["turn_direction"] = (
+                route["scenario"] if trial_id == "turn" else None
+            )
+            runtime_bindings = _write_centered_capture_evidence(
+                attempt,
+                speed_contract=profile["speed_contract"],
+                trial_id=trial_id,
+                scenario=route["scenario"],
+            )
+            validation["speed_contract"] = {
+                "status": "PASS",
+                "profile_id": publisher.SPEED_30KPH_PROFILE_ID,
+                "maximum_observed_speed_mps": 7.74,
+                **speed_bindings,
+                **runtime_bindings,
+            }
+            validation["desktop_capture"] = json.loads(
+                (attempt / "desktop_capture.json").read_text(encoding="utf-8")
+            )
+            validation["carla_lifecycle"] = _write_speed_lifecycle_evidence(
+                attempt,
+                map_id=status["map_id"],
+                trial_id=trial_id,
+                canonical_name=status["canonical_name"],
+            )
+            validation["visual_evidence"] = _speed_visual_evidence_binding(attempt)
+            _write_json(validation_path, validation)
+    _write_json(plan_path, plan)
+    _write_json(aggregate_path, aggregate)
 
 
 def _mark_terminal_matrix_straight_failed(matrix_root: Path) -> None:
@@ -572,6 +1037,46 @@ def test_verified_source_archive_fails_closed_on_digest_mismatch(
         )
 
 
+def test_publish_staging_rejects_manifest_and_symlink_path_escape(
+    tmp_path: Path,
+) -> None:
+    destination = tmp_path / "publication"
+    destination.mkdir()
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep", encoding="utf-8")
+    stale = destination / "stale.txt"
+    stale.write_text("remove", encoding="utf-8")
+    _write_json(
+        destination / "publication_manifest.json",
+        {
+            "generated_files": [
+                str(victim),
+                "../victim.txt",
+                "stale.txt",
+            ]
+        },
+    )
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    (staging / "README.md").write_text("new", encoding="utf-8")
+
+    publisher._publish_staging(staging, destination, [])
+
+    assert victim.read_text(encoding="utf-8") == "keep"
+    assert not stale.exists()
+    assert (destination / "README.md").read_text(encoding="utf-8") == "new"
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (destination / "escape").symlink_to(outside, target_is_directory=True)
+    escaped_staging = tmp_path / "escaped_staging"
+    (escaped_staging / "escape").mkdir(parents=True)
+    (escaped_staging / "escape/payload.txt").write_text("blocked", encoding="utf-8")
+    with pytest.raises(publisher.PublicationError, match="publish outside"):
+        publisher._publish_staging(escaped_staging, destination, [])
+    assert not (outside / "payload.txt").exists()
+
+
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is required")
 def test_publish_renders_only_verified_basicagent_run_and_separates_scope(
     tmp_path: Path,
@@ -583,11 +1088,17 @@ def test_publish_renders_only_verified_basicagent_run_and_separates_scope(
     stale.parent.mkdir(parents=True)
     stale.write_bytes(b"stale")
     report = tmp_path / "docs/validation-2026-08-31.md"
+    report_preamble = tmp_path / "docs/validation-summary.inc.md"
+    report_preamble.write_text(
+        "## Campaign summary\n\nReproducible operator-reviewed context.\n",
+        encoding="utf-8",
+    )
 
     payload = publisher.publish_assets(
         artifact_root,
         docs_root,
         report_path=report,
+        report_preamble_path=report_preamble,
         expected_selected_map_count=1,
         gif_fps=2.0,
         gif_max_frames=2,
@@ -614,9 +1125,23 @@ def test_publish_renders_only_verified_basicagent_run_and_separates_scope(
     assert "expert_overview_1920x1080.png" in readme
     assert publisher.BASICAGENT_AGGREGATE_NAME in readme
     assert "../../../../artifacts/" not in readme
-    assert "all_maps_basicagent_status_1920x1080.png" in report.read_text(
-        encoding="utf-8"
-    )
+    assert "Campaign summary" not in readme
+    assert f"--report-preamble {report_preamble.resolve()}" in readme
+    assert "--expected-map-count 19" in readme
+    assert "--expected-selected-map-count 1" in readme
+    report_text = report.read_text(encoding="utf-8")
+    assert "all_maps_basicagent_status_1920x1080.png" in report_text
+    assert report_text.index("## Campaign summary") < report_text.index("Source:")
+    assert payload["report_preamble"] == {
+        "source": str(report_preamble.resolve()),
+        "sha256": publisher._sha256(report_preamble),
+        "validation_scope": (
+            "UTF-8, non-empty, no level-one heading, SHA256-bound; "
+            "operator-reviewed narrative, not semantically generated"
+        ),
+        "embedding_requested": True,
+        "report_target": str(report.resolve()),
+    }
     completed = subprocess.run(
         ["sha256sum", "-c", "SHA256SUMS"],
         cwd=docs_root,
@@ -625,6 +1150,204 @@ def test_publish_renders_only_verified_basicagent_run_and_separates_scope(
         check=False,
     )
     assert completed.returncode == 0, completed.stderr
+
+
+def test_report_preamble_requires_report_and_cannot_add_level_one_heading(
+    tmp_path: Path,
+) -> None:
+    preamble = tmp_path / "summary.md"
+    preamble.write_text("## Valid summary\n", encoding="utf-8")
+
+    with pytest.raises(publisher.PublicationError, match="requires a report path"):
+        publisher.publish_assets(
+            tmp_path / "artifacts",
+            tmp_path / "assets",
+            report_preamble_path=preamble,
+        )
+
+    preamble.write_text("# Duplicate title\n", encoding="utf-8")
+    with pytest.raises(publisher.PublicationError, match="level-one heading"):
+        publisher._load_report_preamble(preamble)
+
+    preamble.write_text("## Valid summary\n\n# Late duplicate title\n", encoding="utf-8")
+    with pytest.raises(publisher.PublicationError, match="level-one heading"):
+        publisher._load_report_preamble(preamble)
+
+
+def test_owned_window_visual_audit_requires_complete_centered_pass(
+    tmp_path: Path,
+) -> None:
+    audit_dir = tmp_path / "visual_audit"
+    audit_dir.mkdir()
+    identities = {("town01", "straight"), ("town01", "turn")}
+    trial_directories: dict[tuple[str, str], Path] = {}
+
+    def source_record(path: Path, *, dimensions: list[int] | None = None) -> dict:
+        record = {
+            "sha256": publisher._sha256(path),
+            "size_bytes": path.stat().st_size,
+        }
+        if dimensions is not None:
+            record["dimensions"] = dimensions
+        return record
+
+    def visual_scene(map_id: str, trial_id: str, png_sha256: str) -> dict:
+        return {
+            "map_id": map_id,
+            "trial_id": trial_id,
+            "status": "PASS",
+            "vehicle_visible": True,
+            "reference_route_visible": True,
+            "final_trajectory_visible": True,
+            "vad_trajectories_visible": True,
+            "viewport_centered": True,
+            "representative_png_sha256": png_sha256,
+        }
+
+    review_scenes = []
+    audit_trials = []
+    for identity in sorted(identities):
+        map_id, trial_id = identity
+        trial = tmp_path / "trials" / map_id / trial_id
+        trial.mkdir(parents=True)
+        trial_directories[identity] = trial
+        _write_json(trial / "result.json", {"success": True})
+        _write_json(trial / "source_route.json", {"town": "Town01"})
+        _write_json(trial / "desktop_capture.json", {"schema_version": 1})
+        Image.new("RGB", (192, 108), "navy").save(
+            trial / "autoware_rviz_fullscreen.png"
+        )
+        Image.new("RGB", (192, 108), "green").save(
+            trial / "autoware_rviz_candidate.png"
+        )
+        Image.new("RGB", (96, 54), "purple").save(
+            trial / "autoware_rviz_drive.gif", save_all=True
+        )
+        (trial / "autoware_rviz_capture.mkv").write_bytes(b"bound-recording")
+        representative_sha256 = publisher._sha256(
+            trial / "autoware_rviz_fullscreen.png"
+        )
+        scene = visual_scene(map_id, trial_id, representative_sha256)
+        review_scenes.append(scene)
+        audit_trials.append({
+            "map_id": scene["map_id"],
+            "trial_id": scene["trial_id"],
+            "status": "PASS",
+            "selected_attempt_directory": str(trial),
+            "visual_review": scene,
+            "result": {
+                "sha256": publisher._sha256(trial / "result.json")
+            },
+            "source_route": {
+                "status": "EXACT_MATCH",
+                "sha256": publisher._sha256(trial / "source_route.json"),
+                "centered_file": str(trial / "source_route.json"),
+                "publication_original_file": str(trial / "source_route.json"),
+            },
+            "capture": {
+                "metadata_sha256": publisher._sha256(
+                    trial / "desktop_capture.json"
+                ),
+                "representative_png": source_record(
+                    trial / "autoware_rviz_fullscreen.png",
+                    dimensions=[192, 108],
+                ),
+                "candidate_png": source_record(
+                    trial / "autoware_rviz_candidate.png",
+                    dimensions=[192, 108],
+                ),
+                "drive_gif": source_record(
+                    trial / "autoware_rviz_drive.gif",
+                    dimensions=[96, 54],
+                ),
+                "recording": source_record(
+                    trial / "autoware_rviz_capture.mkv"
+                ),
+                "rviz_view_contract": {
+                    "vehicle_centered": True,
+                    "target_frame": "base_link",
+                    "center_xy_m": [0.0, 0.0],
+                },
+                "representative_frame": {
+                    "frame_verification": {"pixel_exact_match": True}
+                },
+            },
+        })
+    contact_sheet = audit_dir / "v16_owned_window_contact_sheet.png"
+    contact = Image.new("RGB", (320, 180), "navy")
+    contact.paste("green", (160, 0, 320, 180))
+    contact.save(contact_sheet)
+    _write_json(
+        audit_dir / "v16_owned_window_visual_review.json",
+        {"schema_version": 1, "scenes": review_scenes},
+    )
+    _write_json(
+        audit_dir / "v16_owned_window_visual_audit.json",
+        {
+            "status": "PASS",
+            "mechanical_status": "PASS",
+            "counts": {
+                "maps": 1,
+                "total": 2,
+                "mechanical_pass": 2,
+                "visual_pass": 2,
+                "visual_flag": 0,
+                "visual_pending": 0,
+            },
+            "contact_sheet": {
+                "dimensions": [320, 180],
+                "scene_count": 2,
+                "rows": 1,
+                "columns": 2,
+                "sha256": publisher._sha256(contact_sheet),
+            },
+            "trials": audit_trials,
+        },
+    )
+    (audit_dir / "v16_owned_window_visual_audit.md").write_text(
+        "# Audit\n\n- Overall status: **PASS**\n", encoding="utf-8"
+    )
+
+    record = publisher.collect_owned_window_visual_audit(
+        audit_dir, trial_directories
+    )
+
+    assert record is not None
+    assert record["status"] == "PASS"
+    assert record["counts"]["visual_pass"] == 2
+    assert record["contact_sheet_dimensions"] == [320, 180]
+    assert set(record["files"]) == set(publisher.OWNED_WINDOW_VISUAL_AUDIT_NAMES)
+    staging = tmp_path / "staging"
+    copied = publisher._copy_owned_window_visual_audit(record, staging)
+    assert copied["counts"]["total"] == 2
+    for name in publisher.OWNED_WINDOW_VISUAL_AUDIT_NAMES:
+        assert (
+            staging / publisher.OWNED_WINDOW_VISUAL_AUDIT_DIR / name
+        ).read_bytes() == (audit_dir / name).read_bytes()
+
+    audit = json.loads(
+        (audit_dir / "v16_owned_window_visual_audit.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    audit["trials"][0]["capture"]["representative_png"]["sha256"] = "0" * 64
+    _write_json(audit_dir / "v16_owned_window_visual_audit.json", audit)
+    with pytest.raises(publisher.PublicationError, match="source binding mismatch"):
+        publisher.collect_owned_window_visual_audit(audit_dir, trial_directories)
+    audit["trials"][0]["capture"]["representative_png"]["sha256"] = (
+        audit["trials"][0]["visual_review"]["representative_png_sha256"]
+    )
+    _write_json(audit_dir / "v16_owned_window_visual_audit.json", audit)
+
+    review = json.loads(
+        (audit_dir / "v16_owned_window_visual_review.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    review["scenes"][0]["viewport_centered"] = False
+    _write_json(audit_dir / "v16_owned_window_visual_review.json", review)
+    with pytest.raises(publisher.PublicationError, match="visible content"):
+        publisher.collect_owned_window_visual_audit(audit_dir, trial_directories)
 
 
 def test_vad_publication_requires_successful_full_stack_result(tmp_path: Path) -> None:
@@ -704,6 +1427,13 @@ def test_same_route_centered_refresh_overlays_only_visual_media_and_is_archived(
     selected = matrix_root / "maps/town01/trials/straight/attempt_001"
     refresh = artifact_root / "centered_vad_v2/town01/straight/attempt_001"
     _write_centered_vad_visual_refresh(refresh, selected)
+    # Recorder startup/shutdown tails do not have to be symmetric around the
+    # route.  The representative image is bound to the route midpoint by its
+    # timestamp and exact recording offset, not to the whole MKV midpoint.
+    capture_path = refresh / "desktop_capture.json"
+    capture = json.loads(capture_path.read_text(encoding="utf-8"))
+    capture["representative_frame"]["recording_duration_sec"] = 70.0
+    _write_json(capture_path, capture)
     refresh_specs = publisher._parse_vad_visual_refresh_specs(
         [f"town01:straight={refresh}"]
     )
@@ -1022,6 +1752,418 @@ def test_terminal_matrix_auto_discovers_pass_trials_and_keeps_explicit_lane_foll
     assert "`town01` (Town01) | PASS (matrix) | PASS (matrix) | **PASS/PASS**" in report_text
     assert "lane_follow` row is supplemental" in report_text
     assert "route-assisted HYBRID" in report_text
+
+
+def test_speed_30kph_matrix_is_explicit_external_root_simulation_screening(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+
+    with pytest.raises(
+        publisher.PublicationError,
+        match="does not match the explicitly requested selector",
+    ):
+        publisher.resolve_vad_trial_specs(snapshot, (), matrix_root)
+
+    specs, matrix_record = publisher.resolve_vad_trial_specs(
+        snapshot, (), matrix_root, "speed_30kph"
+    )
+    assert matrix_record is not None
+    assert matrix_record["runtime_profile_selector"] == "speed_30kph"
+    assert matrix_record["status"] == "COMPLETE"
+    assert matrix_record["runnable_map_count"] == 9
+    assert matrix_record["runnable_pass_count"] == 9
+    assert matrix_record["blocked_map_count"] == 10
+    assert matrix_record["discovered_pass_trial_count"] == 18
+    assert matrix_record["evidence_interpretation"] == (
+        publisher.SPEED_30KPH_PUBLICATION_INTERPRETATION
+    )
+    assert all(spec.evidence_root == matrix_root.resolve() for spec in specs)
+    assert all(spec.runtime_profile_selector == "speed_30kph" for spec in specs)
+
+    docs_root = tmp_path / "docs/assets/validation/2026-09-01"
+    report = tmp_path / "docs/validation-2026-09-01.md"
+    payload = publisher.publish_assets(
+        artifact_root,
+        docs_root,
+        report_path=report,
+        expected_selected_map_count=1,
+        vad_matrix_root=matrix_root,
+        vad_runtime_profile_selector="speed_30kph",
+    )
+
+    assert payload["runtime_profile_selector"] == "speed_30kph"
+    assert payload["evidence_boundary"]["speed_30kph"] == (
+        publisher.SPEED_30KPH_PUBLICATION_INTERPRETATION
+    )
+    assert payload["source_aggregate"] == str(
+        (artifact_root / "aggregate.json").resolve()
+    )
+    records = payload["autoware_vad_publications"]
+    assert len(records) == 18
+    assert all(
+        record["evidence_interpretation"]
+        == publisher.SPEED_30KPH_PUBLICATION_INTERPRETATION
+        for record in records
+    )
+    straight = next(record for record in records if record["trial_id"] == "straight")
+    assert straight["route"]["endpoint_source"] == "generated_waypoints"
+    assert straight["route"]["start_endpoint_index"] == 11
+    assert straight["speed_profile"]["real_vehicle_ready"] is False
+    assert straight["centered_capture_provenance"]["status"] == "PASS"
+    assert straight["centered_capture_provenance"]["rviz_view_contract"][
+        "vehicle_centered"
+    ] is True
+    for trial_id in ("straight", "turn"):
+        published = docs_root / f"town01/autoware_vad/{trial_id}"
+        assert (published / "speed_profile.json").is_file()
+        assert (published / "speed_profile.png").is_file()
+        record = next(
+            item
+            for item in records
+            if item["map_id"] == "town01" and item["trial_id"] == trial_id
+        )
+        for name in publisher.SPEED_30KPH_CENTERED_CAPTURE_NAMES:
+            published_path = published / name
+            assert published_path.is_file()
+            source_record = record["centered_capture_provenance"][
+                "source_files"
+            ][name]
+            assert publisher._sha256(published_path) == source_record["sha256"]
+        assert {
+            "candidate",
+            "capture_runtime",
+            "rviz_config",
+            "rviz_checksums",
+        }.issubset(record["file_roles"])
+    report_text = report.read_text(encoding="utf-8")
+    assert "simulation screening only" in report_text
+    assert "explicit CARLA simulation speed overlay" in report_text
+    assert "`real_vehicle_ready=false`" in report_text
+    assert "does not by itself claim that measured speed reached exactly 30 kph" in report_text
+    assert "observed max `7.740 m/s` (`27.86 kph`)" in report_text
+    assert "`waypoint 11→22`" in report_text
+    assert "vehicle-centered candidate still" in report_text
+    assert "pinned RViz config" in report_text
+    assert "--vad-runtime-profile-selector speed_30kph" in report_text
+    assert str(docs_root.resolve()) in report_text
+    completed = subprocess.run(
+        ["sha256sum", "-c", "SHA256SUMS"],
+        cwd=docs_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("map_roster", "exact 9 runnable maps"),
+        ("final_state", "final_state COMPLETE"),
+        ("scenario", "route scenario does not match"),
+        ("lifecycle", "CARLA lifecycle contract is invalid"),
+        ("visual_sha", "matrix visual evidence changed"),
+        ("visual_dimensions", "no complete centered visual binding"),
+    ],
+)
+def test_speed_30kph_final_publication_pre_gate_fails_closed(
+    tmp_path: Path, mutation: str, message: str
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    plan_path = matrix_root / "matrix_plan.json"
+    aggregate_path = matrix_root / "aggregate.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    aggregate = json.loads(aggregate_path.read_text(encoding="utf-8"))
+
+    if mutation == "map_roster":
+        next(item for item in plan["maps"] if item["map_id"] == "town02")[
+            "runnable"
+        ] = True
+        _write_json(plan_path, plan)
+    elif mutation == "final_state":
+        status_path = matrix_root / "maps/town01/status.json"
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        status.update(
+            {
+                "status": "FAILED",
+                "stage": "straight_failed",
+                "reason": "fixture final campaign failure",
+            }
+        )
+        status["trials"]["straight"].update(
+            {"status": "FAILED", "reason": "fixture straight failure"}
+        )
+        _write_json(status_path, status)
+        aggregate.update(
+            {
+                "status": "FAILED",
+                "runnable_pass_count": 8,
+                "status_counts": {"BLOCKED": 10, "FAILED": 1, "PASS": 8},
+                "maps": [
+                    status if item["map_id"] == "town01" else item
+                    for item in aggregate["maps"]
+                ],
+            }
+        )
+        _write_json(aggregate_path, aggregate)
+    else:
+        trial_id = "turn" if mutation == "scenario" else "straight"
+        trial = next(
+            item for item in aggregate["maps"] if item["map_id"] == "town01"
+        )["trials"][trial_id]
+        validation_path = Path(trial["validation"])
+        validation = json.loads(validation_path.read_text(encoding="utf-8"))
+        if mutation == "scenario":
+            validation["catalog_scenario"] = "straight"
+        elif mutation == "lifecycle":
+            validation["carla_lifecycle"]["status"] = "FAILED"
+        elif mutation == "visual_sha":
+            fullscreen = Path(trial["attempt_directory"]) / (
+                "autoware_rviz_fullscreen.png"
+            )
+            fullscreen.write_bytes(fullscreen.read_bytes() + b"drift")
+        else:
+            validation["visual_evidence"]["fullscreen_dimensions"] = [1280, 720]
+        _write_json(validation_path, validation)
+
+    with pytest.raises(publisher.PublicationError, match=message):
+        publisher.resolve_vad_trial_specs(
+            snapshot, (), matrix_root, "speed_30kph"
+        )
+
+
+def test_speed_30kph_rejects_speed_profile_swapped_between_trials(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    base = matrix_root / "maps/town01/trials"
+    shutil.copy2(
+        base / "turn/attempt_001/speed_profile.json",
+        base / "straight/attempt_001/speed_profile.json",
+    )
+    specs, _ = publisher.resolve_vad_trial_specs(
+        snapshot, (), matrix_root, "speed_30kph"
+    )
+
+    with pytest.raises(
+        publisher.PublicationError, match="bound to a different route/result"
+    ):
+        publisher.collect_vad_trials(snapshot, specs)
+
+
+def test_speed_30kph_rejects_runtime_profile_drift_after_matrix_validation(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    runtime_path = (
+        matrix_root
+        / "maps/town01/trials/straight/attempt_001/runtime.env"
+    )
+    runtime_path.write_text(
+        runtime_path.read_text(encoding="utf-8").replace(
+            "TARGET_SPEED_MPS=8.333333333333334", "TARGET_SPEED_MPS=7.0"
+        ),
+        encoding="utf-8",
+    )
+    specs, _ = publisher.resolve_vad_trial_specs(
+        snapshot, (), matrix_root, "speed_30kph"
+    )
+
+    with pytest.raises(publisher.PublicationError, match="TARGET_SPEED_MPS mismatch"):
+        publisher.collect_vad_trials(snapshot, specs)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("center", "matrix visual evidence changed"),
+        ("pinned_config", "matrix visual evidence changed"),
+        ("recording", "matrix visual evidence changed"),
+    ],
+)
+def test_speed_30kph_publication_revalidates_own_centered_capture(
+    tmp_path: Path, mutation: str, message: str
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    aggregate = json.loads((matrix_root / "aggregate.json").read_text(encoding="utf-8"))
+    passing_map = next(item for item in aggregate["maps"] if item["status"] == "PASS")
+    attempt = Path(passing_map["trials"]["straight"]["attempt_directory"])
+    if mutation == "center":
+        capture_path = attempt / "desktop_capture.json"
+        capture = json.loads(capture_path.read_text(encoding="utf-8"))
+        capture["rviz_view_contract"]["center_xy_m"] = [1.0, 0.0]
+        _write_json(capture_path, capture)
+    elif mutation == "pinned_config":
+        (attempt / "rviz_capture_provenance/autoware_vad_carla.rviz").write_text(
+            "Panels: [drift]\n", encoding="utf-8"
+        )
+    else:
+        (attempt / "autoware_rviz_capture.mkv").unlink()
+
+    with pytest.raises(publisher.PublicationError, match=message):
+        specs, _ = publisher.resolve_vad_trial_specs(
+            snapshot, (), matrix_root, "speed_30kph"
+        )
+        publisher.collect_vad_trials(snapshot, specs)
+
+
+def test_speed_30kph_centered_source_change_fails_during_copy(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    specs, matrix_record = publisher.resolve_vad_trial_specs(
+        snapshot, (), matrix_root, "speed_30kph"
+    )
+    trials = publisher.collect_vad_trials(snapshot, specs)
+    trial = trials[0]
+    (trial.directory / "autoware_rviz_candidate.png").write_bytes(b"changed")
+
+    with pytest.raises(publisher.PublicationError, match="changed during publication"):
+        publisher._copy_vad_trial(trial, tmp_path / "staging", matrix_record)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("vad_geometry", "vad_geometry_source"),
+        ("gate_real_vehicle", "vehicle_cmd_gate"),
+        ("controller_real_vehicle", "longitudinal_controller"),
+        ("overlay_source", "explicit CARLA simulation speed overlay"),
+        ("validation_speed", "lacks passing speed-contract evidence"),
+        ("artifact_real_vehicle", "does not prove VAD geometry"),
+    ],
+)
+def test_speed_30kph_publication_fails_closed_on_boundary_drift(
+    tmp_path: Path, mutation: str, message: str
+) -> None:
+    artifact_root = tmp_path / "artifacts/validation/2026-08-31"
+    snapshot = _snapshot(artifact_root)
+    matrix_root = _write_terminal_vad_matrix(
+        tmp_path / "artifacts/validation/2026-09-01",
+        snapshot,
+        runnable_map_ids=publisher.SPEED_30KPH_RUNNABLE_MAP_IDS,
+    )
+    _convert_terminal_matrix_to_speed_30kph(matrix_root)
+    plan_path = matrix_root / "matrix_plan.json"
+    aggregate_path = matrix_root / "aggregate.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    aggregate = json.loads(aggregate_path.read_text(encoding="utf-8"))
+    if mutation == "vad_geometry":
+        plan["runtime_profile"]["speed_contract"]["vad_geometry_source"] = False
+        aggregate["runtime_profile"] = plan["runtime_profile"]
+    elif mutation == "gate_real_vehicle":
+        plan["runtime_profile"]["speed_contract"]["vehicle_cmd_gate"][
+            "real_vehicle_ready"
+        ] = True
+        aggregate["runtime_profile"] = plan["runtime_profile"]
+    elif mutation == "controller_real_vehicle":
+        plan["runtime_profile"]["speed_contract"]["longitudinal_controller"][
+            "real_vehicle_ready"
+        ] = True
+        aggregate["runtime_profile"] = plan["runtime_profile"]
+    elif mutation == "overlay_source":
+        plan["runtime_profile"]["speed_contract"]["route_manager_parameters"][
+            "longitudinal_velocity_source"
+        ] = "raw_vad"
+        aggregate["runtime_profile"] = plan["runtime_profile"]
+    elif mutation == "validation_speed":
+        passing_map = next(item for item in aggregate["maps"] if item["status"] == "PASS")
+        validation_path = Path(
+            passing_map["trials"]["straight"]["validation"]
+        )
+        validation = json.loads(validation_path.read_text(encoding="utf-8"))
+        validation["speed_contract"] = None
+        _write_json(validation_path, validation)
+    else:
+        passing_map = next(item for item in aggregate["maps"] if item["status"] == "PASS")
+        attempt = Path(
+            passing_map["trials"]["straight"]["attempt_directory"]
+        )
+        profile_path = attempt / "speed_profile.json"
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        profile["interpretation"]["real_vehicle_ready"] = True
+        _write_json(profile_path, profile)
+    _write_json(plan_path, plan)
+    _write_json(aggregate_path, aggregate)
+
+    with pytest.raises(publisher.PublicationError, match=message):
+        specs, _ = publisher.resolve_vad_trial_specs(
+            snapshot, (), matrix_root, "speed_30kph"
+        )
+        publisher.collect_vad_trials(snapshot, specs)
+
+
+def test_speed_30kph_requires_matrix_and_cannot_replace_recommended_publication(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifacts"
+    snapshot = _snapshot(artifact_root)
+    with pytest.raises(
+        publisher.PublicationError, match="requires --vad-matrix-root"
+    ):
+        publisher.resolve_vad_trial_specs(snapshot, (), None, "speed_30kph")
+
+    docs_root = tmp_path / "docs/assets/validation/2026-08-31"
+    previous = {
+        "autoware_vad_matrix_source": {
+            "runtime_profile": {
+                "wrapper_options": list(
+                    publisher.VAD_RUNTIME_WRAPPER_OPTIONS["recommended"]
+                )
+            }
+        }
+    }
+    _write_json(docs_root / "publication_manifest.json", previous)
+    original = (docs_root / "publication_manifest.json").read_bytes()
+    with pytest.raises(
+        publisher.PublicationError, match="use a new dated docs/assets destination"
+    ):
+        publisher._protect_existing_publication_profile(docs_root, "speed_30kph")
+    assert (docs_root / "publication_manifest.json").read_bytes() == original
 
 
 def test_matrix_auto_discovery_rejects_an_incomplete_campaign(tmp_path: Path) -> None:

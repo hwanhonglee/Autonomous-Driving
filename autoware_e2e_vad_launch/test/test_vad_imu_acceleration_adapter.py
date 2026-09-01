@@ -22,6 +22,7 @@ LAUNCHES = (
     PACKAGE / "launch/carla_vad.launch.xml",
     PACKAGE / "launch/carla_vad_full.launch.xml",
 )
+FAST_WRAPPER = ROOT / "scripts/e2e/run_route_vad_fast.sh"
 
 
 def load_yaml(path):
@@ -104,6 +105,13 @@ def test_imu_mapping_only_extends_the_stable_reliable_profile():
         for name, value in imu["parameters"].items()
         if name.startswith("noise_")
     )
+
+
+def test_recommended_profile_uses_and_processes_the_dedicated_imu_mapping():
+    wrapper = FAST_WRAPPER.read_text(encoding="utf-8")
+
+    assert "sensor_mapping_vad_fast_reliable_imu.yaml" in wrapper
+    assert '"use_vad_imu_acceleration:=true"' in wrapper
 
 
 def test_dedicated_imu_is_rotation_aligned_with_model_base_frame():

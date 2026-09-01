@@ -21,7 +21,10 @@ from vad_route_logic import (  # noqa: E402
     RoutePoint,
     constrain_trajectory_points_to_route,
     endpoint_fixed_whittaker,
+    limit_trajectory_speed_for_acceleration,
     limit_trajectory_speed_for_curvature,
+    limit_trajectory_speed_for_route_curvature,
+    limit_trajectory_speed_recovery,
     resample_trajectory_points,
     route_alignment_blocked,
     smooth_trajectory_geometry,
@@ -74,6 +77,39 @@ class RoutePlanTest(unittest.TestCase):
         projection = self.plan.project(7.0, 1.0)
         self.assertAlmostEqual(projection.progress_m, 7.0)
         self.assertAlmostEqual(projection.cross_track_error_m, 1.0)
+
+    def test_route_manager_faults_on_negative_signed_deviation(self):
+        class SignedProjectionRoute:
+            def project(self, *_args):
+                return SimpleNamespace(progress_m=1.0, cross_track_error_m=-4.0)
+
+            def remaining(self, _progress_m):
+                return 9.0
+
+            def command_at(self, *_args):
+                return 3
+
+        faults = []
+        manager = SimpleNamespace(
+            route=SignedProjectionRoute(),
+            progress_m=0.0,
+            route_projection_backtrack_m=3.0,
+            route_projection_forward_m=80.0,
+            maneuver_lookahead_m=3.0,
+            maneuver_exit_lookahead_m=2.5,
+            max_route_deviation_m=3.5,
+            actual_path=SimpleNamespace(
+                header=SimpleNamespace(stamp=None), poses=[]
+            ),
+            actual_path_pub=SimpleNamespace(publish=lambda _message: None),
+            _set_fault=faults.append,
+            _update_goal_state=lambda: None,
+        )
+        odometry = Odometry()
+
+        VadRouteManager._on_odometry(manager, odometry)
+
+        self.assertEqual(faults, ["route_deviation:abs(-4.00m)>3.50m"])
 
     def test_projection_does_not_regress(self):
         projection = self.plan.project(4.0, 0.0, previous_progress_m=8.0)
@@ -135,6 +171,10 @@ class RoutePlanTest(unittest.TestCase):
         self.assertAlmostEqual(plan.metadata["route_length_m"], 15.0)
         self.assertEqual(plan.goal.vad_command, plan.points[-2].vad_command)
         self.assertEqual(plan.goal.road_option, plan.points[-2].road_option)
+        self.assertEqual(plan.metadata["runtime_goal_z_m"], 0.3)
+        self.assertEqual(
+            plan.metadata["runtime_goal_z_policy"], "legacy_goal_ros_pose_z"
+        )
 
     def test_load_does_not_duplicate_goal_within_endpoint_epsilon(self):
         payload = self._route_payload()
@@ -153,6 +193,86 @@ class RoutePlanTest(unittest.TestCase):
             (10.0005, 0.0, 0.3, 0.25),
         )
         self.assertAlmostEqual(plan.length_m, 10.0)
+
+    def test_load_never_injects_spawn_clearance_z_into_runtime_route(self):
+        payload = self._route_payload()
+        payload["route"][-1]["z"] = 1.25
+        original_goal_ros_pose = {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 1.75,
+            "yaw": 0.25,
+        }
+        payload["goal_ros_pose"] = {**original_goal_ros_pose, "z": 1.25}
+        payload["goal_carla_transform"] = {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 1.25,
+            "roll": 0.0,
+            "pitch": 0.0,
+            "yaw": -math.degrees(0.25),
+        }
+        payload["goal_endpoint_provenance"] = {
+            "endpoint_source": "spawn_points",
+            "endpoint_index": 7,
+            "original_goal_carla_transform": {
+                **payload["goal_carla_transform"],
+                "z": 1.75,
+            },
+            "original_goal_ros_pose": original_goal_ros_pose,
+            "terminal_z_normalization": {
+                "policy": "last_road_waypoint_z",
+                "original_endpoint_z_m": 1.75,
+                "last_road_waypoint_z_m": 1.25,
+                "runtime_goal_z_m": 1.25,
+                "serialized_terminal_z_m": 1.25,
+                "applied_offset_m": -0.5,
+            },
+        }
+
+        plan = self._load_route_payload(payload)
+
+        self.assertEqual(len(plan.points), 2)
+        self.assertEqual(
+            (plan.goal.x, plan.goal.y, plan.goal.z, plan.goal.yaw),
+            (10.0, 0.0, 1.25, 0.25),
+        )
+        self.assertEqual(plan.metadata["goal_ros_pose"]["z"], 1.25)
+        self.assertEqual(plan.metadata["runtime_goal_z_m"], 1.25)
+        self.assertEqual(
+            plan.metadata["runtime_goal_z_policy"], "last_road_waypoint_z"
+        )
+
+    def test_load_rejects_drifted_road_z_provenance(self):
+        payload = self._route_payload()
+        payload["goal_ros_pose"] = {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 0.0,
+            "yaw": 0.0,
+        }
+        payload["goal_carla_transform"] = {
+            "x": 10.0,
+            "y": 0.0,
+            "z": 0.0,
+        }
+        payload["goal_endpoint_provenance"] = {
+            "endpoint_source": "spawn_points",
+            "endpoint_index": 1,
+            "original_goal_carla_transform": {"z": 0.5},
+            "original_goal_ros_pose": {"z": 0.5},
+            "terminal_z_normalization": {
+                "policy": "last_road_waypoint_z",
+                "original_endpoint_z_m": 0.5,
+                "last_road_waypoint_z_m": 0.0,
+                "runtime_goal_z_m": 0.0,
+                "serialized_terminal_z_m": 0.25,
+                "applied_offset_m": -0.5,
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "serialized_terminal_z_m"):
+            self._load_route_payload(payload)
 
     def test_load_without_goal_metadata_keeps_legacy_endpoint(self):
         plan = self._load_route_payload(self._route_payload())
@@ -737,6 +857,99 @@ class TrajectoryResamplingTest(unittest.TestCase):
             all(point.longitudinal_velocity_mps <= 1.0 + 1.0e-6 for point in points)
         )
 
+    def test_acceleration_cap_prevents_curve_exit_speed_jump(self):
+        points = [
+            make_trajectory_point(float(index) * 0.5, 0.0, index * 0.1, 8.5)
+            for index in range(6)
+        ]
+
+        reduction = limit_trajectory_speed_for_acceleration(
+            points,
+            maximum_acceleration_mps2=2.0,
+            initial_speed_mps=3.0,
+            initial_distance_m=0.5,
+        )
+
+        self.assertGreater(reduction, 4.0)
+        previous_speed = 3.0
+        for point in points:
+            self.assertLessEqual(
+                point.longitudinal_velocity_mps**2 - previous_speed**2,
+                2.0 * 2.0 * 0.5 + 1.0e-9,
+            )
+            previous_speed = point.longitudinal_velocity_mps
+
+    def test_acceleration_cap_rejects_invalid_contract(self):
+        point = make_trajectory_point(0.0, 0.0, 0.0, 1.0)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            limit_trajectory_speed_for_acceleration([point], 0.0, 0.0, 0.5)
+        with self.assertRaisesRegex(ValueError, "must be non-negative"):
+            limit_trajectory_speed_for_acceleration([point], 1.0, -1.0, 0.5)
+
+    def test_speed_recovery_cap_leaves_first_point_and_limits_curve_exit(self):
+        points = [
+            make_trajectory_point(float(index), 0.0, index * 0.1, speed)
+            for index, speed in enumerate((2.0, 8.333, 8.333, 8.333))
+        ]
+
+        reduction = limit_trajectory_speed_recovery(points, 1.5)
+
+        self.assertGreater(reduction, 4.0)
+        self.assertEqual(points[0].longitudinal_velocity_mps, 2.0)
+        for first, second in zip(points, points[1:]):
+            self.assertLessEqual(
+                second.longitudinal_velocity_mps**2
+                - first.longitudinal_velocity_mps**2,
+                2.0 * 1.5 * 1.0 + 1.0e-9,
+            )
+
+    def test_route_curvature_cap_sees_turn_beyond_candidate_horizon(self):
+        route = RoutePlan(
+            {"scenario": "left"},
+            [
+                RoutePoint(0.0, 0.0, 0.0, 0.0, 0.0, 3, "LANEFOLLOW"),
+                RoutePoint(15.0, 0.0, 0.0, 0.0, 15.0, 3, "LANEFOLLOW"),
+                RoutePoint(16.0, 0.0, 0.0, 0.0, 16.0, 0, "LEFT"),
+                RoutePoint(16.0, 1.0, 0.0, math.pi / 2.0, 17.0, 0, "LEFT"),
+                RoutePoint(16.0, 10.0, 0.0, math.pi / 2.0, 26.0, 3, "LANEFOLLOW"),
+            ],
+        )
+        points = [
+            make_trajectory_point(float(index), 0.0, index * 0.1, 8.333)
+            for index in range(4)
+        ]
+
+        reduction = limit_trajectory_speed_for_route_curvature(
+            points,
+            route,
+            progress_m=0.0,
+            maximum_lateral_acceleration_mps2=1.2,
+            lookahead_distance_m=20.0,
+            comfortable_deceleration_mps2=2.0,
+        )
+
+        self.assertGreater(reduction, 0.1)
+        self.assertLess(points[0].longitudinal_velocity_mps, 8.333)
+
+    def test_recalculated_acceleration_uses_asymmetric_speed_profile_limits(self):
+        points = [
+            make_trajectory_point(0.0, 0.0, 0.0, 1.0),
+            make_trajectory_point(0.5, 0.0, 0.1, 3.0),
+            make_trajectory_point(1.0, 0.0, 0.2, 0.0),
+        ]
+        manager = SimpleNamespace(
+            maximum_longitudinal_acceleration_mps2=1.5,
+            comfortable_deceleration_mps2=2.0,
+        )
+
+        VadRouteManager._recalculate_acceleration(
+            manager, SimpleNamespace(points=points)
+        )
+
+        self.assertEqual(points[0].acceleration_mps2, 1.5)
+        self.assertEqual(points[1].acceleration_mps2, -2.0)
+        self.assertEqual(points[2].acceleration_mps2, 0.0)
+
     def test_sample_distances_include_exact_stop_and_end(self):
         self.assertEqual(
             trajectory_sample_distances(2.0, 0.5, extra_distances=(1.2, 1.0)),
@@ -927,6 +1140,8 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
         manager = SimpleNamespace(
             comfortable_deceleration_mps2=1.2,
             maximum_speed_mps=10.0,
+            longitudinal_velocity_source="vad_prediction",
+            nominal_cruise_speed_mps=0.0,
         )
         smoothed_distances = trajectory_arc_lengths(points)
         legacy_zero_index = next(
@@ -958,6 +1173,34 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
         self.assertGreater(
             abs(result.stop_distance_m - original_stop_distance), 0.15
         )
+
+    def test_explicit_nominal_overlay_sets_cruise_and_preserves_hard_stop(self):
+        manager = SimpleNamespace(
+            comfortable_deceleration_mps2=2.0,
+            maximum_speed_mps=8.333333333333334,
+            longitudinal_velocity_source="explicit_simulation_nominal",
+            nominal_cruise_speed_mps=8.333333333333334,
+        )
+        cruise = [
+            make_trajectory_point(float(index), 0.0, index * 0.1, 2.5)
+            for index in range(4)
+        ]
+        VadRouteManager._apply_velocity_profile(manager, cruise, 100.0)
+        self.assertTrue(
+            all(
+                point.longitudinal_velocity_mps == 8.333333333333334
+                for point in cruise
+            )
+        )
+
+        hard_stop = [
+            make_trajectory_point(float(index), 0.0, index * 0.1, speed)
+            for index, speed in enumerate((2.5, 2.5, 0.0, 2.5))
+        ]
+        VadRouteManager._apply_velocity_profile(manager, hard_stop, 100.0)
+        self.assertEqual(hard_stop[2].longitudinal_velocity_mps, 0.0)
+        self.assertEqual(hard_stop[3].longitudinal_velocity_mps, 0.0)
+        self.assertLess(hard_stop[1].longitudinal_velocity_mps, 8.333333333333334)
 
     def test_straight_geometry_remains_straight(self):
         points = [
@@ -1227,6 +1470,9 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
             "trajectory_geometry_smoothing_strength": "0.0",
             "trajectory_geometry_smoothing_interval_m": "0.25",
             "trajectory_geometry_smoothing_max_deviation_m": "0.10",
+            "longitudinal_velocity_source": "vad_prediction",
+            "nominal_cruise_speed_mps": "0.0",
+            "route_curvature_lookahead_m": "0.0",
         }
         for launch_name in ("carla_vad.launch.xml", "carla_vad_full.launch.xml"):
             with self.subTest(launch_name=launch_name):

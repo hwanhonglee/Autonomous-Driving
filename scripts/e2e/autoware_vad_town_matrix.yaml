@@ -2,9 +2,10 @@ schema_version: 1
 matrix_id: autoware_vad_town_straight_turn_v1
 description: >-
   Reproducible full-stack Autoware VAD validation matrix. Every runnable map
-  uses the same recommended visualized profile and produces separate straight
-  and turn trials. Maps without a locally validated Autoware full-map bundle
-  remain explicit BLOCKED records rather than being mislabeled as VAD tests.
+  uses one explicitly selected visualized runtime profile and produces separate
+  straight and turn trials. Maps without a locally validated Autoware full-map
+  bundle remain explicit BLOCKED records rather than being mislabeled as VAD
+  tests.
 
 canonical_map_manifest: carla_expert_suite.yaml
 
@@ -22,8 +23,205 @@ runtime_profile:
   carla_arguments:
     - -RenderOffScreen
     - -nosound
-  map_lifecycle: cold_start_owned_process_group
+  map_lifecycle: cold_start_owned_process_group_per_trial
   client_map_loading_allowed: false
+
+# The historical runtime_profile above remains the default `recommended`
+# contract. Opt-in profiles are selected explicitly by the runner and become
+# part of the immutable campaign-plan digest.
+runtime_profiles:
+  speed_30kph:
+    id: vad_carla_30kph_visualized_v2
+    trial_wrapper: run_recorded_route_trial.sh
+    wrapper_options:
+      - --recommended
+      - --speed-30kph
+      - --visualize
+      - --capture-desktop
+    ready_timeout_sec: 600
+    launch_arguments:
+      - carla_timeout:=60
+    carla_quality: Epic
+    carla_arguments:
+      - -RenderOffScreen
+      - -nosound
+    map_lifecycle: cold_start_owned_process_group_per_trial
+    client_map_loading_allowed: false
+    # Prefer 210 m so the vehicle can accelerate, hold >=7.5 m/s for one second,
+    # and still stop at the unchanged goal gate. Town02_Opt and Town10HD_Opt have
+    # no physical 200 m straight, so the 170 m lower admission bound lets those
+    # compact maps run without weakening the speed verdict. Results retain a
+    # nominal- vs compact-capacity tier and may honestly FAIL speed exposure.
+    route_generation_contracts:
+      straight:
+        seeds:
+          - 0
+        pairs_per_seed: 8
+        minimum_distance_m: 170.0
+        maximum_distance_m: 260.0
+        preferred_distance_m: 210.0
+        maximum_traces_per_scenario: 20000
+      turn:
+        seeds:
+          - 0
+        pairs_per_seed: 8
+        minimum_distance_m: 20.0
+        maximum_distance_m: 120.0
+        preferred_distance_m: 60.0
+        maximum_traces_per_scenario: 20000
+    # Town10HD_Opt has no exact physical-straight route in the shared 170-260 m
+    # search at 10 m endpoint spacing. This override changes generation/search
+    # capacity only; the 170 m physical/speed minimum and AEB/MRM verdicts remain
+    # unchanged and exact serialized physical geometry remains authoritative.
+    map_route_generation_overrides:
+      town10hd_opt:
+        straight:
+          seeds:
+            - 0
+          pairs_per_seed: 8
+          minimum_distance_m: 170.0
+          maximum_distance_m: 182.0
+          preferred_distance_m: 172.0
+          maximum_traces_per_scenario: 20000
+          endpoint_waypoint_spacing_m: 0.5
+          endpoint_junction_policy: exclude
+          candidate_enumeration_policy: directed_topology_straight_v1
+          straight_capacity_profile: town10hd_opt_30kph_compact_v1
+    # The straight-only override avoids a known traffic-light-head false
+    # positive. Turn routes are never selected from an observed runtime result:
+    # every exact-geometry PASS candidate uses the declared physical ranking
+    # below.
+    map_trial_route_selection_overrides:
+      town03:
+        straight:
+          scenario: straight
+          seed: 0
+          pair_index: 1
+          rationale: traffic_light_head_clearance_screening_v1
+    turn_route_selection_policy:
+      policy_id: physical_turn_curvature_deceleration_v1
+      applicability: speed_30kph_all_turn_candidates
+      exact_serialized_physical_turn_pass_required: true
+      common_physical_turn_ranking_authority: true
+      custom_turn_geometry_preflight_role: additional_required_provenance_gate
+      execution_result_fields_used: false
+      map_preflight_fallback_allowed: false
+      candidate_pair_reindexing_allowed: false
+      candidate_generation_quota_modified: false
+      curvature_epsilon_per_m: 0.000001
+      ranking_order:
+        - curvature_limited_speed_mps_desc
+        - braking_preview_reserve_m_desc
+        - maximum_command_alignment_skew_m_asc
+        - turn_core_arc_length_m_desc
+        - scenario_asc
+        - seed_asc
+        - pair_index_asc
+        - route_id_asc
+      parameter_sources:
+        target_speed_mps: speed_contract.target_speed_mps
+        maximum_lateral_acceleration_mps2: speed_contract.route_manager_parameters.maximum_lateral_acceleration_mps2
+        comfortable_deceleration_mps2: speed_contract.route_manager_parameters.comfortable_deceleration_mps2
+        route_curvature_lookahead_m: speed_contract.route_manager_parameters.route_curvature_lookahead_m
+    speed_contract:
+      profile_id: carla_vad_30kph_v2
+      validation_state: carla_30kph_v2_screening
+      longitudinal_speed_source: explicit_simulation_profile
+      longitudinal_acceleration_role: trajectory_internal_curve_exit_cap
+      vad_geometry_source: true
+      vad_cruise_velocity_evaluated: false
+      vad_hard_stop_sentinel_preserved: true
+      vad_velocity_evaluated: false
+      vad_geometry_evaluated: true
+      target_speed_mps: 8.333333333333334
+      maximum_observed_speed_mps: 9.0
+      maximum_speed_sample_gap_sec: 0.25
+      route_manager_parameters:
+        longitudinal_velocity_source: explicit_simulation_nominal
+        nominal_cruise_speed_mps: 8.333333333333334
+        maximum_speed_mps: 8.333333333333334
+        controller_stop_offset_m: 0.60
+        comfortable_deceleration_mps2: 2.0
+        maximum_longitudinal_acceleration_mps2: 1.5
+        maximum_lateral_acceleration_mps2: 1.2
+        maneuver_lookahead_m: 4.0
+        maneuver_exit_lookahead_m: 2.5
+        route_curvature_lookahead_m: 20.0
+        curvature_speed_preview_m: 3.0
+        max_route_deviation_m: 1.0
+        max_candidate_age_sec: 0.5
+        candidate_timeout_sec: 1.5
+      vehicle_cmd_gate:
+        profile_id: carla_vad_30kph_v2
+        speed_limit_source: explicit_simulation_profile
+        real_vehicle_ready: false
+        parameter_sha256: 446a99c61c06cc42edb0398840300fc48100bc45d9fb682c70232baa5c215c41
+        metadata_sha256: 58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733
+        source_sha256: 1fea920b4a3b04353f449ee20c07eff09219620f721aac8b0fad9b591dfd5f61
+        source_repository_commit: f942598d44b5769353167c76b784323d5c14c8c7
+        velocity_limit_mps: 8.333333333333334
+        longitudinal_acceleration_limit_mps2: 1.5
+        lateral_acceleration_limit_mps2: 1.8
+      longitudinal_controller:
+        profile_id: carla_vad_30kph_v2
+        parameter_sha256: 16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3
+        metadata_sha256: 517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f
+        source_sha256: de1ca069eee774d4e415ab177a4285a6a237ec5fae6c41fdf6640ee294f502db
+        source_repository_commit: 7fa129ee416f17f9adfdbeb8e66a532f7b5b9006
+        speed_limit_source: explicit_simulation_profile
+        real_vehicle_ready: false
+        maximum_output_mps2: 1.5
+        maximum_proportional_effort_mps2: 1.5
+        command_gate_longitudinal_acceleration_cap_mps2: 1.5
+      trials:
+        straight:
+          exposure_mode: straight_target_required
+          minimum_sustained_speed_mps: 7.5
+          minimum_sustained_speed_sec: 1.0
+          maximum_lateral_acceleration_mps2: 1.8
+          physical_geometry:
+            maximum_arc_to_direct_ratio: 1.005
+            maximum_chord_deviation_m: 2.5
+            maximum_endpoint_tangent_to_chord_deg: 10.0
+            maximum_net_heading_change_deg: 10.0
+            maximum_cumulative_heading_change_deg: 25.0
+            maximum_p95_abs_curvature_per_m: 0.01
+            maximum_abs_curvature_per_m: 0.02592
+        turn:
+          exposure_mode: curvature_limited_turn
+          minimum_sustained_speed_mps: 0.0
+          minimum_sustained_speed_sec: 0.0
+          maximum_lateral_acceleration_p95_mps2: 1.5
+          maximum_lateral_acceleration_mps2: 1.8
+          require_selected_turn_command: true
+          physical_geometry:
+            profile_id: carla_vad_30kph_v2
+            maneuver_lookahead_m: 4.0
+            lead_buffer_m: 5.0
+            minimum_route_lead_m: 25.0
+            longitudinal_grade_window_m: 5.0
+            controller_maximum_output_mps2: 1.5
+            slope_compensation_max_pitch_rad: 0.1
+            standard_gravity_mps2: 9.81
+            maximum_absolute_grade_ratio: 0.09983341664682815
+            maximum_compensated_gravity_mps2: 0.9793658173053843
+            maximum_pre_gate_total_acceleration_mps2: 2.4793658173053843
+            downstream_vehicle_cmd_gate_acceleration_cap_mps2: 1.5
+            ideal_net_uphill_acceleration_reserve_mps2: 0.5206341826946157
+            minimum_route_tail_m: 10.0
+            minimum_turn_arc_length_m: 10.0
+            maximum_turn_arc_length_m: 30.0
+            minimum_turn_heading_change_deg: 60.0
+            maximum_turn_heading_change_deg: 120.0
+            maximum_turn_heading_excess_deg: 20.0
+            turn_alignment_heading_margin_deg: 10.0
+            maximum_turn_command_lead_m: 8.0
+            maximum_turn_command_tail_m: 8.0
+            maximum_p95_abs_curvature_per_m: 0.20
+            maximum_abs_curvature_per_m: 0.30
+            initial_approach_distance_m: 15.0
+            maximum_initial_lateral_deviation_m: 1.5
+            maximum_initial_heading_change_deg: 30.0
 
 route_contract:
   weather: ClearNoon
@@ -56,13 +254,6 @@ route_contract:
         - CHANGELANERIGHT
 
 known_blockers:
-  town10hd_opt:
-    code: blocked_missing_pointcloud
-    reason: >-
-      Lanelet2, OpenDRIVE, and the packaged level exist, but the exhaustive
-      readiness inventory found no Town10HD/Town10HD_Opt point-cloud map. A
-      truthful Autoware full-map/VAD trial is blocked until a ROS-coordinate
-      PCD is generated and aligned.
   woraksan_1_0_3:
     code: packaged_runtime_assets_missing
     reason: >-
@@ -146,6 +337,17 @@ validated_full_map_bundles:
     path: ../../data/maps/Town07_full
     canonical_carla_map: /Game/Carla/Maps/Town07
     profile: town07
+    accepted_statuses:
+      - full_map_structurally_ready_not_vad_validated
+    accepted_alignment_statuses:
+      - PASS
+    readiness_artifact: ../../artifacts/validation/2026-08-31/town_full_map_readiness.json
+    readiness_status_prefix: TEST_ROUTES_MAP_PREFLIGHT_PASS
+  town10hd_opt:
+    bundle_schema: packaged_town
+    path: ../../data/maps/Town10HD_Opt_full
+    canonical_carla_map: /Game/Carla/Maps/Town10HD_Opt
+    profile: town10hd_opt
     accepted_statuses:
       - full_map_structurally_ready_not_vad_validated
     accepted_alignment_statuses:

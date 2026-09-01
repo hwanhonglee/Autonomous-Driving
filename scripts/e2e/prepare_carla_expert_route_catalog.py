@@ -27,6 +27,45 @@ except ModuleNotFoundError:
         load_manifest,
     )
 
+try:
+    from physical_straight_geometry import (
+        PhysicalStraightGeometryError,
+        SPEED_30KPH_STRAIGHT_GEOMETRY_CONTRACT,
+        analyze_serialized_physical_straight,
+    )
+except ModuleNotFoundError:
+    from scripts.e2e.physical_straight_geometry import (
+        PhysicalStraightGeometryError,
+        SPEED_30KPH_STRAIGHT_GEOMETRY_CONTRACT,
+        analyze_serialized_physical_straight,
+    )
+
+try:
+    from physical_turn_geometry import (
+        PhysicalTurnGeometryError,
+        SPEED_30KPH_TURN_CONTRACT_PROVENANCE,
+        SPEED_30KPH_TURN_GEOMETRY_CONTRACT,
+        analyze_serialized_physical_turn,
+    )
+except ModuleNotFoundError:
+    from scripts.e2e.physical_turn_geometry import (
+        PhysicalTurnGeometryError,
+        SPEED_30KPH_TURN_CONTRACT_PROVENANCE,
+        SPEED_30KPH_TURN_GEOMETRY_CONTRACT,
+        analyze_serialized_physical_turn,
+    )
+
+try:
+    from serialized_custom_turn_geometry import (
+        SerializedCustomTurnGeometryError,
+        analyze_serialized_custom_turn,
+    )
+except ModuleNotFoundError:
+    from scripts.e2e.serialized_custom_turn_geometry import (
+        SerializedCustomTurnGeometryError,
+        analyze_serialized_custom_turn,
+    )
+
 
 SCENARIOS = ("lane_follow", "straight", "left", "right")
 RECOVERABLE_TRACE_EXCEPTIONS = (
@@ -56,6 +95,50 @@ TURN_GEOMETRY_ARGUMENTS = (
     "maximum_turn_command_tail_m",
     "maximum_turn_p95_curvature_per_m",
 )
+SPAWN_POINT_ENDPOINT_SOURCE = "spawn_points"
+GENERATED_WAYPOINT_ENDPOINT_SOURCE = "generated_waypoints"
+PHYSICAL_STRAIGHT_PROFILES = ("speed_30kph",)
+PHYSICAL_TURN_PROFILES = ("speed_30kph",)
+ENDPOINT_JUNCTION_POLICIES = ("include", "exclude")
+CANDIDATE_ENUMERATION_POLICIES = (
+    "all_pairs",
+    "directed_topology_straight_v1",
+)
+STRAIGHT_CAPACITY_PROFILES = ("town10hd_opt_30kph_compact_v1",)
+TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE: dict[str, Any] = {
+    "profile_id": "town10hd_opt_30kph_compact_v1",
+    "scope": "CARLA-only Town10HD_Opt 30 kph straight capacity screening",
+    "measurement_source": (
+        "measured 30 kph threshold-entry, exposure, and stopping distances"
+    ),
+    "validation_threshold_reuse": False,
+    "minimum_route_length_m": 170.0,
+    "threshold_entry_distance_m": 145.865,
+    "minimum_exposure_distance_m": 7.5,
+    "minimum_stop_distance_m": 14.169,
+    "derived_required_distance_m": 167.534,
+    "minimum_route_margin_m": 2.466,
+    "derivation": "145.865 + 7.5 + 14.169 = 167.534; 170.0 - 167.534 = 2.466",
+    "unchanged_verdicts": [
+        "exact_serialized_physical_straight",
+        "30_kph_speed_exposure",
+        "AEB",
+        "MRM",
+    ],
+    "postfilter_authority": (
+        "exact serialized physical-straight geometry remains mandatory"
+    ),
+    "real_vehicle_ready": False,
+}
+# The in-tree Autoware CARLA bridge applies this in
+# InitializeInterface._parse_spawn_point before actor creation.  The route keeps
+# the raw road/base_link Z and must not apply the same clearance twice.
+BRIDGE_SPAWN_Z_OFFSET_M = 2.0
+BRIDGE_SPAWN_Z_OFFSET_SOURCE = (
+    "src/universe/autoware_universe/simulator/autoware_carla_interface/src/"
+    "autoware_carla_interface/carla_autoware.py::"
+    "InitializeInterface._parse_spawn_point"
+)
 
 
 class CatalogError(RuntimeError):
@@ -71,6 +154,19 @@ def parse_integer_list(text: str) -> tuple[int, ...]:
         raise CatalogError("seeds must be a non-empty unique list")
     if any(value < 0 for value in values):
         raise CatalogError("seeds must be non-negative")
+    return values
+
+
+def parse_scenarios(text: str) -> tuple[str, ...]:
+    values = tuple(item.strip() for item in text.split(",") if item.strip())
+    if not values or len(set(values)) != len(values):
+        raise CatalogError("scenarios must be a non-empty unique comma-separated list")
+    unsupported = tuple(value for value in values if value not in SCENARIOS)
+    if unsupported:
+        raise CatalogError(
+            f"scenarios must be a subset of {','.join(SCENARIOS)}; "
+            f"unsupported={list(unsupported)}"
+        )
     return values
 
 
@@ -126,11 +222,57 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--weather", default="ClearNoon")
     parser.add_argument("--seeds", default="0,1,2")
+    parser.add_argument(
+        "--scenarios",
+        default=",".join(SCENARIOS),
+        help="unique comma-separated subset of lane_follow,straight,left,right",
+    )
     parser.add_argument("--pairs-per-seed", type=int, default=1)
     parser.add_argument("--min-distance", type=float, default=20.0)
     parser.add_argument("--max-distance", type=float, default=120.0)
     parser.add_argument("--preferred-distance", type=float, default=60.0)
     parser.add_argument("--sampling-resolution", type=float, default=1.0)
+    parser.add_argument(
+        "--endpoint-waypoint-spacing-m",
+        type=float,
+        help=(
+            "opt in to deterministic CARLA generate_waypoints endpoints at this "
+            "spacing; omitted keeps the existing recommended spawn-point endpoints"
+        ),
+    )
+    parser.add_argument(
+        "--endpoint-junction-policy",
+        choices=ENDPOINT_JUNCTION_POLICIES,
+        default="include",
+        help="whether generated-waypoint endpoints may themselves be junction points",
+    )
+    parser.add_argument(
+        "--candidate-enumeration-policy",
+        choices=CANDIDATE_ENUMERATION_POLICIES,
+        default="all_pairs",
+        help="deterministic route-pair enumeration policy",
+    )
+    parser.add_argument(
+        "--straight-capacity-profile",
+        choices=STRAIGHT_CAPACITY_PROFILES,
+        help="fail-closed map/profile-specific straight capacity contract",
+    )
+    parser.add_argument(
+        "--physical-straight-profile",
+        choices=PHYSICAL_STRAIGHT_PROFILES,
+        help=(
+            "opt in to a pinned physical-straight admission gate applied to the "
+            "exact serialized straight route"
+        ),
+    )
+    parser.add_argument(
+        "--physical-turn-profile",
+        choices=PHYSICAL_TURN_PROFILES,
+        help=(
+            "opt in to a pinned physical-turn admission gate applied to exact "
+            "serialized left/right routes"
+        ),
+    )
     parser.add_argument(
         "--max-endpoint-offset",
         type=float,
@@ -180,6 +322,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     try:
         args.seeds = parse_integer_list(args.seeds)
+        args.scenarios = parse_scenarios(args.scenarios)
         args.exclude_spawn_indices = parse_excluded_spawn_indices(
             args.exclude_spawn_indices
         )
@@ -195,11 +338,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         parser.error("distance range is invalid")
     if args.preferred_distance <= 0.0 or args.sampling_resolution <= 0.0:
         parser.error("preferred distance and sampling resolution must be positive")
+    try:
+        validate_endpoint_waypoint_spacing(args.endpoint_waypoint_spacing_m)
+    except CatalogError as error:
+        parser.error(str(error))
     if not math.isfinite(args.max_endpoint_offset) or args.max_endpoint_offset <= 0.0:
         parser.error("max-endpoint-offset must be positive and finite")
     try:
         initial_approach_contract(args)
         turn_geometry_contract(args)
+        physical_straight_contract(args)
+        physical_turn_contract(args)
+        straight_capacity_contract(args)
     except CatalogError as error:
         parser.error(str(error))
     return args
@@ -280,6 +430,149 @@ def validate_active_server_profile(
 
 def _location_distance(first: Any, second: Any) -> float:
     return float(first.location.distance(second.location))
+
+
+def validate_endpoint_waypoint_spacing(value: Any) -> float | None:
+    """Validate the opt-in waypoint endpoint spacing for CLI and direct callers."""
+    if value is None:
+        return None
+    try:
+        spacing_m = float(value)
+    except (TypeError, ValueError) as error:
+        raise CatalogError(
+            "endpoint waypoint spacing must be positive and finite"
+        ) from error
+    if not math.isfinite(spacing_m) or spacing_m <= 0.0:
+        raise CatalogError("endpoint waypoint spacing must be positive and finite")
+    return spacing_m
+
+
+def _transform_sort_key(transform: Any) -> tuple[float, ...]:
+    """Return a complete finite transform key suitable for stable endpoint order."""
+    try:
+        values = (
+            float(transform.location.x),
+            float(transform.location.y),
+            float(transform.location.z),
+            float(transform.rotation.roll),
+            float(transform.rotation.pitch),
+            float(transform.rotation.yaw),
+        )
+    except (AttributeError, TypeError, ValueError) as error:
+        raise CatalogError("generated waypoint has an invalid transform") from error
+    if not all(math.isfinite(value) for value in values):
+        raise CatalogError("generated waypoint transform must be finite")
+    return values
+
+
+def _generated_waypoint_endpoint_records(
+    carla_map: Any, spacing_m: float, junction_policy: str = "include"
+) -> tuple[list[Any], list[Any], dict[str, Any]]:
+    """Build a unique, deterministically ordered endpoint transform pool.
+
+    ``carla.Map.generate_waypoints`` ordering is not part of CARLA's public
+    contract.  Sorting the complete transform makes endpoint indices stable
+    even if the API returns the same unique waypoints in a different order.
+    CARLA can return the same exact transform more than once for topology
+    boundaries. Because the planner consumes only the location, retaining
+    those duplicates would create ambiguous aliases. Collapse exact duplicate
+    full transforms deterministically and retain the raw/deduplicated counts in
+    catalog provenance.
+    """
+    spacing_m = validate_endpoint_waypoint_spacing(spacing_m)
+    assert spacing_m is not None
+    if junction_policy not in ENDPOINT_JUNCTION_POLICIES:
+        raise CatalogError(
+            f"unsupported endpoint junction policy: {junction_policy!r}"
+        )
+    try:
+        waypoints = list(carla_map.generate_waypoints(spacing_m))
+    except (AttributeError, TypeError, RuntimeError, ValueError) as error:
+        raise CatalogError(
+            "CARLA failed to generate waypoint route endpoints"
+        ) from error
+    unique_by_transform: dict[tuple[float, ...], tuple[int, Any, Any]] = {}
+    junction_count = 0
+    junction_excluded_count = 0
+    for api_index, waypoint in enumerate(waypoints):
+        try:
+            transform = waypoint.transform
+        except AttributeError as error:
+            raise CatalogError(
+                f"generated waypoint {api_index} has no transform"
+            ) from error
+        is_junction = getattr(waypoint, "is_junction", None)
+        if junction_policy == "exclude" and not isinstance(is_junction, bool):
+            raise CatalogError(
+                f"generated waypoint {api_index} lacks boolean is_junction"
+            )
+        if bool(is_junction):
+            junction_count += 1
+            if junction_policy == "exclude":
+                junction_excluded_count += 1
+                continue
+        key = _transform_sort_key(transform)
+        unique_by_transform.setdefault(key, (api_index, transform, waypoint))
+    keyed = [
+        (key, api_index, transform, waypoint)
+        for key, (api_index, transform, waypoint) in unique_by_transform.items()
+    ]
+    if len(keyed) < 2:
+        raise CatalogError("CARLA generated fewer than two waypoint route endpoints")
+    keyed.sort(key=lambda item: item[0])
+    return (
+        [transform for _key, _api_index, transform, _waypoint in keyed],
+        [waypoint for _key, _api_index, _transform, waypoint in keyed],
+        {
+            "api_count": len(waypoints),
+            "junction_policy": junction_policy,
+            "junction_waypoint_count": junction_count,
+            "junction_excluded_count": junction_excluded_count,
+            "eligible_api_count": len(waypoints) - junction_excluded_count,
+            "duplicate_transform_count": (
+                len(waypoints) - junction_excluded_count - len(keyed)
+            ),
+        },
+    )
+
+
+def _generated_waypoint_endpoint_pool(
+    carla_map: Any, spacing_m: float, junction_policy: str = "include"
+) -> tuple[list[Any], dict[str, Any]]:
+    endpoints, _waypoints, provenance = _generated_waypoint_endpoint_records(
+        carla_map, spacing_m, junction_policy
+    )
+    return endpoints, provenance
+
+
+def generated_waypoint_endpoint_transforms(
+    carla_map: Any, spacing_m: float, junction_policy: str = "include"
+) -> list[Any]:
+    endpoints, _provenance = _generated_waypoint_endpoint_pool(
+        carla_map, spacing_m, junction_policy
+    )
+    return endpoints
+
+
+def waypoint_spawn_height_contract(start_transform: Any) -> dict[str, Any]:
+    """Describe the single bridge-owned road-clearance offset without applying it."""
+    source_z_m = float(start_transform.location.z)
+    if not math.isfinite(source_z_m):
+        raise CatalogError("waypoint endpoint start Z must be finite")
+    return {
+        "endpoint_transform_z_m": source_z_m,
+        "catalog_z_offset_m": 0.0,
+        "bridge_z_offset_m": BRIDGE_SPAWN_Z_OFFSET_M,
+        "actor_spawn_z_before_base_link_to_center_shift_m": (
+            source_z_m + BRIDGE_SPAWN_Z_OFFSET_M
+        ),
+        "base_link_to_center_shift": (
+            "bridge applies wheelbase/2 along the local longitudinal axis after "
+            "the Z clearance; pitched transforms may also change actor Z"
+        ),
+        "offset_owner": "autoware_carla_interface_bridge",
+        "bridge_source": BRIDGE_SPAWN_Z_OFFSET_SOURCE,
+    }
 
 
 def initial_approach_contract(args: argparse.Namespace) -> dict[str, Any]:
@@ -384,6 +677,134 @@ def turn_geometry_contract(args: argparse.Namespace) -> dict[str, Any]:
         "maximum_p95_abs_curvature_per_m": numeric[
             "maximum_turn_p95_curvature_per_m"
         ],
+    }
+
+
+def physical_straight_contract(args: argparse.Namespace) -> dict[str, Any]:
+    """Return the explicit serialized-route geometry admission contract."""
+    profile = getattr(args, "physical_straight_profile", None)
+    if profile is None:
+        return {"enabled": False}
+    if profile not in PHYSICAL_STRAIGHT_PROFILES:
+        raise CatalogError(f"unsupported physical-straight profile: {profile!r}")
+    if tuple(getattr(args, "scenarios", SCENARIOS)) != ("straight",):
+        raise CatalogError(
+            "physical-straight profile requires --scenarios straight"
+        )
+    return {
+        "enabled": True,
+        "profile_id": profile,
+        "measurement_source": "exact_serialized_route_with_terminal_goal",
+        "admission_policy": "reject_before_accepted_pair_quota",
+        "limits": dict(SPEED_30KPH_STRAIGHT_GEOMETRY_CONTRACT),
+    }
+
+
+def straight_capacity_contract(args: argparse.Namespace) -> dict[str, Any]:
+    """Validate the sole map/profile-specific compact straight generation mode."""
+    profile = getattr(args, "straight_capacity_profile", None)
+    junction_policy = getattr(args, "endpoint_junction_policy", "include")
+    enumeration_policy = getattr(args, "candidate_enumeration_policy", "all_pairs")
+    if junction_policy not in ENDPOINT_JUNCTION_POLICIES:
+        raise CatalogError(f"unsupported endpoint junction policy: {junction_policy!r}")
+    if enumeration_policy not in CANDIDATE_ENUMERATION_POLICIES:
+        raise CatalogError(
+            f"unsupported candidate enumeration policy: {enumeration_policy!r}"
+        )
+    if profile is None:
+        if junction_policy != "include" or enumeration_policy != "all_pairs":
+            raise CatalogError(
+                "non-default endpoint/candidate policy requires an explicit "
+                "straight-capacity profile"
+            )
+        return {"enabled": False}
+    if profile not in STRAIGHT_CAPACITY_PROFILES:
+        raise CatalogError(f"unsupported straight-capacity profile: {profile!r}")
+
+    expected_integers = {
+        "pairs_per_seed": 8,
+        "max_traces": 20000,
+    }
+    expected_numbers = {
+        "min_distance": 170.0,
+        "max_distance": 182.0,
+        "preferred_distance": 172.0,
+        "sampling_resolution": 1.0,
+        "endpoint_waypoint_spacing_m": 0.5,
+        "max_endpoint_offset": 2.0,
+    }
+    mismatches = []
+    for field, expected in expected_integers.items():
+        value = getattr(args, field, None)
+        if isinstance(value, bool) or not isinstance(value, int) or value != expected:
+            mismatches.append(f"{field}={value!r} (expected {expected!r})")
+    for field, expected in expected_numbers.items():
+        value = getattr(args, field, None)
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or not math.isclose(
+                float(value), expected, rel_tol=0.0, abs_tol=1.0e-9
+            )
+        ):
+            mismatches.append(f"{field}={value!r} (expected {expected!r})")
+    expected_identity = {
+        "map_id": "town10hd_opt",
+        "scenarios": ("straight",),
+        "seeds": (0,),
+        "physical_straight_profile": "speed_30kph",
+        "weather": "ClearNoon",
+        "endpoint_junction_policy": "exclude",
+        "candidate_enumeration_policy": "directed_topology_straight_v1",
+    }
+    for field, expected in expected_identity.items():
+        value = getattr(args, field, None)
+        if value != expected:
+            mismatches.append(f"{field}={value!r} (expected {expected!r})")
+    if mismatches:
+        raise CatalogError(
+            f"straight-capacity profile {profile!r} contract mismatch: "
+            + "; ".join(mismatches)
+        )
+    return {
+        "enabled": True,
+        "profile_id": profile,
+        "map_id": "town10hd_opt",
+        "scenario": "straight",
+        "endpoint_waypoint_spacing_m": 0.5,
+        "endpoint_junction_policy": "exclude",
+        "candidate_enumeration_policy": "directed_topology_straight_v1",
+        "admission_policy": "prefilter_then_exact_serialized_physical_postfilter",
+        "provenance": dict(TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE),
+    }
+
+
+def physical_turn_contract(args: argparse.Namespace) -> dict[str, Any]:
+    """Return the explicit serialized packaged-Town turn admission contract."""
+    profile = getattr(args, "physical_turn_profile", None)
+    if profile is None:
+        return {"enabled": False}
+    if profile not in PHYSICAL_TURN_PROFILES:
+        raise CatalogError(f"unsupported physical-turn profile: {profile!r}")
+    if tuple(getattr(args, "scenarios", SCENARIOS)) != ("left", "right"):
+        raise CatalogError(
+            "physical-turn profile requires --scenarios left,right"
+        )
+    if initial_approach_contract(args)["enabled"] or turn_geometry_contract(args)[
+        "enabled"
+    ]:
+        raise CatalogError(
+            "physical-turn profile cannot be combined with custom-map turn gates"
+        )
+    return {
+        "enabled": True,
+        "profile_id": profile,
+        "applicability": "packaged_town_only",
+        "measurement_source": "exact_serialized_3d_route_with_terminal_goal",
+        "admission_policy": "reject_before_accepted_pair_quota",
+        "limits": dict(SPEED_30KPH_TURN_GEOMETRY_CONTRACT),
+        "provenance": dict(SPEED_30KPH_TURN_CONTRACT_PROVENANCE),
     }
 
 
@@ -740,6 +1161,173 @@ def deterministic_pairs(
     return [(start, goal) for _, _, start, goal in ranked]
 
 
+def _heading_difference_deg(first: float, second: float) -> float:
+    return abs((first - second + 180.0) % 360.0 - 180.0)
+
+
+def deterministic_directed_topology_straight_pairs(
+    endpoints: Sequence[Any],
+    planner: Any,
+    seed: int,
+    minimum_distance: float,
+    maximum_distance: float,
+    preferred_distance: float,
+    sampling_resolution: float,
+    physical_straight_limits: Mapping[str, Any],
+) -> tuple[list[tuple[int, int]], dict[str, Any]]:
+    """Prefilter physically possible straight pairs on the directed road graph.
+
+    Chord and endpoint-heading checks are mathematical necessary conditions of
+    the unchanged physical-straight contract. Directed graph reachability then
+    removes reverse-lane pairs without calling ``trace_route``. This is only an
+    enumeration optimization: every retained pair still passes through the
+    exact serialized-route distance, road-option, and physical postfilters.
+    """
+    graph = getattr(planner, "_graph", None)
+    localize = getattr(planner, "_localize", None)
+    if (
+        graph is None
+        or not callable(localize)
+        or not hasattr(graph, "is_directed")
+        or not graph.is_directed()
+    ):
+        raise CatalogError(
+            "directed topology enumeration requires the GlobalRoutePlanner "
+            "directed graph and localization API"
+        )
+    try:
+        maximum_arc_ratio = float(
+            physical_straight_limits["maximum_arc_to_direct_ratio"]
+        )
+        maximum_heading = float(
+            physical_straight_limits["maximum_endpoint_tangent_to_chord_deg"]
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise CatalogError(
+            "directed topology enumeration lacks physical-straight bounds"
+        ) from error
+    if (
+        not math.isfinite(maximum_arc_ratio)
+        or maximum_arc_ratio < 1.0
+        or not math.isfinite(maximum_heading)
+        or maximum_heading <= 0.0
+    ):
+        raise CatalogError(
+            "directed topology enumeration has invalid physical-straight bounds"
+        )
+
+    direct_minimum = minimum_distance / maximum_arc_ratio
+    cell_size = maximum_distance
+    cells: dict[tuple[int, int], list[int]] = {}
+    xy_yaw: list[tuple[float, float, float]] = []
+    for index, endpoint in enumerate(endpoints):
+        try:
+            x = float(endpoint.location.x)
+            y = float(endpoint.location.y)
+            yaw = float(endpoint.rotation.yaw)
+        except (AttributeError, TypeError, ValueError) as error:
+            raise CatalogError(
+                f"generated endpoint {index} lacks finite x/y/yaw"
+            ) from error
+        if not all(math.isfinite(value) for value in (x, y, yaw)):
+            raise CatalogError(f"generated endpoint {index} lacks finite x/y/yaw")
+        xy_yaw.append((x, y, yaw))
+        cell = (math.floor(x / cell_size), math.floor(y / cell_size))
+        cells.setdefault(cell, []).append(index)
+
+    geometric_by_start: dict[int, list[tuple[int, float]]] = {}
+    geometric_count = 0
+    for start_index, (start_x, start_y, start_yaw) in enumerate(xy_yaw):
+        start_cell = (
+            math.floor(start_x / cell_size),
+            math.floor(start_y / cell_size),
+        )
+        for cell_x in range(start_cell[0] - 1, start_cell[0] + 2):
+            for cell_y in range(start_cell[1] - 1, start_cell[1] + 2):
+                for goal_index in cells.get((cell_x, cell_y), ()):
+                    if goal_index == start_index:
+                        continue
+                    goal_x, goal_y, goal_yaw = xy_yaw[goal_index]
+                    dx = goal_x - start_x
+                    dy = goal_y - start_y
+                    direct_distance = math.hypot(dx, dy)
+                    if not (
+                        direct_minimum - 1.0e-9
+                        <= direct_distance
+                        <= maximum_distance + 1.0e-9
+                    ):
+                        continue
+                    chord_heading = math.degrees(math.atan2(dy, dx))
+                    if (
+                        _heading_difference_deg(start_yaw, chord_heading)
+                        > maximum_heading + 1.0e-9
+                        or _heading_difference_deg(goal_yaw, chord_heading)
+                        > maximum_heading + 1.0e-9
+                    ):
+                        continue
+                    geometric_by_start.setdefault(start_index, []).append(
+                        (goal_index, direct_distance)
+                    )
+                    geometric_count += 1
+
+    localized: dict[int, tuple[Any, Any]] = {}
+
+    def localized_edge(index: int) -> tuple[Any, Any]:
+        if index not in localized:
+            try:
+                edge = localize(endpoints[index].location)
+            except Exception as error:
+                raise CatalogError(
+                    f"directed topology localization failed for endpoint {index}"
+                ) from error
+            if not isinstance(edge, tuple) or len(edge) != 2:
+                raise CatalogError(
+                    f"directed topology localization returned no edge for endpoint {index}"
+                )
+            if edge[0] not in graph or edge[1] not in graph:
+                raise CatalogError(
+                    f"directed topology localization returned an unknown edge for "
+                    f"endpoint {index}"
+                )
+            localized[index] = edge
+        return localized[index]
+
+    ranked: list[tuple[int, bytes, int, int]] = []
+    for start_index, candidates in geometric_by_start.items():
+        source = localized_edge(start_index)[0]
+        reachable = nx.descendants(graph, source)
+        reachable.add(source)
+        for goal_index, direct_distance in candidates:
+            target = localized_edge(goal_index)[0]
+            if target not in reachable:
+                continue
+            bucket = int(
+                abs(direct_distance - preferred_distance) / sampling_resolution
+            )
+            token = f"{seed}:{start_index}:{goal_index}".encode("ascii")
+            ranked.append(
+                (bucket, hashlib.sha256(token).digest(), start_index, goal_index)
+            )
+    ranked.sort()
+    pairs = [(start, goal) for _bucket, _tie, start, goal in ranked]
+    return pairs, {
+        "policy": "directed_topology_straight_v1",
+        "input_endpoint_count": len(endpoints),
+        "planar_chord_heading_candidate_count": geometric_count,
+        "directed_reachable_candidate_count": len(pairs),
+        "directed_graph_node_count": graph.number_of_nodes(),
+        "directed_graph_edge_count": graph.number_of_edges(),
+        "necessary_chord_minimum_m": direct_minimum,
+        "necessary_chord_maximum_m": maximum_distance,
+        "maximum_endpoint_heading_to_chord_deg": maximum_heading,
+        "ranking": "preferred_chord_distance_bucket_then_seeded_sha256",
+        "postfilter_authority": (
+            "exact serialized route distance and physical-straight analysis"
+        ),
+        "real_vehicle_ready": False,
+    }
+
+
 def validate_excluded_spawn_indices(
     excluded_indices: Sequence[int], spawn_point_count: int
 ) -> tuple[int, ...]:
@@ -777,14 +1365,261 @@ def trace_route_candidate(planner: Any, start: Any, goal: Any) -> tuple[Any, Exc
 
 
 def _trace_error_sample(
-    start_index: int, goal_index: int, error: Exception
+    start_index: int,
+    goal_index: int,
+    error: Exception,
+    endpoint_source: str = SPAWN_POINT_ENDPOINT_SOURCE,
 ) -> dict[str, Any]:
-    return {
-        "start_spawn_index": start_index,
-        "goal_spawn_index": goal_index,
+    sample = {
         "error_type": type(error).__name__,
         "message": str(error)[:240],
     }
+    if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE:
+        return {
+            "start_spawn_index": start_index,
+            "goal_spawn_index": goal_index,
+            **sample,
+        }
+    sample.update(
+        {
+            "endpoint_source": endpoint_source,
+            "start_endpoint_index": start_index,
+            "goal_endpoint_index": goal_index,
+        }
+    )
+    return sample
+
+
+def serialized_route_length(route_points: Sequence[Mapping[str, Any]]) -> float:
+    """Return the exact serialized terminal distance used in route evidence."""
+    if not route_points or not isinstance(route_points[-1], Mapping):
+        raise CatalogError("serialized route has no terminal point")
+    value = route_points[-1].get("distance_m")
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+        or float(value) < 0.0
+    ):
+        raise CatalogError("serialized route terminal distance_m is invalid")
+    return float(value)
+
+
+def _physical_straight_rejection_sample(
+    start_index: int,
+    goal_index: int,
+    result: Mapping[str, Any],
+    endpoint_source: str,
+) -> dict[str, Any]:
+    def finite_metric(name: str) -> float | None:
+        value = result.get(name)
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+        ):
+            return None
+        return float(value)
+
+    sample = {
+        "failure_reasons": list(result.get("failure_reasons", [])),
+        "route_length_m": finite_metric("route_length_m"),
+        "direct_distance_m": finite_metric("direct_distance_m"),
+        "arc_to_direct_ratio": finite_metric("arc_to_direct_ratio"),
+        "maximum_chord_deviation_m": finite_metric(
+            "maximum_chord_deviation_m"
+        ),
+        "maximum_endpoint_tangent_to_chord_deg": finite_metric(
+            "maximum_endpoint_tangent_to_chord_deg"
+        ),
+        "absolute_net_heading_change_deg": finite_metric(
+            "absolute_net_heading_change_deg"
+        ),
+        "cumulative_absolute_heading_change_deg": finite_metric(
+            "cumulative_absolute_heading_change_deg"
+        ),
+        "p95_absolute_curvature_per_m": finite_metric(
+            "p95_absolute_curvature_per_m"
+        ),
+        "maximum_absolute_curvature_per_m": finite_metric(
+            "maximum_absolute_curvature_per_m"
+        ),
+    }
+    if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE:
+        return {
+            "start_spawn_index": start_index,
+            "goal_spawn_index": goal_index,
+            **sample,
+        }
+    return {
+        "endpoint_source": endpoint_source,
+        "start_endpoint_index": start_index,
+        "goal_endpoint_index": goal_index,
+        **sample,
+    }
+
+
+def _physical_turn_rejection_sample(
+    start_index: int,
+    goal_index: int,
+    result: Mapping[str, Any],
+    endpoint_source: str,
+) -> dict[str, Any]:
+    def finite_or_none(value: Any) -> float | None:
+        return (
+            float(value)
+            if isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            else None
+        )
+
+    block = result.get("selected_block")
+    block_metrics = (
+        {
+            field: finite_or_none(block.get(field))
+            for field in (
+                "route_lead_distance_m",
+                "route_tail_distance_m",
+                "command_arc_length_m",
+                "signed_net_heading_change_deg",
+                "heading_excess_deg",
+                "command_lead_distance_m",
+                "command_tail_distance_m",
+                "p95_absolute_curvature_per_m",
+                "maximum_absolute_curvature_per_m",
+            )
+        }
+        if isinstance(block, Mapping)
+        else None
+    )
+    initial = result.get("initial_approach")
+    initial_metrics = (
+        {
+            field: finite_or_none(initial.get(field))
+            for field in (
+                "covered_distance_m",
+                "maximum_lateral_deviation_m",
+                "maximum_heading_change_deg",
+            )
+        }
+        if isinstance(initial, Mapping)
+        else None
+    )
+    grade = result.get("longitudinal_grade")
+    grade_metrics = (
+        {
+            field: finite_or_none(grade.get(field))
+            for field in (
+                "window_length_m",
+                "maximum_absolute_grade_ratio",
+                "maximum_absolute_grade_percent",
+                "maximum_allowed_absolute_grade_ratio",
+            )
+        }
+        if isinstance(grade, Mapping)
+        else None
+    )
+    sample = {
+        "scenario": result.get("scenario"),
+        "failure_reasons": list(result.get("failure_reasons", [])),
+        "route_length_m": finite_or_none(result.get("route_length_m")),
+        "directional_block_count": result.get("directional_block_count"),
+        "additional_maneuver_commands": list(
+            result.get("additional_maneuver_commands", [])
+        ),
+        "initial_approach": initial_metrics,
+        "longitudinal_grade": grade_metrics,
+        "selected_block": block_metrics,
+    }
+    if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE:
+        return {
+            "start_spawn_index": start_index,
+            "goal_spawn_index": goal_index,
+            **sample,
+        }
+    return {
+        "endpoint_source": endpoint_source,
+        "start_endpoint_index": start_index,
+        "goal_endpoint_index": goal_index,
+        **sample,
+    }
+
+
+def _physical_turn_error_rejection_sample(
+    start_index: int,
+    goal_index: int,
+    scenario: str,
+    route_length_m: float,
+    error: PhysicalTurnGeometryError,
+    endpoint_source: str,
+) -> dict[str, Any]:
+    sample = {
+        "scenario": scenario,
+        "failure_reasons": [str(error)],
+        "route_length_m": route_length_m,
+        "directional_block_count": None,
+        "additional_maneuver_commands": [],
+        "initial_approach": None,
+        "longitudinal_grade": None,
+        "selected_block": None,
+        "analysis_error": error.evidence(),
+    }
+    if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE:
+        return {
+            "start_spawn_index": start_index,
+            "goal_spawn_index": goal_index,
+            **sample,
+        }
+    return {
+        "endpoint_source": endpoint_source,
+        "start_endpoint_index": start_index,
+        "goal_endpoint_index": goal_index,
+        **sample,
+    }
+
+
+def _normalized_goal_metadata(
+    helper: Any,
+    goal_transform: Any,
+    route: Sequence[Any],
+    route_points: Sequence[Mapping[str, Any]],
+    endpoint_source: str,
+    goal_index: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Normalize runtime/serialized goal Z while retaining the raw endpoint."""
+    if not route or not route_points:
+        raise CatalogError("goal normalization requires a non-empty route")
+    original_carla = dict(helper.transform_dict(goal_transform))
+    original_ros = dict(helper.ros_pose_dict(goal_transform))
+    try:
+        original_z = float(goal_transform.location.z)
+        road_z = float(route[-1][0].transform.location.z)
+    except (AttributeError, TypeError, ValueError) as error:
+        raise CatalogError("goal endpoint or road waypoint Z is invalid") from error
+    if not math.isfinite(original_z) or not math.isfinite(road_z):
+        raise CatalogError("goal endpoint and road waypoint Z must be finite")
+    original_carla.setdefault("z", original_z)
+    original_ros.setdefault("z", original_z)
+    normalized_route = [dict(point) for point in route_points]
+    normalized_route[-1]["z"] = road_z
+    normalized_carla = {**original_carla, "z": road_z}
+    normalized_ros = {**original_ros, "z": road_z}
+    provenance = {
+        "endpoint_source": endpoint_source,
+        "endpoint_index": int(goal_index),
+        "original_goal_carla_transform": original_carla,
+        "original_goal_ros_pose": original_ros,
+        "terminal_z_normalization": {
+            "policy": "last_road_waypoint_z",
+            "original_endpoint_z_m": original_z,
+            "last_road_waypoint_z_m": road_z,
+            "runtime_goal_z_m": road_z,
+            "serialized_terminal_z_m": road_z,
+            "applied_offset_m": road_z - original_z,
+        },
+    }
+    return normalized_route, normalized_carla, normalized_ros, provenance
 
 
 def _route_payload(
@@ -795,14 +1630,47 @@ def _route_payload(
     sampling_resolution: float,
     start_index: int,
     goal_index: int,
-    spawn_points: Sequence[Any],
+    endpoints: Sequence[Any],
     route: Sequence[Any],
     initial_approach: Mapping[str, Any] | None = None,
     turn_geometry: Mapping[str, Any] | None = None,
+    *,
+    endpoint_source: str = SPAWN_POINT_ENDPOINT_SOURCE,
+    endpoint_waypoint_spacing_m: float | None = None,
+    serialized_route: Sequence[Mapping[str, Any]] | None = None,
+    physical_straight: Mapping[str, Any] | None = None,
+    physical_turn: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    start_transform = spawn_points[start_index]
-    goal_transform = spawn_points[goal_index]
-    route_points = helper.serialize_route(route, goal_transform)
+    if endpoint_source == GENERATED_WAYPOINT_ENDPOINT_SOURCE:
+        endpoint_waypoint_spacing_m = validate_endpoint_waypoint_spacing(
+            endpoint_waypoint_spacing_m
+        )
+        if endpoint_waypoint_spacing_m is None:
+            raise CatalogError(
+                "generated waypoint endpoint payload requires its spacing"
+            )
+    elif endpoint_source != SPAWN_POINT_ENDPOINT_SOURCE:
+        raise CatalogError(f"unsupported endpoint source: {endpoint_source!r}")
+    start_transform = endpoints[start_index]
+    goal_transform = endpoints[goal_index]
+    raw_route_points = (
+        list(serialized_route)
+        if serialized_route is not None
+        else helper.serialize_route(route, goal_transform)
+    )
+    (
+        route_points,
+        goal_carla_transform,
+        goal_ros_pose,
+        goal_endpoint_provenance,
+    ) = _normalized_goal_metadata(
+        helper,
+        goal_transform,
+        route,
+        raw_route_points,
+        endpoint_source,
+        goal_index,
+    )
     option_counts: dict[str, int] = {}
     for point in route_points:
         option = point["road_option"]
@@ -816,12 +1684,24 @@ def _route_payload(
         "scenario": scenario,
         "sampling_resolution_m": sampling_resolution,
         "route_length_m": route_points[-1]["distance_m"],
-        "start_spawn_index": start_index,
-        "goal_spawn_index": goal_index,
+        **(
+            {
+                "start_spawn_index": start_index,
+                "goal_spawn_index": goal_index,
+            }
+            if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE
+            else {
+                "endpoint_source": endpoint_source,
+                "endpoint_waypoint_spacing_m": endpoint_waypoint_spacing_m,
+                "start_endpoint_index": start_index,
+                "goal_endpoint_index": goal_index,
+            }
+        ),
         "start_carla_transform": helper.transform_dict(start_transform),
         "start_ros_pose": helper.ros_pose_dict(start_transform),
-        "goal_carla_transform": helper.transform_dict(goal_transform),
-        "goal_ros_pose": helper.ros_pose_dict(goal_transform),
+        "goal_carla_transform": goal_carla_transform,
+        "goal_ros_pose": goal_ros_pose,
+        "goal_endpoint_provenance": goal_endpoint_provenance,
         "spawn_point": ",".join(
             f"{value:.6f}"
             for value in (
@@ -836,10 +1716,18 @@ def _route_payload(
         "option_counts": option_counts,
         "route": route_points,
     }
+    if endpoint_source == GENERATED_WAYPOINT_ENDPOINT_SOURCE:
+        payload["spawn_height_contract"] = waypoint_spawn_height_contract(
+            start_transform
+        )
     if initial_approach is not None:
         payload["initial_approach_preflight"] = dict(initial_approach)
     if turn_geometry is not None:
         payload["turn_geometry_preflight"] = dict(turn_geometry)
+    if physical_straight is not None:
+        payload["physical_straight_preflight"] = dict(physical_straight)
+    if physical_turn is not None:
+        payload["physical_turn_preflight"] = dict(physical_turn)
     return payload
 
 
@@ -955,13 +1843,42 @@ def build_catalog(
     )
 
     carla_map = world.get_map()
-    spawn_points = carla_map.get_spawn_points()
-    if len(spawn_points) < 2:
-        raise CatalogError(f"map {args.map_id} exposes fewer than two spawn points")
-    excluded_spawn_indices = validate_excluded_spawn_indices(
-        getattr(args, "exclude_spawn_indices", ()), len(spawn_points)
+    spawn_points = list(carla_map.get_spawn_points())
+    capacity_contract = straight_capacity_contract(args)
+    endpoint_junction_policy = getattr(args, "endpoint_junction_policy", "include")
+    candidate_enumeration_policy = getattr(
+        args, "candidate_enumeration_policy", "all_pairs"
     )
-    eligible_spawn_point_count = len(spawn_points) - len(excluded_spawn_indices)
+    endpoint_waypoint_spacing_m = validate_endpoint_waypoint_spacing(
+        getattr(args, "endpoint_waypoint_spacing_m", None)
+    )
+    if endpoint_waypoint_spacing_m is None:
+        endpoint_source = SPAWN_POINT_ENDPOINT_SOURCE
+        endpoints = spawn_points
+        endpoint_waypoints: list[Any] = []
+        if len(endpoints) < 2:
+            raise CatalogError(f"map {args.map_id} exposes fewer than two spawn points")
+        excluded_endpoint_indices = validate_excluded_spawn_indices(
+            getattr(args, "exclude_spawn_indices", ()), len(endpoints)
+        )
+    else:
+        endpoint_source = GENERATED_WAYPOINT_ENDPOINT_SOURCE
+        if getattr(args, "exclude_spawn_indices", ()):
+            raise CatalogError(
+                "exclude-spawn-indices cannot be used with generated waypoint "
+                "route endpoints"
+            )
+        (
+            endpoints,
+            endpoint_waypoints,
+            endpoint_pool_provenance,
+        ) = _generated_waypoint_endpoint_records(
+            carla_map,
+            endpoint_waypoint_spacing_m,
+            endpoint_junction_policy,
+        )
+        excluded_endpoint_indices = ()
+    eligible_endpoint_count = len(endpoints) - len(excluded_endpoint_indices)
     planner = helper.GlobalRoutePlanner(carla_map, args.sampling_resolution)
     output_root = args.output_root.expanduser().resolve()
     route_root = output_root / "routes" / args.map_id
@@ -971,25 +1888,72 @@ def build_catalog(
     total_coverage = Counter()
     total_error_types: Counter[str] = Counter()
     total_error_samples: list[dict[str, Any]] = []
+    total_physical_straight_rejection_samples: list[dict[str, Any]] = []
+    total_physical_turn_rejection_samples: list[dict[str, Any]] = []
     approach_contract = initial_approach_contract(args)
     geometry_contract = turn_geometry_contract(args)
+    selected_scenarios = tuple(getattr(args, "scenarios", SCENARIOS))
+    straight_contract = physical_straight_contract(args)
+    packaged_turn_contract = physical_turn_contract(args)
 
-    for scenario in SCENARIOS:
+    for scenario in selected_scenarios:
         created_before = len(catalog_routes)
         traces = 0
         coverage = Counter()
         error_types: Counter[str] = Counter()
         error_samples: list[dict[str, Any]] = []
+        candidate_enumeration_reports: list[dict[str, Any]] = []
+        physical_straight_rejection_samples: list[dict[str, Any]] = []
+        physical_turn_rejection_samples: list[dict[str, Any]] = []
         for seed in args.seeds:
             created_for_seed = 0
-            pairs = deterministic_pairs(
-                spawn_points,
-                seed,
-                args.min_distance,
-                args.max_distance,
-                args.preferred_distance,
-                args.sampling_resolution,
-                excluded_spawn_indices,
+            if candidate_enumeration_policy == "directed_topology_straight_v1":
+                if scenario != "straight" or not straight_contract["enabled"]:
+                    raise CatalogError(
+                        "directed topology candidate enumeration is restricted "
+                        "to physical-straight generation"
+                    )
+                if len(endpoint_waypoints) != len(endpoints):
+                    raise CatalogError(
+                        "directed topology candidate enumeration lacks waypoint "
+                        "endpoint provenance"
+                    )
+                pairs, enumeration_report = (
+                    deterministic_directed_topology_straight_pairs(
+                        endpoints,
+                        planner,
+                        seed,
+                        args.min_distance,
+                        args.max_distance,
+                        args.preferred_distance,
+                        args.sampling_resolution,
+                        straight_contract["limits"],
+                    )
+                )
+            else:
+                pairs = deterministic_pairs(
+                    endpoints,
+                    seed,
+                    args.min_distance,
+                    args.max_distance,
+                    args.preferred_distance,
+                    args.sampling_resolution,
+                    excluded_endpoint_indices,
+                )
+                enumeration_report = {
+                    "policy": "all_pairs",
+                    "input_endpoint_count": len(endpoints),
+                    "ranked_candidate_count": len(pairs),
+                    "ranking": (
+                        "preferred_chord_distance_bucket_then_seeded_sha256"
+                    ),
+                    "postfilter_authority": (
+                        "exact serialized route scenario/distance and enabled "
+                        "physical geometry analysis"
+                    ),
+                }
+            candidate_enumeration_reports.append(
+                {"seed": seed, **enumeration_report}
             )
             for start_index, goal_index in pairs:
                 if traces >= args.max_traces or created_for_seed >= args.pairs_per_seed:
@@ -1001,15 +1965,20 @@ def build_catalog(
                 _reset_planner(planner, helper)
                 route, trace_error = trace_route_candidate(
                     planner,
-                    spawn_points[start_index].location,
-                    spawn_points[goal_index].location,
+                    endpoints[start_index].location,
+                    endpoints[goal_index].location,
                 )
                 if trace_error is not None:
                     coverage["planner_error"] += 1
                     error_types[type(trace_error).__name__] += 1
                     if len(error_samples) < MAX_TRACE_ERROR_SAMPLES:
                         error_samples.append(
-                            _trace_error_sample(start_index, goal_index, trace_error)
+                            _trace_error_sample(
+                                start_index,
+                                goal_index,
+                                trace_error,
+                                endpoint_source,
+                            )
                         )
                     continue
                 if not route or len(route) < 2:
@@ -1017,13 +1986,13 @@ def build_catalog(
                     continue
                 route = normalize_route_endpoints(
                     route,
-                    spawn_points[start_index].location,
-                    spawn_points[goal_index].location,
+                    endpoints[start_index].location,
+                    endpoints[goal_index].location,
                 )
                 start_offset, goal_offset = route_endpoint_offsets(
                     route,
-                    spawn_points[start_index].location,
-                    spawn_points[goal_index].location,
+                    endpoints[start_index].location,
+                    endpoints[goal_index].location,
                 )
                 maximum_endpoint_offset = float(
                     getattr(args, "max_endpoint_offset", 2.0)
@@ -1037,10 +2006,90 @@ def build_catalog(
                 if not helper.route_matches(route, scenario):
                     coverage["scenario_mismatch"] += 1
                     continue
-                length = helper.route_length(route)
+                serialized_route = helper.serialize_route(
+                    route, endpoints[goal_index]
+                )
+                length = serialized_route_length(serialized_route)
                 if not args.min_distance <= length <= args.max_distance:
                     coverage["distance_rejected"] += 1
                     continue
+                physical_straight = None
+                if straight_contract["enabled"] and scenario == "straight":
+                    try:
+                        physical_straight = analyze_serialized_physical_straight(
+                            {"route": serialized_route},
+                            straight_contract["limits"],
+                        )
+                    except PhysicalStraightGeometryError as error:
+                        raise CatalogError(
+                            f"serialized physical-straight analysis failed: {error}"
+                        ) from error
+                    if physical_straight["status"] != "PASS":
+                        coverage["physical_straight_rejected"] += 1
+                        if (
+                            len(physical_straight_rejection_samples)
+                            < MAX_TRACE_ERROR_SAMPLES
+                        ):
+                            physical_straight_rejection_samples.append(
+                                _physical_straight_rejection_sample(
+                                    start_index,
+                                    goal_index,
+                                    physical_straight,
+                                    endpoint_source,
+                                )
+                            )
+                        continue
+                physical_turn = None
+                if packaged_turn_contract["enabled"] and scenario in (
+                    "left",
+                    "right",
+                ):
+                    try:
+                        physical_turn = analyze_serialized_physical_turn(
+                            {
+                                "scenario": scenario,
+                                "route_length_m": length,
+                                "route": serialized_route,
+                            },
+                            packaged_turn_contract["limits"],
+                        )
+                    except PhysicalTurnGeometryError as error:
+                        if error.fatal:
+                            raise CatalogError(
+                                "serialized physical-turn analysis failed "
+                                f"fatally ({error.error_scope}): {error}"
+                            ) from error
+                        coverage["physical_turn_rejected"] += 1
+                        if (
+                            len(physical_turn_rejection_samples)
+                            < MAX_TRACE_ERROR_SAMPLES
+                        ):
+                            physical_turn_rejection_samples.append(
+                                _physical_turn_error_rejection_sample(
+                                    start_index,
+                                    goal_index,
+                                    scenario,
+                                    length,
+                                    error,
+                                    endpoint_source,
+                                )
+                            )
+                        continue
+                    if physical_turn["status"] != "PASS":
+                        coverage["physical_turn_rejected"] += 1
+                        if (
+                            len(physical_turn_rejection_samples)
+                            < MAX_TRACE_ERROR_SAMPLES
+                        ):
+                            physical_turn_rejection_samples.append(
+                                _physical_turn_rejection_sample(
+                                    start_index,
+                                    goal_index,
+                                    physical_turn,
+                                    endpoint_source,
+                                )
+                            )
+                        continue
                 initial_approach = None
                 if approach_contract["enabled"] and scenario != "lane_follow":
                     initial_approach = analyze_initial_approach(
@@ -1051,9 +2100,14 @@ def build_catalog(
                         continue
                 turn_geometry = None
                 if geometry_contract["enabled"] and scenario in ("left", "right"):
-                    turn_geometry = analyze_turn_geometry(
-                        route, scenario, geometry_contract
-                    )
+                    try:
+                        turn_geometry = analyze_serialized_custom_turn(
+                            serialized_route, scenario, geometry_contract
+                        )
+                    except SerializedCustomTurnGeometryError as error:
+                        raise CatalogError(
+                            f"serialized custom-turn analysis failed: {error}"
+                        ) from error
                     if turn_geometry["status"] != "PASS":
                         coverage["turn_geometry_rejected"] += 1
                         continue
@@ -1068,10 +2122,15 @@ def build_catalog(
                     args.sampling_resolution,
                     start_index,
                     goal_index,
-                    spawn_points,
+                    endpoints,
                     route,
                     initial_approach,
                     turn_geometry,
+                    endpoint_source=endpoint_source,
+                    endpoint_waypoint_spacing_m=endpoint_waypoint_spacing_m,
+                    serialized_route=serialized_route,
+                    physical_straight=physical_straight,
+                    physical_turn=physical_turn,
                 )
                 atomic_write_json(route_path, payload)
                 used_pairs.add((start_index, goal_index))
@@ -1084,10 +2143,30 @@ def build_catalog(
                         "scenario": scenario,
                         "seed": seed,
                         "pair_index": pair_index,
-                        "start_spawn_index": start_index,
-                        "goal_spawn_index": goal_index,
+                        **(
+                            {
+                                "start_spawn_index": start_index,
+                                "goal_spawn_index": goal_index,
+                            }
+                            if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE
+                            else {
+                                "endpoint_source": endpoint_source,
+                                "start_endpoint_index": start_index,
+                                "goal_endpoint_index": goal_index,
+                            }
+                        ),
                         "route_length_m": payload["route_length_m"],
                         "initial_approach_preflight": initial_approach,
+                        **(
+                            {"physical_straight_preflight": physical_straight}
+                            if physical_straight is not None
+                            else {}
+                        ),
+                        **(
+                            {"physical_turn_preflight": physical_turn}
+                            if physical_turn is not None
+                            else {}
+                        ),
                         **(
                             {"turn_geometry_preflight": turn_geometry}
                             if turn_geometry is not None
@@ -1097,6 +2176,15 @@ def build_catalog(
                         "sha256": sha256_file(route_path),
                     }
                 )
+            if capacity_contract["enabled"] and created_for_seed != (
+                args.pairs_per_seed
+            ):
+                raise CatalogError(
+                    "straight-capacity profile could not fill the exact accepted "
+                    f"pair quota for seed {seed}: accepted={created_for_seed} "
+                    f"required={args.pairs_per_seed} traces={traces} "
+                    f"maximum={args.max_traces}"
+                )
         count = len(catalog_routes) - created_before
         skipped = (
             coverage["planner_error"]
@@ -1104,6 +2192,8 @@ def build_catalog(
             + coverage["endpoint_rejected"]
             + coverage["scenario_mismatch"]
             + coverage["distance_rejected"]
+            + coverage["physical_straight_rejected"]
+            + coverage["physical_turn_rejected"]
             + coverage["initial_approach_rejected"]
             + coverage["turn_geometry_rejected"]
         )
@@ -1112,12 +2202,28 @@ def build_catalog(
         remaining_samples = MAX_TRACE_ERROR_SAMPLES - len(total_error_samples)
         if remaining_samples > 0:
             total_error_samples.extend(error_samples[:remaining_samples])
+        remaining_physical_samples = (
+            MAX_TRACE_ERROR_SAMPLES
+            - len(total_physical_straight_rejection_samples)
+        )
+        if remaining_physical_samples > 0:
+            total_physical_straight_rejection_samples.extend(
+                physical_straight_rejection_samples[:remaining_physical_samples]
+            )
+        remaining_turn_samples = (
+            MAX_TRACE_ERROR_SAMPLES - len(total_physical_turn_rejection_samples)
+        )
+        if remaining_turn_samples > 0:
+            total_physical_turn_rejection_samples.extend(
+                physical_turn_rejection_samples[:remaining_turn_samples]
+            )
         scenario_results.append(
             {
                 "scenario": scenario,
                 "status": "READY" if count else "SKIP",
                 "route_count": count,
                 "traces": traces,
+                "candidate_enumeration": candidate_enumeration_reports,
                 "trace_coverage": {
                     "attempted": coverage["attempted"],
                     "accepted": coverage["accepted"],
@@ -1127,6 +2233,30 @@ def build_catalog(
                     "endpoint_rejected": coverage["endpoint_rejected"],
                     "scenario_mismatch": coverage["scenario_mismatch"],
                     "distance_rejected": coverage["distance_rejected"],
+                    **(
+                        {
+                            "physical_straight_rejected": coverage[
+                                "physical_straight_rejected"
+                            ],
+                            "physical_straight_rejection_samples": (
+                                physical_straight_rejection_samples
+                            ),
+                        }
+                        if straight_contract["enabled"]
+                        else {}
+                    ),
+                    **(
+                        {
+                            "physical_turn_rejected": coverage[
+                                "physical_turn_rejected"
+                            ],
+                            "physical_turn_rejection_samples": (
+                                physical_turn_rejection_samples
+                            ),
+                        }
+                        if packaged_turn_contract["enabled"]
+                        else {}
+                    ),
                     "initial_approach_rejected": coverage[
                         "initial_approach_rejected"
                     ],
@@ -1181,6 +2311,7 @@ def build_catalog(
         },
         "generation": {
             "weather": args.weather,
+            "scenarios": list(selected_scenarios),
             "seeds": list(args.seeds),
             "pairs_per_seed": args.pairs_per_seed,
             "minimum_distance_m": args.min_distance,
@@ -1196,11 +2327,60 @@ def build_catalog(
                 if geometry_contract["enabled"]
                 else {}
             ),
+            **(
+                {"physical_straight_contract": straight_contract}
+                if straight_contract["enabled"]
+                else {}
+            ),
+            **(
+                {"physical_turn_contract": packaged_turn_contract}
+                if packaged_turn_contract["enabled"]
+                else {}
+            ),
             "max_traces_per_scenario": args.max_traces,
+            "endpoint_source": endpoint_source,
+            "endpoint_waypoint_spacing_m": endpoint_waypoint_spacing_m,
+            "endpoint_junction_policy": endpoint_junction_policy,
+            "candidate_enumeration_policy": candidate_enumeration_policy,
+            "straight_capacity_contract": capacity_contract,
+            "endpoint_count": len(endpoints),
+            "eligible_endpoint_count": eligible_endpoint_count,
+            "endpoint_ordering": (
+                "carla_spawn_point_index"
+                if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE
+                else "deduplicated_lexicographic_transform_x_y_z_roll_pitch_yaw"
+            ),
             "spawn_point_count": len(spawn_points),
-            "excluded_spawn_indices": list(excluded_spawn_indices),
-            "excluded_spawn_point_count": len(excluded_spawn_indices),
-            "eligible_spawn_point_count": eligible_spawn_point_count,
+            **(
+                {
+                    "excluded_spawn_indices": list(excluded_endpoint_indices),
+                    "excluded_spawn_point_count": len(excluded_endpoint_indices),
+                    "eligible_spawn_point_count": eligible_endpoint_count,
+                }
+                if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE
+                else {
+                    "endpoint_api_count": endpoint_pool_provenance["api_count"],
+                    "endpoint_eligible_api_count": endpoint_pool_provenance[
+                        "eligible_api_count"
+                    ],
+                    "endpoint_junction_waypoint_count": endpoint_pool_provenance[
+                        "junction_waypoint_count"
+                    ],
+                    "endpoint_junction_excluded_count": endpoint_pool_provenance[
+                        "junction_excluded_count"
+                    ],
+                    "endpoint_duplicate_transform_count": endpoint_pool_provenance[
+                        "duplicate_transform_count"
+                    ],
+                    "endpoint_deduplication": "exact_full_transform_keep_first_api_occurrence",
+                    "spawn_height_contract": {
+                        "catalog_z_offset_m": 0.0,
+                        "bridge_z_offset_m": BRIDGE_SPAWN_Z_OFFSET_M,
+                        "offset_owner": "autoware_carla_interface_bridge",
+                        "bridge_source": BRIDGE_SPAWN_Z_OFFSET_SOURCE,
+                    }
+                }
+            ),
             "trace_coverage": {
                 "attempted": total_coverage["attempted"],
                 "accepted": total_coverage["accepted"],
@@ -1210,6 +2390,8 @@ def build_catalog(
                     + total_coverage["endpoint_rejected"]
                     + total_coverage["scenario_mismatch"]
                     + total_coverage["distance_rejected"]
+                    + total_coverage["physical_straight_rejected"]
+                    + total_coverage["physical_turn_rejected"]
                     + total_coverage["initial_approach_rejected"]
                     + total_coverage["turn_geometry_rejected"]
                 ),
@@ -1218,6 +2400,30 @@ def build_catalog(
                 "endpoint_rejected": total_coverage["endpoint_rejected"],
                 "scenario_mismatch": total_coverage["scenario_mismatch"],
                 "distance_rejected": total_coverage["distance_rejected"],
+                **(
+                    {
+                        "physical_straight_rejected": total_coverage[
+                            "physical_straight_rejected"
+                        ],
+                        "physical_straight_rejection_samples": (
+                            total_physical_straight_rejection_samples
+                        ),
+                    }
+                    if straight_contract["enabled"]
+                    else {}
+                ),
+                **(
+                    {
+                        "physical_turn_rejected": total_coverage[
+                            "physical_turn_rejected"
+                        ],
+                        "physical_turn_rejection_samples": (
+                            total_physical_turn_rejection_samples
+                        ),
+                    }
+                    if packaged_turn_contract["enabled"]
+                    else {}
+                ),
                 "initial_approach_rejected": total_coverage[
                     "initial_approach_rejected"
                 ],
@@ -1232,8 +2438,19 @@ def build_catalog(
                 ),
                 "planner_error_types": dict(sorted(total_error_types.items())),
                 "planner_error_samples": total_error_samples,
-                "excluded_spawn_point_count": len(excluded_spawn_indices),
-                "eligible_spawn_point_count": eligible_spawn_point_count,
+                **(
+                    {
+                        "excluded_spawn_point_count": len(
+                            excluded_endpoint_indices
+                        ),
+                        "eligible_spawn_point_count": eligible_endpoint_count,
+                    }
+                    if endpoint_source == SPAWN_POINT_ENDPOINT_SOURCE
+                    else {
+                        "endpoint_count": len(endpoints),
+                        "eligible_endpoint_count": eligible_endpoint_count,
+                    }
+                ),
             },
         },
         "scenario_results": scenario_results,

@@ -9,6 +9,7 @@ from autoware_internal_planning_msgs.msg import CandidateTrajectories
 from autoware_planning_msgs.msg import Trajectory, TrajectoryPoint
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import (
     DurabilityPolicy,
@@ -24,7 +25,10 @@ from vad_route_logic import (
     GeometrySmoothingResult,
     RoutePlan,
     constrain_trajectory_points_to_route,
+    limit_trajectory_speed_for_acceleration,
     limit_trajectory_speed_for_curvature,
+    limit_trajectory_speed_for_route_curvature,
+    limit_trajectory_speed_recovery,
     resample_trajectory_points,
     route_alignment_blocked,
     smooth_trajectory_geometry,
@@ -70,7 +74,46 @@ class VadRouteManager(Node):
         self.comfortable_deceleration_mps2 = self._positive_parameter(
             "comfortable_deceleration_mps2"
         )
+        self.maximum_longitudinal_acceleration_mps2 = float(
+            self.declare_parameter(
+                "maximum_longitudinal_acceleration_mps2", 0.0
+            ).value
+        )
+        if (
+            not math.isfinite(self.maximum_longitudinal_acceleration_mps2)
+            or self.maximum_longitudinal_acceleration_mps2 < 0.0
+        ):
+            raise RuntimeError(
+                "maximum_longitudinal_acceleration_mps2 must be finite and "
+                "non-negative"
+            )
         self.maximum_speed_mps = self._positive_parameter("maximum_speed_mps")
+        self.longitudinal_velocity_source = str(
+            self.declare_parameter(
+                "longitudinal_velocity_source", "vad_prediction"
+            ).value
+        )
+        if self.longitudinal_velocity_source not in (
+            "vad_prediction",
+            "explicit_simulation_nominal",
+        ):
+            raise RuntimeError(
+                "longitudinal_velocity_source must be vad_prediction or "
+                "explicit_simulation_nominal"
+            )
+        self.nominal_cruise_speed_mps = self._nonnegative_parameter(
+            "nominal_cruise_speed_mps"
+        )
+        if self.longitudinal_velocity_source == "explicit_simulation_nominal":
+            if self.nominal_cruise_speed_mps <= 0.0:
+                raise RuntimeError(
+                    "nominal_cruise_speed_mps must be positive for the explicit "
+                    "simulation velocity source"
+                )
+            if self.nominal_cruise_speed_mps > self.maximum_speed_mps:
+                raise RuntimeError(
+                    "nominal_cruise_speed_mps must not exceed maximum_speed_mps"
+                )
         self.route_corridor_half_width_m = self._positive_parameter(
             "route_corridor_half_width_m"
         )
@@ -204,6 +247,18 @@ class VadRouteManager(Node):
         self.curvature_speed_preview_m = self._positive_parameter(
             "curvature_speed_preview_m"
         )
+        self.route_curvature_lookahead_m = self._nonnegative_parameter(
+            "route_curvature_lookahead_m"
+        )
+        if (
+            self.longitudinal_velocity_source == "explicit_simulation_nominal"
+            and self.maximum_lateral_acceleration_mps2 > 0.0
+            and self.route_curvature_lookahead_m <= 0.0
+        ):
+            raise RuntimeError(
+                "explicit simulation velocity with a lateral acceleration cap "
+                "requires route_curvature_lookahead_m"
+            )
         self.trajectory_resample_interval_m = self._positive_parameter(
             "trajectory_resample_interval_m"
         )
@@ -382,9 +437,9 @@ class VadRouteManager(Node):
             self.maneuver_exit_lookahead_m,
         )
 
-        if self.cross_track_error_m > self.max_route_deviation_m:
+        if abs(self.cross_track_error_m) > self.max_route_deviation_m:
             self._set_fault(
-                f"route_deviation:{self.cross_track_error_m:.2f}m>"
+                f"route_deviation:abs({self.cross_track_error_m:.2f}m)>"
                 f"{self.max_route_deviation_m:.2f}m"
             )
 
@@ -646,20 +701,71 @@ class VadRouteManager(Node):
                 self.curvature_speed_preview_m,
                 self.comfortable_deceleration_mps2,
             )
+            if self.route_curvature_lookahead_m > 0.0:
+                limit_trajectory_speed_for_route_curvature(
+                    output.points,
+                    self.route,
+                    self.progress_m,
+                    self.maximum_lateral_acceleration_mps2,
+                    self.route_curvature_lookahead_m,
+                    self.comfortable_deceleration_mps2,
+                )
+
+        if self.maximum_longitudinal_acceleration_mps2 > 0.0:
+            if self.longitudinal_velocity_source == "explicit_simulation_nominal":
+                # The stateful vehicle command gate owns the launch ramp. This
+                # forward pass only limits recovery after a curve/terminal cap.
+                limit_trajectory_speed_recovery(
+                    output.points,
+                    self.maximum_longitudinal_acceleration_mps2,
+                )
+            else:
+                current_speed_mps = math.hypot(
+                    self.odom.twist.twist.linear.x,
+                    self.odom.twist.twist.linear.y,
+                )
+                limit_trajectory_speed_for_acceleration(
+                    output.points,
+                    self.maximum_longitudinal_acceleration_mps2,
+                    current_speed_mps,
+                    self.trajectory_resample_interval_m,
+                )
 
         self._recalculate_acceleration(output)
         return output
 
     def _apply_velocity_profile(self, points, stop_distance_m):
         distances = trajectory_arc_lengths(points)
+        explicit_nominal = (
+            self.longitudinal_velocity_source == "explicit_simulation_nominal"
+        )
+        hard_stop_distance_m = next(
+            (
+                distance
+                for point, distance in zip(points, distances)
+                if explicit_nominal
+                and point.longitudinal_velocity_mps <= 1.0e-3
+            ),
+            None,
+        )
         for point, path_distance in zip(points, distances):
             distance_to_stop = max(0.0, stop_distance_m - path_distance)
             speed_cap = math.sqrt(
                 2.0 * self.comfortable_deceleration_mps2 * distance_to_stop
             )
+            requested_speed_mps = (
+                self.nominal_cruise_speed_mps
+                if explicit_nominal
+                else max(0.0, point.longitudinal_velocity_mps)
+            )
+            if (
+                hard_stop_distance_m is not None
+                and path_distance >= hard_stop_distance_m - 1.0e-3
+            ):
+                requested_speed_mps = 0.0
             point.longitudinal_velocity_mps = float(
                 min(
-                    max(0.0, point.longitudinal_velocity_mps),
+                    requested_speed_mps,
                     self.maximum_speed_mps,
                     speed_cap,
                 )
@@ -667,6 +773,21 @@ class VadRouteManager(Node):
             if path_distance >= stop_distance_m - 1.0e-3:
                 point.longitudinal_velocity_mps = 0.0
             point.lateral_velocity_mps = 0.0
+
+        if explicit_nominal and hard_stop_distance_m is not None:
+            for index in range(len(points) - 2, -1, -1):
+                segment = max(0.0, distances[index + 1] - distances[index])
+                following_speed = max(
+                    0.0, points[index + 1].longitudinal_velocity_mps
+                )
+                deceleration_cap = math.sqrt(
+                    following_speed**2
+                    + 2.0 * self.comfortable_deceleration_mps2 * segment
+                )
+                points[index].longitudinal_velocity_mps = min(
+                    max(0.0, points[index].longitudinal_velocity_mps),
+                    deceleration_cap,
+                )
 
     def _apply_geometry_smoothing(
         self,
@@ -740,6 +861,11 @@ class VadRouteManager(Node):
             previous_time = time_sec
 
     def _recalculate_acceleration(self, trajectory):
+        positive_acceleration_limit = (
+            self.maximum_longitudinal_acceleration_mps2
+            if self.maximum_longitudinal_acceleration_mps2 > 0.0
+            else self.comfortable_deceleration_mps2
+        )
         for index, point in enumerate(trajectory.points):
             if index + 1 >= len(trajectory.points):
                 point.acceleration_mps2 = 0.0
@@ -759,7 +885,7 @@ class VadRouteManager(Node):
             point.acceleration_mps2 = float(
                 max(
                     -self.comfortable_deceleration_mps2,
-                    min(self.comfortable_deceleration_mps2, acceleration),
+                    min(positive_acceleration_limit, acceleration),
                 )
             )
 
@@ -1011,7 +1137,7 @@ def main():
     try:
         node = VadRouteManager()
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         if node is not None:

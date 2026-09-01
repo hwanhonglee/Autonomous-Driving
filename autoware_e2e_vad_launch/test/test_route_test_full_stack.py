@@ -9,15 +9,18 @@ import pytest
 SCRIPT_DIR = Path(__file__).resolve().parents[2] / "scripts" / "e2e"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-import route_test
-from route_test import (
+import route_test  # noqa: E402
+from route_test import (  # noqa: E402
+    advance_sustained_speed_duration,
     EvaluationFailure,
     RouteTestMonitor,
     goal_completion_failures,
     load_goal_ros_pose,
     make_result,
     parse_args,
+    percentile,
     route_snapshot,
+    speed_exposure_failures,
     update_goal_completion_claim,
 )
 
@@ -88,6 +91,8 @@ def make_monitor(full_stack):
     monitor.full_stack = full_stack
     monitor.position = (1.0, 2.0)
     monitor.speed_mps = 0.05
+    monitor.yaw_rate_rps = 0.2
+    monitor.lateral_acceleration_mps2 = 0.01
     monitor.sim_time = 3.0
     monitor.trajectory_points = 6
     monitor.trajectory_valid = True
@@ -401,6 +406,8 @@ def test_full_stack_snapshot_records_standard_state():
     )
 
     assert snapshot["speed_mps"] == 0.05
+    assert snapshot["yaw_rate_rps"] == 0.2
+    assert snapshot["lateral_acceleration_mps2"] == 0.01
     assert snapshot["direct_goal_distance_m"] == 5.0
     assert snapshot["route_status"] == "ready"
     assert snapshot["localization_initialization_state"] == 3
@@ -465,6 +472,59 @@ def test_goal_completion_accepts_all_four_independent_checks():
         max_goal_distance_m=1.5,
         max_stop_speed_mps=0.15,
     ) == []
+
+
+def test_speed_exposure_accepts_sustained_bounded_30kph_run():
+    assert speed_exposure_failures(
+        maximum_speed_mps=8.4,
+        sustained_speed_duration_sec=1.2,
+        maximum_lateral_acceleration_mps2=1.4,
+        minimum_sustained_speed_mps=7.5,
+        minimum_sustained_speed_sec=1.0,
+        maximum_observed_speed_mps=9.0,
+        maximum_allowed_lateral_acceleration_mps2=1.8,
+    ) == []
+
+
+def test_percentile_is_finite_filtered_and_linearly_interpolated():
+    assert percentile([0.0, 1.0, float("nan"), 2.0], 0.5) == 1.0
+    assert percentile([0.0, 1.0, 2.0], 0.95) == pytest.approx(1.9)
+    assert percentile([], 0.95) is None
+
+
+def test_sustained_speed_requires_two_fresh_high_speed_samples():
+    duration = advance_sustained_speed_duration(
+        0.0, 7.6, 7.7, 0.2, 7.5, 0.25
+    )
+    assert duration == pytest.approx(0.2)
+    assert advance_sustained_speed_duration(
+        duration, 7.7, 7.8, 0.2, 7.5, 0.25
+    ) == pytest.approx(0.4)
+
+    # A lone high peak and a delayed high sample cannot claim the gap.
+    assert advance_sustained_speed_duration(
+        0.8, 2.0, 8.0, 0.2, 7.5, 0.25
+    ) == 0.0
+    assert advance_sustained_speed_duration(
+        0.8, 8.0, 8.1, 1.0, 7.5, 0.25
+    ) == 0.0
+
+
+def test_speed_exposure_rejects_peak_only_overspeed_and_lateral_limit():
+    failures = speed_exposure_failures(
+        maximum_speed_mps=9.1,
+        sustained_speed_duration_sec=0.1,
+        maximum_lateral_acceleration_mps2=1.9,
+        minimum_sustained_speed_mps=7.5,
+        minimum_sustained_speed_sec=1.0,
+        maximum_observed_speed_mps=9.0,
+        maximum_allowed_lateral_acceleration_mps2=1.8,
+    )
+
+    assert len(failures) == 3
+    assert "maximum speed" in failures[0]
+    assert "was sustained for only" in failures[1]
+    assert "maximum lateral acceleration" in failures[2]
 
 
 def test_goal_completion_waits_for_odometry_newer_than_claim():
@@ -550,6 +610,14 @@ def test_parse_args_loads_route_goal_and_completion_defaults(tmp_path, monkeypat
     assert args.max_goal_distance == 1.5
     assert args.max_stop_speed == 0.15
     assert args.ready_stability == 4.0
+    assert args.min_sustained_speed == 0.0
+    assert args.min_sustained_speed_sec == 0.0
+    assert args.max_observed_speed == 0.0
+    assert args.max_lateral_acceleration == 0.0
+    assert args.max_speed_sample_gap == 0.25
+    assert args.longitudinal_speed_source == "vad_prediction"
+    assert args.vad_velocity_evaluated is True
+    assert args.vad_geometry_evaluated is True
 
     result = make_result(args)
     assert result["route_file"] == str(route_file.resolve())
@@ -557,6 +625,86 @@ def test_parse_args_loads_route_goal_and_completion_defaults(tmp_path, monkeypat
     assert result["limits"]["maximum_direct_goal_distance_m"] == 1.5
     assert result["limits"]["maximum_stop_speed_mps"] == 0.15
     assert result["limits"]["ready_stability_wall_sec"] == 4.0
+    assert result["limits"]["minimum_sustained_speed_mps"] == 0.0
+    assert result["limits"]["maximum_observed_speed_mps"] == 0.0
+    assert result["limits"]["maximum_speed_sample_gap_sec"] == 0.25
+    assert result["profile_context"] == {
+        "longitudinal_velocity_source": "vad_prediction",
+        "vad_velocity_evaluated": True,
+        "vad_geometry_evaluated": True,
+    }
+
+
+def test_parse_args_accepts_complete_speed_exposure_contract(tmp_path, monkeypatch):
+    route_file = tmp_path / "route.json"
+    route_file.write_text(
+        json.dumps(
+            {
+                "goal_ros_pose": {
+                    "x": 1.0,
+                    "y": 2.0,
+                    "z": 0.0,
+                    "yaw": 0.0,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "route_test.py",
+            "--route-file",
+            str(route_file),
+            "--min-sustained-speed",
+            "7.5",
+            "--min-sustained-speed-sec",
+            "1.0",
+            "--max-observed-speed",
+            "9.0",
+            "--max-lateral-acceleration",
+            "1.8",
+        ],
+    )
+
+    args = parse_args()
+
+    assert args.min_sustained_speed == 7.5
+    assert args.min_sustained_speed_sec == 1.0
+    assert args.max_observed_speed == 9.0
+    assert args.max_lateral_acceleration == 1.8
+
+
+def test_parse_args_rejects_half_enabled_speed_exposure(tmp_path, monkeypatch):
+    route_file = tmp_path / "route.json"
+    route_file.write_text(
+        json.dumps(
+            {
+                "goal_ros_pose": {
+                    "x": 1.0,
+                    "y": 2.0,
+                    "z": 0.0,
+                    "yaw": 0.0,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "route_test.py",
+            "--route-file",
+            str(route_file),
+            "--min-sustained-speed",
+            "7.5",
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="2"):
+        parse_args()
 
 
 def test_parse_args_rejects_nonpositive_completion_limits(tmp_path, monkeypatch):

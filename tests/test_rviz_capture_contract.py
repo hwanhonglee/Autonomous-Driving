@@ -89,6 +89,15 @@ def test_full_capture_view_keeps_reference_final_and_vad_paths_visible() -> None
     assert visible_topics == required_topics
 
 
+def test_full_capture_view_embeds_the_front_camera_panel() -> None:
+    config = _load_config(FULL_RVIZ)
+    camera = _named_display(config["Visualization Manager"]["Displays"], "VAD Front Camera")
+
+    assert camera["Enabled"] is True
+    assert camera["Value"] is True
+    assert camera["Topic"]["Value"] == "/sensing/camera/CAM_FRONT/image_raw"
+
+
 def test_capture_views_disable_odometry_trails_and_deemphasize_candidates() -> None:
     full = _load_config(FULL_RVIZ)
     lightweight = _load_config(LIGHTWEIGHT_RVIZ)
@@ -124,14 +133,75 @@ def test_desktop_still_is_selected_from_the_route_recording() -> None:
     assert '"candidate_png_file": "autoware_rviz_candidate.png"' in source
 
 
-def test_desktop_capture_pins_the_owned_rviz_window_above_normal_windows() -> None:
+def test_desktop_capture_selects_one_owned_rviz_window_without_desktop_side_effects() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
     assert "for command in ffmpeg ffprobe xdpyinfo xprop xwininfo" in source
-    assert "pin_rviz_capture_window()" in source
-    assert "pin_rviz_capture_window\n" in source
-    assert "_NET_WM_STATE_ABOVE" in source
-    assert "RVIZ_CAPTURE_FOREGROUND_GUARD=rviz_above" in source
+    assert "matching_owned_rviz_capture_windows()" in source
+    assert "inspect_owned_rviz_capture_window()" in source
+    assert "prepare_owned_rviz_capture_window()" in source
+    assert "prepare_owned_rviz_capture_window\n" in source
+    assert "${#matching_windows[@]} != 1" in source
+    assert 'grep -Fq -- "${capture_rviz_runtime_config}"' in source
+    assert '"rviz2",[[:space:]]*"rviz2"' in source
+    assert "_NET_WM_PID" in source
+    assert '"${observed_rviz_window_pgid}" != "${stack_pgid}"' in source
+    assert '"${observed_rviz_window_map_state}" != "IsViewable"' in source
+    assert "_NET_WM_STATE_MAXIMIZED_HORZ" in source
+    assert "_NET_WM_STATE_MAXIMIZED_VERT" in source
+    assert "_NET_WM_STATE_ABOVE" not in source
+    assert "XWarpPointer" not in source
+    assert "_NET_CLIENT_LIST_STACKING" not in source
+    assert "xdotool" not in source
+    assert '${desktop_display}+0,0' not in source
+
+
+def test_owned_window_capture_is_revalidated_while_the_recorder_is_alive() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    call_index = source.index("\nprepare_owned_rviz_capture_window\n")
+    candidate_wait_index = source.index(
+        "if ! timeout 30 ros2 topic echo /planning/vad/candidate_trajectories",
+        call_index,
+    )
+    candidate_png_index = source.index("autoware_rviz_candidate.png", call_index)
+    assert call_index < candidate_wait_index < candidate_png_index
+    assert "verify_owned_rviz_capture_window candidate_pre" in source
+    assert "verify_owned_rviz_capture_window candidate_post" in source
+    assert "require_desktop_recorder recording_started" in source
+    assert "verify_owned_rviz_capture_window recording_started" in source
+    assert "desktop_recorder_alive" in source
+    assert "verify_owned_rviz_capture_window representative" in source
+    assert "require_desktop_recorder representative" in source
+    assert "Owned RViz geometry changed during" in source
+    assert "Owned RViz PID/PGID changed or left the stack group" in source
+
+
+def test_owned_window_capture_pads_to_1920x1080_without_scaling() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "capture_output_width_px=1920" in source
+    assert "capture_output_height_px=1080" in source
+    assert "observed_rviz_window_width_px < 1280" in source
+    assert "observed_rviz_window_height_px < 720" in source
+    assert "observed_rviz_window_width_px > capture_output_width_px" in source
+    assert "observed_rviz_window_height_px > capture_output_height_px" in source
+    assert "capture_pad_left_px=$(((capture_output_width_px" in source
+    assert "capture_pad_right_px=$((capture_output_width_px" in source
+    assert "capture_pad_top_px=$(((capture_output_height_px" in source
+    assert "capture_pad_bottom_px=$((capture_output_height_px" in source
+    assert "color=black,setsar=1" in source
+    assert source.count('-window_id "${capture_rviz_window_id_decimal}"') == 2
+    assert source.count('-video_size "${capture_rviz_input_dimensions}"') == 2
+    assert source.count('-i "${desktop_display}"') == 2
+    assert source.count('-vf "${capture_pad_filter}"') == 2
+    assert '"${DISPLAY}" "${capture_output_dimensions}"' in source
+    assert '"method": "ffmpeg_x11grab_owned_window_v1"' in source
+    assert '"root_capture": False' in source
+    assert '"shell_surfaces_excluded": True' in source
+    assert '"input_dimensions": input_dimensions' in source
+    assert '"padding_px": padding_px' in source
+    assert '"scaling": "none"' in source
 
 
 def test_capture_timestamps_are_python_isoformat_compatible() -> None:
@@ -152,3 +222,56 @@ def test_desktop_metadata_records_a_fail_closed_centered_view_contract() -> None
     assert '"scale": 10.0' in source
     assert '"vehicle_centered": True' in source
     assert '"visible_path_topics": sorted(visible_path_topics)' in source
+
+
+def test_owned_window_capture_structurally_excludes_shell_overlays() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "top_center_bright_fraction" not in source
+    assert '"method": "owned_window_excludes_shell_surfaces_v1"' in source
+    assert '"root_capture": False' in source
+    assert '"shell_surfaces_excluded": True' in source
+    assert '"passed": True' in source
+
+
+def test_desktop_capture_uses_embedded_camera_without_external_rqt() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "stack_command+=(--rviz-only)" in source
+    assert "RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera" in source
+    assert "RVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false" in source
+    assert '"embedded_rviz_display": "VAD Front Camera"' in source
+    assert (
+        '"embedded_rviz_topic": "/sensing/camera/CAM_FRONT/image_raw"'
+        in source
+    )
+    assert '"external_rqt_image_view_launched": False' in source
+
+
+def test_owned_window_runtime_provenance_is_fail_closed() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert source.startswith("#!/usr/bin/env bash\nset -euo pipefail\n")
+    for field in (
+        "RVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1",
+        "RVIZ_CAPTURE_ROOT=false",
+        "RVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true",
+        "RVIZ_CAPTURE_SCALE_APPLIED=false",
+        "RVIZ_CAPTURE_WINDOW_ID=%s",
+        "RVIZ_CAPTURE_WINDOW_ID_DECIMAL=%s",
+        "RVIZ_CAPTURE_WINDOW_TITLE_CONFIG_MATCH=true",
+        "RVIZ_CAPTURE_WINDOW_CLASS=rviz2",
+        "RVIZ_CAPTURE_WINDOW_PID=%s",
+        "RVIZ_CAPTURE_WINDOW_PGID=%s",
+        "RVIZ_CAPTURE_STACK_PGID=%s",
+        "RVIZ_CAPTURE_WINDOW_MAP_STATE=IsViewable",
+        "RVIZ_CAPTURE_INPUT_WIDTH_PX=%s",
+        "RVIZ_CAPTURE_INPUT_HEIGHT_PX=%s",
+        "RVIZ_CAPTURE_PAD_LEFT_PX=%s",
+        "RVIZ_CAPTURE_PAD_TOP_PX=%s",
+        "RVIZ_CAPTURE_PAD_RIGHT_PX=%s",
+        "RVIZ_CAPTURE_PAD_BOTTOM_PX=%s",
+        "RVIZ_CAPTURE_SCALING=none",
+        "RVIZ_CAPTURE_GEOMETRY_STABLE=true",
+    ):
+        assert field in source

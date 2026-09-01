@@ -3,6 +3,8 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
+source scripts/e2e/workspace_runtime_lock.sh
+e2e_acquire_workspace_runtime_lock "full build"
 
 scripts/e2e/apply_vad_uuid_patch.sh
 scripts/e2e/apply_vad_fp16_layer_norm_patch.sh
@@ -10,6 +12,8 @@ scripts/e2e/apply_vad_frame_assembly_patch.sh
 scripts/e2e/apply_vad_causal_state_sync_patch.sh
 scripts/e2e/apply_vad_bev_shift_modes_patch.sh
 scripts/e2e/apply_vad_temporal_head_mode_patch.sh
+scripts/e2e/apply_vad_object_safety_patches.sh
+scripts/e2e/apply_mission_planner_lane_only_patch.sh
 scripts/e2e/apply_tensorrt_system_headers_patch.sh
 scripts/e2e/apply_tensorrt_unused_cublas_patch.sh
 scripts/e2e/apply_tensorrt_local_sdk_headers_patch.sh
@@ -65,6 +69,25 @@ colcon build \
     -Dcumm_DIR="${AUTOWARE_E2E_SPCONV_ROOT}/share/cmake/cumm" \
     -Dspconv_DIR="${AUTOWARE_E2E_SPCONV_ROOT}/lib/cmake/spconv"
 
+if [[ "${AUTOWARE_E2E_FULL_BUILD_RESUME:-0}" == "1" ]]; then
+  # The global resume may skip this patched runtime. Rebuild it explicitly so
+  # a stale library cannot be admitted under fresh source provenance.
+  colcon build \
+    --base-paths src \
+    --symlink-install \
+    --executor sequential \
+    --packages-select \
+      autoware_autonomous_emergency_braking \
+      autoware_lanelet2_extension \
+      autoware_route_handler \
+      autoware_mission_planner_universe \
+      autoware_tensorrt_vad \
+    --cmake-args \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DBUILD_TESTING=OFF \
+      -Dament_cmake_auto_DIR="${AUTOWARE_E2E_AMENT_CMAKE_AUTO_DIR}"
+fi
+
 # Reconfigure only the project package with its focused tests enabled after all
 # full-stack runtime dependencies have been installed. Restrict package
 # discovery to this data-only package so stale/partial exec dependency install
@@ -82,3 +105,5 @@ colcon build \
 
 unset AUTOWARE_E2E_SKIP_INSTALL
 source scripts/e2e/env.sh
+python3 scripts/e2e/mission_planner_build_provenance.py capture
+python3 scripts/e2e/vad_object_safety_build_provenance.py capture

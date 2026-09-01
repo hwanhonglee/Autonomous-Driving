@@ -1,0 +1,178 @@
+diff --git a/autoware_lanelet2_extension/lib/deprecated.cpp b/autoware_lanelet2_extension/lib/deprecated.cpp
+index 7a78e45..309cbb4 100644
+--- a/autoware_lanelet2_extension/lib/deprecated.cpp
++++ b/autoware_lanelet2_extension/lib/deprecated.cpp
+@@ -27,6 +27,7 @@
+ #include <lanelet2_core/geometry/Lanelet.h>
+ 
+ #include <algorithm>
++#include <cmath>
+ #include <iostream>
+ #include <limits>
+ #include <utility>
+@@ -94,22 +95,13 @@ std::vector<double> calculateAccumulatedLengths(const lanelet::ConstLineString3d
+ std::pair<size_t, size_t> findNearestIndexPair(
+   const std::vector<double> & accumulated_lengths, const double target_length)
+ {
+-  // List size
++  // Select only a segment with positive arc length. Consecutive points with the same
++  // coordinates create equal accumulated lengths and must never be used as an interpolation
++  // denominator.
+   const auto N = accumulated_lengths.size();
+-
+-  // Front
+-  if (target_length < accumulated_lengths.at(1)) {
+-    return std::make_pair(0, 1);
+-  }
+-
+-  // Back
+-  if (target_length > accumulated_lengths.at(N - 2)) {
+-    return std::make_pair(N - 2, N - 1);
+-  }
+-
+-  // Middle
+   for (std::size_t i = 1; i < N; ++i) {
+     if (
++      accumulated_lengths.at(i) > accumulated_lengths.at(i - 1) &&
+       accumulated_lengths.at(i - 1) <= target_length &&
+       target_length <= accumulated_lengths.at(i)) {
+       return std::make_pair(i - 1, i);
+@@ -123,12 +115,17 @@ std::pair<size_t, size_t> findNearestIndexPair(
+ std::vector<lanelet::BasicPoint3d> resamplePoints(
+   const lanelet::ConstLineString3d & line_string, const int num_segments)
+ {
+-  // Calculate length
+-  const auto line_length = static_cast<double>(lanelet::geometry::length(line_string));
++  if (line_string.empty() || num_segments <= 0) return {};
+ 
+   // Calculate accumulated lengths
+   const auto accumulated_lengths = calculateAccumulatedLengths(line_string);
+   if (accumulated_lengths.size() < 2) return {};
++  const double line_length = accumulated_lengths.back();
++  if (!std::isfinite(line_length)) return {};
++  if (line_length == 0.0) {
++    return std::vector<lanelet::BasicPoint3d>(
++      static_cast<std::size_t>(num_segments) + 1, line_string.front().basicPoint());
++  }
+ 
+   // Create each segment
+   std::vector<lanelet::BasicPoint3d> resampled_points;
+diff --git a/autoware_lanelet2_extension/lib/utilities.cpp b/autoware_lanelet2_extension/lib/utilities.cpp
+index 7b20124..6b42c12 100644
+--- a/autoware_lanelet2_extension/lib/utilities.cpp
++++ b/autoware_lanelet2_extension/lib/utilities.cpp
+@@ -37,6 +37,7 @@
+ #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+ 
+ #include <algorithm>
++#include <cmath>
+ #include <iostream>
+ #include <limits>
+ #include <map>
+@@ -147,22 +148,13 @@ std::vector<double> calculateAccumulatedLengths(const lanelet::ConstLineString3d
+ std::pair<size_t, size_t> findNearestIndexPair(
+   const std::vector<double> & accumulated_lengths, const double target_length)
+ {
+-  // List size
++  // Select only a segment with positive arc length. Consecutive points with the same
++  // coordinates create equal accumulated lengths and must never be used as an interpolation
++  // denominator.
+   const auto N = accumulated_lengths.size();
+-
+-  // Front
+-  if (target_length < accumulated_lengths.at(1)) {
+-    return std::make_pair(0, 1);
+-  }
+-
+-  // Back
+-  if (target_length > accumulated_lengths.at(N - 2)) {
+-    return std::make_pair(N - 2, N - 1);
+-  }
+-
+-  // Middle
+   for (std::size_t i = 1; i < N; ++i) {
+     if (
++      accumulated_lengths.at(i) > accumulated_lengths.at(i - 1) &&
+       accumulated_lengths.at(i - 1) <= target_length &&
+       target_length <= accumulated_lengths.at(i)) {
+       return std::make_pair(i - 1, i);
+@@ -176,12 +168,17 @@ std::pair<size_t, size_t> findNearestIndexPair(
+ std::vector<lanelet::BasicPoint3d> resamplePoints(
+   const lanelet::ConstLineString3d & line_string, const int num_segments)
+ {
+-  // Calculate length
+-  const auto line_length = static_cast<double>(lanelet::geometry::length(line_string));
++  if (line_string.empty() || num_segments <= 0) return {};
+ 
+   // Calculate accumulated lengths
+   const auto accumulated_lengths = calculateAccumulatedLengths(line_string);
+   if (accumulated_lengths.size() < 2) return {};
++  const double line_length = accumulated_lengths.back();
++  if (!std::isfinite(line_length)) return {};
++  if (line_length == 0.0) {
++    return std::vector<lanelet::BasicPoint3d>(
++      static_cast<std::size_t>(num_segments) + 1, line_string.front().basicPoint());
++  }
+ 
+   // Create each segment
+   std::vector<lanelet::BasicPoint3d> resampled_points;
+diff --git a/autoware_lanelet2_extension/test/src/test_utilities.cpp b/autoware_lanelet2_extension/test/src/test_utilities.cpp
+index 9e35506..7957f74 100644
+--- a/autoware_lanelet2_extension/test/src/test_utilities.cpp
++++ b/autoware_lanelet2_extension/test/src/test_utilities.cpp
+@@ -17,10 +17,12 @@
+ #include "autoware_lanelet2_extension/utility/utilities.hpp"
+ 
+ #include <gtest/gtest.h>
++#include <lanelet2_core/geometry/LineString.h>
+ #include <lanelet2_core/primitives/Point.h>
+ #include <lanelet2_routing/RoutingGraphContainer.h>
+ #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+ 
++#include <cmath>
+ #include <map>
+ #include <unordered_map>
+ 
+@@ -159,6 +161,42 @@ TEST_F(TestSuite, OverwriteLaneletsCenterline)  // NOLINT for gtest
+   }
+ }
+ 
++TEST(Utilities, Town05DuplicateBoundaryCenterlineIsFinite)  // NOLINT for gtest
++{
++  constexpr lanelet::Id town05_turn_lanelet_id = 28467;
++  const Point3d left_start(getId(), -49.6552200317, 74.6567993164, 0.0554504394531);
++  const Point3d left_start_duplicate(getId(), -49.6552200317, 74.6567993164, 0.0554504394531);
++  const Point3d left_middle(getId(), -49.6611099243, 75.6567840576, 0.0554504394531);
++  const Point3d left_end(getId(), -65.7798919678, 89.7428817749, 0.0);
++  const Point3d right_start(getId(), -46.1504745483, 73.8610992432, 0.0554504394531);
++  const Point3d right_middle(getId(), -46.1552810669, 74.6774139404, 0.0554504394531);
++  const Point3d right_end(getId(), -65.7746200562, 93.2428741455, 0.0);
++
++  const LineString3d left_bound(getId(), {left_start, left_start_duplicate, left_middle, left_end});
++  const LineString3d right_bound(getId(), {right_start, right_middle, right_end});
++  Lanelet turn_lanelet(town05_turn_lanelet_id, left_bound, right_bound);
++  turn_lanelet.attributes()[lanelet::AttributeName::Subtype] = lanelet::AttributeValueString::Road;
++
++  auto map = std::make_shared<lanelet::LaneletMap>();
++  map->add(turn_lanelet);
++  lanelet::utils::overwriteLaneletsCenterline(map, 1.0, true);
++
++  const auto centerline = map->laneletLayer.get(town05_turn_lanelet_id).centerline();
++  ASSERT_GT(centerline.size(), 2U);
++  EXPECT_TRUE(std::isfinite(lanelet::geometry::length(centerline)));
++  EXPECT_GT(lanelet::geometry::length(centerline), 0.0);
++  for (const auto & point : centerline) {
++    EXPECT_TRUE(std::isfinite(point.x()));
++    EXPECT_TRUE(std::isfinite(point.y()));
++    EXPECT_TRUE(std::isfinite(point.z()));
++  }
++
++  EXPECT_NEAR(centerline.front().x(), (left_start.x() + right_start.x()) / 2.0, 1.0e-9);
++  EXPECT_NEAR(centerline.front().y(), (left_start.y() + right_start.y()) / 2.0, 1.0e-9);
++  EXPECT_NEAR(centerline.back().x(), (left_end.x() + right_end.x()) / 2.0, 1.0e-9);
++  EXPECT_NEAR(centerline.back().y(), (left_end.y() + right_end.y()) / 2.0, 1.0e-9);
++}
++
+ /*
+ TEST(Utilities, copyZ)  // NOLINT for gtest
+ {

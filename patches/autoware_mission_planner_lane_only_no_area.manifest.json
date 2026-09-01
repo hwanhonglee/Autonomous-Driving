@@ -1,0 +1,100 @@
+{
+  "schema_version": 2,
+  "repositories": [
+    {
+      "name": "autoware_lanelet2_extension",
+      "repository": "https://github.com/autowarefoundation/autoware_lanelet2_extension.git",
+      "git_tag": "1.2.0",
+      "git_commit": "4a3420d8cc19906e7739618f8a1686400f79b4ac",
+      "workspace_path": "src/core/autoware_lanelet2_extension",
+      "patch": "patches/autoware_lanelet2_extension_zero_length_resample.patch",
+      "files": [
+        {
+          "path": "autoware_lanelet2_extension/lib/deprecated.cpp",
+          "base_sha256": "06a167178e0afaa723d3866a452b77d71034b4790da79b365146bbf90b6bf79c",
+          "patched_sha256": "cb42495eb007a2667589a04b1e5576a57da7575d63273dbead09090dea5e714b"
+        },
+        {
+          "path": "autoware_lanelet2_extension/lib/utilities.cpp",
+          "base_sha256": "dc91a554a1eaf8b3de4866f4604700f50cb7440ee565ef6e0ff435a7eadf6966",
+          "patched_sha256": "076b6680133e83c6543cd13e85b0f1524d37c81bebc3cc7b82fdbeda4374a20d"
+        },
+        {
+          "path": "autoware_lanelet2_extension/test/src/test_utilities.cpp",
+          "base_sha256": "9f3a49b2de3b9cd6e25d5ecf340f0619197f9a5b9aed2e820e5d5b27013d8d55",
+          "patched_sha256": "06397501070933540bb7c05d4bebd5882920fc6bef0aa575758d1bc3981940b4"
+        }
+      ]
+    },
+    {
+      "name": "autoware_core",
+      "repository": "https://github.com/autowarefoundation/autoware_core.git",
+      "git_tag": "1.9.0",
+      "git_commit": "f25f83c632c1984ec276c894c41857d4abc0dad8",
+      "workspace_path": "src/core/autoware_core",
+      "patch": "patches/autoware_route_handler_finite_path.patch",
+      "files": [
+        {
+          "path": "planning/autoware_route_handler/src/route_handler.cpp",
+          "base_sha256": "8c062213ec5c6789a9d118e5b96f43e01e9c8dd4fd48424a9e0db61efd477e85",
+          "patched_sha256": "73cd7ab5a92c254929abd6546cf5ab465146695bd62ce8c2cd563bb71453a6bd"
+        },
+        {
+          "path": "planning/autoware_route_handler/test/test_route_handler.cpp",
+          "base_sha256": "231a2db6e761371200d727cce29eb1bd3b119633b8450ee16bee561d025524d1",
+          "patched_sha256": "fef6c7cf4bfdcaa38879ae0574c36c1ada79495fbc2cfe171b502ad30d71316e"
+        }
+      ]
+    },
+    {
+      "name": "autoware_universe",
+      "repository": "https://github.com/autowarefoundation/autoware_universe.git",
+      "git_tag": "0.52.0",
+      "git_commit": "6e477c645efec33f7909095eea684474e97f5e3d",
+      "workspace_path": "src/universe/autoware_universe",
+      "patch": "patches/autoware_mission_planner_lane_only_no_area.patch",
+      "files": [
+        {
+          "path": "planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp",
+          "base_sha256": "449c721e5e44522cb09cf0ee35134a3af26af13c1bfb473495950a37e7aaa5aa",
+          "patched_sha256": "978577644c31f20b590d7b224bf5138f48f70e4e277727568acda7f5a16176f6"
+        },
+        {
+          "path": "planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp",
+          "base_sha256": "ee3f2ad4109d8a84b5e4d3d80d792befda289e8cf89bb8d364f38f0617771d94",
+          "patched_sha256": "9fb67706b0f8b079a080f7b6d8fa58f71ed5f01e239b26ac2934a6e28556cbb1"
+        }
+      ]
+    }
+  ],
+  "runtime_source_contract": {
+    "repository": "autoware_universe",
+    "path": "planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp",
+    "marker_prefix": "source-contract=",
+    "normalized_sha256": "1f05e8d66b21225b96746c523b1377a21e33a26f9275038223926c02161994b3"
+  },
+  "town05_regression_contract": {
+    "map": "Town05_Opt",
+    "lanelet2_map_sha256": "45cdcfd7eca052969e84c645becdfcbda5b0d9f63002da49d6f22b553fab6ad0",
+    "lanelet_path": [22775, 28467, 1850],
+    "duplicate_boundary": {
+      "lanelet_id": 28467,
+      "side": "left",
+      "node_ids": [22667, 28413],
+      "local_xyz": [-49.6552200317, 74.6567993164, 0.0554504394531]
+    },
+    "route_start_ros_pose": {
+      "x": -47.711585998535156,
+      "y": 41.689964294433594,
+      "z": 0.44999998807907104,
+      "yaw": 1.5766867064939338
+    },
+    "route_goal_ros_pose": {
+      "x": -80.08187103271484,
+      "y": 91.51465606689453,
+      "z": 0.29999998211860657,
+      "yaw": 3.1400863696772445
+    },
+    "failure_mode": "duplicate consecutive left-boundary coordinate caused non-finite centerline and route cost"
+  }
+}

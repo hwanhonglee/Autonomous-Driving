@@ -1,0 +1,664 @@
+diff --git a/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp b/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp
+index 828965b..babe4fd 100644
+--- a/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp
++++ b/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp
+@@ -101,6 +101,12 @@ struct ObjectData
+ class CollisionDataKeeper
+ {
+ public:
++  struct Timeouts
++  {
++    double collision_keep_time;
++    double previous_obstacle_keep_time;
++  };
++
+   /**
+    * @brief Constructor for CollisionDataKeeper
+    * @param clock Shared pointer to the clock
+@@ -120,9 +126,9 @@ public:
+ 
+   /**
+    * @brief Get timeout values for collision and obstacle data
+-   * @return Pair of collision and obstacle data timeout values
++   * @return Named collision and obstacle data timeout values
+    */
+-  std::pair<double, double> getTimeout()
++  [[nodiscard]] Timeouts getTimeouts() const
+   {
+     return {collision_keep_time_, previous_obstacle_keep_time_};
+   }
+diff --git a/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp b/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp
+index d6209fb..9266c23 100644
+--- a/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp
++++ b/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp
+@@ -71,6 +71,19 @@ std::optional<double> getLongitudinalOffset(
+ PredictedObject transformObjectFrame(
+   const PredictedObject & input, const geometry_msgs::msg::TransformStamped & transform_stamped);
+ 
++/**
++ * @brief Conservatively check whether a predicted object may overlap a vertical detection range
++ * @param object the predicted object, expressed in the same frame as the height limits
++ * @param minimum_height lower inclusive height limit
++ * @param maximum_height upper inclusive height limit
++ * @return false only when a finite known-shape object is proven vertically separate. Bounding
++ *         boxes use their normalized full 3D orientation; cylinders and polygons use their height
++ *         only for yaw-only orientations. Returns true for overlap, boundary contact, or uncertain
++ *         input.
++ */
++bool hasVerticalOverlap(
++  const PredictedObject & object, const double minimum_height, const double maximum_height);
++
+ /**
+  * @brief Get the predicted objects polygon as a geometry polygon
+  * @param current_pose the predicted object's pose
+diff --git a/control/autoware_autonomous_emergency_braking/src/node.cpp b/control/autoware_autonomous_emergency_braking/src/node.cpp
+index 2de483a..05299b6 100644
+--- a/control/autoware_autonomous_emergency_braking/src/node.cpp
++++ b/control/autoware_autonomous_emergency_braking/src/node.cpp
+@@ -64,6 +64,9 @@ namespace
+ {
+ using autoware::motion::control::autonomous_emergency_braking::colorTuple;
+ constexpr double MIN_MOVING_VELOCITY_THRESHOLD = 0.1;
++constexpr char AEB_PREDICTED_OBJECT_SAFETY_RUNTIME_CONTRACT[] =
++  "autoware-e2e:aeb-predicted-object-safety-v3:oriented-bbox-vertical-overlap+"
++  "forward-longitudinal-roi";
+ // Sky blue (RGB: 0, 148, 205) - A medium-bright blue color
+ constexpr colorTuple IMU_PATH_COLOR = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
+ // Forest green (RGB: 0, 100, 0) - A deep, dark green color
+@@ -141,6 +144,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
+   vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
+   collision_data_keeper_(this->get_clock())
+ {
++  RCLCPP_INFO(get_logger(), "%s", AEB_PREDICTED_OBJECT_SAFETY_RUNTIME_CONTRACT);
++
+   // Publisher
+   {
+     pub_obstacle_pointcloud_ =
+@@ -260,10 +265,12 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
+   update_param<double>(parameters, "mpc_prediction_time_interval", mpc_prediction_time_interval_);
+ 
+   {  // Object history data keeper setup
+-    auto [previous_obstacle_keep_time, collision_keeping_sec] = collision_data_keeper_.getTimeout();
+-    update_param<double>(parameters, "previous_obstacle_keep_time", previous_obstacle_keep_time);
+-    update_param<double>(parameters, "collision_keeping_sec", collision_keeping_sec);
+-    collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
++    auto timeouts = collision_data_keeper_.getTimeouts();
++    update_param<double>(
++      parameters, "previous_obstacle_keep_time", timeouts.previous_obstacle_keep_time);
++    update_param<double>(parameters, "collision_keeping_sec", timeouts.collision_keep_time);
++    collision_data_keeper_.setTimeout(
++      timeouts.collision_keep_time, timeouts.previous_obstacle_keep_time);
+   }
+ 
+   rcl_interfaces::msg::SetParametersResult result;
+@@ -831,6 +838,9 @@ void AEB::createObjectDataUsingPredictedObjects(
+ 
+   if (!longitudinal_offset_opt.has_value()) return;
+   const auto longitudinal_offset = longitudinal_offset_opt.value();
++  const auto path_length = autoware::motion_utils::calcArcLength(ego_path);
++  const double maximum_detection_height =
++    vehicle_info_.vehicle_height_m + detection_range_max_height_margin_;
+ 
+   // Check which objects collide with the ego footprints
+   std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
+@@ -839,6 +849,12 @@ void AEB::createObjectDataUsingPredictedObjects(
+     const auto t_predicted_object =
+       utils::transformObjectFrame(predicted_object, transform_stamped);
+     const auto & obj_pose = t_predicted_object.kinematics.initial_pose_with_covariance.pose;
++    // Signs, traffic lights, and other overhead objects can overlap the path in 2D while remaining
++    // physically clear of the vehicle. Reject them before the planar polygon intersection.
++    if (!utils::hasVerticalOverlap(
++          t_predicted_object, detection_range_min_height_, maximum_detection_height)) {
++      return;
++    }
+     const auto obj_poly = convertObjToPolygon(t_predicted_object);
+     const double obj_tangent_velocity = get_object_tangent_velocity(t_predicted_object, obj_pose);
+ 
+@@ -855,10 +871,17 @@ void AEB::createObjectDataUsingPredictedObjects(
+           autoware_utils::create_point(collision_point.x(), collision_point.y(), 0.0);
+         const double obj_arc_length =
+           autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+-        if (std::isnan(obj_arc_length)) continue;
++        // Keep the PredictedObjects longitudinal ROI identical to the pointcloud path. A point
++        // with a negative signed arc length is behind the current driving path; taking abs() below
++        // would otherwise turn that rear object into a plausible forward obstacle distance.
++        if (
++          !std::isfinite(obj_arc_length) || obj_arc_length < 0.0 ||
++          obj_arc_length > path_length + longitudinal_offset) {
++          continue;
++        }
+ 
+-        // If the object is behind the ego, we need to use the backward long offset. The
+-        // distance should be a positive number in any case
++        // The longitudinal offset selects the leading vehicle edge for either driving direction.
++        // An object intersecting that edge can yield a negative edge distance, so retain abs().
+         const double dist_ego_to_object = obj_arc_length - longitudinal_offset;
+ 
+         ObjectData obj;
+diff --git a/control/autoware_autonomous_emergency_braking/src/utils.cpp b/control/autoware_autonomous_emergency_braking/src/utils.cpp
+index 2d7e9fe..b28aa0e 100644
+--- a/control/autoware_autonomous_emergency_braking/src/utils.cpp
++++ b/control/autoware_autonomous_emergency_braking/src/utils.cpp
+@@ -16,12 +16,89 @@
+ #include <autoware/motion_utils/trajectory/trajectory.hpp>
+ #include <autoware_utils/geometry/geometry.hpp>
+ 
++#include <algorithm>
++#include <cmath>
++#include <limits>
+ #include <optional>
+ #include <string>
+ #include <vector>
+ 
+ namespace autoware::motion::control::autonomous_emergency_braking::utils
+ {
++namespace
++{
++constexpr double kMinimumQuaternionNorm = std::numeric_limits<double>::epsilon();
++constexpr double kYawOnlyQuaternionTolerance = 1.0e-6;
++
++struct NormalizedQuaternion
++{
++  double x;
++  double y;
++  double z;
++  double w;
++};
++
++std::optional<NormalizedQuaternion> normalizeQuaternion(
++  const geometry_msgs::msg::Quaternion & orientation)
++{
++  const double components[] = {orientation.x, orientation.y, orientation.z, orientation.w};
++  double scale = 0.0;
++  for (const double component : components) {
++    if (!std::isfinite(component)) {
++      return std::nullopt;
++    }
++    scale = std::max(scale, std::abs(component));
++  }
++  if (scale == 0.0) {
++    return std::nullopt;
++  }
++
++  double scaled_squared_norm = 0.0;
++  for (const double component : components) {
++    const double scaled_component = component / scale;
++    scaled_squared_norm += scaled_component * scaled_component;
++  }
++  const double scaled_norm = std::sqrt(scaled_squared_norm);
++  if (
++    !std::isfinite(scaled_norm) || scaled_norm == 0.0 ||
++    scale <= kMinimumQuaternionNorm / scaled_norm) {
++    return std::nullopt;
++  }
++
++  return NormalizedQuaternion{
++    (orientation.x / scale) / scaled_norm, (orientation.y / scale) / scaled_norm,
++    (orientation.z / scale) / scaled_norm, (orientation.w / scale) / scaled_norm};
++}
++
++bool isYawOnly(const NormalizedQuaternion & orientation)
++{
++  return std::hypot(orientation.x, orientation.y) <= kYawOnlyQuaternionTolerance;
++}
++
++std::optional<double> getBoundingBoxVerticalHalfExtent(
++  const autoware_perception_msgs::msg::Shape & shape, const NormalizedQuaternion & orientation)
++{
++  const double dimensions[] = {shape.dimensions.x, shape.dimensions.y, shape.dimensions.z};
++  if (std::any_of(dimensions, dimensions + 3, [](const double dimension) {
++        return !std::isfinite(dimension) || dimension <= 0.0;
++      })) {
++    return std::nullopt;
++  }
++
++  // Third row of the rotation matrix that maps the object's local bounding box into the frame in
++  // which the vertical limits are expressed. Its absolute dot product with the three half extents
++  // is the exact vertical support of an arbitrarily oriented box.
++  const double rotation_z_x = 2.0 * (orientation.x * orientation.z - orientation.w * orientation.y);
++  const double rotation_z_y = 2.0 * (orientation.y * orientation.z + orientation.w * orientation.x);
++  const double rotation_z_z =
++    1.0 - 2.0 * (orientation.x * orientation.x + orientation.y * orientation.y);
++  const double half_extent = 0.5 * (std::abs(rotation_z_x) * shape.dimensions.x +
++                                    std::abs(rotation_z_y) * shape.dimensions.y +
++                                    std::abs(rotation_z_z) * shape.dimensions.z);
++  return std::isfinite(half_extent) ? std::make_optional(half_extent) : std::nullopt;
++}
++}  // namespace
++
+ using autoware_perception_msgs::msg::PredictedObject;
+ using autoware_perception_msgs::msg::PredictedObjects;
+ using autoware_utils::Polygon2d;
+@@ -101,6 +178,58 @@ PredictedObject transformObjectFrame(
+   return output;
+ }
+ 
++bool hasVerticalOverlap(
++  const PredictedObject & object, const double minimum_height, const double maximum_height)
++{
++  const double center_height = object.kinematics.initial_pose_with_covariance.pose.position.z;
++  const auto & orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
++
++  if (
++    !std::isfinite(center_height) || !std::isfinite(minimum_height) ||
++    !std::isfinite(maximum_height) || minimum_height > maximum_height) {
++    return true;
++  }
++
++  const auto normalized_orientation = normalizeQuaternion(orientation);
++  if (!normalized_orientation.has_value()) {
++    return true;
++  }
++
++  const auto vertical_half_extent = [&]() -> std::optional<double> {
++    if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
++      return getBoundingBoxVerticalHalfExtent(object.shape, normalized_orientation.value());
++    }
++
++    if (
++      object.shape.type != autoware_perception_msgs::msg::Shape::CYLINDER &&
++      object.shape.type != autoware_perception_msgs::msg::Shape::POLYGON) {
++      return std::nullopt;
++    }
++
++    // dimensions.z is the established vertical-height contract for cylinders and polygonal
++    // prisms. Without their full 3D geometry, it is safe to prove separation only for yaw-only
++    // orientations; tilted or otherwise uncertain non-box shapes remain collision candidates.
++    const double object_height = object.shape.dimensions.z;
++    if (
++      !std::isfinite(object_height) || object_height <= 0.0 ||
++      !isYawOnly(normalized_orientation.value())) {
++      return std::nullopt;
++    }
++    return 0.5 * object_height;
++  }();
++  if (!vertical_half_extent.has_value()) {
++    return true;
++  }
++
++  const double object_minimum_height = center_height - vertical_half_extent.value();
++  const double object_maximum_height = center_height + vertical_half_extent.value();
++  if (!std::isfinite(object_minimum_height) || !std::isfinite(object_maximum_height)) {
++    return true;
++  }
++
++  return object_minimum_height <= maximum_height && object_maximum_height >= minimum_height;
++}
++
+ Polygon2d convertPolygonObjectToGeometryPolygon(
+   const Pose & current_pose, const autoware_perception_msgs::msg::Shape & obj_shape)
+ {
+diff --git a/control/autoware_autonomous_emergency_braking/test/test.cpp b/control/autoware_autonomous_emergency_braking/test/test.cpp
+index 46bec86..669dd8f 100644
+--- a/control/autoware_autonomous_emergency_braking/test/test.cpp
++++ b/control/autoware_autonomous_emergency_braking/test/test.cpp
+@@ -28,6 +28,7 @@
+ #include <gtest/gtest.h>
+ #include <pcl/memory.h>
+ 
++#include <cmath>
+ #include <limits>
+ #include <memory>
+ #include <thread>
+@@ -289,9 +290,23 @@ TEST_F(TestAEB, checkEmptyPathAtZeroSpeed)
+ 
+ TEST_F(TestAEB, checkParamUpdate)
+ {
+-  std::vector<rclcpp::Parameter> parameters{rclcpp::Parameter("param")};
+-  const auto result = aeb_node_->onParameter(parameters);
+-  ASSERT_TRUE(result.successful);
++  constexpr double collision_keeping_sec = 3.0;
++  constexpr double previous_obstacle_keep_time = 1.0;
++  aeb_node_->collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
++
++  const std::vector<rclcpp::Parameter> parameters{
++    rclcpp::Parameter("use_pointcloud_data", false),
++    rclcpp::Parameter("use_predicted_object_data", true)};
++
++  constexpr size_t update_count = 4;
++  for (size_t i = 0; i < update_count; ++i) {
++    const auto result = aeb_node_->onParameter(parameters);
++    ASSERT_TRUE(result.successful);
++
++    const auto timeouts = aeb_node_->collision_data_keeper_.getTimeouts();
++    EXPECT_DOUBLE_EQ(timeouts.collision_keep_time, collision_keeping_sec);
++    EXPECT_DOUBLE_EQ(timeouts.previous_obstacle_keep_time, previous_obstacle_keep_time);
++  }
+ }
+ 
+ TEST_F(TestAEB, checkEmptyFetchData)
+@@ -346,6 +361,334 @@ TEST_F(TestAEB, checkConvertObjectToPolygon)
+   ASSERT_DOUBLE_EQ(expected_pose.position.z, t_pose.position.z);
+ }
+ 
++TEST_F(TestAEB, PredictedObjectVerticalExtentOverlapsVehicle)
++{
++  PredictedObject object;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 1.25;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.5;
++
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectVerticalExtentDoesNotOverlapVehicle)
++{
++  PredictedObject overhead_object;
++  overhead_object.kinematics.initial_pose_with_covariance.pose.position.z = 5.072;
++  overhead_object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  overhead_object.shape.dimensions.x = 1.0;
++  overhead_object.shape.dimensions.y = 1.0;
++  overhead_object.shape.dimensions.z = 0.8712;
++
++  EXPECT_FALSE(utils::hasVerticalOverlap(overhead_object, 0.0, 2.5));
++
++  PredictedObject below_object;
++  below_object.kinematics.initial_pose_with_covariance.pose.position.z = -1.0;
++  below_object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  below_object.shape.dimensions.x = 1.0;
++  below_object.shape.dimensions.y = 1.0;
++  below_object.shape.dimensions.z = 1.0;
++
++  EXPECT_FALSE(utils::hasVerticalOverlap(below_object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectVerticalBoundaryContactIsIncluded)
++{
++  PredictedObject lower_boundary_object;
++  lower_boundary_object.kinematics.initial_pose_with_covariance.pose.position.z = -0.5;
++  lower_boundary_object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  lower_boundary_object.shape.dimensions.x = 1.0;
++  lower_boundary_object.shape.dimensions.y = 1.0;
++  lower_boundary_object.shape.dimensions.z = 1.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(lower_boundary_object, 0.0, 2.5));
++
++  PredictedObject upper_boundary_object;
++  upper_boundary_object.kinematics.initial_pose_with_covariance.pose.position.z = 3.0;
++  upper_boundary_object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  upper_boundary_object.shape.dimensions.x = 1.0;
++  upper_boundary_object.shape.dimensions.y = 1.0;
++  upper_boundary_object.shape.dimensions.z = 1.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(upper_boundary_object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectVerticalExtentKeepsInvalidValuesConservatively)
++{
++  PredictedObject object;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 1.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.0;
++
++  object.kinematics.initial_pose_with_covariance.pose.position.z =
++    std::numeric_limits<double>::quiet_NaN();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 1.0;
++  object.shape.dimensions.z = std::numeric_limits<double>::infinity();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.shape.dimensions.z = -1.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.shape.dimensions.z = 1.0;
++  object.shape.dimensions.x = std::numeric_limits<double>::quiet_NaN();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 0.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.shape.dimensions.y = 1.0;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  object.shape.dimensions.z = 0.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.shape.dimensions.z = 1.0;
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, std::numeric_limits<double>::quiet_NaN(), 2.5));
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, std::numeric_limits<double>::infinity()));
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 2.5, 0.0));
++
++  object.kinematics.initial_pose_with_covariance.pose.position.z =
++    std::numeric_limits<double>::max();
++  object.shape.dimensions.z = std::numeric_limits<double>::max();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectBoundingBoxRequiresNormalizableOrientation)
++{
++  PredictedObject object;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 0.0;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.0;
++
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w =
++    std::numeric_limits<double>::quiet_NaN();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w =
++    std::numeric_limits<double>::denorm_min();
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++
++  object.kinematics.initial_pose_with_covariance.pose.orientation.x = 0.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 2.0;
++  EXPECT_FALSE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectBoundingBoxRejectsRecordedTown05OverheadWithBaseTilt)
++{
++  PredictedObject object;
++  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
++  object.shape.dimensions.x = 0.290449262;
++  object.shape.dimensions.y = 0.367494732;
++  object.shape.dimensions.z = 0.870966375;
++  auto & pose = object.kinematics.initial_pose_with_covariance.pose;
++  pose.position.z = 5.080685470553764;
++  // Recorded after transforming the Town05 VAD object at source stamp 31.450000468 into
++  // base_link. The small road-relative roll/pitch must not disable provable vertical separation.
++  pose.orientation.x = 1.3118688630561471e-05;
++  pose.orientation.y = 6.65187236599427e-05;
++  pose.orientation.z = 0.7156399763780478;
++  pose.orientation.w = 0.6984693404959066;
++
++  EXPECT_FALSE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectBoundingBoxKeepsLargeRollThatActuallyOverlaps)
++{
++  PredictedObject object;
++  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 60.0;
++  object.shape.dimensions.z = 1.0;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++
++  constexpr double roll = 0.1;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.x = std::sin(roll * 0.5);
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = std::cos(roll * 0.5);
++  // The long local Y extent rotates down to roughly z=1.51 m, so this is a real vertical overlap.
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectTiltedNonBoxShapesRemainConservativeCandidates)
++{
++  PredictedObject object;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  object.shape.dimensions.z = 1.0;
++  constexpr double roll = 0.1;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.x = std::sin(roll * 0.5);
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = std::cos(roll * 0.5);
++
++  for (const auto shape_type :
++       {autoware_perception_msgs::msg::Shape::CYLINDER,
++        autoware_perception_msgs::msg::Shape::POLYGON}) {
++    object.shape.type = shape_type;
++    EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++  }
++
++  object.kinematics.initial_pose_with_covariance.pose.orientation.x = 0.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  object.shape.type = 255;
++  EXPECT_TRUE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++}
++
++TEST_F(TestAEB, PredictedObjectVerticalExtentSupportsEveryShapeHeightContract)
++{
++  PredictedObject object;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.0;
++
++  for (const auto shape_type :
++       {autoware_perception_msgs::msg::Shape::BOUNDING_BOX,
++        autoware_perception_msgs::msg::Shape::CYLINDER,
++        autoware_perception_msgs::msg::Shape::POLYGON}) {
++    object.shape.type = shape_type;
++    EXPECT_FALSE(utils::hasVerticalOverlap(object, 0.0, 2.5));
++  }
++}
++
++TEST_F(TestAEB, PredictedObjectCollisionCandidatesUseVerticalOverlap)
++{
++  constexpr double longitudinal_velocity = 3.0;
++  constexpr double yaw_rate = 0.0;
++  const auto ego_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
++  const auto ego_polygons = aeb_node_->generatePathFootprint(ego_path, 0.0);
++  ASSERT_FALSE(ego_path.empty());
++  ASSERT_FALSE(ego_polygons.empty());
++
++  auto velocity = std::make_shared<VelocityReport>();
++  velocity->longitudinal_velocity = longitudinal_velocity;
++  aeb_node_->current_velocity_ptr_ = velocity;
++
++  PredictedObject object;
++  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
++  object.shape.dimensions.x = 1.0;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.0;
++  object.kinematics.initial_pose_with_covariance.pose.position.x = 3.0;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++
++  auto predicted_objects = std::make_shared<PredictedObjects>();
++  predicted_objects->header.frame_id = "base_link";
++  predicted_objects->objects.push_back(object);
++
++  predicted_objects->objects.front().kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  aeb_node_->predicted_objects_ptr_ = predicted_objects;
++  std::vector<ObjectData> collision_candidates;
++  aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, collision_candidates);
++  EXPECT_TRUE(collision_candidates.empty());
++
++  predicted_objects->objects.front().kinematics.initial_pose_with_covariance.pose.position.z = 0.5;
++  collision_candidates.clear();
++  aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, collision_candidates);
++  EXPECT_FALSE(collision_candidates.empty());
++
++  predicted_objects->objects.front().kinematics.initial_pose_with_covariance.pose.position.z = 5.0;
++  predicted_objects->objects.front().shape.dimensions.z = std::numeric_limits<double>::quiet_NaN();
++  collision_candidates.clear();
++  aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, collision_candidates);
++  EXPECT_FALSE(collision_candidates.empty());
++}
++
++TEST_F(TestAEB, PredictedObjectCollisionCandidatesRejectObjectsBehindDrivingPath)
++{
++  auto velocity = std::make_shared<VelocityReport>();
++  aeb_node_->current_velocity_ptr_ = velocity;
++
++  PredictedObject object;
++  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
++  object.shape.dimensions.x = 0.5;
++  object.shape.dimensions.y = 1.0;
++  object.shape.dimensions.z = 1.0;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 0.5;
++  object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++
++  auto predicted_objects = std::make_shared<PredictedObjects>();
++  predicted_objects->header.frame_id = "base_link";
++  predicted_objects->objects.push_back(object);
++  aeb_node_->predicted_objects_ptr_ = predicted_objects;
++
++  const auto collect_candidates = [&](const double longitudinal_velocity, const double object_x) {
++    velocity->longitudinal_velocity = longitudinal_velocity;
++    predicted_objects->objects.front()
++      .kinematics.initial_pose_with_covariance.pose.position.x = object_x;
++    const auto ego_path = aeb_node_->generateEgoPath(longitudinal_velocity, 0.0);
++    const auto ego_polygons = aeb_node_->generatePathFootprint(ego_path, 0.0);
++    EXPECT_FALSE(ego_path.empty());
++    EXPECT_FALSE(ego_polygons.empty());
++    std::vector<ObjectData> candidates;
++    aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, candidates);
++    return candidates;
++  };
++
++  // The object overlaps the current rear footprint, but its entire polygon is behind the
++  // base_link origin in the driving direction. The pointcloud path already rejects this case.
++  EXPECT_TRUE(collect_candidates(3.0, -1.0).empty());
++  EXPECT_FALSE(collect_candidates(3.0, 1.0).empty());
++
++  // Signed arc length follows the path, so the same contract also holds while reversing.
++  EXPECT_TRUE(collect_candidates(-3.0, 1.0).empty());
++  EXPECT_FALSE(collect_candidates(-3.0, -2.0).empty());
++}
++
++TEST_F(TestAEB, PredictedObjectCollisionCandidatesRejectRecordedCTrackRearObject)
++{
++  constexpr double longitudinal_velocity = 2.7057600021362305;
++  constexpr double yaw_rate = 0.27349579334259033;
++  const auto ego_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
++  const auto ego_polygons = aeb_node_->generatePathFootprint(ego_path, 0.0);
++  ASSERT_FALSE(ego_path.empty());
++  ASSERT_FALSE(ego_polygons.empty());
++
++  auto velocity = std::make_shared<VelocityReport>();
++  velocity->longitudinal_velocity = longitudinal_velocity;
++  aeb_node_->current_velocity_ptr_ = velocity;
++
++  PredictedObject object;
++  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
++  object.shape.dimensions.x = 5.039;
++  object.shape.dimensions.y = 2.033;
++  object.shape.dimensions.z = 1.484;
++  object.kinematics.initial_pose_with_covariance.pose.position.x = -2.089;
++  object.kinematics.initial_pose_with_covariance.pose.position.y = -3.092;
++  object.kinematics.initial_pose_with_covariance.pose.position.z = 0.895;
++  object.kinematics.initial_pose_with_covariance.pose.orientation =
++    autoware_utils::create_quaternion_from_yaw(-1.659);
++
++  auto predicted_objects = std::make_shared<PredictedObjects>();
++  predicted_objects->header.frame_id = "base_link";
++  predicted_objects->objects.push_back(object);
++  aeb_node_->predicted_objects_ptr_ = predicted_objects;
++
++  std::vector<ObjectData> candidates;
++  aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, candidates);
++  EXPECT_TRUE(candidates.empty());
++
++  // A long object crossing the base_link origin still has forward intersection points and must
++  // remain an immediate AEB candidate; the rear filter must not discard the object as a whole.
++  auto & crossing_object = predicted_objects->objects.front();
++  crossing_object.shape.dimensions.x = 4.0;
++  crossing_object.shape.dimensions.y = 1.0;
++  crossing_object.shape.dimensions.z = 1.0;
++  crossing_object.kinematics.initial_pose_with_covariance.pose.position.x = 0.0;
++  crossing_object.kinematics.initial_pose_with_covariance.pose.position.y = 0.0;
++  crossing_object.kinematics.initial_pose_with_covariance.pose.position.z = 0.5;
++  crossing_object.kinematics.initial_pose_with_covariance.pose.orientation.w = 1.0;
++  crossing_object.kinematics.initial_pose_with_covariance.pose.orientation.z = 0.0;
++  candidates.clear();
++  aeb_node_->createObjectDataUsingPredictedObjects(ego_path, ego_polygons, candidates);
++  EXPECT_FALSE(candidates.empty());
++}
++
+ TEST_F(TestAEB, CollisionDataKeeper)
+ {
+   using namespace std::literals::chrono_literals;

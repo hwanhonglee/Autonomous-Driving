@@ -1,0 +1,311 @@
+diff --git a/e2e/autoware_tensorrt_vad/CMakeLists.txt b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+--- a/e2e/autoware_tensorrt_vad/CMakeLists.txt
++++ b/e2e/autoware_tensorrt_vad/CMakeLists.txt
+@@ -166,6 +166,12 @@ if(TRT_AVAIL AND CUDA_AVAIL)
+     target_link_libraries(test_bev_shift_contract
+       ${PROJECT_NAME}_lib
+     )
++    ament_add_gtest(test_objects_converter_orientation
++      test/test_objects_converter_orientation.cpp
++    )
++    target_link_libraries(test_objects_converter_orientation
++      ${PROJECT_NAME}_lib
++    )
+   endif()
+ 
+   install(
+diff --git a/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp b/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp
+index 0475bab..1395b9b 100644
+--- a/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp
++++ b/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp
+@@ -18,6 +18,8 @@
+ #include <autoware_utils_uuid/uuid_helper.hpp>
+ 
+ #include <cmath>
++#include <limits>
++#include <stdexcept>
+ #include <string>
+ #include <unordered_map>
+ #include <vector>
+@@ -27,6 +29,44 @@ namespace autoware::tensorrt_vad::vad_interface
+ 
+ namespace
+ {
++constexpr double kPi = 3.14159265358979323846;
++constexpr char kObjectYawContract[] =
++  "autoware-e2e:bench2drive-second-yaw-to-physical-v1:-yaw-pi/2";
++
++float normalize_yaw(const float yaw)
++{
++  return std::atan2(std::sin(yaw), std::cos(yaw));
++}
++
++void validate_bbox_contract(const BBox & bbox)
++{
++  for (const auto value : bbox.bbox) {
++    if (!std::isfinite(value)) {
++      throw std::invalid_argument("VAD bbox contains a non-finite value");
++    }
++  }
++  if (!std::isfinite(bbox.confidence)) {
++    throw std::invalid_argument("VAD bbox confidence is non-finite");
++  }
++  if (bbox.bbox[2] <= 0.0F || bbox.bbox[3] <= 0.0F || bbox.bbox[5] <= 0.0F) {
++    throw std::invalid_argument("VAD bbox dimensions must be positive");
++  }
++  if (std::hypot(bbox.bbox[6], bbox.bbox[7]) <= std::numeric_limits<float>::epsilon()) {
++    throw std::invalid_argument(
++      std::string{kObjectYawContract} + ": VAD bbox orientation vector is degenerate");
++  }
++  for (const auto & trajectory : bbox.trajectories) {
++    if (!std::isfinite(trajectory.confidence)) {
++      throw std::invalid_argument("VAD object trajectory confidence is non-finite");
++    }
++    for (const auto & point : trajectory.trajectory) {
++      if (!std::isfinite(point[0]) || !std::isfinite(point[1])) {
++        throw std::invalid_argument("VAD object trajectory contains a non-finite value");
++      }
++    }
++  }
++}
++
+ uint8_t classification_label_from_name(const std::string & class_name)
+ {
+   using Classification = autoware_perception_msgs::msg::ObjectClassification;
+@@ -88,16 +128,22 @@ geometry_msgs::msg::Point OutputObjectsConverter::convert_position(
+ float OutputObjectsConverter::calculate_object_orientation(
+   const BBox & bbox, const Eigen::Matrix4d & base2map_transform) const
+ {
+-  float sin_theta = bbox.bbox[6];
+-  float cos_theta = bbox.bbox[7];
+-  float vad_yaw = std::atan2(sin_theta, cos_theta);
++  const float sin_theta = bbox.bbox[6];
++  const float cos_theta = bbox.bbox[7];
++  const float second_yaw = std::atan2(sin_theta, cos_theta);
++
++  // Bench2Drive's VAD head uses the SECOND box-yaw convention. Its official
++  // result formatter converts that value back to physical object heading as
++  // `-box_yaw - pi / 2`. Apply the same conversion before moving the heading
++  // from base_link into map. Omitting it rotates road-aligned vehicle boxes by
++  // approximately 90 degrees and can create false path intersections in AEB.
++  const float physical_base_yaw = -second_yaw - static_cast<float>(kPi / 2.0);
+ 
+   // Get vehicle rotation from base2map_transform
+-  Eigen::Matrix3d rotation_matrix = base2map_transform.block<3, 3>(0, 0);
+-  float transform_yaw = std::atan2(rotation_matrix(1, 0), rotation_matrix(0, 0));
+-  float map_yaw = vad_yaw + transform_yaw;
++  const Eigen::Matrix3d rotation_matrix = base2map_transform.block<3, 3>(0, 0);
++  const float transform_yaw = std::atan2(rotation_matrix(1, 0), rotation_matrix(0, 0));
+ 
+-  return map_yaw;
++  return normalize_yaw(physical_base_yaw + transform_yaw);
+ }
+ 
+ geometry_msgs::msg::Twist OutputObjectsConverter::convert_velocity(
+@@ -211,6 +257,15 @@ autoware_perception_msgs::msg::PredictedObjects OutputObjectsConverter::process_
+   const std::vector<BBox> & bboxes, const rclcpp::Time & stamp,
+   const Eigen::Matrix4d & base2map_transform) const
+ {
++  if (!base2map_transform.allFinite()) {
++    throw std::invalid_argument("base_link to map transform contains a non-finite value");
++  }
++  if (
++    std::hypot(base2map_transform(0, 0), base2map_transform(1, 0)) <=
++    std::numeric_limits<double>::epsilon()) {
++    throw std::invalid_argument("base_link to map transform has a degenerate yaw axis");
++  }
++
+   autoware_perception_msgs::msg::PredictedObjects predicted_objects;
+   // Set header
+   predicted_objects.header.stamp = stamp;
+@@ -218,6 +273,7 @@ autoware_perception_msgs::msg::PredictedObjects OutputObjectsConverter::process_
+ 
+   // Object class name mapping
+   for (const auto & bbox : bboxes) {
++    validate_bbox_contract(bbox);
+     autoware_perception_msgs::msg::PredictedObject predicted_object;
+ 
+     // Set object ID
+diff --git a/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp b/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp
+new file mode 100644
+index 0000000..3c8756f
+--- /dev/null
++++ b/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp
+@@ -0,0 +1,177 @@
++// Copyright 2026 TIER IV
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++#include "output_converter/objects_converter.hpp"
++
++#include <gtest/gtest.h>
++
++#include <cmath>
++#include <limits>
++#include <memory>
++#include <stdexcept>
++#include <vector>
++
++namespace autoware::tensorrt_vad::vad_interface
++{
++namespace
++{
++constexpr double kPi = 3.14159265358979323846;
++constexpr double kTolerance = 1.0e-5;
++
++double yaw_error(const double actual, const double expected)
++{
++  return std::atan2(std::sin(actual - expected), std::cos(actual - expected));
++}
++
++double quaternion_yaw(const geometry_msgs::msg::Quaternion & quaternion)
++{
++  const double sin_yaw = 2.0 * (quaternion.w * quaternion.z + quaternion.x * quaternion.y);
++  const double cos_yaw = 1.0 - 2.0 * (quaternion.y * quaternion.y + quaternion.z * quaternion.z);
++  return std::atan2(sin_yaw, cos_yaw);
++}
++
++Eigen::Matrix4d transform_with_yaw(const double yaw)
++{
++  Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
++  transform(0, 0) = std::cos(yaw);
++  transform(0, 1) = -std::sin(yaw);
++  transform(1, 0) = std::sin(yaw);
++  transform(1, 1) = std::cos(yaw);
++  return transform;
++}
++
++BBox make_bbox(const double second_yaw)
++{
++  BBox bbox;
++  bbox.bbox = {
++    12.0F,
++    3.0F,
++    1.8F,
++    4.8F,
++    0.0F,
++    1.5F,
++    static_cast<float>(std::sin(second_yaw)),
++    static_cast<float>(std::cos(second_yaw)),
++    0.0F,
++    0.0F};
++  bbox.confidence = 0.9F;
++  bbox.object_class = 0;
++  return bbox;
++}
++
++class ObjectsConverterOrientationTest : public ::testing::Test
++{
++protected:
++  ObjectsConverterOrientationTest()
++  : transformer_(nullptr),
++    config_(
++      640, 384, {-50.0, -50.0, -5.0, 50.0, 50.0, 5.0}, "legacy_zero", 2, {}, {}, {"CAR"}, {"car"}),
++    converter_(transformer_, config_)
++  {
++  }
++
++  autoware_perception_msgs::msg::PredictedObject convert(
++    const BBox & bbox, const Eigen::Matrix4d & transform = Eigen::Matrix4d::Identity()) const
++  {
++    const auto objects =
++      converter_.process_predicted_objects({bbox}, rclcpp::Time(1, 0), transform);
++    EXPECT_EQ(objects.objects.size(), 1U);
++    return objects.objects.at(0);
++  }
++
++  CoordinateTransformer transformer_;
++  VadInterfaceConfig config_;
++  OutputObjectsConverter converter_;
++};
++
++TEST_F(ObjectsConverterOrientationTest, AppliesOfficialBench2DriveSecondYawConvention)
++{
++  struct Case
++  {
++    double second_yaw;
++    double expected_physical_yaw;
++  };
++  const std::vector<Case> cases = {
++    {0.0, -kPi / 2.0},
++    {kPi / 2.0, -kPi},
++    {-kPi / 2.0, 0.0},
++    {kPi, kPi / 2.0},
++  };
++
++  for (const auto & test_case : cases) {
++    const auto object = convert(make_bbox(test_case.second_yaw));
++    const double actual_yaw =
++      quaternion_yaw(object.kinematics.initial_pose_with_covariance.pose.orientation);
++    EXPECT_NEAR(yaw_error(actual_yaw, test_case.expected_physical_yaw), 0.0, kTolerance);
++  }
++}
++
++TEST_F(ObjectsConverterOrientationTest, AddsBaseToMapYawAfterConventionConversion)
++{
++  constexpr double second_yaw = -kPi / 2.0;
++  constexpr double transform_yaw = kPi / 3.0;
++  const auto object = convert(make_bbox(second_yaw), transform_with_yaw(transform_yaw));
++  const double actual_yaw =
++    quaternion_yaw(object.kinematics.initial_pose_with_covariance.pose.orientation);
++
++  EXPECT_NEAR(yaw_error(actual_yaw, transform_yaw), 0.0, kTolerance);
++}
++
++TEST_F(ObjectsConverterOrientationTest, KeepsLengthOnThePhysicalLongAxis)
++{
++  const auto object = convert(make_bbox(-kPi / 2.0));
++  const double yaw =
++    quaternion_yaw(object.kinematics.initial_pose_with_covariance.pose.orientation);
++  const double longitudinal_half_extent =
++    std::abs(std::cos(yaw)) * object.shape.dimensions.x / 2.0 +
++    std::abs(std::sin(yaw)) * object.shape.dimensions.y / 2.0;
++  const double lateral_half_extent = std::abs(std::sin(yaw)) * object.shape.dimensions.x / 2.0 +
++                                     std::abs(std::cos(yaw)) * object.shape.dimensions.y / 2.0;
++
++  EXPECT_FLOAT_EQ(object.shape.dimensions.x, 4.8F);
++  EXPECT_FLOAT_EQ(object.shape.dimensions.y, 1.8F);
++  EXPECT_NEAR(longitudinal_half_extent, 2.4, kTolerance);
++  EXPECT_NEAR(lateral_half_extent, 0.9, kTolerance);
++}
++
++TEST_F(ObjectsConverterOrientationTest, RejectsNonFiniteOrDegenerateOrientation)
++{
++  auto non_finite_sin = make_bbox(0.0);
++  non_finite_sin.bbox[6] = std::numeric_limits<float>::quiet_NaN();
++  EXPECT_THROW(convert(non_finite_sin), std::invalid_argument);
++
++  auto non_finite_cos = make_bbox(0.0);
++  non_finite_cos.bbox[7] = std::numeric_limits<float>::infinity();
++  EXPECT_THROW(convert(non_finite_cos), std::invalid_argument);
++
++  auto degenerate = make_bbox(0.0);
++  degenerate.bbox[6] = 0.0F;
++  degenerate.bbox[7] = 0.0F;
++  EXPECT_THROW(convert(degenerate), std::invalid_argument);
++}
++
++TEST_F(ObjectsConverterOrientationTest, RejectsNonFiniteOrDegenerateMapTransform)
++{
++  Eigen::Matrix4d non_finite = Eigen::Matrix4d::Identity();
++  non_finite(0, 0) = std::numeric_limits<double>::quiet_NaN();
++  EXPECT_THROW(convert(make_bbox(0.0), non_finite), std::invalid_argument);
++
++  Eigen::Matrix4d degenerate = Eigen::Matrix4d::Identity();
++  degenerate(0, 0) = 0.0;
++  degenerate(1, 0) = 0.0;
++  EXPECT_THROW(convert(make_bbox(0.0), degenerate), std::invalid_argument);
++}
++
++}  // namespace
++}  // namespace autoware::tensorrt_vad::vad_interface

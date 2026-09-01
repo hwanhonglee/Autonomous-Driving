@@ -11,6 +11,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/e2e"))
+sys.path.insert(0, str(ROOT / "autoware_e2e_vad_launch/scripts"))
 
 from align_carla_route_to_map import (  # noqa: E402
     AlignmentError,
@@ -20,6 +21,7 @@ from align_carla_route_to_map import (  # noqa: E402
     prepare_aligned_route,
     transform_pose,
 )
+from vad_route_logic import RoutePlan  # noqa: E402
 
 
 def sample_route():
@@ -38,6 +40,55 @@ def sample_route():
             {"x": 4.0, "y": 5.0, "z": 6.0, "yaw": -3.0, "road_id": 8},
         ],
     }
+
+
+def sample_route_with_goal_provenance():
+    route = sample_route()
+    route["goal_carla_transform"] = {
+        "x": 4.0,
+        "y": -5.0,
+        "z": 6.0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": math.degrees(3.0),
+    }
+    route["route"] = [
+        {
+            "x": 1.0,
+            "y": 2.0,
+            "z": 3.0,
+            "yaw": 0.25,
+            "distance_m": 0.0,
+            "vad_command": 3,
+            "road_option": "LANEFOLLOW",
+        },
+        {
+            "x": 4.0,
+            "y": 5.0,
+            "z": 6.0,
+            "yaw": -3.0,
+            "distance_m": 5.196152422706632,
+            "vad_command": 3,
+            "road_option": "LANEFOLLOW",
+        },
+    ]
+    original_carla = {**route["goal_carla_transform"], "z": 6.5}
+    original_ros = {**route["goal_ros_pose"], "z": 6.5}
+    route["goal_endpoint_provenance"] = {
+        "endpoint_source": "spawn_points",
+        "endpoint_index": 7,
+        "original_goal_carla_transform": original_carla,
+        "original_goal_ros_pose": original_ros,
+        "terminal_z_normalization": {
+            "policy": "last_road_waypoint_z",
+            "original_endpoint_z_m": 6.5,
+            "last_road_waypoint_z_m": 6.0,
+            "runtime_goal_z_m": 6.0,
+            "serialized_terminal_z_m": 6.0,
+            "applied_offset_m": -0.5,
+        },
+    }
+    return route
 
 
 def write_bundle(path, transform):
@@ -97,6 +148,55 @@ def test_alignment_transforms_only_ros_map_poses_and_records_provenance(tmp_path
     assert output["route"][0]["road_id"] == 7
     assert output["coordinate_alignment"]["source_route_sha256"] == "abc"
     assert output["coordinate_alignment"]["map_bundle_profile"] == "test_map"
+
+
+def test_aligned_goal_provenance_stays_raw_and_route_plan_applies_z_offset(tmp_path):
+    route = sample_route_with_goal_provenance()
+    source = tmp_path / "route.json"
+    source.write_text(json.dumps(route), encoding="utf-8")
+
+    aligned = align_route_payload(
+        route,
+        MapTransform(0.0, 0.0, -15.0, 0.0),
+        source_path=source,
+        source_sha256="abc",
+        bundle={"profile": "c_track_simulation_xodr_current"},
+    )
+    aligned_path = tmp_path / "aligned.json"
+    aligned_path.write_text(json.dumps(aligned), encoding="utf-8")
+
+    assert aligned["goal_carla_transform"] == route["goal_carla_transform"]
+    assert aligned["goal_endpoint_provenance"] == route["goal_endpoint_provenance"]
+    assert aligned["goal_ros_pose"]["z"] == pytest.approx(-9.0)
+    assert aligned["route"][-1]["z"] == pytest.approx(-9.0)
+    plan = RoutePlan.load(aligned_path)
+    assert plan.goal.z == pytest.approx(-9.0)
+    assert plan.metadata["runtime_goal_z_policy"] == (
+        "last_road_waypoint_z+coordinate_alignment_z"
+    )
+
+
+@pytest.mark.parametrize("tamper", ("alignment", "provenance"))
+def test_aligned_goal_provenance_tampering_fails_closed(tmp_path, tamper):
+    route = sample_route_with_goal_provenance()
+    aligned = align_route_payload(
+        route,
+        MapTransform(0.0, 0.0, -15.0, 0.0),
+        source_path=tmp_path / "route.json",
+        source_sha256="abc",
+        bundle={"profile": "c_track_simulation_xodr_current"},
+    )
+    if tamper == "alignment":
+        aligned["coordinate_alignment"]["carla_to_map_transform"]["z_m"] = -14.0
+    else:
+        aligned["goal_endpoint_provenance"]["terminal_z_normalization"][
+            "runtime_goal_z_m"
+        ] = 6.25
+    aligned_path = tmp_path / f"aligned-{tamper}.json"
+    aligned_path.write_text(json.dumps(aligned), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="goal terminal Z|raw goal terminal Z"):
+        RoutePlan.load(aligned_path)
 
 
 def test_prepare_writes_deterministic_route_and_reports_launch_values(tmp_path):
@@ -262,3 +362,52 @@ def test_full_wrapper_rejects_manual_alignment_override(tmp_path):
 
     assert completed.returncode == 2
     assert "controlled by map_bundle.json" in completed.stderr
+
+
+@pytest.mark.parametrize(
+    "argument",
+    (
+        "route_file:=/tmp/alternate-route.json",
+        "map_path:=/tmp/alternate-map",
+        "carla_map:=AlternateTown",
+        "data_path:=/tmp/alternate-data",
+        "carla_host:=example.invalid",
+        "carla_port:=2999",
+        "spawn_point:=0,0,0,0,0,0",
+        "spawn_point_reference:=map",
+        "truth_initial_pose:=[0,0,0,0,0,0,1]",
+        "use_route_manager:=false",
+    ),
+)
+def test_full_wrapper_rejects_runtime_owned_launch_override(tmp_path, argument):
+    cuda_root = tmp_path / "cuda"
+    (cuda_root / "bin").mkdir(parents=True)
+    nvcc = cuda_root / "bin/nvcc"
+    nvcc.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    nvcc.chmod(0o755)
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "AUTOWARE_E2E_CUDA_ROOT": str(cuda_root),
+            "AUTOWARE_E2E_SKIP_INSTALL": "1",
+        }
+    )
+    route = ROOT / "autoware_e2e_vad_launch/test/fixtures/route_map/town99_route.json"
+
+    completed = subprocess.run(
+        [
+            str(ROOT / "scripts/e2e/run_route_vad_full.sh"),
+            str(route),
+            argument,
+        ],
+        cwd=ROOT,
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert argument.partition(":=")[0] in completed.stderr
+    assert "controlled by this wrapper" in completed.stderr

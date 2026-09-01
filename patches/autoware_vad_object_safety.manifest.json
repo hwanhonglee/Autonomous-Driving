@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "contract_id": "autoware-vad-object-safety-v4",
+  "repository": {
+    "name": "autoware_universe",
+    "workspace_path": "src/universe/autoware_universe",
+    "git_commit": "6e477c645efec33f7909095eea684474e97f5e3d"
+  },
+  "prerequisite_patches": [
+    {
+      "path": "patches/autoware_tensorrt_vad_candidate_uuid.patch",
+      "sha256": "9827ddfa35ab94a7c209b247040388d46dfc471bb413320cd96df52e1c3d2177"
+    },
+    {
+      "path": "patches/autoware_tensorrt_vad_fp16_layer_norm.patch",
+      "sha256": "7b884621bd7330807d8038b09bd1b9bcfaa72e8097b13e855cee637a4098b40c"
+    },
+    {
+      "path": "patches/autoware_tensorrt_vad_frame_assembly.patch",
+      "sha256": "2cba8219e935b0319b65dee96c084176ccf8fecc28347b85096bbb8451ed5cd6"
+    },
+    {
+      "path": "patches/autoware_tensorrt_vad_causal_state_sync.patch",
+      "sha256": "0d9dca505dea0ea435385a10808215c5ef4b1127c0d3f8403baa197deec31e38"
+    },
+    {
+      "path": "patches/autoware_tensorrt_vad_bev_shift_modes.patch",
+      "sha256": "1b027f66253998ea73f90ebe700841305df00ec92c749e2e43e6010e24c5d62a"
+    },
+    {
+      "path": "patches/autoware_tensorrt_vad_temporal_head_mode.patch",
+      "sha256": "54e44c0ae22c96f8412c98a8e5b5b4ad538063a6597164c2dc42033c1169c56b"
+    }
+  ],
+  "patches": [
+    {
+      "name": "vad_object_yaw",
+      "path": "patches/autoware_tensorrt_vad_object_yaw.patch",
+      "sha256": "d06f16e7c0e3dd1d08c38488910a7b635a618b4b7023060502499bb70da2444d",
+      "files": [
+        {
+          "path": "e2e/autoware_tensorrt_vad/CMakeLists.txt",
+          "base_state": "file",
+          "base_sha256": "9f21f08308d7776fd7325bfd6e3c2083ed1ba4987ef06962e28782285724b958",
+          "patched_sha256": "e7ca99875d9d7d37eba1cf7fa2986f9773cf37025a7de21190678f25d4912ac4"
+        },
+        {
+          "path": "e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp",
+          "base_state": "file",
+          "base_sha256": "f9d89d6e954b71ee8c755cb20c55c2b851dbba238a41ad819398a06ccc130c51",
+          "patched_sha256": "9a040ba9fe10debe700514bb0bb5551dca887004ae93396968801beba00e03ce"
+        },
+        {
+          "path": "e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp",
+          "base_state": "absent",
+          "patched_sha256": "af3a92ee2322a415c13a053392269d652b84c5c7354e1ee8bb38443054110fd2"
+        }
+      ]
+    },
+    {
+      "name": "aeb_named_timeouts_oriented_bbox_vertical_overlap_and_longitudinal_roi",
+      "path": "patches/autoware_aeb_named_timeouts.patch",
+      "sha256": "1d1bac1f7b53ab3b32d92ff70e9c397d3c56f73be4a65b7d5ba59d836fcc4080",
+      "files": [
+        {
+          "path": "control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp",
+          "base_state": "file",
+          "base_sha256": "380b2f93e0c1acacdee9a15889ee001de8a6dc7a4f24be9914630607328b433a",
+          "patched_sha256": "7cdc969047d2efd30ba8fabd1087634cee4714b3f182d332d6aafae7935e5c3f"
+        },
+        {
+          "path": "control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp",
+          "base_state": "file",
+          "base_sha256": "45bdbaf103e2aea0f3ed1d38d38dd850a6f3f8e8c769f67a22926511f15babd9",
+          "patched_sha256": "fb50e5c8255d99504ac54637363067aba6c3f013ed2ac8618c1997f3f637bc7a"
+        },
+        {
+          "path": "control/autoware_autonomous_emergency_braking/src/node.cpp",
+          "base_state": "file",
+          "base_sha256": "50cd00a6eddef22320c650fd7ddd78c41fa7933aea64dde4405797ce2148e606",
+          "patched_sha256": "cbb8cfa9c3159f762703b5037e8d8b554d95ac0185d406249cb5bc6e52e12153"
+        },
+        {
+          "path": "control/autoware_autonomous_emergency_braking/src/utils.cpp",
+          "base_state": "file",
+          "base_sha256": "b22c33248c82d806369e9c22c7469913c38a4fccb36587859e2e8380584a7cb6",
+          "patched_sha256": "072a602c1cdb039560178be6983212ec3177a550068a0e124e3af54cd3a3c749"
+        },
+        {
+          "path": "control/autoware_autonomous_emergency_braking/test/test.cpp",
+          "base_state": "file",
+          "base_sha256": "bce2fd5ebc012f18d058c04a4db7b3d582e19b6b3501c109bf6a65d075e2842a",
+          "patched_sha256": "e72701fb89e78724624864b5835cdc22e23cad6734e5fe60b2e163343e1c90a3"
+        }
+      ]
+    }
+  ],
+  "yaw_contract": {
+    "training_dataset": "Bench2Drive CARLA",
+    "raw_yaw": "atan2(sin_theta, cos_theta)",
+    "physical_base_yaw": "normalize(-raw_yaw-pi/2)",
+    "map_yaw": "normalize(physical_base_yaw+base_to_map_yaw)",
+    "runtime_marker": "autoware-e2e:bench2drive-second-yaw-to-physical-v1:-yaw-pi/2",
+    "primary_source": "https://github.com/Thinklab-SJTU/Bench2DriveZoo/blob/uniad/vad/mmcv/datasets/B2D_vad_dataset.py"
+  },
+  "aeb_vertical_overlap_contract": {
+    "object_frame": "base_link",
+    "bounding_box_interval": "center_z+-0.5*(abs(R20)*dx+abs(R21)*dy+abs(R22)*dz)",
+    "bounding_box_orientation_scope": "valid_normalizable_full_quaternion",
+    "non_box_interval": "center_z+-positive_shape_height/2",
+    "non_box_orientation_scope": "valid_normalizable_yaw_only",
+    "non_box_shapes": [
+      "CYLINDER",
+      "POLYGON"
+    ],
+    "detection_interval": "[detection_range_min_height,vehicle_height+detection_range_max_height_margin]",
+    "boundary_policy": "inclusive",
+    "invalid_or_unsupported_policy": "conservative_2d_candidate",
+    "runtime_marker": "autoware-e2e:aeb-predicted-object-safety-v3:oriented-bbox-vertical-overlap+forward-longitudinal-roi"
+  },
+  "aeb_longitudinal_roi_contract": {
+    "arc_reference": "ego_path.front",
+    "accepted_interval": "[0,path_length+longitudinal_offset]",
+    "driving_direction_policy": "signed_arc_relative_to_forward_or_reverse_ego_path",
+    "rear_intersection_policy": "reject_before_edge_distance_absolute_value",
+    "nonfinite_policy": "reject",
+    "pointcloud_parity": "utils::getObjectOnPathData",
+    "runtime_marker": "autoware-e2e:aeb-predicted-object-safety-v3:oriented-bbox-vertical-overlap+forward-longitudinal-roi"
+  },
+  "runtime_libraries": [
+    {
+      "package": "autoware_tensorrt_vad",
+      "build_path": "build/autoware_tensorrt_vad/libautoware_tensorrt_vad_lib.so",
+      "install_path": "install/autoware_tensorrt_vad/lib/libautoware_tensorrt_vad_lib.so",
+      "required_marker": "autoware-e2e:bench2drive-second-yaw-to-physical-v1:-yaw-pi/2",
+      "source_paths": [
+        "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/CMakeLists.txt",
+        "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp",
+        "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp"
+      ]
+    },
+    {
+      "package": "autoware_autonomous_emergency_braking",
+      "build_path": "build/autoware_autonomous_emergency_braking/libautoware_autonomous_emergency_braking_node.so",
+      "install_path": "install/autoware_autonomous_emergency_braking/lib/libautoware_autonomous_emergency_braking_node.so",
+      "required_marker": "autoware-e2e:aeb-predicted-object-safety-v3:oriented-bbox-vertical-overlap+forward-longitudinal-roi",
+      "source_paths": [
+        "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp",
+        "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/node.cpp"
+      ]
+    },
+    {
+      "package": "autoware_autonomous_emergency_braking",
+      "build_path": "build/autoware_autonomous_emergency_braking/libautoware_autonomous_emergency_braking_helpers.so",
+      "install_path": "install/autoware_autonomous_emergency_braking/lib/libautoware_autonomous_emergency_braking_helpers.so",
+      "source_paths": [
+        "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp",
+        "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/utils.cpp"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 import shutil
 import sys
@@ -9,7 +10,8 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "e2e"))
 
-from validate_route_map import ValidationError, validate_route_map
+import validate_route_map as route_map_validator  # noqa: E402
+from validate_route_map import ValidationError, validate_route_map  # noqa: E402
 
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "route_map"
@@ -25,6 +27,49 @@ def copy_fixture(tmp_path):
     return route, map_path
 
 
+def append_connected_road_lanelet(map_path: Path) -> None:
+    osm_path = map_path / "lanelet2_map.osm"
+    osm = osm_path.read_text(encoding="utf-8")
+    addition = """
+  <node id="5" lat="0.0" lon="0.0">
+    <tag k="local_x" v="20.0" />
+    <tag k="local_y" v="2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <node id="6" lat="0.0" lon="0.0">
+    <tag k="local_x" v="20.0" />
+    <tag k="local_y" v="-2.0" />
+    <tag k="ele" v="0.0" />
+  </node>
+  <way id="12">
+    <nd ref="2" />
+    <nd ref="5" />
+  </way>
+  <way id="13">
+    <nd ref="4" />
+    <nd ref="6" />
+  </way>
+  <relation id="101">
+    <member type="way" ref="12" role="left" />
+    <member type="way" ref="13" role="right" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+  </relation>
+"""
+    osm_path.write_text(osm.replace("</osm>", addition + "</osm>"), encoding="utf-8")
+
+
+def write_route_endpoints(route: Path, start_x: float, goal_x: float, yaw: float = 0.0) -> None:
+    payload = json.loads(route.read_text(encoding="utf-8"))
+    start = {"x": start_x, "y": 0.0, "z": 0.0, "yaw": yaw}
+    goal = {"x": goal_x, "y": 0.0, "z": 0.0, "yaw": yaw}
+    payload["start_ros_pose"] = start
+    payload["goal_ros_pose"] = goal
+    payload["route"] = [start, {"x": 10.0, "y": 0.0, "z": 0.0, "yaw": yaw}, goal]
+    payload["route_length_m"] = abs(goal_x - start_x)
+    route.write_text(json.dumps(payload), encoding="utf-8")
+
+
 def test_valid_route_and_local_map_pass():
     result = validate_route_map(ROUTE, MAP)
 
@@ -35,7 +80,73 @@ def test_valid_route_and_local_map_pass():
     assert result["pcd"]["points"] == 2
     assert result["pcd"]["encoding"] == "ascii"
     assert result["maximum_lanelet_vertical_distance_m"] == pytest.approx(0.0)
+    assert result["directed_connectivity"]["start_lanelet_id"] == 100
+    assert result["directed_connectivity"]["goal_lanelet_id"] == 100
+    assert result["directed_connectivity"]["path_lanelet_ids"] == [100]
+    assert result["directed_connectivity"]["routing_policy"]["lane_changes_allowed"] is True
     assert result["warnings"] == []
+
+
+def test_directed_routing_accepts_connected_forward_lanelets(tmp_path):
+    route, map_path = copy_fixture(tmp_path)
+    append_connected_road_lanelet(map_path)
+    write_route_endpoints(route, 1.0, 19.0)
+
+    result = validate_route_map(route, map_path)
+
+    connectivity = result["directed_connectivity"]
+    assert connectivity["status"] == "PASS"
+    assert connectivity["start_lanelet_id"] == 100
+    assert connectivity["goal_lanelet_id"] == 101
+    assert connectivity["path_lanelet_ids"] == [100, 101]
+    assert connectivity["no_lane_change_route_available"] is True
+    assert connectivity["requires_lane_change"] is False
+
+
+def test_directed_routing_rejects_reverse_topology_despite_polygon_membership(tmp_path):
+    route, map_path = copy_fixture(tmp_path)
+    append_connected_road_lanelet(map_path)
+    write_route_endpoints(route, 19.0, 1.0)
+
+    with pytest.raises(ValidationError, match="no directed Lanelet2 route exists") as caught:
+        validate_route_map(route, map_path)
+
+    assert "[101]" in str(caught.value)
+    assert "goal road lanelet 100" in str(caught.value)
+
+
+def test_goal_yaw_must_match_autoware_goal_threshold(tmp_path):
+    route, map_path = copy_fixture(tmp_path)
+    payload = json.loads(route.read_text(encoding="utf-8"))
+    payload["goal_ros_pose"]["yaw"] = 2.0
+    payload["route"][-1]["yaw"] = 2.0
+    route.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValidationError, match="Autoware goal threshold=45.000 deg"):
+        validate_route_map(route, map_path)
+
+
+def test_start_yaw_must_match_autoware_start_threshold(tmp_path):
+    route, map_path = copy_fixture(tmp_path)
+    payload = json.loads(route.read_text(encoding="utf-8"))
+    payload["start_ros_pose"]["yaw"] = math.pi
+    payload["route"][0]["yaw"] = math.pi
+    route.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValidationError, match="Autoware start threshold=90.000 deg"):
+        validate_route_map(route, map_path)
+
+
+def test_missing_lanelet2_python_dependency_fails_closed(monkeypatch):
+    def unavailable():
+        raise ValidationError(
+            ["lanelet2 Python routing dependency is unavailable; fail-closed fixture"]
+        )
+
+    monkeypatch.setattr(route_map_validator, "_lanelet2_routing_modules", unavailable)
+
+    with pytest.raises(ValidationError, match="dependency is unavailable"):
+        validate_route_map(ROUTE, MAP)
 
 
 def test_custom_map_bundle_supplies_exact_carla_identity(tmp_path):

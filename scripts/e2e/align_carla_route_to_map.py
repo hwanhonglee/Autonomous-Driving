@@ -108,6 +108,9 @@ def align_route_payload(
     if not isinstance(route.get("spawn_point"), str) or not route["spawn_point"].strip():
         raise AlignmentError("spawn_point must remain a non-empty raw CARLA transform string")
 
+    # Keep spawn/start/goal CARLA transforms and goal_endpoint_provenance in the
+    # source CARLA-map frame.  RoutePlan combines that raw road-Z evidence with
+    # coordinate_alignment.z_m when it validates the transformed ROS terminal.
     output = deepcopy(route)
     output["start_ros_pose"] = transform_pose(
         route.get("start_ros_pose"), transform, "start_ros_pose"

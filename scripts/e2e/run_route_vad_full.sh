@@ -23,6 +23,10 @@ for argument in "$@"; do
       echo "Map alignment is controlled by map_bundle.json: ${argument%%:=*}" >&2
       exit 2
       ;;
+    route_file:=*|map_path:=*|carla_map:=*|data_path:=*|carla_host:=*|carla_port:=*|spawn_point:=*|spawn_point_reference:=*|truth_initial_pose:=*|use_route_manager:=*)
+      echo "Route/map launch argument is controlled by this wrapper: ${argument%%:=*}" >&2
+      exit 2
+      ;;
   esac
 done
 

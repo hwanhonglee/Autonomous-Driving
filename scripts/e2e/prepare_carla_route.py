@@ -160,7 +160,17 @@ def ros_pose_dict(transform):
     }
 
 
+def _pose_distance_3d(first, second):
+    return math.sqrt(
+        (float(first["x"]) - float(second["x"])) ** 2
+        + (float(first["y"]) - float(second["y"])) ** 2
+        + (float(first["z"]) - float(second["z"])) ** 2
+    )
+
+
 def serialize_route(route, goal_transform):
+    if not route:
+        raise RuntimeError("cannot serialize an empty CARLA route")
     cumulative = 0.0
     points = []
     previous = None
@@ -186,11 +196,15 @@ def serialize_route(route, goal_transform):
         )
         previous = transform
 
-    goal_pose = ros_pose_dict(goal_transform)
+    original_goal_pose = ros_pose_dict(goal_transform)
     terminal = points[-1]
-    terminal_gap = math.hypot(
-        goal_pose["x"] - terminal["x"], goal_pose["y"] - terminal["y"]
-    )
+    # CARLA spawn/recommended transforms conventionally carry an actor-clearance
+    # Z (commonly +0.3/+0.5 m), while planner waypoints are on the road surface.
+    # Preserve the exact endpoint X/Y/yaw but keep the runtime route on the last
+    # road waypoint elevation.  Otherwise a coincident endpoint becomes a false
+    # zero-distance elevation jump in the physical-grade preflight.
+    goal_pose = {**original_goal_pose, "z": float(terminal["z"])}
+    terminal_gap = _pose_distance_3d(goal_pose, terminal)
     if terminal_gap > 1.0e-6:
         cumulative += terminal_gap
         points.append(
@@ -208,6 +222,44 @@ def serialize_route(route, goal_transform):
     for point in points:
         point["remaining_m"] = total - point["distance_m"]
     return points
+
+
+def normalized_goal_metadata(
+    goal_transform, route, route_points, *, endpoint_source, endpoint_index
+):
+    """Return road-Z runtime goals plus the untouched endpoint provenance."""
+    if not route or not route_points:
+        raise RuntimeError("goal metadata requires a non-empty road route")
+    original_carla = transform_dict(goal_transform)
+    original_ros = ros_pose_dict(goal_transform)
+    road_z = float(route[-1][0].transform.location.z)
+    serialized_z = float(route_points[-1]["z"])
+    values = tuple(original_carla.values()) + tuple(original_ros.values()) + (
+        road_z,
+        serialized_z,
+    )
+    if not all(math.isfinite(float(value)) for value in values):
+        raise RuntimeError("goal endpoint metadata must be finite")
+    if not math.isclose(serialized_z, road_z, rel_tol=0.0, abs_tol=1.0e-9):
+        raise RuntimeError(
+            "serialized terminal Z does not match the last road waypoint Z"
+        )
+    normalized_carla = {**original_carla, "z": road_z}
+    normalized_ros = {**original_ros, "z": road_z}
+    return normalized_carla, normalized_ros, {
+        "endpoint_source": endpoint_source,
+        "endpoint_index": int(endpoint_index),
+        "original_goal_carla_transform": original_carla,
+        "original_goal_ros_pose": original_ros,
+        "terminal_z_normalization": {
+            "policy": "last_road_waypoint_z",
+            "original_endpoint_z_m": float(original_carla["z"]),
+            "last_road_waypoint_z_m": road_z,
+            "runtime_goal_z_m": road_z,
+            "serialized_terminal_z_m": serialized_z,
+            "applied_offset_m": road_z - float(original_carla["z"]),
+        },
+    }
 
 
 def set_async_mode(world):
@@ -249,6 +301,17 @@ def main():
     start_transform = spawn_points[start_index]
     goal_transform = spawn_points[goal_index]
     route_points = serialize_route(route, goal_transform)
+    (
+        goal_carla_transform,
+        goal_ros_pose,
+        goal_endpoint_provenance,
+    ) = normalized_goal_metadata(
+        goal_transform,
+        route,
+        route_points,
+        endpoint_source="spawn_points",
+        endpoint_index=goal_index,
+    )
     option_counts = {}
     for point in route_points:
         option = point["road_option"]
@@ -267,8 +330,9 @@ def main():
         "goal_spawn_index": goal_index,
         "start_carla_transform": transform_dict(start_transform),
         "start_ros_pose": ros_pose_dict(start_transform),
-        "goal_carla_transform": transform_dict(goal_transform),
-        "goal_ros_pose": ros_pose_dict(goal_transform),
+        "goal_carla_transform": goal_carla_transform,
+        "goal_ros_pose": goal_ros_pose,
+        "goal_endpoint_provenance": goal_endpoint_provenance,
         "spawn_point": ",".join(
             f"{value:.6f}"
             for value in (

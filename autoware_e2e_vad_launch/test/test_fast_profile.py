@@ -1,3 +1,4 @@
+import hashlib
 import json
 import math
 import os
@@ -21,13 +22,24 @@ VAD_PACKAGE = UNIVERSE / "e2e/autoware_tensorrt_vad"
 BASELINE_MAPPING = PACKAGE / "config/sensor_mapping_full.yaml"
 FAST_MAPPING = PACKAGE / "config/sensor_mapping_vad_fast.yaml"
 RELIABLE_FAST_MAPPING = PACKAGE / "config/sensor_mapping_vad_fast_reliable.yaml"
+RELIABLE_FAST_IMU_MAPPING = (
+    PACKAGE / "config/sensor_mapping_vad_fast_reliable_imu.yaml"
+)
 SYNC_QUEUE32_PARAMS = PACKAGE / "test/fixtures/vad/sync_queue32.param.yaml"
 RELIABLE_SYNC_QUEUE32_PARAMS = PACKAGE / "config/vad_carla_tiny_recommended.param.yaml"
 RECOMMENDED_MPC_PARAMS = PACKAGE / "config/mpc_carla_recommended.param.yaml"
+SPEED_30_GATE_PARAMS = PACKAGE / "config/vehicle_cmd_gate_carla_30kph.param.yaml"
+SPEED_30_GATE_METADATA = Path(f"{SPEED_30_GATE_PARAMS}.metadata.json")
 CARLA_PID_PARAMS = PACKAGE / "config/pid_carla_vad_no_steer_convergence.param.yaml"
+SPEED_30_PID_PARAMS = PACKAGE / "config/pid_carla_vad_30kph.param.yaml"
+SPEED_30_PID_METADATA = Path(f"{SPEED_30_PID_PARAMS}.metadata.json")
 STOCK_PID_PARAMS = (
     ROOT
     / "src/launcher/autoware_launch/autoware_launch/config/control/trajectory_follower/longitudinal/pid.param.yaml"
+)
+STOCK_VEHICLE_CMD_GATE_PARAMS = (
+    ROOT
+    / "src/launcher/autoware_launch/autoware_launch/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"
 )
 FAST_VAD_PARAMS = PACKAGE / "config/vad_carla_tiny_fast.param.yaml"
 FP16_VAD_PARAMS = PACKAGE / "config/vad_carla_tiny_fast_fp16_heads.param.yaml"
@@ -55,6 +67,7 @@ CARLA_WRAPPER_SOURCE = (
 FAST_WRAPPER = ROOT / "scripts/e2e/run_route_vad_fast.sh"
 RECORDED_WRAPPER = ROOT / "scripts/e2e/run_recorded_route_trial.sh"
 SMART_WRAPPER = ROOT / "scripts/e2e/run_route_vad_smart_mpc.sh"
+TOWN_MATRIX = ROOT / "scripts/e2e/autoware_vad_town_matrix.yaml"
 
 CAMERAS = (
     "CAM_FRONT",
@@ -352,8 +365,10 @@ def test_route_postprocessing_is_opt_in_and_launch_parameters_are_wired(launch_p
     root = parse_xml(launch_path)
     args = direct_args(root)
     expected_defaults = {
+        "maneuver_lookahead_m": "2.0",
         "controller_stop_offset_m": "0.49",
         "comfortable_deceleration_mps2": "1.2",
+        "maximum_longitudinal_acceleration_mps2": "0.0",
         "maximum_speed_mps": "2.5",
         "turn_inward_corridor_half_width_m": "0.5",
         "turn_outward_corridor_half_width_m": "0.5",
@@ -369,6 +384,9 @@ def test_route_postprocessing_is_opt_in_and_launch_parameters_are_wired(launch_p
         "trajectory_lateral_filter_timeout_sec": "4.0",
         "maximum_lateral_acceleration_mps2": "0.0",
         "curvature_speed_preview_m": "3.0",
+        "max_route_deviation_m": "3.5",
+        "max_candidate_age_sec": "2.0",
+        "candidate_timeout_sec": "6.0",
     }
     for name, default in expected_defaults.items():
         assert args[name].get("default") == default
@@ -430,6 +448,84 @@ def test_carla_pid_profile_changes_only_the_stopped_steer_gate():
     expected = deepcopy(stock)
     expected[gate] = False
     assert carla == expected
+
+
+def test_speed_30_gate_changes_only_allowlisted_simulation_limits():
+    stock = ros_parameters(STOCK_VEHICLE_CMD_GATE_PARAMS)
+    speed_30 = ros_parameters(SPEED_30_GATE_PARAMS)
+    expected = deepcopy(stock)
+    expected["nominal"]["vel_lim"] = 8.333333333333334
+    expected["nominal"]["lon_acc_lim_for_lon_vel"] = [1.5] * 4
+    expected["nominal"]["lat_acc_lim_for_steer_cmd"] = [1.8] * 4
+    expected["on_transition"]["vel_lim"] = 8.333333333333334
+    expected["on_transition"]["lat_acc_lim_for_steer_cmd"] = [1.8] * 2
+
+    assert speed_30 == expected
+    metadata = json.loads(SPEED_30_GATE_METADATA.read_text(encoding="utf-8"))
+    assert metadata["profile_id"] == "carla_vad_30kph_v2"
+    assert metadata["speed_limit_source"] == "explicit_simulation_profile"
+    assert metadata["real_vehicle_ready"] is False
+    assert metadata["source_sha256"] == hashlib.sha256(
+        STOCK_VEHICLE_CMD_GATE_PARAMS.read_bytes()
+    ).hexdigest()
+
+
+def test_speed_30_pid_changes_only_allowlisted_simulation_limits():
+    carla = ros_parameters(CARLA_PID_PARAMS)
+    speed_30 = ros_parameters(SPEED_30_PID_PARAMS)
+    expected = deepcopy(carla)
+    expected["max_out"] = 1.5
+    expected["max_p_effort"] = 1.5
+
+    assert speed_30 == expected
+    metadata = json.loads(SPEED_30_PID_METADATA.read_text(encoding="utf-8"))
+    assert metadata["profile_id"] == "carla_vad_30kph_v2"
+    assert metadata["scope"] == "CARLA simulation screening only"
+    assert metadata["allowed_overrides"] == {
+        "max_out": 1.5,
+        "max_p_effort": 1.5,
+    }
+    assert metadata["command_gate_longitudinal_acceleration_cap_mps2"] == 1.5
+    assert metadata["speed_limit_source"] == "explicit_simulation_profile"
+    assert metadata["real_vehicle_ready"] is False
+    assert metadata["source_sha256"] == hashlib.sha256(
+        CARLA_PID_PARAMS.read_bytes()
+    ).hexdigest()
+
+
+def test_speed_30_turn_grade_envelope_matches_longitudinal_controller_limits():
+    speed_30 = ros_parameters(SPEED_30_PID_PARAMS)
+    matrix = load_yaml(TOWN_MATRIX)
+    geometry = matrix["runtime_profiles"]["speed_30kph"]["speed_contract"][
+        "trials"
+    ]["turn"]["physical_geometry"]
+
+    assert speed_30["enable_slope_compensation"] is True
+    assert geometry["controller_maximum_output_mps2"] == pytest.approx(
+        speed_30["max_out"]
+    )
+    assert geometry["slope_compensation_max_pitch_rad"] == pytest.approx(
+        speed_30["max_pitch_rad"]
+    )
+    assert geometry["longitudinal_grade_window_m"] == pytest.approx(5.0)
+    # Match the controller implementation's exact slope-compensation constant.
+    assert geometry["standard_gravity_mps2"] == pytest.approx(9.81)
+    maximum_grade = math.sin(speed_30["max_pitch_rad"])
+    compensated_gravity = geometry["standard_gravity_mps2"] * maximum_grade
+    assert geometry["maximum_absolute_grade_ratio"] == pytest.approx(maximum_grade)
+    assert geometry["maximum_compensated_gravity_mps2"] == pytest.approx(
+        compensated_gravity
+    )
+    assert geometry["maximum_pre_gate_total_acceleration_mps2"] == pytest.approx(
+        speed_30["max_out"] + compensated_gravity
+    )
+    assert geometry[
+        "downstream_vehicle_cmd_gate_acceleration_cap_mps2"
+    ] == pytest.approx(1.5)
+    assert geometry["ideal_net_uphill_acceleration_reserve_mps2"] == pytest.approx(
+        geometry["downstream_vehicle_cmd_gate_acceleration_cap_mps2"]
+        - compensated_gravity
+    )
 
 
 def test_full_shell_uses_standard_system_with_vad_rate_aware_topic_gates():
@@ -621,12 +717,32 @@ def make_fake_runtime(tmp_path):
         RELIABLE_FAST_MAPPING, package_share / "config" / RELIABLE_FAST_MAPPING.name
     )
     shutil.copy2(
+        RELIABLE_FAST_IMU_MAPPING,
+        package_share / "config" / RELIABLE_FAST_IMU_MAPPING.name,
+    )
+    shutil.copy2(
         RELIABLE_SYNC_QUEUE32_PARAMS,
         package_share / "config" / RELIABLE_SYNC_QUEUE32_PARAMS.name,
     )
     shutil.copy2(
         RECOMMENDED_MPC_PARAMS,
         package_share / "config" / RECOMMENDED_MPC_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_30_GATE_PARAMS,
+        package_share / "config" / SPEED_30_GATE_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_30_GATE_METADATA,
+        package_share / "config" / SPEED_30_GATE_METADATA.name,
+    )
+    shutil.copy2(
+        SPEED_30_PID_PARAMS,
+        package_share / "config" / SPEED_30_PID_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_30_PID_METADATA,
+        package_share / "config" / SPEED_30_PID_METADATA.name,
     )
     shutil.copy2(FAST_VAD_LAUNCH, package_share / "launch" / FAST_VAD_LAUNCH.name)
 
@@ -712,6 +828,41 @@ def test_fast_wrapper_rejects_visualization_without_full_stack(tmp_path):
     assert "--full" in completed.stderr
 
 
+def test_fast_wrapper_builds_rviz_only_without_external_camera_window(tmp_path):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--full", "--rviz-only", str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    assert "carla_vad_full.launch.xml" in arguments
+    assert "rviz:=true" in arguments
+    assert "launch_fast_camera_view:=false" in arguments
+
+
+def test_fast_wrapper_keeps_interactive_visualization_camera_window(tmp_path):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--full", "--visualize", str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    assert "rviz:=true" in arguments
+    assert "launch_fast_camera_view:=true" in arguments
+
+
 def test_fast_wrapper_builds_minimal_raw_profile_command(tmp_path):
     route = make_route(tmp_path)
     completed = subprocess.run(
@@ -778,7 +929,11 @@ def test_fast_wrapper_builds_validated_recommended_profile(tmp_path):
     arguments = completed.stdout.splitlines()
     package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
     assert "carla_vad_full.launch.xml" in arguments
-    assert f"sensor_mapping_file:={package_config / RELIABLE_FAST_MAPPING.name}" in arguments
+    assert (
+        f"sensor_mapping_file:={package_config / RELIABLE_FAST_IMU_MAPPING.name}"
+        in arguments
+    )
+    assert "use_vad_imu_acceleration:=true" in arguments
     assert (
         f"vad_model_override_file:={package_config / RELIABLE_SYNC_QUEUE32_PARAMS.name}"
         in arguments
@@ -797,6 +952,62 @@ def test_fast_wrapper_builds_validated_recommended_profile(tmp_path):
     assert "right_turn_trajectory_lateral_filter_gain:=0.75" not in arguments
     assert "rviz:=true" in arguments
     assert "launch_fast_camera_view:=true" in arguments
+
+
+def test_fast_wrapper_builds_guarded_speed_30_profile(tmp_path):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--speed-30kph", "--visualize", str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert "controller_stop_offset_m:=0.60" in arguments
+    assert "comfortable_deceleration_mps2:=2.0" in arguments
+    assert "maximum_longitudinal_acceleration_mps2:=1.5" in arguments
+    assert "longitudinal_velocity_source:=explicit_simulation_nominal" in arguments
+    assert "nominal_cruise_speed_mps:=8.333333333333334" in arguments
+    assert "maneuver_lookahead_m:=4.0" in arguments
+    assert "maneuver_exit_lookahead_m:=2.5" in arguments
+    assert "maximum_lateral_acceleration_mps2:=1.2" in arguments
+    assert "curvature_speed_preview_m:=3.0" in arguments
+    assert "route_curvature_lookahead_m:=20.0" in arguments
+    assert "max_candidate_age_sec:=0.5" in arguments
+    assert "candidate_timeout_sec:=1.5" in arguments
+    assert "max_route_deviation_m:=1.0" in arguments
+    assert "maximum_speed_mps:=8.333333333333334" in arguments
+    assert (
+        f"vehicle_cmd_gate_param_path:={package_config / SPEED_30_GATE_PARAMS.name}"
+        in arguments
+    )
+    assert (
+        f"longitudinal_controller_param_path:={package_config / SPEED_30_PID_PARAMS.name}"
+        in arguments
+    )
+    assert "comfortable_deceleration_mps2:=0.60" not in arguments
+    assert "maximum_speed_mps:=2.5" not in arguments
+
+
+@pytest.mark.parametrize("experimental", ["--tight-corridor", "--trajectory-stability"])
+def test_fast_wrapper_screens_speed_30_independently(tmp_path, experimental):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--speed-30kph", experimental, str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert "must be screened independently" in completed.stderr
 
 
 def test_fast_wrapper_adds_trajectory_stability_candidate(tmp_path):

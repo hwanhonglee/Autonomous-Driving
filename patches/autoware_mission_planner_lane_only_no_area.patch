@@ -1,0 +1,328 @@
+diff --git a/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp b/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp
+index 9a0ec82..3e76c88 100644
+--- a/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp
++++ b/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp
+@@ -42,6 +42,8 @@
+ #include <lanelet2_core/geometry/BoundingBox.h>
+ #include <lanelet2_core/geometry/Lanelet.h>
+ 
++#include <algorithm>
++#include <cmath>
+ #include <limits>
+ #include <string>
+ #include <vector>
+@@ -86,6 +88,24 @@ bool hasDirectionChangeTag(const lanelet::ConstLanelet & lanelet)
+   const std::string direction_change_tag = lanelet.attributeOr("direction_change", "none");
+   return direction_change_tag == "yes";
+ }
++
++bool has_finite_lanelet_geometry(const lanelet::ConstLaneletOrAreas & path)
++{
++  if (path.empty()) {
++    return false;
++  }
++  return std::all_of(path.begin(), path.end(), [](const auto & element) {
++    if (!element.isLanelet()) {
++      return true;
++    }
++    const auto & centerline = static_cast<const lanelet::ConstLanelet &>(element).centerline();
++    return centerline.size() >= 2 &&
++           std::all_of(centerline.begin(), centerline.end(), [](const auto & point) {
++             return std::isfinite(point.x()) && std::isfinite(point.y()) &&
++                    std::isfinite(point.z());
++           });
++  });
++}
+ }  // namespace
+ 
+ void DefaultPlanner::initialize_common(rclcpp::Node * node)
+@@ -410,16 +430,36 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
+   LaneletRoute route_msg;
+   RouteSections route_sections;
+ 
++  const auto lanelet_map_ptr = route_handler_.getLaneletMapPtr();
++  if (!lanelet_map_ptr) {
++    RCLCPP_WARN(logger, "Cannot plan a route before a lanelet map is loaded.");
++    return route_msg;
++  }
++  const bool use_area_routing = param_.allow_area && !lanelet_map_ptr->areaLayer.empty();
++
+   lanelet::ConstLaneletOrAreas all_route_lanelets_or_areas;
+   for (std::size_t i = 1; i < points.size(); i++) {
+     const auto start_check_point = points.at(i - 1);
+     const auto goal_check_point = points.at(i);
+ 
+     lanelet::ConstLaneletOrAreas path_lanelets_or_areas;
+-    if (!route_handler_.planPathLaneletsBetweenCheckpoints(
+-          start_check_point, goal_check_point, &path_lanelets_or_areas,
+-          param_.consider_no_drivable_lanes)) {
+-      RCLCPP_WARN(logger, "Failed to plan route.");
++    bool is_path_found = false;
++    if (use_area_routing) {
++      is_path_found = route_handler_.planPathLaneletsBetweenCheckpoints(
++        start_check_point, goal_check_point, &path_lanelets_or_areas,
++        param_.consider_no_drivable_lanes);
++    } else {
++      RCLCPP_DEBUG(
++        logger,
++        "Mission planner lane-only fallback active (no routable areas; "
++        "source-contract=1f05e8d66b21225b96746c523b1377a21e33a26f9275038223926c02161994b3).");
++      lanelet::ConstLanelets path_lanelets;
++      is_path_found = route_handler_.planPathLaneletsBetweenCheckpoints(
++        start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes);
++      path_lanelets_or_areas.assign(path_lanelets.begin(), path_lanelets.end());
++    }
++    if (!is_path_found || !has_finite_lanelet_geometry(path_lanelets_or_areas)) {
++      RCLCPP_WARN(logger, "Failed to plan a non-empty route with finite lanelet geometry.");
+       return route_msg;
+     }
+ 
+diff --git a/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp b/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp
+index 3715c30..48bf28d 100644
+--- a/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp
++++ b/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp
+@@ -14,6 +14,8 @@
+ 
+ #include <../src/lanelet2_plugins/default_planner.hpp>
+ #include <ament_index_cpp/get_package_share_directory.hpp>
++#include <autoware/lanelet2_utils/conversion.hpp>
++#include <autoware_lanelet2_extension/utility/utilities.hpp>
+ #include <autoware_test_utils/autoware_test_utils.hpp>
+ #include <autoware_utils/geometry/boost_geometry.hpp>
+ #include <autoware_utils/geometry/geometry.hpp>
+@@ -24,11 +26,17 @@
+ #include <gtest/gtest.h>
+ #include <lanelet2_core/Forward.h>
+ #include <lanelet2_core/LaneletMap.h>
++#include <lanelet2_core/geometry/Area.h>
++#include <lanelet2_core/geometry/Lanelet.h>
++#include <lanelet2_core/geometry/LineString.h>
+ #include <lanelet2_core/geometry/Polygon.h>
++#include <lanelet2_core/primitives/Area.h>
+ #include <lanelet2_core/primitives/Lanelet.h>
+ #include <lanelet2_core/primitives/LineString.h>
+ #include <lanelet2_core/primitives/Point.h>
+ 
++#include <cmath>
++#include <limits>
+ #include <memory>
+ #include <string>
+ #include <vector>
+@@ -39,11 +47,106 @@ using autoware_utils::create_quaternion_from_rpy;
+ using geometry_msgs::msg::Pose;
+ using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
+ 
++namespace
++{
++constexpr lanelet::Id kTown05EntryLaneId = 22775;
++constexpr lanelet::Id kTown05TurnLaneId = 28467;
++constexpr lanelet::Id kTown05ExitLaneId = 1850;
++
++lanelet::Lanelet make_road_lanelet(
++  const lanelet::Id id, const lanelet::LineString3d & left, const lanelet::LineString3d & right)
++{
++  lanelet::Lanelet lanelet(id, left, right);
++  lanelet.attributes()["subtype"] = "road";
++  lanelet.attributes()["participant:vehicle"] = "yes";
++  return lanelet;
++}
++
++lanelet::LaneletMapPtr make_town05_turn_map()
++{
++  const lanelet::Point3d entry_left_start(1, 0.0, 0.0, 0.0);
++  const lanelet::Point3d entry_left_end(2, 0.0, 20.0, 0.0);
++  const lanelet::Point3d entry_right_start(3, 4.0, 0.0, 0.0);
++  const lanelet::Point3d entry_right_end(4, 4.0, 20.0, 0.0);
++
++  const lanelet::Point3d turn_left_start_duplicate(11, 0.0, 20.0, 0.0);
++  const lanelet::Point3d turn_left_middle(5, -4.0, 28.0, 0.0);
++  const lanelet::Point3d turn_left_end(6, -20.0, 36.0, 0.0);
++  const lanelet::Point3d turn_right_middle(7, 0.0, 32.0, 0.0);
++  const lanelet::Point3d turn_right_end(8, -20.0, 40.0, 0.0);
++
++  const lanelet::Point3d exit_left_end(9, -50.0, 36.0, 0.0);
++  const lanelet::Point3d exit_right_end(10, -50.0, 40.0, 0.0);
++
++  const lanelet::LineString3d entry_left(101, {entry_left_start, entry_left_end});
++  const lanelet::LineString3d entry_right(102, {entry_right_start, entry_right_end});
++  const lanelet::LineString3d turn_left(
++    103, {entry_left_end, turn_left_start_duplicate, turn_left_middle, turn_left_end});
++  const lanelet::LineString3d turn_right(104, {entry_right_end, turn_right_middle, turn_right_end});
++  const lanelet::LineString3d exit_left(105, {turn_left_end, exit_left_end});
++  const lanelet::LineString3d exit_right(106, {turn_right_end, exit_right_end});
++
++  auto map = std::make_shared<lanelet::LaneletMap>();
++  map->add(make_road_lanelet(kTown05EntryLaneId, entry_left, entry_right));
++  map->add(make_road_lanelet(kTown05TurnLaneId, turn_left, turn_right));
++  map->add(make_road_lanelet(kTown05ExitLaneId, exit_left, exit_right));
++  lanelet::utils::overwriteLaneletsCenterline(map, 1.0, true);
++  return map;
++}
++
++constexpr lanelet::Id kAreaEntryLaneId = 100;
++constexpr lanelet::Id kAreaId = 200;
++constexpr lanelet::Id kAreaExitLaneId = 300;
++
++lanelet::LaneletMapPtr make_lane_area_lane_map()
++{
++  const lanelet::Point3d entry_left_start(21, 0.0, 0.0, 0.0);
++  const lanelet::Point3d entry_left_end(22, 0.0, 10.0, 0.0);
++  const lanelet::Point3d entry_right_start(23, 4.0, 0.0, 0.0);
++  const lanelet::Point3d entry_right_end(24, 4.0, 10.0, 0.0);
++  const lanelet::Point3d exit_left_start(25, 0.0, 20.0, 0.0);
++  const lanelet::Point3d exit_left_end(26, 0.0, 30.0, 0.0);
++  const lanelet::Point3d exit_right_start(27, 4.0, 20.0, 0.0);
++  const lanelet::Point3d exit_right_end(28, 4.0, 30.0, 0.0);
++
++  const lanelet::LineString3d entry_left(201, {entry_left_start, entry_left_end});
++  const lanelet::LineString3d entry_right(202, {entry_right_start, entry_right_end});
++  const lanelet::LineString3d exit_left(203, {exit_left_start, exit_left_end});
++  const lanelet::LineString3d exit_right(204, {exit_right_start, exit_right_end});
++  lanelet::LineString3d area_entry(205, {entry_right_end, entry_left_end});
++  const lanelet::LineString3d area_left(206, {entry_left_end, exit_left_start});
++  lanelet::LineString3d area_exit(207, {exit_left_start, exit_right_start});
++  const lanelet::LineString3d area_right(208, {exit_right_start, entry_right_end});
++  area_entry.attributes()["type"] = "virtual";
++  area_exit.attributes()["type"] = "virtual";
++
++  lanelet::Area area(kAreaId, lanelet::LineStrings3d{area_entry, area_left, area_exit, area_right});
++  area.attributes()["subtype"] = "parking";
++  area.attributes()["participant:vehicle"] = "yes";
++
++  auto map = std::make_shared<lanelet::LaneletMap>();
++  map->add(make_road_lanelet(kAreaEntryLaneId, entry_left, entry_right));
++  map->add(area);
++  map->add(make_road_lanelet(kAreaExitLaneId, exit_left, exit_right));
++  return map;
++}
++}  // namespace
++
+ // inherit DefaultPlanner to access protected methods and make wrapper to private methods
+ struct DefaultPlanner : public autoware::mission_planner_universe::lanelet2::DefaultPlanner
+ {
+   // todo(someone): create tests with various kinds of maps
+   void set_default_test_map() { route_handler_.setMap(autoware::test_utils::makeMapBinMsg()); }
++  void set_test_map(const lanelet::LaneletMapPtr & map)
++  {
++    route_handler_.setMap(autoware::experimental::lanelet2_utils::to_autoware_map_msgs(map));
++    is_graph_ready_ = true;
++  }
++  void set_allow_area(const bool allow_area)
++  {
++    param_.allow_area = allow_area;
++    route_handler_.setAllowArea(allow_area);
++  }
+   [[nodiscard]] bool check_goal_inside_lanes(
+     const lanelet::ConstLanelets & lanelets_near_goal,
+     const autoware_utils::Polygon2d & goal_footprint) const
+@@ -363,6 +466,110 @@ TEST_F(DefaultPlannerTest, plan)
+   }
+ }
+ 
++TEST_F(DefaultPlannerTest, planTown05TurnWithoutAreas)
++{
++  const auto map = make_town05_turn_map();
++  ASSERT_TRUE(map->areaLayer.empty());
++  for (const auto id : {kTown05EntryLaneId, kTown05TurnLaneId, kTown05ExitLaneId}) {
++    const auto lanelet = map->laneletLayer.get(id);
++    ASSERT_GE(lanelet.centerline().size(), 2U);
++    EXPECT_TRUE(std::isfinite(lanelet::geometry::length2d(lanelet)));
++    EXPECT_GT(lanelet::geometry::length2d(lanelet), 0.0);
++    for (const auto & point : lanelet.centerline()) {
++      EXPECT_TRUE(std::isfinite(point.x()));
++      EXPECT_TRUE(std::isfinite(point.y()));
++      EXPECT_TRUE(std::isfinite(point.z()));
++    }
++  }
++  planner_.set_test_map(map);
++  planner_.set_allow_area(false);
++
++  RoutePoints route_points{
++    autoware::test_utils::createPose(2.0, 5.0, 0.0, 0.0, 0.0, 1.5707963267948966),
++    autoware::test_utils::createPose(-45.0, 38.0, 0.0, 0.0, 0.0, 3.141592653589793)};
++
++  const auto route = planner_.plan(route_points);
++  const std::vector<lanelet::Id> expected_ids{
++    kTown05EntryLaneId, kTown05TurnLaneId, kTown05ExitLaneId};
++  ASSERT_EQ(route.segments.size(), expected_ids.size());
++  for (std::size_t i = 0; i < expected_ids.size(); ++i) {
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.id, expected_ids.at(i));
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.primitive_type, "lane");
++  }
++}
++
++TEST_F(DefaultPlannerTest, rejectNonFiniteTown05RouteWithoutCrash)
++{
++  auto map = make_town05_turn_map();
++  auto turn_lanelet = map->laneletLayer.get(kTown05TurnLaneId);
++  const double nan = std::numeric_limits<double>::quiet_NaN();
++  turn_lanelet.setCenterline(lanelet::LineString3d(
++    1000, {lanelet::Point3d(1001, -2.0, 24.0, 0.0), lanelet::Point3d(1002, nan, nan, nan)}));
++  planner_.set_test_map(map);
++  planner_.set_allow_area(false);
++
++  RoutePoints route_points{
++    autoware::test_utils::createPose(2.0, 5.0, 0.0, 0.0, 0.0, 1.5707963267948966),
++    autoware::test_utils::createPose(-45.0, 38.0, 0.0, 0.0, 0.0, 3.141592653589793)};
++
++  const auto route = planner_.plan(route_points);
++  EXPECT_TRUE(route.segments.empty());
++}
++
++TEST_F(DefaultPlannerTest, planLaneOnlyWhenAreaLayerIsEmpty)
++{
++  const auto map = make_town05_turn_map();
++  ASSERT_TRUE(map->areaLayer.empty());
++  planner_.set_test_map(map);
++  planner_.set_allow_area(true);
++
++  RoutePoints route_points{
++    autoware::test_utils::createPose(2.0, 5.0, 0.0, 0.0, 0.0, 1.5707963267948966),
++    autoware::test_utils::createPose(-45.0, 38.0, 0.0, 0.0, 0.0, 3.141592653589793)};
++
++  const auto route = planner_.plan(route_points);
++  const std::vector<lanelet::Id> expected_ids{
++    kTown05EntryLaneId, kTown05TurnLaneId, kTown05ExitLaneId};
++  ASSERT_EQ(route.segments.size(), expected_ids.size());
++  for (std::size_t i = 0; i < expected_ids.size(); ++i) {
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.id, expected_ids.at(i));
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.primitive_type, "lane");
++  }
++}
++
++TEST_F(DefaultPlannerTest, planThroughAreaWhenEnabled)
++{
++  const auto map = make_lane_area_lane_map();
++  ASSERT_FALSE(map->areaLayer.empty());
++  planner_.set_test_map(map);
++  planner_.set_allow_area(true);
++
++  const auto & route_handler = planner_.getRouteHandler();
++  const auto lanelet_map = route_handler.getLaneletMapPtr();
++  const auto entry_lanelet = lanelet_map->laneletLayer.get(kAreaEntryLaneId);
++  const auto area = lanelet_map->areaLayer.get(kAreaId);
++  const auto exit_lanelet = lanelet_map->laneletLayer.get(kAreaExitLaneId);
++  const auto traffic_rules = route_handler.getTrafficRulesPtr();
++  ASSERT_TRUE(traffic_rules->canPass(area));
++  ASSERT_TRUE(lanelet::geometry::follows(entry_lanelet, area));
++  ASSERT_TRUE(lanelet::geometry::follows(area, exit_lanelet));
++  ASSERT_TRUE(traffic_rules->canPass(entry_lanelet, area));
++  ASSERT_TRUE(traffic_rules->canPass(area, exit_lanelet));
++
++  RoutePoints route_points{
++    autoware::test_utils::createPose(2.0, 5.0, 0.0, 0.0, 0.0, 1.5707963267948966),
++    autoware::test_utils::createPose(2.0, 25.0, 0.0, 0.0, 0.0, 1.5707963267948966)};
++
++  const auto route = planner_.plan(route_points);
++  const std::vector<lanelet::Id> expected_ids{kAreaEntryLaneId, kAreaId, kAreaExitLaneId};
++  const std::vector<std::string> expected_types{"lane", "area", "lane"};
++  ASSERT_EQ(route.segments.size(), expected_ids.size());
++  for (std::size_t i = 0; i < expected_ids.size(); ++i) {
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.id, expected_ids.at(i));
++    EXPECT_EQ(route.segments.at(i).preferred_primitive.primitive_type, expected_types.at(i));
++  }
++}
++
+ //  `visualize` function is used for user too, so it is more important than debug functions
+ TEST_F(DefaultPlannerTest, visualize)
+ {

@@ -40,6 +40,22 @@ def finite(value):
     return value is not None and math.isfinite(value)
 
 
+def percentile(values, quantile):
+    """Return a linearly interpolated percentile for finite numeric samples."""
+    if not math.isfinite(quantile) or not 0.0 <= quantile <= 1.0:
+        raise ValueError("quantile must be finite and in [0, 1]")
+    ordered = sorted(float(value) for value in values if finite(value))
+    if not ordered:
+        return None
+    position = (len(ordered) - 1) * quantile
+    lower = int(math.floor(position))
+    upper = int(math.ceil(position))
+    if lower == upper:
+        return ordered[lower]
+    fraction = position - lower
+    return ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction
+
+
 def load_goal_ros_pose(route_file):
     route_path = Path(route_file).expanduser().resolve()
     try:
@@ -108,6 +124,87 @@ def goal_completion_failures(
     return failures
 
 
+def speed_exposure_failures(
+    maximum_speed_mps,
+    sustained_speed_duration_sec,
+    maximum_lateral_acceleration_mps2,
+    minimum_sustained_speed_mps,
+    minimum_sustained_speed_sec,
+    maximum_observed_speed_mps,
+    maximum_allowed_lateral_acceleration_mps2,
+):
+    """Return fail-closed speed-profile violations for a completed route."""
+    failures = []
+    if not finite(maximum_speed_mps):
+        failures.append("maximum observed speed is unavailable")
+    elif (
+        maximum_observed_speed_mps > 0.0
+        and maximum_speed_mps > maximum_observed_speed_mps
+    ):
+        failures.append(
+            f"maximum speed {maximum_speed_mps:.3f} m/s exceeds "
+            f"{maximum_observed_speed_mps:.3f} m/s"
+        )
+    if minimum_sustained_speed_mps > 0.0:
+        if not finite(sustained_speed_duration_sec):
+            failures.append("sustained target-speed duration is unavailable")
+        elif sustained_speed_duration_sec < minimum_sustained_speed_sec:
+            failures.append(
+                f"speed >= {minimum_sustained_speed_mps:.3f} m/s was sustained "
+                f"for only {sustained_speed_duration_sec:.3f} s; require "
+                f"{minimum_sustained_speed_sec:.3f} s"
+            )
+    if not finite(maximum_lateral_acceleration_mps2):
+        failures.append("maximum lateral acceleration is unavailable")
+    elif (
+        maximum_allowed_lateral_acceleration_mps2 > 0.0
+        and maximum_lateral_acceleration_mps2
+        > maximum_allowed_lateral_acceleration_mps2
+    ):
+        failures.append(
+            "maximum lateral acceleration "
+            f"{maximum_lateral_acceleration_mps2:.3f} m/s^2 exceeds "
+            f"{maximum_allowed_lateral_acceleration_mps2:.3f} m/s^2"
+        )
+    return failures
+
+
+def advance_sustained_speed_duration(
+    current_duration_sec,
+    previous_speed_mps,
+    current_speed_mps,
+    sample_interval_sec,
+    minimum_speed_mps,
+    maximum_sample_interval_sec,
+):
+    """Advance a continuous dwell only across two fresh high-speed samples.
+
+    Requiring both endpoints prevents a delayed DDS sample or a single peak
+    from claiming the entire elapsed interval as high-speed exposure.
+    """
+    values = (
+        current_duration_sec,
+        previous_speed_mps,
+        current_speed_mps,
+        sample_interval_sec,
+        minimum_speed_mps,
+        maximum_sample_interval_sec,
+    )
+    if not all(finite(value) for value in values):
+        return 0.0
+    if (
+        current_duration_sec < 0.0
+        or sample_interval_sec < 0.0
+        or minimum_speed_mps <= 0.0
+        or maximum_sample_interval_sec <= 0.0
+        or sample_interval_sec > maximum_sample_interval_sec
+        or previous_speed_mps < minimum_speed_mps
+        or current_speed_mps < minimum_speed_mps
+    ):
+        return 0.0
+    return current_duration_sec + sample_interval_sec
+
+
 def update_goal_completion_claim(node, odometry_count_at_claim):
     claimed = node.goal_reached is True and node.route_status == "goal_reached"
     if not claimed:
@@ -125,6 +222,8 @@ class RouteTestMonitor(Node):
         self.position = None
         self.position_z = None
         self.speed_mps = None
+        self.yaw_rate_rps = None
+        self.lateral_acceleration_mps2 = None
         self.sim_time = None
         self.trajectory_points = None
         self.trajectory_valid = False
@@ -265,6 +364,10 @@ class RouteTestMonitor(Node):
         self.speed_mps = math.sqrt(
             linear.x * linear.x + linear.y * linear.y + linear.z * linear.z
         )
+        self.yaw_rate_rps = float(msg.twist.twist.angular.z)
+        self.lateral_acceleration_mps2 = abs(
+            self.speed_mps * self.yaw_rate_rps
+        )
         self.sim_time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
         if self.record_path:
             self._record_path_sample()
@@ -275,7 +378,14 @@ class RouteTestMonitor(Node):
             return
         if not all(
             finite(value)
-            for value in (*self.position, self.position_z, self.speed_mps, self.sim_time)
+            for value in (
+                *self.position,
+                self.position_z,
+                self.speed_mps,
+                self.yaw_rate_rps,
+                self.lateral_acceleration_mps2,
+                self.sim_time,
+            )
         ):
             return
         if self.actual_path:
@@ -298,6 +408,11 @@ class RouteTestMonitor(Node):
                 "z": float(self.position_z),
                 "sim_time_sec": float(self.sim_time),
                 "speed_mps": float(self.speed_mps),
+                "yaw_rate_rps": float(self.yaw_rate_rps),
+                "command": int(self.command) if self.command is not None else None,
+                "lateral_acceleration_mps2": float(
+                    self.lateral_acceleration_mps2
+                ),
             }
         )
 
@@ -384,6 +499,12 @@ class RouteTestMonitor(Node):
             missing.append("odometry")
         if self.sim_time is None or not finite(self.sim_time):
             missing.append("simulation timestamp")
+        if not finite(self.speed_mps):
+            missing.append("odometry speed")
+        if not finite(self.yaw_rate_rps):
+            missing.append("odometry yaw rate")
+        if not finite(self.lateral_acceleration_mps2):
+            missing.append("odometry lateral acceleration")
         if self.trajectory_points is None or not self.trajectory_valid:
             missing.append("valid trajectory")
         if self.route_status not in ("ready", "stopping"):
@@ -488,6 +609,18 @@ class RouteTestMonitor(Node):
             )
         if not finite(self.cross_track_error):
             raise EvaluationFailure(f"invalid cross-track error: {self.cross_track_error}")
+        if not finite(self.speed_mps) or self.speed_mps < 0.0:
+            raise EvaluationFailure(f"invalid odometry speed: {self.speed_mps}")
+        if not finite(self.yaw_rate_rps):
+            raise EvaluationFailure(f"invalid odometry yaw rate: {self.yaw_rate_rps}")
+        if (
+            not finite(self.lateral_acceleration_mps2)
+            or self.lateral_acceleration_mps2 < 0.0
+        ):
+            raise EvaluationFailure(
+                "invalid odometry lateral acceleration: "
+                f"{self.lateral_acceleration_mps2}"
+            )
         if not finite(self.trajectory_correction) or self.trajectory_correction < 0.0:
             raise EvaluationFailure(
                 f"invalid trajectory correction: {self.trajectory_correction}"
@@ -921,6 +1054,54 @@ def parse_args():
         help="maximum final odometry speed for verified goal completion in m/s",
     )
     parser.add_argument(
+        "--min-sustained-speed",
+        type=float,
+        default=0.0,
+        help="minimum speed exposure threshold in m/s; zero disables the gate",
+    )
+    parser.add_argument(
+        "--min-sustained-speed-sec",
+        type=float,
+        default=0.0,
+        help="continuous simulated seconds required above --min-sustained-speed",
+    )
+    parser.add_argument(
+        "--max-observed-speed",
+        type=float,
+        default=0.0,
+        help="maximum observed odometry speed in m/s; zero disables the gate",
+    )
+    parser.add_argument(
+        "--max-lateral-acceleration",
+        type=float,
+        default=0.0,
+        help="maximum observed |speed * yaw_rate| in m/s^2; zero disables the gate",
+    )
+    parser.add_argument(
+        "--max-speed-sample-gap",
+        type=float,
+        default=0.25,
+        help=(
+            "maximum simulated interval counted toward continuous speed "
+            "exposure in seconds"
+        ),
+    )
+    parser.add_argument(
+        "--longitudinal-speed-source",
+        choices=("vad_prediction", "explicit_simulation_nominal"),
+        default="vad_prediction",
+    )
+    parser.add_argument(
+        "--vad-velocity-evaluated",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument(
+        "--vad-geometry-evaluated",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument(
         "--data-stale-timeout",
         type=float,
         default=30.0,
@@ -953,11 +1134,29 @@ def parse_args():
         "data_stale_timeout",
         "report_interval",
         "path_sample_distance",
+        "max_speed_sample_gap",
     )
     for name in positive:
         value = getattr(args, name)
         if not math.isfinite(value) or value <= 0:
             parser.error(f"--{name.replace('_', '-')} must be positive")
+    nonnegative = (
+        "min_sustained_speed",
+        "min_sustained_speed_sec",
+        "max_observed_speed",
+        "max_lateral_acceleration",
+    )
+    for name in nonnegative:
+        value = getattr(args, name)
+        if not math.isfinite(value) or value < 0.0:
+            parser.error(f"--{name.replace('_', '-')} must be finite and non-negative")
+    if (args.min_sustained_speed > 0.0) != (
+        args.min_sustained_speed_sec > 0.0
+    ):
+        parser.error(
+            "--min-sustained-speed and --min-sustained-speed-sec must be "
+            "enabled together"
+        )
     try:
         args.route_file, args.goal_ros_pose = load_goal_ros_pose(args.route_file)
     except ValueError as error:
@@ -997,6 +1196,11 @@ def make_result(args):
         "execution_mode": "full_stack" if args.full_stack else "minimal",
         "route_file": str(args.route_file),
         "goal_ros_pose": dict(args.goal_ros_pose),
+        "profile_context": {
+            "longitudinal_velocity_source": args.longitudinal_speed_source,
+            "vad_velocity_evaluated": args.vad_velocity_evaluated,
+            "vad_geometry_evaluated": args.vad_geometry_evaluated,
+        },
         "success": False,
         "reason": "test did not start",
         "started_at": utc_now(),
@@ -1014,6 +1218,11 @@ def make_result(args):
             "maximum_trajectory_correction_m": args.max_trajectory_correction,
             "maximum_direct_goal_distance_m": args.max_goal_distance,
             "maximum_stop_speed_mps": args.max_stop_speed,
+            "minimum_sustained_speed_mps": args.min_sustained_speed,
+            "minimum_sustained_speed_sec": args.min_sustained_speed_sec,
+            "maximum_observed_speed_mps": args.max_observed_speed,
+            "maximum_lateral_acceleration_mps2": args.max_lateral_acceleration,
+            "maximum_speed_sample_gap_sec": args.max_speed_sample_gap,
             "data_stale_timeout_wall_sec": args.data_stale_timeout,
             "path_sample_distance_m": args.path_sample_distance,
         },
@@ -1026,6 +1235,11 @@ def make_result(args):
             "minimum_remaining_distance_m": None,
             "maximum_absolute_cte_m": 0.0,
             "maximum_trajectory_correction_m": 0.0,
+            "maximum_observed_speed_mps": 0.0,
+            "maximum_lateral_acceleration_mps2": 0.0,
+            "maximum_sustained_speed_duration_sec": 0.0,
+            "maximum_speed_sample_gap_sec": 0.0,
+            "speed_by_command": {},
             "commands_seen": [],
         },
         "assessment": {
@@ -1060,6 +1274,10 @@ def route_snapshot(node, goal_ros_pose=None):
         "position": position,
         "sim_time_sec": json_number(node.sim_time),
         "speed_mps": json_number(node.speed_mps),
+        "yaw_rate_rps": json_number(node.yaw_rate_rps),
+        "lateral_acceleration_mps2": json_number(
+            node.lateral_acceleration_mps2
+        ),
         "direct_goal_distance_m": json_number(
             direct_goal_distance(node.position, goal_ros_pose)
         ),
@@ -1219,11 +1437,45 @@ def run_evaluation(node, args, result):
     progress_reference_remaining = node.remaining_distance
     max_abs_cte = abs(node.cross_track_error)
     max_trajectory_correction = node.trajectory_correction
+    maximum_observed_speed = node.speed_mps
+    maximum_lateral_acceleration = node.lateral_acceleration_mps2
+    current_sustained_speed_sec = 0.0
+    maximum_sustained_speed_sec = 0.0
+    maximum_speed_sample_gap_sec = 0.0
+    previous_evaluated_speed = node.speed_mps
+    previous_evaluated_command = node.command
+    command_maximum_speed = {node.command: node.speed_mps}
+    command_current_sustained_speed = {node.command: 0.0}
+    command_maximum_sustained_speed = {node.command: 0.0}
     last_progress_sim = 0.0
     last_report = wall_start - args.report_interval
     commands_seen = {node.command}
     unexpected_disengage_wall = None
     completion_claim_odom_count = None
+
+    def metrics_snapshot():
+        speed_by_command = {}
+        for command in sorted(command_maximum_speed):
+            speed_by_command[str(command)] = {
+                "maximum_observed_speed_mps": command_maximum_speed[command],
+                "maximum_sustained_speed_duration_sec": (
+                    command_maximum_sustained_speed.get(command, 0.0)
+                ),
+            }
+        return {
+            "sim_elapsed_sec": sim_elapsed,
+            "wall_elapsed_sec": time.monotonic() - wall_start,
+            "traveled_distance_m": traveled_distance,
+            "minimum_remaining_distance_m": minimum_remaining,
+            "maximum_absolute_cte_m": max_abs_cte,
+            "maximum_trajectory_correction_m": max_trajectory_correction,
+            "maximum_observed_speed_mps": maximum_observed_speed,
+            "maximum_lateral_acceleration_mps2": maximum_lateral_acceleration,
+            "maximum_sustained_speed_duration_sec": maximum_sustained_speed_sec,
+            "maximum_speed_sample_gap_sec": maximum_speed_sample_gap_sec,
+            "speed_by_command": speed_by_command,
+            "commands_seen": sorted(commands_seen),
+        }
 
     print(
         f"Route test engaged: remaining={minimum_remaining:.2f} m, "
@@ -1250,8 +1502,60 @@ def run_evaluation(node, args, result):
             raise EvaluationFailure(
                 f"simulation time moved backwards: {last_sim_time:.3f} -> {node.sim_time:.3f}"
             )
-        sim_elapsed += max(0.0, node.sim_time - last_sim_time)
+        sim_step = max(0.0, node.sim_time - last_sim_time)
+        sim_elapsed += sim_step
         last_sim_time = node.sim_time
+        maximum_speed_sample_gap_sec = max(maximum_speed_sample_gap_sec, sim_step)
+
+        maximum_observed_speed = max(maximum_observed_speed, node.speed_mps)
+        maximum_lateral_acceleration = max(
+            maximum_lateral_acceleration,
+            node.lateral_acceleration_mps2,
+        )
+        command_maximum_speed[node.command] = max(
+            command_maximum_speed.get(node.command, 0.0), node.speed_mps
+        )
+        if args.min_sustained_speed > 0.0:
+            current_sustained_speed_sec = advance_sustained_speed_duration(
+                current_sustained_speed_sec,
+                previous_evaluated_speed,
+                node.speed_mps,
+                sim_step,
+                args.min_sustained_speed,
+                args.max_speed_sample_gap,
+            )
+            previous_command_duration = (
+                command_current_sustained_speed.get(node.command, 0.0)
+                if previous_evaluated_command == node.command
+                else 0.0
+            )
+            command_current_sustained_speed[node.command] = (
+                advance_sustained_speed_duration(
+                    previous_command_duration,
+                    previous_evaluated_speed,
+                    node.speed_mps,
+                    sim_step,
+                    args.min_sustained_speed,
+                    args.max_speed_sample_gap,
+                )
+                if previous_evaluated_command == node.command
+                else 0.0
+            )
+        else:
+            current_sustained_speed_sec = 0.0
+            command_current_sustained_speed[node.command] = 0.0
+        for command in list(command_current_sustained_speed):
+            if command != node.command:
+                command_current_sustained_speed[command] = 0.0
+        maximum_sustained_speed_sec = max(
+            maximum_sustained_speed_sec, current_sustained_speed_sec
+        )
+        command_maximum_sustained_speed[node.command] = max(
+            command_maximum_sustained_speed.get(node.command, 0.0),
+            command_current_sustained_speed[node.command],
+        )
+        previous_evaluated_speed = node.speed_mps
+        previous_evaluated_command = node.command
 
         if node.position is not None and previous_position is not None:
             step = math.hypot(
@@ -1267,15 +1571,7 @@ def run_evaluation(node, args, result):
             progress_reference_remaining = node.remaining_distance
             last_progress_sim = sim_elapsed
 
-        result["metrics"] = {
-            "sim_elapsed_sec": sim_elapsed,
-            "wall_elapsed_sec": now - wall_start,
-            "traveled_distance_m": traveled_distance,
-            "minimum_remaining_distance_m": minimum_remaining,
-            "maximum_absolute_cte_m": max_abs_cte,
-            "maximum_trajectory_correction_m": max_trajectory_correction,
-            "commands_seen": sorted(commands_seen),
-        }
+        result["metrics"] = metrics_snapshot()
         result["final"] = route_snapshot(node, args.goal_ros_pose)
 
         if abs(node.cross_track_error) > args.max_cte:
@@ -1287,6 +1583,17 @@ def run_evaluation(node, args, result):
                 "trajectory correction limit exceeded: "
                 f"{node.trajectory_correction:.3f} m"
             )
+        instantaneous_speed_failures = speed_exposure_failures(
+            maximum_observed_speed,
+            maximum_sustained_speed_sec,
+            maximum_lateral_acceleration,
+            0.0,
+            0.0,
+            args.max_observed_speed,
+            args.max_lateral_acceleration,
+        )
+        if instantaneous_speed_failures:
+            raise EvaluationFailure(instantaneous_speed_failures[0])
 
         previous_claim_odom_count = completion_claim_odom_count
         completion_claim_odom_count, completion_evidence_ready = (
@@ -1303,6 +1610,20 @@ def run_evaluation(node, args, result):
                 raise EvaluationFailure(
                     "invalid goal completion claim: "
                     + "; ".join(completion_failures)
+                )
+            exposure_failures = speed_exposure_failures(
+                maximum_observed_speed,
+                maximum_sustained_speed_sec,
+                maximum_lateral_acceleration,
+                args.min_sustained_speed,
+                args.min_sustained_speed_sec,
+                args.max_observed_speed,
+                args.max_lateral_acceleration,
+            )
+            if exposure_failures:
+                raise EvaluationFailure(
+                    "speed exposure contract failed: "
+                    + "; ".join(exposure_failures)
                 )
             result["success"] = True
             result["reason"] = "goal reached"
@@ -1367,15 +1688,7 @@ def run_evaluation(node, args, result):
             )
             last_report = now
 
-    result["metrics"] = {
-        "sim_elapsed_sec": sim_elapsed,
-        "wall_elapsed_sec": time.monotonic() - wall_start,
-        "traveled_distance_m": traveled_distance,
-        "minimum_remaining_distance_m": minimum_remaining,
-        "maximum_absolute_cte_m": max_abs_cte,
-        "maximum_trajectory_correction_m": max_trajectory_correction,
-        "commands_seen": sorted(commands_seen),
-    }
+    result["metrics"] = metrics_snapshot()
     result["final"] = route_snapshot(node, args.goal_ros_pose)
 
 
@@ -1480,12 +1793,83 @@ def main():
         result["assessment"] = {
             "planning_architecture": "vad_route_manager_hybrid",
             "route_completion": "PASS" if result["success"] else "FAIL",
-            "trajectory_geometry": (
-                "hybrid_route_assisted" if assisted else "vad_unassisted"
-            ),
+            "trajectory_geometry": "hybrid_route_assisted",
             "xy_corridor_correction_applied": assisted,
-            "e2e_geometry_unassisted": not assisted,
+            "e2e_geometry_unassisted": False,
         }
+
+    speed_contract_enabled = any(
+        value > 0.0
+        for value in (
+            args.min_sustained_speed,
+            args.max_observed_speed,
+            args.max_lateral_acceleration,
+        )
+    )
+    metrics = result.get("metrics", {})
+    p95_lateral_acceleration = percentile(
+        (
+            sample.get("lateral_acceleration_mps2")
+            for sample in result.get("actual_path", [])
+            if isinstance(sample, dict)
+        ),
+        0.95,
+    )
+    lateral_acceleration_by_command = {}
+    for sample in result.get("actual_path", []):
+        if not isinstance(sample, dict):
+            continue
+        command = sample.get("command")
+        value = sample.get("lateral_acceleration_mps2")
+        if isinstance(command, int) and finite(value):
+            lateral_acceleration_by_command.setdefault(str(command), []).append(value)
+    p95_lateral_acceleration_by_command = {
+        command: percentile(values, 0.95)
+        for command, values in sorted(lateral_acceleration_by_command.items())
+    }
+    turn_lateral_acceleration = [
+        value
+        for command in ("0", "1")
+        for value in lateral_acceleration_by_command.get(command, [])
+    ]
+    result["speed_exposure"] = {
+        "status": (
+            "PASS"
+            if speed_contract_enabled and result["success"]
+            else "FAIL"
+            if speed_contract_enabled
+            else "NOT_REQUESTED"
+        ),
+        "minimum_sustained_speed_mps": args.min_sustained_speed,
+        "minimum_sustained_speed_sec": args.min_sustained_speed_sec,
+        "maximum_observed_speed_limit_mps": args.max_observed_speed,
+        "maximum_lateral_acceleration_limit_mps2": (
+            args.max_lateral_acceleration
+        ),
+        "maximum_observed_speed_mps": metrics.get(
+            "maximum_observed_speed_mps"
+        ),
+        "maximum_sustained_speed_duration_sec": metrics.get(
+            "maximum_sustained_speed_duration_sec"
+        ),
+        "maximum_speed_sample_gap_sec": metrics.get(
+            "maximum_speed_sample_gap_sec"
+        ),
+        "maximum_lateral_acceleration_mps2": metrics.get(
+            "maximum_lateral_acceleration_mps2"
+        ),
+        "p95_lateral_acceleration_mps2": p95_lateral_acceleration,
+        "p95_lateral_acceleration_mps2_by_command": (
+            p95_lateral_acceleration_by_command
+        ),
+        "p95_turn_lateral_acceleration_mps2": percentile(
+            turn_lateral_acceleration, 0.95
+        ),
+        "speed_by_command": metrics.get("speed_by_command", {}),
+        "longitudinal_velocity_source": args.longitudinal_speed_source,
+        "vad_velocity_evaluated": args.vad_velocity_evaluated,
+        "vad_geometry_evaluated": args.vad_geometry_evaluated,
+    }
 
     try:
         output = atomic_write_json(args.result, result)

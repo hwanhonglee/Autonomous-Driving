@@ -71,6 +71,15 @@ def _parse_args() -> argparse.Namespace:
         default="legacy_fl",
         help="legacy_fl converts CARLA FL wheel reports; virtual uses the report as-is",
     )
+    parser.add_argument(
+        "--maneuver-lookahead-m",
+        type=float,
+        default=0.0,
+        help=(
+            "route-manager maneuver lookahead; include the command-switch approach "
+            "in turn geometry diagnostics"
+        ),
+    )
     parser.add_argument("--wheel-base-m", type=float, default=WHEEL_BASE_M)
     parser.add_argument("--wheel-tread-m", type=float, default=WHEEL_TREAD_M)
     return parser.parse_args()
@@ -896,15 +905,20 @@ def _interpolate_record_value(
 
 
 def _turn_progress_ranges(
-    route_progress: np.ndarray, route_command: np.ndarray, margin_m: float = 2.0
+    route_progress: np.ndarray,
+    route_command: np.ndarray,
+    margin_m: float = 2.0,
+    maneuver_lookahead_m: float = 0.0,
 ) -> list[tuple[float, float]]:
+    if not math.isfinite(maneuver_lookahead_m) or maneuver_lookahead_m < 0.0:
+        raise ValueError("maneuver lookahead must be finite and non-negative")
     indices = np.flatnonzero(np.isin(route_command, (0, 1)))
     if not len(indices):
         return []
     groups = np.split(indices, np.flatnonzero(np.diff(indices) > 1) + 1)
     return [
         (
-            float(route_progress[group[0]]) - margin_m,
+            float(route_progress[group[0]]) - maneuver_lookahead_m - margin_m,
             float(route_progress[group[-1]]) + margin_m,
         )
         for group in groups
@@ -1579,6 +1593,11 @@ def main() -> int:
         raise ValueError("--mpc-input-delay-sec must be non-negative")
     if args.mpc_steer_tau_sec is not None and args.mpc_steer_tau_sec <= 0.0:
         raise ValueError("--mpc-steer-tau-sec must be positive")
+    if (
+        not math.isfinite(args.maneuver_lookahead_m)
+        or args.maneuver_lookahead_m < 0.0
+    ):
+        raise ValueError("--maneuver-lookahead-m must be finite and non-negative")
     args.result_dir.mkdir(parents=True, exist_ok=True)
     records, topic_types = _read_bag(args.bag)
     route, route_xy, route_progress, route_command = _load_route(args.route_file)
@@ -1600,7 +1619,18 @@ def main() -> int:
         raise RuntimeError("bag has no messages for required topics: " + ", ".join(missing))
 
     turn_progress_ranges = _turn_progress_ranges(route_progress, route_command)
-    geometry_ranges = turn_progress_ranges or None
+    command_switch_ranges = _turn_progress_ranges(
+        route_progress,
+        route_command,
+        margin_m=0.0,
+        maneuver_lookahead_m=args.maneuver_lookahead_m,
+    )
+    geometry_progress_ranges = _turn_progress_ranges(
+        route_progress,
+        route_command,
+        maneuver_lookahead_m=args.maneuver_lookahead_m,
+    )
+    geometry_ranges = geometry_progress_ranges or None
     raw_metrics, _, _ = _trajectory_route_metrics(
         raw, route_xy, route_progress, geometry_ranges
     )
@@ -1681,6 +1711,14 @@ def main() -> int:
         "mpc_diagnostic": diagnostic_metrics,
         "steering_tracking": steering_metrics,
         "peak_corner_cut": peak_context,
+        "turn_geometry_window": {
+            "basis": "route_manager_directional_command_switch",
+            "maneuver_lookahead_m": args.maneuver_lookahead_m,
+            "command_switch_progress_ranges_m": command_switch_ranges,
+            "analysis_progress_ranges_m": geometry_progress_ranges,
+            "analysis_margin_m": 2.0,
+            "commanded_turn_progress_ranges_m": turn_progress_ranges,
+        },
     }
     verdict = _classify(metrics, args.mpc_input_delay_sec, args.mpc_steer_tau_sec)
     diagnosis = {
@@ -1703,6 +1741,7 @@ def main() -> int:
         "runtime_configuration": {
             "mpc_input_delay_sec": args.mpc_input_delay_sec,
             "mpc_steer_tau_sec": args.mpc_steer_tau_sec,
+            "maneuver_lookahead_m": args.maneuver_lookahead_m,
             "steering_report_mode": args.steering_report_mode,
             "wheel_base_m": args.wheel_base_m,
             "wheel_tread_m": args.wheel_tread_m,

@@ -32,6 +32,162 @@ _INTERPOLATED_POINT_FIELDS = (
 )
 
 
+def _goal_coordinate_alignment_z(payload):
+    """Return the strict CARLA-map -> map Z offset for an aligned route."""
+    alignment = payload.get("coordinate_alignment")
+    if alignment is None:
+        return 0.0, False
+    if not isinstance(alignment, dict):
+        raise ValueError("coordinate_alignment must be an object")
+    if alignment.get("schema_version") != 1:
+        raise ValueError("coordinate_alignment.schema_version must be 1")
+    if (
+        alignment.get("source_frame") != "carla_map"
+        or alignment.get("target_frame") != "map"
+    ):
+        raise ValueError(
+            "coordinate_alignment must describe the carla_map -> map transform"
+        )
+    transform = alignment.get("carla_to_map_transform")
+    if not isinstance(transform, dict):
+        raise ValueError("coordinate_alignment has no carla_to_map_transform object")
+    values = {}
+    for field in ("x_m", "y_m", "z_m", "yaw_rad"):
+        raw = transform.get(field)
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raise ValueError(
+                f"coordinate_alignment.carla_to_map_transform.{field} "
+                "must be a number"
+            )
+        value = float(raw)
+        if not math.isfinite(value):
+            raise ValueError(
+                f"coordinate_alignment.carla_to_map_transform.{field} "
+                "must be finite"
+            )
+        values[field] = value
+    return values["z_m"], True
+
+
+def _runtime_goal_z(payload, goal_z, terminal_z):
+    """Resolve legacy goal Z or validate the raw-road/aligned-runtime contract.
+
+    Endpoint provenance and ``goal_carla_transform`` remain in the raw CARLA
+    map frame even after route alignment.  ROS runtime poses are in ``map``;
+    therefore an aligned route must equal the provenance road Z plus the
+    strictly declared ``coordinate_alignment`` Z offset.
+    """
+    provenance = payload.get("goal_endpoint_provenance")
+    if provenance is None:
+        return goal_z, "legacy_goal_ros_pose_z"
+    if not isinstance(provenance, dict):
+        raise ValueError("goal_endpoint_provenance must be an object")
+    endpoint_source = provenance.get("endpoint_source")
+    endpoint_index = provenance.get("endpoint_index")
+    if not isinstance(endpoint_source, str) or not endpoint_source:
+        raise ValueError("goal_endpoint_provenance.endpoint_source is invalid")
+    if (
+        isinstance(endpoint_index, bool)
+        or not isinstance(endpoint_index, int)
+        or endpoint_index < 0
+    ):
+        raise ValueError("goal_endpoint_provenance.endpoint_index is invalid")
+
+    normalization = provenance.get("terminal_z_normalization")
+    if not isinstance(normalization, dict):
+        raise ValueError(
+            "goal_endpoint_provenance.terminal_z_normalization must be an object"
+        )
+    if normalization.get("policy") != "last_road_waypoint_z":
+        raise ValueError("unsupported goal terminal Z normalization policy")
+    numeric_fields = (
+        "original_endpoint_z_m",
+        "last_road_waypoint_z_m",
+        "runtime_goal_z_m",
+        "serialized_terminal_z_m",
+        "applied_offset_m",
+    )
+    try:
+        values = {name: float(normalization[name]) for name in numeric_fields}
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(
+            "goal terminal Z normalization must contain numeric evidence"
+        ) from error
+    if not all(math.isfinite(value) for value in values.values()):
+        raise ValueError("goal terminal Z normalization contains a non-finite value")
+    raw_road_z = values["last_road_waypoint_z_m"]
+    for name in ("runtime_goal_z_m", "serialized_terminal_z_m"):
+        if not math.isclose(
+            values[name], raw_road_z, rel_tol=0.0, abs_tol=1.0e-9
+        ):
+            raise ValueError(
+                f"goal terminal Z normalization {name} differs from the raw "
+                "last road waypoint Z"
+            )
+    alignment_z, aligned = _goal_coordinate_alignment_z(payload)
+    expected_runtime_z = raw_road_z + alignment_z
+    if not math.isclose(
+        expected_runtime_z, terminal_z, rel_tol=0.0, abs_tol=1.0e-9
+    ):
+        raise ValueError(
+            "raw goal terminal Z plus coordinate-alignment Z differs from route "
+            "terminal Z"
+        )
+    if not math.isclose(goal_z, terminal_z, rel_tol=0.0, abs_tol=1.0e-9):
+        raise ValueError("normalized goal_ros_pose.z differs from route terminal Z")
+    if not math.isclose(
+        values["applied_offset_m"],
+        raw_road_z - values["original_endpoint_z_m"],
+        rel_tol=0.0,
+        abs_tol=1.0e-9,
+    ):
+        raise ValueError("goal terminal Z normalization applied offset is inconsistent")
+
+    original_carla = provenance.get("original_goal_carla_transform")
+    original_ros = provenance.get("original_goal_ros_pose")
+    normalized_carla = payload.get("goal_carla_transform")
+    if not all(
+        isinstance(value, dict)
+        for value in (original_carla, original_ros, normalized_carla)
+    ):
+        raise ValueError("goal terminal Z provenance is incomplete")
+    try:
+        original_z_values = (
+            float(original_carla["z"]),
+            float(original_ros["z"]),
+        )
+        normalized_carla_z = float(normalized_carla["z"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("goal terminal Z provenance lacks numeric Z values") from error
+    if not all(
+        math.isfinite(value) for value in (*original_z_values, normalized_carla_z)
+    ):
+        raise ValueError("goal terminal Z provenance contains a non-finite Z value")
+    if not all(
+        math.isclose(
+            value,
+            values["original_endpoint_z_m"],
+            rel_tol=0.0,
+            abs_tol=1.0e-9,
+        )
+        for value in original_z_values
+    ):
+        raise ValueError("original goal endpoint Z provenance is inconsistent")
+    if not math.isclose(
+        normalized_carla_z, raw_road_z, rel_tol=0.0, abs_tol=1.0e-9
+    ):
+        raise ValueError(
+            "normalized goal_carla_transform.z differs from the raw last road "
+            "waypoint Z"
+        )
+    policy = (
+        "last_road_waypoint_z+coordinate_alignment_z"
+        if aligned
+        else "last_road_waypoint_z"
+    )
+    return terminal_z, policy
+
+
 def route_alignment_blocked(required, aligned, heartbeat_age_sec=None, timeout_sec=None):
     """Return whether standard-route agreement must hold the VAD output stopped."""
     if not required:
@@ -378,10 +534,13 @@ class RoutePlan:
 
             terminal = points[-1]
             endpoint_gap_m = math.hypot(goal_x - terminal.x, goal_y - terminal.y)
+            runtime_goal_z, runtime_goal_z_policy = _runtime_goal_z(
+                payload, goal_z, terminal.z
+            )
             exact_goal = RoutePoint(
                 x=goal_x,
                 y=goal_y,
-                z=goal_z,
+                z=runtime_goal_z,
                 yaw=goal_yaw,
                 distance_m=(
                     terminal.distance_m + endpoint_gap_m
@@ -399,6 +558,8 @@ class RoutePlan:
         metadata = {**payload, "route_file": str(route_path)}
         if goal_pose is not None:
             metadata["route_length_m"] = points[-1].distance_m
+            metadata["runtime_goal_z_m"] = points[-1].z
+            metadata["runtime_goal_z_policy"] = runtime_goal_z_policy
         return cls(metadata, points)
 
     def project(self, x, y, previous_progress_m=0.0, backtrack_m=3.0, forward_m=80.0):
@@ -1336,4 +1497,179 @@ def limit_trajectory_speed_for_curvature(
             maximum_reduction,
             original_speed - points[index].longitudinal_velocity_mps,
         )
+    return maximum_reduction
+
+
+def limit_trajectory_speed_for_route_curvature(
+    points,
+    route,
+    progress_m,
+    maximum_lateral_acceleration_mps2,
+    lookahead_distance_m,
+    comfortable_deceleration_mps2,
+    sample_interval_m=0.5,
+):
+    """Cap speed for RoutePlan curvature beyond a short VAD horizon.
+
+    For every output station, future route curvature is converted to a lateral
+    acceleration speed limit and propagated backward with the configured
+    comfortable deceleration. Route sampling errors are deliberately allowed
+    to raise so the manager publishes its fail-closed stop trajectory.
+    """
+    for name, value in (
+        ("route progress", progress_m),
+        ("maximum lateral acceleration", maximum_lateral_acceleration_mps2),
+        ("route curvature lookahead", lookahead_distance_m),
+        ("comfortable deceleration", comfortable_deceleration_mps2),
+        ("route curvature sample interval", sample_interval_m),
+    ):
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+    if progress_m < 0.0:
+        raise ValueError("route progress must be non-negative")
+    if (
+        maximum_lateral_acceleration_mps2 <= 0.0
+        or lookahead_distance_m <= 0.0
+        or comfortable_deceleration_mps2 <= 0.0
+        or sample_interval_m <= 0.0
+    ):
+        raise ValueError("route curvature limits must be positive")
+    if not points:
+        return 0.0
+
+    def curvature_at(station_m):
+        first = route.sample_at(max(0.0, station_m - sample_interval_m))
+        middle = route.sample_at(station_m)
+        last = route.sample_at(
+            min(route.length_m, station_m + sample_interval_m)
+        )
+        first_length = math.hypot(middle.x - first.x, middle.y - first.y)
+        second_length = math.hypot(last.x - middle.x, last.y - middle.y)
+        chord_length = math.hypot(last.x - first.x, last.y - first.y)
+        denominator = first_length * second_length * chord_length
+        if denominator <= 1.0e-9:
+            return 0.0
+        cross = (middle.x - first.x) * (last.y - first.y) - (
+            middle.y - first.y
+        ) * (last.x - first.x)
+        return abs(2.0 * cross / denominator)
+
+    local_distances = trajectory_arc_lengths(points)
+    maximum_reduction = 0.0
+    for point, local_distance in zip(points, local_distances):
+        station = min(route.length_m, progress_m + local_distance)
+        end_station = min(route.length_m, station + lookahead_distance_m)
+        future_stations = trajectory_sample_distances(
+            end_station - station,
+            sample_interval_m,
+        )
+        speed_cap = math.inf
+        for offset in future_stations:
+            future_station = station + offset
+            curvature = curvature_at(future_station)
+            if curvature <= 1.0e-6:
+                continue
+            curve_speed = math.sqrt(
+                maximum_lateral_acceleration_mps2 / curvature
+            )
+            speed_cap = min(
+                speed_cap,
+                math.sqrt(
+                    curve_speed**2
+                    + 2.0 * comfortable_deceleration_mps2 * offset
+                ),
+            )
+        original_speed = max(0.0, point.longitudinal_velocity_mps)
+        point.longitudinal_velocity_mps = min(original_speed, speed_cap)
+        maximum_reduction = max(
+            maximum_reduction,
+            original_speed - point.longitudinal_velocity_mps,
+        )
+    return maximum_reduction
+
+
+def limit_trajectory_speed_for_acceleration(
+    points,
+    maximum_acceleration_mps2,
+    initial_speed_mps,
+    initial_distance_m=0.0,
+):
+    """Cap forward speed increases using a distance-domain acceleration limit.
+
+    ``initial_distance_m`` represents the short distance from the current
+    vehicle state to the first trajectory sample. Supplying it explicitly
+    prevents a high raw VAD speed at point zero from bypassing the ramp while
+    still allowing a stopped vehicle to begin moving.
+    """
+    for name, value in (
+        ("maximum longitudinal acceleration", maximum_acceleration_mps2),
+        ("initial speed", initial_speed_mps),
+        ("initial distance", initial_distance_m),
+    ):
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+    if maximum_acceleration_mps2 <= 0.0:
+        raise ValueError("maximum longitudinal acceleration must be positive")
+    if initial_speed_mps < 0.0:
+        raise ValueError("initial speed must be non-negative")
+    if initial_distance_m < 0.0:
+        raise ValueError("initial distance must be non-negative")
+    if not points:
+        return 0.0
+
+    distances = trajectory_arc_lengths(points)
+    previous_speed = initial_speed_mps
+    previous_distance = -initial_distance_m
+    maximum_reduction = 0.0
+    for point, distance in zip(points, distances):
+        segment = max(0.0, distance - previous_distance)
+        acceleration_cap = math.sqrt(
+            previous_speed**2 + 2.0 * maximum_acceleration_mps2 * segment
+        )
+        original_speed = max(0.0, point.longitudinal_velocity_mps)
+        point.longitudinal_velocity_mps = min(original_speed, acceleration_cap)
+        maximum_reduction = max(
+            maximum_reduction,
+            original_speed - point.longitudinal_velocity_mps,
+        )
+        previous_speed = point.longitudinal_velocity_mps
+        previous_distance = distance
+    return maximum_reduction
+
+
+def limit_trajectory_speed_recovery(
+    points,
+    maximum_acceleration_mps2,
+):
+    """Limit point-to-point speed recovery without constraining point zero.
+
+    This is intended for an explicit simulation cruise profile whose launch
+    ramp is enforced by the stateful vehicle command gate. Starting from the
+    already-shaped first point still prevents a curvature or terminal slowdown
+    from jumping immediately back to cruise speed later in the trajectory.
+    """
+    if not math.isfinite(maximum_acceleration_mps2):
+        raise ValueError("maximum longitudinal acceleration must be finite")
+    if maximum_acceleration_mps2 <= 0.0:
+        raise ValueError("maximum longitudinal acceleration must be positive")
+    if len(points) < 2:
+        return 0.0
+
+    distances = trajectory_arc_lengths(points)
+    previous_speed = max(0.0, points[0].longitudinal_velocity_mps)
+    previous_distance = distances[0]
+    maximum_reduction = 0.0
+    for point, distance in zip(points[1:], distances[1:]):
+        segment = max(0.0, distance - previous_distance)
+        acceleration_cap = math.sqrt(
+            previous_speed**2 + 2.0 * maximum_acceleration_mps2 * segment
+        )
+        original_speed = max(0.0, point.longitudinal_velocity_mps)
+        point.longitudinal_velocity_mps = min(original_speed, acceleration_cap)
+        maximum_reduction = max(
+            maximum_reduction,
+            original_speed - point.longitudinal_velocity_mps,
+        )
+        previous_speed = point.longitudinal_velocity_mps
+        previous_distance = distance
     return maximum_reduction

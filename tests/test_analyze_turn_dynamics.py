@@ -272,6 +272,39 @@ def test_frenet_decomposition_uses_one_route_normal() -> None:
     assert context["path_offset_at_lookahead_m"] == pytest.approx(0.4)
 
 
+def test_turn_geometry_window_starts_at_route_manager_command_switch() -> None:
+    route_progress = np.arange(0.0, 16.0)
+    route_command = np.full(len(route_progress), 3, dtype=int)
+    route_command[8:13] = 1
+
+    commanded_turn = analyzer._turn_progress_ranges(route_progress, route_command)
+    command_switch = analyzer._turn_progress_ranges(
+        route_progress,
+        route_command,
+        margin_m=0.0,
+        maneuver_lookahead_m=4.0,
+    )
+    analysis_window = analyzer._turn_progress_ranges(
+        route_progress,
+        route_command,
+        maneuver_lookahead_m=4.0,
+    )
+
+    assert commanded_turn == [(6.0, 14.0)]
+    assert command_switch == [(4.0, 12.0)]
+    assert analysis_window == [(2.0, 14.0)]
+
+
+@pytest.mark.parametrize("lookahead", [-1.0, math.inf, math.nan])
+def test_turn_geometry_window_rejects_invalid_lookahead(lookahead: float) -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        analyzer._turn_progress_ranges(
+            np.asarray([0.0, 1.0]),
+            np.asarray([3, 1]),
+            maneuver_lookahead_m=lookahead,
+        )
+
+
 def test_peak_corner_context_excludes_stopped_and_non_turn_samples() -> None:
     route_x = np.linspace(0.0, 20.0, 21)
     route_xy = np.column_stack((route_x, np.zeros_like(route_x)))

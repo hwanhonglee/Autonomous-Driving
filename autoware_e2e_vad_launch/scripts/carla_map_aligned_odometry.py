@@ -7,6 +7,7 @@ from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 import rclpy
 from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
 
@@ -202,7 +203,7 @@ def main():
     node = CarlaMapAlignedOdometry()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

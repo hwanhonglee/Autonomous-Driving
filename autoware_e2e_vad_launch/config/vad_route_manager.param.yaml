@@ -7,7 +7,14 @@
     goal_hold_sec: 1.0
     controller_stop_offset_m: 0.49
     comfortable_deceleration_mps2: 1.2
+    # Zero preserves the screened baseline. High-speed profiles opt in to a
+    # distance-domain ramp from current odometry through every trajectory point.
+    maximum_longitudinal_acceleration_mps2: 0.0
     maximum_speed_mps: 2.5
+    # Baseline retains VAD-predicted velocities. CARLA speed screening may opt
+    # into an explicit simulation-only cruise source while preserving VAD XY.
+    longitudinal_velocity_source: vad_prediction
+    nominal_cruise_speed_mps: 0.0
     route_corridor_half_width_m: 0.5
     turn_inward_corridor_half_width_m: 0.5
     turn_outward_corridor_half_width_m: 0.5
@@ -32,6 +39,7 @@
     trajectory_geometry_smoothing_max_deviation_m: 0.10
     maximum_lateral_acceleration_mps2: 0.0
     curvature_speed_preview_m: 3.0
+    route_curvature_lookahead_m: 0.0
     trajectory_resample_interval_m: 0.5
     max_route_deviation_m: 3.5
     max_first_point_distance_m: 3.0

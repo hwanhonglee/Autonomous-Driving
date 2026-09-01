@@ -67,7 +67,8 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "stack_command+=(--visualize)" in source
     assert "stack_command+=(--tight-corridor)" in source
     assert "vad_carla_tiny_recommended.param.yaml" in source
-    assert "sensor_mapping_vad_fast_reliable.yaml" in source
+    assert "sensor_mapping_vad_fast_reliable_imu.yaml" in source
+    assert "VAD_IMU_ACCELERATION_ENABLED=true" in source
     assert "mpc_carla_recommended.param.yaml" in source
     assert "RECOMMENDED=%s" in source
     assert "VISUALIZE=%s" in source
@@ -89,9 +90,65 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "autoware_rviz_fullscreen.png" in source
     assert "autoware_rviz_drive.gif" in source
     assert "desktop_capture.json" in source
+    assert "critical_stack_child_failure" in source
+    assert "exit code .*mission_planner_container" in source
+    assert "critical_process_failure.log" in source
+    assert "Critical Autoware mission-planner process exited" in source
+    assert "setsid scripts/e2e/route_test.sh" in source
+    assert 'while kill -0 "${route_test_pid}"' in source
+    assert "probe_carla_server.py" in source
+    assert "carla_preflight_health.json" in source
+    assert "carla_completion_health.json" in source
+    assert "Pre-created matrix output directory violates" in source
+    assert 'children != [output / "carla_server.log"]' in source
+    assert "matrix CARLA server log is not bound" in source
+    assert "require_carla_owner route_readiness" in source
+    assert "require_carla_owner route_evaluation" in source
+    assert "require_carla_owner route_completion" in source
+    assert "socket.create_connection" not in source
+    assert "exited during route evaluation" in source
+    assert "exited at route completion" in source
+    assert "exited before evidence finalization" in source
+    assert "VSCODE_SNAP_GUI_ENV_SANITIZED=%s" in source
+    assert "unset GIO_LAUNCHED_DESKTOP_FILE" in source
+    assert "unset GTK_EXE_PREFIX GTK_IM_MODULE_FILE GTK_PATH XDG_DATA_HOME" in source
+    assert 'export XDG_DATA_DIRS="${XDG_DATA_DIRS_VSCODE_SNAP_ORIG}"' in source
+    assert "GTK_IM_MODULE/QT_IM_MODULE" in source
     assert '"capture_started_after_candidate": True' in source
     assert source.count("--no-daemon") >= 2
     assert "ready|stopping" not in source
+
+
+def test_trial_records_and_enforces_guarded_speed_30_contract() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "--speed-30kph" in source
+    assert "SPEED_PROFILE_ID=%s" in source
+    assert "TARGET_SPEED_MPS=%s" in source
+    assert "TARGET_SPEED_KPH=30.0" in source
+    assert "SPEED_LIMIT_SOURCE=explicit_simulation_profile" in source
+    assert "LONGITUDINAL_SPEED_SOURCE=explicit_simulation_profile" in source
+    assert "LONGITUDINAL_PID_MAX_OUT_MPS2=1.5" in source
+    assert "LONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5" in source
+    assert "VAD_GEOMETRY_SOURCE=true" in source
+    assert "REAL_VEHICLE_READY=false" in source
+    assert 'maneuver_lookahead_m="4.0"' in source
+    assert "--maneuver-lookahead-m" in source
+    assert 'minimum_sustained_speed_mps="7.5"' in source
+    assert 'minimum_sustained_speed_sec="1.0"' in source
+    assert 'maximum_observed_speed_mps="9.0"' in source
+    assert 'maximum_lateral_acceleration_limit_mps2="1.8"' in source
+    assert "--min-sustained-speed" in source
+    assert "--max-observed-speed" in source
+    assert "--max-lateral-acceleration" in source
+    assert "--max-speed-sample-gap" in source
+    assert "MAXIMUM_SPEED_SAMPLE_GAP_SEC=0.25" in source
+    assert "speed_profile_provenance" in source
+    assert "VEHICLE_CMD_GATE_PARAM_SHA256=%s" in source
+    assert "LONGITUDINAL_CONTROLLER_PARAM_SHA256=%s" in source
+    assert "longitudinal_controller.param.yaml.metadata.json" in source
+    assert "vehicle_cmd_gate.params.yaml" in source
+    assert 'speed_exposure_mode="curvature_limited_turn"' in source
 
 
 def test_visualize_is_available_to_the_full_profile() -> None:
@@ -206,6 +263,52 @@ def test_recommended_rejects_protected_launch_argument(tmp_path: Path) -> None:
 
     assert completed.returncode != 0
     assert "Recommended profile argument is controlled" in completed.stderr
+
+
+@pytest.mark.parametrize(
+    "protected",
+    (
+        "vehicle_cmd_gate_param_path:=/tmp/unsafe.yaml",
+        "maximum_longitudinal_acceleration_mps2:=9.0",
+        "candidate_timeout_sec:=60.0",
+    ),
+)
+def test_speed_30_rejects_protected_launch_argument(
+    tmp_path: Path, protected: str
+) -> None:
+    completed = subprocess.run(
+        [
+            str(TRIAL_SCRIPT),
+            "--speed-30kph",
+            str(tmp_path / "result"),
+            str(ROOT / "data/routes/town01_fast_left_clear_noon.json"),
+            protected,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            key: value
+            for key, value in os.environ.items()
+            if key != "AUTOWARE_E2E_NVIDIA_COMPAT_ROOT"
+        },
+    )
+
+    assert completed.returncode != 0
+    assert "Recommended profile argument is controlled" in completed.stderr
+
+
+@pytest.mark.parametrize("experimental", ("--tight-corridor", "--trajectory-stability"))
+def test_speed_30_rejects_experimental_combinations(experimental: str) -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), "--speed-30kph", experimental],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "must be screened independently" in completed.stderr
 
 
 def test_cleanup_stops_group_after_original_leader_exits(tmp_path: Path) -> None:

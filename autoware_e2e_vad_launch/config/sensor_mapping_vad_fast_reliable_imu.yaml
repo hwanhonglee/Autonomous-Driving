@@ -1,8 +1,9 @@
 default_sensor_kit_name: carla_sensor_kit_description
 
 # Stable VAD profile: exact-frame reliable cameras plus a continuous CARLA IMU.
-# A zero source tick captures every physics frame; bridge cadence publishes exact
-# six-camera bundles at 5 Hz and keeps every available 20 Hz IMU sample.
+# A zero source tick captures every 0.05 s CARLA physics frame; bridge cadence
+# publishes exact six-camera bundles at 5 Hz and keeps every available IMU sample.
+# The IMU's 50 Hz setting is a bridge throttle ceiling, not a 50 Hz source claim.
 sensor_mappings:
   CAM_FRONT/camera_link:
     carla_type: sensor.camera.rgb

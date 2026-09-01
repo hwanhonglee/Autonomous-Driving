@@ -69,6 +69,61 @@ MANAGED_VAD_NAMES = (
     "autoware_vad_route_result.png",
     "autoware_vad_turn_path_control.gif",
 )
+SPEED_30KPH_EVIDENCE_NAMES = (
+    "speed_profile.json",
+    "speed_profile.png",
+)
+SPEED_30KPH_CENTERED_CAPTURE_NAMES = (
+    "autoware_rviz_candidate.png",
+    "runtime.env",
+    "rviz_capture_provenance/autoware_vad_carla.rviz",
+    "rviz_capture_provenance/SHA256SUMS",
+)
+SPEED_30KPH_VISUAL_EVIDENCE_NAMES = (
+    "desktop_capture.json",
+    "autoware_rviz_fullscreen.png",
+    "autoware_rviz_drive.gif",
+    "autoware_rviz_candidate.png",
+    "autoware_rviz_capture.mkv",
+    "rviz_capture_provenance/autoware_vad_carla.rviz",
+    "rviz_capture_provenance/SHA256SUMS",
+)
+SPEED_30KPH_FULLSCREEN_DIMENSIONS = (1920, 1080)
+SPEED_30KPH_DRIVE_GIF_DIMENSIONS = (960, 540)
+OWNED_WINDOW_VISUAL_AUDIT_DIR = "owned_window_visual_audit"
+OWNED_WINDOW_VISUAL_AUDIT_NAMES = (
+    "v16_owned_window_visual_audit.json",
+    "v16_owned_window_visual_audit.md",
+    "v16_owned_window_visual_review.json",
+    "v16_owned_window_contact_sheet.png",
+)
+SPEED_30KPH_RUNNABLE_MAP_IDS = frozenset(
+    {
+        "town01",
+        "town02_opt",
+        "town03",
+        "town04",
+        "town05_opt",
+        "town06",
+        "town07",
+        "town10hd_opt",
+        "c_track_1_0_7",
+    }
+)
+SPEED_30KPH_BLOCKED_MAP_IDS = frozenset(
+    {
+        "town02",
+        "town05",
+        "town08",
+        "town09",
+        "town10hd",
+        "town11",
+        "town12",
+        "town13",
+        "town15",
+        "woraksan_1_0_3",
+    }
+)
 LABELED_VAD_ROUTE_NAME = "autoware_vad_route.json"
 LABELED_VAD_EVIDENCE_NAMES = (
     "autoware_rviz_fullscreen.png",
@@ -100,6 +155,29 @@ DASHBOARD_NAME = "all_maps_basicagent_status_1920x1080.png"
 BASICAGENT_AGGREGATE_NAME = "carla_basicagent_sweep_aggregate.json"
 VAD_MATRIX_AGGREGATE_NAME = "autoware_vad_matrix_aggregate.json"
 VAD_MATRIX_PLAN_NAME = "autoware_vad_matrix_plan.json"
+VAD_RUNTIME_PROFILE_SELECTORS = ("recommended", "speed_30kph")
+VAD_RUNTIME_WRAPPER_OPTIONS = {
+    "recommended": ["--recommended", "--visualize", "--capture-desktop"],
+    "speed_30kph": [
+        "--recommended",
+        "--speed-30kph",
+        "--visualize",
+        "--capture-desktop",
+    ],
+}
+SPEED_30KPH_RUNTIME_PROFILE_ID = "vad_carla_30kph_visualized_v2"
+SPEED_30KPH_PROFILE_ID = "carla_vad_30kph_v2"
+SPEED_30KPH_VALIDATION_STATE = "carla_30kph_v2_screening"
+SPEED_30KPH_PUBLICATION_INTERPRETATION = {
+    "classification": "simulation screening",
+    "profile_id": SPEED_30KPH_PROFILE_ID,
+    "planning_architecture": "vad_route_manager_hybrid",
+    "geometry_source": "VAD candidate geometry",
+    "longitudinal_speed_source": "explicit CARLA simulation speed overlay",
+    "vad_velocity_evaluated": False,
+    "vad_geometry_evaluated": True,
+    "real_vehicle_ready": False,
+}
 
 
 class PublicationError(RuntimeError):
@@ -125,6 +203,8 @@ class VadTrial:
     result: Mapping[str, Any]
     route: Mapping[str, Any] | None
     desktop_capture: Mapping[str, Any] | None
+    speed_profile: Mapping[str, Any] | None
+    centered_capture_provenance: Mapping[str, Any] | None
     source: str
 
 
@@ -134,6 +214,12 @@ class VadTrialSpec:
     trial_id: str | None
     directory: Path
     source: str = "explicit"
+    evidence_root: Path | None = None
+    runtime_profile_selector: str = "recommended"
+    matrix_speed_contract: Mapping[str, Any] | None = None
+    matrix_speed_evidence: Mapping[str, Any] | None = None
+    matrix_visual_evidence: Mapping[str, Any] | None = None
+    matrix_campaign_rviz_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -195,6 +281,42 @@ def _sha256(path: Path) -> str:
         while block := stream.read(1024 * 1024):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _sha256_json(value: Any) -> str:
+    encoded = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _bag_manifest(path: Path, label: str) -> dict[str, Any]:
+    root = path.expanduser()
+    if root.is_symlink():
+        raise PublicationError(f"{label} rosbag root must not be a symlink: {root}")
+    root = root.resolve()
+    if not root.is_dir():
+        raise PublicationError(f"{label} rosbag directory is missing: {root}")
+    files: list[dict[str, Any]] = []
+    for source in sorted(root.rglob("*")):
+        if source.is_symlink():
+            raise PublicationError(f"{label} rosbag contains a symlink: {source}")
+        if not source.is_file():
+            continue
+        files.append(
+            {
+                "path": source.relative_to(root).as_posix(),
+                "size_bytes": source.stat().st_size,
+                "sha256": _sha256(source),
+            }
+        )
+    if not files or not any(item["path"] == "metadata.yaml" for item in files):
+        raise PublicationError(f"{label} rosbag has no metadata.yaml")
+    manifest = {"schema_version": 1, "root": str(root), "files": files}
+    manifest["sha256"] = _sha256_json(
+        {"schema_version": manifest["schema_version"], "files": files}
+    )
+    return manifest
 
 
 def _inside(root: Path, candidate: Path, label: str) -> Path:
@@ -471,8 +593,356 @@ def _normalize_vad_trial_specs(
     return result
 
 
+def _exact_finite_number(value: Any, expected: float, label: str) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(float(value))
+        or not math.isclose(
+            float(value), expected, rel_tol=0.0, abs_tol=1.0e-9
+        )
+    ):
+        raise PublicationError(f"{label} must be exactly {expected!r}")
+
+
+def _validate_matrix_runtime_profile(
+    plan: Mapping[str, Any],
+    aggregate: Mapping[str, Any],
+    requested_selector: str,
+) -> tuple[Mapping[str, Any], dict[str, Any] | None]:
+    """Validate and classify the immutable matrix runtime profile.
+
+    Historical recommended-profile matrices predate ``runtime_profile_selector``;
+    they remain readable as recommended evidence.  The speed profile never gets
+    that compatibility fallback: both plan and aggregate must explicitly identify
+    it, and callers must opt in with the same selector.
+    """
+    if requested_selector not in VAD_RUNTIME_PROFILE_SELECTORS:
+        raise PublicationError(
+            f"unsupported Autoware VAD runtime profile selector: {requested_selector!r}"
+        )
+    plan_has_selector = "runtime_profile_selector" in plan
+    aggregate_has_selector = "runtime_profile_selector" in aggregate
+    plan_selector = plan.get("runtime_profile_selector", "recommended")
+    aggregate_selector = aggregate.get("runtime_profile_selector", "recommended")
+    if (
+        plan_selector not in VAD_RUNTIME_PROFILE_SELECTORS
+        or aggregate_selector not in VAD_RUNTIME_PROFILE_SELECTORS
+        or plan_selector != aggregate_selector
+    ):
+        raise PublicationError(
+            "Autoware VAD matrix runtime_profile_selector is missing, unknown, or "
+            "inconsistent between plan and aggregate"
+        )
+    if plan_selector != requested_selector:
+        raise PublicationError(
+            "Autoware VAD matrix runtime profile does not match the explicitly "
+            f"requested selector {requested_selector!r}"
+        )
+    if requested_selector == "speed_30kph" and not (
+        plan_has_selector and aggregate_has_selector
+    ):
+        raise PublicationError(
+            "speed_30kph publication requires an explicit runtime_profile_selector "
+            "in both matrix plan and aggregate"
+        )
+
+    runtime_profile = plan.get("runtime_profile")
+    expected_options = VAD_RUNTIME_WRAPPER_OPTIONS[requested_selector]
+    if (
+        not isinstance(runtime_profile, Mapping)
+        or runtime_profile.get("wrapper_options") != expected_options
+        or runtime_profile.get("client_map_loading_allowed") is not False
+        or aggregate.get("runtime_profile") != runtime_profile
+    ):
+        raise PublicationError(
+            "Autoware VAD matrix did not use the selected fixed visualized profile"
+        )
+    if requested_selector == "recommended":
+        return runtime_profile, None
+
+    if (
+        runtime_profile.get("id") != SPEED_30KPH_RUNTIME_PROFILE_ID
+        or runtime_profile.get("trial_wrapper") != "run_recorded_route_trial.sh"
+        or runtime_profile.get("map_lifecycle")
+        != "cold_start_owned_process_group_per_trial"
+    ):
+        raise PublicationError(
+            "speed_30kph runtime identity or CARLA lifecycle is not pinned"
+        )
+    contract = runtime_profile.get("speed_contract")
+    if not isinstance(contract, Mapping):
+        raise PublicationError("speed_30kph runtime profile has no speed_contract")
+    required_contract = {
+        "profile_id": SPEED_30KPH_PROFILE_ID,
+        "validation_state": SPEED_30KPH_VALIDATION_STATE,
+        "longitudinal_speed_source": "explicit_simulation_profile",
+        "longitudinal_acceleration_role": "trajectory_internal_curve_exit_cap",
+        "vad_geometry_source": True,
+        "vad_cruise_velocity_evaluated": False,
+        "vad_hard_stop_sentinel_preserved": True,
+        "vad_velocity_evaluated": False,
+        "vad_geometry_evaluated": True,
+    }
+    for field, expected in required_contract.items():
+        if contract.get(field) != expected:
+            raise PublicationError(
+                f"speed_30kph speed_contract.{field} is not pinned to {expected!r}"
+            )
+    _exact_finite_number(
+        contract.get("target_speed_mps"),
+        8.333333333333334,
+        "speed_30kph speed_contract.target_speed_mps",
+    )
+    route_manager = contract.get("route_manager_parameters")
+    if (
+        not isinstance(route_manager, Mapping)
+        or route_manager.get("longitudinal_velocity_source")
+        != "explicit_simulation_nominal"
+    ):
+        raise PublicationError(
+            "speed_30kph must use the explicit CARLA simulation speed overlay"
+        )
+    for component_name in ("vehicle_cmd_gate", "longitudinal_controller"):
+        component = contract.get(component_name)
+        if (
+            not isinstance(component, Mapping)
+            or component.get("profile_id") != SPEED_30KPH_PROFILE_ID
+            or component.get("speed_limit_source")
+            != "explicit_simulation_profile"
+            or component.get("real_vehicle_ready") is not False
+        ):
+            raise PublicationError(
+                f"speed_30kph {component_name} is mislabeled or real-vehicle ready"
+            )
+    return runtime_profile, dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+
+
+def _validate_speed_matrix_campaign_contract(
+    plan: Mapping[str, Any], aggregate: Mapping[str, Any]
+) -> str:
+    """Return the campaign-pinned RViz configuration digest.
+
+    The speed publication is deliberately stricter than the historical
+    recommended-profile publisher.  A self-consistent capture-side checksum is
+    not enough: the capture must use the RViz file admitted into the immutable
+    matrix execution contract.
+    """
+    campaign = plan.get("campaign_execution_contract")
+    recorded_sha256 = plan.get("campaign_execution_contract_sha256")
+    admission_sha256 = plan.get("admission_contract_sha256")
+    if (
+        not isinstance(campaign, Mapping)
+        or campaign.get("schema_version") != 1
+        or campaign.get("hash_algorithm") != "sha256"
+        or not isinstance(recorded_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", recorded_sha256) is None
+        or _sha256_json(campaign) != recorded_sha256
+        or aggregate.get("campaign_execution_contract_sha256") != recorded_sha256
+        or not isinstance(admission_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", admission_sha256) is None
+        or aggregate.get("admission_contract_sha256") != admission_sha256
+    ):
+        raise PublicationError(
+            "speed_30kph matrix campaign/admission contract is missing or stale"
+        )
+    files = campaign.get("files")
+    if not isinstance(files, list):
+        raise PublicationError(
+            "speed_30kph matrix campaign execution contract has no file records"
+        )
+    rviz_records = [
+        item
+        for item in files
+        if isinstance(item, Mapping)
+        and item.get("path")
+        == "autoware_e2e_vad_launch/rviz/autoware_vad_carla.rviz"
+    ]
+    if len(rviz_records) != 1:
+        raise PublicationError(
+            "speed_30kph matrix campaign does not pin the centered RViz config"
+        )
+    rviz_sha256 = rviz_records[0].get("sha256")
+    if (
+        not isinstance(rviz_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", rviz_sha256) is None
+    ):
+        raise PublicationError(
+            "speed_30kph matrix centered RViz config digest is invalid"
+        )
+    return rviz_sha256
+
+
+def _validate_matrix_trial_lifecycle(
+    attempt: Path,
+    validation: Mapping[str, Any],
+    *,
+    map_id: str,
+    trial_id: str,
+    canonical_name: str,
+    expected_campaign_sha256: str,
+    expected_admission_sha256: str,
+) -> None:
+    if (
+        validation.get("campaign_execution_contract_sha256")
+        != expected_campaign_sha256
+        or validation.get("admission_contract_sha256")
+        != expected_admission_sha256
+    ):
+        raise PublicationError(
+            f"{map_id}:{trial_id} matrix validation is detached from its "
+            "campaign/admission contract"
+        )
+    lifecycle = validation.get("carla_lifecycle")
+    expected_generation = f"{map_id}_{trial_id}_{attempt.name}"
+    owner_pid = lifecycle.get("owner_pid") if isinstance(lifecycle, Mapping) else None
+    owner_pgid = lifecycle.get("owner_pgid") if isinstance(lifecycle, Mapping) else None
+    if (
+        not isinstance(lifecycle, Mapping)
+        or lifecycle.get("schema_version") != 1
+        or lifecycle.get("status") != "PASS"
+        or lifecycle.get("lifecycle")
+        != "cold_start_owned_process_group_per_trial"
+        or lifecycle.get("generation_id") != expected_generation
+        or lifecycle.get("expected_map") != canonical_name
+        or not isinstance(owner_pid, int)
+        or isinstance(owner_pid, bool)
+        or owner_pid <= 0
+        or owner_pgid != owner_pid
+        or lifecycle.get("post_completion_exit_policy")
+        != (
+            "completion RPC PASS preserves a completed drive; the next trial "
+            "always receives a new cold-start generation"
+        )
+    ):
+        raise PublicationError(
+            f"{map_id}:{trial_id} matrix CARLA lifecycle contract is invalid"
+        )
+
+    log_record = lifecycle.get("server_log")
+    expected_log = (attempt / "carla_server.log").resolve()
+    recorded_log = None
+    if isinstance(log_record, Mapping) and isinstance(log_record.get("path"), str):
+        recorded_log = Path(str(log_record["path"])).expanduser().resolve()
+    if (
+        not isinstance(log_record, Mapping)
+        or recorded_log != expected_log
+        or not expected_log.is_file()
+        or log_record.get("size_bytes") != expected_log.stat().st_size
+        or log_record.get("sha256") != _sha256(expected_log)
+    ):
+        raise PublicationError(
+            f"{map_id}:{trial_id} matrix CARLA server log binding changed"
+        )
+
+    health_contracts = (
+        (
+            "preflight_health_sha256",
+            "carla_preflight_health.json",
+            "trial_preflight",
+            "running",
+        ),
+        (
+            "completion_health_sha256",
+            "carla_completion_health.json",
+            "trial_completion",
+            "running",
+        ),
+        (
+            "cleanup_health_sha256",
+            "carla_cleanup_health.json",
+            "trial_cleanup",
+            "stopped",
+        ),
+    )
+    for digest_field, file_name, stage, mode in health_contracts:
+        health_path = attempt / file_name
+        if (
+            not health_path.is_file()
+            or lifecycle.get(digest_field) != _sha256(health_path)
+        ):
+            raise PublicationError(
+                f"{map_id}:{trial_id} matrix CARLA {stage} evidence changed"
+            )
+        health = _read_object(health_path, f"{map_id}:{trial_id} CARLA {stage}")
+        if (
+            health.get("schema_version") != 1
+            or health.get("status") != "PASS"
+            or health.get("stage") != stage
+            or health.get("mode") != mode
+            or health.get("generation_id") != expected_generation
+            or health.get("expected_map") != canonical_name
+            or health.get("owner_pid") != owner_pid
+            or health.get("owner_pgid") != owner_pgid
+            or health.get("read_only") is not True
+            or (mode == "stopped" and health.get("port_released") is not True)
+        ):
+            raise PublicationError(
+                f"{map_id}:{trial_id} matrix CARLA {stage} contract is invalid"
+            )
+
+
+def _validate_speed_matrix_visual_binding(
+    attempt: Path,
+    validation: Mapping[str, Any],
+    *,
+    map_id: str,
+    trial_id: str,
+    campaign_rviz_sha256: str,
+) -> dict[str, Any]:
+    label = f"{map_id}:{trial_id}"
+    binding = validation.get("visual_evidence")
+    files = binding.get("files") if isinstance(binding, Mapping) else None
+    if (
+        not isinstance(binding, Mapping)
+        or binding.get("schema_version") != 1
+        or binding.get("binding") != "matrix_validation_sha256_v1"
+        or not isinstance(files, Mapping)
+        or set(files) != set(SPEED_30KPH_VISUAL_EVIDENCE_NAMES)
+        or binding.get("fullscreen_dimensions")
+        != list(SPEED_30KPH_FULLSCREEN_DIMENSIONS)
+        or binding.get("candidate_dimensions")
+        != list(SPEED_30KPH_FULLSCREEN_DIMENSIONS)
+        or binding.get("drive_gif_dimensions")
+        != list(SPEED_30KPH_DRIVE_GIF_DIMENSIONS)
+        or binding.get("vehicle_centered") is not True
+        or binding.get("target_frame") != "base_link"
+    ):
+        raise PublicationError(
+            f"{label} speed_30kph matrix has no complete centered visual binding"
+        )
+    for name in SPEED_30KPH_VISUAL_EVIDENCE_NAMES:
+        path = attempt / name
+        record = files.get(name)
+        if (
+            not path.is_file()
+            or path.is_symlink()
+            or not isinstance(record, Mapping)
+            or record.get("size_bytes") != path.stat().st_size
+            or record.get("sha256") != _sha256(path)
+        ):
+            raise PublicationError(
+                f"{label} matrix visual evidence changed: {name}"
+            )
+    config_record = files[
+        "rviz_capture_provenance/autoware_vad_carla.rviz"
+    ]
+    if config_record.get("sha256") != campaign_rviz_sha256:
+        raise PublicationError(
+            f"{label} centered RViz config differs from the admitted campaign file"
+        )
+    capture = _read_object(attempt / "desktop_capture.json", f"{label} desktop capture")
+    if validation.get("desktop_capture") != capture:
+        raise PublicationError(
+            f"{label} desktop capture differs from matrix validation"
+        )
+    return dict(binding)
+
+
 def discover_vad_matrix_trial_specs(
-    snapshot: Mapping[str, Any], matrix_root: Path
+    snapshot: Mapping[str, Any],
+    matrix_root: Path,
+    runtime_profile_selector: str = "recommended",
 ) -> tuple[list[VadTrialSpec], dict[str, Any]]:
     """Discover only status-backed PASS trials from a finished Town matrix.
 
@@ -481,8 +951,10 @@ def discover_vad_matrix_trial_specs(
     this function checks that status/aggregate/validation chain afresh before
     handing the attempt to the publication validator.
     """
-    artifact_root = Path(snapshot["artifact_root"])
-    matrix_root = _inside(artifact_root, matrix_root, "Autoware VAD matrix root")
+    # A new matrix may intentionally live in a newer validation-date directory
+    # than the immutable BasicAgent sweep.  Treat the user-selected matrix root as
+    # its own read boundary and confine every recorded attempt beneath it.
+    matrix_root = matrix_root.expanduser().resolve()
     plan_path = matrix_root / "matrix_plan.json"
     aggregate_path = matrix_root / "aggregate.json"
     plan, plan_sha256 = _read_object_with_sha256(
@@ -517,16 +989,13 @@ def discover_vad_matrix_trial_specs(
             "Autoware VAD matrix aggregate predates its matrix plan"
         )
 
-    runtime_profile = plan.get("runtime_profile")
-    expected_options = ["--recommended", "--visualize", "--capture-desktop"]
-    if (
-        not isinstance(runtime_profile, Mapping)
-        or runtime_profile.get("wrapper_options") != expected_options
-        or runtime_profile.get("client_map_loading_allowed") is not False
-        or aggregate.get("runtime_profile") != runtime_profile
-    ):
-        raise PublicationError(
-            "Autoware VAD matrix did not use the fixed recommended visualized profile"
+    runtime_profile, profile_interpretation = _validate_matrix_runtime_profile(
+        plan, aggregate, runtime_profile_selector
+    )
+    campaign_rviz_sha256 = None
+    if runtime_profile_selector == "speed_30kph":
+        campaign_rviz_sha256 = _validate_speed_matrix_campaign_contract(
+            plan, aggregate
         )
     route_contract = plan.get("route_contract")
     contract_trials = (
@@ -574,6 +1043,28 @@ def discover_vad_matrix_trial_specs(
     aggregate_by_map = indexed_maps(aggregate_maps, "matrix aggregate")
     if set(plan_by_map) != set(known_maps) or set(aggregate_by_map) != set(known_maps):
         raise PublicationError("Autoware VAD matrix map ids differ from the canonical sweep")
+    if runtime_profile_selector == "speed_30kph":
+        canonical_ids = set(known_maps)
+        if canonical_ids != (
+            set(SPEED_30KPH_RUNNABLE_MAP_IDS) | set(SPEED_30KPH_BLOCKED_MAP_IDS)
+        ):
+            raise PublicationError(
+                "speed_30kph canonical map inventory differs from the pinned 19-map set"
+            )
+        planned_runnable = {
+            map_id
+            for map_id, entry in plan_by_map.items()
+            if entry.get("runnable") is True
+        }
+        planned_blocked = canonical_ids - planned_runnable
+        if (
+            planned_runnable != set(SPEED_30KPH_RUNNABLE_MAP_IDS)
+            or planned_blocked != set(SPEED_30KPH_BLOCKED_MAP_IDS)
+        ):
+            raise PublicationError(
+                "speed_30kph matrix must admit the exact 9 runnable maps and retain "
+                "the exact 10 canonical BLOCKED maps"
+            )
 
     def matrix_attempt_path(
         value: Any, map_id: str, trial_id: str
@@ -723,6 +1214,10 @@ def discover_vad_matrix_trial_specs(
                 or validation.get("map_id") != map_id
                 or validation.get("trial_id") != trial_id
                 or recorded_attempt != attempt
+                or validation.get(
+                    "runtime_profile_selector", "recommended"
+                )
+                != runtime_profile_selector
                 or validation.get("runtime_profile") != runtime_profile
                 or not isinstance(result, Mapping)
                 or result.get("success") is not True
@@ -735,12 +1230,96 @@ def discover_vad_matrix_trial_specs(
                 raise PublicationError(
                     f"{map_id}:{trial_id} matrix validation is stale or incomplete"
                 )
+            visual_binding = None
+            if runtime_profile_selector == "speed_30kph":
+                if campaign_rviz_sha256 is None:  # pragma: no cover - set above.
+                    raise PublicationError("speed_30kph campaign RViz digest was lost")
+                _validate_matrix_trial_lifecycle(
+                    attempt,
+                    validation,
+                    map_id=map_id,
+                    trial_id=trial_id,
+                    canonical_name=known_maps[map_id],
+                    expected_campaign_sha256=str(
+                        plan["campaign_execution_contract_sha256"]
+                    ),
+                    expected_admission_sha256=str(plan["admission_contract_sha256"]),
+                )
+                visual_binding = _validate_speed_matrix_visual_binding(
+                    attempt,
+                    validation,
+                    map_id=map_id,
+                    trial_id=trial_id,
+                    campaign_rviz_sha256=campaign_rviz_sha256,
+                )
+                attempt_result = _read_object(
+                    attempt / "result.json", f"{map_id}:{trial_id} matrix result"
+                )
+                pass_route = _labeled_trial_route(
+                    attempt,
+                    attempt_result,
+                    known_maps[map_id],
+                    f"{map_id}:{trial_id} matrix",
+                )
+                route_scenario = pass_route["scenario"]
+                scenario_is_valid = (
+                    trial_id == "straight" and route_scenario == "straight"
+                ) or (
+                    trial_id == "turn" and route_scenario in {"left", "right"}
+                )
+                expected_turn_direction = (
+                    route_scenario if trial_id == "turn" else None
+                )
+                if (
+                    not scenario_is_valid
+                    or validation.get("catalog_scenario") != route_scenario
+                    or validation.get("turn_direction") != expected_turn_direction
+                ):
+                    raise PublicationError(
+                        f"{map_id}:{trial_id} route scenario does not match its "
+                        "straight/turn matrix slot"
+                    )
+            validation_speed = validation.get("speed_contract")
+            if runtime_profile_selector == "speed_30kph":
+                if (
+                    not isinstance(validation_speed, Mapping)
+                    or validation_speed.get("status") != "PASS"
+                    or validation_speed.get("profile_id")
+                    != SPEED_30KPH_PROFILE_ID
+                ):
+                    raise PublicationError(
+                        f"{map_id}:{trial_id} speed_30kph matrix validation lacks "
+                        "passing speed-contract evidence"
+                    )
+            elif validation_speed is not None:
+                raise PublicationError(
+                    f"{map_id}:{trial_id} recommended matrix unexpectedly carries "
+                    "speed-profile evidence"
+                )
             specs.append(
                 VadTrialSpec(
                     map_id=map_id,
                     trial_id=trial_id,
                     directory=attempt,
                     source="matrix_pass_auto_discovery",
+                    evidence_root=matrix_root,
+                    runtime_profile_selector=runtime_profile_selector,
+                    matrix_speed_contract=(
+                        dict(runtime_profile["speed_contract"])
+                        if runtime_profile_selector == "speed_30kph"
+                        else None
+                    ),
+                    matrix_speed_evidence=(
+                        dict(validation_speed)
+                        if isinstance(validation_speed, Mapping)
+                        else None
+                    ),
+                    matrix_visual_evidence=(
+                        visual_binding
+                        if isinstance(visual_binding, Mapping)
+                        else None
+                    ),
+                    matrix_campaign_rviz_sha256=campaign_rviz_sha256,
                 )
             )
             matrix_trial_records[trial_id] = {
@@ -749,6 +1328,11 @@ def discover_vad_matrix_trial_specs(
                 "reason": trial_reason,
                 "attempt_directory": str(attempt),
                 "route": None,
+                "speed_contract": (
+                    dict(validation_speed)
+                    if isinstance(validation_speed, Mapping)
+                    else None
+                ),
             }
         trial_statuses = {
             trial_id: record["status"]
@@ -804,6 +1388,32 @@ def discover_vad_matrix_trial_specs(
     )
     if aggregate.get("status") != expected_overall:
         raise PublicationError("Autoware VAD matrix overall status is inconsistent")
+    if runtime_profile_selector == "speed_30kph":
+        runnable_statuses = {
+            item["map_id"]: item["status"]
+            for item in matrix_maps
+            if item["map_id"] in SPEED_30KPH_RUNNABLE_MAP_IDS
+        }
+        blocked_statuses = {
+            item["map_id"]: item["status"]
+            for item in matrix_maps
+            if item["map_id"] in SPEED_30KPH_BLOCKED_MAP_IDS
+        }
+        if (
+            aggregate.get("status") != "COMPLETE"
+            or runnable_count != 9
+            or runnable_pass_count != 9
+            or blocked_count != 10
+            or computed_counts != {"BLOCKED": 10, "PASS": 9}
+            or set(runnable_statuses.values()) != {"PASS"}
+            or set(blocked_statuses.values()) != {"BLOCKED"}
+            or len(specs) != 18
+        ):
+            raise PublicationError(
+                "speed_30kph publication requires final_state COMPLETE, 9/9 "
+                "runnable map PASS, 10 canonical BLOCKED maps, and 18 bound "
+                "straight/turn PASS trials"
+            )
     return specs, {
         "matrix_root": str(matrix_root),
         "matrix_id": matrix_id,
@@ -814,7 +1424,9 @@ def discover_vad_matrix_trial_specs(
         "plan_sha256": plan_sha256,
         "aggregate": str(aggregate_path),
         "aggregate_sha256": aggregate_sha256,
+        "runtime_profile_selector": runtime_profile_selector,
         "runtime_profile": dict(runtime_profile),
+        "evidence_interpretation": profile_interpretation,
         "discovered_pass_trial_count": len(specs),
         "canonical_map_count": len(plan_maps),
         "runnable_map_count": runnable_count,
@@ -840,13 +1452,29 @@ def resolve_vad_trial_specs(
     snapshot: Mapping[str, Any],
     explicit_values: Mapping[str, Path] | Sequence[VadTrialSpec],
     matrix_root: Path | None,
+    runtime_profile_selector: str = "recommended",
 ) -> tuple[list[VadTrialSpec], dict[str, Any] | None]:
     explicit = _normalize_vad_trial_specs(explicit_values)
+    if runtime_profile_selector not in VAD_RUNTIME_PROFILE_SELECTORS:
+        raise PublicationError(
+            f"unsupported Autoware VAD runtime profile selector: "
+            f"{runtime_profile_selector!r}"
+        )
+    if runtime_profile_selector != "recommended" and matrix_root is None:
+        raise PublicationError(
+            "speed_30kph publication requires --vad-matrix-root; standalone explicit "
+            "trials cannot establish the immutable simulation-screening contract"
+        )
+    if runtime_profile_selector == "speed_30kph" and explicit:
+        raise PublicationError(
+            "speed_30kph publication accepts only status-backed matrix PASS trials; "
+            "do not mix unbound explicit trials into simulation-screening evidence"
+        )
     discovered: list[VadTrialSpec] = []
     matrix_record = None
     if matrix_root is not None:
         discovered, matrix_record = discover_vad_matrix_trial_specs(
-            snapshot, matrix_root
+            snapshot, matrix_root, runtime_profile_selector
         )
         failed_identities = {
             (item["map_id"], trial["trial_id"])
@@ -864,6 +1492,12 @@ def resolve_vad_trial_specs(
                     if (spec.map_id, spec.trial_id) in failed_identities
                     else spec.source
                 ),
+                evidence_root=spec.evidence_root,
+                runtime_profile_selector=spec.runtime_profile_selector,
+                matrix_speed_contract=spec.matrix_speed_contract,
+                matrix_speed_evidence=spec.matrix_speed_evidence,
+                matrix_visual_evidence=spec.matrix_visual_evidence,
+                matrix_campaign_rviz_sha256=spec.matrix_campaign_rviz_sha256,
             )
             for spec in explicit
         ]
@@ -896,8 +1530,6 @@ def _labeled_trial_route(
     route = _read_object(route_path, f"{label} route")
     town = route.get("town")
     scenario = route.get("scenario")
-    start = route.get("start_spawn_index")
-    goal = route.get("goal_spawn_index")
     length = route.get("route_length_m")
     if town != canonical_name:
         raise PublicationError(
@@ -905,13 +1537,75 @@ def _labeled_trial_route(
         )
     if not isinstance(scenario, str) or not scenario.strip():
         raise PublicationError(f"{label} route has no scenario")
-    if (
-        not isinstance(start, int)
-        or isinstance(start, bool)
-        or not isinstance(goal, int)
-        or isinstance(goal, bool)
-    ):
-        raise PublicationError(f"{label} route has invalid spawn indices")
+    endpoint_source = route.get("endpoint_source", "spawn_points")
+    endpoint_record: dict[str, Any]
+    if endpoint_source == "spawn_points":
+        start = route.get("start_spawn_index")
+        goal = route.get("goal_spawn_index")
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in (start, goal)
+        ):
+            raise PublicationError(f"{label} route has invalid spawn-point indices")
+        endpoint_record = {
+            "endpoint_source": "spawn_points",
+            "start_index": start,
+            "goal_index": goal,
+            "start_spawn_index": start,
+            "goal_spawn_index": goal,
+        }
+    elif endpoint_source == "generated_waypoints":
+        start = route.get("start_endpoint_index")
+        goal = route.get("goal_endpoint_index")
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in (start, goal)
+        ):
+            raise PublicationError(
+                f"{label} route has invalid generated-waypoint endpoint indices"
+            )
+        spacing = route.get("endpoint_waypoint_spacing_m")
+        if (
+            isinstance(spacing, bool)
+            or not isinstance(spacing, (int, float))
+            or not math.isfinite(float(spacing))
+            or float(spacing) <= 0.0
+        ):
+            raise PublicationError(
+                f"{label} route has invalid generated-waypoint endpoint spacing"
+            )
+        spawn_height = route.get("spawn_height_contract")
+        if (
+            not isinstance(spawn_height, Mapping)
+            or spawn_height.get("offset_owner")
+            != "autoware_carla_interface_bridge"
+        ):
+            raise PublicationError(
+                f"{label} route lacks the bridge-owned spawn-height contract"
+            )
+        _exact_finite_number(
+            spawn_height.get("bridge_z_offset_m"),
+            2.0,
+            f"{label} route bridge_z_offset_m",
+        )
+        _exact_finite_number(
+            spawn_height.get("catalog_z_offset_m"),
+            0.0,
+            f"{label} route catalog_z_offset_m",
+        )
+        endpoint_record = {
+            "endpoint_source": "generated_waypoints",
+            "start_index": start,
+            "goal_index": goal,
+            "start_endpoint_index": start,
+            "goal_endpoint_index": goal,
+            "endpoint_waypoint_spacing_m": float(spacing),
+            "spawn_height_contract": dict(spawn_height),
+        }
+    else:
+        raise PublicationError(
+            f"{label} route has unsupported endpoint_source {endpoint_source!r}"
+        )
     if (
         not isinstance(length, (int, float))
         or isinstance(length, bool)
@@ -923,9 +1617,8 @@ def _labeled_trial_route(
         "source": str(route_path),
         "town": town,
         "scenario": scenario,
-        "start_spawn_index": start,
-        "goal_spawn_index": goal,
         "route_length_m": float(length),
+        **endpoint_record,
     }
 
 
@@ -1029,6 +1722,268 @@ def _labeled_desktop_capture(directory: Path, label: str) -> dict[str, Any]:
     return dict(capture)
 
 
+def _validated_speed_profile(
+    directory: Path,
+    result: Mapping[str, Any],
+    matrix_speed_evidence: Mapping[str, Any] | None,
+    label: str,
+) -> dict[str, Any]:
+    json_path = directory / "speed_profile.json"
+    plot_path = directory / "speed_profile.png"
+    if not json_path.is_file() or not plot_path.is_file():
+        raise PublicationError(
+            f"{label} speed_30kph trial is missing speed_profile.json/png"
+        )
+    profile, profile_sha256 = _read_object_with_sha256(
+        json_path, f"{label} speed profile"
+    )
+    if (
+        profile.get("schema_version") != 1
+        or profile.get("analysis") != "carla_speed_source_evidence"
+        or profile.get("status") != "complete"
+        or profile.get("outputs")
+        != {"json": "speed_profile.json", "plot": "speed_profile.png"}
+    ):
+        raise PublicationError(f"{label} speed-profile artifact identity is invalid")
+    inputs = profile.get("inputs")
+    if (
+        not isinstance(inputs, Mapping)
+        or inputs.get("profile_id") != SPEED_30KPH_PROFILE_ID
+        or inputs.get("longitudinal_speed_source")
+        != "explicit_simulation_nominal"
+    ):
+        raise PublicationError(f"{label} speed-profile input contract is invalid")
+    _exact_finite_number(
+        inputs.get("target_speed_mps"),
+        8.333333333333334,
+        f"{label} speed-profile target_speed_mps",
+    )
+    interpretation = profile.get("interpretation")
+    if (
+        not isinstance(interpretation, Mapping)
+        or interpretation.get("cruise_velocity_source")
+        != "explicit CARLA simulation profile"
+        or interpretation.get("planning_geometry")
+        != "VAD route-manager hybrid"
+        or interpretation.get("raw_vad_velocity_is_cruise_target") is not False
+        or interpretation.get("real_vehicle_ready") is not False
+    ):
+        raise PublicationError(
+            f"{label} speed profile does not prove VAD geometry plus the explicit "
+            "CARLA simulation overlay"
+        )
+    quality = profile.get("quality")
+    required_series = {
+        "raw_selected_vad",
+        "explicit_overlaid_planning",
+        "gated_control_command",
+        "actual_odometry",
+    }
+    series = profile.get("series")
+    declared_series = quality.get("required_series") if isinstance(quality, Mapping) else None
+    if (
+        not isinstance(quality, Mapping)
+        or quality.get("problems") != []
+        or not isinstance(declared_series, list)
+        or not all(isinstance(name, str) for name in declared_series)
+        or set(declared_series) != required_series
+        or not isinstance(series, Mapping)
+        or any(
+            not isinstance(series.get(name), list) or not series[name]
+            for name in required_series
+        )
+    ):
+        raise PublicationError(
+            f"{label} speed profile lacks complete four-source speed evidence"
+        )
+    profile_context = result.get("profile_context")
+    exposure = result.get("speed_exposure")
+    expected_context = {
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "vad_geometry_evaluated": True,
+        "vad_velocity_evaluated": False,
+    }
+    if (
+        profile_context != expected_context
+        or not isinstance(exposure, Mapping)
+        or exposure.get("status") != "PASS"
+        or any(exposure.get(field) != expected for field, expected in expected_context.items())
+    ):
+        raise PublicationError(
+            f"{label} result does not retain passing speed-screening context"
+        )
+    identity = profile.get("source_identity")
+    if not isinstance(identity, Mapping) or identity.get("schema_version") != 1:
+        raise PublicationError(f"{label} speed profile has no source identity")
+    identity_sha256 = identity.get("sha256")
+    if (
+        not isinstance(identity_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", identity_sha256)
+        or identity_sha256
+        != _sha256_json(
+            {key: value for key, value in identity.items() if key != "sha256"}
+        )
+    ):
+        raise PublicationError(f"{label} speed-profile source identity changed")
+    route_identity = identity.get("effective_route")
+    result_identity = identity.get("route_result")
+    bag_identity = identity.get("rosbag")
+    if (
+        not isinstance(route_identity, Mapping)
+        or not isinstance(result_identity, Mapping)
+        or not isinstance(bag_identity, Mapping)
+    ):
+        raise PublicationError(f"{label} speed-profile source identity is incomplete")
+    result_path = (directory / "result.json").resolve()
+    route_value = result.get("route_file")
+    if not isinstance(route_value, str) or not route_value:
+        raise PublicationError(f"{label} result has no effective route")
+    route_path = Path(route_value).expanduser()
+    if not route_path.is_absolute():
+        route_path = directory / route_path
+    route_path = _inside(directory, route_path, f"{label} effective route")
+    recorded_route = Path(str(route_identity.get("path", ""))).expanduser()
+    recorded_result = Path(str(result_identity.get("path", ""))).expanduser()
+    scenario = "straight" if route_identity.get("trial_id") == "straight" else (
+        route_identity.get("scenario")
+    )
+    if (
+        not route_path.is_file()
+        or recorded_route.resolve() != route_path
+        or recorded_result.resolve() != result_path
+        or route_identity.get("sha256") != _sha256(route_path)
+        or result_identity.get("sha256") != _sha256(result_path)
+        or route_identity.get("trial_id") not in {"straight", "turn"}
+        or route_identity.get("scenario") not in {"straight", "left", "right"}
+        or scenario not in {"straight", "left", "right"}
+        or result_identity.get("success") is not True
+        or result_identity.get("execution_mode") != "full_stack"
+        or result_identity.get("profile_context") != expected_context
+    ):
+        raise PublicationError(
+            f"{label} speed profile is bound to a different route/result"
+        )
+    bag = _bag_manifest(directory / "bag", f"{label} speed profile")
+    if bag_identity != bag:
+        raise PublicationError(
+            f"{label} speed-profile rosbag manifest changed after analysis"
+        )
+    if Path(str(inputs.get("bag", ""))).expanduser().resolve() != (
+        directory / "bag"
+    ).resolve():
+        raise PublicationError(f"{label} speed-profile input bag path changed")
+
+    if not isinstance(matrix_speed_evidence, Mapping):
+        raise PublicationError(
+            f"{label} speed profile has no immutable matrix-validation binding"
+        )
+    plot_sha256 = _sha256(plot_path)
+    immutable_bindings = {
+        "speed_profile_json_sha256": profile_sha256,
+        "speed_profile_plot_sha256": plot_sha256,
+        "speed_profile_source_identity_sha256": identity_sha256,
+        "speed_profile_result_sha256": result_identity.get("sha256"),
+        "speed_profile_route_sha256": route_identity.get("sha256"),
+        "speed_profile_bag_manifest_sha256": bag.get("sha256"),
+    }
+    for field, expected in immutable_bindings.items():
+        if matrix_speed_evidence.get(field) != expected:
+            raise PublicationError(
+                f"{label} matrix validation does not bind {field}"
+            )
+    plot_dimensions = _image_dimensions(
+        plot_path, f"{label} speed-profile plot", "PNG"
+    )
+    return {
+        "analysis": "carla_speed_source_evidence",
+        "profile_id": SPEED_30KPH_PROFILE_ID,
+        "classification": "simulation screening",
+        "longitudinal_speed_source": "explicit CARLA simulation speed overlay",
+        "geometry_source": "VAD candidate geometry",
+        "real_vehicle_ready": False,
+        "json_source": str(json_path),
+        "json_sha256": profile_sha256,
+        "plot_source": str(plot_path),
+        "plot_sha256": plot_sha256,
+        "plot_dimensions": list(plot_dimensions),
+        "source_identity": dict(identity),
+        "matrix_validation_bindings": immutable_bindings,
+    }
+
+
+def _validated_speed_centered_capture(
+    directory: Path,
+    capture: Mapping[str, Any],
+    speed_contract: Mapping[str, Any] | None,
+    matrix_speed_evidence: Mapping[str, Any] | None,
+    matrix_visual_evidence: Mapping[str, Any] | None,
+    trial_id: str | None,
+    scenario: str | None,
+    label: str,
+) -> dict[str, Any]:
+    """Revalidate and pin the matrix trial's own vehicle-centered capture."""
+    capture_path = directory / "desktop_capture.json"
+    on_disk_capture = _read_object(capture_path, f"{label} desktop capture")
+    if on_disk_capture != capture:
+        raise PublicationError(
+            f"{label} desktop capture changed during centered-capture validation"
+        )
+    if (
+        capture.get("source_dimensions")
+        != list(SPEED_30KPH_FULLSCREEN_DIMENSIONS)
+        or capture.get("png_dimensions")
+        != list(SPEED_30KPH_FULLSCREEN_DIMENSIONS)
+        or capture.get("candidate_png_dimensions")
+        != list(SPEED_30KPH_FULLSCREEN_DIMENSIONS)
+        or capture.get("gif_dimensions")
+        != list(SPEED_30KPH_DRIVE_GIF_DIMENSIONS)
+    ):
+        raise PublicationError(
+            f"{label} speed_30kph centered capture must be a 1920x1080 owned-window "
+            "with a 960x540 drive GIF"
+        )
+    if not isinstance(matrix_visual_evidence, Mapping):
+        raise PublicationError(
+            f"{label} speed_30kph centered capture lacks its matrix SHA binding"
+        )
+    rviz_contract, runtime_profile = _validate_centered_capture(
+        directory,
+        capture,
+        label,
+        speed_contract=speed_contract,
+        matrix_speed_evidence=matrix_speed_evidence,
+        trial_id=trial_id,
+        scenario=scenario,
+    )
+    source_files: dict[str, dict[str, str]] = {}
+    for name in tuple(
+        dict.fromkeys(
+            SPEED_30KPH_VISUAL_EVIDENCE_NAMES
+            + SPEED_30KPH_CENTERED_CAPTURE_NAMES
+        )
+    ):
+        source = directory / name
+        source_files[name] = {
+            "source": str(source),
+            "sha256": _sha256(source),
+        }
+    recording = directory / "autoware_rviz_capture.mkv"
+    return {
+        "status": "PASS",
+        "scope": (
+            "matrix trial's own vehicle-centered owned-RViz-window capture; "
+            "base_link fixed at RViz X/Y 0"
+        ),
+        "rviz_view_contract": rviz_contract,
+        "runtime_profile": runtime_profile,
+        "matrix_visual_evidence": dict(matrix_visual_evidence),
+        "source_files": source_files,
+        "recording_source": str(recording),
+        "recording_sha256": _sha256(recording),
+        "recording_size_bytes": recording.stat().st_size,
+    }
+
+
 def collect_vad_trials(
     snapshot: Mapping[str, Any],
     trial_paths: Mapping[str, Path] | Sequence[VadTrialSpec],
@@ -1058,7 +2013,12 @@ def collect_vad_trials(
             raise PublicationError(f"Autoware VAD trial has an unsafe id: {label}")
         if map_id not in known_maps:
             raise PublicationError(f"Autoware VAD trial uses unknown map id: {map_id}")
-        directory = _inside(artifact_root, spec.directory, "Autoware VAD trial")
+        if spec.runtime_profile_selector not in VAD_RUNTIME_PROFILE_SELECTORS:
+            raise PublicationError(
+                f"{label} has an unknown runtime-profile selector"
+            )
+        evidence_root = spec.evidence_root or artifact_root
+        directory = _inside(evidence_root, spec.directory, "Autoware VAD trial")
         result = _read_object(directory / "result.json", "Autoware VAD result")
         assessment = result.get("assessment")
         final = result.get("final")
@@ -1085,6 +2045,26 @@ def collect_vad_trials(
                 directory, result, known_maps[map_id], label
             )
             desktop_capture = _labeled_desktop_capture(directory, label)
+        speed_profile = None
+        centered_capture_provenance = None
+        if spec.runtime_profile_selector == "speed_30kph":
+            speed_profile = _validated_speed_profile(
+                directory, result, spec.matrix_speed_evidence, label
+            )
+            if desktop_capture is None:  # pragma: no cover - labeled matrix trials only.
+                raise PublicationError(
+                    f"{label} speed_30kph trial has no centered desktop capture"
+                )
+            centered_capture_provenance = _validated_speed_centered_capture(
+                directory,
+                desktop_capture,
+                spec.matrix_speed_contract,
+                spec.matrix_speed_evidence,
+                spec.matrix_visual_evidence,
+                trial_id,
+                str(route["scenario"]) if route is not None else None,
+                label,
+            )
         trials.append(
             VadTrial(
                 map_id=map_id,
@@ -1093,6 +2073,8 @@ def collect_vad_trials(
                 result=result,
                 route=route,
                 desktop_capture=desktop_capture,
+                speed_profile=speed_profile,
+                centered_capture_provenance=centered_capture_provenance,
                 source=spec.source,
             )
         )
@@ -1134,9 +2116,257 @@ def _finite_number(value: Any, label: str, *, positive: bool = False) -> float:
     return float(value)
 
 
+def _runtime_exact_number(
+    runtime: Mapping[str, str], field: str, expected: Any, label: str
+) -> None:
+    try:
+        actual = float(runtime[field])
+    except (KeyError, TypeError, ValueError) as error:
+        raise PublicationError(f"{label} runtime has no finite {field}") from error
+    expected_number = _finite_number(expected, f"{label} expected {field}")
+    if not math.isfinite(actual) or not math.isclose(
+        actual, expected_number, rel_tol=0.0, abs_tol=1.0e-9
+    ):
+        raise PublicationError(
+            f"{label} runtime {field} mismatch: expected={expected_number!r} "
+            f"actual={runtime.get(field)!r}"
+        )
+
+
+def _read_sha256_manifest(path: Path, label: str) -> dict[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as error:
+        raise PublicationError(f"cannot read {label} {path}: {error}") from error
+    values: dict[str, str] = {}
+    for line in lines:
+        digest, separator, name = line.partition("  ")
+        if (
+            not separator
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            or not name
+            or name in values
+        ):
+            raise PublicationError(f"{label} has a malformed line: {line!r}")
+        values[name] = digest
+    return values
+
+
+def _validate_speed_runtime_binding(
+    directory: Path,
+    runtime: Mapping[str, str],
+    speed_contract: Mapping[str, Any] | None,
+    matrix_speed_evidence: Mapping[str, Any] | None,
+    trial_id: str | None,
+    scenario: str | None,
+    label: str,
+) -> dict[str, Any]:
+    if (
+        not isinstance(speed_contract, Mapping)
+        or not isinstance(matrix_speed_evidence, Mapping)
+        or trial_id not in {"straight", "turn"}
+        or scenario not in {"straight", "left", "right"}
+    ):
+        raise PublicationError(f"{label} lacks its matrix speed-runtime contract")
+    trials = speed_contract.get("trials")
+    parameters = speed_contract.get("route_manager_parameters")
+    gate = speed_contract.get("vehicle_cmd_gate")
+    controller = speed_contract.get("longitudinal_controller")
+    if (
+        not isinstance(trials, Mapping)
+        or not isinstance(trials.get(trial_id), Mapping)
+        or not isinstance(parameters, Mapping)
+        or not isinstance(gate, Mapping)
+        or not isinstance(controller, Mapping)
+    ):
+        raise PublicationError(f"{label} matrix speed-runtime contract is incomplete")
+    trial_contract = trials[trial_id]
+    expected_strings = {
+        "RECOMMENDED": "true",
+        "VISUALIZE": "true",
+        "CAPTURE_DESKTOP": "true",
+        "SPEED_30KPH": "true",
+        "TIGHT_CORRIDOR_CANDIDATE": "false",
+        "TRAJECTORY_STABILITY_CANDIDATE": "false",
+        "SMART_MPC": "false",
+        "FP16_HEADS": "false",
+        "SPEED_PROFILE_ID": str(speed_contract["profile_id"]),
+        "ROUTE_SCENARIO": scenario,
+        "SPEED_EXPOSURE_MODE": str(trial_contract["exposure_mode"]),
+        "LONGITUDINAL_SPEED_SOURCE": str(
+            speed_contract["longitudinal_speed_source"]
+        ),
+        "LONGITUDINAL_ACCELERATION_ROLE": str(
+            speed_contract["longitudinal_acceleration_role"]
+        ),
+        "VAD_GEOMETRY_SOURCE": "true",
+        "VAD_VELOCITY_EVALUATED": "false",
+        "VAD_GEOMETRY_EVALUATED": "true",
+        "VAD_CRUISE_VELOCITY_EVALUATED": "false",
+        "VAD_HARD_STOP_SENTINEL_PRESERVED": "true",
+        "VAD_IMU_ACCELERATION_ENABLED": "true",
+        "CLOSED_LOOP_VALIDATION_STATE": str(speed_contract["validation_state"]),
+        "SPEED_LIMIT_SOURCE": str(gate["speed_limit_source"]),
+        "REAL_VEHICLE_READY": "false",
+    }
+    for field, expected in expected_strings.items():
+        if runtime.get(field) != expected:
+            raise PublicationError(
+                f"{label} runtime {field} mismatch: expected={expected!r} "
+                f"actual={runtime.get(field)!r}"
+            )
+    if runtime.get("VSCODE_SNAP_GUI_ENV_SANITIZED") not in {"true", "false"}:
+        raise PublicationError(
+            f"{label} runtime does not record VS Code GUI environment isolation"
+        )
+    expected_numbers = {
+        "TARGET_SPEED_MPS": speed_contract["target_speed_mps"],
+        "TARGET_SPEED_KPH": 30.0,
+        "MINIMUM_SUSTAINED_SPEED_MPS": trial_contract[
+            "minimum_sustained_speed_mps"
+        ],
+        "MINIMUM_SUSTAINED_SPEED_SEC": trial_contract[
+            "minimum_sustained_speed_sec"
+        ],
+        "MAXIMUM_OBSERVED_SPEED_MPS": speed_contract[
+            "maximum_observed_speed_mps"
+        ],
+        "MAXIMUM_SPEED_SAMPLE_GAP_SEC": speed_contract[
+            "maximum_speed_sample_gap_sec"
+        ],
+        "MAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2": trial_contract[
+            "maximum_lateral_acceleration_mps2"
+        ],
+        "MAXIMUM_LONGITUDINAL_ACCELERATION_MPS2": parameters[
+            "maximum_longitudinal_acceleration_mps2"
+        ],
+        "COMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2": gate[
+            "longitudinal_acceleration_limit_mps2"
+        ],
+        "MAXIMUM_LATERAL_ACCELERATION_MPS2": parameters[
+            "maximum_lateral_acceleration_mps2"
+        ],
+        "CONTROLLER_STOP_OFFSET_M": parameters["controller_stop_offset_m"],
+        "MANEUVER_LOOKAHEAD_M": parameters["maneuver_lookahead_m"],
+        "MANEUVER_EXIT_LOOKAHEAD_M": parameters["maneuver_exit_lookahead_m"],
+        "ROUTE_CURVATURE_LOOKAHEAD_M": parameters[
+            "route_curvature_lookahead_m"
+        ],
+        "CURVATURE_SPEED_PREVIEW_M": parameters["curvature_speed_preview_m"],
+        "MAX_ROUTE_DEVIATION_M": parameters["max_route_deviation_m"],
+        "MAX_CANDIDATE_AGE_SEC": parameters["max_candidate_age_sec"],
+        "CANDIDATE_TIMEOUT_SEC": parameters["candidate_timeout_sec"],
+        "COMFORTABLE_DECELERATION_MPS2": parameters[
+            "comfortable_deceleration_mps2"
+        ],
+        "LONGITUDINAL_PID_MAX_OUT_MPS2": controller["maximum_output_mps2"],
+        "LONGITUDINAL_PID_MAX_P_EFFORT_MPS2": controller[
+            "maximum_proportional_effort_mps2"
+        ],
+    }
+    for field, expected in expected_numbers.items():
+        _runtime_exact_number(runtime, field, expected, label)
+
+    provenance = directory / "speed_profile_provenance"
+    paths = {
+        "vehicle_cmd_gate.param.yaml": provenance / "vehicle_cmd_gate.param.yaml",
+        "vehicle_cmd_gate.param.yaml.metadata.json": provenance
+        / "vehicle_cmd_gate.param.yaml.metadata.json",
+        "longitudinal_controller.param.yaml": provenance
+        / "longitudinal_controller.param.yaml",
+        "longitudinal_controller.param.yaml.metadata.json": provenance
+        / "longitudinal_controller.param.yaml.metadata.json",
+    }
+    actual_sha256 = {}
+    for name, path in paths.items():
+        if not path.is_file():
+            raise PublicationError(f"{label} speed provenance is missing {name}")
+        actual_sha256[name] = _sha256(path)
+    expected_sha256 = {
+        "vehicle_cmd_gate.param.yaml": gate["parameter_sha256"],
+        "vehicle_cmd_gate.param.yaml.metadata.json": gate["metadata_sha256"],
+        "longitudinal_controller.param.yaml": controller["parameter_sha256"],
+        "longitudinal_controller.param.yaml.metadata.json": controller[
+            "metadata_sha256"
+        ],
+    }
+    if actual_sha256 != expected_sha256 or _read_sha256_manifest(
+        provenance / "SHA256SUMS", f"{label} speed-provenance SHA256SUMS"
+    ) != expected_sha256:
+        raise PublicationError(f"{label} speed config provenance digest mismatch")
+    runtime_sha_fields = {
+        "VEHICLE_CMD_GATE_PARAM_SHA256": actual_sha256[
+            "vehicle_cmd_gate.param.yaml"
+        ],
+        "VEHICLE_CMD_GATE_METADATA_SHA256": actual_sha256[
+            "vehicle_cmd_gate.param.yaml.metadata.json"
+        ],
+        "LONGITUDINAL_CONTROLLER_PARAM_SHA256": actual_sha256[
+            "longitudinal_controller.param.yaml"
+        ],
+        "LONGITUDINAL_CONTROLLER_METADATA_SHA256": actual_sha256[
+            "longitudinal_controller.param.yaml.metadata.json"
+        ],
+    }
+    for field, expected in runtime_sha_fields.items():
+        if runtime.get(field) != expected:
+            raise PublicationError(f"{label} runtime {field} digest mismatch")
+
+    immutable_files = {
+        "runtime_env_sha256": directory / "runtime.env",
+        "route_manager_parameter_dump_sha256": directory
+        / "vad_route_manager.params.yaml",
+        "vehicle_cmd_gate_parameter_dump_sha256": directory
+        / "vehicle_cmd_gate.params.yaml",
+        "longitudinal_controller_parameter_dump_sha256": directory
+        / "controller.params.yaml",
+    }
+    for field, path in immutable_files.items():
+        if not path.is_file() or matrix_speed_evidence.get(field) != _sha256(path):
+            raise PublicationError(
+                f"{label} matrix validation does not bind current {field}"
+            )
+    matrix_provenance = {
+        "gate_provenance_sha256": expected_sha256[
+            "vehicle_cmd_gate.param.yaml"
+        ],
+        "gate_metadata_sha256": expected_sha256[
+            "vehicle_cmd_gate.param.yaml.metadata.json"
+        ],
+        "longitudinal_controller_provenance_sha256": expected_sha256[
+            "longitudinal_controller.param.yaml"
+        ],
+        "longitudinal_controller_metadata_sha256": expected_sha256[
+            "longitudinal_controller.param.yaml.metadata.json"
+        ],
+    }
+    for field, expected in matrix_provenance.items():
+        if matrix_speed_evidence.get(field) != expected:
+            raise PublicationError(
+                f"{label} matrix validation does not bind current {field}"
+            )
+    return {
+        "profile_id": speed_contract["profile_id"],
+        "trial_id": trial_id,
+        "scenario": scenario,
+        "runtime_env_sha256": matrix_speed_evidence["runtime_env_sha256"],
+        "config_sha256": actual_sha256,
+        "vscode_snap_gui_env_sanitized": runtime[
+            "VSCODE_SNAP_GUI_ENV_SANITIZED"
+        ],
+    }
+
+
 def _validate_centered_capture(
-    directory: Path, capture: Mapping[str, Any], label: str
-) -> tuple[dict[str, Any], dict[str, str]]:
+    directory: Path,
+    capture: Mapping[str, Any],
+    label: str,
+    *,
+    speed_contract: Mapping[str, Any] | None = None,
+    matrix_speed_evidence: Mapping[str, Any] | None = None,
+    trial_id: str | None = None,
+    scenario: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     candidate_name = capture.get("candidate_png_file")
     if candidate_name != "autoware_rviz_candidate.png":
         raise PublicationError(
@@ -1160,7 +2390,7 @@ def _validate_centered_capture(
         capture.get("source_dimensions"), f"{label} source_dimensions"
     ):
         raise PublicationError(
-            f"{label} centered candidate still must cover the full display"
+            f"{label} centered candidate still must cover the owned RViz window"
         )
     candidate_observed_at = _parse_timestamp(
         capture.get("candidate_observed_at"),
@@ -1288,9 +2518,9 @@ def _validate_centered_capture(
         f"{label} desktop recording duration",
         positive=True,
     )
-    if offset < 0.0 or offset > duration or abs(offset - duration / 2.0) > 2.0:
+    if offset < 0.0 or offset > duration:
         raise PublicationError(
-            f"{label} representative frame is not near the recording midpoint"
+            f"{label} representative frame is outside the desktop recording"
         )
     route_started = _parse_timestamp(
         capture.get("route_evaluation_started_at"),
@@ -1311,6 +2541,11 @@ def _validate_centered_capture(
         representative.get("captured_at"),
         f"{label} representative frame",
     )
+    timestamp_offset = (representative_at - recording_started).total_seconds()
+    if abs(offset - timestamp_offset) > 0.01:
+        raise PublicationError(
+            f"{label} representative frame offset does not match its timestamp"
+        )
     if not (
         candidate_observed_at
         <= candidate_still_at
@@ -1356,6 +2591,16 @@ def _validate_centered_capture(
         or runtime.get("RVIZ_CAPTURE_CONFIG_SHA256") != config_sha256
     ):
         raise PublicationError(f"{label} runtime/pinned RViz config mismatch")
+    if speed_contract is not None or matrix_speed_evidence is not None:
+        return dict(contract), _validate_speed_runtime_binding(
+            directory,
+            runtime,
+            speed_contract,
+            matrix_speed_evidence,
+            trial_id,
+            scenario,
+            label,
+        )
     return dict(contract), expected_profile
 
 
@@ -1462,6 +2707,283 @@ def collect_ime_proof(
         before_size=sizes[0],
         after_size=sizes[1],
     )
+
+
+def collect_owned_window_visual_audit(
+    directory_value: Path | None,
+    expected_trial_directories: Mapping[tuple[str, str], Path],
+) -> dict[str, Any] | None:
+    if directory_value is None:
+        return None
+    expected_identities = set(expected_trial_directories)
+    if not expected_identities:
+        raise PublicationError(
+            "owned-window visual audit requires labeled Autoware VAD trials"
+        )
+    directory = directory_value.expanduser().resolve()
+    if not directory.is_dir():
+        raise PublicationError(
+            f"owned-window visual audit directory is not a directory: {directory}"
+        )
+    sources = {name: directory / name for name in OWNED_WINDOW_VISUAL_AUDIT_NAMES}
+    missing = [str(path) for path in sources.values() if not path.is_file()]
+    if missing:
+        raise PublicationError(
+            "owned-window visual audit is incomplete: " + ", ".join(missing)
+        )
+
+    audit = _read_object(
+        sources["v16_owned_window_visual_audit.json"],
+        "owned-window visual audit",
+    )
+    review = _read_object(
+        sources["v16_owned_window_visual_review.json"],
+        "owned-window visual review",
+    )
+    expected_count = len(expected_identities)
+    expected_map_count = len({identity[0] for identity in expected_identities})
+    counts = audit.get("counts")
+    if (
+        audit.get("status") != "PASS"
+        or audit.get("mechanical_status") != "PASS"
+        or not isinstance(counts, Mapping)
+        or counts.get("maps") != expected_map_count
+        or counts.get("total") != expected_count
+        or counts.get("mechanical_pass") != expected_count
+        or counts.get("visual_pass") != expected_count
+        or counts.get("visual_flag") != 0
+        or counts.get("visual_pending") != 0
+    ):
+        raise PublicationError(
+            "owned-window visual audit is not a complete PASS for the published trials"
+        )
+
+    required_visual_fields = (
+        "vehicle_visible",
+        "reference_route_visible",
+        "final_trajectory_visible",
+        "vad_trajectories_visible",
+        "viewport_centered",
+    )
+
+    def validated_scene_identities(
+        values: Any, label: str, *, nested: bool
+    ) -> dict[tuple[str, str], Mapping[str, Any]]:
+        if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+            raise PublicationError(f"{label} scenes must be a list")
+        scenes: dict[tuple[str, str], Mapping[str, Any]] = {}
+        for index, value in enumerate(values):
+            if not isinstance(value, Mapping):
+                raise PublicationError(f"{label} scene {index} is not an object")
+            identity = (value.get("map_id"), value.get("trial_id"))
+            if not all(isinstance(item, str) and item for item in identity):
+                raise PublicationError(f"{label} scene {index} has no identity")
+            typed_identity = (str(identity[0]), str(identity[1]))
+            if typed_identity in scenes:
+                raise PublicationError(f"{label} contains duplicate scene {typed_identity}")
+            scenes[typed_identity] = value
+            visual = value.get("visual_review") if nested else value
+            if not isinstance(visual, Mapping) or visual.get("status") != "PASS":
+                raise PublicationError(f"{label} scene {typed_identity} is not PASS")
+            if any(visual.get(field) is not True for field in required_visual_fields):
+                raise PublicationError(
+                    f"{label} scene {typed_identity} lacks required visible content"
+                )
+            if nested:
+                trial_directory = expected_trial_directories.get(typed_identity)
+                if trial_directory is None:  # Checked again as a complete set below.
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} is not a published VAD trial"
+                    )
+                trial_directory = trial_directory.expanduser().resolve()
+                selected_directory = value.get("selected_attempt_directory")
+                if (
+                    not isinstance(selected_directory, str)
+                    or Path(selected_directory).expanduser().resolve()
+                    != trial_directory
+                ):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} selected attempt mismatch"
+                    )
+                capture = value.get("capture")
+                if not isinstance(capture, Mapping):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} has no capture record"
+                    )
+                contract = capture.get("rviz_view_contract")
+                representative = capture.get("representative_frame")
+                frame_verification = (
+                    representative.get("frame_verification")
+                    if isinstance(representative, Mapping)
+                    else None
+                )
+                if (
+                    not isinstance(contract, Mapping)
+                    or contract.get("vehicle_centered") is not True
+                    or contract.get("target_frame") != "base_link"
+                    or contract.get("center_xy_m") != [0.0, 0.0]
+                    or not isinstance(frame_verification, Mapping)
+                    or frame_verification.get("pixel_exact_match") is not True
+                ):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} violates the centered-frame contract"
+                    )
+
+                def require_source_record(
+                    record_value: Any,
+                    relative: str,
+                    record_label: str,
+                    *,
+                    expected_format: str | None = None,
+                ) -> str:
+                    if not isinstance(record_value, Mapping):
+                        raise PublicationError(
+                            f"{label} scene {typed_identity} lacks {record_label} provenance"
+                        )
+                    source = trial_directory / relative
+                    if not source.is_file():
+                        raise PublicationError(
+                            f"{label} scene {typed_identity} source is missing: {source}"
+                        )
+                    digest = _sha256(source)
+                    if (
+                        record_value.get("sha256") != digest
+                        or record_value.get("size_bytes") != source.stat().st_size
+                    ):
+                        raise PublicationError(
+                            f"{label} scene {typed_identity} {record_label} source binding mismatch"
+                        )
+                    if expected_format is not None:
+                        dimensions = _image_dimensions(
+                            source,
+                            f"{label} scene {typed_identity} {record_label}",
+                            expected_format,
+                        )
+                        if record_value.get("dimensions") != list(dimensions):
+                            raise PublicationError(
+                                f"{label} scene {typed_identity} {record_label} dimensions mismatch"
+                            )
+                    return digest
+
+                representative_digest = require_source_record(
+                    capture.get("representative_png"),
+                    "autoware_rviz_fullscreen.png",
+                    "representative PNG",
+                    expected_format="PNG",
+                )
+                require_source_record(
+                    capture.get("candidate_png"),
+                    "autoware_rviz_candidate.png",
+                    "candidate PNG",
+                    expected_format="PNG",
+                )
+                require_source_record(
+                    capture.get("drive_gif"),
+                    "autoware_rviz_drive.gif",
+                    "drive GIF",
+                    expected_format="GIF",
+                )
+                require_source_record(
+                    capture.get("recording"),
+                    "autoware_rviz_capture.mkv",
+                    "recording",
+                )
+                metadata_path = trial_directory / "desktop_capture.json"
+                if capture.get("metadata_sha256") != _sha256(metadata_path):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} capture metadata binding mismatch"
+                    )
+                result_record = value.get("result")
+                result_path = trial_directory / "result.json"
+                if (
+                    not isinstance(result_record, Mapping)
+                    or result_record.get("sha256") != _sha256(result_path)
+                ):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} result binding mismatch"
+                    )
+                route_record = value.get("source_route")
+                route_path = trial_directory / "source_route.json"
+                if (
+                    not isinstance(route_record, Mapping)
+                    or route_record.get("status") != "EXACT_MATCH"
+                    or route_record.get("sha256") != _sha256(route_path)
+                    or any(
+                        not isinstance(route_record.get(key), str)
+                        or Path(str(route_record[key])).expanduser().resolve()
+                        != route_path
+                        for key in ("centered_file", "publication_original_file")
+                    )
+                ):
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} source-route binding mismatch"
+                    )
+                if visual.get("representative_png_sha256") != representative_digest:
+                    raise PublicationError(
+                        f"{label} scene {typed_identity} visual review PNG binding mismatch"
+                    )
+        if set(scenes) != expected_identities:
+            raise PublicationError(
+                f"{label} identities do not match the published VAD trials"
+            )
+        return scenes
+
+    audit_scenes = validated_scene_identities(
+        audit.get("trials"), "visual audit", nested=True
+    )
+    review_scenes = validated_scene_identities(
+        review.get("scenes"), "visual review", nested=False
+    )
+    for identity, audit_scene in audit_scenes.items():
+        if dict(audit_scene["visual_review"]) != dict(review_scenes[identity]):
+            raise PublicationError(
+                f"visual audit scene {identity} does not match operator review JSON"
+            )
+
+    contact = audit.get("contact_sheet")
+    contact_path = sources["v16_owned_window_contact_sheet.png"]
+    if not isinstance(contact, Mapping):
+        raise PublicationError("owned-window visual audit has no contact-sheet record")
+    dimensions = _image_dimensions(
+        contact_path, "owned-window visual audit contact sheet", "PNG"
+    )
+    with Image.open(contact_path) as contact_image:
+        extrema = contact_image.convert("RGB").getextrema()
+    if all(low == high for low, high in extrema):
+        raise PublicationError("owned-window visual audit contact sheet is blank")
+    if (
+        contact.get("dimensions") != list(dimensions)
+        or contact.get("scene_count") != expected_count
+        or contact.get("sha256") != _sha256(contact_path)
+        or not isinstance(contact.get("rows"), int)
+        or not isinstance(contact.get("columns"), int)
+        or contact.get("rows", 0) < 1
+        or contact.get("columns", 0) < 1
+        or contact["rows"] * contact["columns"] < expected_count
+    ):
+        raise PublicationError(
+            "owned-window visual audit contact-sheet provenance mismatch"
+        )
+    markdown = sources["v16_owned_window_visual_audit.md"].read_text(
+        encoding="utf-8"
+    )
+    if "Overall status: **PASS**" not in markdown:
+        raise PublicationError("owned-window visual audit Markdown is not PASS")
+
+    return {
+        "status": "PASS",
+        "source_directory": str(directory),
+        "counts": dict(counts),
+        "contact_sheet_dimensions": list(dimensions),
+        "files": {
+            name: {
+                "source": str(source),
+                "sha256": _sha256(source),
+                "published_file": f"{OWNED_WINDOW_VISUAL_AUDIT_DIR}/{name}",
+            }
+            for name, source in sources.items()
+        },
+    }
 
 
 def _font(size: int, bold: bool = False) -> ImageFont.ImageFont:
@@ -1663,18 +3185,43 @@ def _markdown(
     link_prefix: str,
     aggregate_link: str,
     vad_matrix_record: Mapping[str, Any] | None,
+    docs_assets_root: Path,
+    report_path: Path | None,
+    owned_window_visual_audit_record: Mapping[str, Any] | None = None,
+    report_preamble: Mapping[str, Any] | None = None,
+    *,
+    embed_report_preamble: bool = False,
 ) -> str:
     basic_by_map = {record["map_id"]: record for record in basic_records}
     reproduction_parts = [
         "python3 scripts/e2e/publish_validation_assets.py",
         f"  --artifact-root {snapshot['artifact_root']}",
-        "  --docs-assets-root docs/assets/validation/2026-08-31",
-        "  --report docs/validation-2026-08-31.md",
+        f"  --docs-assets-root {docs_assets_root}",
+        f"  --expected-map-count {snapshot['canonical_map_count']}",
+        f"  --expected-selected-map-count {snapshot['selected_map_count']}",
     ]
+    if report_path is not None:
+        reproduction_parts.append(f"  --report {report_path}")
+    if report_preamble is not None:
+        reproduction_parts.append(
+            f"  --report-preamble {report_preamble['source']}"
+        )
+    if owned_window_visual_audit_record is not None:
+        reproduction_parts.append(
+            "  --owned-window-visual-audit-dir "
+            f"{owned_window_visual_audit_record['source_directory']}"
+        )
     if vad_matrix_record is not None:
         reproduction_parts.append(
             f"  --vad-matrix-root {vad_matrix_record['matrix_root']}"
         )
+        selector = vad_matrix_record.get(
+            "runtime_profile_selector", "recommended"
+        )
+        if selector != "recommended":
+            reproduction_parts.append(
+                f"  --vad-runtime-profile-selector {selector}"
+            )
     for record in vad_records:
         if record.get("source") == "matrix_pass_auto_discovery":
             continue
@@ -1711,6 +3258,19 @@ def _markdown(
     lines = [
         "# Validation evidence",
         "",
+    ]
+    if embed_report_preamble and report_preamble is not None:
+        lines.extend(
+            [
+                "> The following campaign summary is an operator-reviewed, SHA-bound "
+                "narrative supplement. The generated provenance and result tables "
+                "below remain authoritative.",
+                "",
+            ]
+        )
+        lines.extend(str(report_preamble["content"]).strip().splitlines())
+        lines.append("")
+    lines.extend([
         f"Source: [archived CARLA BasicAgent aggregate JSON]({aggregate_link}) "
         f"(`sha256:{snapshot['aggregate_sha256']}`) — overall "
         f"**{snapshot.get('status')}**, selected success "
@@ -1726,7 +3286,7 @@ def _markdown(
         "",
         "| Map | Status | Stage | Published media |",
         "|---|---|---|---|",
-    ]
+    ])
     for entry in snapshot["maps"]:
         map_id = entry["map_id"]
         record = basic_by_map.get(map_id)
@@ -1768,6 +3328,24 @@ def _markdown(
             if isinstance(matrix_plan_file, str)
             else "source matrix plan JSON"
         )
+        if vad_matrix_record.get("runtime_profile_selector") == "speed_30kph":
+            interpretation = vad_matrix_record.get("evidence_interpretation")
+            if interpretation != SPEED_30KPH_PUBLICATION_INTERPRETATION:
+                raise PublicationError(
+                    "speed_30kph publication lost its simulation-screening boundary"
+                )
+            lines.extend(
+                [
+                    "> **30 kph evidence boundary — simulation screening only.** "
+                    "`carla_vad_30kph_v2` evaluates VAD candidate geometry through "
+                    "`vad_route_manager_hybrid` while an explicit CARLA simulation "
+                    "speed overlay supplies longitudinal cruise velocity. It does not "
+                    "evaluate raw VAD cruise velocity and `real_vehicle_ready=false`. "
+                    "A PASS is therefore not a real-vehicle-readiness claim and does "
+                    "not by itself claim that measured speed reached exactly 30 kph.",
+                    "",
+                ]
+            )
         lines.extend(
             [
                 f"Matrix campaign status: **{matrix_status}**; runnable map PASS "
@@ -1828,8 +3406,8 @@ def _markdown(
                     route_text = ""
                     if route:
                         route_text = (
-                            f" (matrix route {route['start_spawn_index']}→"
-                            f"{route['goal_spawn_index']}, {route['scenario']})"
+                            f" (matrix route {_route_endpoint_text(route)}, "
+                            f"{route['scenario']})"
                         )
                     outcome_parts.append(
                         f"{trial['trial_id']}={trial['status']}{route_text}: "
@@ -1934,7 +3512,7 @@ def _markdown(
                 "Every row passed the full-stack, route-assisted HYBRID "
                 "`vad_route_manager_hybrid` evaluator; these rows are not unassisted "
                 "end-to-end VAD claims. Every labeled row also requires a candidate-gated "
-                "full-display Autoware/RViz capture and recorded route-analysis bundle.",
+                "owned-window Autoware/RViz capture and recorded route-analysis bundle.",
                 "",
             ]
         )
@@ -1963,14 +3541,14 @@ def _markdown(
                     "matrix status chain. None rewrites the terminal table above.",
                     "",
                     "| Map | Trial | Source and matrix relation | Evidence timing | Route | "
-                    "Result | Full display | Drive GIF | Route/control analysis |",
+                    "Result | Owned RViz window | Drive GIF | Route/control analysis |",
                     "|---|---|---|---|---|---|---|---|---|",
                 ]
             )
         else:
             lines.extend(
                 [
-                    "| Map | Trial | Route | Result | Full display | Drive GIF | "
+                    "| Map | Trial | Route | Result | Owned RViz window | Drive GIF | "
                     "Route/control analysis |",
                     "|---|---|---|---|---|---|---|",
                 ]
@@ -1981,7 +3559,7 @@ def _markdown(
             route_text = "—"
             if route:
                 route_text = (
-                    f"`{route['start_spawn_index']}→{route['goal_spawn_index']}` "
+                    f"`{_route_endpoint_text(route)}` "
                     f"({route['scenario']}, {route['route_length_m']:.2f} m; "
                     f"[JSON]({asset(roles['route'])}))"
                 )
@@ -2017,6 +3595,38 @@ def _markdown(
                     f"[steering]({asset(roles['steering_tracking'])}), "
                     f"[latency]({asset(roles['latency'])})"
                 )
+            if "speed_profile" in roles:
+                analysis += (
+                    f", [speed-source JSON]({asset(roles['speed_profile'])}), "
+                    f"[speed plot]({asset(roles['speed_plot'])})"
+                )
+                context = record.get("matrix_context")
+                speed_contract = (
+                    context.get("speed_contract")
+                    if isinstance(context, Mapping)
+                    else None
+                )
+                maximum_speed = (
+                    speed_contract.get("maximum_observed_speed_mps")
+                    if isinstance(speed_contract, Mapping)
+                    else None
+                )
+                if (
+                    isinstance(maximum_speed, (int, float))
+                    and not isinstance(maximum_speed, bool)
+                    and math.isfinite(float(maximum_speed))
+                ):
+                    maximum_speed = float(maximum_speed)
+                    analysis += (
+                        f", observed max `{maximum_speed:.3f} m/s` "
+                        f"(`{maximum_speed * 3.6:.2f} kph`)"
+                    )
+            if "rviz_config" in roles:
+                analysis += (
+                    f", [capture runtime]({asset(roles['capture_runtime'])}), "
+                    f"[pinned RViz config]({asset(roles['rviz_config'])}), "
+                    f"[RViz checksum]({asset(roles['rviz_checksums'])})"
+                )
             if vad_matrix_record is not None:
                 context = record["matrix_context"]
                 relation = context["relation"]
@@ -2048,8 +3658,7 @@ def _markdown(
                 failed_route = context.get("matrix_failed_route")
                 if relation == "explicit_recovery_alternate_route" and failed_route:
                     source += (
-                        f" (failed matrix route {failed_route['start_spawn_index']}→"
-                        f"{failed_route['goal_spawn_index']}, "
+                        f" (failed matrix route {_route_endpoint_text(failed_route)}, "
                         f"{failed_route['scenario']})"
                     )
                 timing_labels = {
@@ -2082,6 +3691,43 @@ def _markdown(
                     f"{route_text} | [JSON]({asset(roles['result'])}) | "
                     f"{fullscreen} | {drive} | {analysis} |"
                 )
+    if owned_window_visual_audit_record is not None:
+        audit_files = owned_window_visual_audit_record["files"]
+        audit_counts = owned_window_visual_audit_record["counts"]
+        contact = audit_files["v16_owned_window_contact_sheet.png"][
+            "published_file"
+        ]
+        audit_json = audit_files["v16_owned_window_visual_audit.json"][
+            "published_file"
+        ]
+        audit_markdown = audit_files["v16_owned_window_visual_audit.md"][
+            "published_file"
+        ]
+        review_json = audit_files["v16_owned_window_visual_review.json"][
+            "published_file"
+        ]
+        dimensions = owned_window_visual_audit_record[
+            "contact_sheet_dimensions"
+        ]
+        lines.extend(
+            [
+                "",
+                "## Owned-window vehicle-centered visual audit",
+                "",
+                f"**PASS**: {audit_counts['maps']} maps / "
+                f"{audit_counts['total']} straight+turn trials passed both the "
+                "mechanical centered-frame contract and the operator visual review. "
+                "Every representative PNG is pixel-exact with its route-midpoint "
+                "recording frame.",
+                "",
+                f"[Contact sheet {dimensions[0]}x{dimensions[1]}]({asset(contact)}), "
+                f"[audit JSON]({asset(audit_json)}), "
+                f"[audit Markdown]({asset(audit_markdown)}), "
+                f"[operator review JSON]({asset(review_json)}).",
+                "",
+                f"![All owned-window Autoware VAD scenes]({asset(contact)})",
+            ]
+        )
     lines.extend(["", "## VS Code Korean IME desktop proof", ""])
     if ime_record is None:
         lines.append("No VS Code IME before/after proof was supplied to this publication.")
@@ -2103,7 +3749,14 @@ def _markdown(
             "",
             "## Integrity and reproduction",
             "",
-            "Run `sha256sum -c SHA256SUMS` in this asset directory. Rebuild with:",
+            "Run the checksum command from the published asset directory:",
+            "",
+            "```bash",
+            f"cd {docs_assets_root}",
+            "sha256sum -c SHA256SUMS",
+            "```",
+            "",
+            "Rebuild with:",
             "",
             "```bash",
             reproduction_command,
@@ -2114,14 +3767,23 @@ def _markdown(
     return "\n".join(lines)
 
 
+def _route_endpoint_text(route: Mapping[str, Any]) -> str:
+    source = route.get("endpoint_source", "spawn_points")
+    start = route.get("start_index", route.get("start_spawn_index"))
+    goal = route.get("goal_index", route.get("goal_spawn_index"))
+    prefix = "waypoint " if source == "generated_waypoints" else ""
+    return f"{prefix}{start}→{goal}"
+
+
 def _route_identity(route: Mapping[str, Any] | None) -> tuple[Any, ...] | None:
     if route is None:
         return None
     return (
         route.get("town"),
         route.get("scenario"),
-        route.get("start_spawn_index"),
-        route.get("goal_spawn_index"),
+        route.get("endpoint_source", "spawn_points"),
+        route.get("start_index", route.get("start_spawn_index")),
+        route.get("goal_index", route.get("goal_spawn_index")),
     )
 
 
@@ -2205,6 +3867,15 @@ def _matrix_publication_context(
         "matrix_trial_status": (
             trial_record.get("status") if trial_record is not None else None
         ),
+        "runtime_profile_selector": matrix_record.get(
+            "runtime_profile_selector", "recommended"
+        ),
+        "speed_contract": (
+            dict(trial_record["speed_contract"])
+            if trial_record is not None
+            and isinstance(trial_record.get("speed_contract"), Mapping)
+            else None
+        ),
         "route_comparison": route_comparison,
         "matrix_failed_route": (
             dict(matrix_route) if isinstance(matrix_route, Mapping) else None
@@ -2223,6 +3894,34 @@ def _copy_vad_trial(
         relative_dir /= Path("autoware_vad") / trial.trial_id
     output_dir = staging / relative_dir
     output_dir.mkdir(parents=True, exist_ok=True)
+    centered_sources: Mapping[str, Any] = {}
+    if trial.centered_capture_provenance is not None:
+        candidate_sources = trial.centered_capture_provenance.get("source_files")
+        if not isinstance(candidate_sources, Mapping):  # pragma: no cover - internal.
+            raise PublicationError("centered capture lost its pinned source files")
+        centered_sources = candidate_sources
+
+    def centered_source(name: str) -> tuple[Path, str]:
+        record = centered_sources.get(name)
+        if not isinstance(record, Mapping):
+            raise PublicationError(
+                f"{trial.map_id}:{trial.trial_id} centered capture lacks {name}"
+            )
+        source_value = record.get("source")
+        expected_sha256 = record.get("sha256")
+        expected_source = (trial.directory / name).resolve()
+        if (
+            not isinstance(source_value, str)
+            or Path(source_value).expanduser().resolve() != expected_source
+            or not isinstance(expected_sha256, str)
+            or re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is None
+        ):
+            raise PublicationError(
+                f"{trial.map_id}:{trial.trial_id} centered capture has invalid "
+                f"source provenance for {name}"
+            )
+        return expected_source, expected_sha256
+
     sources = (
         trial.directory / "result.json",
         trial.directory / "route_result.png",
@@ -2251,7 +3950,16 @@ def _copy_vad_trial(
             source = trial.directory / name
             destination = output_dir / name
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, destination)
+            if name in centered_sources:
+                verified_source, expected_sha256 = centered_source(name)
+                _copy_verified_source(
+                    verified_source,
+                    destination,
+                    expected_sha256,
+                    f"{trial.map_id}:{trial.trial_id} {name}",
+                )
+            else:
+                shutil.copy2(source, destination)
             relative = (relative_dir / name).as_posix()
             relative_files.append(relative)
         file_roles.update(
@@ -2265,6 +3973,69 @@ def _copy_vad_trial(
                 "latency": (relative_dir / "latency/e2e_latency.json").as_posix(),
             }
         )
+    published_speed_profile = None
+    if trial.speed_profile is not None:
+        speed_files: dict[str, str] = {}
+        for name, source_key, sha_key in (
+            ("speed_profile.json", "json_source", "json_sha256"),
+            ("speed_profile.png", "plot_source", "plot_sha256"),
+        ):
+            destination = output_dir / name
+            _copy_verified_source(
+                Path(trial.speed_profile[source_key]),
+                destination,
+                str(trial.speed_profile[sha_key]),
+                f"{trial.map_id}:{trial.trial_id} {name}",
+            )
+            relative = (relative_dir / name).as_posix()
+            relative_files.append(relative)
+            speed_files[name] = relative
+        file_roles.update(
+            {
+                "speed_profile": speed_files["speed_profile.json"],
+                "speed_plot": speed_files["speed_profile.png"],
+            }
+        )
+        published_speed_profile = {
+            **dict(trial.speed_profile),
+            "files": speed_files,
+        }
+    published_centered_capture = None
+    if trial.centered_capture_provenance is not None:
+        if trial.speed_profile is None:  # pragma: no cover - internal invariant.
+            raise PublicationError(
+                "centered matrix capture publication requires speed-profile evidence"
+            )
+        centered_files: dict[str, str] = {}
+        for name in SPEED_30KPH_CENTERED_CAPTURE_NAMES:
+            source, expected_sha256 = centered_source(name)
+            destination = output_dir / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            _copy_verified_source(
+                source,
+                destination,
+                expected_sha256,
+                f"{trial.map_id}:{trial.trial_id} {name}",
+            )
+            relative = (relative_dir / name).as_posix()
+            relative_files.append(relative)
+            centered_files[name] = relative
+        file_roles.update(
+            {
+                "candidate": centered_files["autoware_rviz_candidate.png"],
+                "capture_runtime": centered_files["runtime.env"],
+                "rviz_config": centered_files[
+                    "rviz_capture_provenance/autoware_vad_carla.rviz"
+                ],
+                "rviz_checksums": centered_files[
+                    "rviz_capture_provenance/SHA256SUMS"
+                ],
+            }
+        )
+        published_centered_capture = {
+            **dict(trial.centered_capture_provenance),
+            "published_files": centered_files,
+        }
     refresh_record = None
     published_capture = trial.desktop_capture
     if visual_refresh is not None:
@@ -2358,6 +4129,11 @@ def _copy_vad_trial(
         "success": True,
         "execution_mode": "full_stack",
         "planning_architecture": "vad_route_manager_hybrid",
+        "evidence_interpretation": (
+            dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+            if trial.speed_profile is not None
+            else None
+        ),
         "source": trial.source,
         "matrix_context": _matrix_publication_context(trial, matrix_record),
         "route": dict(trial.route) if trial.route is not None else None,
@@ -2371,6 +4147,8 @@ def _copy_vad_trial(
             if trial.desktop_capture is not None
             else None
         ),
+        "speed_profile": published_speed_profile,
+        "centered_capture_provenance": published_centered_capture,
         "visual_refresh": refresh_record,
         "file_roles": file_roles,
         "files": relative_files,
@@ -2389,6 +4167,31 @@ def _copy_ime_proof(proof: ImeProof, staging: Path) -> dict[str, Any]:
         "before_dimensions": list(proof.before_size),
         "after_dimensions": list(proof.after_size),
         "files": list(MANAGED_IME_NAMES),
+    }
+
+
+def _copy_owned_window_visual_audit(
+    audit: Mapping[str, Any], staging: Path
+) -> dict[str, Any]:
+    copied_files: dict[str, dict[str, Any]] = {}
+    for name, record in audit["files"].items():
+        if not isinstance(record, Mapping):  # pragma: no cover - validated above.
+            raise PublicationError("owned-window visual audit lost file provenance")
+        destination = staging / str(record["published_file"])
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        _copy_verified_source(
+            Path(str(record["source"])),
+            destination,
+            str(record["sha256"]),
+            f"owned-window visual audit {name}",
+        )
+        copied_files[str(name)] = dict(record)
+    return {
+        "status": audit["status"],
+        "source_directory": audit["source_directory"],
+        "counts": dict(audit["counts"]),
+        "contact_sheet_dimensions": list(audit["contact_sheet_dimensions"]),
+        "files": copied_files,
     }
 
 
@@ -2411,6 +4214,15 @@ def _atomic_write(path: Path, text: str) -> None:
         raise
 
 
+def _safe_publication_relative_file(value: Any) -> str | None:
+    if not isinstance(value, str) or not value or "\x00" in value:
+        return None
+    relative = Path(value)
+    if relative.is_absolute() or value == "." or ".." in relative.parts:
+        return None
+    return relative.as_posix()
+
+
 def _publish_staging(staging: Path, destination: Path, map_ids: Sequence[str]) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     staged_files = {
@@ -2429,18 +4241,27 @@ def _publish_staging(staging: Path, destination: Path, map_ids: Sequence[str]) -
         try:
             previous = _read_object(previous_manifest_path, "previous publication")
             managed_candidates.update(
-                str(value)
+                relative
                 for value in previous.get("generated_files", [])
-                if isinstance(value, str) and ".." not in Path(value).parts
+                if (relative := _safe_publication_relative_file(value)) is not None
             )
         except PublicationError:
             pass
+    destination_resolved = destination.resolve()
     for relative in sorted(managed_candidates - set(staged_files)):
-        target = destination / relative
+        target = (destination / relative).resolve()
+        if not target.is_relative_to(destination_resolved):
+            raise PublicationError(
+                f"refusing to remove a publication path outside {destination_resolved}"
+            )
         if target.is_file() or target.is_symlink():
             target.unlink()
     for relative, source in sorted(staged_files.items()):
-        target = destination / relative
+        target = (destination / relative).resolve()
+        if not target.is_relative_to(destination_resolved):
+            raise PublicationError(
+                f"refusing to publish outside {destination_resolved}"
+            )
         target.parent.mkdir(parents=True, exist_ok=True)
         os.replace(source, target)
 
@@ -2453,15 +4274,94 @@ def _copy_verified_source(
         raise PublicationError(f"{label} changed during publication")
 
 
+def _published_runtime_profile_selector(
+    manifest: Mapping[str, Any],
+) -> str | None:
+    matrix = manifest.get("autoware_vad_matrix_source")
+    if matrix is None:
+        return None
+    if not isinstance(matrix, Mapping):
+        raise PublicationError(
+            "previous publication has an invalid Autoware VAD matrix record"
+        )
+    selector = matrix.get("runtime_profile_selector")
+    if selector is None:
+        profile = matrix.get("runtime_profile")
+        options = profile.get("wrapper_options") if isinstance(profile, Mapping) else None
+        if options == VAD_RUNTIME_WRAPPER_OPTIONS["recommended"]:
+            return "recommended"
+        raise PublicationError(
+            "previous publication matrix has no identifiable runtime profile"
+        )
+    if selector not in VAD_RUNTIME_PROFILE_SELECTORS:
+        raise PublicationError(
+            "previous publication matrix has an unknown runtime profile"
+        )
+    return str(selector)
+
+
+def _protect_existing_publication_profile(
+    destination: Path, requested_selector: str
+) -> None:
+    manifest_path = destination / "publication_manifest.json"
+    if not manifest_path.is_file():
+        return
+    previous = _read_object(manifest_path, "previous publication")
+    previous_selector = _published_runtime_profile_selector(previous)
+    if previous_selector != requested_selector and (
+        requested_selector == "speed_30kph"
+        or previous_selector == "speed_30kph"
+    ):
+        raise PublicationError(
+            "refusing to overwrite an existing publication with a different runtime "
+            "profile; use a new dated docs/assets destination"
+        )
+
+
+def _load_report_preamble(path: Path | None) -> dict[str, str] | None:
+    if path is None:
+        return None
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise PublicationError(f"report preamble is not a file: {resolved}")
+    try:
+        content = resolved.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise PublicationError(
+            f"report preamble is not valid UTF-8: {resolved}"
+        ) from error
+    content = content.strip()
+    if not content:
+        raise PublicationError(f"report preamble is empty: {resolved}")
+    if "\x00" in content:
+        raise PublicationError(f"report preamble contains a NUL byte: {resolved}")
+    if any(line.strip().startswith("# ") for line in content.splitlines()):
+        raise PublicationError(
+            "report preamble must not add a level-one heading"
+        )
+    return {
+        "source": str(resolved),
+        "sha256": _sha256(resolved),
+        "content": content,
+        "validation_scope": (
+            "UTF-8, non-empty, no level-one heading, SHA256-bound; "
+            "operator-reviewed narrative, not semantically generated"
+        ),
+    }
+
+
 def publish_assets(
     artifact_root: Path,
     docs_assets_root: Path,
     report_path: Path | None = None,
+    report_preamble_path: Path | None = None,
+    owned_window_visual_audit_dir: Path | None = None,
     expected_map_count: int = 19,
     expected_selected_map_count: int = 9,
     vad_trial_paths: Mapping[str, Path] | Sequence[VadTrialSpec] | None = None,
     vad_visual_refresh_paths: Sequence[VadTrialSpec] | None = None,
     vad_matrix_root: Path | None = None,
+    vad_runtime_profile_selector: str = "recommended",
     ime_before: Path | None = None,
     ime_after: Path | None = None,
     gif_fps: float = 5.0,
@@ -2471,19 +4371,43 @@ def publish_assets(
         raise PublicationError("GIF FPS must be finite and positive")
     if gif_max_frames < 2:
         raise PublicationError("GIF maximum frame count must be at least two")
+    if report_preamble_path is not None and report_path is None:
+        raise PublicationError("report preamble requires a report path")
+    report_preamble = _load_report_preamble(report_preamble_path)
     snapshot = load_sweep_snapshot(
         artifact_root, expected_map_count, expected_selected_map_count
     )
     basic_runs = collect_basicagent_runs(snapshot)
     vad_trial_specs, vad_matrix_record = resolve_vad_trial_specs(
-        snapshot, vad_trial_paths or (), vad_matrix_root
+        snapshot,
+        vad_trial_paths or (),
+        vad_matrix_root,
+        vad_runtime_profile_selector,
     )
+    if vad_runtime_profile_selector == "speed_30kph" and vad_visual_refresh_paths:
+        raise PublicationError(
+            "speed_30kph publication does not accept an unbound visual refresh; "
+            "publish the matrix trial's own centered capture"
+        )
     vad_trials = collect_vad_trials(snapshot, vad_trial_specs)
+    owned_window_visual_audit = collect_owned_window_visual_audit(
+        owned_window_visual_audit_dir,
+        {
+            (trial.map_id, str(trial.trial_id)): trial.directory
+            for trial in vad_trials
+            if trial.trial_id is not None
+        },
+    )
     vad_visual_refreshes = collect_vad_visual_refreshes(
         snapshot, vad_visual_refresh_paths or (), vad_trials
     )
     ime_proof = collect_ime_proof(snapshot, ime_before, ime_after)
     docs_assets_root = docs_assets_root.expanduser().resolve()
+    if report_path is not None:
+        report_path = report_path.expanduser().resolve()
+    _protect_existing_publication_profile(
+        docs_assets_root, vad_runtime_profile_selector
+    )
     docs_assets_root.parent.mkdir(parents=True, exist_ok=True)
     published_vad_matrix_record = (
         dict(vad_matrix_record) if vad_matrix_record is not None else None
@@ -2515,6 +4439,11 @@ def publish_assets(
             for trial in vad_trials
         ]
         ime_record = _copy_ime_proof(ime_proof, staging) if ime_proof else None
+        published_owned_window_visual_audit = (
+            _copy_owned_window_visual_audit(owned_window_visual_audit, staging)
+            if owned_window_visual_audit is not None
+            else None
+        )
         render_status_dashboard(snapshot, staging / DASHBOARD_NAME)
         if published_vad_matrix_record is not None:
             _copy_verified_source(
@@ -2545,6 +4474,10 @@ def publish_assets(
             ".",
             aggregate_link,
             published_vad_matrix_record,
+            docs_assets_root,
+            report_path,
+            published_owned_window_visual_audit,
+            report_preamble,
         )
         (staging / "README.md").write_text(readme, encoding="utf-8")
 
@@ -2557,10 +4490,20 @@ def publish_assets(
                     "full-stack trials only"
                 ),
                 "autoware_vad_visual_refresh": (
-                    "same-route recommended-profile repeated full-stack PASS; "
-                    "visual media only, original validation result preserved"
+                    None
+                    if vad_runtime_profile_selector == "speed_30kph"
+                    else (
+                        "same-route recommended-profile repeated full-stack PASS; "
+                        "visual media only, original validation result preserved"
+                    )
+                ),
+                "speed_30kph": (
+                    dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+                    if vad_runtime_profile_selector == "speed_30kph"
+                    else None
                 ),
             },
+            "runtime_profile_selector": vad_runtime_profile_selector,
             "source_aggregate": str(snapshot["aggregate_path"]),
             "source_aggregate_sha256": snapshot["aggregate_sha256"],
             "published_source_aggregate_file": BASICAGENT_AGGREGATE_NAME,
@@ -2571,6 +4514,18 @@ def publish_assets(
             "autoware_vad_visual_refresh_count": len(vad_visual_refreshes),
             "autoware_vad_matrix_source": published_vad_matrix_record,
             "vscode_ime_proof": ime_record,
+            "owned_window_visual_audit": published_owned_window_visual_audit,
+            "report_preamble": (
+                {
+                    "source": report_preamble["source"],
+                    "sha256": report_preamble["sha256"],
+                    "validation_scope": report_preamble["validation_scope"],
+                    "embedding_requested": True,
+                    "report_target": str(report_path),
+                }
+                if report_preamble is not None
+                else None
+            ),
         }
         current_files = sorted(
             path.relative_to(staging).as_posix()
@@ -2616,6 +4571,11 @@ def publish_assets(
             link_prefix,
             aggregate_link,
             published_vad_matrix_record,
+            docs_assets_root,
+            report_path,
+            published_owned_window_visual_audit,
+            report_preamble,
+            embed_report_preamble=True,
         )
         _atomic_write(report_path, report)
     return payload
@@ -2626,6 +4586,22 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--artifact-root", type=Path, required=True)
     parser.add_argument("--docs-assets-root", type=Path, required=True)
     parser.add_argument("--report", type=Path)
+    parser.add_argument(
+        "--report-preamble",
+        type=Path,
+        help=(
+            "UTF-8 Markdown fragment inserted below the generated report title; "
+            "the fragment path and digest are recorded for reproducible rebuilds"
+        ),
+    )
+    parser.add_argument(
+        "--owned-window-visual-audit-dir",
+        type=Path,
+        help=(
+            "directory containing the complete centered-window audit JSON, "
+            "Markdown, operator review, and contact sheet"
+        ),
+    )
     parser.add_argument("--expected-map-count", type=int, default=19)
     parser.add_argument("--expected-selected-map-count", type=int, default=9)
     parser.add_argument(
@@ -2640,6 +4616,15 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help=(
             "auto-discover every PASS straight/turn attempt from a terminal "
             "Autoware VAD Town matrix"
+        ),
+    )
+    parser.add_argument(
+        "--vad-runtime-profile-selector",
+        choices=VAD_RUNTIME_PROFILE_SELECTORS,
+        default="recommended",
+        help=(
+            "expected immutable matrix runtime profile; speed_30kph is an "
+            "explicit opt-in simulation-screening publication"
         ),
     )
     parser.add_argument(
@@ -2673,6 +4658,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         if args.expected_map_count < 1 or args.expected_selected_map_count < 1:
             raise PublicationError("expected map counts must be positive")
+        if args.report_preamble is not None and args.report is None:
+            raise PublicationError("--report-preamble requires --report")
+        report_preamble = _load_report_preamble(args.report_preamble)
         if args.dry_run:
             snapshot = load_sweep_snapshot(
                 args.artifact_root,
@@ -2681,9 +4669,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             basic = collect_basicagent_runs(snapshot)
             vad_trial_specs, matrix_record = resolve_vad_trial_specs(
-                snapshot, vad_trials, args.vad_matrix_root
+                snapshot,
+                vad_trials,
+                args.vad_matrix_root,
+                args.vad_runtime_profile_selector,
             )
+            if (
+                args.vad_runtime_profile_selector == "speed_30kph"
+                and vad_visual_refreshes
+            ):
+                raise PublicationError(
+                    "speed_30kph publication does not accept an unbound visual refresh"
+                )
             vad = collect_vad_trials(snapshot, vad_trial_specs)
+            visual_audit = collect_owned_window_visual_audit(
+                args.owned_window_visual_audit_dir,
+                {
+                    (trial.map_id, str(trial.trial_id)): trial.directory
+                    for trial in vad
+                    if trial.trial_id is not None
+                },
+            )
             visual_refreshes = collect_vad_visual_refreshes(
                 snapshot, vad_visual_refreshes, vad
             )
@@ -2694,19 +4700,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"PASS dry-run maps={len(snapshot['maps'])} "
                 f"basicagent_publications={len(basic)} autoware_vad_publications={len(vad)} "
                 f"vad_matrix={matrix_record is not None} "
+                f"runtime_profile={args.vad_runtime_profile_selector} "
                 f"vad_visual_refreshes={len(visual_refreshes)} "
-                f"vscode_ime_proof={ime is not None}"
+                f"vscode_ime_proof={ime is not None} "
+                f"report_preamble={report_preamble is not None} "
+                f"owned_window_visual_audit={visual_audit is not None}"
             )
             return 0
         payload = publish_assets(
             args.artifact_root,
             args.docs_assets_root,
             report_path=args.report,
+            report_preamble_path=args.report_preamble,
+            owned_window_visual_audit_dir=args.owned_window_visual_audit_dir,
             expected_map_count=args.expected_map_count,
             expected_selected_map_count=args.expected_selected_map_count,
             vad_trial_paths=vad_trials,
             vad_visual_refresh_paths=vad_visual_refreshes,
             vad_matrix_root=args.vad_matrix_root,
+            vad_runtime_profile_selector=args.vad_runtime_profile_selector,
             ime_before=args.vscode_ime_before,
             ime_after=args.vscode_ime_after,
             gif_fps=args.gif_fps,

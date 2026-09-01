@@ -165,7 +165,10 @@
   <arg name="maneuver_exit_lookahead_m" default="2.5"/>
   <arg name="controller_stop_offset_m" default="0.49"/>
   <arg name="comfortable_deceleration_mps2" default="1.2"/>
+  <arg name="maximum_longitudinal_acceleration_mps2" default="0.0"/>
   <arg name="maximum_speed_mps" default="2.5"/>
+  <arg name="longitudinal_velocity_source" default="vad_prediction"/>
+  <arg name="nominal_cruise_speed_mps" default="0.0"/>
   <arg name="route_corridor_half_width_m" default="0.5"/>
   <arg name="turn_inward_corridor_half_width_m" default="0.5"/>
   <arg name="turn_outward_corridor_half_width_m" default="0.5"/>
@@ -188,6 +191,10 @@
   <arg name="trajectory_geometry_smoothing_max_deviation_m" default="0.10"/>
   <arg name="maximum_lateral_acceleration_mps2" default="0.0"/>
   <arg name="curvature_speed_preview_m" default="3.0"/>
+  <arg name="route_curvature_lookahead_m" default="0.0"/>
+  <arg name="max_route_deviation_m" default="3.5"/>
+  <arg name="max_candidate_age_sec" default="2.0"/>
+  <arg name="candidate_timeout_sec" default="6.0"/>
 
   <!--
     The standard mission planner is retained for Autoware API/RViz route state.
@@ -599,7 +606,16 @@
         name="comfortable_deceleration_mps2"
         value="$(var comfortable_deceleration_mps2)"
       />
+      <param
+        name="maximum_longitudinal_acceleration_mps2"
+        value="$(var maximum_longitudinal_acceleration_mps2)"
+      />
       <param name="maximum_speed_mps" value="$(var maximum_speed_mps)"/>
+      <param
+        name="longitudinal_velocity_source"
+        value="$(var longitudinal_velocity_source)"
+      />
+      <param name="nominal_cruise_speed_mps" value="$(var nominal_cruise_speed_mps)"/>
       <param
         name="route_corridor_half_width_m"
         value="$(var route_corridor_half_width_m)"
@@ -669,6 +685,13 @@
         name="curvature_speed_preview_m"
         value="$(var curvature_speed_preview_m)"
       />
+      <param
+        name="route_curvature_lookahead_m"
+        value="$(var route_curvature_lookahead_m)"
+      />
+      <param name="max_route_deviation_m" value="$(var max_route_deviation_m)"/>
+      <param name="max_candidate_age_sec" value="$(var max_candidate_age_sec)"/>
+      <param name="candidate_timeout_sec" value="$(var candidate_timeout_sec)"/>
     </node>
 
     <node

@@ -52,6 +52,7 @@ if(BUILD_TESTING)
     test/test_vad_imu_acceleration_adapter.py
   )
   ament_add_pytest_test(test_validate_route_map test/test_validate_route_map.py)
+  ament_add_pytest_test(test_prepare_carla_route test/test_prepare_carla_route.py)
   ament_add_pytest_test(test_fast_profile test/test_fast_profile.py)
   ament_add_pytest_test(test_smart_mpc_integration test/test_smart_mpc_integration.py)
   ament_add_pytest_test(

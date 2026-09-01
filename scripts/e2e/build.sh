@@ -3,12 +3,16 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
+source scripts/e2e/workspace_runtime_lock.sh
+e2e_acquire_workspace_runtime_lock "minimal build"
 scripts/e2e/apply_vad_uuid_patch.sh
 scripts/e2e/apply_vad_fp16_layer_norm_patch.sh
 scripts/e2e/apply_vad_frame_assembly_patch.sh
 scripts/e2e/apply_vad_causal_state_sync_patch.sh
 scripts/e2e/apply_vad_bev_shift_modes_patch.sh
 scripts/e2e/apply_vad_temporal_head_mode_patch.sh
+scripts/e2e/apply_vad_object_safety_patches.sh
+scripts/e2e/apply_mission_planner_lane_only_patch.sh
 scripts/e2e/apply_tensorrt_system_headers_patch.sh
 scripts/e2e/apply_tensorrt_unused_cublas_patch.sh
 scripts/e2e/apply_tensorrt_local_sdk_headers_patch.sh
@@ -38,11 +42,15 @@ fi
 export MAKEFLAGS="-j${CMAKE_BUILD_PARALLEL_LEVEL} -l${CMAKE_BUILD_PARALLEL_LEVEL}"
 
 runtime_packages=(
+  autoware_autonomous_emergency_braking
   autoware_carla_interface
   autoware_external_cmd_selector
+  autoware_lanelet2_extension
+  autoware_mission_planner_universe
   autoware_perception_rviz_plugin
   autoware_planning_rviz_plugin
   autoware_raw_vehicle_cmd_converter
+  autoware_route_handler
   autoware_shift_decider
   autoware_tensorrt_vad
   autoware_trajectory_follower_node
@@ -90,3 +98,5 @@ colcon build \
 # packages are available to subsequent commands.
 unset AUTOWARE_E2E_SKIP_INSTALL
 source scripts/e2e/env.sh
+python3 scripts/e2e/mission_planner_build_provenance.py capture
+python3 scripts/e2e/vad_object_safety_build_provenance.py capture

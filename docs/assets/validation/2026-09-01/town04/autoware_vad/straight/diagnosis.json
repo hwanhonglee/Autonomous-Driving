@@ -1,0 +1,390 @@
+{
+  "alignment": {
+    "maximum_trajectory_age_sec": 1.0,
+    "policy": "receipt timestamp selects the latest causally available message; header stamps measure physics intervals, prediction horizons, and plot time",
+    "primary_time": "ROS message/header stamp (simulation clock)"
+  },
+  "inputs": {
+    "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/maps/town04/trials/straight/attempt_001/bag",
+    "route_file": "/home/a/autoware_e2e/artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/maps/town04/trials/straight/attempt_001/aligned_route.json",
+    "scenario": "straight",
+    "town": "Town04",
+    "weather": "ClearNoon"
+  },
+  "message_counts": {
+    "/control/command/actuation_cmd": 860,
+    "/control/command/control_cmd": 861,
+    "/control/trajectory_follower/control_cmd": 861,
+    "/control/trajectory_follower/lateral/diagnostic": 860,
+    "/control/trajectory_follower/lateral/predicted_trajectory": 860,
+    "/localization/kinematic_state": 1512,
+    "/planning/trajectory": 233,
+    "/planning/vad_route/selected_raw_trajectory": 215,
+    "/vehicle/status/steering_status": 860
+  },
+  "metrics": {
+    "final_path": {
+      "count": 9553,
+      "max_abs": 0.5000000012310895,
+      "mean": 0.053441828711847675,
+      "p95_abs": 0.43348632855714647,
+      "rmse": 0.27998372323333354,
+      "route_progress_ranges_m": null,
+      "snapshot_p95_route_offset_m": {
+        "count": 233,
+        "max_abs": 0.5000000000000008,
+        "mean": 0.33102513834522734,
+        "p95_abs": 0.49999988758206676,
+        "rmse": 0.35471624556583453
+      },
+      "snapshot_peak_curvature_per_m": {
+        "count": 233,
+        "max_abs": 0.031080511458364646,
+        "mean": 0.005249048110732267,
+        "p95_abs": 0.013698150825486873,
+        "rmse": 0.00706400288575845
+      }
+    },
+    "mpc_diagnostic": {
+      "available": true,
+      "controller_current_steer_rad": {
+        "count": 860,
+        "max_abs": 0.027746224775910378,
+        "mean": 0.0007932731380217907,
+        "p95_abs": 0.009332022629678248,
+        "rmse": 0.00486738040850507
+      },
+      "count": 860,
+      "feedforward_filtered_steer_rad": {
+        "count": 860,
+        "max_abs": 0.0,
+        "mean": 0.0,
+        "p95_abs": 0.0,
+        "rmse": 0.0
+      },
+      "feedforward_raw_steer_rad": {
+        "count": 860,
+        "max_abs": 0.0028771795332431793,
+        "mean": 0.00016917511319008337,
+        "p95_abs": 0.0004160172698902873,
+        "rmse": 0.0006092595321796744
+      },
+      "final_steer_command_rad": {
+        "count": 860,
+        "max_abs": 0.031062571331858635,
+        "mean": 0.0005060025310734534,
+        "p95_abs": 0.00996457892470061,
+        "rmse": 0.004931178595921218
+      },
+      "lateral_error_m": {
+        "count": 860,
+        "max_abs": 0.02531808614730835,
+        "mean": 0.001994903170913963,
+        "p95_abs": 0.010411263583227992,
+        "rmse": 0.005137673946178127
+      },
+      "path_curvature_per_m": {
+        "count": 860,
+        "max_abs": 0.0010312499944120646,
+        "mean": 6.063635841133407e-05,
+        "p95_abs": 0.00014911014441167848,
+        "rmse": 0.00021837314411521342
+      },
+      "predicted_steer_rad": {
+        "count": 860,
+        "max_abs": 0.04868051037192345,
+        "mean": 0.0007261321115039891,
+        "p95_abs": 0.01451186323538422,
+        "rmse": 0.006996750186545865
+      },
+      "raw_mpc_steer_command_rad": {
+        "count": 860,
+        "max_abs": 0.03197387605905533,
+        "mean": 0.0005060192961990692,
+        "p95_abs": 0.010818050708621726,
+        "rmse": 0.0052946045836635034
+      },
+      "raw_path_curvature_per_m": {
+        "count": 860,
+        "max_abs": 0.0010312499944120646,
+        "mean": 6.063635841133407e-05,
+        "p95_abs": 0.00014911014441167848,
+        "rmse": 0.00021837314411521342
+      },
+      "yaw_error_rad": {
+        "count": 860,
+        "max_abs": 0.020121926441788673,
+        "mean": -0.0004862794746745643,
+        "p95_abs": 0.014060925086960194,
+        "rmse": 0.005884583223014305
+      }
+    },
+    "mpc_future_prediction": {
+      "horizon_0.5_sec_error_m": {
+        "count": 721,
+        "max_abs": 1.9627719812004263,
+        "mean": 1.2781450903460363,
+        "p95_abs": 1.9407528631826294,
+        "rmse": 1.349148880181642
+      },
+      "horizon_1.0_sec_error_m": {
+        "count": 721,
+        "max_abs": 2.5434993143664535,
+        "mean": 1.7366945171716681,
+        "p95_abs": 2.2593334674025196,
+        "rmse": 1.7888642481936192
+      },
+      "horizon_2.0_sec_error_m": {
+        "count": 694,
+        "max_abs": 4.891610880354653,
+        "mean": 2.9053946471740812,
+        "p95_abs": 4.333183303867145,
+        "rmse": 3.030595049500544
+      }
+    },
+    "mpc_predicted_path": {
+      "count": 33825,
+      "max_abs": 0.5200787726973309,
+      "mean": 0.11281571303269658,
+      "p95_abs": 0.45267299113167786,
+      "rmse": 0.2804262505298448,
+      "route_progress_ranges_m": null,
+      "snapshot_p95_route_offset_m": {
+        "count": 825,
+        "max_abs": 0.5137879684058266,
+        "mean": 0.3258153262171324,
+        "p95_abs": 0.49833010166450137,
+        "rmse": 0.35526949975696415
+      },
+      "snapshot_peak_curvature_per_m": {
+        "count": 825,
+        "max_abs": 0.010362987814367664,
+        "mean": 0.0020628184018777864,
+        "p95_abs": 0.006670440566728463,
+        "rmse": 0.002759995684567586
+      }
+    },
+    "peak_corner_cut": {
+      "available": false,
+      "reason": "no moving odometry sample was inside a commanded turn window"
+    },
+    "predicted_to_final_geometry": {
+      "common_progress_max_m": {
+        "count": 822,
+        "max_abs": 0.12707798422245742,
+        "mean": 0.023680925056354718,
+        "p95_abs": 0.05008726927139489,
+        "rmse": 0.027723522908920113
+      },
+      "common_progress_overlap_m": {
+        "count": 822,
+        "max_abs": 25.051669899007763,
+        "mean": 19.33755155876283,
+        "p95_abs": 24.324167351128043,
+        "rmse": 20.851979308547893
+      },
+      "common_progress_p95_m": {
+        "count": 822,
+        "max_abs": 0.12182321611016662,
+        "mean": 0.022564173855205066,
+        "p95_abs": 0.04696016011177051,
+        "rmse": 0.026347133594716774
+      },
+      "pair_count": 822,
+      "route_progress_ranges_m": null,
+      "source_age_sec": {
+        "count": 822,
+        "max_abs": 0.400000006,
+        "mean": 0.20024331199391726,
+        "p95_abs": 0.300000005,
+        "rmse": 0.2132616623652578
+      }
+    },
+    "raw_path": {
+      "count": 8815,
+      "max_abs": 0.8478680542693913,
+      "mean": 0.0889404139141638,
+      "p95_abs": 0.442319474183061,
+      "rmse": 0.2767278528203272,
+      "route_progress_ranges_m": null,
+      "snapshot_p95_route_offset_m": {
+        "count": 215,
+        "max_abs": 0.7830510633970268,
+        "mean": 0.33816265060307366,
+        "p95_abs": 0.5440492155559546,
+        "rmse": 0.36896654644156246
+      },
+      "snapshot_peak_curvature_per_m": {
+        "count": 180,
+        "max_abs": 0.005656981527388878,
+        "mean": 0.0018333458170699264,
+        "p95_abs": 0.0030974374813203588,
+        "rmse": 0.0019435049580479547
+      }
+    },
+    "raw_to_final_geometry": {
+      "common_progress_max_m": {
+        "count": 233,
+        "max_abs": 0.34798012545333834,
+        "mean": 0.013426079396427735,
+        "p95_abs": 0.08098568369286932,
+        "rmse": 0.044990974831596094
+      },
+      "common_progress_overlap_m": {
+        "count": 233,
+        "max_abs": 27.384002278071677,
+        "mean": 19.206562842994238,
+        "p95_abs": 26.916508799038766,
+        "rmse": 21.87384147115772
+      },
+      "common_progress_p95_m": {
+        "count": 233,
+        "max_abs": 0.28315679749336664,
+        "mean": 0.009773304832584904,
+        "p95_abs": 0.05134988430747895,
+        "rmse": 0.03542680581697085
+      },
+      "pair_count": 233,
+      "route_progress_ranges_m": null,
+      "source_age_sec": {
+        "count": 233,
+        "max_abs": 0.250000004,
+        "mean": 0.011373390712446352,
+        "p95_abs": 0.100000001,
+        "rmse": 0.04382466101267113
+      }
+    },
+    "steering_tracking": {
+      "angle_correlation": 0.9664973387118646,
+      "angle_correlation_delay_sec": 0.2,
+      "available": true,
+      "command_peak_abs_rad": 0.03106255383732933,
+      "derivative_correlation": 0.9796423325282906,
+      "derivative_correlation_delay_sec": 0.2,
+      "first_order_fit": {
+        "delay_sec": 0.1,
+        "gain": 1.2299471404315525,
+        "rmse_rad": 0.0013872026978183573,
+        "time_constant_sec": 0.21333333333333332
+      },
+      "fit_angle_rad": {
+        "count": 860,
+        "max_abs": 0.027746224775910378,
+        "mean": 0.000793574796855241,
+        "p95_abs": 0.009332022629678248,
+        "rmse": 0.004868006634736212
+      },
+      "measured_virtual_peak_abs_rad": 0.027746206855197318,
+      "report_angle_rad": {
+        "count": 860,
+        "max_abs": 0.027746224775910378,
+        "mean": 0.000793574796855241,
+        "p95_abs": 0.009332022629678248,
+        "rmse": 0.004868006634736212
+      },
+      "report_interpretation": {
+        "mode": "virtual",
+        "note": "report already satisfies the virtual bicycle-model tire-angle contract",
+        "wheel_base_m": 2.79,
+        "wheel_tread_m": 1.64
+      },
+      "sample_interval_sec": 0.05,
+      "unity_gain_rmse_rad": 0.003067057087160103
+    },
+    "tracking": {
+      "actual_to_final_cte_m": {
+        "count": 1505,
+        "max_abs": 0.028578368510636987,
+        "mean": 0.0023335721787845942,
+        "p95_abs": 0.012059358957376625,
+        "rmse": 0.006042706382281318
+      },
+      "actual_to_final_yaw_error_rad": {
+        "count": 1505,
+        "max_abs": 0.020054015140749115,
+        "mean": -0.0005015796766402341,
+        "p95_abs": 0.013964802860868805,
+        "rmse": 0.005837976008527702
+      },
+      "actual_to_route_cte_m": {
+        "count": 1512,
+        "max_abs": 0.382408239460075,
+        "mean": 0.07190698576621969,
+        "p95_abs": 0.3635345890009408,
+        "rmse": 0.23436402808275328
+      },
+      "actual_to_route_yaw_error_rad": {
+        "count": 1512,
+        "max_abs": 0.03430037163621602,
+        "mean": -0.004230558881580636,
+        "p95_abs": 0.028338977162219427,
+        "rmse": 0.012306495952830853
+      },
+      "final_trajectory_age_sec": {
+        "count": 1505,
+        "max_abs": 0.400000006,
+        "mean": 0.18415282666976748,
+        "p95_abs": 0.300000005,
+        "rmse": 0.2010644461408504
+      },
+      "odometry_twist_to_pose_yaw_rate_gain": null,
+      "odometry_twist_yaw_rate_rps": {
+        "count": 1512,
+        "max_abs": 0.06295301765203476,
+        "mean": -0.0001431425816175604,
+        "p95_abs": 0.015926852822303772,
+        "rmse": 0.0074675943120557035
+      },
+      "pose_derived_yaw_rate_rps": {
+        "count": 1512,
+        "max_abs": 0.020979199061454363,
+        "mean": -0.0003365507129490513,
+        "p95_abs": 0.011915574384087671,
+        "rmse": 0.005662573450366435
+      },
+      "yaw_rate_note": "Pose-derived yaw rate is used in plots. A gain magnitude near 57.3 (possibly with opposite sign) indicates a CARLA deg/s and ROS rad/s convention mismatch."
+    },
+    "turn_geometry_window": {
+      "analysis_margin_m": 2.0,
+      "analysis_progress_ranges_m": [],
+      "basis": "route_manager_directional_command_switch",
+      "command_switch_progress_ranges_m": [],
+      "commanded_turn_progress_ranges_m": [],
+      "maneuver_lookahead_m": 4.0
+    }
+  },
+  "quality_warnings": [],
+  "runtime_configuration": {
+    "maneuver_lookahead_m": 4.0,
+    "mpc_input_delay_sec": 0.12,
+    "mpc_steer_tau_sec": 0.15,
+    "steering_report_mode": "virtual",
+    "wheel_base_m": 2.79,
+    "wheel_tread_m": 1.64
+  },
+  "schema_version": 2,
+  "selected_control_stage": "trajectory_follower_raw",
+  "selected_control_topic": "/control/trajectory_follower/control_cmd",
+  "selected_plant_input_topic": "/control/command/actuation_cmd",
+  "selected_predicted_topic": "/control/trajectory_follower/lateral/predicted_trajectory",
+  "topic_types": {
+    "/control/command/actuation_cmd": "tier4_vehicle_msgs/msg/ActuationCommandStamped",
+    "/control/command/control_cmd": "autoware_control_msgs/msg/Control",
+    "/control/trajectory_follower/control_cmd": "autoware_control_msgs/msg/Control",
+    "/control/trajectory_follower/lateral/diagnostic": "autoware_internal_debug_msgs/msg/Float32MultiArrayStamped",
+    "/control/trajectory_follower/lateral/predicted_trajectory": "autoware_planning_msgs/msg/Trajectory",
+    "/localization/kinematic_state": "nav_msgs/msg/Odometry",
+    "/planning/trajectory": "autoware_planning_msgs/msg/Trajectory",
+    "/planning/vad_route/selected_raw_trajectory": "autoware_planning_msgs/msg/Trajectory",
+    "/vehicle/status/steering_status": "autoware_vehicle_msgs/msg/SteeringReport"
+  },
+  "verdict": {
+    "classification": "within_thresholds",
+    "control_score": 0,
+    "planning_score": 0,
+    "reasons": [
+      "screening path and tracking metrics remained within thresholds"
+    ],
+    "threshold_note": "Thresholds are screening values; confirm with repeated A/B runs."
+  }
+}

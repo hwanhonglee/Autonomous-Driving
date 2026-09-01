@@ -9,9 +9,149 @@ Autoware와 섞이지 않도록 기본 ROS domain은 42이며, 새 CARLA는 다�
 기준 문서로 사용한다.** 별도 quick-start 문서를 만들지 않는다. 처음 실행할 때는
 바로 아래 절을 사용하고, 구조와 안전 경계가 필요할 때 뒤의 상세 절을 읽는다.
 
-## C-track Driving Map Set Virtual 최신 검증 (2026-08-29)
+## 30 kph all-Town VAD 검증 상태와 끊김 진단 (2026-09-01)
 
-이번 검증은 사용자가 지정한
+현재 `speed_30kph`는 실제 차량용 속도 설정이 아니라 CARLA에서만 쓰는 명시적
+simulation screening profile이다. 목표 nominal speed는 `8.333333 m/s`이지만
+`real_vehicle_ready=false`이며, VAD의 geometry는 평가해도 VAD가 낸 cruise velocity는
+평가하지 않는다. 종방향 속도는 `explicit_simulation_nominal` overlay가 제공한다.
+또한 planning architecture는 순수 end-to-end가 아니라
+`vad_route_manager_hybrid`이다. v16 18건의 개별 진단 분포는 `path_dominant` 14건,
+`within_thresholds` 3건, `mixed_path_and_control` 1건이다. 전체 claim
+boundary는 이 개별 진단 label이 아니라 **hybrid simulation screening**이다.
+VAD local candidate에 JSON route command, corridor/goal 처리와 Autoware MPC/PID가
+개입하므로 `speed_30kph` profile PASS를 VAD 단독 속도 계획, 모든 trial의
+실측 30 kph 도달, 또는 실차 30 kph 준비 완료로 해석하지 않는다.
+
+### 현재 matrix 판정 경계
+
+2026-09-01의 최종 v16은 19개 canonical map을 inventory하고, 그중 full-map과 CARLA
+runtime이 승인된 9개 map에 straight/turn 두 trial씩 실행했다. 결과는 runnable map
+`9/9`, trial `18/18` PASS다. 각 catalog와 trial은 CARLA를 별도 owned process group으로
+cold-start하고 실제 map, completion, cleanup과 port 반환을 검사했다. 나머지 10개
+`BLOCKED` row는 실행 실패가 아니라 검증된 Lanelet2+PCD bundle 또는 runtime asset이
+없어 폐루프 claim을 보류한 항목이다.
+
+속도 gate는 straight와 turn이 다르다. straight 9건은 `>=7.5 m/s`(`27 kph`)를
+`>=1.0 s` 유지해야 했고 실측 최고속도는 `27.69-27.94 kph`였다. turn
+9건은 곡률·횡가속도 제한을 우선하므로 minimum sustained-speed gate가 `0`이고,
+실측 최고속도는 `17.62-24.02 kph`였다. 따라서 `18/18 PASS`는 각 trial의
+정의된 기능·안전 gate 통과이지 모두가 정확히 30 kph를 냈다는 뜻이 아니다.
+
+- runnable 9개: `town01`, `town02_opt`, `town03`, `town04`, `town05_opt`, `town06`,
+  `town07`, `town10hd_opt`, `c_track_1_0_7`
+- blocked 10개: `town02`, `town05`, `town08`, `town09`, `town10hd`, `town11`,
+  `town12`, `town13`, `town15`, `woraksan_1_0_3`
+- 최종 v16 matrix:
+  `artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/`
+- 발행 보고서: [2026-09-01 validation](docs/validation-2026-09-01.md)
+- 발행 자산: [docs/assets/validation/2026-09-01](docs/assets/validation/2026-09-01/)
+
+v14와 v15는 최종 판정이 아니라 아래 safety 사건의 재현 이력으로 보존한다.
+
+- v14 전체 matrix:
+  `artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v14_final/`
+- v15 Town10HD_Opt exact-route 제한 재실행:
+  `artifacts/validation/2026-09-01/autoware_vad_town10hd_repro_30kph_v15/`
+
+v14의 유일한 실패는 `town10hd_opt/turn`에서 한 frame 동안 나온 VAD vehicle object가
+standard AEB와 MRM을 작동시킨 사건이다. object confidence는 약 `0.512`였고 당시 전방
+화면에는 대응 차량이 확인되지 않아 transient false positive 가능성이 높다. 다만 그
+message를 입력으로 받은 AEB/MRM이 정지한 것은 안전 로직의 정상 반응이다. 동일 source
+route hash로 다시 실행한 v15에서는 Town10HD_Opt straight와 turn이 모두 PASS했다.
+v15 aggregate의 `INCOMPLETE 1/9`는 Town10HD_Opt만 의도적으로 선택했기 때문이며 전체
+matrix PASS를 뜻하지 않는다. 최종 v16도 같은 source-route SHA로 straight와 turn이
+PASS했다. v16 `turn`에서는 주행 중 dynamic forward CAR, RSS, AEB
+brake/virtual wall, MRM 개입이 모두 0이었다. 단일 frame velocity spike는
+v16 `straight`의 AEB corridor 밖 off-corridor 관측이었고 AEB/MRM을 작동시키지
+않았다. v16에서도 정적·off-corridor object는 있었으므로 두 번의 clean
+safety repeat가 v14의 확률적 transient를 지우거나 재발 가능성을 0으로
+만들지는 않는다.
+
+따라서 object confidence threshold를 전역으로 올려 안전 반응을 약화시키지 않는다.
+후속 개선은 false positive 유형을 더 수집한 뒤 multi-frame/temporal confirmation을
+별도 safety A/B로 검증한다. v16의 Town10HD_Opt 우회전은 기능 기준은 PASS지만
+최대 correction `13.286/15 m`, 최대 CTE `0.735/1.0 m`이고 진단은
+`mixed_path_and_control`이다. C-track 좌회전도 correction `12.679/15 m`인
+`path_dominant`라서 두 경로는 고도화 우선순위다.
+
+18개 화면은 모두 RViz 소유 창을 직접 녹화했다. `root_capture=false`, target
+`base_link`, TopDownOrtho scale `10`, 입력 `1850x1016`을 무배율 대칭 padding해
+`1920x1080`으로 만들었다. 대표 PNG는 route 평가 시간의 정확한 중간 frame이며, 차량은
+전체 모니터의 물리 중심이 아니라 **우측 RViz 지도 viewport의 중앙**에 유지된다. 경로,
+VAD 후보, 최종 궤적, 전방 camera, Routing/Localization/Autonomous 상태가 함께 보이고
+GNOME bar, dock, terminal, tooltip과 알림은 캡처에서 제외된다. 전체 18개 MKV/GIF는
+전 frame decode와 변화 검사를 통과했다.
+
+### 화면이 끊겨 보이는 직접 원인
+
+v16의 CARLA physics는 synchronous `fixed_delta_seconds=0.05`, 즉 simulation
+기준 20 Hz다. 화면은 `Epic`, `-RenderOffScreen` 조건의 `640x360` RGB camera 6대다.
+현재 `--recommended`가 실제로 고르는
+`sensor_mapping_vad_fast_reliable_imu.yaml`은 각 camera의 `sensor_tick=0.0`이므로
+여섯 camera를 모든 physics frame에 렌더한다. 이는 simulation 시간 기준 camera
+image 120장/s다. bridge는 그중 같은 CARLA frame stamp의 완전한 6-camera bundle만
+5 Hz, DDS `reliable`로 발행한다.
+
+| 관측 항목 | v16 현행 값 | 해석 |
+|---|---:|---|
+| CARLA fixed step | `0.05 s` | simulation physics 20 Hz |
+| 전체 RTF | `0.244-0.251` | simulation이 wall time의 약 1/4 속도로 진행 |
+| camera simulation stamp rate | `5 Hz` | bridge가 의도한 bundle cadence는 유지 |
+| wall-time effective bundle rate | 약 `1.22-1.24 Hz` | 화면에서는 약 `0.8 s`마다 새 simulation frame처럼 보임 |
+| VAD inference | 대개 `34-39 ms`; 별도 spot sample `30-36 ms` | 약 0.8 s 끊김의 직접 병목이 아님 |
+| candidate acceptance / coalesced drop | 약 `100%` / `0` | VAD assembler가 frame을 대량 폐기한 현상은 아님 |
+
+즉 publish 설정 자체가 5 Hz라 시각적으로 부드러운 camera는 아니지만, 더 큰 계단감은
+RTF 약 `0.25` 때문에 wall-time 유효 camera rate가 약 `1.2 Hz`까지 내려간 결과다.
+5 fps로 만든 evidence GIF도 이 계단감을 추가로 강조한다. 여기까지가
+artifact로 확인한 **화면 끊김의 직접 메커니즘**이다. 반면 낮은 RTF 자체의
+원인을 CARLA synchronous six-camera rendering, bridge의 reliable exact-bundle 경로,
+또는 다른 stack의 국소 직렬 대기 중 어디까지로 분리하는 A/B는 아직 하지
+않았다. six-camera/exact-bundle은 현재 설정에 기반한 **원인 가설**이지 인과가
+확정된 결론이 아니다.
+
+v16 실행 중 12회 보조 표본의 CPU idle 최소/중앙/최대는 `72/84/90%`, iowait와 swap은
+모두 `0`이었다. RTX 3090 Ti utilization 최소/중앙/최대는 `9/10/49%`, VRAM은 약
+`4.9/24.6 GB`, 온도 `56-58 C`, 전력 `131-144 W`, throttle `0`이었다. 24 logical CPU
+중 CARLA는 약 `1.45` core, route manager는 약 `2.33` core, VAD node는 약 `0.05` core를
+썼다. 다만 이 12회 표본은 raw log·수집 시각·route stage가 trial의 immutable
+artifact로 보존되지 않은 **보조 관찰**이다. 표본 시점에 지속적인 host 전체
+포화가 보이지 않았다는 뜻이지, CARLA render thread나 exact-bundle 경로의 국소
+직렬 대기, 순간 spike 또는 다른 process 간섭을 배제하거나 낮은 RTF의 원인을
+증명하는 근거로 쓰지 않는다.
+
+bag에서 odometry의 simulation-time 최대 간격은 `0.1 s`, control command 간격은
+`0.05 s`였다. 따라서 현재 관측은 controller가 약 0.8초씩 명령을 멈춘 현상보다는,
+simulation 5 Hz camera가 RTF 약 0.25로 wall time에서는 약 1.2 Hz가 되고 이를 5 fps
+화면에 반복 표시하는 **시각적 계단감**에 가깝다.
+
+### 다음 camera cadence A/B
+
+첫 A/B는 같은 route, weather, `Epic`, UI와 physics 조건을 유지하고 camera source의
+`sensor_tick`만 `0.0 -> 0.2`로 바꾼다. 기존 `sensor_mapping_vad_fast.yaml`은
+best-effort camera이고 IMU가 없어 단일-변수 대조군이 아니다. 따라서 현재
+`sensor_mapping_vad_fast_reliable_imu.yaml`의 5 Hz `reliable` exact-stamp camera, IMU,
+GNSS와 나머지 모든 값을 동일하게 복제한 새 immutable mapping을 만들고 camera
+`sensor_tick`만 `0.2`로 바꾸어야 한다. 그 mapping과 SHA를 각 trial에 보존한다.
+이렇게 하면 source rendering도 5 Hz로 줄지만 ROS publish는 기존 5 Hz
+`reliable` exact-stamp bundle을 그대로 유지한다. 채택 gate는 route PASS,
+six-camera bundle coverage `>=99%`, candidate acceptance `100%`, coalesced drop `0`이며
+RTF와 wall-time bundle rate도 함께 비교한다.
+
+camera ROS publish Hz만 먼저 올리는 것은 첫 비교 변수로 삼지 않는다. source가 모든
+physics frame을 이미 렌더하는 상태에서 DDS와 VAD 호출 부하를 늘려 RTF를 더
+낮출 가능성이 있기 때문이다. 이 인과도 아직 A/B로 확정된 것은 아니다.
+위 5 Hz source A/B가 기능·안전 gate를 통과한 뒤에만 10 Hz profile을 별도 campaign으로
+검토한다.
+
+## 역사 자료: C-track Driving Map Set Virtual 검증 (2026-08-29)
+
+> 이 절은 2026-08-29의 2.5 m/s 계열 custom-map 검증 snapshot이다. 당시 입력 자산의
+> `/home/hong/...` 경로는 provenance로만 보존하며 현재 실행 경로가 아니다. 현재
+> workspace와 30 kph C-track 판정은 문서 맨 앞의 2026-09-01 v16 절을 따른다.
+
+당시 검증은 사용자가 지정한
 `/home/hong/Downloads/Driving_Map_Set/Driving Map Set`의 **Virtual PCD**를 실제
 Full Autoware map bundle에 사용했다. 비교 그림의 공통 도로 구간에서는 같은 폴더의
 v1.0.8 **Lanelet-only geometry가 Virtual PCD 차선과 더 가깝게 겹친다.** XODR 파생
@@ -203,13 +343,17 @@ fit을 적용하고, PCD-Lanelet-CARLA Z residual을 다시 측정해야 한다.
 `c_track_virtual_lanelet_only_reference`의 `z=0`은 이 residual을 해결한 값이 아니라
 CLI/metadata 스키마를 위한 명시적 미검증 placeholder다.
 
-## Custom map Full Autoware + VAD 현재 상태 (2026-08-28)
+## 역사 자료: Custom map Full Autoware + VAD 상태 (2026-08-28)
+
+> 아래 C-track·월악산 수치는 2026-08-28 고정 route 결과다. 특히 월악산 `3/3 PASS`를
+> 2026-09-01 v16 matrix에 합치지 않는다. v16에서는 승인된 packaged runtime/full-map
+> 조합이 없어 `woraksan_1_0_3`을 `BLOCKED`로 유지한다.
 
 C-track과 월악산은 CARLA level만 확인한 상태가 아니다. 이 PC의 RoadRunner/Unreal,
 OpenDRIVE, Lanelet2, PCD와 좌표 변환을 묶어 **Full Autoware shell + TensorRT VAD +
 Autoware MPC/PID** 폐루프 주행까지 실행했다. 결과는 순수 goal-conditioned E2E가
 아니라 route command/corridor를 사용하는 `vad_route_manager_hybrid`임을 전제로 한다.
-아래 C-track 행은 위 Virtual PCD 최신 결과가 아니라 64.29M-point PCD를 사용한
+아래 C-track 행은 위 2026-08-29 Virtual PCD 결과가 아니라 64.29M-point PCD를 사용한
 `c_track_simulation` legacy baseline이다.
 
 | 맵/고정 경로 | 실행 profile | 반복 판정 | 최대 route CTE | 목표 잔여 | wall time |
@@ -228,28 +372,31 @@ Autoware MPC/PID** 폐루프 주행까지 실행했다. 결과는 순수 goal-co
 물리적으로 정체됐다. PID는 당시 `DRIVE` 상태로 양의 가속을 명령하고 있었으므로
 goal tolerance나 MPC 횡제어 문제가 아니었다. Launch 인자 배선을 추가한 뒤 종단
 감속을 실제 `0.6 m/s^2`로 낮췄고, runtime parameter dump와 bag trajectory의
-최소 가속도 `-0.600000 m/s^2`를 확인한 유효 반복이 `3/3 PASS`했다. 현재
+최소 가속도 `-0.600000 m/s^2`를 확인한 유효 반복이 `3/3 PASS`했다. 당시
 `--recommended`는 이 값을 고정한다. 월악산의 `--tight-corridor`는 별도 맵용
 옵션이며 모든 맵의 전역 기본값은 아니다.
 
-## 현재 expert 데이터 수집 범위와 VAD 학습 경계 (2026-08-28)
+## 역사 자료: expert 데이터 수집 범위와 VAD 학습 경계 (2026-08-28)
 
-지금 구현된 것은 `CARLA BasicAgent expert 주행 -> 6-camera/차량 상태 수집 ->
+> 이 절의 smoke 표와 local asset 경로는 2026-08-28 수집 snapshot이다. 현재 v16
+> Full VAD 폐루프의 runnable/blocked 범위나 30 kph 결과로 재해석하지 않는다.
+
+당시 구현된 것은 `CARLA BasicAgent expert 주행 -> 6-camera/차량 상태 수집 ->
 0.5초 간격 3초 future trajectory label export -> PNG/GIF 검수` 파이프라인이다.
 이는 VAD weight를 실행 중 갱신하는 self-training이 아니다. BasicAgent가 차량을
 제어하고 정답 궤적을 만드는 **offline supervised imitation data collection**이며,
-현재 collector 안에서는 VAD shadow inference도 실행하지 않는다. 따라서 이 절의
+당시 collector 안에서는 VAD shadow inference도 실행하지 않았다. 따라서 이 절의
 `PASS`는 **BasicAgent expert 수집, export 계약과 6-camera visual QA가 통과했다**는
 뜻이다. VAD inference, VAD weight 학습, VAD 폐루프 주행 또는 다른 route와 맵으로의
 일반화가 검증됐다는 뜻이 아니다.
 
 약 4 TB는 로컬에 존재하는 파일이 아니라 공개 Bench2Drive Full을 받을 때의
 배포 규모다. **이번 단계에서는 Full과 Base bulk dataset 다운로드를 모두 제외**하고,
-현재 저장공간 gate는 약 20 GiB smoke collection만 확인한다. 외장 저장장치가 준비되기
+당시 저장공간 gate는 약 20 GiB smoke collection만 확인했다. 외장 저장장치가 준비되기
 전에는 대규모 수집이나 dataset/checkpoint 다운로드를 시작하지 않는다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 scripts/e2e/setup_b2d_vad_training.sh --check
 ```
 
@@ -261,7 +408,7 @@ training config, dataset loader, PyTorch fine-tune 및 ONNX/TensorRT parity는 �
 받지 않으며, license flag가 upstream 저장소 간 라이선스 차이나 수정 checkpoint의
 상업적 배포 권한을 해결해 주는 것은 아니다.
 
-### 현재 실제 expert smoke 결과
+### 2026-08-28 당시 expert smoke 결과
 
 | 맵/조건 | raw camera anchors -> validated samples | collision / lane invasion | max route CTE | 판정 |
 |---|---:|---:|---:|---|
@@ -355,7 +502,7 @@ CARLA Shipping build는 positional map override를 무시하고 일부 맵에서
 않으며 Python API가 실제 world 이름과 spawn 수를 읽을 때까지 기다린다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 
 # 일반 packaged Town
 scripts/e2e/run_carla_map.sh Town04 \
@@ -467,7 +614,7 @@ upstream loader에 그대로 넣을 수 없다. 공개 B2D camera order adapter�
 camera order는 exporter에 기록돼 있지만, 학습 전에는 별도 loader와 5 Hz/10 Hz 정책을
 구현해야 한다.
 
-## 최신 결론: VAD raw 경로가 주원인이다 (2026-08-27)
+## 역사 자료: VAD raw 경로 진단 (2026-08-27)
 
 우회전 bag을 `/planning/vad_route/selected_raw_trajectory`, 최종
 `/planning/trajectory`, MPC predicted trajectory, 실제 odometry 순서로 다시
@@ -580,16 +727,23 @@ fine-tune, ONNX parity 단계는 아직 없다.
 4. pure VAD면 공개 B2D planning head를 fine-tune하고, 빠른 hybrid면 residual corrector를 학습한다.
 5. ONNX/PyTorch/TensorRT parity 뒤 held-out CARLA 폐루프를 통과한 모델만 실제차 shadow mode로 옮긴다.
 
-## 현재 권장 quick-start (2026-08-27)
+## 역사 자료: 2026-08-27 권장 quick-start
 
-현재 운용 기준은 `run_route_vad_fast.sh --recommended`다. 이 option은 minimal
+> 이 절은 2026-08-27 환경의 재현용 snapshot이다. 절 안의 `/home/hong/autoware_e2e`
+> 경로와 `--recommended` 단독 `maximum_speed_mps=2.5` 구성은 당시 값으로 보존한다.
+> 현재 workspace는 `/home/a/autoware_e2e`이며, 2026-09-01 v16 30 kph screening은
+> `--recommended --speed-30kph`를 함께 사용한 별도 profile이다. 현재 결과와 실행
+> 경계는 문서 맨 앞의 2026-09-01 절을 사용하고, 아래 명령을 현재 진입점으로
+> 그대로 복사하지 않는다.
+
+당시 운용 기준은 `run_route_vad_fast.sh --recommended`였다. 이 option은 minimal
 launcher가 아니라 **Full Autoware shell, 표준 control/API/RViz와 TensorRT VAD를
 합친 profile**을 선택한다. `--visualize`를 함께 쓰면 Autoware RViz와 전방 camera
 화면이 같이 열린다. 아래 예시는 이전 코드판에서 완주한 Town01 좌회전 route이며, 직진과 우회전은
 각각 `town01_fast_lane_follow_clear_noon.json`,
 `town01_fast_right_clear_noon.json`으로 바꾸면 된다.
 
-> **현재 코드판 검증 상태:** geometry smoothing fixed-point 수정 뒤
+> **당시 코드판 검증 상태:** geometry smoothing fixed-point 수정 뒤
 > `--recommended` 우회전 3/3과 좌회전 non-regression 1/1이 `goal reached`로
 > 통과했다. 우회전 outlier filter는 별도 3/3 완주에도 곡률과 조향 p95가 악화되어
 > `HOLD`다. 일반 실행에는 `--trajectory-stability`를 붙이지 않는다.
@@ -661,7 +815,7 @@ scripts/e2e/run_recorded_route_trial.sh --recommended \
 개별 override하면 wrapper가 실행을 거부하므로, 변경 시험은 별도 profile과 artifact로
 분리한다.
 
-| 계층 | 현재 권장 구성 |
+| 계층 | 2026-08-27 당시 권장 구성 |
 |---|---|
 | Autoware | Full vehicle/system/map/sensing/control/API shell + VAD planning/object + RViz |
 | camera | `640x360`, 5 Hz, raw 6-camera, DDS `reliable`; CARLA frame ID로 capture timestamp를 복원한 완전한 6장 bundle 발행 |
@@ -678,9 +832,9 @@ scripts/e2e/run_recorded_route_trial.sh --recommended \
 적용된다. 따라서 이 세 값은 재학습 없이 경로 출력을 바꾸지만 raw VAD model 자체를
 개선한 것으로 해석하면 안 된다.
 
-### 최신 반복 폐루프 결과
+### 2026-08-27 당시 반복 폐루프 결과
 
-재부팅 후 native NVIDIA `580.178.04`에서 위 권장 구성을 실행한 최신 결과다. 좌회전은
+재부팅 후 native NVIDIA `580.178.04`에서 위 권장 구성을 실행한 당시 결과다. 좌회전은
 기존 bridge timestamp 경로, 직진과 우회전은 CARLA 0.9.15 GPU callback의 한-tick
 header race를 frame ID로 보정한 최종 경로다. 세 경로 모두 Full evaluator의
 `goal reached`로 PASS했다.
@@ -699,7 +853,7 @@ header race를 frame ID로 보정한 최종 경로다. 세 경로 모두 Full ev
 `0 ms`, bridge bundle reject `0`이었다. TensorRT inference 중앙값은 `87.633 ms`였다.
 한 번의 반복은
 카메라가 아니라 VAD raw lane-follow horizon의 trajectory correction이 `15.116 m`로
-안전 한계 `15.0 m`를 넘어서 FAIL했고 `invalid/`에 보존했다. 따라서 최신 PASS도
+안전 한계 `15.0 m`를 넘어서 FAIL했고 `invalid/`에 보존했다. 따라서 당시 PASS도
 VAD 출력 변동성이 사라졌다는 뜻은 아니다.
 
 2026-08-25 재부팅 전에는 matching compatibility library를 사용한 CARLA server와
@@ -736,7 +890,7 @@ trajectory target 상한이며 실제 vehicle response peak와 같은 값이 아
 여전히 `vad_route_manager_hybrid`다. `2/2 PASS`를 순수 VAD geometry 또는 임의의
 새 환경에 대한 일반화 증명으로 해석하지 않는다.
 
-최신 비교 화면과 animation은 다음 위치에 있다.
+당시 비교 화면과 animation은 다음 위치에 있다.
 
 - 재부팅 후 native 좌회전: `artifacts/runs/2026-08-27/post_reboot/town01_left_recommended_native_580178/`
 - 재부팅 후 frame-stamp 직진: `artifacts/runs/2026-08-27/post_reboot/town01_straight_recommended_native_580178/`
@@ -853,7 +1007,7 @@ scripts/e2e/run_recorded_route_trial.sh --recommended \
 `--trajectory-stability`는 실패를 재현하거나 후속 알고리즘을 비교할 때만 사용하며 실행
 artifact의 `CLOSED_LOOP_VALIDATION_STATE=right_turn_repeat_screened_hold`로 기록된다.
 
-최신 시각 자료:
+당시 시각 자료:
 
 - `artifacts/reports/2026-08-27_path_tracking/decision.png`: 3회 평균과 독립 run, 채택 gate
 - `artifacts/reports/2026-08-27_path_tracking/comparison.png`: 7개 run별 수치 표
@@ -875,7 +1029,7 @@ artifact의 `CLOSED_LOOP_VALIDATION_STATE=right_turn_repeat_screened_hold`로 �
 | full calibrated actuation, screen 21/22 | 2/2 goal reached지만 실제 속도 peak `2.944/2.940 m/s`, route p95 `0.782/0.792 m`, final p95 `0.486/0.496 m` | `REJECT`, stock map 유지 |
 | 40% accel blend, screen 34 | 유효 1회 PASS지만 좌회전 stock 32/33보다 route/final/steer가 모두 소폭 악화, 속도 peak `2.915 m/s` | `HOLD/REJECT`, 반복 확대 전 기본값 사용 금지 |
 | turn speed target `2.2 m/s`, screen 27/28 | 2/2 PASS와 조향 감소, 그러나 우회전 route p95 `0.755/0.836 m`와 final p95 `0.458/0.536 m`로 종합 개선 없음 | `REJECT`, 저속 안전 실험만 가능 |
-| 표준 MPC `0.09/0.15`, 기타 timing/weight/rate/cap sweep | 일부 과거 route에서 trade-off가 있었지만 최신 frozen replay와 반복군을 함께 이기지 못함 | 과거 opt-in 결론 `SUPERSEDED` |
+| 표준 MPC `0.09/0.15`, 기타 timing/weight/rate/cap sweep | 일부 과거 route에서 trade-off가 있었지만 당시 frozen replay와 반복군을 함께 이기지 못함 | 과거 opt-in 결론 `SUPERSEDED` |
 | Smart MPC nominal iLQR | 계산은 동작했지만 CARLA에서 route CTE `1.528 m`, goal `3.27 m` 전 stall | `REJECT/HOLD`, 연구용 |
 
 screen 29의 40% blend 실행은 여섯 camera 모두 약 `4.0 s` 발행 gap이 생겨 perception
@@ -884,14 +1038,15 @@ timeout과 MRM이 동작했다. Actuation 비교로 사용할 수 없으므로 �
 로 옮겼다. **재부팅 전 mismatch 상태에서는** CARLA를 compatibility library 없이 재시작하면 약 60초 뒤
 `GameThread timed out waiting for RenderThread`와 exit 139가 재현됐다. 위
 당시 kernel과 맞는 `580.173.02` compatibility root로 CARLA를 다시 시작한 뒤에는 60초 경계를 넘겼고,
-최신 반복 주행에서는 camera 최대 gap이 `0.40~0.60 s` 범위로 유지됐다. 따라서
+당시 최종 반복 주행에서는 camera 최대 gap이 `0.40~0.60 s` 범위로 유지됐다. 따라서
 screen 29는 model/control 실패가 아니라 GPU/render/sensor 입력이 깨진 **invalid trial**로
 분류한다. 현재 native `580.178.04` 환경에는 이 과거 root를 적용하지 않는다.
 
-이 워크스페이스에는 목적이 다른 실행 경로가 있다. 서로 다른 검증 결과를
-같은 결과로 해석하면 안 된다.
+다음 실행 경로 표도 **2026-08-27 당시 snapshot**이다. 표의 Town01/C-track/
+Woraksan 검증 범위와 `그 밖의 route는 미검증` 문구는 현재 v16 상태가
+아니다. 서로 다른 시점·구성의 검증 결과를 같은 결과로 해석하면 안 된다.
 
-| 실행 경로 | 진입점 | 실제 구성 | 현재 상태 |
+| 실행 경로 | 진입점 | 실제 구성 | 2026-08-27 당시 상태 |
 |---|---|---|---|
 | minimal E2E | `carla_vad.launch.xml`, `run_route_vad.sh` | CARLA bridge, truth state, VAD, route manager, 최소 MPC/PID와 command gate | 아래 4개 주행 결과까지 검증됨 |
 | full Autoware shell | `carla_vad_full.launch.xml`, `run_route_vad_full.sh` | 표준 vehicle/system/map/sensing/control/API/RViz + VAD planning/object 출력 | Town01 baseline과 fast+Full C-track 고정 route 1/1, 월악산 고정 route 3/3 검증 완료 |
@@ -930,7 +1085,7 @@ Route JSON과 CARLA 시작 방법은 아래 Full quick-start와 같다. 기존 2
 사용한다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 export CARLA_PORT=2100
 
 # 최소 Autoware control shell, RViz 없음
@@ -1325,7 +1480,7 @@ scripts/e2e/run_route_vad_smart_mpc.sh \
 profile이라는 변수가 추가된다. 다음 Smart 단계는 CARLA control/state data로 학습하기
 전에 VAD zero-speed horizon과 조기 정지를 고치고 같은 strict test를 통과시키는 것이다.
 
-## 기존 Full baseline 재현 (2026-08-23)
+## 역사 자료: 기존 Full baseline 재현 (2026-08-23)
 
 아래 세 terminal 절은 2026-08-23의 non-fast Full baseline을 재현하는 역사 자료다.
 현재 일반 주행과 UI 확인은 문서 맨 앞의 `--recommended --visualize` 절을 사용한다.
@@ -1333,7 +1488,7 @@ profile이라는 변수가 추가된다. 다음 Smart 단계는 CARLA control/st
 이 baseline에서 실제 폐루프 검증이 끝난 조합은 `Town01`, `ClearNoon`,
 spawn 143→145다.
 기존 Woraksan CARLA가 2000번 포트를 사용하므로 아래 project 시험은 2100번을
-사용한다. 세 terminal 모두 `/home/hong/autoware_e2e`에서 실행한다.
+사용한다. 재현 명령은 현재 workspace인 `/home/a/autoware_e2e`에서 실행한다.
 
 2100번 port는 통신 충돌 방지용일 뿐 GPU 격리가 아니다. 같은 RTX 3060에서 시험할
 때는 기존 2000번 CARLA를 먼저 정상 종료한 뒤 Terminal 1을 시작한다. 기존 CARLA를
@@ -1345,7 +1500,7 @@ clone했거나 ignored `data/`와 `install/`을 지운 경우에는 먼저 다�
 Town01 map source 위치와 세부 조건은 뒤의 `준비와 빌드` 절을 따른다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 scripts/e2e/download_vad_models.sh
 scripts/e2e/setup_town01_full_map.sh --dry-run
 scripts/e2e/setup_town01_full_map.sh
@@ -1355,7 +1510,7 @@ scripts/e2e/build_full.sh
 준비된 workspace에서는 환경 진단부터 시작한다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 scripts/e2e/doctor.sh
 ```
 
@@ -1366,7 +1521,7 @@ Driver/library mismatch가 나오면 먼저 재부팅한 뒤 이 문서의 NVIDI
 ### Terminal 1: CARLA 2100
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
@@ -1384,7 +1539,7 @@ scripts/e2e/run_carla.sh \
 Route 준비는 CARLA server만 실행되고 Autoware bridge는 아직 없는 상태에서 한다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
@@ -1407,7 +1562,7 @@ TensorRT VAD와 RViz를 함께 실행한다. `run_visualization.sh`를 추가로
 ### Terminal 3: 자동 주행과 결과 저장
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 
 scripts/e2e/route_test.sh \
@@ -1466,7 +1621,12 @@ scripts/e2e/run_route_vad_full.sh \
 고정 회귀에는 `--start-index`와 `--goal-index`, 새 route 탐색에는 거리 조건을
 사용한다. Route가 생성됐다는 사실은 VAD가 그 route를 성공한다는 뜻이 아니다.
 
-### C-track / 월악산 custom map
+### C-track / 역사 자료인 월악산 custom map
+
+> C-track은 2026-09-01 v16 runnable 범위에 포함된다. 반면 아래 월악산 setup과 고정
+> route 명령은 2026-08-28 재현 자료이며 현재 v16 실행 진입점이 아니다. 월악산은
+> packaged runtime asset과 승인된 full-map bundle을 다시 확보한 뒤 새 catalog와
+> straight/turn 폐루프를 통과해야 `BLOCKED`를 해제한다.
 
 처음 한 번에는 manifest를 검사하고 두 Full map bundle을 만든다. Source asset이 바뀌면
 먼저 `scripts/e2e/custom_map_bundles.yaml`의 고정 path/SHA-256/topology를 검토해 갱신해야
@@ -1476,7 +1636,7 @@ scripts/e2e/run_route_vad_full.sh \
 임의로 덮어쓰지는 않는다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 python3 scripts/e2e/setup_custom_full_map.py list
 python3 scripts/e2e/setup_custom_full_map.py inspect c_track_simulation
 python3 scripts/e2e/setup_custom_full_map.py setup c_track_simulation
@@ -1620,12 +1780,14 @@ export AUTOWARE_E2E_FULL_MAP_PATH=/absolute/path/to/TownXX_full
 scripts/e2e/run_route_vad_full.sh data/routes/townxx_route.json
 ```
 
-현재 project bundle과 Full 폐루프까지 검증한 것은 `Town01_full`,
-`C_track_1_0_7_full`, `Woraksan_v1_0_3_parking_lot_hegiht_fit_full`이다. C-track과
-월악산은 각각 한 고정 route만 검증했다. 로컬 원본에는 Town02, Town03, Town05,
-Town06, Town07, Town10HD의 OSM/PCD가 있지만 아직 이 프로젝트의 `${town}_full`
-bundle과 Full VAD 폐루프 결과는 없다. `setup_town01_full_map.sh`는 Town01 전용이며,
-custom map에는 `setup_custom_full_map.py`를 사용한다.
+2026-09-01 v16에서 Full VAD 폐루프까지 승인·검증한 executable variant는
+`town01`, `town02_opt`, `town03`, `town04`, `town05_opt`, `town06`, `town07`,
+`town10hd_opt`, `c_track_1_0_7`의 9개다. 각 map의 straight/turn이 모두 통과해
+trial `18/18 PASS`다. standard `town02`, `town05`, `town10hd`는 각 optimized variant와
+다른 map identity이므로 여전히 `BLOCKED`다. Woraksan도 현재 packaged runtime asset과
+승인된 full-map bundle이 없어 `BLOCKED`이며, 과거 고정 route 검증을 v16 전체 matrix
+결과로 해석하지 않는다. `setup_town01_full_map.sh`는 Town01 전용이며 custom
+map에는 `setup_custom_full_map.py`를 사용한다.
 
 이 Full Autoware map 조건은 VAD 폐루프와 RViz 표준 map 표시에 필요한 것이다. 문서
 앞부분의 BasicAgent expert collection만 수행할 때는 CARLA level과 OpenDRIVE가 있으면
@@ -1893,7 +2055,7 @@ node 중복, 잘못된 sensor mapping, stale stack처럼 비교 조건이 깨진
 이 PC의 기본 CARLA 경로는 다음과 같다.
 
 ```text
-/home/hong/carla-autoware-universe/CARLA_0.9.15
+/home/a/carla-autoware-universe/CARLA_0.9.15
 ```
 
 다른 위치를 쓸 때는 실행 전에 `CARLA_ROOT`를 지정한다. 모델 또는 local
@@ -2050,7 +2212,7 @@ AUTOWARE_E2E_FULL_BUILD_RESUME=1 scripts/e2e/build_full.sh
 `doctor.sh`의 core package 진단 통과는 build/runtime prerequisite 확인이다.
 그 자체가 full Autoware launch가 정상 기동했거나 주행했다는 검증은 아니다.
 
-두 build script는 재현 가능한 core project patch 다섯 개를 먼저 적용하고, 이미
+두 build script는 재현 가능한 core project patch를 먼저 적용하고, 이미
 적용된 경우 건너뛴다.
 
 - `patches/autoware_tensorrt_vad_candidate_uuid.patch`: candidate와 generator UUID를
@@ -2059,12 +2221,26 @@ AUTOWARE_E2E_FULL_BUILD_RESUME=1 scripts/e2e/build_full.sh
   LayerNorm FP32 경계를 추가한다. 권장 profile은 head FP32를 유지한다.
 - `patches/autoware_tensorrt_vad_frame_assembly.patch`: exact-first 6-camera frame
   assembler, bounded approximate fallback, queue 크기와 image QoS parameter를 추가한다.
+- `patches/autoware_mission_planner_lane_only_no_area.patch`: `allow_area=false`이거나
+  Lanelet2 `areaLayer`가 비어 있으면 mission planner가 lane-only shortest-path API를
+  사용한다. Town05_Opt 실패 topology의 ID `[22775, 28467, 1850]`를 재현한 합성
+  lanelet 연결과 빈 area layer, 그리고 `allow_area=true` lane-area-lane 동작을 C++
+  회귀 fixture로 고정한다. 실제 Town05 맵에서의 증명은 별도 matrix E2E 결과다.
 - `patches/autoware_carla_interface_camera_fast_options.patch`: mapping의 `sensor_tick`과
   postprocess option을 전달한다. CARLA 0.9.15 GPU callback이 같은 capture frame에
   서로 다른 늦은 header timestamp를 붙이는 경우 frame ID와 fixed step으로 capture
   stamp를 복원하고, 완전한 6-camera bundle을 직렬 발행한다.
 - `patches/autoware_carla_interface_vehicle_status_contract.patch`: Ackermann virtual tire
   angle, ROS yaw-rate/velocity sign와 단위를 Autoware message contract에 맞춘다.
+
+Mission planner patch 적용기는
+`patches/autoware_mission_planner_lane_only_no_area.manifest.json`에 고정된 Autoware
+Universe `0.52.0` commit과 패치 전/후 소스 SHA를 먼저 검사한다. 두 파일이 정확한
+BASE 또는 PATCHED 한 상태가 아니거나 부분 적용·추가 drift가 있으면 빌드를 중단한다.
+Minimal `build.sh`도 `autoware_mission_planner_universe`를 명시적으로 빌드하고,
+실제로 로드되는 lanelet2 plugin library의 marker/SHA와 exact source/patch SHA를
+`build/autoware_mission_planner_universe/e2e_lane_only_build_provenance.json`에 기록한다.
+Town matrix runner는 campaign plan을 만들기 전에 이 provenance를 새로 검증한다.
 
 Route logic 회귀 테스트는 `colcon test`에도 등록되어 있다.
 
@@ -2450,9 +2626,14 @@ CARLA와 병렬 실행한 이번 측정은 resource 포화 상태였으므로 ti
 
 ## VAD 계산 속도 줄이기
 
-### 먼저 구분할 시간
+### 2026-08-23 RTX 3060 병렬 실행 역사 기록
 
-현재 확인된 느린 값은 **VAD TensorRT node 하나의 inference latency가 아니라** CARLA
+> 이 절의 `0.0255 RTF`, `92 C`, thermal slowdown 수치는 2026-08-23에 RTX 3060에서
+> CARLA 두 개를 병렬로 띄운 과거 표본이다. 2026-09-01 RTX 3090 Ti 단일 campaign의
+> 현재 끊김 원인은 문서 상단 진단을 사용한다. 두 환경의 수치를 합치거나 이 역사
+> 표본으로 현재 PC 포화를 주장하지 않는다.
+
+당시 확인된 느린 값은 **VAD TensorRT node 하나의 inference latency가 아니라** CARLA
 두 개, Full Autoware, TensorRT VAD와 RViz를 한 RTX 3060에서 함께 실행한 전체 시스템
 시간이다. 위 Full episode의 real-time factor는 다음과 같다.
 
@@ -2482,22 +2663,30 @@ Autoware까지 포함한 end-to-end benchmark도 아니다. 현재 PC와 직접 
 `run_route_vad_fast.sh`는 검증된 baseline을 덮어쓰지 않고 default fast A/B 또는 현재
 권장 deployment를 별도로 선택한다.
 
+아래 `--recommended` 열은 camera·VAD·Full-shell deployment base를 뜻한다.
+`--recommended` 단독 속도 상한은 `2.5 m/s`이고, v16 30 kph matrix는 여기에
+`--speed-30kph`를 추가해 nominal `8.333333 m/s` simulation overlay를 선택했다. 두
+구성의 속도 claim을 섞지 않는다.
+
 | 항목 | baseline | default fast A/B | `--recommended` |
 |---|---|---|---|
-| CARLA camera source | 6 x 1600x900, renderer 최대 20 Hz | 6 x 640x360, `sensor_tick=0.2`로 5 Hz | default fast와 동일 |
+| CARLA camera source | 6 x 1600x900, renderer 최대 20 Hz | 6 x 640x360, `sensor_tick=0.2`로 source 5 Hz | 6 x 640x360, **`sensor_tick=0.0`**, 20 Hz physics frame마다 6대 렌더 |
 | ROS camera 발행 | 실효 약 10 Hz, reliable | 5 Hz, best effort | 5 Hz, **reliable**, 같은 CARLA frame의 완전한 6장 bundle |
 | VAD transport | JPEG compressed | raw | raw |
 | VAD frame sync | exact-first + bounded approximate, queue 8 | exact-first + bounded approximate, queue 8 | exact-first + bounded approximate, queue **32** |
 | TensorRT 입력 | 6 x 640x384 | 동일 | 동일 |
 | camera helper | JPEG republisher 7개, traffic relay, 6-camera combiner | 모두 끔 | 모두 끔 |
-| 다른 CARLA sensor | LiDAR, IMU, GNSS | truth state용 GNSS만 유지 | truth state용 GNSS만 유지 |
+| 다른 CARLA sensor | LiDAR, IMU, GNSS | truth state용 GNSS만 유지 | truth state용 GNSS + VAD acceleration용 IMU 유지 |
 | TensorRT precision | backbone FP16, head 2개 FP32 | 기본 동일; `--fp16-heads`만 실험값 | backbone FP16, head FP32 고정 |
 | Autoware shell/control | Full baseline | minimal이 기본, `--full` 선택 가능 | Full 고정, MPC `0.12/0.15`, 종단 감속 `0.60 m/s^2`, stock actuation |
 
-Camera pixel rendering은 이론상 `172.8 MPix/s`에서 `6.912 MPix/s`로 약 96% 줄고,
-ROS camera pixel rate는 baseline 실효 10 Hz 대비 약 92% 줄어든다. Raw BGRA payload는
-약 27.6 MB/s이므로 같은 PC용 설정이다. CARLA와 Autoware를 다른 PC로 분리하면
-network 대역폭 때문에 compressed transport를 다시 비교해야 한다.
+Default fast의 source pixel rendering은 이론상 `172.8 MPix/s`에서
+`6.912 MPix/s`로 약 96% 줄지만, 현재 `--recommended` source는 모든 20 Hz physics
+frame을 렌더하므로 `27.648 MPix/s`, baseline 대비 약 84% 감소다. 두 fast profile의
+ROS camera 발행은 5 Hz라 output pixel rate는 `6.912 MPix/s`이고 baseline 실효
+10 Hz 대비 약 92% 줄어든다. `--recommended`의 raw BGRA publish payload는 약
+27.6 MB/s이므로 같은 PC용 설정이다. CARLA와 Autoware를 다른 PC로 분리하면 network
+대역폭 때문에 compressed transport를 다시 비교해야 한다.
 
 Source를 `640x384`가 아니라 `640x360`으로 만든 이유는 기존 `1600x900`과 같은
 16:9/FOV를 유지하기 위해서다. VAD CUDA preprocess가 이를 model 고정 크기
@@ -2511,7 +2700,11 @@ Default fast와 `--recommended` 모두 network 한 번의 FLOPs와 ONNX shape는
 성능 knob로 사용하지 않는다. `-nullrhi`와 CARLA no-rendering mode도 RGB 입력을
 비우므로 사용할 수 없다.
 
-### 같이 해결해야 할 시스템 부하
+### 2026-08-23 역사 구성에서 확인한 시스템 부하
+
+아래 순서는 RTX 3060 병렬 CARLA 표본에 대한 당시 조치다. 2026-09-01 all-Town
+campaign은 map renderer 안정성과 동일 조건 비교를 위해 `Epic`을 쓰므로, 아래 `Low`
+권고를 현재 matrix에 그대로 적용하지 않는다.
 
 | 순서 | 변경 | 이유 |
 |---:|---|---|
@@ -2908,7 +3101,7 @@ Rig별 파일은 tracked template를 직접 덮어쓰지 않고 `data/` 아래�
 로컬 대용량 자산용이며 Git에 포함되지 않는다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 
 RIG=data/real_vehicle/vad_rig01
 mkdir -p "${RIG}"
@@ -2990,7 +3183,7 @@ rectification과 extrinsic을 검사한다. 다음 renderer는 첫 surround fram
 `base_link` ground grid를 투영한 3x2 PNG를 만든다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 RIG=data/real_vehicle/vad_rig01
 
 python3 scripts/e2e/render_vad_calibration_preview.py \
@@ -3030,7 +3223,7 @@ camera 교체 또는 calibration 변경 시 만료일과 관계없이 commission
 Placeholder가 하나라도 남거나 SHA/오차 한계가 맞지 않으면 capture-ready가 실패한다.
 
 ```bash
-PROFILE=/home/hong/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
+PROFILE=/home/a/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
 
 python3 scripts/e2e/vad_training_data_contract.py \
   check --capture-ready "${PROFILE}"
@@ -3053,9 +3246,9 @@ python3 scripts/e2e/vad_training_data_contract.py \
 사용하지 않는다.
 
 ```bash
-cd /home/hong/autoware_e2e
+cd /home/a/autoware_e2e
 export ROS_DOMAIN_ID=42
-PROFILE=/home/hong/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
+PROFILE=/home/a/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
 SESSION="artifacts/datasets/real_vehicle/rig01_$(date +%Y%m%d_%H%M%S)"
 
 scripts/e2e/record_vad_training_data.sh \

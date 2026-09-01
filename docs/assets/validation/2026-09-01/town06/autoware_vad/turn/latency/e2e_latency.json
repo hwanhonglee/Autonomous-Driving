@@ -1,0 +1,648 @@
+{
+  "camera_bundle": {
+    "available": true,
+    "bundle_coverage_percent": 100.0,
+    "camera_count": 6,
+    "front_frame_count": 175,
+    "matched_bundle_count": 175,
+    "matching_tolerance_sec": 0.1,
+    "note": "camera_info is a lightweight timestamp proxy for the paired CARLA image",
+    "receipt_span_sec": {
+      "available": true,
+      "count": 175,
+      "max": 1.077262444,
+      "mean": 0.6530878082285715,
+      "median": 0.646965792,
+      "min": 0.6048827640000001,
+      "p95": 0.694238617,
+      "p99": 0.7940440778199982
+    },
+    "stamp_span_sec": {
+      "available": true,
+      "count": 175,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    }
+  },
+  "candidate_front_acceptance": {
+    "acceptance_percent": 100.57142857142857,
+    "available": true,
+    "candidate_count": 176,
+    "candidate_topic": "/planning/vad/candidate_trajectories",
+    "front_count": 175,
+    "front_topic": "/sensing/camera/CAM_FRONT/camera_info",
+    "note": "candidate output count divided by recorded front-camera input count"
+  },
+  "clock_domains": {
+    "cross_domain_subtraction_used": false,
+    "message_stamp": "ROS simulation/physics clock",
+    "receipt": "rosbag recorder wall/system clock"
+  },
+  "data_quality_warnings": [
+    "receipt_latency_sec uses rosbag recorder receipt time (wall/system clock)",
+    "stamp_delta_sec uses only ROS message stamps (simulation/physics clock)",
+    "receipt timestamps are never subtracted from message stamps",
+    "sensor-to-VAD pairing is a lower-bound inference: VAD output does not preserve the front-camera source stamp"
+  ],
+  "event_rates": {
+    "/control/command/actuation_cmd": {
+      "count": 702,
+      "effective_receipt_rate_hz": 4.939499648542395,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 701,
+        "max": 1.0814568996429443,
+        "mean": 0.20244965505667997,
+        "median": 0.05048084259033203,
+        "min": 0.039266347885131836,
+        "p95": 0.6762926578521729,
+        "p99": 0.7004175186157227
+      },
+      "receipt_rate_hz": 19.809495022008953,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 701,
+        "max": 0.05000000100000079,
+        "mean": 0.050000000744650504,
+        "median": 0.05000000100000079,
+        "min": 0.04999999999999716,
+        "p95": 0.05000000100000079,
+        "p99": 0.05000000100000079
+      },
+      "stamp_rate_hz": 19.99999959999969
+    },
+    "/control/trajectory_follower/control_cmd": {
+      "count": 703,
+      "effective_receipt_rate_hz": 4.936420932267661,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 702,
+        "max": 1.0809521675109863,
+        "mean": 0.20257591759717022,
+        "median": 0.050409555435180664,
+        "min": 0.04162430763244629,
+        "p95": 0.6756714344024657,
+        "p99": 0.7003790736198425
+      },
+      "receipt_rate_hz": 19.83750880893711,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 702,
+        "max": 0.05000000100000079,
+        "mean": 0.050000000745014254,
+        "median": 0.05000000100000079,
+        "min": 0.04999999999999716,
+        "p95": 0.05000000100000079,
+        "p99": 0.05000000100000079
+      },
+      "stamp_rate_hz": 19.99999959999969
+    },
+    "/control/trajectory_follower/controller_node_exe/lateral/debug/processing_time_ms": {
+      "count": 702,
+      "effective_receipt_rate_hz": 4.9395083617499695,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 701,
+        "max": 1.0810604095458984,
+        "mean": 0.20244929793897948,
+        "median": 0.05035090446472168,
+        "min": 0.04188251495361328,
+        "p95": 0.6757071018218994,
+        "p99": 0.7004456520080566
+      },
+      "receipt_rate_hz": 19.86061642051831,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 701,
+        "max": 0.05000000100000079,
+        "mean": 0.050000000744650504,
+        "median": 0.05000000100000079,
+        "min": 0.04999999999999716,
+        "p95": 0.05000000100000079,
+        "p99": 0.05000000100000079
+      },
+      "stamp_rate_hz": 19.99999959999969
+    },
+    "/localization/acceleration": {
+      "count": 703,
+      "effective_receipt_rate_hz": 4.946443033566116,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 702,
+        "max": 1.1271045207977295,
+        "mean": 0.20216547389995,
+        "median": 0.0506213903427124,
+        "min": 0.002176523208618164,
+        "p95": 0.7188705086708068,
+        "p99": 0.7459289073944092
+      },
+      "receipt_rate_hz": 19.754494952230463,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 702,
+        "max": 0.05000000100000079,
+        "mean": 0.050000000745014254,
+        "median": 0.05000000100000079,
+        "min": 0.04999999999999716,
+        "p95": 0.05000000100000079,
+        "p99": 0.05000000100000079
+      },
+      "stamp_rate_hz": 19.99999959999969
+    },
+    "/localization/kinematic_state": {
+      "count": 1230,
+      "effective_receipt_rate_hz": 8.65979699060911,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 1229,
+        "max": 1.0785620212554932,
+        "mean": 0.1154761481226897,
+        "median": 0.04725360870361328,
+        "min": 1.239776611328125e-05,
+        "p95": 0.6586628913879393,
+        "p99": 0.69305721282959
+      },
+      "receipt_rate_hz": 21.162404892126986,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 527,
+        "max": 0.10000000200000159,
+        "mean": 0.06660341655218217,
+        "median": 0.05000000100000079,
+        "min": 0.04999999999999716,
+        "p95": 0.10000000200000159,
+        "p99": 0.10000000200000159
+      },
+      "stamp_rate_hz": 19.99999959999969
+    },
+    "/planning/trajectory": {
+      "count": 195,
+      "effective_receipt_rate_hz": 1.367946441840986,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 194,
+        "max": 1.1364574432373047,
+        "mean": 0.7310227721007829,
+        "median": 0.7973587512969971,
+        "min": 0.024293899536132812,
+        "p95": 0.8592947125434875,
+        "p99": 0.9341185760498042
+      },
+      "receipt_rate_hz": 1.2541406216127726,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 184,
+        "max": 0.25000000400000033,
+        "mean": 0.19021739413586958,
+        "median": 0.20000000299999954,
+        "min": 0.10000000099999795,
+        "p95": 0.2000000030000031,
+        "p99": 0.25000000400000033
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/planning/vad/candidate_trajectories": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.233549398539985,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.230506420135498,
+        "mean": 0.8106687913622175,
+        "median": 0.8045432567596436,
+        "min": 0.7621047496795654,
+        "p95": 0.850946044921875,
+        "p99": 0.9495717668533307
+      },
+      "receipt_rate_hz": 1.242941248463846,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.25000000400000033,
+        "mean": 0.20000000297714288,
+        "median": 0.20000000299999954,
+        "min": 0.15000000199999874,
+        "p95": 0.2000000030000031,
+        "p99": 0.25000000400000033
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_BACK/camera_info": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.2335446139000765,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.433058500289917,
+        "mean": 0.8106719357626778,
+        "median": 0.8041291236877441,
+        "min": 0.15480470657348633,
+        "p95": 0.8516100406646728,
+        "p99": 1.1482856321334822
+      },
+      "receipt_rate_hz": 1.2435813733669911,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.20000000300000664,
+        "mean": 0.2000000029828572,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_BACK_LEFT/camera_info": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.2335442967220527,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.4616413116455078,
+        "mean": 0.8106721442086356,
+        "median": 0.8041088581085205,
+        "min": 0.1543900966644287,
+        "p95": 0.856852078437805,
+        "p99": 1.438003406524658
+      },
+      "receipt_rate_hz": 1.2436127147663414,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.20000000300000664,
+        "mean": 0.2000000029828572,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_BACK_RIGHT/camera_info": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.2335444687859276,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.4644932746887207,
+        "mean": 0.8106720311301095,
+        "median": 0.8042030334472656,
+        "min": 0.15505695343017578,
+        "p95": 0.874840998649597,
+        "p99": 1.4611109399795532
+      },
+      "receipt_rate_hz": 1.2434670828253889,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.20000000300000664,
+        "mean": 0.2000000029828572,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_FRONT/camera_info": {
+      "count": 175,
+      "effective_receipt_rate_hz": 1.2331337513168734,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 174,
+        "max": 1.230518102645874,
+        "mean": 0.8109420400926437,
+        "median": 0.8042774200439453,
+        "min": 0.758610725402832,
+        "p95": 0.8502665162086487,
+        "p99": 0.9502779293060324
+      },
+      "receipt_rate_hz": 1.243352076134825,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 174,
+        "max": 0.20000000300000664,
+        "mean": 0.20000000298275866,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_FRONT_LEFT/camera_info": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.2335453850786964,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.289353370666504,
+        "mean": 0.8106714289528983,
+        "median": 0.8039450645446777,
+        "min": 0.7585206031799316,
+        "p95": 0.8502483844757079,
+        "p99": 0.948507857322691
+      },
+      "receipt_rate_hz": 1.2438660850121146,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.20000000300000664,
+        "mean": 0.2000000029828572,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    },
+    "/sensing/camera/CAM_FRONT_RIGHT/camera_info": {
+      "count": 176,
+      "effective_receipt_rate_hz": 1.2335452938639706,
+      "receipt_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.2893955707550049,
+        "mean": 0.810671488898141,
+        "median": 0.8039693832397461,
+        "min": 0.7582571506500244,
+        "p95": 0.8511524200439453,
+        "p99": 0.9485684728622418
+      },
+      "receipt_rate_hz": 1.2438284601962224,
+      "stamp_period_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.20000000300000664,
+        "mean": 0.2000000029828572,
+        "median": 0.20000000299999954,
+        "min": 0.2000000019999959,
+        "p95": 0.2000000030000031,
+        "p99": 0.20000000300000664
+      },
+      "stamp_rate_hz": 4.9999999250000124
+    }
+  },
+  "inputs": {
+    "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/maps/town06/trials/turn/attempt_001/bag"
+  },
+  "message_counts": {
+    "/control/command/actuation_cmd": 702,
+    "/control/trajectory_follower/control_cmd": 703,
+    "/control/trajectory_follower/controller_node_exe/lateral/debug/processing_time_ms": 702,
+    "/localization/acceleration": 703,
+    "/localization/kinematic_state": 1230,
+    "/planning/trajectory": 195,
+    "/planning/vad/candidate_trajectories": 176,
+    "/sensing/camera/CAM_BACK/camera_info": 176,
+    "/sensing/camera/CAM_BACK_LEFT/camera_info": 176,
+    "/sensing/camera/CAM_BACK_RIGHT/camera_info": 176,
+    "/sensing/camera/CAM_FRONT/camera_info": 175,
+    "/sensing/camera/CAM_FRONT_LEFT/camera_info": 176,
+    "/sensing/camera/CAM_FRONT_RIGHT/camera_info": 176
+  },
+  "schema_version": 1,
+  "selected_topics": {
+    "actuation": "/control/command/actuation_cmd",
+    "control": "/control/trajectory_follower/control_cmd",
+    "final_trajectory": "/planning/trajectory",
+    "processing_time": "/control/trajectory_follower/controller_node_exe/lateral/debug/processing_time_ms",
+    "sensor": "/sensing/camera/CAM_FRONT/camera_info",
+    "vad_output": "/planning/vad/candidate_trajectories"
+  },
+  "stages": {
+    "control_to_actuation": {
+      "available": true,
+      "downstream_count": 702,
+      "downstream_coverage_percent": 98.71794871794872,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 702,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 702,
+        "max": 0.053913384,
+        "mean": 0.0010385229586894588,
+        "median": 0.0002712325,
+        "min": 7.561e-06,
+        "p95": 0.0012913741499999951,
+        "p99": 0.04951940070000001
+      },
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 702,
+        "max": 0.050000001,
+        "mean": 0.0006410256524216525,
+        "median": 0.0,
+        "min": 0.0,
+        "p95": 0.0,
+        "p99": 0.05000000099
+      },
+      "upstream_count": 703,
+      "upstream_coverage_percent": 99.85775248933143
+    },
+    "sensor_to_first_control": {
+      "available": true,
+      "downstream_count": 703,
+      "downstream_coverage_percent": 24.893314366998577,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 175,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.488619917,
+        "mean": 0.7665750757885714,
+        "median": 0.7493888870000001,
+        "min": 0.663939079,
+        "p95": 0.8268764153,
+        "p99": 1.46072931522
+      },
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.250000004,
+        "mean": 0.1442857164,
+        "median": 0.15000000200000002,
+        "min": 0.050000001,
+        "p95": 0.200000003,
+        "p99": 0.25000000326
+      },
+      "upstream_count": 175,
+      "upstream_coverage_percent": 100.0
+    },
+    "sensor_to_vad_output": {
+      "available": true,
+      "downstream_count": 176,
+      "downstream_coverage_percent": 99.43181818181819,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 175,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 175,
+        "max": 1.113701193,
+        "mean": 0.6901384559028572,
+        "median": 0.6838650340000001,
+        "min": 0.6397502230000001,
+        "p95": 0.7313041593,
+        "p99": 0.8310777457599982
+      },
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 175,
+        "max": 0.050000001,
+        "mean": 0.04885714360571429,
+        "median": 0.050000001,
+        "min": 0.0,
+        "p95": 0.050000001,
+        "p99": 0.050000001
+      },
+      "upstream_count": 175,
+      "upstream_coverage_percent": 100.0
+    },
+    "trajectory_age_at_control": {
+      "available": true,
+      "control_count": 703,
+      "coverage_percent": 99.57325746799431,
+      "downstream_count": 703,
+      "downstream_coverage_percent": 99.57325746799431,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 700,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 700,
+        "max": 1.130942342,
+        "mean": 0.3851559207342858,
+        "median": 0.1128886455,
+        "min": 0.00013653,
+        "p95": 0.8105144815,
+        "p99": 0.85047995318
+      },
+      "receipt_older_than_0.5_sec_percent": 47.14285714285714,
+      "receipt_older_than_1.0_sec_percent": 0.14285714285714285,
+      "receipt_older_than_2.0_sec_percent": 0.0,
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 700,
+        "max": 0.35000000600000003,
+        "mean": 0.1671428596257143,
+        "median": 0.15000000300000002,
+        "min": 0.0,
+        "p95": 0.30000000400000004,
+        "p99": 0.300000005
+      },
+      "stamp_older_than_0.5_sec_percent": 0.0,
+      "stamp_older_than_1.0_sec_percent": 0.0,
+      "stamp_older_than_2.0_sec_percent": 0.0,
+      "upstream_count": 195,
+      "upstream_coverage_percent": 94.87179487179488
+    },
+    "trajectory_update_to_first_control": {
+      "available": true,
+      "downstream_count": 703,
+      "downstream_coverage_percent": 26.31578947368421,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 195,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 195,
+        "max": 0.667952116,
+        "mean": 0.033890232010256406,
+        "median": 0.022193068,
+        "min": 0.00013653,
+        "p95": 0.04714604029999998,
+        "p99": 0.6236814479
+      },
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 195,
+        "max": 0.200000003,
+        "mean": 0.08897436021538463,
+        "median": 0.100000001,
+        "min": 0.0,
+        "p95": 0.15000000230000002,
+        "p99": 0.200000003
+      },
+      "upstream_count": 195,
+      "upstream_coverage_percent": 100.0
+    },
+    "vad_output_to_final_trajectory": {
+      "available": true,
+      "downstream_count": 195,
+      "downstream_coverage_percent": 90.25641025641026,
+      "negative_receipt_count": 0,
+      "negative_stamp_count": 0,
+      "pair_count": 176,
+      "receipt_latency_sec": {
+        "available": true,
+        "count": 176,
+        "max": 0.144739751,
+        "mean": 0.04158026629545455,
+        "median": 0.0381481895,
+        "min": 0.0017834020000000001,
+        "p95": 0.10388334425000001,
+        "p99": 0.12330846775000001
+      },
+      "stamp_delta_sec": {
+        "available": true,
+        "count": 176,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "upstream_count": 176,
+      "upstream_coverage_percent": 100.0
+    }
+  },
+  "topic_types": {
+    "/control/command/actuation_cmd": "tier4_vehicle_msgs/msg/ActuationCommandStamped",
+    "/control/trajectory_follower/control_cmd": "autoware_control_msgs/msg/Control",
+    "/control/trajectory_follower/controller_node_exe/lateral/debug/processing_time_ms": "autoware_internal_debug_msgs/msg/Float64Stamped",
+    "/localization/acceleration": "geometry_msgs/msg/AccelWithCovarianceStamped",
+    "/localization/kinematic_state": "nav_msgs/msg/Odometry",
+    "/planning/trajectory": "autoware_planning_msgs/msg/Trajectory",
+    "/planning/vad/candidate_trajectories": "autoware_internal_planning_msgs/msg/CandidateTrajectories",
+    "/sensing/camera/CAM_BACK/camera_info": "sensor_msgs/msg/CameraInfo",
+    "/sensing/camera/CAM_BACK_LEFT/camera_info": "sensor_msgs/msg/CameraInfo",
+    "/sensing/camera/CAM_BACK_RIGHT/camera_info": "sensor_msgs/msg/CameraInfo",
+    "/sensing/camera/CAM_FRONT/camera_info": "sensor_msgs/msg/CameraInfo",
+    "/sensing/camera/CAM_FRONT_LEFT/camera_info": "sensor_msgs/msg/CameraInfo",
+    "/sensing/camera/CAM_FRONT_RIGHT/camera_info": "sensor_msgs/msg/CameraInfo"
+  },
+  "vad_input_sync": {
+    "available": true,
+    "camera_to_acceleration_abs_stamp_delta_sec": {
+      "available": true,
+      "count": 175,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "camera_to_odometry_abs_stamp_delta_sec": {
+      "available": true,
+      "count": 175,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "front_sensor_count": 175,
+    "note": "VAD synchronization is anchored on the front camera physics stamp"
+  }
+}

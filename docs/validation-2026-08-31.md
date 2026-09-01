@@ -1,5 +1,8 @@
 # Validation evidence
 
+> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 30 kph 9-map/18-trial 결과와
+> 전체화면 PNG/GIF는 [2026-09-01 검증 보고서](validation-2026-09-01.md)를 사용한다.
+
 Source: [archived CARLA BasicAgent aggregate JSON](assets/validation/2026-08-31/carla_basicagent_sweep_aggregate.json) (`sha256:e2b1da4cba11f0ae5b663d6783737d6819149441637b8cc0a7768976ce609dfb`) — overall **COMPLETE**, selected success **9/9**.
 
 > Scope boundary: the all-map sweep and `expert_*` media are CARLA BasicAgent six-camera route-smoke evidence. They are not Autoware VAD inference or closed-loop-control evidence.

@@ -1,0 +1,1939 @@
+{
+  "schema_version": 1,
+  "matrix_id": "autoware_vad_town_straight_turn_v1",
+  "generated_at": "2026-09-02T02:47:45.727454+00:00",
+  "status": "COMPLETE",
+  "admission_contract_sha256": "f66fadea7b28095218b3434141afb0d13eacd201890dd5158fbd217b9d1de9bd",
+  "campaign_execution_contract_sha256": "ac6411ed459c670296c8b37143d6aa217bbaffbafda240d08935f4638e205e67",
+  "canonical_map_count": 19,
+  "runnable_map_count": 9,
+  "runnable_pass_count": 9,
+  "blocked_map_count": 10,
+  "status_counts": {
+    "BLOCKED": 10,
+    "PASS": 9
+  },
+  "runtime_profile_selector": "speed_30kph_camera_source_5hz",
+  "runtime_profile": {
+    "id": "vad_carla_30kph_camera_source_5hz_visualized_v1",
+    "trial_wrapper": "run_recorded_route_trial.sh",
+    "wrapper_options": [
+      "--recommended",
+      "--speed-30kph",
+      "--camera-source-5hz",
+      "--visualize",
+      "--capture-desktop"
+    ],
+    "ready_timeout_sec": 600,
+    "launch_arguments": [
+      "carla_timeout:=60"
+    ],
+    "carla_quality": "Epic",
+    "carla_arguments": [
+      "-RenderOffScreen",
+      "-nosound"
+    ],
+    "map_lifecycle": "cold_start_owned_process_group_per_trial",
+    "client_map_loading_allowed": false,
+    "route_generation_contracts": {
+      "straight": {
+        "seeds": [
+          0
+        ],
+        "pairs_per_seed": 8,
+        "minimum_distance_m": 170.0,
+        "maximum_distance_m": 260.0,
+        "preferred_distance_m": 210.0,
+        "maximum_traces_per_scenario": 20000
+      },
+      "turn": {
+        "seeds": [
+          0
+        ],
+        "pairs_per_seed": 8,
+        "minimum_distance_m": 20.0,
+        "maximum_distance_m": 120.0,
+        "preferred_distance_m": 60.0,
+        "maximum_traces_per_scenario": 20000
+      }
+    },
+    "map_route_generation_overrides": {
+      "town10hd_opt": {
+        "straight": {
+          "seeds": [
+            0
+          ],
+          "pairs_per_seed": 8,
+          "minimum_distance_m": 170.0,
+          "maximum_distance_m": 182.0,
+          "preferred_distance_m": 172.0,
+          "maximum_traces_per_scenario": 20000,
+          "endpoint_waypoint_spacing_m": 0.5,
+          "endpoint_junction_policy": "exclude",
+          "candidate_enumeration_policy": "directed_topology_straight_v1",
+          "straight_capacity_profile": "town10hd_opt_30kph_compact_v1"
+        }
+      }
+    },
+    "map_trial_route_selection_overrides": {
+      "town03": {
+        "straight": {
+          "scenario": "straight",
+          "seed": 0,
+          "pair_index": 1,
+          "rationale": "traffic_light_head_clearance_screening_v1"
+        }
+      }
+    },
+    "turn_route_selection_policy": {
+      "policy_id": "physical_turn_curvature_deceleration_v1",
+      "applicability": "speed_30kph_all_turn_candidates",
+      "exact_serialized_physical_turn_pass_required": true,
+      "common_physical_turn_ranking_authority": true,
+      "custom_turn_geometry_preflight_role": "additional_required_provenance_gate",
+      "execution_result_fields_used": false,
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false,
+      "curvature_epsilon_per_m": 1e-06,
+      "ranking_order": [
+        "curvature_limited_speed_mps_desc",
+        "braking_preview_reserve_m_desc",
+        "maximum_command_alignment_skew_m_asc",
+        "turn_core_arc_length_m_desc",
+        "scenario_asc",
+        "seed_asc",
+        "pair_index_asc",
+        "route_id_asc"
+      ],
+      "parameter_sources": {
+        "target_speed_mps": "speed_contract.target_speed_mps",
+        "maximum_lateral_acceleration_mps2": "speed_contract.route_manager_parameters.maximum_lateral_acceleration_mps2",
+        "comfortable_deceleration_mps2": "speed_contract.route_manager_parameters.comfortable_deceleration_mps2",
+        "route_curvature_lookahead_m": "speed_contract.route_manager_parameters.route_curvature_lookahead_m"
+      }
+    },
+    "speed_contract": {
+      "profile_id": "carla_vad_30kph_v2",
+      "validation_state": "carla_30kph_v2_screening",
+      "longitudinal_speed_source": "explicit_simulation_profile",
+      "longitudinal_acceleration_role": "trajectory_internal_curve_exit_cap",
+      "vad_geometry_source": true,
+      "vad_cruise_velocity_evaluated": false,
+      "vad_hard_stop_sentinel_preserved": true,
+      "vad_velocity_evaluated": false,
+      "vad_geometry_evaluated": true,
+      "target_speed_mps": 8.333333333333334,
+      "maximum_observed_speed_mps": 9.0,
+      "maximum_speed_sample_gap_sec": 0.25,
+      "route_manager_parameters": {
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "nominal_cruise_speed_mps": 8.333333333333334,
+        "maximum_speed_mps": 8.333333333333334,
+        "controller_stop_offset_m": 0.6,
+        "comfortable_deceleration_mps2": 2.0,
+        "maximum_longitudinal_acceleration_mps2": 1.5,
+        "maximum_lateral_acceleration_mps2": 1.2,
+        "maneuver_lookahead_m": 4.0,
+        "maneuver_exit_lookahead_m": 2.5,
+        "route_curvature_lookahead_m": 20.0,
+        "curvature_speed_preview_m": 3.0,
+        "max_route_deviation_m": 1.0,
+        "max_candidate_age_sec": 0.5,
+        "candidate_timeout_sec": 1.5
+      },
+      "vehicle_cmd_gate": {
+        "profile_id": "carla_vad_30kph_v2",
+        "speed_limit_source": "explicit_simulation_profile",
+        "real_vehicle_ready": false,
+        "parameter_sha256": "446a99c61c06cc42edb0398840300fc48100bc45d9fb682c70232baa5c215c41",
+        "metadata_sha256": "58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733",
+        "source_sha256": "1fea920b4a3b04353f449ee20c07eff09219620f721aac8b0fad9b591dfd5f61",
+        "source_repository_commit": "f942598d44b5769353167c76b784323d5c14c8c7",
+        "velocity_limit_mps": 8.333333333333334,
+        "longitudinal_acceleration_limit_mps2": 1.5,
+        "lateral_acceleration_limit_mps2": 1.8
+      },
+      "longitudinal_controller": {
+        "profile_id": "carla_vad_30kph_v2",
+        "parameter_sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+        "metadata_sha256": "517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f",
+        "source_sha256": "de1ca069eee774d4e415ab177a4285a6a237ec5fae6c41fdf6640ee294f502db",
+        "source_repository_commit": "7fa129ee416f17f9adfdbeb8e66a532f7b5b9006",
+        "speed_limit_source": "explicit_simulation_profile",
+        "real_vehicle_ready": false,
+        "maximum_output_mps2": 1.5,
+        "maximum_proportional_effort_mps2": 1.5,
+        "command_gate_longitudinal_acceleration_cap_mps2": 1.5
+      },
+      "trials": {
+        "straight": {
+          "exposure_mode": "straight_target_required",
+          "minimum_sustained_speed_mps": 7.5,
+          "minimum_sustained_speed_sec": 1.0,
+          "maximum_lateral_acceleration_mps2": 1.8,
+          "physical_geometry": {
+            "maximum_arc_to_direct_ratio": 1.005,
+            "maximum_chord_deviation_m": 2.5,
+            "maximum_endpoint_tangent_to_chord_deg": 10.0,
+            "maximum_net_heading_change_deg": 10.0,
+            "maximum_cumulative_heading_change_deg": 25.0,
+            "maximum_p95_abs_curvature_per_m": 0.01,
+            "maximum_abs_curvature_per_m": 0.02592
+          }
+        },
+        "turn": {
+          "exposure_mode": "curvature_limited_turn",
+          "minimum_sustained_speed_mps": 0.0,
+          "minimum_sustained_speed_sec": 0.0,
+          "maximum_lateral_acceleration_p95_mps2": 1.5,
+          "maximum_lateral_acceleration_mps2": 1.8,
+          "require_selected_turn_command": true,
+          "physical_geometry": {
+            "profile_id": "carla_vad_30kph_v2",
+            "maneuver_lookahead_m": 4.0,
+            "lead_buffer_m": 5.0,
+            "minimum_route_lead_m": 25.0,
+            "longitudinal_grade_window_m": 5.0,
+            "controller_maximum_output_mps2": 1.5,
+            "slope_compensation_max_pitch_rad": 0.1,
+            "standard_gravity_mps2": 9.81,
+            "maximum_absolute_grade_ratio": 0.09983341664682815,
+            "maximum_compensated_gravity_mps2": 0.9793658173053843,
+            "maximum_pre_gate_total_acceleration_mps2": 2.4793658173053843,
+            "downstream_vehicle_cmd_gate_acceleration_cap_mps2": 1.5,
+            "ideal_net_uphill_acceleration_reserve_mps2": 0.5206341826946157,
+            "minimum_route_tail_m": 10.0,
+            "minimum_turn_arc_length_m": 10.0,
+            "maximum_turn_arc_length_m": 30.0,
+            "minimum_turn_heading_change_deg": 60.0,
+            "maximum_turn_heading_change_deg": 120.0,
+            "maximum_turn_heading_excess_deg": 20.0,
+            "turn_alignment_heading_margin_deg": 10.0,
+            "maximum_turn_command_lead_m": 8.0,
+            "maximum_turn_command_tail_m": 8.0,
+            "maximum_p95_abs_curvature_per_m": 0.2,
+            "maximum_abs_curvature_per_m": 0.3,
+            "initial_approach_distance_m": 15.0,
+            "maximum_initial_lateral_deviation_m": 1.5,
+            "maximum_initial_heading_change_deg": 30.0
+          }
+        }
+      }
+    },
+    "camera_source_contract": {
+      "profile_id": "carla_camera_source_5hz_ab_v1",
+      "baseline_selector": "speed_30kph",
+      "sensor_count": 6,
+      "sensor_tick_sec": 0.2,
+      "source_frequency_hz": 5.0,
+      "ros_publish_frequency_hz": 5.0,
+      "maximum_stamp_gap_sec": 0.25,
+      "qos_profile": "reliable",
+      "only_semantic_delta": "camera_parameters_sensor_tick",
+      "imu_gnss_unchanged": true
+    }
+  },
+  "route_contract": {
+    "weather": "ClearNoon",
+    "seed": 0,
+    "pairs_per_seed": 1,
+    "minimum_distance_m": 20.0,
+    "maximum_distance_m": 120.0,
+    "preferred_distance_m": 60.0,
+    "sampling_resolution_m": 1.0,
+    "maximum_endpoint_offset_m": 2.0,
+    "maximum_traces_per_scenario": 5000,
+    "trials": [
+      {
+        "id": "straight",
+        "catalog_scenarios": [
+          "straight"
+        ],
+        "required_road_options": [
+          "STRAIGHT"
+        ],
+        "forbidden_road_options": [
+          "LEFT",
+          "RIGHT",
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      },
+      {
+        "id": "turn",
+        "catalog_scenarios": [
+          "left",
+          "right"
+        ],
+        "require_selected_turn_command": true,
+        "forbidden_road_options": [
+          "CHANGELANELEFT",
+          "CHANGELANERIGHT"
+        ]
+      }
+    ]
+  },
+  "route_generation_contracts": {
+    "straight": {
+      "weather": "ClearNoon",
+      "seeds": [
+        0
+      ],
+      "pairs_per_seed": 8,
+      "minimum_distance_m": 170.0,
+      "maximum_distance_m": 260.0,
+      "preferred_distance_m": 210.0,
+      "sampling_resolution_m": 1.0,
+      "maximum_endpoint_offset_m": 2.0,
+      "maximum_traces_per_scenario": 20000
+    },
+    "turn": {
+      "weather": "ClearNoon",
+      "seeds": [
+        0
+      ],
+      "pairs_per_seed": 8,
+      "minimum_distance_m": 20.0,
+      "maximum_distance_m": 120.0,
+      "preferred_distance_m": 60.0,
+      "sampling_resolution_m": 1.0,
+      "maximum_endpoint_offset_m": 2.0,
+      "maximum_traces_per_scenario": 20000
+    }
+  },
+  "turn_route_selection_policy": {
+    "policy_id": "physical_turn_curvature_deceleration_v1",
+    "applicability": "speed_30kph_all_turn_candidates",
+    "exact_serialized_physical_turn_pass_required": true,
+    "common_physical_turn_ranking_authority": true,
+    "custom_turn_geometry_preflight_role": "additional_required_provenance_gate",
+    "execution_result_fields_used": false,
+    "map_preflight_fallback_allowed": false,
+    "candidate_pair_reindexing_allowed": false,
+    "candidate_generation_quota_modified": false,
+    "curvature_epsilon_per_m": 1e-06,
+    "ranking_order": [
+      "curvature_limited_speed_mps_desc",
+      "braking_preview_reserve_m_desc",
+      "maximum_command_alignment_skew_m_asc",
+      "turn_core_arc_length_m_desc",
+      "scenario_asc",
+      "seed_asc",
+      "pair_index_asc",
+      "route_id_asc"
+    ],
+    "parameter_sources": {
+      "target_speed_mps": "speed_contract.target_speed_mps",
+      "maximum_lateral_acceleration_mps2": "speed_contract.route_manager_parameters.maximum_lateral_acceleration_mps2",
+      "comfortable_deceleration_mps2": "speed_contract.route_manager_parameters.comfortable_deceleration_mps2",
+      "route_curvature_lookahead_m": "speed_contract.route_manager_parameters.route_curvature_lookahead_m"
+    }
+  },
+  "turn_route_selection_policy_sha256": "c7bd95d99a6157420d5a026aed5ca445fa2560fd31fd2b7365587dd879318299",
+  "turn_route_selection_plans": [
+    {
+      "map_id": "town01",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/route_matrix.json",
+      "route_matrix_sha256": "1f4f5a6d76b59e8bebfe1dc1abf86a2f388dcfbfd6df2ab07df9014c7c7ffe5c",
+      "candidate_count": 16,
+      "physical_pass_candidate_count": 16,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "898535cde7aa9ce646f82db5cdad9521382965a0c814633fd4ca1cbe817d94cd",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 3,
+        "route_id": "town01_left_s0000_p03"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 3,
+          "route_id": "town01_left_s0000_p03"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.09303106247480829,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.10696893752519172,
+          "curvature_limited_speed_mps": 3.591506299890189,
+          "braking_curve_speed_mps": 3.591506299890189,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 41.25000762939453,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 14.136381735573385,
+          "braking_preview_reserve_m": 5.863618264426615,
+          "command_lead_distance_m": 3.7545997779014613,
+          "command_tail_distance_m": 4.104163071613627,
+          "maximum_command_alignment_skew_m": 4.104163071613627,
+          "turn_core_arc_length_m": 21.431464672088623
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.591506299890189,
+            "sort_value": -3.591506299890189,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 5.863618264426615,
+            "sort_value": -5.863618264426615,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 4.104163071613627,
+            "sort_value": 4.104163071613627,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 21.431464672088623,
+            "sort_value": -21.431464672088623,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 3,
+            "sort_value": 3,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town01_left_s0000_p03",
+            "sort_value": "town01_left_s0000_p03",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.591506299890189,
+          -5.863618264426615,
+          4.104163071613627,
+          -21.431464672088623,
+          0,
+          0,
+          3,
+          "town01_left_s0000_p03"
+        ]
+      },
+      "selected_ranking_vector_sha256": "d10dd176d06998b2d790e816a636e6790d596912052e4b720db8f8b44f909bb9",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town02_opt",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/route_matrix.json",
+      "route_matrix_sha256": "2fc77c8da7542eeaa30224e4b01b2f39d123fe5a199f0a6dd23cb7a84264ee7f",
+      "candidate_count": 11,
+      "physical_pass_candidate_count": 11,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "cd7428018fa6a9a9d99b830fb86b8c5a0584c21482ae3d4a81d94b0b9dfc3998",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 5,
+        "route_id": "town02_opt_left_s0000_p05"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 5,
+          "route_id": "town02_opt_left_s0000_p05"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.11716499308924493,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.08283500691075509,
+          "curvature_limited_speed_mps": 3.2003073386259064,
+          "braking_curve_speed_mps": 3.2003073386259064,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 45.231837034225464,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 14.800619345695406,
+          "braking_preview_reserve_m": 5.199380654304594,
+          "command_lead_distance_m": 3.8505136634247634,
+          "command_tail_distance_m": 3.8733501889031814,
+          "maximum_command_alignment_skew_m": 3.8733501889031814,
+          "turn_core_arc_length_m": 18.700612545013428
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.2003073386259064,
+            "sort_value": -3.2003073386259064,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 5.199380654304594,
+            "sort_value": -5.199380654304594,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 3.8733501889031814,
+            "sort_value": 3.8733501889031814,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 18.700612545013428,
+            "sort_value": -18.700612545013428,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 5,
+            "sort_value": 5,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town02_opt_left_s0000_p05",
+            "sort_value": "town02_opt_left_s0000_p05",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.2003073386259064,
+          -5.199380654304594,
+          3.8733501889031814,
+          -18.700612545013428,
+          0,
+          0,
+          5,
+          "town02_opt_left_s0000_p05"
+        ]
+      },
+      "selected_ranking_vector_sha256": "a98cd65a2cdcb5977b27e8c932d510f578ededf1b2a3c078506b6432e630eef6",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town03",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/route_matrix.json",
+      "route_matrix_sha256": "b0b7bb3f378c4c64f3abf1904fbec1811446f439befba65b22275c2c8647e8f6",
+      "candidate_count": 15,
+      "physical_pass_candidate_count": 15,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "5ebdd97c3142be27334427f3bc6ed168840c7d82a050d815dbc2d0a48b9e3a3b",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 0,
+        "route_id": "town03_left_s0000_p00"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 0,
+          "route_id": "town03_left_s0000_p00"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.07575432647916387,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.12424567352083614,
+          "curvature_limited_speed_mps": 3.980035102139802,
+          "braking_curve_speed_mps": 3.980035102139802,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 36.0200035572052,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 13.400941257544869,
+          "braking_preview_reserve_m": 6.5990587424551315,
+          "command_lead_distance_m": 2.992495258492042,
+          "command_tail_distance_m": 3.259410099091319,
+          "maximum_command_alignment_skew_m": 3.259410099091319,
+          "turn_core_arc_length_m": 22.725435972213745
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.980035102139802,
+            "sort_value": -3.980035102139802,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 6.5990587424551315,
+            "sort_value": -6.5990587424551315,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 3.259410099091319,
+            "sort_value": 3.259410099091319,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 22.725435972213745,
+            "sort_value": -22.725435972213745,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town03_left_s0000_p00",
+            "sort_value": "town03_left_s0000_p00",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.980035102139802,
+          -6.5990587424551315,
+          3.259410099091319,
+          -22.725435972213745,
+          0,
+          0,
+          0,
+          "town03_left_s0000_p00"
+        ]
+      },
+      "selected_ranking_vector_sha256": "99feb2a53536db60ecf444b6c283b54bc0def17b60c60e3f4a32d90cfdf2abd7",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town04",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/route_matrix.json",
+      "route_matrix_sha256": "7edb47c4b89ad5d4842fd0d1a4baeb0aa89d7f6644ef9a89b9f5fd733e8e4163",
+      "candidate_count": 13,
+      "physical_pass_candidate_count": 13,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "6e148a7a1c1c517078bbbab140caa4a26908f50641767ac449ec9ec40b4ff356",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 4,
+        "route_id": "town04_left_s0000_p04"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 4,
+          "route_id": "town04_left_s0000_p04"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.09045769076133024,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.10954230923866977,
+          "curvature_limited_speed_mps": 3.642234255826848,
+          "braking_curve_speed_mps": 3.642234255826848,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 31.976378738880157,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 14.044643517531476,
+          "braking_preview_reserve_m": 5.955356482468524,
+          "command_lead_distance_m": 2.312807099874256,
+          "command_tail_distance_m": 2.0959507795638856,
+          "maximum_command_alignment_skew_m": 2.312807099874256,
+          "turn_core_arc_length_m": 18.576008915901184
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.642234255826848,
+            "sort_value": -3.642234255826848,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 5.955356482468524,
+            "sort_value": -5.955356482468524,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 2.312807099874256,
+            "sort_value": 2.312807099874256,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 18.576008915901184,
+            "sort_value": -18.576008915901184,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 4,
+            "sort_value": 4,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town04_left_s0000_p04",
+            "sort_value": "town04_left_s0000_p04",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.642234255826848,
+          -5.955356482468524,
+          2.312807099874256,
+          -18.576008915901184,
+          0,
+          0,
+          4,
+          "town04_left_s0000_p04"
+        ]
+      },
+      "selected_ranking_vector_sha256": "f02c9eef9dfa9bb518c94c427e633ddb720364c6a1389c40625fd77c593e5860",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town05_opt",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/route_matrix.json",
+      "route_matrix_sha256": "c8e8a977885e4a6eb1a75b7c1108513bdfa6450aa06d97c6a5cf0bce38227695",
+      "candidate_count": 16,
+      "physical_pass_candidate_count": 16,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "3b568097330bc127dc16a0a0ce363817db20f7de46abbac7188616e6987bc75d",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 6,
+        "route_id": "town05_opt_left_s0000_p06"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 6,
+          "route_id": "town05_opt_left_s0000_p06"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.0716896219112788,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.1283103780887212,
+          "curvature_limited_speed_mps": 4.091310854110496,
+          "braking_curve_speed_mps": 4.091310854110496,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 31.411665678024292,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 13.176404984870526,
+          "braking_preview_reserve_m": 6.823595015129474,
+          "command_lead_distance_m": 2.6926322717567075,
+          "command_tail_distance_m": 3.9191078490468243,
+          "maximum_command_alignment_skew_m": 3.9191078490468243,
+          "turn_core_arc_length_m": 26.347187638282776
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 4.091310854110496,
+            "sort_value": -4.091310854110496,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 6.823595015129474,
+            "sort_value": -6.823595015129474,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 3.9191078490468243,
+            "sort_value": 3.9191078490468243,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 26.347187638282776,
+            "sort_value": -26.347187638282776,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 6,
+            "sort_value": 6,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town05_opt_left_s0000_p06",
+            "sort_value": "town05_opt_left_s0000_p06",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -4.091310854110496,
+          -6.823595015129474,
+          3.9191078490468243,
+          -26.347187638282776,
+          0,
+          0,
+          6,
+          "town05_opt_left_s0000_p06"
+        ]
+      },
+      "selected_ranking_vector_sha256": "d3902336f24f5a8980ccc524d9c443ca026f1d2fa0cd00d7b6aaefd4dd243b5d",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town06",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/route_matrix.json",
+      "route_matrix_sha256": "3a721ae96da36787b4a176b33816e066d3a60c51f54fdc3e8ef862538d9c3853",
+      "candidate_count": 1,
+      "physical_pass_candidate_count": 1,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "bab9ae4bfb31c045b6ec79f6662aae7415c229640f45f44fa6a3e3ec98096c7a",
+      "selected_identity": {
+        "scenario": "right",
+        "seed": 0,
+        "pair_index": 0,
+        "route_id": "town06_right_s0000_p00"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "right",
+          "seed": 0,
+          "pair_index": 0,
+          "route_id": "town06_right_s0000_p00"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.13694602539659984,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.06305397460340018,
+          "curvature_limited_speed_mps": 2.9601649152396106,
+          "braking_curve_speed_mps": 2.9601649152396106,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 60.52559405565262,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 15.170467029757232,
+          "braking_preview_reserve_m": 4.829532970242768,
+          "command_lead_distance_m": 5.818511104612028,
+          "command_tail_distance_m": 1.5690534187389744,
+          "maximum_command_alignment_skew_m": 5.818511104612028,
+          "turn_core_arc_length_m": 16.55016791820526
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 2.9601649152396106,
+            "sort_value": -2.9601649152396106,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 4.829532970242768,
+            "sort_value": -4.829532970242768,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 5.818511104612028,
+            "sort_value": 5.818511104612028,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 16.55016791820526,
+            "sort_value": -16.55016791820526,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "right",
+            "sort_value": 1,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town06_right_s0000_p00",
+            "sort_value": "town06_right_s0000_p00",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -2.9601649152396106,
+          -4.829532970242768,
+          5.818511104612028,
+          -16.55016791820526,
+          1,
+          0,
+          0,
+          "town06_right_s0000_p00"
+        ]
+      },
+      "selected_ranking_vector_sha256": "c086d9a435f7680774b72d5c8a4e0ccc5bfb3743288a37878d517c747ad0f10d",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town07",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/route_matrix.json",
+      "route_matrix_sha256": "08404d7efeb0d0b5dbf7c0dab349275968b921a437706a6c7e9997382b7fe2e3",
+      "candidate_count": 14,
+      "physical_pass_candidate_count": 14,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "5da723e51d2d2437dab2522d3818cb22dc3dd53b9753e9b864b584474b08f0f4",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 1,
+        "route_id": "town07_left_s0000_p01"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 1,
+          "route_id": "town07_left_s0000_p01"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.12945653739022406,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.07054346260977595,
+          "curvature_limited_speed_mps": 3.04458868977546,
+          "braking_curve_speed_mps": 3.04458868977546,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 35.359668016433716,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 15.04373103863395,
+          "braking_preview_reserve_m": 4.9562689613660496,
+          "command_lead_distance_m": 4.410706054934181,
+          "command_tail_distance_m": 5.183122280712851,
+          "maximum_command_alignment_skew_m": 5.183122280712851,
+          "turn_core_arc_length_m": 21.14454197883606
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.04458868977546,
+            "sort_value": -3.04458868977546,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 4.9562689613660496,
+            "sort_value": -4.9562689613660496,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 5.183122280712851,
+            "sort_value": 5.183122280712851,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 21.14454197883606,
+            "sort_value": -21.14454197883606,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 1,
+            "sort_value": 1,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town07_left_s0000_p01",
+            "sort_value": "town07_left_s0000_p01",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.04458868977546,
+          -4.9562689613660496,
+          5.183122280712851,
+          -21.14454197883606,
+          0,
+          0,
+          1,
+          "town07_left_s0000_p01"
+        ]
+      },
+      "selected_ranking_vector_sha256": "bd9bad472b03aa5a8aa2ad68e20b3b321a071541ebde127a694611f0ab66bbc6",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "town10hd_opt",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/route_matrix.json",
+      "route_matrix_sha256": "066937e82fa3b44313cc6d72bb7d63a4bd33824dff7417b34c333618da1ebd06",
+      "candidate_count": 8,
+      "physical_pass_candidate_count": 8,
+      "physical_rejected_candidate_count": 0,
+      "candidate_set_sha256": "9bb1a4da6faf134fc8f03fe230d3a0c46fed075fe1eb28fb253477c73ae53e25",
+      "selected_identity": {
+        "scenario": "right",
+        "seed": 0,
+        "pair_index": 1,
+        "route_id": "town10hd_opt_right_s0000_p01"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "right",
+          "seed": 0,
+          "pair_index": 1,
+          "route_id": "town10hd_opt_right_s0000_p01"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.0818873824411315,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.11811261755886851,
+          "curvature_limited_speed_mps": 3.8280899019266816,
+          "braking_curve_speed_mps": 3.8280899019266816,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 31.93276274204254,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 13.697543036802855,
+          "braking_preview_reserve_m": 6.3024569631971445,
+          "command_lead_distance_m": 2.4935591036299556,
+          "command_tail_distance_m": 4.791966750244242,
+          "maximum_command_alignment_skew_m": 4.791966750244242,
+          "turn_core_arc_length_m": 22.617317736148834
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.8280899019266816,
+            "sort_value": -3.8280899019266816,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 6.3024569631971445,
+            "sort_value": -6.3024569631971445,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 4.791966750244242,
+            "sort_value": 4.791966750244242,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 22.617317736148834,
+            "sort_value": -22.617317736148834,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "right",
+            "sort_value": 1,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 1,
+            "sort_value": 1,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "town10hd_opt_right_s0000_p01",
+            "sort_value": "town10hd_opt_right_s0000_p01",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.8280899019266816,
+          -6.3024569631971445,
+          4.791966750244242,
+          -22.617317736148834,
+          1,
+          0,
+          1,
+          "town10hd_opt_right_s0000_p01"
+        ]
+      },
+      "selected_ranking_vector_sha256": "3c904467ead37161ea52801237ca9f8b3de66e6160c8e4cd6644798ed9682b9f",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    },
+    {
+      "map_id": "c_track_1_0_7",
+      "status": "SELECTED",
+      "route_matrix_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/route_matrix.json",
+      "route_matrix_sha256": "5c25a7e70b5658b9acca7a0510e758b8288f37782c670f23c304a68fe86c6588",
+      "candidate_count": 16,
+      "physical_pass_candidate_count": 1,
+      "physical_rejected_candidate_count": 15,
+      "candidate_set_sha256": "bbf297b68d15ed86a4a738e013532469b698871ae21496c4dd52d68626a743b9",
+      "selected_identity": {
+        "scenario": "left",
+        "seed": 0,
+        "pair_index": 7,
+        "route_id": "c_track_1_0_7_left_s0000_p07"
+      },
+      "selected_ranking_vector": {
+        "schema_version": 1,
+        "policy_id": "physical_turn_curvature_deceleration_v1",
+        "physical_turn_preflight_status": "PASS",
+        "physical_turn_preflight_source": "exact_serialized_common_physical_turn",
+        "stable_identity": {
+          "scenario": "left",
+          "seed": 0,
+          "pair_index": 7,
+          "route_id": "c_track_1_0_7_left_s0000_p07"
+        },
+        "parameter_values": {
+          "target_speed_mps": 8.333333333333334,
+          "maximum_lateral_acceleration_mps2": 1.2,
+          "comfortable_deceleration_mps2": 2.0,
+          "route_curvature_lookahead_m": 20.0,
+          "curvature_epsilon_per_m": 1e-06
+        },
+        "raw_values": {
+          "p95_absolute_curvature_per_m": 0.09779359364194204,
+          "maximum_p95_absolute_curvature_per_m": 0.2,
+          "p95_curvature_reserve_per_m": 0.10220640635805797,
+          "curvature_limited_speed_mps": 3.5029619526064146,
+          "braking_curve_speed_mps": 3.5029619526064146,
+          "route_lead_field": "route_lead_distance_m",
+          "route_lead_m": 28.29475337266922,
+          "available_braking_preview_m": 20.0,
+          "required_braking_distance_m": 14.293425500759078,
+          "braking_preview_reserve_m": 5.706574499240922,
+          "command_lead_distance_m": 3.8675321464918184,
+          "command_tail_distance_m": 5.040309501705799,
+          "maximum_command_alignment_skew_m": 5.040309501705799,
+          "turn_core_arc_length_m": 20.580272436141968
+        },
+        "sort_components": [
+          {
+            "field": "curvature_limited_speed_mps",
+            "direction": "descending",
+            "value": 3.5029619526064146,
+            "sort_value": -3.5029619526064146,
+            "definition": "sqrt(maximum_lateral_acceleration_mps2 / max(p95_abs_curvature_per_m, curvature_epsilon_per_m))"
+          },
+          {
+            "field": "braking_preview_reserve_m",
+            "direction": "descending",
+            "value": 5.706574499240922,
+            "sort_value": -5.706574499240922,
+            "definition": "min(route_lead_m, route_curvature_lookahead_m) - max(0, (target_speed_mps^2 - min(target_speed_mps, curvature_limited_speed_mps)^2) / (2 * comfortable_deceleration_mps2))"
+          },
+          {
+            "field": "maximum_command_alignment_skew_m",
+            "direction": "ascending",
+            "value": 5.040309501705799,
+            "sort_value": 5.040309501705799,
+            "definition": "max(command_lead_distance_m, command_tail_distance_m)"
+          },
+          {
+            "field": "turn_core_arc_length_m",
+            "direction": "descending",
+            "value": 20.580272436141968,
+            "sort_value": -20.580272436141968,
+            "definition": "selected physical-turn command_arc_length_m"
+          },
+          {
+            "field": "scenario",
+            "direction": "ascending",
+            "value": "left",
+            "sort_value": 0,
+            "definition": "fixed left-before-right scenario order"
+          },
+          {
+            "field": "seed",
+            "direction": "ascending",
+            "value": 0,
+            "sort_value": 0,
+            "definition": "catalog seed"
+          },
+          {
+            "field": "pair_index",
+            "direction": "ascending",
+            "value": 7,
+            "sort_value": 7,
+            "definition": "catalog pair index"
+          },
+          {
+            "field": "route_id",
+            "direction": "ascending",
+            "value": "c_track_1_0_7_left_s0000_p07",
+            "sort_value": "c_track_1_0_7_left_s0000_p07",
+            "definition": "catalog route id"
+          }
+        ],
+        "sort_key": [
+          -3.5029619526064146,
+          -5.706574499240922,
+          5.040309501705799,
+          -20.580272436141968,
+          0,
+          0,
+          7,
+          "c_track_1_0_7_left_s0000_p07"
+        ]
+      },
+      "selected_ranking_vector_sha256": "9df761307ceed68c184e8f15fa27912519e057eb0bab65a6dbf03e5a34ac244b",
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false
+    }
+  ],
+  "maps": [
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town01",
+      "canonical_name": "Town01",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:43:20.620350+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town02",
+      "canonical_name": "Town02",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.611858+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Runtime validation showed that the standard packaged Town02 renderer crashes; use town02_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town02_opt",
+      "canonical_name": "Town02_Opt",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:31.897902+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Full-stack route completion, analysis, and post-candidate desktop evidence passed.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town03",
+      "canonical_name": "Town03",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:33.697715+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town04",
+      "canonical_name": "Town04",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:35.765516+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town05",
+      "canonical_name": "Town05",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.650327+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Packaged expert collection crashes in SceneCapture2D skeletal-mesh rendering; use town05_opt.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town05_opt",
+      "canonical_name": "Town05_Opt",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:37.718752+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town06",
+      "canonical_name": "Town06",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:39.873959+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town07",
+      "canonical_name": "Town07",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:41.472406+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town08",
+      "canonical_name": "Town08",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.688632+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town08 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town09",
+      "canonical_name": "Town09",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.698265+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Town09 is a non-distributed Leaderboard unseen map and no local level or OpenDRIVE asset exists.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town10hd",
+      "canonical_name": "Town10HD",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.707956+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=unavailable: Standard Town10HD is unverified and the packaged server boots Town10HD_Opt instead; use town10hd_opt for collection.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town10hd_opt",
+      "canonical_name": "Town10HD_Opt",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:42.692929+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town11",
+      "canonical_name": "Town11",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.727099+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: The complete source map exists, but it is an undecorated large-map proof of concept and is excluded from visual training.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town12",
+      "canonical_name": "Town12",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.736675+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town13",
+      "canonical_name": "Town13",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.746372+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: Complete level and OpenDRIVE assets exist only in the source checkout used by UE4Editor.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "town15",
+      "canonical_name": "Town15",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+      "block_code": "validated_full_map_bundle_missing",
+      "updated_at": "2026-09-02T01:32:16.755952+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "No locally validated Lanelet2 + PCD full-map bundle is declared; CARLA/BasicAgent assets alone do not authorize an Autoware VAD closed-loop claim. Suite status=source_editor_required: This additional campus map is held out and requires the complete source-editor asset set.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "c_track_1_0_7",
+      "canonical_name": "C_track_1_0_7",
+      "runnable": true,
+      "status": "PASS",
+      "stage": "complete",
+      "reason": "Straight and turn full-stack trials both passed.",
+      "block_code": null,
+      "updated_at": "2026-09-02T02:47:45.588682+00:00",
+      "trials": {
+        "straight": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/matrix_validation.json"
+        },
+        "turn": {
+          "status": "PASS",
+          "reason": "Existing trial passed fresh strict validation.",
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001",
+          "validation": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/matrix_validation.json"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "matrix_id": "autoware_vad_town_straight_turn_v1",
+      "map_id": "woraksan_1_0_3",
+      "canonical_name": "Woraksan_v1_0_3_parking_lot_hegiht_fit",
+      "runnable": false,
+      "status": "BLOCKED",
+      "stage": "admission",
+      "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+      "block_code": "packaged_runtime_assets_missing",
+      "updated_at": "2026-09-02T01:32:16.775198+00:00",
+      "trials": {
+        "straight": {
+          "status": "BLOCKED",
+          "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+          "attempt_directory": null,
+          "validation": null
+        },
+        "turn": {
+          "status": "BLOCKED",
+          "reason": "The canonical manifest entry is retained, but the current packaged CARLA installation lacks the required Woraksan runtime assets and no admitted Autoware full-map bundle is present.",
+          "attempt_directory": null,
+          "validation": null
+        }
+      }
+    }
+  ]
+}

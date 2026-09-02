@@ -1,0 +1,54 @@
+vad_object_yaw patch is already applied (APPLIED).
+aeb_named_timeouts_oriented_bbox_vertical_overlap_and_longitudinal_roi patch is already applied (APPLIED).
+Verified VAD object-safety build provenance: /home/a/autoware_e2e/build/autoware_tensorrt_vad/e2e_object_safety_build_provenance.json
+autoware_lanelet2_extension finite-route patch is already applied (APPLIED).
+autoware_core finite-route patch is already applied (APPLIED).
+autoware_universe finite-route patch is already applied (APPLIED).
+Autoware mission planner lane-only fallback patch set is already applied (APPLIED).
+MISSION_PLANNER_BUILD_VERIFIED path=/home/a/autoware_e2e/build/autoware_mission_planner_universe/e2e_lane_only_build_provenance.json
+PLAN maps=19 runnable=9 profile=speed_30kph_camera_source_5hz output=/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1
+RESUME_PASS map=town01 straight+turn evidence freshly validated and status recovered
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town02_opt straight=straight turn=left
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_002 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_002 stage=trial_completion mode=running
+[0m[INFO 1788317193.672716600] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/steering_tracking.png
+[0m[INFO 1788317197.940830344] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/route_result.png
+[0m[INFO 1788317199.748843518] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788317201.193228627] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 178 frames (35.4 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_002
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_002 stage=trial_cleanup mode=stopped
+PASS map=town02_opt trial=straight scenario=straight
+RESUME_PASS map=town02_opt trial=turn
+RESUME_PASS map=town03 straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=town04 straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=town05_opt straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=town06 straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=town07 straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=town10hd_opt straight+turn evidence freshly validated and status recovered
+RESUME_PASS map=c_track_1_0_7 straight+turn evidence freshly validated and status recovered
+SUMMARY status=COMPLETE pass=9/9
+FINAL_STATE_PASS selected_maps=9
+VAD town matrix completed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1

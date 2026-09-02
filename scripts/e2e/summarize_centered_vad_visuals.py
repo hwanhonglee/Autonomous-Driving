@@ -41,6 +41,13 @@ REQUIRED_FILES = (
     "rviz_capture_provenance/autoware_vad_carla.rviz",
     "rviz_capture_provenance/SHA256SUMS",
 )
+PUBLICATION_SELECTION_SCOPE = (
+    "autoware_vad_publications selected map_id/trial_id/trial_directory/source "
+    "records; not a full-file publication manifest digest"
+)
+PUBLICATION_SELECTION_CANONICALIZATION = (
+    "UTF-8 JSON with sort_keys=True, separators=(',', ':'), allow_nan=False"
+)
 
 
 class AuditError(RuntimeError):
@@ -149,7 +156,7 @@ def _runtime_environment(path: Path, label: str) -> dict[str, str]:
     return environment
 
 
-def _strict_result_pass(result: Mapping[str, Any]) -> bool:
+def _full_stack_result_pass(result: Mapping[str, Any]) -> bool:
     assessment = result.get("assessment")
     final = result.get("final")
     return bool(
@@ -202,6 +209,53 @@ def _manifest_records(
     return selected
 
 
+def _publication_selection(
+    manifest_path: Path, expected_map_count: int
+) -> dict[str, Any]:
+    """Bind only the stable manifest projection consumed by the visual audit.
+
+    The final publication manifest embeds the completed visual audit, so hashing the
+    whole input manifest here would create a circular and inevitably stale reference.
+    """
+    manifest_path = manifest_path.expanduser().resolve()
+    selected = _manifest_records(manifest_path, expected_map_count)
+    records: list[dict[str, str]] = []
+    for map_id, trial_id in sorted(selected):
+        record = selected[(map_id, trial_id)]
+        directory_value = record.get("trial_directory")
+        source = record.get("source")
+        if not isinstance(directory_value, str) or not directory_value:
+            raise AuditError(
+                f"{map_id}:{trial_id} publication record has no selected original"
+            )
+        if not isinstance(source, str) or not source:
+            raise AuditError(
+                f"{map_id}:{trial_id} publication record has no selection source"
+            )
+        directory = Path(directory_value).expanduser()
+        if not directory.is_absolute():
+            directory = manifest_path.parent / directory
+        records.append(
+            {
+                "map_id": map_id,
+                "trial_id": trial_id,
+                "trial_directory": str(directory.resolve()),
+                "source": source,
+            }
+        )
+    encoded = json.dumps(
+        records, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return {
+        "selection_source_file": str(manifest_path),
+        "scope": PUBLICATION_SELECTION_SCOPE,
+        "canonicalization": PUBLICATION_SELECTION_CANONICALIZATION,
+        "record_count": len(records),
+        "records": records,
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+    }
+
+
 def _select_latest_successful_attempt(
     trial_root: Path, label: str
 ) -> tuple[Path, list[dict[str, Any]]]:
@@ -221,12 +275,12 @@ def _select_latest_successful_attempt(
             result = _read_json_object(result_path, f"{label} result")
         except AuditError as error:
             error_text = str(error)
-        passed = result is not None and _strict_result_pass(result)
+        passed = result is not None and _full_stack_result_pass(result)
         history.append(
             {
                 "attempt": attempt.name,
                 "attempt_number": _attempt_number(attempt),
-                "strict_result_pass": passed,
+                "full_stack_result_pass": passed,
                 "desktop_capture_present": (attempt / "desktop_capture.json").is_file(),
                 "error": error_text,
             }
@@ -557,8 +611,8 @@ def audit_trials(
         trial_root = centered_root / "maps" / map_id / "trials" / trial_id
         attempt, history = _select_latest_successful_attempt(trial_root, label)
         result = _read_json_object(attempt / "result.json", f"{label} result")
-        if not _strict_result_pass(result):  # pragma: no cover - selection guarantees it.
-            raise AuditError(f"{label} selected attempt lost strict PASS status")
+        if not _full_stack_result_pass(result):  # pragma: no cover - selection guarantees it.
+            raise AuditError(f"{label} selected attempt lost full-stack PASS status")
 
         manifest_record = selected[(map_id, trial_id)]
         original_directory = manifest_record.get("trial_directory")
@@ -799,10 +853,15 @@ def _markdown(summary: Mapping[str, Any]) -> str:
         f"- Contact sheet: `{Path(summary['contact_sheet']['file']).name}` "
         f"({summary['contact_sheet']['dimensions'][0]}×"
         f"{summary['contact_sheet']['dimensions'][1]})",
+        "- Publication selection binding: "
+        f"`{summary['publication_selection']['sha256']}` "
+        f"({summary['publication_selection']['record_count']} stable records; "
+        "not a full-file manifest digest)",
         "",
-        "Every selected rerun is the highest-numbered strict result-PASS attempt for its "
-        "map/trial. `source_route.json` is byte-for-byte equal to the selected original "
-        "named by the existing publication manifest.",
+        "Every selected rerun is the highest-numbered full-stack result-PASS attempt "
+        "for its map/trial; this result-level label is separate from the camera-source "
+        "matrix gate. `source_route.json` is byte-for-byte equal to the selected "
+        "original named by the publication selection.",
         "",
         "| Map | Trial | Attempt | Result | Same source route | Midpoint frame | "
         "Centered contract | Visual review | Notes |",
@@ -850,6 +909,7 @@ def build_outputs(
         expected_map_count=expected_map_count,
         verify_frames=verify_frames,
     )
+    publication_selection = _publication_selection(manifest_path, expected_map_count)
     reviews, review_summary = _load_visual_review(visual_review_path, records)
     for record in records:
         record["visual_review"] = reviews[(record["map_id"], record["trial_id"])]
@@ -890,15 +950,12 @@ def build_outputs(
         ]
     )
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": status,
         "mechanical_status": "PASS",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "centered_root": str(centered_root),
-        "publication_manifest": {
-            "file": str(manifest_path),
-            "sha256": _sha256(manifest_path),
-        },
+        "publication_selection": publication_selection,
         "counts": {
             "maps": len({record["map_id"] for record in records}),
             "total": len(records),

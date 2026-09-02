@@ -22,6 +22,8 @@ import shutil
 import tempfile
 from typing import Any, Mapping, Sequence
 
+from zoneinfo import ZoneInfo
+
 from PIL import Image, ImageDraw, ImageFont
 
 try:
@@ -29,6 +31,11 @@ try:
         EVIDENCE_KIND,
         SUCCESS_STATUSES,
         validated_job,
+    )
+    from autoware_vad_town_matrix import (
+        CAMERA_SOURCE_5HZ_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_CONTRACT,
+        MatrixError as MatrixValidationError,
+        _camera_source_5hz_evidence as _matrix_camera_source_5hz_evidence,
     )
     from export_carla_vad_expert import read_jsonl
     from render_carla_vad_expert import (
@@ -41,6 +48,11 @@ except ModuleNotFoundError:
         EVIDENCE_KIND,
         SUCCESS_STATUSES,
         validated_job,
+    )
+    from scripts.e2e.autoware_vad_town_matrix import (
+        CAMERA_SOURCE_5HZ_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_CONTRACT,
+        MatrixError as MatrixValidationError,
+        _camera_source_5hz_evidence as _matrix_camera_source_5hz_evidence,
     )
     from scripts.e2e.export_carla_vad_expert import read_jsonl
     from scripts.e2e.render_carla_vad_expert import (
@@ -79,6 +91,15 @@ SPEED_30KPH_CENTERED_CAPTURE_NAMES = (
     "rviz_capture_provenance/autoware_vad_carla.rviz",
     "rviz_capture_provenance/SHA256SUMS",
 )
+CAMERA_SOURCE_5HZ_PROVENANCE_NAMES = (
+    "matrix_validation.json",
+    "launch_args.txt",
+    "recorder.log",
+    "stack.log",
+    "vad_route_manager.params.yaml",
+    "sensor_mapping_provenance/sensor_mapping.yaml",
+    "sensor_mapping_provenance/SHA256SUMS",
+)
 SPEED_30KPH_VISUAL_EVIDENCE_NAMES = (
     "desktop_capture.json",
     "autoware_rviz_fullscreen.png",
@@ -96,6 +117,28 @@ OWNED_WINDOW_VISUAL_AUDIT_NAMES = (
     "v16_owned_window_visual_audit.md",
     "v16_owned_window_visual_review.json",
     "v16_owned_window_contact_sheet.png",
+)
+PUBLICATION_SELECTION_SCOPE = (
+    "autoware_vad_publications selected map_id/trial_id/trial_directory/source "
+    "records; not a full-file publication manifest digest"
+)
+PUBLICATION_SELECTION_CANONICALIZATION = (
+    "UTF-8 JSON with sort_keys=True, separators=(',', ':'), allow_nan=False"
+)
+CAMERA_SOURCE_DIAGNOSTICS_DIR = "campaign_diagnostics"
+CAMERA_SOURCE_RETRY_RAW_NAMES = (
+    "result.json",
+    "source_route.json",
+    "aligned_route.json",
+    "launch_args.txt",
+    "runtime.env",
+    "latency/e2e_latency.json",
+    "stack.log",
+    "recorder.log",
+    "sensor_mapping_provenance/sensor_mapping.yaml",
+    "sensor_mapping_provenance/SHA256SUMS",
+    "rviz_capture_provenance/autoware_vad_carla.rviz",
+    "rviz_capture_provenance/SHA256SUMS",
 )
 SPEED_30KPH_RUNNABLE_MAP_IDS = frozenset(
     {
@@ -155,7 +198,15 @@ DASHBOARD_NAME = "all_maps_basicagent_status_1920x1080.png"
 BASICAGENT_AGGREGATE_NAME = "carla_basicagent_sweep_aggregate.json"
 VAD_MATRIX_AGGREGATE_NAME = "autoware_vad_matrix_aggregate.json"
 VAD_MATRIX_PLAN_NAME = "autoware_vad_matrix_plan.json"
-VAD_RUNTIME_PROFILE_SELECTORS = ("recommended", "speed_30kph")
+CAMERA_SOURCE_5HZ_SELECTOR = "speed_30kph_camera_source_5hz"
+SPEED_30KPH_RUNTIME_PROFILE_SELECTORS = frozenset(
+    {"speed_30kph", CAMERA_SOURCE_5HZ_SELECTOR}
+)
+VAD_RUNTIME_PROFILE_SELECTORS = (
+    "recommended",
+    "speed_30kph",
+    CAMERA_SOURCE_5HZ_SELECTOR,
+)
 VAD_RUNTIME_WRAPPER_OPTIONS = {
     "recommended": ["--recommended", "--visualize", "--capture-desktop"],
     "speed_30kph": [
@@ -164,8 +215,20 @@ VAD_RUNTIME_WRAPPER_OPTIONS = {
         "--visualize",
         "--capture-desktop",
     ],
+    CAMERA_SOURCE_5HZ_SELECTOR: [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ],
 }
-SPEED_30KPH_RUNTIME_PROFILE_ID = "vad_carla_30kph_visualized_v2"
+SPEED_30KPH_RUNTIME_PROFILE_IDS = {
+    "speed_30kph": "vad_carla_30kph_visualized_v2",
+    CAMERA_SOURCE_5HZ_SELECTOR: (
+        "vad_carla_30kph_camera_source_5hz_visualized_v1"
+    ),
+}
 SPEED_30KPH_PROFILE_ID = "carla_vad_30kph_v2"
 SPEED_30KPH_VALIDATION_STATE = "carla_30kph_v2_screening"
 SPEED_30KPH_PUBLICATION_INTERPRETATION = {
@@ -178,6 +241,7 @@ SPEED_30KPH_PUBLICATION_INTERPRETATION = {
     "vad_geometry_evaluated": True,
     "real_vehicle_ready": False,
 }
+CAMERA_SOURCE_5HZ_CONTRACT = dict(MATRIX_CAMERA_SOURCE_5HZ_CONTRACT)
 
 
 class PublicationError(RuntimeError):
@@ -206,6 +270,7 @@ class VadTrial:
     speed_profile: Mapping[str, Any] | None
     centered_capture_provenance: Mapping[str, Any] | None
     source: str
+    runtime_profile_selector: str = "recommended"
 
 
 @dataclass(frozen=True)
@@ -605,6 +670,40 @@ def _exact_finite_number(value: Any, expected: float, label: str) -> None:
         raise PublicationError(f"{label} must be exactly {expected!r}")
 
 
+def _is_speed_30kph_profile(selector: str) -> bool:
+    return selector in SPEED_30KPH_RUNTIME_PROFILE_SELECTORS
+
+
+def _speed_30kph_publication_interpretation(
+    selector: str,
+) -> dict[str, Any]:
+    interpretation = dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+    if selector == CAMERA_SOURCE_5HZ_SELECTOR:
+        interpretation.update(
+            {
+                "camera_source_profile_id": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "profile_id"
+                ],
+                "camera_sensor_count": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "sensor_count"
+                ],
+                "camera_sensor_tick_sec": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "sensor_tick_sec"
+                ],
+                "camera_source_frequency_hz": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "source_frequency_hz"
+                ],
+                "camera_ros_publish_frequency_hz": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "ros_publish_frequency_hz"
+                ],
+                "maximum_camera_stamp_gap_sec": CAMERA_SOURCE_5HZ_CONTRACT[
+                    "maximum_stamp_gap_sec"
+                ],
+            }
+        )
+    return interpretation
+
+
 def _validate_matrix_runtime_profile(
     plan: Mapping[str, Any],
     aggregate: Mapping[str, Any],
@@ -639,7 +738,7 @@ def _validate_matrix_runtime_profile(
             "Autoware VAD matrix runtime profile does not match the explicitly "
             f"requested selector {requested_selector!r}"
         )
-    if requested_selector == "speed_30kph" and not (
+    if _is_speed_30kph_profile(requested_selector) and not (
         plan_has_selector and aggregate_has_selector
     ):
         raise PublicationError(
@@ -662,7 +761,8 @@ def _validate_matrix_runtime_profile(
         return runtime_profile, None
 
     if (
-        runtime_profile.get("id") != SPEED_30KPH_RUNTIME_PROFILE_ID
+        runtime_profile.get("id")
+        != SPEED_30KPH_RUNTIME_PROFILE_IDS[requested_selector]
         or runtime_profile.get("trial_wrapper") != "run_recorded_route_trial.sh"
         or runtime_profile.get("map_lifecycle")
         != "cold_start_owned_process_group_per_trial"
@@ -689,6 +789,16 @@ def _validate_matrix_runtime_profile(
             raise PublicationError(
                 f"speed_30kph speed_contract.{field} is not pinned to {expected!r}"
             )
+    camera_contract = runtime_profile.get("camera_source_contract")
+    if requested_selector == CAMERA_SOURCE_5HZ_SELECTOR:
+        if camera_contract != CAMERA_SOURCE_5HZ_CONTRACT:
+            raise PublicationError(
+                "camera-source 5 Hz runtime contract is not pinned"
+            )
+    elif camera_contract is not None:
+        raise PublicationError(
+            "non-camera-source runtime profile unexpectedly carries a camera contract"
+        )
     _exact_finite_number(
         contract.get("target_speed_mps"),
         8.333333333333334,
@@ -715,7 +825,9 @@ def _validate_matrix_runtime_profile(
             raise PublicationError(
                 f"speed_30kph {component_name} is mislabeled or real-vehicle ready"
             )
-    return runtime_profile, dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+    return runtime_profile, _speed_30kph_publication_interpretation(
+        requested_selector
+    )
 
 
 def _validate_speed_matrix_campaign_contract(
@@ -993,7 +1105,7 @@ def discover_vad_matrix_trial_specs(
         plan, aggregate, runtime_profile_selector
     )
     campaign_rviz_sha256 = None
-    if runtime_profile_selector == "speed_30kph":
+    if _is_speed_30kph_profile(runtime_profile_selector):
         campaign_rviz_sha256 = _validate_speed_matrix_campaign_contract(
             plan, aggregate
         )
@@ -1043,7 +1155,7 @@ def discover_vad_matrix_trial_specs(
     aggregate_by_map = indexed_maps(aggregate_maps, "matrix aggregate")
     if set(plan_by_map) != set(known_maps) or set(aggregate_by_map) != set(known_maps):
         raise PublicationError("Autoware VAD matrix map ids differ from the canonical sweep")
-    if runtime_profile_selector == "speed_30kph":
+    if _is_speed_30kph_profile(runtime_profile_selector):
         canonical_ids = set(known_maps)
         if canonical_ids != (
             set(SPEED_30KPH_RUNNABLE_MAP_IDS) | set(SPEED_30KPH_BLOCKED_MAP_IDS)
@@ -1231,7 +1343,7 @@ def discover_vad_matrix_trial_specs(
                     f"{map_id}:{trial_id} matrix validation is stale or incomplete"
                 )
             visual_binding = None
-            if runtime_profile_selector == "speed_30kph":
+            if _is_speed_30kph_profile(runtime_profile_selector):
                 if campaign_rviz_sha256 is None:  # pragma: no cover - set above.
                     raise PublicationError("speed_30kph campaign RViz digest was lost")
                 _validate_matrix_trial_lifecycle(
@@ -1280,7 +1392,7 @@ def discover_vad_matrix_trial_specs(
                         "straight/turn matrix slot"
                     )
             validation_speed = validation.get("speed_contract")
-            if runtime_profile_selector == "speed_30kph":
+            if _is_speed_30kph_profile(runtime_profile_selector):
                 if (
                     not isinstance(validation_speed, Mapping)
                     or validation_speed.get("status") != "PASS"
@@ -1296,6 +1408,19 @@ def discover_vad_matrix_trial_specs(
                     f"{map_id}:{trial_id} recommended matrix unexpectedly carries "
                     "speed-profile evidence"
                 )
+            validation_camera = validation.get("camera_source_contract")
+            if runtime_profile_selector == CAMERA_SOURCE_5HZ_SELECTOR:
+                _validated_camera_source_5hz_evidence(
+                    attempt,
+                    runtime_profile,
+                    validation_camera,
+                    f"{map_id}:{trial_id}",
+                )
+            elif validation_camera is not None:
+                raise PublicationError(
+                    f"{map_id}:{trial_id} non-camera-source matrix unexpectedly "
+                    "carries camera-source evidence"
+                )
             specs.append(
                 VadTrialSpec(
                     map_id=map_id,
@@ -1306,7 +1431,7 @@ def discover_vad_matrix_trial_specs(
                     runtime_profile_selector=runtime_profile_selector,
                     matrix_speed_contract=(
                         dict(runtime_profile["speed_contract"])
-                        if runtime_profile_selector == "speed_30kph"
+                        if _is_speed_30kph_profile(runtime_profile_selector)
                         else None
                     ),
                     matrix_speed_evidence=(
@@ -1331,6 +1456,11 @@ def discover_vad_matrix_trial_specs(
                 "speed_contract": (
                     dict(validation_speed)
                     if isinstance(validation_speed, Mapping)
+                    else None
+                ),
+                "camera_source_contract": (
+                    dict(validation_camera)
+                    if isinstance(validation_camera, Mapping)
                     else None
                 ),
             }
@@ -1388,7 +1518,7 @@ def discover_vad_matrix_trial_specs(
     )
     if aggregate.get("status") != expected_overall:
         raise PublicationError("Autoware VAD matrix overall status is inconsistent")
-    if runtime_profile_selector == "speed_30kph":
+    if _is_speed_30kph_profile(runtime_profile_selector):
         runnable_statuses = {
             item["map_id"]: item["status"]
             for item in matrix_maps
@@ -1465,7 +1595,7 @@ def resolve_vad_trial_specs(
             "speed_30kph publication requires --vad-matrix-root; standalone explicit "
             "trials cannot establish the immutable simulation-screening contract"
         )
-    if runtime_profile_selector == "speed_30kph" and explicit:
+    if _is_speed_30kph_profile(runtime_profile_selector) and explicit:
         raise PublicationError(
             "speed_30kph publication accepts only status-backed matrix PASS trials; "
             "do not mix unbound explicit trials into simulation-screening evidence"
@@ -2047,7 +2177,7 @@ def collect_vad_trials(
             desktop_capture = _labeled_desktop_capture(directory, label)
         speed_profile = None
         centered_capture_provenance = None
-        if spec.runtime_profile_selector == "speed_30kph":
+        if _is_speed_30kph_profile(spec.runtime_profile_selector):
             speed_profile = _validated_speed_profile(
                 directory, result, spec.matrix_speed_evidence, label
             )
@@ -2076,6 +2206,7 @@ def collect_vad_trials(
                 speed_profile=speed_profile,
                 centered_capture_provenance=centered_capture_provenance,
                 source=spec.source,
+                runtime_profile_selector=spec.runtime_profile_selector,
             )
         )
     return trials
@@ -2102,6 +2233,57 @@ def _read_runtime_environment(path: Path, label: str) -> dict[str, str]:
             )
         environment[key] = value
     return environment
+
+
+def _fresh_camera_source_5hz_evidence(
+    directory: Path,
+    runtime_profile: Mapping[str, Any],
+    label: str,
+) -> dict[str, Any]:
+    """Recompute the candidate cadence and loss gates from immutable raw files."""
+    runtime = _read_runtime_environment(
+        directory / "runtime.env", f"{label} camera-source runtime"
+    )
+    latency = _read_object(
+        directory / "latency/e2e_latency.json",
+        f"{label} camera-source latency",
+    )
+    try:
+        evidence = _matrix_camera_source_5hz_evidence(
+            directory, runtime, runtime_profile, latency
+        )
+    except MatrixValidationError as error:
+        raise PublicationError(
+            f"{label} camera-source raw evidence failed fresh validation: {error}"
+        ) from error
+    if not isinstance(evidence, Mapping) or evidence.get("status") != "PASS":
+        raise PublicationError(
+            f"{label} camera-source raw evidence did not produce a PASS record"
+        )
+    return dict(evidence)
+
+
+def _validated_camera_source_5hz_evidence(
+    directory: Path,
+    runtime_profile: Mapping[str, Any],
+    recorded_evidence: Any,
+    label: str,
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    provenance = _validated_camera_source_5hz_provenance_files(
+        directory, recorded_evidence, label
+    )
+    fresh = _fresh_camera_source_5hz_evidence(
+        directory, runtime_profile, label
+    )
+    if (
+        not isinstance(recorded_evidence, Mapping)
+        or dict(recorded_evidence) != fresh
+    ):
+        raise PublicationError(
+            f"{label} camera-source matrix validation does not match freshly "
+            "recomputed cadence/integrity evidence"
+        )
+    return fresh, provenance
 
 
 def _finite_number(value: Any, label: str, *, positive: bool = False) -> float:
@@ -2150,6 +2332,655 @@ def _read_sha256_manifest(path: Path, label: str) -> dict[str, str]:
             raise PublicationError(f"{label} has a malformed line: {line!r}")
         values[name] = digest
     return values
+
+
+def _validated_camera_source_5hz_provenance_files(
+    directory: Path,
+    recorded_evidence: Any,
+    label: str,
+) -> dict[str, dict[str, Any]]:
+    if not isinstance(recorded_evidence, Mapping):
+        raise PublicationError(
+            f"{label} camera-source matrix validation has no evidence object"
+        )
+    paths: dict[str, Path] = {}
+    for name in (
+        *CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+        "runtime.env",
+        "latency/e2e_latency.json",
+    ):
+        source = directory / name
+        path = _inside(
+            directory, source, f"{label} camera-source raw evidence"
+        )
+        if source.is_symlink() or not path.is_file():
+            raise PublicationError(
+                f"{label} camera-source raw evidence is missing or symlinked: {name}"
+            )
+        paths[name] = path
+    mapping_name = "sensor_mapping_provenance/sensor_mapping.yaml"
+    mapping_manifest_name = "sensor_mapping_provenance/SHA256SUMS"
+    mapping_sha256 = _sha256(paths[mapping_name])
+    if (
+        recorded_evidence.get("mapping_sha256") != mapping_sha256
+        or _read_sha256_manifest(
+            paths[mapping_manifest_name],
+            f"{label} camera-source sensor-mapping SHA256SUMS",
+        )
+        != {"sensor_mapping.yaml": mapping_sha256}
+    ):
+        raise PublicationError(
+            f"{label} camera-source sensor-mapping provenance changed"
+        )
+    return {
+        name: {
+            "source": str(path),
+            "sha256": _sha256(path),
+            "size_bytes": path.stat().st_size,
+        }
+        for name, path in paths.items()
+    }
+
+
+def _full_stack_result_pass(result: Mapping[str, Any]) -> bool:
+    assessment = result.get("assessment")
+    final = result.get("final")
+    return bool(
+        result.get("success") is True
+        and result.get("execution_mode") == "full_stack"
+        and isinstance(assessment, Mapping)
+        and assessment.get("planning_architecture") == "vad_route_manager_hybrid"
+        and assessment.get("route_completion") == "PASS"
+        and isinstance(final, Mapping)
+        and final.get("goal_reached") is True
+        and final.get("route_status") == "goal_reached"
+    )
+
+
+def _camera_queue_snapshot(directory: Path, label: str) -> dict[str, Any]:
+    try:
+        stack_lines = (directory / "stack.log").read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines()
+        recorder_lines = (directory / "recorder.log").read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines()
+    except OSError as error:
+        raise PublicationError(f"cannot read {label} queue diagnostics: {error}") from error
+    queue_pattern = re.compile(
+        r"\[INFO\s+([0-9]+(?:\.[0-9]+)?)\].*?VAD frame queued: "
+        r"source_stamp_ns=(\d+).*?assembled=(\d+).*?"
+        r"capacity_pruned=(\d+).*?superseded=(\d+).*?"
+        r"mailbox_submitted=(\d+).*?coalesced_drops=(\d+).*?"
+        r"received_images_min=(\d+).*?received_images_max=(\d+)"
+    )
+    inference_pattern = re.compile(
+        r"published_count=(\d+).*?mailbox_taken=(\d+).*?coalesced_drops=(\d+)"
+    )
+
+    def queue_record(line_number: int, values: Sequence[str]) -> dict[str, Any]:
+        return {
+            "line_number": line_number,
+            "wall_sec": values[0],
+            "source_stamp_ns": int(values[1]),
+            "assembled": int(values[2]),
+            "capacity_pruned": int(values[3]),
+            "superseded": int(values[4]),
+            "mailbox_submitted": int(values[5]),
+            "coalesced_drops": int(values[6]),
+            "received_images_min": int(values[7]),
+            "received_images_max": int(values[8]),
+        }
+
+    queue_records: list[dict[str, Any]] = []
+    inference_records: list[dict[str, Any]] = []
+    for line_number, line in enumerate(stack_lines, start=1):
+        queue_match = queue_pattern.search(line)
+        if queue_match is not None:
+            queue_records.append(queue_record(line_number, queue_match.groups()))
+        inference_match = inference_pattern.search(line)
+        if inference_match is not None:
+            published, mailbox_taken, coalesced = (
+                int(value) for value in inference_match.groups()
+            )
+            inference_records.append(
+                {
+                    "line_number": line_number,
+                    "published_count": published,
+                    "mailbox_taken": mailbox_taken,
+                    "coalesced_drops": coalesced,
+                }
+            )
+    recorder_marker = None
+    recorder_pattern = re.compile(
+        r"\[INFO\s+([0-9]+(?:\.[0-9]+)?)\].*?Recording\.\.\."
+    )
+    for line_number, line in enumerate(recorder_lines, start=1):
+        match = recorder_pattern.search(line)
+        if match is not None:
+            recorder_marker = {
+                "line_number": line_number,
+                "wall_sec": match.group(1),
+            }
+            break
+    if not queue_records or not inference_records or recorder_marker is None:
+        raise PublicationError(f"{label} lacks timestamped queue/recorder counters")
+    initial_superseded = queue_records[0]["superseded"]
+    transition = next(
+        (
+            record
+            for record in queue_records[1:]
+            if record["superseded"] != initial_superseded
+        ),
+        None,
+    )
+    transition_after_recorder = bool(
+        transition is not None
+        and float(transition["wall_sec"]) >= float(recorder_marker["wall_sec"])
+    )
+    return {
+        "queue_sample_count": len(queue_records),
+        "first": queue_records[0],
+        "first_superseded_transition": transition,
+        "last": queue_records[-1],
+        "final_inference": inference_records[-1],
+        "recorder_start": recorder_marker,
+        "transition_after_recorder": transition_after_recorder,
+    }
+
+
+def _source_record(
+    root: Path, source: Path, published_file: str, label: str
+) -> dict[str, Any]:
+    resolved = _inside(root, source, label)
+    if source.is_symlink() or not resolved.is_file():
+        raise PublicationError(f"{label} is missing or symlinked: {source}")
+    return {
+        "source": str(resolved),
+        "sha256": _sha256(resolved),
+        "size_bytes": resolved.stat().st_size,
+        "published_file": published_file,
+    }
+
+
+def _telemetry_window_diagnostics(
+    matrix_root: Path, trials: Sequence[VadTrial]
+) -> dict[str, Any] | None:
+    telemetry_root = matrix_root / "host_telemetry"
+    if not telemetry_root.exists():
+        return None
+    sources = {
+        "vmstat": _inside(
+            matrix_root, telemetry_root / "vmstat.log", "campaign vmstat telemetry"
+        ),
+        "nvidia_smi_dmon": _inside(
+            matrix_root,
+            telemetry_root / "nvidia_smi_dmon.log",
+            "campaign NVIDIA telemetry",
+        ),
+        "pidstat": _inside(
+            matrix_root, telemetry_root / "pidstat.log", "campaign pidstat telemetry"
+        ),
+    }
+    if any(path.is_symlink() or not path.is_file() for path in sources.values()):
+        raise PublicationError("camera-source campaign host telemetry is incomplete")
+    ranked: list[tuple[float, VadTrial]] = []
+    for trial in trials:
+        metrics = trial.result.get("metrics")
+        if not isinstance(metrics, Mapping):
+            continue
+        sim_elapsed = _finite_number(
+            metrics.get("sim_elapsed_sec"), "diagnostic simulation elapsed", positive=True
+        )
+        wall_elapsed = _finite_number(
+            metrics.get("wall_elapsed_sec"), "diagnostic wall elapsed", positive=True
+        )
+        ranked.append((sim_elapsed / wall_elapsed, trial))
+    if not ranked:
+        raise PublicationError("camera-source campaign has no measurable trial RTF")
+    rtf, trial = min(ranked, key=lambda item: item[0])
+    if trial.trial_id is None:  # pragma: no cover - matrix trials are labeled.
+        raise PublicationError("lowest-RTF diagnostic trial has no trial id")
+    kst = ZoneInfo("Asia/Seoul")
+    started = _parse_timestamp(
+        trial.result.get("started_at"), "lowest-RTF trial started_at"
+    ).astimezone(kst)
+    finished = _parse_timestamp(
+        trial.result.get("finished_at"), "lowest-RTF trial finished_at"
+    ).astimezone(kst)
+    window_start = started.replace(microsecond=0)
+    window_end = finished.replace(microsecond=0)
+    if window_end < window_start:
+        raise PublicationError("lowest-RTF telemetry window is reversed")
+
+    vmstat_lines = sources["vmstat"].read_text(
+        encoding="utf-8", errors="replace"
+    ).splitlines()
+    vmstat_rows: list[str] = []
+    vmstat_timestamps: list[datetime] = []
+    idle_values: list[int] = []
+    iowait_values: list[int] = []
+    for line in vmstat_lines:
+        parts = line.split()
+        if len(parts) < 19 or re.fullmatch(r"\d{4}-\d{2}-\d{2}", parts[-2]) is None:
+            continue
+        try:
+            timestamp = datetime.fromisoformat(
+                f"{parts[-2]}T{parts[-1]}"
+            ).replace(tzinfo=kst)
+            idle = int(parts[-5])
+            iowait = int(parts[-4])
+        except (ValueError, IndexError) as error:
+            raise PublicationError(f"invalid vmstat telemetry row: {line!r}") from error
+        if window_start <= timestamp <= window_end:
+            vmstat_rows.append(line)
+            vmstat_timestamps.append(timestamp)
+            idle_values.append(idle)
+            iowait_values.append(iowait)
+
+    dmon_lines = sources["nvidia_smi_dmon"].read_text(
+        encoding="utf-8", errors="replace"
+    ).splitlines()
+    dmon_rows: list[str] = []
+    dmon_timestamps: list[datetime] = []
+    gpu_sm_values: list[int] = []
+    for line in dmon_lines:
+        parts = line.split()
+        if len(parts) < 8 or re.fullmatch(r"\d{8}", parts[0]) is None:
+            continue
+        try:
+            timestamp = datetime.strptime(
+                f"{parts[0]} {parts[1]}", "%Y%m%d %H:%M:%S"
+            ).replace(tzinfo=kst)
+            sm_percent = int(parts[6])
+        except (ValueError, IndexError) as error:
+            raise PublicationError(f"invalid NVIDIA telemetry row: {line!r}") from error
+        if window_start <= timestamp <= window_end:
+            dmon_rows.append(line)
+            dmon_timestamps.append(timestamp)
+            gpu_sm_values.append(sm_percent)
+    if not vmstat_rows or not dmon_rows:
+        raise PublicationError("lowest-RTF telemetry window has no CPU/GPU samples")
+
+    pidstat_lines = sources["pidstat"].read_text(
+        encoding="utf-8", errors="replace"
+    ).splitlines()
+    host_header = next((line for line in pidstat_lines if line.strip()), None)
+    cpu_match = re.search(r"\((\d+) CPU\)", host_header or "")
+    if host_header is None or cpu_match is None:
+        raise PublicationError("pidstat telemetry has no host CPU-count header")
+
+    identity = f"{trial.map_id}_{trial.trial_id}"
+    generated_text = {
+        f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/{identity}_vmstat_window.log": (
+            "\n".join(vmstat_lines[:2] + vmstat_rows) + "\n"
+        ),
+        f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/{identity}_nvidia_smi_dmon_window.log": (
+            "\n".join(dmon_lines[:2] + dmon_rows) + "\n"
+        ),
+        f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/{identity}_pidstat_host_header.txt": (
+            host_header + "\n"
+        ),
+    }
+    window_files = {
+        name: {
+            "published_file": name,
+            "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            "size_bytes": len(content.encode("utf-8")),
+        }
+        for name, content in generated_text.items()
+    }
+    envelope_seconds = int((window_end - window_start).total_seconds()) + 1
+
+    def timestamp_coverage(values: Sequence[datetime]) -> dict[str, Any]:
+        unique = sorted(set(values))
+        maximum_gap = max(
+            (
+                int((current - previous).total_seconds())
+                for previous, current in zip(unique, unique[1:])
+            ),
+            default=0,
+        )
+        return {
+            "raw_row_count": len(values),
+            "unique_timestamp_count": len(unique),
+            "duplicate_row_count": len(values) - len(unique),
+            "missing_timestamp_count": envelope_seconds - len(unique),
+            "unique_timestamp_coverage_percent": (
+                100.0 * len(unique) / envelope_seconds
+            ),
+            "maximum_timestamp_gap_sec": maximum_gap,
+        }
+    result_path = trial.directory / "result.json"
+    telemetry_source_records: dict[str, dict[str, Any]] = {}
+    for name, path in sources.items():
+        source_record = {
+            "source": str(path),
+            "sha256": _sha256(path),
+            "size_bytes": path.stat().st_size,
+        }
+        if name != "pidstat":
+            source_record["published_file"] = (
+                f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/host_telemetry/{path.name}"
+            )
+        telemetry_source_records[name] = source_record
+    return {
+        "identity": {"map_id": trial.map_id, "trial_id": trial.trial_id},
+        "result": {
+            "source": str(result_path.resolve()),
+            "sha256": _sha256(result_path),
+            "published_file": (
+                f"{trial.map_id}/autoware_vad/{trial.trial_id}/"
+                "autoware_vad_result.json"
+            ),
+            "started_at": trial.result["started_at"],
+            "finished_at": trial.result["finished_at"],
+        },
+        "window": {
+            "timezone": "Asia/Seoul",
+            "selection": "whole-second envelope, both endpoints inclusive",
+            "start": window_start.isoformat(),
+            "end": window_end.isoformat(),
+            "envelope_seconds": envelope_seconds,
+            "row_weighting": "every raw row; duplicate timestamps retained",
+        },
+        "host_cpu_count": int(cpu_match.group(1)),
+        "real_time_factor": rtf,
+        "calculation": {
+            "real_time_factor": "metrics.sim_elapsed_sec / metrics.wall_elapsed_sec",
+            "cpu_idle_average_percent": "sum(vmstat.id) / vmstat_sample_count",
+            "gpu_sm_average_percent": "sum(nvidia_smi_dmon.sm) / gpu_sample_count",
+        },
+        "measurements": {
+            "vmstat_sample_count": len(idle_values),
+            "vmstat_timestamp_coverage": timestamp_coverage(vmstat_timestamps),
+            "cpu_idle_sum": sum(idle_values),
+            "cpu_idle_average_percent": sum(idle_values) / len(idle_values),
+            "cpu_idle_minimum_percent": min(idle_values),
+            "iowait_average_percent": sum(iowait_values) / len(iowait_values),
+            "iowait_maximum_percent": max(iowait_values),
+            "gpu_sample_count": len(gpu_sm_values),
+            "gpu_timestamp_coverage": timestamp_coverage(dmon_timestamps),
+            "gpu_sm_sum": sum(gpu_sm_values),
+            "gpu_sm_average_percent": sum(gpu_sm_values) / len(gpu_sm_values),
+            "gpu_sm_maximum_percent": max(gpu_sm_values),
+        },
+        "source_files": telemetry_source_records,
+        "pidstat_archival_policy": (
+            "188 MB process log is SHA-bound but not copied; only the host header "
+            "needed for the 24-CPU claim is published"
+        ),
+        "window_files": window_files,
+        "_generated_text": generated_text,
+    }
+
+
+def collect_camera_source_campaign_diagnostics(
+    matrix_root_value: Path | None,
+    runtime_profile_selector: str,
+    runtime_profile: Mapping[str, Any] | None,
+    trials: Sequence[VadTrial],
+) -> dict[str, Any] | None:
+    if runtime_profile_selector != CAMERA_SOURCE_5HZ_SELECTOR:
+        return None
+    if matrix_root_value is None or not isinstance(runtime_profile, Mapping):
+        raise PublicationError("camera-source diagnostics require the matrix profile")
+    matrix_root = matrix_root_value.expanduser().resolve()
+    selected = {
+        (trial.map_id, str(trial.trial_id)): trial
+        for trial in trials
+        if trial.trial_id is not None
+    }
+    retry_records: list[dict[str, Any]] = []
+    for identity, selected_trial in sorted(selected.items()):
+        attempt_match = re.fullmatch(r"attempt_(\d+)", selected_trial.directory.name)
+        if attempt_match is None:
+            continue
+        selected_number = int(attempt_match.group(1))
+        for candidate in sorted(selected_trial.directory.parent.glob("attempt_*")):
+            candidate_match = re.fullmatch(r"attempt_(\d+)", candidate.name)
+            if (
+                candidate_match is None
+                or not candidate.is_dir()
+                or int(candidate_match.group(1)) >= selected_number
+            ):
+                continue
+            candidate = _inside(
+                matrix_root, candidate, "camera-source rejected retry attempt"
+            )
+            required = [candidate / name for name in CAMERA_SOURCE_RETRY_RAW_NAMES]
+            if any(not path.is_file() or path.is_symlink() for path in required):
+                continue
+            result = _read_object(candidate / "result.json", "retry result")
+            if not _full_stack_result_pass(result):
+                continue
+            runtime = _read_runtime_environment(
+                candidate / "runtime.env", "retry camera-source runtime"
+            )
+            latency = _read_object(
+                candidate / "latency/e2e_latency.json", "retry camera-source latency"
+            )
+            try:
+                _matrix_camera_source_5hz_evidence(
+                    candidate, runtime, runtime_profile, latency
+                )
+            except MatrixValidationError as error:
+                gate_error = str(error)
+            else:
+                continue
+            queue = _camera_queue_snapshot(candidate, f"{identity} {candidate.name}")
+            transition = queue["first_superseded_transition"]
+            if (
+                queue["first"]["superseded"] != 0
+                or not isinstance(transition, Mapping)
+                or transition.get("superseded") != 1
+                or queue["last"]["superseded"] != 1
+                or queue["transition_after_recorder"] is not True
+            ):
+                continue
+            selected_queue = _camera_queue_snapshot(
+                selected_trial.directory, f"{identity} selected"
+            )
+            selected_evidence = _fresh_camera_source_5hz_evidence(
+                selected_trial.directory, runtime_profile, f"{identity} selected"
+            )
+            equality: dict[str, Any] = {}
+            for name in (
+                "source_route.json",
+                "aligned_route.json",
+                "launch_args.txt",
+                "sensor_mapping_provenance/sensor_mapping.yaml",
+                "rviz_capture_provenance/autoware_vad_carla.rviz",
+            ):
+                rejected_digest = _sha256(candidate / name)
+                selected_digest = _sha256(selected_trial.directory / name)
+                equality[name] = {
+                    "equal": rejected_digest == selected_digest,
+                    "sha256": rejected_digest,
+                }
+            dynamic_runtime_fields = {
+                "CARLA_GENERATION_ID",
+                "CARLA_OWNER_PID",
+                "CARLA_OWNER_PGID",
+                "CARLA_SERVER_LOG",
+                "EFFECTIVE_ROUTE_FILE",
+                "RVIZ_CAPTURE_CONFIG",
+                "RVIZ_CAPTURE_WINDOW_PID",
+                "RVIZ_CAPTURE_WINDOW_PGID",
+                "RVIZ_CAPTURE_STACK_PGID",
+            }
+            selected_runtime = _read_runtime_environment(
+                selected_trial.directory / "runtime.env",
+                "selected retry-comparison runtime",
+            )
+            rejected_projection = {
+                key: value
+                for key, value in runtime.items()
+                if key not in dynamic_runtime_fields
+            }
+            selected_projection = {
+                key: value
+                for key, value in selected_runtime.items()
+                if key not in dynamic_runtime_fields
+            }
+            equality["runtime_contract_projection"] = {
+                "equal": rejected_projection == selected_projection,
+                "excluded_run_identity_fields": sorted(dynamic_runtime_fields),
+                "field_count": len(rejected_projection),
+                "sha256": _sha256_json(rejected_projection),
+                "canonicalization": PUBLICATION_SELECTION_CANONICALIZATION,
+            }
+            if any(record["equal"] is not True for record in equality.values()):
+                raise PublicationError(
+                    f"{identity} rejected retry does not share immutable inputs"
+                )
+            retry_directory = (
+                f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/"
+                f"{identity[0]}_{identity[1]}_{candidate.name}"
+            )
+            source_files = {
+                name: _source_record(
+                    matrix_root,
+                    candidate / name,
+                    f"{retry_directory}/{name}",
+                    f"{identity} {candidate.name} {name}",
+                )
+                for name in CAMERA_SOURCE_RETRY_RAW_NAMES
+            }
+            retry_records.append(
+                {
+                    "identity": {"map_id": identity[0], "trial_id": identity[1]},
+                    "attempt": candidate.name,
+                    "selected_attempt": selected_trial.directory.name,
+                    "full_stack_result_pass": True,
+                    "camera_source_matrix_gate": "FAIL",
+                    "camera_source_gate_error": gate_error,
+                    "failure_classification": "superseded_transition_after_recorder",
+                    "immutable_input_equality": equality,
+                    "rejected_queue": queue,
+                    "selected_queue": selected_queue,
+                    "selected_camera_source_evidence": selected_evidence,
+                    "selected_published_directory": (
+                        f"{identity[0]}/autoware_vad/{identity[1]}"
+                    ),
+                    "source_files": source_files,
+                }
+            )
+    host = _telemetry_window_diagnostics(matrix_root, trials)
+    console_files: dict[str, dict[str, Any]] = {}
+    for name in ("campaign_console.log", "campaign_console_retry_001.log"):
+        source = matrix_root / name
+        if source.is_file() and not source.is_symlink():
+            console_files[name] = _source_record(
+                matrix_root,
+                source,
+                f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/{name}",
+                f"camera-source {name}",
+            )
+    return {
+        "schema_version": 1,
+        "status": "PASS",
+        "runtime_profile_selector": runtime_profile_selector,
+        "matrix_root": str(matrix_root),
+        "retry_attempts": retry_records,
+        "host_telemetry": host,
+        "campaign_console_files": console_files,
+    }
+
+
+def _copy_camera_source_campaign_diagnostics(
+    diagnostics: Mapping[str, Any], staging: Path
+) -> dict[str, Any]:
+    public = dict(diagnostics)
+    public_retries: list[dict[str, Any]] = []
+    published_files: list[str] = []
+    for retry in diagnostics["retry_attempts"]:
+        public_retry = dict(retry)
+        public_sources: dict[str, dict[str, Any]] = {}
+        for name, source_record in retry["source_files"].items():
+            destination = staging / source_record["published_file"]
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            _copy_verified_source(
+                Path(source_record["source"]),
+                destination,
+                source_record["sha256"],
+                f"camera-source retry diagnostic {name}",
+            )
+            public_sources[name] = dict(source_record)
+            published_files.append(source_record["published_file"])
+        public_retry["source_files"] = public_sources
+        public_retries.append(public_retry)
+    public["retry_attempts"] = public_retries
+
+    public_console_files: dict[str, dict[str, Any]] = {}
+    for name, source_record in diagnostics.get("campaign_console_files", {}).items():
+        destination = staging / source_record["published_file"]
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        _copy_verified_source(
+            Path(source_record["source"]),
+            destination,
+            source_record["sha256"],
+            f"camera-source campaign console {name}",
+        )
+        public_console_files[name] = dict(source_record)
+        published_files.append(source_record["published_file"])
+    public["campaign_console_files"] = public_console_files
+
+    host = diagnostics.get("host_telemetry")
+    if isinstance(host, Mapping):
+        public_host = dict(host)
+        generated_text = host.get("_generated_text")
+        if not isinstance(generated_text, Mapping):
+            raise PublicationError("host telemetry diagnostics lost generated excerpts")
+        public_host.pop("_generated_text", None)
+        for name, source_record in host["source_files"].items():
+            published_file = source_record.get("published_file")
+            if published_file is None:
+                continue
+            destination = staging / published_file
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            _copy_verified_source(
+                Path(source_record["source"]),
+                destination,
+                source_record["sha256"],
+                f"camera-source host telemetry {name}",
+            )
+            published_files.append(published_file)
+        for relative, content in generated_text.items():
+            if not isinstance(relative, str) or not isinstance(content, str):
+                raise PublicationError("host telemetry excerpt is malformed")
+            destination = staging / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(content, encoding="utf-8")
+            expected = host["window_files"][relative]
+            if (
+                _sha256(destination) != expected["sha256"]
+                or destination.stat().st_size != expected["size_bytes"]
+            ):
+                raise PublicationError("host telemetry excerpt changed while publishing")
+            published_files.append(relative)
+        public["host_telemetry"] = public_host
+
+    summary_relative = f"{CAMERA_SOURCE_DIAGNOSTICS_DIR}/campaign_diagnostics.json"
+    summary_path = staging / summary_relative
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(
+        json.dumps(public, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    published_files.append(summary_relative)
+    return {
+        "status": "PASS",
+        "summary_file": summary_relative,
+        "summary_sha256": _sha256(summary_path),
+        "retry_attempt_count": len(public_retries),
+        "host_telemetry_identity": (
+            public["host_telemetry"]["identity"]
+            if isinstance(public.get("host_telemetry"), Mapping)
+            else None
+        ),
+        "files": sorted(published_files),
+    }
 
 
 def _validate_speed_runtime_binding(
@@ -2740,6 +3571,10 @@ def collect_owned_window_visual_audit(
         sources["v16_owned_window_visual_review.json"],
         "owned-window visual review",
     )
+    if audit.get("schema_version") != 2:
+        raise PublicationError(
+            "owned-window visual audit schema_version must be 2"
+        )
     expected_count = len(expected_identities)
     expected_map_count = len({identity[0] for identity in expected_identities})
     counts = audit.get("counts")
@@ -2939,6 +3774,52 @@ def collect_owned_window_visual_audit(
             raise PublicationError(
                 f"visual audit scene {identity} does not match operator review JSON"
             )
+
+    selection = audit.get("publication_selection")
+    if not isinstance(selection, Mapping):
+        raise PublicationError(
+            "owned-window visual audit has no publication-selection binding"
+        )
+    selection_records = selection.get("records")
+    if not isinstance(selection_records, list):
+        raise PublicationError(
+            "owned-window visual audit publication-selection records must be a list"
+        )
+    expected_selection_records: list[dict[str, str]] = []
+    for map_id, trial_id in sorted(expected_identities):
+        scene = audit_scenes[(map_id, trial_id)]
+        route = scene.get("source_route")
+        source = route.get("publication_source") if isinstance(route, Mapping) else None
+        if not isinstance(source, str) or not source:
+            raise PublicationError(
+                f"visual audit scene {(map_id, trial_id)} has no publication source"
+            )
+        expected_selection_records.append(
+            {
+                "map_id": map_id,
+                "trial_id": trial_id,
+                "trial_directory": str(
+                    expected_trial_directories[(map_id, trial_id)]
+                    .expanduser()
+                    .resolve()
+                ),
+                "source": source,
+            }
+        )
+    selection_source_file = selection.get("selection_source_file")
+    if (
+        not isinstance(selection_source_file, str)
+        or not selection_source_file
+        or selection.get("scope") != PUBLICATION_SELECTION_SCOPE
+        or selection.get("canonicalization")
+        != PUBLICATION_SELECTION_CANONICALIZATION
+        or selection.get("record_count") != expected_count
+        or selection_records != expected_selection_records
+        or selection.get("sha256") != _sha256_json(selection_records)
+    ):
+        raise PublicationError(
+            "owned-window visual audit publication-selection binding mismatch"
+        )
 
     contact = audit.get("contact_sheet")
     contact_path = sources["v16_owned_window_contact_sheet.png"]
@@ -3189,6 +4070,7 @@ def _markdown(
     report_path: Path | None,
     owned_window_visual_audit_record: Mapping[str, Any] | None = None,
     report_preamble: Mapping[str, Any] | None = None,
+    camera_source_diagnostics_record: Mapping[str, Any] | None = None,
     *,
     embed_report_preamble: bool = False,
 ) -> str:
@@ -3328,9 +4210,14 @@ def _markdown(
             if isinstance(matrix_plan_file, str)
             else "source matrix plan JSON"
         )
-        if vad_matrix_record.get("runtime_profile_selector") == "speed_30kph":
+        if _is_speed_30kph_profile(
+            str(vad_matrix_record.get("runtime_profile_selector"))
+        ):
             interpretation = vad_matrix_record.get("evidence_interpretation")
-            if interpretation != SPEED_30KPH_PUBLICATION_INTERPRETATION:
+            expected_interpretation = _speed_30kph_publication_interpretation(
+                str(vad_matrix_record.get("runtime_profile_selector"))
+            )
+            if interpretation != expected_interpretation:
                 raise PublicationError(
                     "speed_30kph publication lost its simulation-screening boundary"
                 )
@@ -3346,6 +4233,22 @@ def _markdown(
                     "",
                 ]
             )
+            if (
+                vad_matrix_record.get("runtime_profile_selector")
+                == CAMERA_SOURCE_5HZ_SELECTOR
+            ):
+                lines.extend(
+                    [
+                        "> **5 Hz camera-source contract.** All six CARLA RGB "
+                        "cameras use source `sensor_tick=0.2 s` and reliable ROS "
+                        "publication at 5 Hz; IMU/GNSS settings are unchanged. "
+                        "Publication freshly recomputes the six topic stamp rates, "
+                        "worst stamp gap, synchronized-bundle coverage, candidate/front "
+                        "coverage, and VAD queue/mailbox loss directly from `runtime.env`, "
+                        "the pinned sensor mapping, latency JSON, and recorder/stack logs.",
+                        "",
+                    ]
+                )
         lines.extend(
             [
                 f"Matrix campaign status: **{matrix_status}**; runnable map PASS "
@@ -3360,7 +4263,9 @@ def _markdown(
                 f"`{vad_matrix_record['generated_at']}`).",
                 "",
                 "The terminal table below is immutable publication provenance. Matrix "
-                "PASS trials are revalidated from status + `matrix_validation.json`. "
+                "PASS trials are revalidated from status + `matrix_validation.json`; "
+                "camera-source trials additionally re-run the raw cadence and loss "
+                "validator. "
                 "Explicit supplemental PASS rows are reported separately with capture "
                 "timing; they never change a matrix `FAILED` or `BLOCKED` row.",
                 "",
@@ -3621,6 +4526,47 @@ def _markdown(
                         f", observed max `{maximum_speed:.3f} m/s` "
                         f"(`{maximum_speed * 3.6:.2f} kph`)"
                     )
+            camera_source = record.get("camera_source_provenance")
+            if isinstance(camera_source, Mapping):
+                camera_validation = camera_source.get("validation")
+                if not isinstance(camera_validation, Mapping):
+                    raise PublicationError(
+                        "camera-source publication lost its measured validation"
+                    )
+                coverage = _finite_number(
+                    camera_validation.get("bundle_coverage_percent"),
+                    "published camera bundle coverage",
+                )
+                maximum_gap = _finite_number(
+                    camera_validation.get("maximum_camera_stamp_gap_sec"),
+                    "published maximum camera stamp gap",
+                )
+                candidate_count = camera_validation.get("candidate_count")
+                front_count = camera_validation.get("front_count")
+                inference = camera_validation.get("vad_inference")
+                if (
+                    isinstance(candidate_count, bool)
+                    or not isinstance(candidate_count, int)
+                    or isinstance(front_count, bool)
+                    or not isinstance(front_count, int)
+                    or not isinstance(inference, Mapping)
+                ):
+                    raise PublicationError(
+                        "camera-source publication has invalid measured counts"
+                    )
+                analysis += (
+                    f", [camera cadence/integrity]"
+                    f"({asset(roles['matrix_validation'])})"
+                    f" (bundle `{coverage:.2f}%`, worst gap "
+                    f"`{maximum_gap:.3f} s`, candidate/front "
+                    f"`{candidate_count}/{front_count}`, queue drops "
+                    f"`{inference.get('coalesced_drops')}`), "
+                    f"[sensor mapping]({asset(roles['sensor_mapping'])}), "
+                    f"[mapping checksum]({asset(roles['sensor_mapping_checksums'])}), "
+                    f"[runtime args]({asset(roles['launch_args'])}), "
+                    f"[stack log]({asset(roles['stack_log'])}), "
+                    f"[recorder log]({asset(roles['recorder_log'])})"
+                )
             if "rviz_config" in roles:
                 analysis += (
                     f", [capture runtime]({asset(roles['capture_runtime'])}), "
@@ -3726,6 +4672,40 @@ def _markdown(
                 f"[operator review JSON]({asset(review_json)}).",
                 "",
                 f"![All owned-window Autoware VAD scenes]({asset(contact)})",
+            ]
+        )
+    if camera_source_diagnostics_record is not None:
+        diagnostic_files = camera_source_diagnostics_record["files"]
+
+        def diagnostic_file(suffix: str) -> str:
+            matches = [
+                value
+                for value in diagnostic_files
+                if isinstance(value, str) and value.endswith(suffix)
+            ]
+            if len(matches) != 1:
+                raise PublicationError(
+                    f"camera-source diagnostics lack one {suffix!r} file"
+                )
+            return matches[0]
+
+        lines.extend(
+            [
+                "",
+                "## Camera-source retry and host diagnostics",
+                "",
+                "The retry classification and the lowest-RTF host measurements are "
+                "recomputable from archived raw evidence and deterministic "
+                "whole-second telemetry excerpts.",
+                "",
+                f"- [Diagnostic summary JSON]({asset(camera_source_diagnostics_record['summary_file'])})",
+                f"- Town02 rejected retry: [result]({asset(diagnostic_file('attempt_001/result.json'))}), "
+                f"[stack log]({asset(diagnostic_file('attempt_001/stack.log'))}), "
+                f"[recorder log]({asset(diagnostic_file('attempt_001/recorder.log'))}), "
+                f"[source route]({asset(diagnostic_file('attempt_001/source_route.json'))})",
+                f"- Lowest-RTF window: [vmstat rows]({asset(diagnostic_file('_vmstat_window.log'))}), "
+                f"[GPU dmon rows]({asset(diagnostic_file('_nvidia_smi_dmon_window.log'))}), "
+                f"[24-CPU host header]({asset(diagnostic_file('_pidstat_host_header.txt'))})",
             ]
         )
     lines.extend(["", "## VS Code Korean IME desktop proof", ""])
@@ -4036,6 +5016,86 @@ def _copy_vad_trial(
             **dict(trial.centered_capture_provenance),
             "published_files": centered_files,
         }
+    published_camera_source_provenance = None
+    if trial.runtime_profile_selector == CAMERA_SOURCE_5HZ_SELECTOR:
+        validation = _read_object(
+            trial.directory / "matrix_validation.json",
+            f"{trial.map_id}:{trial.trial_id} matrix validation",
+        )
+        camera_evidence = validation.get("camera_source_contract")
+        runtime_profile = validation.get("runtime_profile")
+        validated_camera_source = (
+            _validated_camera_source_5hz_evidence(
+                trial.directory,
+                runtime_profile,
+                camera_evidence,
+                f"{trial.map_id}:{trial.trial_id}",
+            )
+            if isinstance(runtime_profile, Mapping)
+            else None
+        )
+        if validated_camera_source is None:
+            raise PublicationError(
+                f"{trial.map_id}:{trial.trial_id} lost freshly validated "
+                "camera-source evidence"
+            )
+        fresh_camera_evidence, raw_provenance = validated_camera_source
+        provenance_files: dict[str, dict[str, Any]] = {}
+        for name in (
+            *CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+            "runtime.env",
+            "latency/e2e_latency.json",
+        ):
+            source_record = raw_provenance[name]
+            source = Path(str(source_record["source"]))
+            expected_sha256 = str(source_record["sha256"])
+            destination = output_dir / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            _copy_verified_source(
+                source,
+                destination,
+                expected_sha256,
+                f"{trial.map_id}:{trial.trial_id} {name}",
+            )
+            relative = (relative_dir / name).as_posix()
+            if relative not in relative_files:
+                relative_files.append(relative)
+            provenance_files[name] = {
+                "published_file": relative,
+                "sha256": expected_sha256,
+                "size_bytes": source_record["size_bytes"],
+            }
+        file_roles.update(
+            {
+                "matrix_validation": provenance_files[
+                    "matrix_validation.json"
+                ]["published_file"],
+                "stack_log": provenance_files["stack.log"][
+                    "published_file"
+                ],
+                "recorder_log": provenance_files["recorder.log"][
+                    "published_file"
+                ],
+                "launch_args": provenance_files["launch_args.txt"][
+                    "published_file"
+                ],
+                "route_manager_parameters": provenance_files[
+                    "vad_route_manager.params.yaml"
+                ]["published_file"],
+                "sensor_mapping": provenance_files[
+                    "sensor_mapping_provenance/sensor_mapping.yaml"
+                ]["published_file"],
+                "sensor_mapping_checksums": provenance_files[
+                    "sensor_mapping_provenance/SHA256SUMS"
+                ]["published_file"],
+            }
+        )
+        published_camera_source_provenance = {
+            "status": "PASS",
+            "contract": dict(CAMERA_SOURCE_5HZ_CONTRACT),
+            "validation": fresh_camera_evidence,
+            "files": provenance_files,
+        }
     refresh_record = None
     published_capture = trial.desktop_capture
     if visual_refresh is not None:
@@ -4130,7 +5190,9 @@ def _copy_vad_trial(
         "execution_mode": "full_stack",
         "planning_architecture": "vad_route_manager_hybrid",
         "evidence_interpretation": (
-            dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
+            _speed_30kph_publication_interpretation(
+                trial.runtime_profile_selector
+            )
             if trial.speed_profile is not None
             else None
         ),
@@ -4149,6 +5211,7 @@ def _copy_vad_trial(
         ),
         "speed_profile": published_speed_profile,
         "centered_capture_provenance": published_centered_capture,
+        "camera_source_provenance": published_camera_source_provenance,
         "visual_refresh": refresh_record,
         "file_roles": file_roles,
         "files": relative_files,
@@ -4309,8 +5372,11 @@ def _protect_existing_publication_profile(
     previous = _read_object(manifest_path, "previous publication")
     previous_selector = _published_runtime_profile_selector(previous)
     if previous_selector != requested_selector and (
-        requested_selector == "speed_30kph"
-        or previous_selector == "speed_30kph"
+        _is_speed_30kph_profile(requested_selector)
+        or (
+            previous_selector is not None
+            and _is_speed_30kph_profile(previous_selector)
+        )
     ):
         raise PublicationError(
             "refusing to overwrite an existing publication with a different runtime "
@@ -4384,12 +5450,27 @@ def publish_assets(
         vad_matrix_root,
         vad_runtime_profile_selector,
     )
-    if vad_runtime_profile_selector == "speed_30kph" and vad_visual_refresh_paths:
+    if (
+        _is_speed_30kph_profile(vad_runtime_profile_selector)
+        and vad_visual_refresh_paths
+    ):
         raise PublicationError(
             "speed_30kph publication does not accept an unbound visual refresh; "
             "publish the matrix trial's own centered capture"
         )
     vad_trials = collect_vad_trials(snapshot, vad_trial_specs)
+    camera_source_diagnostics = collect_camera_source_campaign_diagnostics(
+        Path(vad_matrix_record["matrix_root"])
+        if vad_matrix_record is not None
+        else None,
+        vad_runtime_profile_selector,
+        (
+            vad_matrix_record.get("runtime_profile")
+            if vad_matrix_record is not None
+            else None
+        ),
+        vad_trials,
+    )
     owned_window_visual_audit = collect_owned_window_visual_audit(
         owned_window_visual_audit_dir,
         {
@@ -4444,6 +5525,13 @@ def publish_assets(
             if owned_window_visual_audit is not None
             else None
         )
+        published_camera_source_diagnostics = (
+            _copy_camera_source_campaign_diagnostics(
+                camera_source_diagnostics, staging
+            )
+            if camera_source_diagnostics is not None
+            else None
+        )
         render_status_dashboard(snapshot, staging / DASHBOARD_NAME)
         if published_vad_matrix_record is not None:
             _copy_verified_source(
@@ -4478,6 +5566,9 @@ def publish_assets(
             report_path,
             published_owned_window_visual_audit,
             report_preamble,
+            camera_source_diagnostics_record=(
+                published_camera_source_diagnostics
+            ),
         )
         (staging / "README.md").write_text(readme, encoding="utf-8")
 
@@ -4491,15 +5582,17 @@ def publish_assets(
                 ),
                 "autoware_vad_visual_refresh": (
                     None
-                    if vad_runtime_profile_selector == "speed_30kph"
+                    if _is_speed_30kph_profile(vad_runtime_profile_selector)
                     else (
                         "same-route recommended-profile repeated full-stack PASS; "
                         "visual media only, original validation result preserved"
                     )
                 ),
                 "speed_30kph": (
-                    dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
-                    if vad_runtime_profile_selector == "speed_30kph"
+                    _speed_30kph_publication_interpretation(
+                        vad_runtime_profile_selector
+                    )
+                    if _is_speed_30kph_profile(vad_runtime_profile_selector)
                     else None
                 ),
             },
@@ -4515,6 +5608,9 @@ def publish_assets(
             "autoware_vad_matrix_source": published_vad_matrix_record,
             "vscode_ime_proof": ime_record,
             "owned_window_visual_audit": published_owned_window_visual_audit,
+            "camera_source_campaign_diagnostics": (
+                published_camera_source_diagnostics
+            ),
             "report_preamble": (
                 {
                     "source": report_preamble["source"],
@@ -4575,6 +5671,9 @@ def publish_assets(
             report_path,
             published_owned_window_visual_audit,
             report_preamble,
+            camera_source_diagnostics_record=(
+                published_camera_source_diagnostics
+            ),
             embed_report_preamble=True,
         )
         _atomic_write(report_path, report)
@@ -4675,13 +5774,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.vad_runtime_profile_selector,
             )
             if (
-                args.vad_runtime_profile_selector == "speed_30kph"
+                _is_speed_30kph_profile(args.vad_runtime_profile_selector)
                 and vad_visual_refreshes
             ):
                 raise PublicationError(
                     "speed_30kph publication does not accept an unbound visual refresh"
                 )
             vad = collect_vad_trials(snapshot, vad_trial_specs)
+            camera_diagnostics = collect_camera_source_campaign_diagnostics(
+                Path(matrix_record["matrix_root"])
+                if matrix_record is not None
+                else None,
+                args.vad_runtime_profile_selector,
+                (
+                    matrix_record.get("runtime_profile")
+                    if matrix_record is not None
+                    else None
+                ),
+                vad,
+            )
             visual_audit = collect_owned_window_visual_audit(
                 args.owned_window_visual_audit_dir,
                 {
@@ -4704,7 +5815,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"vad_visual_refreshes={len(visual_refreshes)} "
                 f"vscode_ime_proof={ime is not None} "
                 f"report_preamble={report_preamble is not None} "
-                f"owned_window_visual_audit={visual_audit is not None}"
+                f"owned_window_visual_audit={visual_audit is not None} "
+                f"camera_source_diagnostics={camera_diagnostics is not None}"
             )
             return 0
         payload = publish_assets(

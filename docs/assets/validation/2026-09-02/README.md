@@ -14,8 +14,12 @@ Candidate의 직진과 좌회전은 full-stack route, speed, camera/VAD integrit
 gap은 `0.200 s`였다.
 
 이 발행본은 CTrack만 선택한 기능·무결성 A/B이므로 matrix 상태가 의도적으로
-`INCOMPLETE (1/9 runnable maps)`이다. 전체 Town 검증의 기준 결과는
-[`../2026-09-01`](../2026-09-01/README.md)의 9-map, 18-trial PASS다.
+`INCOMPLETE (1/9 runnable maps)`이다. 같은 candidate를 실행 가능한 전체 Town으로
+확장한 최신 기준 결과는
+[`../2026-09-02-all-towns-camera-source-5hz`](../2026-09-02-all-towns-camera-source-5hz/README.md)의
+**COMPLETE 9/9, 직진·회전 18/18 PASS**다. 상세 수치와 끊김 원인 분석은
+[`validation-2026-09-02-all-towns-camera-source-5hz.md`](../../../validation-2026-09-02-all-towns-camera-source-5hz.md)에
+있다.
 
 ## 빠른 화면 확인
 

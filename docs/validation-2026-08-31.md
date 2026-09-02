@@ -1,7 +1,9 @@
 # Validation evidence
 
-> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 30 kph 9-map/18-trial 결과와
-> 전체화면 PNG/GIF는 [2026-09-01 검증 보고서](validation-2026-09-01.md)를 사용한다.
+> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 5 Hz camera-source 30 kph
+> 9-map/18-trial 결과와 차량 중심 전체화면 PNG/GIF는
+> [2026-09-02 전체 Town 검증 보고서](validation-2026-09-02-all-towns-camera-source-5hz.md)를
+> 사용한다. [2026-09-01 보고서](validation-2026-09-01.md)는 이전 30 kph 기준선이다.
 
 Source: [archived CARLA BasicAgent aggregate JSON](assets/validation/2026-08-31/carla_basicagent_sweep_aggregate.json) (`sha256:e2b1da4cba11f0ae5b663d6783737d6819149441637b8cc0a7768976ce609dfb`) — overall **COMPLETE**, selected success **9/9**.
 

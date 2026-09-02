@@ -183,7 +183,7 @@ def test_audit_selects_latest_strict_pass_and_matches_original_route(
     assert len(records) == 2
     straight = next(record for record in records if record["trial_id"] == "straight")
     assert straight["selected_attempt"] == "attempt_001"
-    assert straight["attempt_history"][-1]["strict_result_pass"] is False
+    assert straight["attempt_history"][-1]["full_stack_result_pass"] is False
     assert straight["source_route"]["status"] == "EXACT_MATCH"
     assert straight["capture"]["representative_frame"]["selection"] == (
         "route_evaluation_midpoint"
@@ -255,6 +255,17 @@ def test_cli_writes_pending_summary_and_contact_sheet(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stderr
     summary = json.loads((centered_root / "summary.json").read_text(encoding="utf-8"))
     assert summary["status"] == "MECHANICAL_PASS_VISUAL_PENDING"
+    assert summary["schema_version"] == 2
+    assert "publication_manifest" not in summary
+    selection = summary["publication_selection"]
+    assert selection["scope"] == summary_tool.PUBLICATION_SELECTION_SCOPE
+    assert selection["canonicalization"] == (
+        summary_tool.PUBLICATION_SELECTION_CANONICALIZATION
+    )
+    assert selection["record_count"] == 2
+    assert selection["records"] == sorted(
+        selection["records"], key=lambda record: (record["map_id"], record["trial_id"])
+    )
     assert summary["counts"] == {
         "maps": 1,
         "total": 2,
@@ -266,6 +277,27 @@ def test_cli_writes_pending_summary_and_contact_sheet(tmp_path: Path) -> None:
     assert (centered_root / "SUMMARY.md").is_file()
     with Image.open(centered_root / "contact_sheet.png") as sheet:
         assert sheet.size == (1920, 402)
+
+
+def test_publication_selection_digest_ignores_non_selection_manifest_fields(
+    tmp_path: Path,
+) -> None:
+    _, manifest = _fixture(tmp_path)
+    original = summary_tool._publication_selection(manifest, 1)
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["owned_window_visual_audit"] = {
+        "status": "PASS",
+        "files": ["audit.json"],
+    }
+    _write_json(manifest, payload)
+
+    unrelated_update = summary_tool._publication_selection(manifest, 1)
+
+    assert unrelated_update == original
+    payload["autoware_vad_publications"][0]["source"] = "changed-selection"
+    _write_json(manifest, payload)
+    changed_selection = summary_tool._publication_selection(manifest, 1)
+    assert changed_selection["sha256"] != original["sha256"]
 
 
 def test_visual_review_is_bound_to_representative_png_hashes(tmp_path: Path) -> None:

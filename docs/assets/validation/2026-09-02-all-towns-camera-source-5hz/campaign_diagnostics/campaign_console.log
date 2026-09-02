@@ -1,0 +1,462 @@
+vad_object_yaw patch is already applied (APPLIED).
+aeb_named_timeouts_oriented_bbox_vertical_overlap_and_longitudinal_roi patch is already applied (APPLIED).
+Verified VAD object-safety build provenance: /home/a/autoware_e2e/build/autoware_tensorrt_vad/e2e_object_safety_build_provenance.json
+autoware_lanelet2_extension finite-route patch is already applied (APPLIED).
+autoware_core finite-route patch is already applied (APPLIED).
+autoware_universe finite-route patch is already applied (APPLIED).
+Autoware mission planner lane-only fallback patch set is already applied (APPLIED).
+MISSION_PLANNER_BUILD_VERIFIED path=/home/a/autoware_e2e/build/autoware_mission_planner_universe/e2e_lane_only_build_provenance.json
+PLAN maps=19 runnable=9 profile=speed_30kph_camera_source_5hz output=/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1
+CARLA_HEALTH_PASS generation=town01_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town01_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town01_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town01 straight=straight turn=left
+CARLA_HEALTH_PASS generation=town01_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town01_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788312895.288093448] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788312900.314897015] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788312902.165273861] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788312903.716710721] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 201 frames (40.0 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town01_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town01 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town01_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town01_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788313079.078812938] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788313082.636587875] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788313084.420764634] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 102 frames (20.2 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town01/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town01_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town01 trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town02_opt_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town02_opt straight=straight turn=left
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788313320.538220847] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788313324.777044054] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788313326.575017663] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788313328.016468038] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 178 frames (35.4 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town02_opt_straight_attempt_001 stage=trial_cleanup mode=stopped
+ERROR: camera-source VAD queue/mailbox evidence reports loss or coalescing: published=272, mailbox_taken=272, mailbox_submitted=263, capacity_pruned=0, superseded=1, coalesced_drops=0
+CARLA_HEALTH_PASS generation=town02_opt_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town02_opt_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788313497.434730783] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788313500.934025179] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788313502.725231308] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 83 frames (16.4 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town02_opt_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town02_opt trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town03_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town03_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town03_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town03 straight=straight turn=left
+CARLA_HEALTH_PASS generation=town03_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town03_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788313755.493895589] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788313760.904415739] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788313762.780762830] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788313764.341244927] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 210 frames (41.8 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town03_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town03 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town03_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town03_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788314053.391466484] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788314056.585123391] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.300s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788314058.298791370] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 87 frames (17.2 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town03/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town03_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town03 trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town04_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town04_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town04_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town04 straight=straight turn=left
+CARLA_HEALTH_PASS generation=town04_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town04_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788314449.048096710] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: within_thresholds
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788314454.593361324] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788314456.471581348] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788314458.074954819] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 199 frames (39.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town04_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town04 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town04_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town04_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788314632.317065773] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788314635.673352523] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788314637.411303825] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 90 frames (17.8 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town04/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town04_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town04 trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town05_opt_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town05_opt_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town05_opt_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town05_opt straight=straight turn=left
+CARLA_HEALTH_PASS generation=town05_opt_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town05_opt_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788314917.430578545] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: within_thresholds
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788314922.126516543] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788314923.910177970] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788314925.374981213] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 201 frames (40.0 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town05_opt_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town05_opt trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town05_opt_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town05_opt_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788315099.782126374] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788315103.102536149] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788315104.838233433] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 99 frames (19.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town05_opt/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town05_opt_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town05_opt trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town06_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town06_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town06_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town06 straight=straight turn=right
+CARLA_HEALTH_PASS generation=town06_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town06_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788315541.802707509] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: within_thresholds
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788315546.906608004] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788315548.744904985] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788315550.296358078] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 199 frames (39.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town06_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town06 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town06_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town06_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788315721.160123386] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788315724.303566999] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788315725.991270217] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 74 frames (14.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town06/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town06_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town06 trial=turn scenario=right
+CARLA_HEALTH_PASS generation=town07_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town07_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town07_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town07 straight=straight turn=left
+CARLA_HEALTH_PASS generation=town07_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town07_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788315922.646451179] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788315927.287055284] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788315929.164624781] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788315930.677555410] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 229 frames (45.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town07_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town07 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town07_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town07_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788316103.140892225] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788316106.188276336] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788316107.862376260] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 82 frames (16.2 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town07/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town07_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town07 trial=turn scenario=left
+CARLA_HEALTH_PASS generation=town10hd_opt_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=town10hd_opt_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=town10hd_opt_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=town10hd_opt straight=straight turn=right
+CARLA_HEALTH_PASS generation=town10hd_opt_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town10hd_opt_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788316317.669723568] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788316321.833846421] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788316323.618399069] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788316325.060970980] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 176 frames (35.0 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=town10hd_opt_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town10hd_opt trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=town10hd_opt_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=town10hd_opt_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788316496.166827468] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788316499.403645868] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788316501.084469020] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 83 frames (16.4 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town10hd_opt/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=town10hd_opt_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=town10hd_opt trial=turn scenario=right
+CARLA_HEALTH_PASS generation=c_track_1_0_7_catalog_attempt_001 stage=catalog_preflight mode=running
+CARLA_HEALTH_PASS generation=c_track_1_0_7_catalog_attempt_001 stage=catalog_completion mode=running
+CARLA_HEALTH_PASS generation=c_track_1_0_7_catalog_attempt_001 stage=catalog_cleanup mode=stopped
+ROUTES map=c_track_1_0_7 straight=straight turn=left
+CARLA_HEALTH_PASS generation=c_track_1_0_7_straight_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=c_track_1_0_7_straight_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788316722.950529375] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/steering_tracking.png
+[0m[INFO 1788316728.934195200] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.250s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/route_result.png
+[0m[INFO 1788316730.887663523] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Traceback (most recent call last):
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 538, in <module>
+    raise SystemExit(main())
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 492, in main
+    start, end, turn_range = _select_interval(
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 163, in _select_interval
+    turn_range = _route_turn_range(route_progress, route_command, turn_margin_m)
+  File "/home/a/autoware_e2e/scripts/e2e/render_turn_animation.py", line 115, in _route_turn_range
+    raise ValueError("route has no LEFT or RIGHT command segment")
+ValueError: route has no LEFT or RIGHT command segment
+No turn interval was rendered; retrying the animation over the motion interval.
+[0m[INFO 1788316732.618462160] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 220 frames (43.8 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/straight/attempt_001
+CARLA_HEALTH_PASS generation=c_track_1_0_7_straight_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=c_track_1_0_7 trial=straight scenario=straight
+CARLA_HEALTH_PASS generation=c_track_1_0_7_turn_attempt_001 stage=trial_preflight mode=running
+Captured raw vehicle command converter provenance: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/actuation_config_provenance (4 files)
+CARLA_HEALTH_PASS generation=c_track_1_0_7_turn_attempt_001 stage=trial_completion mode=running
+[0m[INFO 1788316916.624989703] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+classification: path_dominant
+diagnosis: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/diagnosis.json
+path plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/path_vs_control.png
+steering plot: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/steering_tracking.png
+[0m[INFO 1788316920.065403764] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+trajectory stamp age: median=0.150s p95=0.250s max=0.350s
+wrote /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/latency/e2e_latency.json
+Route result image: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/route_result.png
+[0m[INFO 1788316921.805995782] [rosbag2_storage]: Opened database '/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/bag/bag_0.db3' for READ_ONLY. (open() at ./src/rosbag2_storage_default_plugins/sqlite/sqlite_storage.cpp:228)[0m
+Rendered 99 frames (19.6 simulation seconds): /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001/turn_path_control.gif
+Recorded route trial passed: /home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/c_track_1_0_7/trials/turn/attempt_001
+CARLA_HEALTH_PASS generation=c_track_1_0_7_turn_attempt_001 stage=trial_cleanup mode=stopped
+PASS map=c_track_1_0_7 trial=turn scenario=left
+SUMMARY status=FAILED pass=8/9
+selected-map final-state validation failed: town02_opt: aggregate map status is 'FAILED', not PASS; town02_opt/straight: aggregate status is 'FAILED', not PASS; town02_opt: status map status is 'FAILED', not PASS; town02_opt/straight: status status is 'FAILED', not PASS
+VAD town matrix failed: failure_count=1, final_state_ok=0.

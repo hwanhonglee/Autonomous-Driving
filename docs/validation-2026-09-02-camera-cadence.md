@@ -7,8 +7,10 @@ publish는 5 Hz로 유지한다. VAD route manager에만 BLAS 계열 thread를 �
 payload로 확인했다.
 
 이 보고서는 CTrack 한 맵의 기능·무결성 A/B이다. 해당 matrix의 `INCOMPLETE 1/9`는
-오류가 아니라 CTrack만 선택했기 때문이며, 9개 실행 가능 맵 전체의 기준 결과는
-[`validation-2026-09-01.md`](validation-2026-09-01.md)에 그대로 유지된다.
+오류가 아니라 CTrack만 선택했기 때문이다. 같은 candidate를 9개 실행 가능 맵의
+직진·회전으로 확장한 후속 결과는
+[`validation-2026-09-02-all-towns-camera-source-5hz.md`](validation-2026-09-02-all-towns-camera-source-5hz.md)의
+`COMPLETE 9/9`, 18/18 PASS로 마무리됐다.
 
 ## 결론
 
@@ -79,5 +81,7 @@ cache 또는 일시적인 renderer/scheduler 상태가 강한 순서 교란 요�
 
 현재 architecture는 `vad_route_manager_hybrid`이고 종방향 속도는 explicit CARLA
 simulation profile이 공급한다. VAD geometry는 평가했지만 raw VAD velocity는 평가하지
-않았고 `real_vehicle_ready=false`다. 이번 CTrack 검증을 기준으로 동일 candidate profile을
-9개 실행 가능 맵의 직진·회전에 확장한 별도 전체 matrix가 다음 단계다.
+않았고 `real_vehicle_ready=false`다. 동일 candidate의 9개 실행 가능 맵 전체 matrix는
+후속 보고서에서 완료됐다. 다음 단계는 이 30 kph 기준을 보존한 채 60 kph 전용
+정지거리·경로 길이·곡률·제어기 saturation 계약을 먼저 정의하고 별도 campaign으로
+실행하는 것이다.

@@ -1,0 +1,575 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "validated_at": "2026-09-02T02:47:31.886986+00:00",
+  "matrix_id": "autoware_vad_town_straight_turn_v1",
+  "admission_contract_sha256": "f66fadea7b28095218b3434141afb0d13eacd201890dd5158fbd217b9d1de9bd",
+  "campaign_execution_contract_sha256": "ac6411ed459c670296c8b37143d6aa217bbaffbafda240d08935f4638e205e67",
+  "map_id": "town02_opt",
+  "trial_id": "turn",
+  "catalog_scenario": "left",
+  "turn_direction": "left",
+  "trial_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001",
+  "route_analysis": {
+    "town": "Town02_Opt",
+    "scenario": "left",
+    "route_length_m": 83.60592353133212,
+    "endpoint_source": "spawn_points",
+    "start_spawn_index": 8,
+    "goal_spawn_index": 53,
+    "goal_endpoint_provenance": {
+      "endpoint_source": "spawn_points",
+      "endpoint_index": 53,
+      "original_goal_carla_transform": {
+        "x": 162.92002868652344,
+        "y": 237.42996215820312,
+        "z": 0.5,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": -179.9996337890625
+      },
+      "original_goal_ros_pose": {
+        "x": 162.92002868652344,
+        "y": -237.42996215820312,
+        "z": 0.5,
+        "yaw": 3.141586262003177
+      },
+      "terminal_z_normalization": {
+        "policy": "last_road_waypoint_z",
+        "original_endpoint_z_m": 0.5,
+        "last_road_waypoint_z_m": 0.0,
+        "runtime_goal_z_m": 0.0,
+        "serialized_terminal_z_m": 0.0,
+        "applied_offset_m": -0.5
+      }
+    },
+    "option_counts": {
+      "LANEFOLLOW": 66,
+      "LEFT": 16
+    },
+    "vad_command_counts": {
+      "0": 16,
+      "3": 66
+    },
+    "point_count": 82
+  },
+  "result": {
+    "success": true,
+    "execution_mode": "full_stack",
+    "planning_architecture": "vad_route_manager_hybrid",
+    "route_completion": "PASS",
+    "goal_reached": true
+  },
+  "runtime_profile_selector": "speed_30kph_camera_source_5hz",
+  "runtime_profile": {
+    "id": "vad_carla_30kph_camera_source_5hz_visualized_v1",
+    "trial_wrapper": "run_recorded_route_trial.sh",
+    "wrapper_options": [
+      "--recommended",
+      "--speed-30kph",
+      "--camera-source-5hz",
+      "--visualize",
+      "--capture-desktop"
+    ],
+    "ready_timeout_sec": 600,
+    "launch_arguments": [
+      "carla_timeout:=60"
+    ],
+    "carla_quality": "Epic",
+    "carla_arguments": [
+      "-RenderOffScreen",
+      "-nosound"
+    ],
+    "map_lifecycle": "cold_start_owned_process_group_per_trial",
+    "client_map_loading_allowed": false,
+    "route_generation_contracts": {
+      "straight": {
+        "seeds": [
+          0
+        ],
+        "pairs_per_seed": 8,
+        "minimum_distance_m": 170.0,
+        "maximum_distance_m": 260.0,
+        "preferred_distance_m": 210.0,
+        "maximum_traces_per_scenario": 20000
+      },
+      "turn": {
+        "seeds": [
+          0
+        ],
+        "pairs_per_seed": 8,
+        "minimum_distance_m": 20.0,
+        "maximum_distance_m": 120.0,
+        "preferred_distance_m": 60.0,
+        "maximum_traces_per_scenario": 20000
+      }
+    },
+    "map_route_generation_overrides": {
+      "town10hd_opt": {
+        "straight": {
+          "seeds": [
+            0
+          ],
+          "pairs_per_seed": 8,
+          "minimum_distance_m": 170.0,
+          "maximum_distance_m": 182.0,
+          "preferred_distance_m": 172.0,
+          "maximum_traces_per_scenario": 20000,
+          "endpoint_waypoint_spacing_m": 0.5,
+          "endpoint_junction_policy": "exclude",
+          "candidate_enumeration_policy": "directed_topology_straight_v1",
+          "straight_capacity_profile": "town10hd_opt_30kph_compact_v1"
+        }
+      }
+    },
+    "map_trial_route_selection_overrides": {
+      "town03": {
+        "straight": {
+          "scenario": "straight",
+          "seed": 0,
+          "pair_index": 1,
+          "rationale": "traffic_light_head_clearance_screening_v1"
+        }
+      }
+    },
+    "turn_route_selection_policy": {
+      "policy_id": "physical_turn_curvature_deceleration_v1",
+      "applicability": "speed_30kph_all_turn_candidates",
+      "exact_serialized_physical_turn_pass_required": true,
+      "common_physical_turn_ranking_authority": true,
+      "custom_turn_geometry_preflight_role": "additional_required_provenance_gate",
+      "execution_result_fields_used": false,
+      "map_preflight_fallback_allowed": false,
+      "candidate_pair_reindexing_allowed": false,
+      "candidate_generation_quota_modified": false,
+      "curvature_epsilon_per_m": 1e-06,
+      "ranking_order": [
+        "curvature_limited_speed_mps_desc",
+        "braking_preview_reserve_m_desc",
+        "maximum_command_alignment_skew_m_asc",
+        "turn_core_arc_length_m_desc",
+        "scenario_asc",
+        "seed_asc",
+        "pair_index_asc",
+        "route_id_asc"
+      ],
+      "parameter_sources": {
+        "target_speed_mps": "speed_contract.target_speed_mps",
+        "maximum_lateral_acceleration_mps2": "speed_contract.route_manager_parameters.maximum_lateral_acceleration_mps2",
+        "comfortable_deceleration_mps2": "speed_contract.route_manager_parameters.comfortable_deceleration_mps2",
+        "route_curvature_lookahead_m": "speed_contract.route_manager_parameters.route_curvature_lookahead_m"
+      }
+    },
+    "speed_contract": {
+      "profile_id": "carla_vad_30kph_v2",
+      "validation_state": "carla_30kph_v2_screening",
+      "longitudinal_speed_source": "explicit_simulation_profile",
+      "longitudinal_acceleration_role": "trajectory_internal_curve_exit_cap",
+      "vad_geometry_source": true,
+      "vad_cruise_velocity_evaluated": false,
+      "vad_hard_stop_sentinel_preserved": true,
+      "vad_velocity_evaluated": false,
+      "vad_geometry_evaluated": true,
+      "target_speed_mps": 8.333333333333334,
+      "maximum_observed_speed_mps": 9.0,
+      "maximum_speed_sample_gap_sec": 0.25,
+      "route_manager_parameters": {
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "nominal_cruise_speed_mps": 8.333333333333334,
+        "maximum_speed_mps": 8.333333333333334,
+        "controller_stop_offset_m": 0.6,
+        "comfortable_deceleration_mps2": 2.0,
+        "maximum_longitudinal_acceleration_mps2": 1.5,
+        "maximum_lateral_acceleration_mps2": 1.2,
+        "maneuver_lookahead_m": 4.0,
+        "maneuver_exit_lookahead_m": 2.5,
+        "route_curvature_lookahead_m": 20.0,
+        "curvature_speed_preview_m": 3.0,
+        "max_route_deviation_m": 1.0,
+        "max_candidate_age_sec": 0.5,
+        "candidate_timeout_sec": 1.5
+      },
+      "vehicle_cmd_gate": {
+        "profile_id": "carla_vad_30kph_v2",
+        "speed_limit_source": "explicit_simulation_profile",
+        "real_vehicle_ready": false,
+        "parameter_sha256": "446a99c61c06cc42edb0398840300fc48100bc45d9fb682c70232baa5c215c41",
+        "metadata_sha256": "58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733",
+        "source_sha256": "1fea920b4a3b04353f449ee20c07eff09219620f721aac8b0fad9b591dfd5f61",
+        "source_repository_commit": "f942598d44b5769353167c76b784323d5c14c8c7",
+        "velocity_limit_mps": 8.333333333333334,
+        "longitudinal_acceleration_limit_mps2": 1.5,
+        "lateral_acceleration_limit_mps2": 1.8
+      },
+      "longitudinal_controller": {
+        "profile_id": "carla_vad_30kph_v2",
+        "parameter_sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+        "metadata_sha256": "517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f",
+        "source_sha256": "de1ca069eee774d4e415ab177a4285a6a237ec5fae6c41fdf6640ee294f502db",
+        "source_repository_commit": "7fa129ee416f17f9adfdbeb8e66a532f7b5b9006",
+        "speed_limit_source": "explicit_simulation_profile",
+        "real_vehicle_ready": false,
+        "maximum_output_mps2": 1.5,
+        "maximum_proportional_effort_mps2": 1.5,
+        "command_gate_longitudinal_acceleration_cap_mps2": 1.5
+      },
+      "trials": {
+        "straight": {
+          "exposure_mode": "straight_target_required",
+          "minimum_sustained_speed_mps": 7.5,
+          "minimum_sustained_speed_sec": 1.0,
+          "maximum_lateral_acceleration_mps2": 1.8,
+          "physical_geometry": {
+            "maximum_arc_to_direct_ratio": 1.005,
+            "maximum_chord_deviation_m": 2.5,
+            "maximum_endpoint_tangent_to_chord_deg": 10.0,
+            "maximum_net_heading_change_deg": 10.0,
+            "maximum_cumulative_heading_change_deg": 25.0,
+            "maximum_p95_abs_curvature_per_m": 0.01,
+            "maximum_abs_curvature_per_m": 0.02592
+          }
+        },
+        "turn": {
+          "exposure_mode": "curvature_limited_turn",
+          "minimum_sustained_speed_mps": 0.0,
+          "minimum_sustained_speed_sec": 0.0,
+          "maximum_lateral_acceleration_p95_mps2": 1.5,
+          "maximum_lateral_acceleration_mps2": 1.8,
+          "require_selected_turn_command": true,
+          "physical_geometry": {
+            "profile_id": "carla_vad_30kph_v2",
+            "maneuver_lookahead_m": 4.0,
+            "lead_buffer_m": 5.0,
+            "minimum_route_lead_m": 25.0,
+            "longitudinal_grade_window_m": 5.0,
+            "controller_maximum_output_mps2": 1.5,
+            "slope_compensation_max_pitch_rad": 0.1,
+            "standard_gravity_mps2": 9.81,
+            "maximum_absolute_grade_ratio": 0.09983341664682815,
+            "maximum_compensated_gravity_mps2": 0.9793658173053843,
+            "maximum_pre_gate_total_acceleration_mps2": 2.4793658173053843,
+            "downstream_vehicle_cmd_gate_acceleration_cap_mps2": 1.5,
+            "ideal_net_uphill_acceleration_reserve_mps2": 0.5206341826946157,
+            "minimum_route_tail_m": 10.0,
+            "minimum_turn_arc_length_m": 10.0,
+            "maximum_turn_arc_length_m": 30.0,
+            "minimum_turn_heading_change_deg": 60.0,
+            "maximum_turn_heading_change_deg": 120.0,
+            "maximum_turn_heading_excess_deg": 20.0,
+            "turn_alignment_heading_margin_deg": 10.0,
+            "maximum_turn_command_lead_m": 8.0,
+            "maximum_turn_command_tail_m": 8.0,
+            "maximum_p95_abs_curvature_per_m": 0.2,
+            "maximum_abs_curvature_per_m": 0.3,
+            "initial_approach_distance_m": 15.0,
+            "maximum_initial_lateral_deviation_m": 1.5,
+            "maximum_initial_heading_change_deg": 30.0
+          }
+        }
+      }
+    },
+    "camera_source_contract": {
+      "profile_id": "carla_camera_source_5hz_ab_v1",
+      "baseline_selector": "speed_30kph",
+      "sensor_count": 6,
+      "sensor_tick_sec": 0.2,
+      "source_frequency_hz": 5.0,
+      "ros_publish_frequency_hz": 5.0,
+      "maximum_stamp_gap_sec": 0.25,
+      "qos_profile": "reliable",
+      "only_semantic_delta": "camera_parameters_sensor_tick",
+      "imu_gnss_unchanged": true
+    }
+  },
+  "speed_contract": {
+    "status": "PASS",
+    "profile_id": "carla_vad_30kph_v2",
+    "exposure_mode": "curvature_limited_turn",
+    "maximum_observed_speed_mps": 5.819081009235769,
+    "maximum_observed_speed_limit_mps": 9.0,
+    "maximum_lateral_acceleration_mps2": 0.6626734243615149,
+    "maximum_lateral_acceleration_limit_mps2": 1.8,
+    "maximum_speed_sample_gap_sec": 0.05000000100000079,
+    "maximum_speed_sample_gap_limit_sec": 0.25,
+    "route_manager_parameter_dump": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/vad_route_manager.params.yaml",
+    "gate_provenance_sha256": "446a99c61c06cc42edb0398840300fc48100bc45d9fb682c70232baa5c215c41",
+    "gate_metadata_sha256": "58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733",
+    "longitudinal_controller_provenance_sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+    "longitudinal_controller_metadata_sha256": "517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f",
+    "longitudinal_controller_parameter_dump": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/controller.params.yaml",
+    "runtime_env_sha256": "aa26e9f4242587c6563f2ee88fddebfe1955d0e5ab5ba619623e5e4ea7729d36",
+    "route_manager_parameter_dump_sha256": "007d8d7fe19158821e669c5afc15c2e9990b65f0dd1f7e7589849ea6fee8ee06",
+    "vehicle_cmd_gate_parameter_dump_sha256": "db42a411e453615cf8c2b68b44a8d864e1456f9c3b66525598a4ca89c676ad72",
+    "longitudinal_controller_parameter_dump_sha256": "8acbb29b68c30fb318cc1998c5b17a5028c1d6256c2795f32faf97145e15cfba",
+    "selected_turn_command": 0,
+    "commands_seen": [
+      0,
+      3
+    ],
+    "p95_selected_turn_command_lateral_acceleration_mps2": 0.6292001797279284,
+    "p95_turn_lateral_acceleration_mps2": 0.6292001797279284,
+    "p95_lateral_acceleration_limit_mps2": 1.5,
+    "speed_profile_json_sha256": "4f87a4ccc26393b4daedbaac8752765292da207d082fb832979be00337f6d2d9",
+    "speed_profile_plot_sha256": "38d91b342ed0db248326526e7d89b5c440801ee5944ed7be8637dd8df435591c",
+    "speed_profile_source_identity_sha256": "ab56edcae8a8ecaaf67dbba82ef4659314f2663537a19ef80130cc6088eb79d1",
+    "speed_profile_result_sha256": "ed4d72caa40eada68404071b97588bda23ca7ed1678e719a64a1ee00651489fb",
+    "speed_profile_route_sha256": "17c482114abdf36198e647851b74e947fc21c8db3fecfc41d8352144e83a2afa",
+    "speed_profile_bag_manifest_sha256": "ad88c0e80d98b71392baa555b2a26a926f050cf326fe1613966b3231d8bce1b6"
+  },
+  "camera_source_contract": {
+    "status": "PASS",
+    "contract": {
+      "profile_id": "carla_camera_source_5hz_ab_v1",
+      "baseline_selector": "speed_30kph",
+      "sensor_count": 6,
+      "sensor_tick_sec": 0.2,
+      "source_frequency_hz": 5.0,
+      "ros_publish_frequency_hz": 5.0,
+      "maximum_stamp_gap_sec": 0.25,
+      "qos_profile": "reliable",
+      "only_semantic_delta": "camera_parameters_sensor_tick",
+      "imu_gnss_unchanged": true
+    },
+    "mapping_sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+    "baseline_mapping_sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865",
+    "semantic_delta": {
+      "camera_ids": [
+        "CAM_BACK",
+        "CAM_BACK_LEFT",
+        "CAM_BACK_RIGHT",
+        "CAM_FRONT",
+        "CAM_FRONT_LEFT",
+        "CAM_FRONT_RIGHT"
+      ],
+      "field": "parameters.sensor_tick",
+      "baseline_sec": 0.0,
+      "candidate_sec": 0.2,
+      "other_fields_equal": true
+    },
+    "bundle_coverage_percent": 100.0,
+    "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+    "camera_stamp_gap_sec": {
+      "CAM_BACK": 0.20000000300000664,
+      "CAM_BACK_LEFT": 0.20000000300000664,
+      "CAM_BACK_RIGHT": 0.20000000300000664,
+      "CAM_FRONT": 0.20000000300000664,
+      "CAM_FRONT_LEFT": 0.20000000300000664,
+      "CAM_FRONT_RIGHT": 0.20000000300000664
+    },
+    "candidate_front_acceptance_percent": 100.0,
+    "candidate_count": 223,
+    "front_count": 223,
+    "vad_inference": {
+      "published_count": 270,
+      "mailbox_taken": 270,
+      "mailbox_submitted": 264,
+      "capacity_pruned": 0,
+      "superseded": 0,
+      "superseded_classification": "none",
+      "recorder_start_wall_sec": null,
+      "coalesced_drops": 0
+    }
+  },
+  "campaign_route_map_preflight": {
+    "status": "PASS",
+    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/campaign_route_map_preflight.json",
+    "sha256": "2fce1450c25d78f925d7822fd1536b425670bf81e1637ce1ddd8377e10d6ae43",
+    "route_sha256": "304743654d1b0db3e2c9d6fd64676f4ac3f13ecc7f91eb5f1b79994c5b0ae9b7",
+    "aligned_route": {
+      "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/campaign_route_map_preflight_routes/turn.aligned.json",
+      "sha256": "17c482114abdf36198e647851b74e947fc21c8db3fecfc41d8352144e83a2afa",
+      "source_route_sha256": "304743654d1b0db3e2c9d6fd64676f4ac3f13ecc7f91eb5f1b79994c5b0ae9b7",
+      "carla_to_map_transform": {
+        "x_m": 0.0,
+        "y_m": 0.0,
+        "z_m": 0.0,
+        "yaw_rad": 0.0
+      }
+    },
+    "route_generation_contract_sha256": "d188b10b164a1ad97cb8d9458cef21a1f51b775de25fce733341c0b740b4e0c3"
+  },
+  "carla_lifecycle": {
+    "schema_version": 1,
+    "status": "PASS",
+    "lifecycle": "cold_start_owned_process_group_per_trial",
+    "generation_id": "town02_opt_turn_attempt_001",
+    "expected_map": "Town02_Opt",
+    "owner_pid": 2288386,
+    "owner_pgid": 2288386,
+    "server_log": {
+      "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/carla_server.log",
+      "size_bytes": 262,
+      "sha256": "5f712446c0e0f8c22e026f0f2d8404472ab2302ee057c3af984bea6d48bee00e"
+    },
+    "preflight_health_sha256": "34668e03f5e316dec145bc55d0593f596a4a21c3fdcc6c158f93a6d2f9ccff88",
+    "completion_health_sha256": "34fa2f71123a214e6009d4abfa2ecfecc485d0b8a4232b27f6933cf90cee8b79",
+    "cleanup_health_sha256": "de5d165619b8fb8c61107412b76c088eaafdaf2b31aa782df5f7509149b576e0",
+    "post_completion_exit_policy": "completion RPC PASS preserves a completed drive; the next trial always receives a new cold-start generation"
+  },
+  "desktop_capture": {
+    "camera_view_contract": {
+      "embedded_rviz_display": "VAD Front Camera",
+      "embedded_rviz_enabled": true,
+      "embedded_rviz_topic": "/sensing/camera/CAM_FRONT/image_raw",
+      "external_rqt_image_view_launched": false,
+      "occlusion_guard": "owned_rviz_window_only_v1"
+    },
+    "candidate_observed": true,
+    "candidate_observed_at": "2026-09-02T01:43:31.490836Z",
+    "candidate_png_dimensions": [
+      1920,
+      1080
+    ],
+    "candidate_png_file": "autoware_rviz_candidate.png",
+    "candidate_still_captured_at": "2026-09-02T01:43:33.791610Z",
+    "candidate_topic": "/planning/vad/candidate_trajectories",
+    "capture_source": {
+      "geometry_stable": true,
+      "input_dimensions": [
+        1850,
+        1016
+      ],
+      "map_state": "IsViewable",
+      "method": "ffmpeg_x11grab_owned_window_v1",
+      "output_dimensions": [
+        1920,
+        1080
+      ],
+      "padding_mode": "deterministic_center_black_v1",
+      "padding_px": {
+        "bottom": 32,
+        "left": 35,
+        "right": 35,
+        "top": 32
+      },
+      "pgid": 2288865,
+      "pid": 2289477,
+      "root_capture": false,
+      "sample_aspect_ratio": 1,
+      "scaling": "none",
+      "shell_surfaces_excluded": true,
+      "stack_process_group_owned": true,
+      "window_config_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/maps/town02_opt/trials/turn/attempt_001/rviz_capture_provenance/autoware_vad_carla.rviz",
+      "window_id_decimal": 73400581,
+      "window_id_hex": "0x4600105",
+      "window_title_contains_config": true,
+      "wm_class": "rviz2"
+    },
+    "capture_started_after_candidate": true,
+    "captured_at": "2026-09-02T01:43:56.040443+00:00",
+    "desktop_overlay_check": {
+      "method": "owned_window_excludes_shell_surfaces_v1",
+      "passed": true,
+      "root_capture": false,
+      "shell_surfaces_excluded": true
+    },
+    "display": ":1",
+    "display_dimensions": [
+      1920,
+      1080
+    ],
+    "gif_dimensions": [
+      960,
+      540
+    ],
+    "gif_file": "autoware_rviz_drive.gif",
+    "png_dimensions": [
+      1920,
+      1080
+    ],
+    "png_file": "autoware_rviz_fullscreen.png",
+    "recording_file": "autoware_rviz_capture.mkv",
+    "recording_started_at": "2026-09-02T01:43:33.796082Z",
+    "representative_frame": {
+      "captured_at": "2026-09-02T01:43:56.040443+00:00",
+      "offset_sec": 22.244361,
+      "recording_duration_sec": 47.2,
+      "selection": "route_evaluation_midpoint",
+      "source": "autoware_rviz_capture.mkv"
+    },
+    "route_evaluation_finished_at": "2026-09-02T01:44:16.173466Z",
+    "route_evaluation_started_at": "2026-09-02T01:43:35.907421Z",
+    "rviz_view_contract": {
+      "angle_rad": 0.0,
+      "center_xy_m": [
+        0.0,
+        0.0
+      ],
+      "config_file": "rviz_capture_provenance/autoware_vad_carla.rviz",
+      "config_sha256": "a3418affb8839b9847ab66c1ff518b97826541c5d0566c72e6de92282677b7fd",
+      "controller": "rviz_default_plugins/TopDownOrtho",
+      "scale": 10.0,
+      "target_frame": "base_link",
+      "vehicle_centered": true,
+      "visible_path_topics": [
+        "/planning/trajectory",
+        "/planning/vad/candidate_trajectories",
+        "/planning/vad_route/actual_path",
+        "/planning/vad_route/reference_path",
+        "/planning/vad_route/selected_raw_trajectory"
+      ],
+      "visual_clarity": {
+        "candidate_path_alpha": 0.22,
+        "candidate_path_width": 0.04,
+        "odometry_covariance": false,
+        "odometry_display": "Kinematic State",
+        "odometry_keep": 1,
+        "odometry_orientation": false,
+        "odometry_position": false
+      }
+    },
+    "schema_version": 1,
+    "source_dimensions": [
+      1920,
+      1080
+    ]
+  },
+  "visual_evidence": {
+    "schema_version": 1,
+    "binding": "matrix_validation_sha256_v1",
+    "fullscreen_dimensions": [
+      1920,
+      1080
+    ],
+    "candidate_dimensions": [
+      1920,
+      1080
+    ],
+    "drive_gif_dimensions": [
+      960,
+      540
+    ],
+    "vehicle_centered": true,
+    "target_frame": "base_link",
+    "files": {
+      "desktop_capture.json": {
+        "size_bytes": 3553,
+        "sha256": "6008e09e597fe24f5ef10091ad7aefc19eb84b175c10b438104fcc19219eba49"
+      },
+      "autoware_rviz_fullscreen.png": {
+        "size_bytes": 288360,
+        "sha256": "93a6a2e59f6923a27248a82785e3cbe543148aacf123f1145d793bdc37610c52"
+      },
+      "autoware_rviz_drive.gif": {
+        "size_bytes": 3989543,
+        "sha256": "ebd0f889d4180e98c594b15f0f6acfcf70ae7ab7646c27bdbbe1251f292d7cfa"
+      },
+      "autoware_rviz_candidate.png": {
+        "size_bytes": 141236,
+        "sha256": "16f51f96325961fb4a066caa6f63aae3e14c34a1cac3a6e1238d42e86ce9a15a"
+      },
+      "autoware_rviz_capture.mkv": {
+        "size_bytes": 7310723,
+        "sha256": "dc2fb481bc713d4745582f202e310d0b55872190221bb2267ff4e12dc3135ccf"
+      },
+      "rviz_capture_provenance/autoware_vad_carla.rviz": {
+        "size_bytes": 32595,
+        "sha256": "a3418affb8839b9847ab66c1ff518b97826541c5d0566c72e6de92282677b7fd"
+      },
+      "rviz_capture_provenance/SHA256SUMS": {
+        "size_bytes": 90,
+        "sha256": "7d268bd446cdbc1e7fa3f3ac3b04ea12be713d26139d8be919f75e75089fd8db"
+      }
+    }
+  }
+}

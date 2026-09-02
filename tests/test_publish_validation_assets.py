@@ -642,6 +642,17 @@ def _speed_30kph_runtime_profile() -> dict:
     return dict(manifest["runtime_profiles"]["speed_30kph"])
 
 
+def _camera_source_5hz_runtime_profile() -> dict:
+    manifest = yaml.safe_load(
+        (ROOT / "scripts/e2e/autoware_vad_town_matrix.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    return dict(
+        manifest["runtime_profiles"][publisher.CAMERA_SOURCE_5HZ_SELECTOR]
+    )
+
+
 def _write_speed_profile_evidence(directory: Path) -> dict[str, str]:
     result_path = directory / "result.json"
     result = json.loads(result_path.read_text(encoding="utf-8"))
@@ -1243,6 +1254,7 @@ def test_owned_window_visual_audit_requires_complete_centered_pass(
                 "sha256": publisher._sha256(trial / "source_route.json"),
                 "centered_file": str(trial / "source_route.json"),
                 "publication_original_file": str(trial / "source_route.json"),
+                "publication_source": "fixture_selected_original",
             },
             "capture": {
                 "metadata_sha256": publisher._sha256(
@@ -1277,6 +1289,15 @@ def test_owned_window_visual_audit_requires_complete_centered_pass(
     contact = Image.new("RGB", (320, 180), "navy")
     contact.paste("green", (160, 0, 320, 180))
     contact.save(contact_sheet)
+    selection_records = [
+        {
+            "map_id": map_id,
+            "trial_id": trial_id,
+            "trial_directory": str(trial_directories[(map_id, trial_id)].resolve()),
+            "source": "fixture_selected_original",
+        }
+        for map_id, trial_id in sorted(identities)
+    ]
     _write_json(
         audit_dir / "v16_owned_window_visual_review.json",
         {"schema_version": 1, "scenes": review_scenes},
@@ -1284,8 +1305,21 @@ def test_owned_window_visual_audit_requires_complete_centered_pass(
     _write_json(
         audit_dir / "v16_owned_window_visual_audit.json",
         {
+            "schema_version": 2,
             "status": "PASS",
             "mechanical_status": "PASS",
+            "publication_selection": {
+                "selection_source_file": str(
+                    (tmp_path / "publication_manifest.json").resolve()
+                ),
+                "scope": publisher.PUBLICATION_SELECTION_SCOPE,
+                "canonicalization": (
+                    publisher.PUBLICATION_SELECTION_CANONICALIZATION
+                ),
+                "record_count": len(selection_records),
+                "records": selection_records,
+                "sha256": publisher._sha256_json(selection_records),
+            },
             "counts": {
                 "maps": 1,
                 "total": 2,
@@ -1329,6 +1363,16 @@ def test_owned_window_visual_audit_requires_complete_centered_pass(
         (audit_dir / "v16_owned_window_visual_audit.json").read_text(
             encoding="utf-8"
         )
+    )
+    audit["publication_selection"]["sha256"] = "0" * 64
+    _write_json(audit_dir / "v16_owned_window_visual_audit.json", audit)
+    with pytest.raises(
+        publisher.PublicationError,
+        match="publication-selection binding mismatch",
+    ):
+        publisher.collect_owned_window_visual_audit(audit_dir, trial_directories)
+    audit["publication_selection"]["sha256"] = publisher._sha256_json(
+        audit["publication_selection"]["records"]
     )
     audit["trials"][0]["capture"]["representative_png"]["sha256"] = "0" * 64
     _write_json(audit_dir / "v16_owned_window_visual_audit.json", audit)
@@ -1862,6 +1906,316 @@ def test_speed_30kph_matrix_is_explicit_external_root_simulation_screening(
         check=False,
     )
     assert completed.returncode == 0, completed.stderr
+
+
+def test_camera_source_5hz_runtime_profile_is_explicit_and_pinned() -> None:
+    selector = publisher.CAMERA_SOURCE_5HZ_SELECTOR
+    profile = _camera_source_5hz_runtime_profile()
+    plan = {
+        "runtime_profile_selector": selector,
+        "runtime_profile": profile,
+    }
+    aggregate = json.loads(json.dumps(plan))
+
+    runtime_profile, interpretation = publisher._validate_matrix_runtime_profile(
+        plan, aggregate, selector
+    )
+
+    assert runtime_profile == profile
+    assert profile["wrapper_options"] == publisher.VAD_RUNTIME_WRAPPER_OPTIONS[
+        selector
+    ]
+    assert (
+        profile["camera_source_contract"]
+        == publisher.CAMERA_SOURCE_5HZ_CONTRACT
+    )
+    assert interpretation == {
+        **publisher.SPEED_30KPH_PUBLICATION_INTERPRETATION,
+        "camera_source_profile_id": "carla_camera_source_5hz_ab_v1",
+        "camera_sensor_count": 6,
+        "camera_sensor_tick_sec": 0.2,
+        "camera_source_frequency_hz": 5.0,
+        "camera_ros_publish_frequency_hz": 5.0,
+        "maximum_camera_stamp_gap_sec": 0.25,
+    }
+
+
+def test_camera_source_5hz_runtime_profile_rejects_contract_drift() -> None:
+    selector = publisher.CAMERA_SOURCE_5HZ_SELECTOR
+    profile = _camera_source_5hz_runtime_profile()
+    profile["camera_source_contract"]["maximum_stamp_gap_sec"] = 0.5
+    plan = {
+        "runtime_profile_selector": selector,
+        "runtime_profile": profile,
+    }
+    aggregate = json.loads(json.dumps(plan))
+
+    with pytest.raises(
+        publisher.PublicationError,
+        match="camera-source 5 Hz runtime contract is not pinned",
+    ):
+        publisher._validate_matrix_runtime_profile(plan, aggregate, selector)
+
+
+def test_baseline_speed_profile_rejects_camera_source_contract() -> None:
+    selector = "speed_30kph"
+    profile = _speed_30kph_runtime_profile()
+    profile["camera_source_contract"] = dict(
+        publisher.CAMERA_SOURCE_5HZ_CONTRACT
+    )
+    plan = {
+        "runtime_profile_selector": selector,
+        "runtime_profile": profile,
+    }
+    aggregate = json.loads(json.dumps(plan))
+
+    with pytest.raises(
+        publisher.PublicationError,
+        match="non-camera-source runtime profile unexpectedly carries",
+    ):
+        publisher._validate_matrix_runtime_profile(plan, aggregate, selector)
+
+
+def test_camera_source_5hz_fresh_validation_reads_raw_runtime_and_latency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime = {
+        "CAMERA_SOURCE_5HZ": "true",
+        "CAMERA_SOURCE_SENSOR_TICK_SEC": "0.2",
+        "CAMERA_ROS_PUBLISH_HZ": "5.0",
+    }
+    (tmp_path / "runtime.env").write_text(
+        "".join(f"{key}={value}\n" for key, value in runtime.items()),
+        encoding="utf-8",
+    )
+    latency = {"status": "complete", "fixture": "raw-latency"}
+    _write_json(tmp_path / "latency/e2e_latency.json", latency)
+    profile = _camera_source_5hz_runtime_profile()
+    expected = {"status": "PASS", "fixture": "freshly-recomputed"}
+    calls = []
+
+    def fake_validator(directory, actual_runtime, actual_profile, actual_latency):
+        calls.append(
+            (directory, actual_runtime, actual_profile, actual_latency)
+        )
+        return expected
+
+    monkeypatch.setattr(
+        publisher, "_matrix_camera_source_5hz_evidence", fake_validator
+    )
+
+    assert publisher._fresh_camera_source_5hz_evidence(
+        tmp_path, profile, "fixture"
+    ) == expected
+    assert calls == [(tmp_path, runtime, profile, latency)]
+
+    def failing_validator(*_args):
+        raise publisher.MatrixValidationError("camera stamp gap exceeded")
+
+    monkeypatch.setattr(
+        publisher, "_matrix_camera_source_5hz_evidence", failing_validator
+    )
+    with pytest.raises(
+        publisher.PublicationError,
+        match="raw evidence failed fresh validation: camera stamp gap exceeded",
+    ):
+        publisher._fresh_camera_source_5hz_evidence(
+            tmp_path, profile, "fixture"
+        )
+
+
+def test_camera_source_retry_queue_transition_is_bound_after_recorder(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "stack.log").write_text(
+        "[INFO 10.000000001] VAD frame queued: source_stamp_ns=1 "
+        "assembled=2 capacity_pruned=0 superseded=0 mailbox_submitted=2 "
+        "coalesced_drops=0 received_images_min=2 received_images_max=2\n"
+        "[INFO 12.000000001] VAD frame queued: source_stamp_ns=2 "
+        "assembled=3 capacity_pruned=0 superseded=1 mailbox_submitted=3 "
+        "coalesced_drops=0 received_images_min=3 received_images_max=4\n"
+        "published_count=4 mailbox_taken=4 coalesced_drops=0\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "recorder.log").write_text(
+        "[INFO 11.000000001] Recording...\n", encoding="utf-8"
+    )
+
+    snapshot = publisher._camera_queue_snapshot(tmp_path, "fixture")
+
+    assert snapshot["first"]["superseded"] == 0
+    assert snapshot["first_superseded_transition"]["superseded"] == 1
+    assert snapshot["first_superseded_transition"]["line_number"] == 2
+    assert snapshot["recorder_start"]["wall_sec"] == "11.000000001"
+    assert snapshot["transition_after_recorder"] is True
+    assert snapshot["final_inference"] == {
+        "line_number": 3,
+        "published_count": 4,
+        "mailbox_taken": 4,
+        "coalesced_drops": 0,
+    }
+
+
+def test_camera_source_host_diagnostics_use_inclusive_whole_second_rows(
+    tmp_path: Path,
+) -> None:
+    matrix_root = tmp_path / "matrix"
+    telemetry = matrix_root / "host_telemetry"
+    telemetry.mkdir(parents=True)
+    (telemetry / "vmstat.log").write_text(
+        "header one\nheader two\n"
+        "1 0 0 0 0 0 0 0 0 0 0 0 10 5 85 0 0 2026-09-02 10:00:00\n"
+        "1 0 0 0 0 0 0 0 0 0 0 0 5 5 90 0 0 2026-09-02 10:00:01\n"
+        "1 0 0 0 0 0 0 0 0 0 0 0 4 5 91 0 0 2026-09-02 10:00:01\n"
+        "1 0 0 0 0 0 0 0 0 0 0 0 3 5 92 0 0 2026-09-02 10:00:02\n",
+        encoding="utf-8",
+    )
+    (telemetry / "nvidia_smi_dmon.log").write_text(
+        "# header one\n# header two\n"
+        "20260902 10:00:00 0 0 0 - 10 0\n"
+        "20260902 10:00:01 0 0 0 - 20 0\n"
+        "20260902 10:00:02 0 0 0 - 30 0\n",
+        encoding="utf-8",
+    )
+    (telemetry / "pidstat.log").write_text(
+        "Linux fixture (host) (24 CPU)\nlarge rows omitted\n", encoding="utf-8"
+    )
+    trial_directory = matrix_root / "maps/town03/trials/turn/attempt_001"
+    result = {
+        "started_at": "2026-09-02T01:00:00.900000+00:00",
+        "finished_at": "2026-09-02T01:00:02.100000+00:00",
+        "metrics": {"sim_elapsed_sec": 1.0, "wall_elapsed_sec": 4.0},
+    }
+    _write_json(trial_directory / "result.json", result)
+    trial = publisher.VadTrial(
+        map_id="town03",
+        trial_id="turn",
+        directory=trial_directory,
+        result=result,
+        route=None,
+        desktop_capture=None,
+        speed_profile=None,
+        centered_capture_provenance=None,
+        source="fixture",
+    )
+
+    host = publisher._telemetry_window_diagnostics(matrix_root, [trial])
+
+    assert host is not None
+    assert host["window"]["start"] == "2026-09-02T10:00:00+09:00"
+    assert host["window"]["end"] == "2026-09-02T10:00:02+09:00"
+    assert host["measurements"]["vmstat_sample_count"] == 4
+    assert host["measurements"]["cpu_idle_sum"] == 358
+    assert host["measurements"]["vmstat_timestamp_coverage"] == {
+        "raw_row_count": 4,
+        "unique_timestamp_count": 3,
+        "duplicate_row_count": 1,
+        "missing_timestamp_count": 0,
+        "unique_timestamp_coverage_percent": 100.0,
+        "maximum_timestamp_gap_sec": 1,
+    }
+    assert host["measurements"]["gpu_sm_sum"] == 60
+    assert host["host_cpu_count"] == 24
+
+    diagnostics = {
+        "schema_version": 1,
+        "status": "PASS",
+        "runtime_profile_selector": publisher.CAMERA_SOURCE_5HZ_SELECTOR,
+        "matrix_root": str(matrix_root),
+        "retry_attempts": [],
+        "host_telemetry": host,
+        "campaign_console_files": {},
+    }
+    staging = tmp_path / "staging"
+    published = publisher._copy_camera_source_campaign_diagnostics(
+        diagnostics, staging
+    )
+    assert published["retry_attempt_count"] == 0
+    assert (staging / "campaign_diagnostics/host_telemetry/vmstat.log").read_bytes() == (
+        telemetry / "vmstat.log"
+    ).read_bytes()
+    assert (
+        staging / "campaign_diagnostics/town03_turn_vmstat_window.log"
+    ).is_file()
+    assert publisher._sha256(
+        staging / published["summary_file"]
+    ) == published["summary_sha256"]
+
+
+def test_camera_source_5hz_recorded_evidence_must_equal_fresh_recompute(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    expected = {
+        "status": "PASS",
+        "bundle_coverage_percent": 100.0,
+        "maximum_camera_stamp_gap_sec": 0.2,
+    }
+    monkeypatch.setattr(
+        publisher,
+        "_validated_camera_source_5hz_provenance_files",
+        lambda *_args: {},
+    )
+    monkeypatch.setattr(
+        publisher,
+        "_fresh_camera_source_5hz_evidence",
+        lambda *_args: dict(expected),
+    )
+
+    fresh, provenance = publisher._validated_camera_source_5hz_evidence(
+        tmp_path,
+        _camera_source_5hz_runtime_profile(),
+        dict(expected),
+        "fixture",
+    )
+    assert fresh == expected
+    assert provenance == {}
+
+    stale = dict(expected)
+    stale["maximum_camera_stamp_gap_sec"] = 0.25
+    with pytest.raises(
+        publisher.PublicationError,
+        match="does not match freshly recomputed cadence/integrity evidence",
+    ):
+        publisher._validated_camera_source_5hz_evidence(
+            tmp_path,
+            _camera_source_5hz_runtime_profile(),
+            stale,
+            "fixture",
+        )
+
+
+def test_camera_source_5hz_dry_run_requires_all_publication_provenance(
+    tmp_path: Path,
+) -> None:
+    required = (
+        *publisher.CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+        "runtime.env",
+        "latency/e2e_latency.json",
+    )
+    for name in required:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"fixture {name}\n", encoding="utf-8")
+    mapping = tmp_path / "sensor_mapping_provenance/sensor_mapping.yaml"
+    mapping_sha256 = publisher._sha256(mapping)
+    (tmp_path / "sensor_mapping_provenance/SHA256SUMS").write_text(
+        f"{mapping_sha256}  sensor_mapping.yaml\n", encoding="utf-8"
+    )
+    evidence = {"mapping_sha256": mapping_sha256}
+
+    sources = publisher._validated_camera_source_5hz_provenance_files(
+        tmp_path, evidence, "fixture"
+    )
+    assert set(sources) == set(required)
+
+    (tmp_path / "launch_args.txt").unlink()
+    with pytest.raises(
+        publisher.PublicationError,
+        match="raw evidence is missing or symlinked: launch_args.txt",
+    ):
+        publisher._validated_camera_source_5hz_provenance_files(
+            tmp_path, evidence, "fixture"
+        )
 
 
 @pytest.mark.parametrize(

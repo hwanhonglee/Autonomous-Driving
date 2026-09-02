@@ -2,10 +2,12 @@
 
 > The following campaign summary is an operator-reviewed, SHA-bound narrative supplement. The generated provenance and result tables below remain authoritative.
 
-> 2026-09-02 후속 검증: CTrack에서 여섯 CARLA camera source를 5 Hz로 제한한
-> 30 kph 직진·좌회전 A/B와 끊김 원인 분석은
+> 2026-09-02 후속 검증: CTrack A/B를 거쳐 여섯 CARLA camera source를 5 Hz로
+> 제한한 30 kph 전체 9-map/18-trial 결과는
+> [`validation-2026-09-02-all-towns-camera-source-5hz.md`](validation-2026-09-02-all-towns-camera-source-5hz.md),
+> CTrack A/B와 끊김 원인 분석은
 > [`validation-2026-09-02-camera-cadence.md`](validation-2026-09-02-camera-cadence.md)에
-> 있다. 아래 9-map, 18-trial 결과는 전체 Town 기준 결과로 그대로 유지된다.
+> 있다. 아래 내용은 camera-source 변경 전 `speed_30kph` 기준선으로 보존한다.
 
 ## 2026-09-01 최종 요약
 

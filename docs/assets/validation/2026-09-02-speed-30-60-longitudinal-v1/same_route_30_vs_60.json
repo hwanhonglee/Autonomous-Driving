@@ -1,0 +1,498 @@
+{
+  "analysis": "same_route_autoware_speed_trial_comparison",
+  "comparison": {
+    "lower_target_run_was_slower_in_wall_time": true,
+    "maximum_observed_speed_increase_kph": 7.3297666207461525,
+    "maximum_observed_speed_increase_mps": 2.036046283540598,
+    "pilot_goal_reached_despite_speed_failure": true,
+    "pilot_real_time_factor": 0.5268044404905251,
+    "pilot_speed_exposure_passed": false,
+    "pilot_target_shortfall_kph": 24.804727369300167,
+    "pilot_target_shortfall_mps": 6.890202047027824,
+    "reference_real_time_factor": 0.2484468967318301,
+    "reference_speed_exposure_passed": true
+  },
+  "comparison_id": "town06_same_effective_route_30_vs_60_v1",
+  "findings": {
+    "actuation_velocity_axis_clamping_observed": false,
+    "classification": "60KPH_TARGET_NOT_REACHED_REFERENCE_30KPH_PASS",
+    "interpretation": "The requested speed is an explicit simulation profile envelope. Raw VAD cruise velocity and real-vehicle readiness are not evaluated.",
+    "target_speed_alone_does_not_explain_low_rtf": {
+      "reason": "The byte-identical lower-target reference run had the lower RTF. This excludes requested target speed as a sufficient explanation, but does not identify a single renderer/transport cause.",
+      "supported": true
+    }
+  },
+  "generated_at": "2026-09-02T07:21:22.546864+00:00",
+  "real_vehicle_ready": false,
+  "same_route": {
+    "route_length_m": 445.8799516556895,
+    "scenario": "straight",
+    "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+    "town": "Town06",
+    "verified": true
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "strict_contract": {
+    "pilot_outcome": "FAIL_SPEED_EXPOSURE",
+    "pilot_profile_id": "carla_vad_60kph_straight_pilot_v1",
+    "reference_outcome": "PASS",
+    "reference_profile_id": "carla_vad_30kph_v2"
+  },
+  "trials": {
+    "pilot_60kph": {
+      "actuation_map": {
+        "converter_lookup_velocity_source": "absolute_current_odometry_longitudinal_speed_mps",
+        "runtime_lookup_classification": "OBSERVED_LOOKUPS_WITHIN_MAP_AXIS",
+        "status": "EXPLORATORY",
+        "target_envelope_classification": "TARGET_ENVELOPE_EXCEEDS_MAP_AXIS_CLAMP_IF_REACHED",
+        "velocity_axis_clamping_observed": false
+      },
+      "camera": {
+        "bundle_coverage_percent": 100.0,
+        "candidate_front_acceptance_percent": 100.23310023310023,
+        "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+        "status": "PASS"
+      },
+      "goal_reached": true,
+      "label": "60 kph pilot",
+      "longitudinal": {
+        "accel_command_near_saturation": {
+          "longest_contiguous_duration_sec": 3.4000000509999992,
+          "sample_fraction_percent": 4.013961605584642,
+          "time_fraction_percent": 3.958090803651265
+        },
+        "actual_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 3396,
+          "duration_sec": 85.950001281,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 3396,
+          "last_time_sec": 85.950001281,
+          "maximum": 9.776464462280273,
+          "maximum_sample_gap_sec": 0.10000000200000159,
+          "mean": 5.1920530839968535,
+          "median": 5.2661662101745605,
+          "minimum": -0.01021859422326088,
+          "p95": 9.228010416030884
+        },
+        "brake_command_active": {
+          "longest_contiguous_duration_sec": 7.600000112999993,
+          "sample_fraction_percent": 16.637579988365328,
+          "time_fraction_percent": 16.29802095504695
+        },
+        "gated_positive_acceleration_limit": {
+          "longest_contiguous_duration_sec": 8.300000124,
+          "sample_fraction_percent": 43.54651162790697,
+          "time_fraction_percent": 43.10645724235752
+        },
+        "gated_target_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 1720,
+          "duration_sec": 85.950001281,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 1720,
+          "last_time_sec": 85.950001281,
+          "maximum": 16.66666603088379,
+          "maximum_sample_gap_sec": 0.05000000100000079,
+          "mean": 11.104936979008029,
+          "median": 12.792381286621094,
+          "minimum": 0.0,
+          "p95": 16.66666603088379
+        },
+        "raw_acceleration_above_gate_limit": {
+          "longest_contiguous_duration_sec": 8.150000122000002,
+          "sample_fraction_percent": 42.848837209302324,
+          "time_fraction_percent": 42.40837696422188
+        },
+        "raw_target_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 1720,
+          "duration_sec": 85.950001281,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 1720,
+          "last_time_sec": 85.950001281,
+          "maximum": 16.66666603088379,
+          "maximum_sample_gap_sec": 0.05000000100000079,
+          "mean": 11.73619202195212,
+          "median": 14.517268180847168,
+          "minimum": 0.0,
+          "p95": 16.66666603088379
+        }
+      },
+      "motion": {
+        "maximum_absolute_cte_m": 0.5247069001197815,
+        "maximum_lateral_acceleration_mps2": 0.3582043884950982,
+        "maximum_observed_speed_kph": 35.19527263069984,
+        "maximum_observed_speed_mps": 9.776464619638844,
+        "maximum_sustained_speed_duration_sec": 0.0,
+        "real_time_factor": 0.5268044404905251,
+        "sim_elapsed_sec": 78.100001164,
+        "target_attainment_percent": 58.658787717833064,
+        "traveled_distance_m": 445.136530889363,
+        "wall_elapsed_sec": 148.2523592460202
+      },
+      "profile_id": "carla_vad_60kph_straight_pilot_v1",
+      "reason": "speed exposure contract failed: speed >= 15.000 m/s was sustained for only 0.000 s; require 1.000 s",
+      "rosbag_identity": {
+        "files": [
+          {
+            "path": "bag_0.db3",
+            "sha256": "5336132ec12c6129fa5ae1115d544cfc43fe2f1c3d446f14316b9e21f0d7a457",
+            "size_bytes": 53444608
+          },
+          {
+            "path": "metadata.yaml",
+            "sha256": "5f1b4e89fd19ace982f5991218f5038e93f268d69e892aa924428d1bfc2bea73",
+            "size_bytes": 32515
+          }
+        ],
+        "root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/bag",
+        "schema_version": 1,
+        "sha256": "201d0b84e25ee507a8c29c31f2964e6a1935a454a1781e20e29c3377dff65c80"
+      },
+      "route": {
+        "route_length_m": 445.8799516556895,
+        "scenario": "straight",
+        "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+        "town": "Town06"
+      },
+      "runtime_load": {
+        "findings_classification": "transient_camera_delivery_path_stall_not_host_wide_saturation",
+        "phase_detection": {
+          "boundary_index": 138,
+          "cross_boundary_wall_period_sec": 0.16201329231262207,
+          "detected": true,
+          "initial_last_index": 137,
+          "initial_median_wall_period_sec": 0.8028888702392578,
+          "largest_period_drop_sec": 0.5858213901519775,
+          "median_wall_period_ratio": 4.008885460415416,
+          "period_index_after_drop": 137,
+          "period_index_before_drop": 136,
+          "recovered_first_index": 138,
+          "recovered_median_wall_period_sec": 0.20027732849121094,
+          "source_period_sec": {
+            "available": true,
+            "count": 446,
+            "max": 0.20000000300001375,
+            "mean": 0.20000000297982062,
+            "median": 0.20000000299999954,
+            "min": 0.2000000019999959,
+            "p95": 0.2000000030000031,
+            "p99": 0.20000000300001375
+          }
+        },
+        "runtime_pattern": "transient_recovery",
+        "source": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/runtime_load_analysis.json",
+          "sha256": "ff5d71b1869a98f4296270bf47f48c5e3f642957f13e075f22e2745b2cdb25d9",
+          "size_bytes": 171765
+        }
+      },
+      "rviz": {
+        "candidate_observed": true,
+        "gif_dimensions": [
+          960,
+          540
+        ],
+        "png_dimensions": [
+          1920,
+          1080
+        ],
+        "vehicle_centered": true
+      },
+      "source_records": {
+        "actuation_map_runtime_coverage.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/actuation_map_runtime_coverage.json",
+          "sha256": "f4eef923e393a12af572a16b67342a02c8dbae8824b87fd2c110ce927ab616a5",
+          "size_bytes": 4467
+        },
+        "aligned_route.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/aligned_route.json",
+          "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+          "size_bytes": 185078
+        },
+        "camera_source_5hz_validation.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/camera_source_5hz_validation.json",
+          "sha256": "dcf3fc0ce5a56766e4839a928e10384d4f1a45a5adb52b8d52a5bdb99130f7d4",
+          "size_bytes": 1665
+        },
+        "desktop_capture.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/desktop_capture.json",
+          "sha256": "75ea4ff0a8ffbf8a5321c057a4898f54776ac077b8070eae7d18240b9f9e8280",
+          "size_bytes": 3524
+        },
+        "latency/e2e_latency.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/latency/e2e_latency.json",
+          "sha256": "e5fa1ad80378bf5a311194e72cd06bdc4721f968d5c943ac6be0fb5dcafe3ad9",
+          "size_bytes": 20893
+        },
+        "longitudinal_response.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/longitudinal_response.json",
+          "sha256": "200866694c8f8be477fa11d85c6942b97bd6181df50c780c4d029747baeb9dd0",
+          "size_bytes": 3162045
+        },
+        "result.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/result.json",
+          "sha256": "17c4b73fdeae66b0b49929869ec5853304ebba489ae5b8cffb6ce68250560493",
+          "size_bytes": 422692
+        },
+        "runtime.env": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/runtime.env",
+          "sha256": "aafa5cc112dadb09e0004152a504830749495c5631d7aafd325c552c29035c4e",
+          "size_bytes": 6208
+        },
+        "sensor_mapping_provenance/SHA256SUMS": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/sensor_mapping_provenance/SHA256SUMS",
+          "sha256": "f681871db10b5f150771d75fa7bb69b7c6d601a5cc6f31f024c4518f1126d778",
+          "size_bytes": 86
+        },
+        "sensor_mapping_provenance/sensor_mapping.yaml": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/sensor_mapping_provenance/sensor_mapping.yaml",
+          "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+          "size_bytes": 3946
+        },
+        "speed_profile.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/speed_profile.json",
+          "sha256": "b011d212bf3b92c558a1d0e68272df57483d7729368611e63164e35e9a26fe90",
+          "size_bytes": 1484123
+        },
+        "stack.log": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001/stack.log",
+          "sha256": "2360a4b31318074413b9d423c822afb8a4c28a4700c1c7af7f53e335a6bab9d7",
+          "size_bytes": 314143
+        }
+      },
+      "speed_exposure_status": "FAIL",
+      "target_speed_kph": 60.00000000000001,
+      "target_speed_mps": 16.666666666666668,
+      "trial_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/trial/attempt_001",
+      "trial_verdict": "FAIL"
+    },
+    "reference_30kph": {
+      "actuation_map": {
+        "converter_lookup_velocity_source": "absolute_current_odometry_longitudinal_speed_mps",
+        "runtime_lookup_classification": "OBSERVED_LOOKUPS_WITHIN_MAP_AXIS",
+        "status": "PASS",
+        "target_envelope_classification": "TARGET_ENVELOPE_COVERED_BY_MAP_AXIS",
+        "velocity_axis_clamping_observed": false
+      },
+      "camera": {
+        "bundle_coverage_percent": 99.7289972899729,
+        "candidate_front_acceptance_percent": 100.0,
+        "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+        "status": "PASS"
+      },
+      "goal_reached": true,
+      "label": "30 kph reference",
+      "longitudinal": {
+        "accel_command_near_saturation": {
+          "longest_contiguous_duration_sec": 0.0,
+          "sample_fraction_percent": 0.0,
+          "time_fraction_percent": 0.0
+        },
+        "actual_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 2846,
+          "duration_sec": 73.8000011,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 2846,
+          "last_time_sec": 73.8000011,
+          "maximum": 7.740337371826172,
+          "maximum_sample_gap_sec": 0.10000000200000159,
+          "mean": 6.04494336172777,
+          "median": 7.663382053375244,
+          "minimum": -0.02431488037109375,
+          "p95": 7.739959239959717
+        },
+        "brake_command_active": {
+          "longest_contiguous_duration_sec": 3.650000054000003,
+          "sample_fraction_percent": 10.907859078590786,
+          "time_fraction_percent": 10.711864405798803
+        },
+        "gated_positive_acceleration_limit": {
+          "longest_contiguous_duration_sec": 8.900000132999999,
+          "sample_fraction_percent": 19.837508463100882,
+          "time_fraction_percent": 19.71544715464781
+        },
+        "gated_target_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 1477,
+          "duration_sec": 73.8000011,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 1477,
+          "last_time_sec": 73.8000011,
+          "maximum": 8.333333015441895,
+          "maximum_sample_gap_sec": 0.05000000100000079,
+          "mean": 7.130377404869723,
+          "median": 8.333333015441895,
+          "minimum": 0.0,
+          "p95": 8.333333015441895
+        },
+        "raw_acceleration_above_gate_limit": {
+          "longest_contiguous_duration_sec": 8.900000132999999,
+          "sample_fraction_percent": 19.837508463100882,
+          "time_fraction_percent": 19.71544715464781
+        },
+        "raw_target_speed_mps": {
+          "bag_receipt_fallback_count": 0,
+          "count": 1477,
+          "duration_sec": 73.8000011,
+          "first_time_sec": 0.0,
+          "header_stamp_count": 1477,
+          "last_time_sec": 73.8000011,
+          "maximum": 8.333333015441895,
+          "maximum_sample_gap_sec": 0.05000000100000079,
+          "mean": 7.417680677079477,
+          "median": 8.333333015441895,
+          "minimum": 0.0,
+          "p95": 8.333333015441895
+        }
+      },
+      "motion": {
+        "maximum_absolute_cte_m": 0.5322219133377075,
+        "maximum_lateral_acceleration_mps2": 0.42346379262382583,
+        "maximum_observed_speed_kph": 27.865506009953688,
+        "maximum_observed_speed_mps": 7.740418336098246,
+        "maximum_sustained_speed_duration_sec": 45.800000682,
+        "real_time_factor": 0.2484468967318301,
+        "sim_elapsed_sec": 70.65000105300001,
+        "target_attainment_percent": 92.88502003317895,
+        "traveled_distance_m": 445.129085231153,
+        "wall_elapsed_sec": 284.3666070390027
+      },
+      "profile_id": "carla_vad_30kph_v2",
+      "reason": "goal reached",
+      "rosbag_identity": {
+        "files": [
+          {
+            "path": "bag_0.db3",
+            "sha256": "051b62344d5a563bf06f8f0e4ac03fbab470f070ab37effa42848e4a5785ac9f",
+            "size_bytes": 46280704
+          },
+          {
+            "path": "metadata.yaml",
+            "sha256": "ee9334d1a1477352b77e60529e5d3c0c2a334247e93b25d6c0500b6a32c3ef73",
+            "size_bytes": 32516
+          }
+        ],
+        "root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/bag",
+        "schema_version": 1,
+        "sha256": "321a19339eb4cdc16071e946027d49bb4a3578d0123cafbdc6f41482253d3c03"
+      },
+      "route": {
+        "route_length_m": 445.8799516556895,
+        "scenario": "straight",
+        "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+        "town": "Town06"
+      },
+      "runtime_load": {
+        "findings_classification": "persistent_camera_delivery_path_stall_without_recovery_not_host_wide_saturation",
+        "phase_detection": {
+          "classification": "persistent_low_rtf_no_recovery",
+          "detected": false,
+          "interval_near_realtime_fraction": 0.0,
+          "interval_near_realtime_threshold_rtf": 0.8,
+          "persistent_low_threshold_rtf": 0.8,
+          "reason": "VAD cadence has no distinct abrupt recovery (median wall-period ratio < 1.5)",
+          "rolling_interval_count": 20,
+          "rolling_rtf": {
+            "available": true,
+            "count": 366,
+            "max": 0.2550678866427661,
+            "mean": 0.2482731689739834,
+            "median": 0.24894053264912552,
+            "min": 0.23474046440492774,
+            "p95": 0.25138959987945625,
+            "p99": 0.2522092658281447
+          }
+        },
+        "runtime_pattern": "persistent_low_rtf_no_recovery",
+        "source": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/runtime_load_analysis.json",
+          "sha256": "1450c26e9a1f13876c9d16dbfaf1c2d40f40cc2ca93b7078e30e8f113f5bdb9e",
+          "size_bytes": 157697
+        }
+      },
+      "rviz": {
+        "candidate_observed": true,
+        "gif_dimensions": [
+          960,
+          540
+        ],
+        "png_dimensions": [
+          1920,
+          1080
+        ],
+        "vehicle_centered": true
+      },
+      "source_records": {
+        "actuation_map_runtime_coverage.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/actuation_map_runtime_coverage.json",
+          "sha256": "9f7e4b73eb06bfd6f4e1b97f34109cf4bff6d59d494b33f63e7b1b50052f4ecc",
+          "size_bytes": 4435
+        },
+        "aligned_route.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/aligned_route.json",
+          "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+          "size_bytes": 185078
+        },
+        "camera_source_5hz_validation.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/camera_source_5hz_validation.json",
+          "sha256": "71065d767a427b6739d79a85c84d1222339f8b9f1874ac5a6cfb9a169370517c",
+          "size_bytes": 1663
+        },
+        "desktop_capture.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/desktop_capture.json",
+          "sha256": "cbb150afe6098efbfc65b01fb6108ea2cf99ba6b81efcf883b21c5d94ca0226e",
+          "size_bytes": 3535
+        },
+        "latency/e2e_latency.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/latency/e2e_latency.json",
+          "sha256": "ba2084041099318c5246904f8faac05f6e3f0e5caf78a9a4e8b53e97c16955ae",
+          "size_bytes": 20970
+        },
+        "longitudinal_response.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/longitudinal_response.json",
+          "sha256": "cc6fe12a8212f2fdd9183b8f5ff28370a50011c118a03db21221ece13167c379",
+          "size_bytes": 2709189
+        },
+        "result.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/result.json",
+          "sha256": "85c3e6332e35661360dce406533156031fc09973e0cb336de030d1d083e7c8ae",
+          "size_bytes": 368455
+        },
+        "runtime.env": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/runtime.env",
+          "sha256": "ca98dd7dd5b276077994c32cb527f9a5e21700b3b10d53eef5a01b9e39bf76f9",
+          "size_bytes": 6138
+        },
+        "sensor_mapping_provenance/SHA256SUMS": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/sensor_mapping_provenance/SHA256SUMS",
+          "sha256": "f681871db10b5f150771d75fa7bb69b7c6d601a5cc6f31f024c4518f1126d778",
+          "size_bytes": 86
+        },
+        "sensor_mapping_provenance/sensor_mapping.yaml": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/sensor_mapping_provenance/sensor_mapping.yaml",
+          "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+          "size_bytes": 3946
+        },
+        "speed_profile.json": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/speed_profile.json",
+          "sha256": "cc2355bea23d3743540c21329fb4db66ce571f4272d9fd72f8bc3efd6608044b",
+          "size_bytes": 1247358
+        },
+        "stack.log": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/stack.log",
+          "sha256": "098f6d70bc9824f011318ae84adb77d997e3ddd222f5d4297e833848ede2f169",
+          "size_bytes": 278321
+        }
+      },
+      "speed_exposure_status": "PASS",
+      "target_speed_kph": 30.000000000000004,
+      "target_speed_mps": 8.333333333333334,
+      "trial_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002",
+      "trial_verdict": "PASS"
+    }
+  }
+}

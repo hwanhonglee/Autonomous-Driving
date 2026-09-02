@@ -1,0 +1,388 @@
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+@@ -26,11 +26,12 @@ from .modules.carla_data_provider import GameTime
+ from .modules.coordinate_transformer import CoordinateTransformer
+ from .modules.carla_wrapper import SensorReceivedNoData
+ from .modules.carla_wrapper import SensorWrapper
++from .modules.runtime_timing import RuntimeTimingMonitor
+ 
+ 
+ class SensorLoop(object):
+ 
+-    def __init__(self):
++    def __init__(self, timing_monitor=None):
+         self.start_game_time = None
+         self.start_system_time = None
+         self.sensor = None
+@@ -38,6 +39,7 @@ class SensorLoop(object):
+         self.running = False
+         self.timestamp_last_run = 0.0
+         self.timeout = 20.0
++        self._runtime_timing = timing_monitor
+ 
+     def _stop_loop(self):
+         self.running = False
+@@ -47,8 +49,20 @@ class SensorLoop(object):
+             self.timestamp_last_run = timestamp.elapsed_seconds
+             GameTime.on_carla_tick(timestamp)
+             CarlaDataProvider.on_carla_tick()
++            started_ns = (
++                self._runtime_timing.start()
++                if self._runtime_timing is not None
++                else None
++            )
+             try:
+                 ego_action = self.sensor()
+             except SensorReceivedNoData as e:
+                 raise RuntimeError(e)
++            finally:
++                if self._runtime_timing is not None:
++                    self._runtime_timing.warn_if_slow(
++                        "sensor_wait",
++                        started_ns,
++                        sim_time_sec=timestamp.elapsed_seconds,
++                    )
+             self.ego_actor.apply_control(ego_action)
+@@ -55,4 +69,17 @@ class SensorLoop(object):
+         if self.running:
+-            CarlaDataProvider.get_world().tick()
++            started_ns = (
++                self._runtime_timing.start()
++                if self._runtime_timing is not None
++                else None
++            )
++            try:
++                CarlaDataProvider.get_world().tick()
++            finally:
++                if self._runtime_timing is not None:
++                    self._runtime_timing.warn_if_slow(
++                        "world_tick",
++                        started_ns,
++                        sim_time_sec=timestamp.elapsed_seconds,
++                    )
+ 
+ 
+@@ -183,7 +210,10 @@ class InitializeInterface(object):
+             self._setup_traffic_manager(client)
+ 
+     def run_bridge(self):
+-        self.bridge_loop = SensorLoop()
++        timing_monitor = getattr(self.interface, "_runtime_timing", None)
++        if timing_monitor is None:
++            timing_monitor = RuntimeTimingMonitor(self.interface.logger)
++        self.bridge_loop = SensorLoop(timing_monitor=timing_monitor)
+         self.bridge_loop.sensor = self.sensor_wrapper
+         self.bridge_loop.ego_actor = self.ego_actor
+         self.bridge_loop.start_system_time = time.time()
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -51,6 +51,7 @@ from .modules.carla_utils import carla_rotation_to_ros_quaternion
+ from .modules.carla_utils import create_cloud
+ from .modules.carla_utils import ros_pose_to_carla_transform
+ from .modules.carla_wrapper import SensorInterface
++from .modules.runtime_timing import RuntimeTimingMonitor
+ from .vehicle_status_conversion import carla_yaw_rate_to_ros
+ from .vehicle_status_conversion import fl_wheel_to_virtual_tire_angle
+ from .vehicle_status_conversion import rear_axle_lateral_velocity
+@@ -287,5 +288,6 @@ class carla_ros2_interface(object):
+         rclpy.init(args=None)
+         self.ros2_node = rclpy.create_node("carla_ros2_interface")
+         self.logger = self.ros2_node.get_logger()
++        self._runtime_timing = RuntimeTimingMonitor(self.logger)
+         self.sensor_registry.logger = self.logger
+         self.ros_publisher_manager = ROSPublisherManager(self.ros2_node, logger=self.logger)
+@@ -344,6 +346,7 @@ class carla_ros2_interface(object):
+         # reliable-QoS flow control (see SensorPublishWorker).
+         self._publish_workers = {}
+         self._rejected_camera_bundles = 0
++        self._runtime_timing = None
+ 
+         # ROS-related helpers initialized later
+         self.ros2_node = None
+@@ -462,18 +465,41 @@ class carla_ros2_interface(object):
+         header.stamp = Time(sec=seconds, nanosec=nanoseconds)
+         return header
+ 
++    def _get_runtime_timing(self):
++        """Return the shared timing monitor, creating it lazily for test instances."""
++        monitor = getattr(self, "_runtime_timing", None)
++        if monitor is None and getattr(self, "logger", None) is not None:
++            monitor = RuntimeTimingMonitor(self.logger)
++            self._runtime_timing = monitor
++        return monitor
++
+     def _submit_to_publish_worker(self, key, fn, *args):
+         """Run a publish call on the sensor's worker thread (created lazily)."""
+         worker = self._publish_workers.get(key)
+         if worker is None:
+-            worker = SensorPublishWorker(key, self.logger)
++            worker = SensorPublishWorker(
++                key, self.logger, timing_monitor=self._get_runtime_timing()
++            )
+             self._publish_workers[key] = worker
+         worker.submit(fn, args)
+ 
+     def _publish_camera_bundle(self, camera_measurements):
+         """Convert and publish one complete physical camera frame serially."""
+-        for measurement, camera_id, timestamp in camera_measurements:
+-            self.camera(measurement, camera_id, timestamp)
++        timing = self._get_runtime_timing()
++        started_ns = timing.start() if timing is not None else None
++        try:
++            for measurement, camera_id, timestamp in camera_measurements:
++                self.camera(measurement, camera_id, timestamp)
++        finally:
++            if timing is not None:
++                timing.warn_if_slow(
++                    "camera_bundle_total",
++                    started_ns,
++                    camera_count=len(camera_measurements),
++                    source_stamp_sec=(
++                        camera_measurements[0][2] if camera_measurements else "none"
++                    ),
++                )
+ 
+     def _queue_camera_bundle(self, camera_measurements, expected_count):
+         """Validate and atomically enqueue a same-frame camera bundle."""
+@@ -727,12 +761,23 @@ class carla_ros2_interface(object):
+         header = self.get_msg_header(
+             frame_id=config.frame_id or f"{cam_id}/camera_optical_link", timestamp=timestamp
+         )
++        timing = self._get_runtime_timing()
+ 
+         # Publish camera info
+         if has_info_subs:
+             cam_info = self.camera_info_cache[cam_id]
+             cam_info.header = header
+-            info_pub.publish(cam_info)
++            started_ns = timing.start() if timing is not None else None
++            try:
++                info_pub.publish(cam_info)
++            finally:
++                if timing is not None:
++                    timing.warn_if_slow(
++                        "camera_info_publish",
++                        started_ns,
++                        camera=cam_id,
++                        source_stamp_sec=timestamp,
++                    )
+ 
+         # Publish image
+         if has_image_subs:
+@@ -739,9 +783,29 @@ class carla_ros2_interface(object):
+                 dtype=numpy.uint8,
+                 buffer=carla_camera_data.raw_data,
+             )
+-            img_msg = self.cv_bridge.cv2_to_imgmsg(image_array, encoding="bgra8")
++            started_ns = timing.start() if timing is not None else None
++            try:
++                img_msg = self.cv_bridge.cv2_to_imgmsg(image_array, encoding="bgra8")
++            finally:
++                if timing is not None:
++                    timing.warn_if_slow(
++                        "camera_cv_bridge",
++                        started_ns,
++                        camera=cam_id,
++                        source_stamp_sec=timestamp,
++                    )
+             img_msg.header = header
+-            img_pub.publish(img_msg)
++            started_ns = timing.start() if timing is not None else None
++            try:
++                img_pub.publish(img_msg)
++            finally:
++                if timing is not None:
++                    timing.warn_if_slow(
++                        "camera_image_publish",
++                        started_ns,
++                        camera=cam_id,
++                        source_stamp_sec=timestamp,
++                    )
+ 
+     def imu(self, carla_imu_measurement, timestamp):
+         """Transform and publish IMU measurement to ROS."""
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/runtime_timing.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/runtime_timing.py
+new file mode 100644
+--- /dev/null
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/runtime_timing.py
+@@ -0,0 +1,109 @@
++#!/usr/bin/env python3
++
++# Copyright 2026 Tier IV, Inc.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++"""Low-overhead, rate-limited timing diagnostics for the CARLA bridge."""
++
++import threading
++import time
++
++
++class RuntimeTimingMonitor:
++    """Report only slow runtime stages while keeping the normal path cheap."""
++
++    def __init__(
++        self,
++        logger,
++        threshold_sec=0.050,
++        log_interval_sec=5.0,
++        clock_ns=time.monotonic_ns,
++    ):
++        self._logger = logger
++        self._threshold_ns = int(threshold_sec * 1_000_000_000)
++        self._log_interval_ns = int(log_interval_sec * 1_000_000_000)
++        self._clock_ns = clock_ns
++        self._lock = threading.Lock()
++        self._last_log_ns = {}
++        self._suppressed = {}
++
++    def start(self):
++        """Return a monotonic start token for ``warn_if_slow``."""
++        return self._clock_ns()
++
++    @staticmethod
++    def _key(stage, fields):
++        # Rate-limit each camera/worker independently without letting volatile
++        # fields such as counters or source stamps create unbounded keys.
++        return (stage, fields.get("camera", ""), fields.get("worker", ""))
++
++    @staticmethod
++    def _format_fields(fields):
++        return " ".join(f"{name}={fields[name]}" for name in sorted(fields))
++
++    def _warn(self, message):
++        # Diagnostics must never mask a bridge or publisher exception.
++        try:
++            self._logger.warning(message)
++        except Exception:  # noqa: B902 - logging is deliberately fail-open
++            pass
++
++    def _claim_log_slot(self, key, now_ns):
++        with self._lock:
++            last_log_ns = self._last_log_ns.get(key)
++            if (
++                last_log_ns is not None
++                and now_ns - last_log_ns < self._log_interval_ns
++            ):
++                self._suppressed[key] = self._suppressed.get(key, 0) + 1
++                return None
++            suppressed = self._suppressed.pop(key, 0)
++            self._last_log_ns[key] = now_ns
++            return suppressed
++
++    def warn_if_slow(self, stage, started_ns, **fields):
++        """Warn when a monotonic duration is strictly greater than the threshold."""
++        finished_ns = self._clock_ns()
++        duration_ns = max(0, finished_ns - started_ns)
++        if duration_ns <= self._threshold_ns:
++            return duration_ns
++
++        key = self._key(stage, fields)
++        suppressed = self._claim_log_slot(key, finished_ns)
++        if suppressed is None:
++            return duration_ns
++
++        details = {
++            "duration_ms": f"{duration_ns / 1_000_000.0:.3f}",
++            "monotonic_ns": finished_ns,
++            **fields,
++        }
++        if suppressed:
++            details["suppressed"] = suppressed
++        self._warn(f"runtime_timing stage={stage} {self._format_fields(details)}")
++        return duration_ns
++
++    def warn_event(self, stage, **fields):
++        """Rate-limit a structured warning for an exceptional non-timing event."""
++        now_ns = self._clock_ns()
++        key = self._key(stage, fields)
++        suppressed = self._claim_log_slot(key, now_ns)
++        if suppressed is None:
++            return False
++
++        details = {"monotonic_ns": now_ns, **fields}
++        if suppressed:
++            details["suppressed"] = suppressed
++        self._warn(f"runtime_event stage={stage} {self._format_fields(details)}")
++        return True
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
+@@ -17,4 +17,6 @@
+ import queue
+ import threading
+ 
++from .runtime_timing import RuntimeTimingMonitor
++
+ _SENTINEL = object()
+@@ -36,11 +38,12 @@ class SensorPublishWorker:
+     the oldest frame is the correct degradation.
+     """
+ 
+-    def __init__(self, name, logger, queue_size=1):
++    def __init__(self, name, logger, queue_size=1, timing_monitor=None):
+         self._name = name
+         self._logger = logger
+         self._queue = queue.Queue(maxsize=queue_size)
+         self._dropped = 0
++        self._timing = timing_monitor or RuntimeTimingMonitor(logger)
+         self._thread = threading.Thread(
+             target=self._run, name=f"sensor_publish_{name}", daemon=True
+         )
+@@ -48,18 +51,23 @@ class SensorPublishWorker:
+ 
+     def submit(self, fn, args):
+         """Enqueue a publish call without blocking; drop the stale frame when full."""
+-        item = (fn, args)
++        item = (fn, args, self._timing.start())
++        dropped_this_submit = 0
+         while True:
+             try:
+                 self._queue.put_nowait(item)
++                if dropped_this_submit:
++                    self._timing.warn_event(
++                        "sensor_publish_drop",
++                        worker=self._name,
++                        dropped_this_submit=dropped_this_submit,
++                        dropped_total=self._dropped,
++                    )
+                 return
+             except queue.Full:
+                 try:
+                     self._queue.get_nowait()
+                     self._dropped += 1
+-                    if self._dropped % 100 == 1:
+-                        self._logger.debug(
+-                            f"Publish worker '{self._name}' dropped {self._dropped} stale frames"
+-                        )
++                    dropped_this_submit += 1
+                 except queue.Empty:
+                     pass
+@@ -69,6 +77,14 @@ class SensorPublishWorker:
+             item = self._queue.get()
+             if item is _SENTINEL:
+                 return
+-            fn, args = item
++            fn, args, enqueued_ns = item
++            queue_wait_stage = (
++                "camera_bundle_queue_wait"
++                if self._name == "camera_bundle"
++                else "sensor_publish_queue_wait"
++            )
++            self._timing.warn_if_slow(
++                queue_wait_stage, enqueued_ns, worker=self._name
++            )
+             try:
+                 fn(*args)

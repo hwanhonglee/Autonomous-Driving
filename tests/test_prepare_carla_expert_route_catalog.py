@@ -1985,6 +1985,26 @@ def test_cli_physical_straight_profile_is_explicit_and_straight_only():
         )
 
 
+def test_cli_60kph_physical_straight_profile_reuses_geometry_with_distinct_id():
+    module = load_module()
+    args = module.parse_args(
+        [
+            "--map-id",
+            "town06",
+            "--output-root",
+            "/tmp/expert-routes",
+            "--scenarios",
+            "straight",
+            "--physical-straight-profile",
+            "speed_60kph_straight_pilot",
+        ]
+    )
+
+    contract = module.physical_straight_contract(args)
+    assert contract["profile_id"] == "speed_60kph_straight_pilot"
+    assert contract["limits"] == module.SPEED_30KPH_STRAIGHT_GEOMETRY_CONTRACT
+
+
 def test_cli_town10_compact_capacity_profile_is_exact_and_fail_closed():
     module = load_module()
     exact = [
@@ -2045,6 +2065,100 @@ def test_cli_town10_compact_capacity_profile_is_exact_and_fail_closed():
         drifted[drifted.index(old)] = replacement
         with pytest.raises(SystemExit):
             module.parse_args(drifted)
+
+
+def test_cli_town06_60kph_capacity_profile_is_exact_and_fail_closed():
+    module = load_module()
+    exact = [
+        "--map-id",
+        "town06",
+        "--output-root",
+        "/tmp/expert-routes",
+        "--weather",
+        "ClearNoon",
+        "--scenarios",
+        "straight",
+        "--seeds",
+        "0",
+        "--pairs-per-seed",
+        "1",
+        "--min-distance",
+        "430",
+        "--max-distance",
+        "460",
+        "--preferred-distance",
+        "445",
+        "--sampling-resolution",
+        "1",
+        "--endpoint-waypoint-spacing-m",
+        "0.5",
+        "--endpoint-junction-policy",
+        "exclude",
+        "--candidate-enumeration-policy",
+        "directed_topology_straight_v1",
+        "--straight-capacity-profile",
+        "town06_60kph_straight_pilot_v1",
+        "--physical-straight-profile",
+        "speed_60kph_straight_pilot",
+        "--max-endpoint-offset",
+        "2",
+        "--max-traces",
+        "20000",
+    ]
+    args = module.parse_args(exact)
+    capacity = module.straight_capacity_contract(args)
+
+    assert capacity == {
+        "enabled": True,
+        "profile_id": "town06_60kph_straight_pilot_v1",
+        "map_id": "town06",
+        "scenario": "straight",
+        "endpoint_waypoint_spacing_m": 0.5,
+        "endpoint_junction_policy": "exclude",
+        "candidate_enumeration_policy": "directed_topology_straight_v1",
+        "admission_policy": "prefilter_then_exact_serialized_physical_postfilter",
+        "provenance": module.TOWN06_60KPH_STRAIGHT_CAPACITY_PROVENANCE,
+    }
+    provenance = capacity["provenance"]
+    assert provenance["simulation_only"] is True
+    assert provenance["real_vehicle_ready"] is False
+    assert provenance["calibration_claim"] is False
+    assert provenance["target_speed_mps"] == 16.666666666666668
+    assert provenance["minimum_sustained_speed_mps"] == 15.0
+    assert provenance["minimum_sustained_speed_duration_sec"] == 1.0
+    assert provenance["observed_30kph_threshold_entry_distance_m"] == 73.58
+    assert provenance["threshold_entry_distance_m"] == 294.32
+    assert provenance["minimum_exposure_distance_m"] == 15.0
+    assert provenance["assumed_deceleration_mps2"] == 2.0
+    assert provenance["minimum_stop_distance_m"] == 69.444
+    assert provenance["derived_required_distance_m"] == 378.764
+    assert provenance["minimum_route_margin_m"] == 51.236
+    assert "not a vehicle or control calibration claim" in provenance["claim_limit"]
+
+    def replace_option(arguments, option, replacement):
+        drifted = list(arguments)
+        drifted[drifted.index(option) + 1] = replacement
+        return drifted
+
+    for option, replacement in (
+        ("--map-id", "town01"),
+        ("--weather", "CloudyNoon"),
+        ("--scenarios", "lane_follow"),
+        ("--seeds", "1"),
+        ("--pairs-per-seed", "2"),
+        ("--min-distance", "431"),
+        ("--max-distance", "461"),
+        ("--preferred-distance", "446"),
+        ("--sampling-resolution", "2"),
+        ("--endpoint-waypoint-spacing-m", "1.0"),
+        ("--endpoint-junction-policy", "include"),
+        ("--candidate-enumeration-policy", "all_pairs"),
+        ("--physical-straight-profile", "speed_30kph"),
+        ("--max-endpoint-offset", "3"),
+        ("--max-traces", "19999"),
+    ):
+        with pytest.raises(SystemExit):
+            module.parse_args(replace_option(exact, option, replacement))
 
 
 def test_cli_physical_turn_profile_is_explicit_and_packaged_turn_only():

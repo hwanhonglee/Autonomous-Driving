@@ -36,7 +36,12 @@ Usage: run_recorded_route_trial.sh [options] OUTPUT_DIR ROUTE_JSON [launch argum
 Options:
   --recommended          Run the repeat-screened full-stack parameter profile
   --speed-30kph          Add the guarded 8.333 m/s screening profile
-  --camera-source-5hz    Render six CARLA cameras at 5 sim-Hz in recommended mode
+  --speed-60kph-pilot    Add the straight-only CARLA 16.667 m/s exploratory pilot
+  --camera-source-5hz    Render six CARLA cameras at 5 sim-Hz with the pinned
+                         localhost-only Best-Effort KEEP_LAST depth-1 profile
+  --control-ab-pid-i40   30 kph A/B: PID max_i_effort 0.30 -> 0.40 only
+  --control-ab-turn-preview-5m
+                         30 kph turn A/B: curvature preview 3 m -> 5 m only
   --visualize            Start RViz (and the front-camera view outside capture mode)
   --capture-desktop      Record 1920x1080 owned-RViz PNG/GIF evidence after a VAD candidate
   --tight-corridor       Screen the recommended profile with a +/-0.20 m corridor
@@ -48,6 +53,9 @@ Options:
   --mpc-input-delay SEC  Label the turn analysis with the applied MPC delay
   --mpc-steer-tau SEC    Label the turn analysis with the applied steering tau
   --ready-timeout SEC    Maximum wall time for the VAD route to become ready (default: 180)
+  --runtime-health-gate  Require stable /clock and six-camera health before engagement
+  --runtime-health-timeout SEC
+                         Runtime-health wall timeout (default: 45)
 
 CARLA must already be running at CARLA_HOST/CARLA_PORT. The helper owns only the
 Autoware stack and recorder processes that it starts.
@@ -57,10 +65,16 @@ EOF
 mpc_input_delay=""
 mpc_steer_tau=""
 ready_timeout=180
+runtime_health_gate=false
+runtime_health_gate_explicit=false
+runtime_health_timeout=45
+runtime_health_window_sec=8.0
+runtime_health_gate_mode="disabled"
 smart_mpc=false
 fp16_heads=false
 recommended=false
 speed_30kph=false
+speed_60kph_pilot=false
 camera_source_5hz=false
 camera_source_sensor_tick_sec=0.0
 visualize=false
@@ -76,10 +90,17 @@ minimum_sustained_speed_sec=""
 maximum_observed_speed_mps=""
 maximum_lateral_acceleration_limit_mps2=""
 maneuver_lookahead_m=""
+maneuver_exit_lookahead_m=""
+curvature_speed_preview_m=""
+route_curvature_lookahead_m=""
+max_route_deviation_m=""
 speed_profile_id="baseline"
 speed_exposure_mode="not_requested"
 model_override=""
 sensor_mapping=""
+control_ab_pid_i40=false
+control_ab_turn_preview_5m=false
+control_ab_candidate_id="baseline"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --recommended)
@@ -91,10 +112,25 @@ while [[ $# -gt 0 ]]; do
       recommended=true
       shift
       ;;
+    --speed-60kph-pilot)
+      speed_60kph_pilot=true
+      recommended=true
+      shift
+      ;;
     --camera-source-5hz)
       camera_source_5hz=true
       camera_source_sensor_tick_sec=0.2
       recommended=true
+      shift
+      ;;
+    --control-ab-pid-i40)
+      control_ab_pid_i40=true
+      control_ab_candidate_id="pid_i40"
+      shift
+      ;;
+    --control-ab-turn-preview-5m)
+      control_ab_turn_preview_5m=true
+      control_ab_candidate_id="turn_preview_5m"
       shift
       ;;
     --visualize)
@@ -147,6 +183,16 @@ while [[ $# -gt 0 ]]; do
       ready_timeout="$2"
       shift 2
       ;;
+    --runtime-health-gate)
+      runtime_health_gate=true
+      runtime_health_gate_explicit=true
+      shift
+      ;;
+    --runtime-health-timeout)
+      [[ $# -ge 2 ]] || { usage; exit 2; }
+      runtime_health_timeout="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -177,9 +223,29 @@ if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
+if [[ "${speed_30kph}" == "true" && "${speed_60kph_pilot}" == "true" ]]; then
+  echo "--speed-30kph and --speed-60kph-pilot are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${control_ab_pid_i40}" == "true" && \
+      "${control_ab_turn_preview_5m}" == "true" ]]; then
+  echo "Select exactly one isolated 30 kph control A/B candidate per trial." >&2
+  exit 2
+fi
+if [[ ( "${control_ab_pid_i40}" == "true" || \
+        "${control_ab_turn_preview_5m}" == "true" ) && \
+      "${speed_30kph}" != "true" ]]; then
+  echo "Control A/B candidates require --speed-30kph." >&2
+  exit 2
+fi
 if [[ "${speed_30kph}" == "true" && \
       ( "${tight_corridor}" == "true" || "${trajectory_stability}" == "true" ) ]]; then
   echo "--speed-30kph must be screened independently of experimental corridor/filter modes." >&2
+  exit 2
+fi
+if [[ "${speed_60kph_pilot}" == "true" && \
+      ( "${tight_corridor}" == "true" || "${trajectory_stability}" == "true" ) ]]; then
+  echo "--speed-60kph-pilot must be screened independently of experimental corridor/filter modes." >&2
   exit 2
 fi
 if [[ "${tight_corridor}" == "true" && "${recommended}" != "true" ]]; then
@@ -203,6 +269,14 @@ if [[ "${smart_mpc}" == "true" && -n "${model_override}" ]]; then
   exit 2
 fi
 
+if [[ ( "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ) &&
+      "${camera_source_5hz}" == "true" ]]; then
+  runtime_health_gate=true
+  runtime_health_gate_mode="automatic_speed_camera_source_5hz"
+elif [[ "${runtime_health_gate_explicit}" == "true" ]]; then
+  runtime_health_gate_mode="explicit"
+fi
+
 if [[ $# -lt 2 ]]; then
   usage
   exit 2
@@ -220,6 +294,13 @@ if [[ "${recommended}" == "true" ]]; then
   speed_profile_id="recommended_9kph_v1"
   if [[ "${speed_30kph}" == "true" ]]; then
     maneuver_lookahead_m="4.0"
+    maneuver_exit_lookahead_m="2.5"
+    curvature_speed_preview_m="3.0"
+    if [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
+      curvature_speed_preview_m="5.0"
+    fi
+    route_curvature_lookahead_m="20.0"
+    max_route_deviation_m="1.0"
     speed_profile_id="carla_vad_30kph_v2"
     comfortable_deceleration_mps2="2.0"
     maximum_longitudinal_acceleration_mps2="1.5"
@@ -227,6 +308,19 @@ if [[ "${recommended}" == "true" ]]; then
     target_speed_mps="8.333333333333334"
     maximum_observed_speed_mps="9.0"
     maximum_lateral_acceleration_limit_mps2="1.8"
+  elif [[ "${speed_60kph_pilot}" == "true" ]]; then
+    maneuver_lookahead_m="6.0"
+    maneuver_exit_lookahead_m="3.5"
+    curvature_speed_preview_m="6.0"
+    route_curvature_lookahead_m="40.0"
+    max_route_deviation_m="1.0"
+    speed_profile_id="carla_vad_60kph_straight_pilot_v1"
+    comfortable_deceleration_mps2="2.0"
+    maximum_longitudinal_acceleration_mps2="1.5"
+    maximum_lateral_acceleration_mps2="1.0"
+    target_speed_mps="16.666666666666668"
+    maximum_observed_speed_mps="18.0"
+    maximum_lateral_acceleration_limit_mps2="1.2"
   else
     comfortable_deceleration_mps2="0.60"
   fi
@@ -310,28 +404,65 @@ if [[ "${speed_30kph}" == "true" ]]; then
       exit 2
       ;;
   esac
+  if [[ "${control_ab_turn_preview_5m}" == "true" && \
+        "${route_scenario}" != "left" && "${route_scenario}" != "right" ]]; then
+    echo "--control-ab-turn-preview-5m requires a left or right route." >&2
+    exit 2
+  fi
+fi
+if [[ "${speed_60kph_pilot}" == "true" ]]; then
+  if [[ "${route_scenario}" != "straight" ]]; then
+    echo "--speed-60kph-pilot requires a straight route; got ${route_scenario}" >&2
+    exit 2
+  fi
+  speed_exposure_mode="straight_target_required"
+  minimum_sustained_speed_mps="15.0"
+  minimum_sustained_speed_sec="1.0"
 fi
 
 recommended_mpc=""
-speed_30kph_gate=""
-speed_30kph_pid=""
+speed_gate=""
+speed_pid=""
+cyclonedds_config=""
 if [[ "${recommended}" == "true" ]]; then
   package_share="$(ros2 pkg prefix autoware_e2e_vad_launch)/share/autoware_e2e_vad_launch"
   model_override="${package_share}/config/vad_carla_tiny_recommended.param.yaml"
   sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu.yaml"
   if [[ "${camera_source_5hz}" == "true" ]]; then
-    sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+    sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
+    model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
   fi
   recommended_mpc="${package_share}/config/mpc_carla_recommended.param.yaml"
   required_profile_files=("${model_override}" "${sensor_mapping}" "${recommended_mpc}")
-  if [[ "${speed_30kph}" == "true" ]]; then
-    speed_30kph_gate="${package_share}/config/vehicle_cmd_gate_carla_30kph.param.yaml"
-    speed_30kph_pid="${package_share}/config/pid_carla_vad_30kph.param.yaml"
+  if [[ "${camera_source_5hz}" == "true" ]]; then
     required_profile_files+=(
-      "${speed_30kph_gate}"
-      "${speed_30kph_gate}.metadata.json"
-      "${speed_30kph_pid}"
-      "${speed_30kph_pid}.metadata.json"
+      "${sensor_mapping}.metadata.json"
+      "${model_override}.metadata.json"
+      "${cyclonedds_config}"
+      "${cyclonedds_config}.metadata.json"
+    )
+  fi
+  if [[ "${speed_30kph}" == "true" ]]; then
+    speed_gate="${package_share}/config/vehicle_cmd_gate_carla_30kph.param.yaml"
+    speed_pid="${package_share}/config/pid_carla_vad_30kph.param.yaml"
+    if [[ "${control_ab_pid_i40}" == "true" ]]; then
+      speed_pid="${package_share}/config/pid_carla_vad_30kph_i40_ab.param.yaml"
+    fi
+    required_profile_files+=(
+      "${speed_gate}"
+      "${speed_gate}.metadata.json"
+      "${speed_pid}"
+      "${speed_pid}.metadata.json"
+    )
+  elif [[ "${speed_60kph_pilot}" == "true" ]]; then
+    speed_gate="${package_share}/config/vehicle_cmd_gate_carla_60kph_pilot.param.yaml"
+    speed_pid="${package_share}/config/pid_carla_vad_60kph_pilot.param.yaml"
+    required_profile_files+=(
+      "${speed_gate}"
+      "${speed_gate}.metadata.json"
+      "${speed_pid}"
+      "${speed_pid}.metadata.json"
     )
   fi
   for required in "${required_profile_files[@]}"; do
@@ -358,9 +489,96 @@ if [[ -n "${sensor_mapping}" ]]; then
   sensor_mapping="$(realpath -- "${sensor_mapping}")"
 fi
 
+camera_transport_profile_id="legacy_shared_camera_qos"
+camera_transport_sensor_mapping_sha256=""
+camera_transport_vad_override_sha256=""
+camera_transport_cyclonedds_sha256=""
+if [[ "${camera_source_5hz}" == "true" ]]; then
+  camera_transport_profile_id="carla_vad_camera_source_5hz_best_effort_image_v2"
+  camera_transport_sensor_mapping_sha256="$(
+    sha256sum -- "${sensor_mapping}" | awk '{print $1}'
+  )"
+  camera_transport_vad_override_sha256="$(
+    sha256sum -- "${model_override}" | awk '{print $1}'
+  )"
+  camera_transport_cyclonedds_sha256="$(
+    sha256sum -- "${cyclonedds_config}" | awk '{print $1}'
+  )"
+  python3 - "${sensor_mapping}" "${model_override}" \
+    "${sensor_mapping}.metadata.json" "${model_override}.metadata.json" \
+    "${cyclonedds_config}" "${cyclonedds_config}.metadata.json" \
+    "${camera_transport_profile_id}" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+import yaml
+
+mapping_path, model_path, mapping_meta_path, model_meta_path, cyclone_path, cyclone_meta_path = map(
+    Path, sys.argv[1:7]
+)
+profile_id = sys.argv[7]
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+mapping = yaml.safe_load(mapping_path.read_text(encoding="utf-8"))
+model = yaml.safe_load(model_path.read_text(encoding="utf-8"))
+mapping_meta = json.loads(mapping_meta_path.read_text(encoding="utf-8"))
+model_meta = json.loads(model_meta_path.read_text(encoding="utf-8"))
+cyclone_meta = json.loads(cyclone_meta_path.read_text(encoding="utf-8"))
+cameras = [
+    value
+    for value in mapping["sensor_mappings"].values()
+    if value.get("carla_type") == "sensor.camera.rgb"
+]
+if len(cameras) != 6:
+    raise SystemExit("camera transport profile must contain exactly six cameras")
+for camera in cameras:
+    ros = camera["ros_config"]
+    if (
+        ros.get("image_qos_profile") != "best_effort_depth_1"
+        or ros.get("camera_info_qos_profile") != "reliable"
+        or ros.get("frequency_hz") != 5
+        or camera["parameters"].get("sensor_tick") != 0.2
+    ):
+        raise SystemExit("camera transport profile violates the split QoS contract")
+for sensor_name in ("tamagawa/imu_link", "gnss_link"):
+    if mapping["sensor_mappings"][sensor_name]["ros_config"].get("qos_profile") != "reliable":
+        raise SystemExit(f"{sensor_name} must retain reliable QoS")
+sync = model["/**"]["ros__parameters"]["sync_params"]
+if sync.get("image_reliability") != "best_effort" or sync.get("image_queue_depth") != 1:
+    raise SystemExit("VAD image subscriber must request Best-Effort KEEP_LAST depth 1")
+for metadata, path in (
+    (mapping_meta, mapping_path),
+    (model_meta, model_path),
+    (cyclone_meta, cyclone_path),
+):
+    if (
+        metadata.get("profile_id") != profile_id
+        or metadata.get("effective_file_sha256") != digest(path)
+    ):
+        raise SystemExit(f"transport metadata/hash mismatch for {path}")
+if (
+    cyclone_meta.get("network_interface") != "lo"
+    or cyclone_meta.get("ros_localhost_only") is not False
+    or cyclone_meta.get("rmw_implementation") != "rmw_cyclonedds_cpp"
+):
+    raise SystemExit("CycloneDDS localhost transport metadata mismatch")
+PY
+  # CycloneDDS owns the exact loopback selection. ROS_LOCALHOST_ONLY=1 would
+  # select lo a second time and makes Cyclone 0.10 reject node creation.
+  export ROS_LOCALHOST_ONLY=0
+  export AUTOWARE_E2E_PINNED_CYCLONEDDS_URI="file://${cyclonedds_config}"
+  export AUTOWARE_E2E_PINNED_CYCLONEDDS_SHA256="${camera_transport_cyclonedds_sha256}"
+  export CYCLONEDDS_URI="${AUTOWARE_E2E_PINNED_CYCLONEDDS_URI}"
+fi
+
 raw_vehicle_cmd_converter_config="$(
   ros2 pkg prefix autoware_carla_interface
 )/share/autoware_carla_interface/config/raw_vehicle_cmd_converter.param.yaml"
+runtime_health_probe="${root}/scripts/e2e/probe_runtime_health.py"
 for argument in "${launch_arguments[@]}"; do
   case "${argument}" in
     raw_vehicle_cmd_converter_config:=*)
@@ -410,8 +628,29 @@ if [[ ! -f "${raw_vehicle_cmd_converter_config}" ]]; then
   exit 2
 fi
 raw_vehicle_cmd_converter_config="$(realpath -- "${raw_vehicle_cmd_converter_config}")"
+if [[ "${runtime_health_gate}" == "true" && ! -f "${runtime_health_probe}" ]]; then
+  echo "Runtime health probe not found: ${runtime_health_probe}" >&2
+  exit 2
+fi
 if [[ ! "${ready_timeout}" =~ ^[1-9][0-9]*$ ]]; then
   echo "ready timeout must be a positive integer" >&2
+  exit 2
+fi
+if ! python3 - "${runtime_health_timeout}" "${runtime_health_window_sec}" <<'PY'
+import math
+import sys
+
+try:
+    timeout = float(sys.argv[1])
+    window = float(sys.argv[2])
+except ValueError:
+    raise SystemExit(1)
+minimum = window + 0.1 + 2.0
+if not math.isfinite(timeout) or timeout < minimum:
+    raise SystemExit(1)
+PY
+then
+  echo "runtime health timeout must be finite and at least 10.1 seconds" >&2
   exit 2
 fi
 desktop_dimensions=""
@@ -534,6 +773,20 @@ odometry = named_display(config["Visualization Manager"]["Displays"], "Kinematic
 candidates = named_display(
     config["Visualization Manager"]["Displays"], "VAD Candidate Trajectories"
 )
+front_camera = named_display(
+    config["Visualization Manager"]["Displays"], "VAD Front Camera"
+)
+front_camera_topic = (
+    front_camera.get("Topic", {}) if isinstance(front_camera, dict) else {}
+)
+if (
+    front_camera_topic.get("Reliability Policy") != "Best Effort"
+    or front_camera_topic.get("History Policy") != "Keep Last"
+    or front_camera_topic.get("Depth") != 1
+):
+    raise SystemExit(
+        "RViz front-camera reader must request Best-Effort KEEP_LAST depth 1"
+    )
 covariance = odometry.get("Covariance", {}) if isinstance(odometry, dict) else {}
 clarity = {
     "odometry_keep": odometry.get("Keep") if isinstance(odometry, dict) else None,
@@ -641,6 +894,19 @@ fi
 python3 scripts/e2e/capture_raw_vehicle_cmd_converter_provenance.py \
   --config "${raw_vehicle_cmd_converter_config}" \
   --output-dir "${output_dir}/actuation_config_provenance"
+if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
+  actuation_coverage_arguments=(
+    --provenance-dir "${output_dir}/actuation_config_provenance"
+    --profile-id "${speed_profile_id}"
+    --target-speed-mps "${target_speed_mps}"
+    --output "${output_dir}/actuation_map_coverage.json"
+  )
+  if [[ "${speed_60kph_pilot}" == "true" ]]; then
+    actuation_coverage_arguments+=(--allow-target-envelope-beyond-axis)
+  fi
+  python3 scripts/e2e/analyze_actuation_map_coverage.py \
+    "${actuation_coverage_arguments[@]}"
+fi
 printf '%s\n' "${launch_arguments[@]}" > "${output_dir}/launch_args.txt"
 printf 'ROS_DOMAIN_ID=%s\nCARLA_HOST=%s\nCARLA_PORT=%s\n' \
   "${ROS_DOMAIN_ID}" "${carla_host}" "${carla_port}" > "${output_dir}/runtime.env"
@@ -658,6 +924,29 @@ printf 'RECOMMENDED=%s\nVISUALIZE=%s\nCAPTURE_DESKTOP=%s\nTIGHT_CORRIDOR_CANDIDA
 printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=5.0\n' \
   "${camera_source_5hz}" "${camera_source_sensor_tick_sec}" >> \
   "${output_dir}/runtime.env"
+printf 'CAMERA_TRANSPORT_PROFILE_ID=%s\nCAMERA_IMAGE_PUBLISH_QOS=%s\nCAMERA_IMAGE_PUBLISH_HISTORY=%s\nCAMERA_IMAGE_PUBLISH_DEPTH=%s\nCAMERA_INFO_PUBLISH_QOS=%s\nCAMERA_INFO_PUBLISH_DEPTH=%s\nVAD_IMAGE_SUBSCRIPTION_QOS=%s\nVAD_IMAGE_SUBSCRIPTION_DEPTH=%s\nRVIZ_IMAGE_SUBSCRIPTION_QOS=best_effort\nRVIZ_IMAGE_SUBSCRIPTION_DEPTH=%s\nRMW_IMPLEMENTATION=%s\nROS_LOCALHOST_ONLY=%s\nCYCLONEDDS_URI=%s\nCAMERA_TRANSPORT_SENSOR_MAPPING_SHA256=%s\nCAMERA_TRANSPORT_VAD_OVERRIDE_SHA256=%s\nCAMERA_TRANSPORT_CYCLONEDDS_SHA256=%s\n' \
+  "${camera_transport_profile_id}" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf best_effort || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf keep_last || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf reliable || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf best_effort || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
+  "${RMW_IMPLEMENTATION:-}" "${ROS_LOCALHOST_ONLY:-}" "${CYCLONEDDS_URI:-}" \
+  "${camera_transport_sensor_mapping_sha256}" \
+  "${camera_transport_vad_override_sha256}" \
+  "${camera_transport_cyclonedds_sha256}" >> "${output_dir}/runtime.env"
+printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
+  "${control_ab_candidate_id}" "${control_ab_pid_i40}" \
+  "${control_ab_turn_preview_5m}" >> "${output_dir}/runtime.env"
+runtime_health_probe_sha256="$(sha256sum -- "${runtime_health_probe}" | awk '{print $1}')"
+printf 'RUNTIME_HEALTH_GATE_ENABLED=%s\nRUNTIME_HEALTH_GATE_MODE=%s\nRUNTIME_HEALTH_TIMEOUT_SEC=%s\nRUNTIME_HEALTH_WINDOW_SEC=%s\nRUNTIME_HEALTH_REQUIRED_CONSECUTIVE_PASSES=3\nRUNTIME_HEALTH_EVIDENCE_FILE=runtime_health.json\nRUNTIME_HEALTH_PROBE_FILE=%s\nRUNTIME_HEALTH_PROBE_SHA256=%s\nRUNTIME_HEALTH_GATE_PHASE=after_optional_rviz_recorder_before_rosbag_and_engagement\n' \
+  "${runtime_health_gate}" "${runtime_health_gate_mode}" \
+  "${runtime_health_timeout}" "${runtime_health_window_sec}" \
+  "${runtime_health_probe}" "${runtime_health_probe_sha256}" >> \
+  "${output_dir}/runtime.env"
 if [[ "${capture_desktop}" == "true" ]]; then
   printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\n' \
     "${capture_output_width_px}" "${capture_output_height_px}" >> \
@@ -665,20 +954,57 @@ if [[ "${capture_desktop}" == "true" ]]; then
 fi
 printf 'VSCODE_SNAP_GUI_ENV_SANITIZED=%s\n' \
   "${vscode_snap_gui_env_sanitized}" >> "${output_dir}/runtime.env"
-printf 'SPEED_30KPH=%s\nSPEED_PROFILE_ID=%s\nROUTE_SCENARIO=%s\nSPEED_EXPOSURE_MODE=%s\n' \
-  "${speed_30kph}" "${speed_profile_id}" "${route_scenario}" \
+printf 'SPEED_30KPH=%s\nSPEED_60KPH_PILOT=%s\nSPEED_PROFILE_ID=%s\nROUTE_SCENARIO=%s\nSPEED_EXPOSURE_MODE=%s\n' \
+  "${speed_30kph}" "${speed_60kph_pilot}" "${speed_profile_id}" "${route_scenario}" \
   "${speed_exposure_mode}" >> "${output_dir}/runtime.env"
 if [[ -n "${maneuver_lookahead_m}" ]]; then
   printf 'MANEUVER_LOOKAHEAD_M=%s\nVAD_IMU_ACCELERATION_ENABLED=true\n' \
     "${maneuver_lookahead_m}" >> "${output_dir}/runtime.env"
 fi
-if [[ "${speed_30kph}" == "true" ]]; then
-  printf 'TARGET_SPEED_MPS=%s\nTARGET_SPEED_KPH=30.0\nMINIMUM_SUSTAINED_SPEED_MPS=%s\nMINIMUM_SUSTAINED_SPEED_SEC=%s\nMAXIMUM_OBSERVED_SPEED_MPS=%s\nMAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2=%s\nMAXIMUM_LONGITUDINAL_ACCELERATION_MPS2=%s\nMAXIMUM_LATERAL_ACCELERATION_MPS2=%s\nMAXIMUM_SPEED_SAMPLE_GAP_SEC=0.25\nCONTROLLER_STOP_OFFSET_M=0.60\nMANEUVER_EXIT_LOOKAHEAD_M=2.5\nCURVATURE_SPEED_PREVIEW_M=3.0\nROUTE_CURVATURE_LOOKAHEAD_M=20.0\nMAX_ROUTE_DEVIATION_M=1.0\nMAX_CANDIDATE_AGE_SEC=0.5\nCANDIDATE_TIMEOUT_SEC=1.5\nLONGITUDINAL_SPEED_SOURCE=explicit_simulation_profile\nLONGITUDINAL_ACCELERATION_ROLE=trajectory_internal_curve_exit_cap\nLONGITUDINAL_PID_MAX_OUT_MPS2=1.5\nLONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5\nCOMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2=1.5\nVAD_CRUISE_VELOCITY_EVALUATED=false\nVAD_HARD_STOP_SENTINEL_PRESERVED=true\nVAD_VELOCITY_EVALUATED=false\nVAD_GEOMETRY_EVALUATED=true\nVAD_GEOMETRY_SOURCE=true\nSPEED_LIMIT_SOURCE=explicit_simulation_profile\nREAL_VEHICLE_READY=false\n' \
-    "${target_speed_mps}" "${minimum_sustained_speed_mps}" \
+if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
+  if [[ "${speed_30kph}" == "true" ]]; then
+    printf 'TARGET_SPEED_MPS=%s\nTARGET_SPEED_KPH=30.0\n' \
+      "${target_speed_mps}" >> "${output_dir}/runtime.env"
+  else
+    printf 'TARGET_SPEED_MPS=%s\nTARGET_SPEED_KPH=60.0\n' \
+      "${target_speed_mps}" >> "${output_dir}/runtime.env"
+  fi
+  printf 'MINIMUM_SUSTAINED_SPEED_MPS=%s\nMINIMUM_SUSTAINED_SPEED_SEC=%s\nMAXIMUM_OBSERVED_SPEED_MPS=%s\nMAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2=%s\nMAXIMUM_LONGITUDINAL_ACCELERATION_MPS2=%s\nMAXIMUM_LATERAL_ACCELERATION_MPS2=%s\nMAXIMUM_SPEED_SAMPLE_GAP_SEC=0.25\nCONTROLLER_STOP_OFFSET_M=0.60\nMANEUVER_EXIT_LOOKAHEAD_M=%s\nCURVATURE_SPEED_PREVIEW_M=%s\nROUTE_CURVATURE_LOOKAHEAD_M=%s\nMAX_ROUTE_DEVIATION_M=%s\nMAX_CANDIDATE_AGE_SEC=0.5\nCANDIDATE_TIMEOUT_SEC=1.5\nLONGITUDINAL_SPEED_SOURCE=explicit_simulation_profile\nLONGITUDINAL_ACCELERATION_ROLE=trajectory_internal_curve_exit_cap\nLONGITUDINAL_PID_MAX_OUT_MPS2=1.5\nLONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5\nCOMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2=1.5\nVAD_CRUISE_VELOCITY_EVALUATED=false\nVAD_HARD_STOP_SENTINEL_PRESERVED=true\nVAD_VELOCITY_EVALUATED=false\nVAD_GEOMETRY_EVALUATED=true\nVAD_GEOMETRY_SOURCE=true\nSPEED_LIMIT_SOURCE=explicit_simulation_profile\nREAL_VEHICLE_READY=false\n' \
+    "${minimum_sustained_speed_mps}" \
     "${minimum_sustained_speed_sec}" "${maximum_observed_speed_mps}" \
     "${maximum_lateral_acceleration_limit_mps2}" \
     "${maximum_longitudinal_acceleration_mps2}" \
-    "${maximum_lateral_acceleration_mps2}" >> "${output_dir}/runtime.env"
+    "${maximum_lateral_acceleration_mps2}" "${maneuver_exit_lookahead_m}" \
+    "${curvature_speed_preview_m}" "${route_curvature_lookahead_m}" \
+    "${max_route_deviation_m}" >> "${output_dir}/runtime.env"
+fi
+if [[ "${speed_60kph_pilot}" == "true" ]]; then
+  printf 'SIMULATION_ONLY_EXPLORATORY=true\nROUTE_SCOPE=straight_only\n' >> \
+    "${output_dir}/runtime.env"
+fi
+if [[ -f "${output_dir}/actuation_map_coverage.json" ]]; then
+  python3 - "${output_dir}/actuation_map_coverage.json" <<'PY' >> \
+    "${output_dir}/runtime.env"
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+fields = {
+    "ACTUATION_MAP_COVERAGE_STATUS": payload["status"],
+    "ACTUATION_MAP_TARGET_ENVELOPE_CLASSIFICATION": payload[
+        "target_envelope_classification"
+    ],
+    "ACTUATION_MAP_VELOCITY_AXIS_MAXIMUM_MPS": payload[
+        "map_velocity_axis_maximum_mps"
+    ],
+    "ACTUATION_TARGET_WITHIN_MAP_VELOCITY_AXIS": str(
+        payload["target_within_map_velocity_axis"]
+    ).lower(),
+}
+for key, value in fields.items():
+    print(f"{key}={value}")
+PY
 fi
 if [[ "${capture_desktop}" == "true" ]]; then
   printf 'RVIZ_CAPTURE_CONFIG=%s\nRVIZ_CAPTURE_CONFIG_SHA256=%s\n' \
@@ -692,6 +1018,8 @@ fi
 validation_state="experimental"
 if [[ "${speed_30kph}" == "true" ]]; then
   validation_state="carla_30kph_v2_screening"
+elif [[ "${speed_60kph_pilot}" == "true" ]]; then
+  validation_state="carla_60kph_straight_pilot_v1_exploratory"
 elif [[ "${tight_corridor}" == "true" && "${trajectory_stability}" == "true" ]]; then
   validation_state="combined_tight_corridor_and_trajectory_stability_experimental"
 elif [[ "${tight_corridor}" == "true" ]]; then
@@ -736,6 +1064,21 @@ if [[ -n "${sensor_mapping}" ]]; then
   printf '%s  %s\n' "${sensor_mapping_sha256}" "sensor_mapping.yaml" > \
     "${output_dir}/sensor_mapping_provenance/SHA256SUMS"
 fi
+if [[ "${camera_source_5hz}" == "true" ]]; then
+  cyclonedds_metadata="${cyclonedds_config}.metadata.json"
+  cyclonedds_metadata_sha256="$(
+    sha256sum -- "${cyclonedds_metadata}" | awk '{print $1}'
+  )"
+  mkdir -p "${output_dir}/camera_transport_provenance"
+  cp -- "${cyclonedds_config}" \
+    "${output_dir}/camera_transport_provenance/cyclonedds.xml"
+  cp -- "${cyclonedds_metadata}" \
+    "${output_dir}/camera_transport_provenance/cyclonedds.xml.metadata.json"
+  printf '%s  %s\n%s  %s\n' \
+    "${camera_transport_cyclonedds_sha256}" "cyclonedds.xml" \
+    "${cyclonedds_metadata_sha256}" "cyclonedds.xml.metadata.json" > \
+    "${output_dir}/camera_transport_provenance/SHA256SUMS"
+fi
 if [[ -n "${recommended_mpc}" ]]; then
   recommended_mpc_sha256="$(sha256sum -- "${recommended_mpc}" | awk '{print $1}')"
   printf 'MPC_PARAM_FILE=%s\nMPC_PARAM_SHA256=%s\nMPC_INPUT_DELAY_SEC=%s\nMPC_STEER_TAU_SEC=%s\n' \
@@ -749,17 +1092,17 @@ if [[ -n "${recommended_mpc}" ]]; then
   printf '%s  %s\n' "${recommended_mpc_sha256}" "mpc.param.yaml" > \
     "${output_dir}/MPC_SHA256SUMS"
 fi
-if [[ -n "${speed_30kph_gate}" ]]; then
-  speed_gate_sha256="$(sha256sum -- "${speed_30kph_gate}" | awk '{print $1}')"
-  speed_gate_metadata="${speed_30kph_gate}.metadata.json"
+if [[ -n "${speed_gate}" ]]; then
+  speed_gate_sha256="$(sha256sum -- "${speed_gate}" | awk '{print $1}')"
+  speed_gate_metadata="${speed_gate}.metadata.json"
   speed_gate_metadata_sha256="$(
     sha256sum -- "${speed_gate_metadata}" | awk '{print $1}'
   )"
   printf 'VEHICLE_CMD_GATE_PARAM_FILE=%s\nVEHICLE_CMD_GATE_PARAM_SHA256=%s\nVEHICLE_CMD_GATE_METADATA_SHA256=%s\n' \
-    "${speed_30kph_gate}" "${speed_gate_sha256}" \
+    "${speed_gate}" "${speed_gate_sha256}" \
     "${speed_gate_metadata_sha256}" >> "${output_dir}/runtime.env"
   mkdir -p "${output_dir}/speed_profile_provenance"
-  cp -- "${speed_30kph_gate}" \
+  cp -- "${speed_gate}" \
     "${output_dir}/speed_profile_provenance/vehicle_cmd_gate.param.yaml"
   cp -- "${speed_gate_metadata}" \
     "${output_dir}/speed_profile_provenance/vehicle_cmd_gate.param.yaml.metadata.json"
@@ -769,17 +1112,17 @@ if [[ -n "${speed_30kph_gate}" ]]; then
     "vehicle_cmd_gate.param.yaml.metadata.json" > \
     "${output_dir}/speed_profile_provenance/SHA256SUMS"
 fi
-if [[ -n "${speed_30kph_pid}" ]]; then
-  speed_pid_sha256="$(sha256sum -- "${speed_30kph_pid}" | awk '{print $1}')"
-  speed_pid_metadata="${speed_30kph_pid}.metadata.json"
+if [[ -n "${speed_pid}" ]]; then
+  speed_pid_sha256="$(sha256sum -- "${speed_pid}" | awk '{print $1}')"
+  speed_pid_metadata="${speed_pid}.metadata.json"
   speed_pid_metadata_sha256="$(
     sha256sum -- "${speed_pid_metadata}" | awk '{print $1}'
   )"
   printf 'LONGITUDINAL_CONTROLLER_PARAM_FILE=%s\nLONGITUDINAL_CONTROLLER_PARAM_SHA256=%s\nLONGITUDINAL_CONTROLLER_METADATA_SHA256=%s\n' \
-    "${speed_30kph_pid}" "${speed_pid_sha256}" \
+    "${speed_pid}" "${speed_pid_sha256}" \
     "${speed_pid_metadata_sha256}" >> "${output_dir}/runtime.env"
   mkdir -p "${output_dir}/speed_profile_provenance"
-  cp -- "${speed_30kph_pid}" \
+  cp -- "${speed_pid}" \
     "${output_dir}/speed_profile_provenance/longitudinal_controller.param.yaml"
   cp -- "${speed_pid_metadata}" \
     "${output_dir}/speed_profile_provenance/longitudinal_controller.param.yaml.metadata.json"
@@ -1175,9 +1518,16 @@ if [[ "${recommended}" == "true" ]]; then
   stack_command=(scripts/e2e/run_route_vad_fast.sh --recommended)
   if [[ "${speed_30kph}" == "true" ]]; then
     stack_command+=(--speed-30kph)
+  elif [[ "${speed_60kph_pilot}" == "true" ]]; then
+    stack_command+=(--speed-60kph-pilot)
   fi
   if [[ "${camera_source_5hz}" == "true" ]]; then
     stack_command+=(--camera-source-5hz)
+  fi
+  if [[ "${control_ab_pid_i40}" == "true" ]]; then
+    stack_command+=(--control-ab-pid-i40)
+  elif [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
+    stack_command+=(--control-ab-turn-preview-5m)
   fi
   if [[ "${visualize}" == "true" ]]; then
     if [[ "${capture_desktop}" == "true" ]]; then
@@ -1317,6 +1667,235 @@ if [[ "${capture_desktop}" == "true" ]]; then
   verify_owned_rviz_capture_window recording_started
 fi
 
+if [[ "${runtime_health_gate}" == "true" ]]; then
+  require_carla_owner runtime_health_gate || exit 1
+  runtime_health_arguments=(
+    --output "${output_dir}/runtime_health.json"
+    --window-sec "${runtime_health_window_sec}"
+    --timeout-sec "${runtime_health_timeout}"
+  )
+  if [[ "${camera_source_5hz}" == "true" ]]; then
+    runtime_health_arguments+=(
+      --camera-transport-profile-id "${camera_transport_profile_id}"
+      --sensor-mapping-sha256 "${camera_transport_sensor_mapping_sha256}"
+      --vad-model-override-sha256 "${camera_transport_vad_override_sha256}"
+      --cyclonedds-uri "${CYCLONEDDS_URI}"
+      --cyclonedds-config-sha256 "${camera_transport_cyclonedds_sha256}"
+    )
+  fi
+  if [[ "${capture_desktop}" == "true" ]]; then
+    require_desktop_recorder runtime_health_start
+    runtime_health_arguments+=(
+      --rviz-recorder-pid "${desktop_pid}"
+      --rviz-recorder-pgid "${desktop_pgid}"
+    )
+  fi
+  runtime_health_exit_status=0
+  python3 "${runtime_health_probe}" "${runtime_health_arguments[@]}" > \
+    "${output_dir}/runtime_health.log" 2>&1 || runtime_health_exit_status=$?
+  if [[ ! -f "${output_dir}/runtime_health.json" ||
+        -L "${output_dir}/runtime_health.json" ]]; then
+    echo "Runtime health gate did not produce regular JSON evidence" >&2
+    exit 1
+  fi
+  runtime_health_evidence_sha256="$(
+    sha256sum -- "${output_dir}/runtime_health.json" | awk '{print $1}'
+  )"
+  python3 - "${output_dir}/runtime_health.json" \
+    "${runtime_health_exit_status}" "${runtime_health_probe_sha256}" \
+    "${runtime_health_timeout}" "${capture_desktop}" "${desktop_pid}" \
+    "${desktop_pgid}" "${runtime_health_evidence_sha256}" \
+    "${camera_transport_profile_id}" \
+    "${camera_transport_sensor_mapping_sha256}" \
+    "${camera_transport_vad_override_sha256}" \
+    "${CYCLONEDDS_URI:-}" "${camera_transport_cyclonedds_sha256}" <<'PY' >> \
+    "${output_dir}/runtime.env"
+import json
+import math
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+exit_status = int(sys.argv[2])
+expected_probe_sha256 = sys.argv[3]
+expected_timeout = float(sys.argv[4])
+rviz_required = sys.argv[5] == "true"
+expected_rviz_pid = int(sys.argv[6]) if rviz_required else None
+expected_rviz_pgid = int(sys.argv[7]) if rviz_required else None
+evidence_sha256 = sys.argv[8]
+expected_transport_profile = sys.argv[9]
+expected_mapping_sha256 = sys.argv[10]
+expected_vad_override_sha256 = sys.argv[11]
+expected_cyclonedds_uri = sys.argv[12]
+expected_cyclonedds_sha256 = sys.argv[13]
+payload = json.loads(path.read_text(encoding="utf-8"))
+expected_status = "PASS" if exit_status == 0 else "FAIL"
+contract = payload.get("contract")
+runtime = payload.get("runtime")
+sequence = payload.get("sequence")
+if (
+    payload.get("schema_version") != 1
+    or payload.get("probe_id") != "pre_engagement_runtime_health_v1"
+    or payload.get("status") != expected_status
+    or not isinstance(contract, dict)
+    or not isinstance(runtime, dict)
+    or runtime.get("read_only_subscriber") is not True
+    or runtime.get("publisher_qos_modified") is not False
+    or runtime.get("rosbag_started") is not False
+    or runtime.get("vehicle_engaged") is not False
+    or runtime.get("rviz_recorder_required") is not rviz_required
+    or payload.get("finished_at") is None
+):
+    raise SystemExit("runtime health JSON top-level contract mismatch")
+if (
+    not math.isclose(float(payload.get("timeout_seconds")), expected_timeout)
+    or not math.isclose(float(contract.get("window_seconds")), 8.0)
+    or contract.get("required_consecutive_passes") != 3
+    or contract.get("topics", {}).get("clock") != "/clock"
+    or len(contract.get("topics", {}).get("camera_info", [])) != 6
+    or contract.get("thresholds")
+    != {
+        "maximum_bundle_receipt_p95_seconds": 0.04,
+        "minimum_bundle_coverage_percent": 99.0,
+        "minimum_camera_wall_rate_hz": 4.0,
+        "minimum_complete_bundle_count": 20,
+        "minimum_rtf": 0.9,
+    }
+    or payload.get("source", {}).get("sha256") != expected_probe_sha256
+):
+    raise SystemExit("runtime health JSON fixed thresholds/provenance mismatch")
+transport = contract.get("camera_transport")
+if expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_v1":
+    expected_transport = {
+        "profile_id": expected_transport_profile,
+        "camera_image_publisher_reliability": "best_effort",
+        "camera_info_publisher_reliability": "reliable",
+        "vad_image_subscription_reliability": "best_effort",
+        "rviz_image_subscription_reliability": "best_effort",
+        "sensor_mapping_sha256": expected_mapping_sha256,
+        "vad_model_override_sha256": expected_vad_override_sha256,
+        "probe_topics": "camera_info_only",
+    }
+    if transport != expected_transport:
+        raise SystemExit("runtime health camera transport provenance mismatch")
+elif expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_v2":
+    expected_transport = {
+        "profile_id": expected_transport_profile,
+        "camera_image_publisher_reliability": "best_effort",
+        "camera_info_publisher_reliability": "reliable",
+        "vad_image_subscription_reliability": "best_effort",
+        "rviz_image_subscription_reliability": "best_effort",
+        "sensor_mapping_sha256": expected_mapping_sha256,
+        "vad_model_override_sha256": expected_vad_override_sha256,
+        "probe_topics": "camera_info_plus_read_only_image_graph",
+        "camera_image_endpoint_history": "keep_last",
+        "camera_image_endpoint_depth": 1,
+        "camera_image_endpoint_durability": "volatile",
+        "exact_camera_image_graph_required": True,
+        "cyclonedds_loopback_interface_required": True,
+        "ros_localhost_only_expected": "0",
+        "rmw_implementation": "rmw_cyclonedds_cpp",
+        "cyclonedds_uri": expected_cyclonedds_uri,
+        "cyclonedds_config_sha256": expected_cyclonedds_sha256,
+    }
+    graph = payload.get("camera_image_graph")
+    transport_environment = runtime.get("transport_environment")
+    if (
+        transport != expected_transport
+        or contract.get("topics", {}).get("camera_image_graph")
+        != [
+            "/sensing/camera/CAM_FRONT/image_raw",
+            "/sensing/camera/CAM_BACK/image_raw",
+            "/sensing/camera/CAM_FRONT_LEFT/image_raw",
+            "/sensing/camera/CAM_BACK_LEFT/image_raw",
+            "/sensing/camera/CAM_FRONT_RIGHT/image_raw",
+            "/sensing/camera/CAM_BACK_RIGHT/image_raw",
+        ]
+        or not isinstance(graph, dict)
+        or not isinstance(transport_environment, dict)
+        or transport_environment.get("status") != "PASS"
+    ):
+        raise SystemExit("runtime health transport-v2 provenance mismatch")
+    if expected_status == "PASS" and graph.get("status") != "PASS":
+        raise SystemExit("runtime health PASS lacks exact camera endpoint graph")
+elif transport is not None:
+    raise SystemExit("unexpected runtime health camera transport provenance")
+rviz_active = False
+if rviz_required:
+    before = runtime.get("rviz_recorder_before")
+    after = runtime.get("rviz_recorder_after")
+    expected_identity = (expected_rviz_pid, expected_rviz_pgid)
+    if expected_status == "PASS" and not all(
+        isinstance(item, dict) for item in (before, after)
+    ):
+        raise SystemExit("runtime health JSON lacks RViz load evidence")
+    for item in (before, after):
+        if item is None:
+            continue
+        if not isinstance(item, dict):
+            raise SystemExit("runtime health JSON RViz evidence is invalid")
+        if (item.get("pid"), item.get("pgid")) != expected_identity:
+            raise SystemExit("runtime health JSON RViz identity mismatch")
+        if not isinstance(item.get("process_state"), str):
+            raise SystemExit("runtime health JSON RViz process state is invalid")
+    rviz_active = all(isinstance(item, dict) for item in (before, after))
+if not re.fullmatch(r"[0-9a-f]{64}", evidence_sha256):
+    raise SystemExit("runtime health JSON digest is invalid")
+evaluated = len(payload.get("windows", []))
+maximum_consecutive = 0
+winning = ""
+if isinstance(sequence, dict):
+    evaluated = sequence.get("evaluated_window_count", evaluated)
+    maximum_consecutive = sequence.get("maximum_consecutive_passes", 0)
+    winning = ",".join(str(index) for index in sequence.get("winning_window_indexes", []))
+if expected_status == "PASS" and (
+    not isinstance(sequence, dict)
+    or sequence.get("status") != "PASS"
+    or sequence.get("timed_out") is not False
+    or len(sequence.get("winning_window_indexes", [])) != 3
+):
+    raise SystemExit("runtime health JSON PASS lacks three consecutive windows")
+print(f"RUNTIME_HEALTH_GATE_STATUS={expected_status}")
+print(f"RUNTIME_HEALTH_GATE_EXIT_CODE={exit_status}")
+print(f"RUNTIME_HEALTH_EVIDENCE_SHA256={evidence_sha256}")
+print(f"RUNTIME_HEALTH_EVALUATED_WINDOWS={evaluated}")
+print(f"RUNTIME_HEALTH_MAXIMUM_CONSECUTIVE_PASSES={maximum_consecutive}")
+print(f"RUNTIME_HEALTH_WINNING_WINDOW_INDEXES={winning}")
+print(f"RUNTIME_HEALTH_RVIZ_RECORDER_REQUIRED={str(rviz_required).lower()}")
+print(f"RUNTIME_HEALTH_RVIZ_RECORDER_ACTIVE_DURING_PROBE={str(rviz_active).lower()}")
+if expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_v2":
+    print(f"RUNTIME_HEALTH_CAMERA_IMAGE_GRAPH_STATUS={graph.get('status')}")
+    print(
+        "RUNTIME_HEALTH_TRANSPORT_ENVIRONMENT_STATUS="
+        f"{transport_environment.get('status')}"
+    )
+print(f"RUNTIME_HEALTH_FINISHED_AT={payload['finished_at']}")
+PY
+  if (( runtime_health_exit_status != 0 )); then
+    echo "Pre-engagement runtime health gate failed; see ${output_dir}/runtime_health.json" >&2
+    exit 1
+  fi
+  require_carla_owner runtime_health_complete || exit 1
+  if ! kill -0 "${stack_pid}" 2>/dev/null; then
+    echo "Autoware stack exited during the runtime health gate" >&2
+    exit 1
+  fi
+  if [[ "${capture_desktop}" == "true" ]]; then
+    require_desktop_recorder runtime_health_complete
+    verify_owned_rviz_capture_window runtime_health_complete
+  fi
+  critical_failure=""
+  if critical_failure="$(
+    critical_stack_child_failure "${output_dir}/stack.log"
+  )"; then
+    printf '%s\n' "${critical_failure}" > \
+      "${output_dir}/critical_process_failure.log"
+    echo "Critical Autoware process exited during runtime health gate: ${critical_failure}" >&2
+    exit 1
+  fi
+fi
+
 setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag" \
   > "${output_dir}/recorder.log" 2>&1 &
 recorder_pid=$!
@@ -1334,7 +1913,7 @@ route_test_arguments=(
   --route-file "${route_file}"
   --result "${output_dir}/result.json"
 )
-if [[ "${speed_30kph}" == "true" ]]; then
+if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
   route_test_arguments+=(
     --max-cte 1.0
     --max-observed-speed "${maximum_observed_speed_mps}"
@@ -1827,7 +2406,7 @@ PY
     analysis_status=1
   fi
 fi
-if [[ "${speed_30kph}" == "true" ]]; then
+if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
   speed_analysis_status=0
   python3 scripts/e2e/analyze_speed_profile.py \
     --bag "${output_dir}/bag" \
@@ -1839,7 +2418,76 @@ if [[ "${speed_30kph}" == "true" ]]; then
     --longitudinal-speed-source explicit_simulation_nominal > \
     "${output_dir}/speed_profile_analysis.log" 2>&1 || speed_analysis_status=$?
   if (( speed_analysis_status != 0 )); then
-    echo "30 km/h speed-source analysis failed; see ${output_dir}/speed_profile_analysis.log" >&2
+    if [[ "${speed_30kph}" == "true" ]]; then
+      echo "30 km/h speed-source analysis failed; see ${output_dir}/speed_profile_analysis.log" >&2
+    else
+      echo "60 km/h speed-source analysis failed; see ${output_dir}/speed_profile_analysis.log" >&2
+    fi
+    analysis_status=1
+  fi
+
+  # The command converter indexes its CSV maps by observed odometry speed, not
+  # by the requested cruise target.  Preserve a separate post-run audit so an
+  # out-of-axis target is never mislabeled as an observed clamped lookup.
+  runtime_coverage_status=0
+  observed_maximum_speed_mps="$(
+    python3 - "${output_dir}/result.json" <<'PY'
+import json
+import math
+from pathlib import Path
+import sys
+
+result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+metrics = result.get("metrics")
+if not isinstance(metrics, dict):
+    raise SystemExit("route result has no metrics object")
+value = metrics.get("maximum_observed_speed_mps")
+if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+    raise SystemExit("route result has no finite maximum observed speed")
+print(f"{float(value):.17g}")
+PY
+  )" || runtime_coverage_status=$?
+  if (( runtime_coverage_status == 0 )); then
+    runtime_coverage_arguments=(
+      --provenance-dir "${output_dir}/actuation_config_provenance"
+      --profile-id "${speed_profile_id}"
+      --target-speed-mps "${target_speed_mps}"
+      --observed-maximum-speed-mps "${observed_maximum_speed_mps}"
+      --output "${output_dir}/actuation_map_runtime_coverage.json"
+    )
+    if [[ "${speed_60kph_pilot}" == "true" ]]; then
+      runtime_coverage_arguments+=(--allow-target-envelope-beyond-axis)
+    fi
+    python3 scripts/e2e/analyze_actuation_map_coverage.py \
+      "${runtime_coverage_arguments[@]}" || runtime_coverage_status=$?
+  fi
+  if (( runtime_coverage_status != 0 )); then
+    echo "Post-run actuation-map lookup audit failed" >&2
+    analysis_status=1
+  fi
+
+  longitudinal_analysis_status=0
+  longitudinal_analysis_arguments=(
+    --bag "${output_dir}/bag"
+    --route-file "${route_file}"
+    --result "${output_dir}/result.json"
+    --output-dir "${output_dir}"
+    --profile-id "${speed_profile_id}"
+    --target-speed-mps "${target_speed_mps}"
+    --longitudinal-speed-source explicit_simulation_nominal
+  )
+  if [[ -f "${output_dir}/actuation_map_runtime_coverage.json" ]]; then
+    longitudinal_analysis_arguments+=(
+      --actuation-map-coverage \
+        "${output_dir}/actuation_map_runtime_coverage.json"
+    )
+  fi
+  python3 scripts/e2e/analyze_longitudinal_response.py \
+    "${longitudinal_analysis_arguments[@]}" > \
+    "${output_dir}/longitudinal_response_analysis.log" 2>&1 || \
+    longitudinal_analysis_status=$?
+  if (( longitudinal_analysis_status != 0 )); then
+    echo "Longitudinal response analysis failed; see ${output_dir}/longitudinal_response_analysis.log" >&2
     analysis_status=1
   fi
 fi

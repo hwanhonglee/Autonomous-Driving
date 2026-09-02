@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain Id="any">
+    <General>
+      <!-- Simulation campaign isolation: never select a LAN interface. -->
+      <Interfaces>
+        <NetworkInterface name="lo" priority="default" multicast="true" />
+      </Interfaces>
+      <!-- Local SPDP multicast is required for independent ROS 2 processes. -->
+      <AllowMulticast>true</AllowMulticast>
+    </General>
+  </Domain>
+</CycloneDDS>

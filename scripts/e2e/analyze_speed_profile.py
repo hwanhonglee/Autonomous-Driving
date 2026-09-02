@@ -3,7 +3,8 @@
 
 The plot intentionally separates the selected VAD trajectory's recorded velocity
 from the explicit CARLA simulation cruise overlay, the vehicle-command gate, and
-the measured vehicle response.  It does not claim that VAD predicted 30 km/h.
+the measured vehicle response.  It never treats the requested simulation target
+as a velocity predicted by VAD.
 """
 
 from __future__ import annotations
@@ -154,17 +155,17 @@ def _source_identity(
         "vad_velocity_evaluated": False,
         "vad_geometry_evaluated": True,
     }
+    result_success = result.get("success")
+    exposure_status = exposure.get("status") if isinstance(exposure, dict) else None
     if (
-        result.get("success") is not True
+        not isinstance(result_success, bool)
         or result.get("execution_mode") != "full_stack"
         or profile_context != expected_context
         or not isinstance(exposure, dict)
-        or exposure.get("status") != "PASS"
+        or exposure_status not in {"PASS", "FAIL"}
         or any(exposure.get(key) != value for key, value in expected_context.items())
     ):
-        raise RuntimeError(
-            "route result is not a passing explicit-simulation speed trial"
-        )
+        raise RuntimeError("route result is not an explicit-simulation speed trial")
     town = route.get("town")
     scenario = route.get("scenario")
     if not isinstance(town, str) or not town or scenario not in {
@@ -186,9 +187,11 @@ def _source_identity(
         "route_result": {
             "path": str(result_path),
             "sha256": _sha256_file(result_path),
-            "success": True,
+            "success": result_success,
             "execution_mode": "full_stack",
             "profile_context": expected_context,
+            "speed_exposure_status": exposure_status,
+            "reason": result.get("reason"),
         },
         "rosbag": _bag_manifest(bag),
     }
@@ -211,7 +214,7 @@ def _parse_args() -> argparse.Namespace:
         "--result",
         required=True,
         type=Path,
-        help="passing route_test result.json bound to this analysis",
+        help="route_test result.json bound to this analysis, including failed trials",
     )
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--profile-id", required=True)
@@ -365,6 +368,7 @@ def build_evidence(
     longitudinal_speed_source: str,
     source_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    target_speed_kph = target_speed_mps * 3.6
     required_records = {
         key: records.get(topic, []) for key, topic in SERIES_TOPICS.items()
     }
@@ -441,7 +445,7 @@ def build_evidence(
             "bag": str(bag.resolve()),
             "profile_id": profile_id,
             "target_speed_mps": target_speed_mps,
-            "target_speed_kph": target_speed_mps * 3.6,
+            "target_speed_kph": target_speed_kph,
             "longitudinal_speed_source": longitudinal_speed_source,
         },
         "source_identity": source_identity,
@@ -452,8 +456,8 @@ def build_evidence(
             "real_vehicle_ready": False,
             "note": (
                 "The selected raw VAD velocity is preserved as evidence but is not the "
-                "30 km/h cruise target. The planning series includes the explicit "
-                "simulation-only velocity overlay."
+                f"{target_speed_kph:.6g} km/h cruise target. The planning series "
+                "includes the explicit simulation-only velocity overlay."
             ),
         },
         "alignment": {
@@ -506,9 +510,15 @@ def _plot_evidence(evidence: dict[str, Any], output: Path) -> None:
     series = evidence.get("series", {})
     figure, axes = plt.subplots(2, 1, figsize=(16, 10), constrained_layout=True)
     profile = evidence.get("inputs", {}).get("profile_id", "unknown")
+    target_kph = evidence.get("inputs", {}).get("target_speed_kph")
+    target_label = (
+        f"{float(target_kph):.6g} km/h"
+        if isinstance(target_kph, (int, float)) and math.isfinite(float(target_kph))
+        else "unknown-speed"
+    )
     status = evidence.get("status", "incomplete").upper()
     figure.suptitle(
-        f"30 km/h CARLA speed-source evidence | {profile} | EVIDENCE {status}",
+        f"{target_label} CARLA speed-source evidence | {profile} | EVIDENCE {status}",
         fontsize=17,
         fontweight="bold",
     )

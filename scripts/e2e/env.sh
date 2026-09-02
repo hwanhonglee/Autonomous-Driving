@@ -6,6 +6,8 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 fi
 
 _autoware_e2e_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+_autoware_e2e_pinned_cyclonedds_uri="${AUTOWARE_E2E_PINNED_CYCLONEDDS_URI:-}"
+_autoware_e2e_pinned_cyclonedds_sha256="${AUTOWARE_E2E_PINNED_CYCLONEDDS_SHA256:-}"
 _autoware_e2e_restore_nounset=false
 if [[ $- == *u* ]]; then
   _autoware_e2e_restore_nounset=true
@@ -96,6 +98,42 @@ fi
 export CARLA_ROOT="${CARLA_ROOT:-${_autoware_e2e_root}/../carla-autoware-universe/CARLA_0.9.15}"
 export ROS_DOMAIN_ID="${AUTOWARE_E2E_ROS_DOMAIN_ID:-42}"
 export RMW_IMPLEMENTATION="rmw_cyclonedds_cpp"
+
+# A nested helper may source this file again after its owning trial selected a
+# hash-pinned CycloneDDS profile.  Discard arbitrary inherited CYCLONEDDS_URI
+# above, then restore only this explicit project marker after verifying the
+# exact local file.  This keeps the stack, health probe, rosbag, and engagement
+# clients in the same isolated DDS graph.
+if [[ -n "${_autoware_e2e_pinned_cyclonedds_uri}" || \
+      -n "${_autoware_e2e_pinned_cyclonedds_sha256}" ]]; then
+  if [[ -z "${_autoware_e2e_pinned_cyclonedds_uri}" || \
+        ! "${_autoware_e2e_pinned_cyclonedds_sha256}" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "Pinned CycloneDDS URI and SHA-256 must be supplied together." >&2
+    return 1
+  fi
+  case "${_autoware_e2e_pinned_cyclonedds_uri}" in
+    file:///*)
+      _autoware_e2e_pinned_cyclonedds_path="${_autoware_e2e_pinned_cyclonedds_uri#file://}"
+      ;;
+    *)
+      echo "Pinned CycloneDDS URI must be an absolute file:/// URI." >&2
+      return 1
+      ;;
+  esac
+  if [[ ! -f "${_autoware_e2e_pinned_cyclonedds_path}" ]]; then
+    echo "Pinned CycloneDDS config not found: ${_autoware_e2e_pinned_cyclonedds_path}" >&2
+    return 1
+  fi
+  _autoware_e2e_pinned_cyclonedds_actual_sha256="$({
+    sha256sum -- "${_autoware_e2e_pinned_cyclonedds_path}"
+  } | awk '{print $1}')"
+  if [[ "${_autoware_e2e_pinned_cyclonedds_actual_sha256}" != \
+        "${_autoware_e2e_pinned_cyclonedds_sha256}" ]]; then
+    echo "Pinned CycloneDDS config SHA-256 mismatch: ${_autoware_e2e_pinned_cyclonedds_path}" >&2
+    return 1
+  fi
+  export CYCLONEDDS_URI="${_autoware_e2e_pinned_cyclonedds_uri}"
+fi
 _tensorrt_10_8_root="${_autoware_e2e_root}/data/vendor/tensorrt-10.8/root/usr"
 if [[ -e "${_tensorrt_10_8_root}/lib64/libnvinfer.so" ]]; then
   _default_tensorrt_root="${_tensorrt_10_8_root}"
@@ -182,3 +220,7 @@ unset _carla_egg _carla_root_candidate _cuda_12_8_root _default_tensorrt_root
 unset _tensorrt_10_8_root _nvidia_compat_lib _autoware_e2e_root
 unset _ament_cmake_auto_macro _ament_cmake_auto_compat
 unset _tf2_ros_include_root _tf2_ros_header_compat
+unset _autoware_e2e_pinned_cyclonedds_uri
+unset _autoware_e2e_pinned_cyclonedds_sha256
+unset _autoware_e2e_pinned_cyclonedds_path
+unset _autoware_e2e_pinned_cyclonedds_actual_sha256

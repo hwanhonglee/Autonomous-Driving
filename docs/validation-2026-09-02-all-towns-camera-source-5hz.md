@@ -1,5 +1,23 @@
 # Validation evidence
 
+> 후속 60 kph pilot, 동일 경로 30 kph 비교와 18개 종방향 분석은
+> [2026-09-02 속도·종방향 검증 보고서](validation-2026-09-02-speed-30-60-longitudinal.md)에
+> 정리했다. 이 문서의 전체 Town 주행·camera·차량 중심 화면 판정은 그대로 유지한다.
+
+> 최신 화면 끊김 수정, 30 kph 제어 A/B와 선택 baseline 회귀, 현재 60 kph 후보는
+> [2026-09-02 runtime·제어 캠페인 보고서](validation-2026-09-02-runtime-control-campaign.md)와
+> [Git에 포함되는 정리 화면](assets/validation/2026-09-02-runtime-control-campaign-v1/README.md),
+> [canonical 캠페인 폴더](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/)에서
+> 이어진다. 이 후속 캠페인은 아래 9-map/18-trial 결과를 덮어쓰지 않는다.
+
+검증 자료의 계보는 [2026-08-31 초기 map inventory](validation-2026-08-31.md),
+[2026-09-01 v16 owned-window 기준선](validation-2026-09-01.md)과
+[v16 화면 audit](assets/validation/2026-09-01/owned_window_visual_audit/v16_owned_window_visual_audit.md),
+그리고 이 문서의 2026-09-02 최신 camera-source 5 Hz matrix 순이다. 최신 판정은
+실행 가능 map **PASS 9/9**와 선택 직진·회전 **18/18 PASS**다. 나머지
+**BLOCKED 10**은 주행 실패가 아니라 검증된 Lanelet2+PCD map bundle이 없거나
+validation admission을 받지 못한 `unavailable/not admitted` 상태다.
+
 > The following campaign summary is an operator-reviewed, SHA-bound narrative supplement. The generated provenance and result tables below remain authoritative.
 
 ## 캠페인 결론

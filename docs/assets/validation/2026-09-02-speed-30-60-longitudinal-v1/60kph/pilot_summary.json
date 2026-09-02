@@ -1,0 +1,58 @@
+{
+  "actuation_map": {
+    "converter_lookup_velocity_source": "absolute_current_odometry_longitudinal_speed_mps",
+    "runtime_lookup_classification": "OBSERVED_LOOKUPS_WITHIN_MAP_AXIS",
+    "status": "EXPLORATORY",
+    "target_envelope_classification": "TARGET_ENVELOPE_EXCEEDS_MAP_AXIS_CLAMP_IF_REACHED",
+    "velocity_axis_clamping_observed": false
+  },
+  "camera": {
+    "bundle_coverage_percent": 100.0,
+    "candidate_front_acceptance_percent": 100.23310023310023,
+    "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+    "status": "PASS"
+  },
+  "comparison": {
+    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town06_same_route_30_vs_60_analysis_v1/same_route_30_vs_60.json",
+    "sha256": "179b5916c9476f8fc634f41c69ed9cd42d20c282213913cd522001f149a56d29",
+    "size_bytes": 23091
+  },
+  "goal_reached": true,
+  "profile_id": "carla_vad_60kph_straight_pilot_v1",
+  "real_vehicle_ready": false,
+  "reason": "speed exposure contract failed: speed >= 15.000 m/s was sustained for only 0.000 s; require 1.000 s",
+  "rviz": {
+    "candidate_observed": true,
+    "gif_dimensions": [
+      960,
+      540
+    ],
+    "png_dimensions": [
+      1920,
+      1080
+    ],
+    "vehicle_centered": true
+  },
+  "same_route_reference": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002",
+  "schema_version": 1,
+  "speed_exposure_status": "FAIL",
+  "status": "EVIDENCE_COMPLETE_TRIAL_FAILED_SPEED_EXPOSURE",
+  "summary": {
+    "maximum_absolute_cte_m": 0.5247069001197815,
+    "maximum_lateral_acceleration_mps2": 0.3582043884950982,
+    "maximum_observed_speed_kph": 35.19527263069984,
+    "maximum_observed_speed_mps": 9.776464619638844,
+    "maximum_sustained_speed_duration_sec": 0.0,
+    "real_time_factor": 0.5268044404905251,
+    "sim_elapsed_sec": 78.100001164,
+    "target_attainment_percent": 58.658787717833064,
+    "traveled_distance_m": 445.136530889363,
+    "wall_elapsed_sec": 148.2523592460202
+  },
+  "supersedes_for_interpretation": {
+    "file": "pilot_run.json",
+    "original_file_preserved": true,
+    "reason": "The original wrapper summary predates failure-tolerant speed analysis and the corrected current-odometry actuation lookup audit."
+  },
+  "trial_verdict": "FAIL"
+}

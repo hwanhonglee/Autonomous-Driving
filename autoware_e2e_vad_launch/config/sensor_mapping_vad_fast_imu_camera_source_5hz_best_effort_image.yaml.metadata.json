@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v1",
+  "scope": "CARLA simulation runtime-stutter remediation",
+  "base_file": "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+  "base_sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+  "effective_file_sha256": "17f1a1f110fae297131b9f7e06d7bff7237fd88ce7638745d4f7415b5fcdce4d",
+  "transport_contract": {
+    "camera_image_raw_publishers": "best_effort",
+    "camera_info_publishers": "reliable",
+    "imu_publisher": "reliable",
+    "gnss_publisher": "reliable",
+    "camera_count": 6,
+    "camera_source_period_seconds": 0.2,
+    "camera_publish_rate_hz": 5
+  },
+  "isolated_change": "split six raw-image writers from reliable camera_info writers",
+  "real_vehicle_ready": false
+}

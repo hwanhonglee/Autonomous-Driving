@@ -158,7 +158,10 @@ def test_recorded_trial_invokes_speed_analyzer_only_inside_speed_profile() -> No
     )
 
     assert "scripts/e2e/analyze_speed_profile.py" in source
-    speed_guard = 'if [[ "${speed_30kph}" == "true" ]]; then'
+    speed_guard = (
+        'if [[ "${speed_30kph}" == "true" || '
+        '"${speed_60kph_pilot}" == "true" ]]; then'
+    )
     analyzer_offset = source.index("scripts/e2e/analyze_speed_profile.py")
     guard_offset = source.rfind(speed_guard, 0, analyzer_offset)
     assert guard_offset >= 0
@@ -173,6 +176,21 @@ def test_recorded_trial_invokes_speed_analyzer_only_inside_speed_profile() -> No
         guard_offset : analyzer_offset + 500
     ]
     assert "speed_profile_analysis.log" in source[guard_offset:analyzer_offset + 500]
+
+
+def test_evidence_uses_the_requested_target_instead_of_a_fixed_30kph_label() -> None:
+    records = _complete_records()
+    evidence = analyzer.build_evidence(
+        records,
+        _topic_types(),
+        bag=Path("/tmp/synthetic_speed_bag_60"),
+        profile_id="carla_vad_60kph_straight_pilot_v1",
+        target_speed_mps=16.666666666666668,
+        longitudinal_speed_source="explicit_simulation_nominal",
+    )
+
+    assert evidence["inputs"]["target_speed_kph"] == pytest.approx(60.0)
+    assert "60 km/h cruise target" in evidence["interpretation"]["note"]
 
 
 def test_source_identity_binds_route_result_and_complete_rosbag(
@@ -217,9 +235,55 @@ def test_source_identity_binds_route_result_and_complete_rosbag(
     assert identity["effective_route"]["trial_id"] == "straight"
     assert identity["rosbag"]["root"] == str(bag.resolve())
     assert len(identity["rosbag"]["files"]) == 2
+    assert identity["route_result"]["success"] is True
+    assert identity["route_result"]["speed_exposure_status"] == "PASS"
     assert identity["sha256"] == analyzer._sha256_json(
         {key: value for key, value in identity.items() if key != "sha256"}
     )
+
+
+def test_source_identity_preserves_a_failed_speed_exposure_for_analysis(
+    tmp_path: Path,
+) -> None:
+    bag = tmp_path / "bag"
+    bag.mkdir()
+    (bag / "metadata.yaml").write_text("version: 9\n", encoding="utf-8")
+    route = tmp_path / "route.json"
+    route.write_text(
+        json.dumps(
+            {
+                "town": "Town06",
+                "scenario": "straight",
+                "route_length_m": 445.88,
+            }
+        ),
+        encoding="utf-8",
+    )
+    context = {
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "vad_velocity_evaluated": False,
+        "vad_geometry_evaluated": True,
+    }
+    result = tmp_path / "result.json"
+    result.write_text(
+        json.dumps(
+            {
+                "success": False,
+                "reason": "speed exposure contract failed",
+                "execution_mode": "full_stack",
+                "route_file": str(route),
+                "profile_context": context,
+                "speed_exposure": {"status": "FAIL", **context},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    identity = analyzer._source_identity(bag, route, result)
+
+    assert identity["route_result"]["success"] is False
+    assert identity["route_result"]["speed_exposure_status"] == "FAIL"
+    assert identity["route_result"]["reason"] == "speed exposure contract failed"
 
 
 def test_source_identity_rejects_result_bound_to_another_route(

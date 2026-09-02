@@ -24,6 +24,8 @@ scripts/e2e/apply_carla_vehicle_status_patch.sh
 scripts/e2e/apply_carla_base_link_pose_patch.sh
 scripts/e2e/apply_carla_base_link_route_contract_patch.sh
 scripts/e2e/apply_carla_imu_source_timestamp_patch.sh
+scripts/e2e/apply_carla_runtime_timing_patch.sh
+scripts/e2e/apply_carla_camera_qos_split_patch.sh
 scripts/e2e/apply_autoware_launch_control_override.sh
 scripts/e2e/apply_autoware_launch_vehicle_cmd_gate_override.sh
 scripts/e2e/setup_tl_expected.sh

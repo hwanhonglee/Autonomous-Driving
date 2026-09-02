@@ -25,17 +25,55 @@ RELIABLE_FAST_MAPPING = PACKAGE / "config/sensor_mapping_vad_fast_reliable.yaml"
 RELIABLE_FAST_IMU_MAPPING = (
     PACKAGE / "config/sensor_mapping_vad_fast_reliable_imu.yaml"
 )
-CAMERA_SOURCE_5HZ_MAPPING = PACKAGE / (
+RELIABLE_CAMERA_SOURCE_5HZ_MAPPING = PACKAGE / (
     "config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+)
+CAMERA_SOURCE_5HZ_MAPPING = PACKAGE / (
+    "config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml"
+)
+CAMERA_SOURCE_5HZ_MAPPING_METADATA = Path(
+    f"{CAMERA_SOURCE_5HZ_MAPPING}.metadata.json"
 )
 SYNC_QUEUE32_PARAMS = PACKAGE / "test/fixtures/vad/sync_queue32.param.yaml"
 RELIABLE_SYNC_QUEUE32_PARAMS = PACKAGE / "config/vad_carla_tiny_recommended.param.yaml"
+CAMERA_SOURCE_5HZ_VAD_PARAMS = PACKAGE / (
+    "config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml"
+)
+CAMERA_SOURCE_5HZ_VAD_METADATA = Path(f"{CAMERA_SOURCE_5HZ_VAD_PARAMS}.metadata.json")
+CAMERA_SOURCE_5HZ_DEPTH1_MAPPING = PACKAGE / (
+    "config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
+)
+CAMERA_SOURCE_5HZ_DEPTH1_MAPPING_METADATA = Path(
+    f"{CAMERA_SOURCE_5HZ_DEPTH1_MAPPING}.metadata.json"
+)
+CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS = PACKAGE / (
+    "config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+)
+CAMERA_SOURCE_5HZ_DEPTH1_VAD_METADATA = Path(
+    f"{CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS}.metadata.json"
+)
+CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE = (
+    PACKAGE / "config/cyclonedds_camera_depth1_localhost_v2.xml"
+)
+CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE_METADATA = Path(
+    f"{CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE}.metadata.json"
+)
 RECOMMENDED_MPC_PARAMS = PACKAGE / "config/mpc_carla_recommended.param.yaml"
 SPEED_30_GATE_PARAMS = PACKAGE / "config/vehicle_cmd_gate_carla_30kph.param.yaml"
 SPEED_30_GATE_METADATA = Path(f"{SPEED_30_GATE_PARAMS}.metadata.json")
 CARLA_PID_PARAMS = PACKAGE / "config/pid_carla_vad_no_steer_convergence.param.yaml"
 SPEED_30_PID_PARAMS = PACKAGE / "config/pid_carla_vad_30kph.param.yaml"
 SPEED_30_PID_METADATA = Path(f"{SPEED_30_PID_PARAMS}.metadata.json")
+SPEED_30_PID_I40_AB_PARAMS = (
+    PACKAGE / "config/pid_carla_vad_30kph_i40_ab.param.yaml"
+)
+SPEED_30_PID_I40_AB_METADATA = Path(f"{SPEED_30_PID_I40_AB_PARAMS}.metadata.json")
+SPEED_60_GATE_PARAMS = (
+    PACKAGE / "config/vehicle_cmd_gate_carla_60kph_pilot.param.yaml"
+)
+SPEED_60_GATE_METADATA = Path(f"{SPEED_60_GATE_PARAMS}.metadata.json")
+SPEED_60_PID_PARAMS = PACKAGE / "config/pid_carla_vad_60kph_pilot.param.yaml"
+SPEED_60_PID_METADATA = Path(f"{SPEED_60_PID_PARAMS}.metadata.json")
 STOCK_PID_PARAMS = (
     ROOT
     / "src/launcher/autoware_launch/autoware_launch/config/control/trajectory_follower/longitudinal/pid.param.yaml"
@@ -234,7 +272,7 @@ def test_reliable_fast_mapping_uses_exact_frame_capture_and_reliable_qos():
 
 def test_camera_source_5hz_mapping_changes_only_six_camera_ticks():
     baseline = load_yaml(RELIABLE_FAST_IMU_MAPPING)
-    candidate = load_yaml(CAMERA_SOURCE_5HZ_MAPPING)
+    candidate = load_yaml(RELIABLE_CAMERA_SOURCE_5HZ_MAPPING)
 
     expected = deepcopy(baseline)
     for config in camera_mappings(expected).values():
@@ -254,6 +292,127 @@ def test_camera_source_5hz_mapping_changes_only_six_camera_ticks():
     assert candidate["sensor_mappings"]["gnss_link"] == baseline[
         "sensor_mappings"
     ]["gnss_link"]
+
+
+def test_camera_source_5hz_runtime_profile_splits_only_raw_image_qos():
+    baseline = load_yaml(RELIABLE_CAMERA_SOURCE_5HZ_MAPPING)
+    candidate = load_yaml(CAMERA_SOURCE_5HZ_MAPPING)
+
+    expected = deepcopy(baseline)
+    for config in camera_mappings(expected).values():
+        config["ros_config"]["image_qos_profile"] = "best_effort"
+        config["ros_config"]["camera_info_qos_profile"] = "reliable"
+
+    assert candidate == expected
+    cameras = camera_mappings(candidate)
+    assert all(
+        config["ros_config"]["image_qos_profile"] == "best_effort"
+        and config["ros_config"]["camera_info_qos_profile"] == "reliable"
+        for config in cameras.values()
+    )
+    assert candidate["sensor_mappings"]["tamagawa/imu_link"] == baseline[
+        "sensor_mappings"
+    ]["tamagawa/imu_link"]
+    assert candidate["sensor_mappings"]["gnss_link"] == baseline[
+        "sensor_mappings"
+    ]["gnss_link"]
+
+
+def test_camera_source_5hz_vad_reader_and_metadata_match_transport_contract():
+    params = ros_parameters(CAMERA_SOURCE_5HZ_VAD_PARAMS)
+    mapping_metadata = json.loads(
+        CAMERA_SOURCE_5HZ_MAPPING_METADATA.read_text(encoding="utf-8")
+    )
+    vad_metadata = json.loads(
+        CAMERA_SOURCE_5HZ_VAD_METADATA.read_text(encoding="utf-8")
+    )
+
+    assert params["sync_params"] == {
+        "frame_buffer_size": 32,
+        "image_queue_depth": 32,
+        "image_reliability": "best_effort",
+    }
+    for metadata, path in (
+        (mapping_metadata, CAMERA_SOURCE_5HZ_MAPPING),
+        (vad_metadata, CAMERA_SOURCE_5HZ_VAD_PARAMS),
+    ):
+        assert metadata["profile_id"] == (
+            "carla_vad_camera_source_5hz_best_effort_image_v1"
+        )
+        assert metadata["effective_file_sha256"] == hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
+
+
+def test_camera_source_5hz_depth1_v2_changes_only_bounded_image_histories():
+    baseline_mapping = load_yaml(CAMERA_SOURCE_5HZ_MAPPING)
+    candidate_mapping = load_yaml(CAMERA_SOURCE_5HZ_DEPTH1_MAPPING)
+    expected_mapping = deepcopy(baseline_mapping)
+    for config in camera_mappings(expected_mapping).values():
+        config["ros_config"]["image_qos_profile"] = "best_effort_depth_1"
+
+    assert candidate_mapping == expected_mapping
+    baseline_params = ros_parameters(CAMERA_SOURCE_5HZ_VAD_PARAMS)
+    candidate_params = ros_parameters(CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS)
+    expected_params = deepcopy(baseline_params)
+    expected_params["sync_params"]["image_queue_depth"] = 1
+    assert candidate_params == expected_params
+
+
+def test_camera_source_5hz_depth1_v2_metadata_binds_localhost_transport():
+    profile_id = "carla_vad_camera_source_5hz_best_effort_image_v2"
+    cyclone_sha = hashlib.sha256(CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE.read_bytes()).hexdigest()
+    for metadata_path, effective_path in (
+        (CAMERA_SOURCE_5HZ_DEPTH1_MAPPING_METADATA, CAMERA_SOURCE_5HZ_DEPTH1_MAPPING),
+        (CAMERA_SOURCE_5HZ_DEPTH1_VAD_METADATA, CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS),
+        (CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE_METADATA, CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE),
+    ):
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        assert metadata["profile_id"] == profile_id
+        assert metadata["effective_file_sha256"] == hashlib.sha256(
+            effective_path.read_bytes()
+        ).hexdigest()
+        assert metadata["real_vehicle_ready"] is False
+
+    mapping_contract = json.loads(
+        CAMERA_SOURCE_5HZ_DEPTH1_MAPPING_METADATA.read_text(encoding="utf-8")
+    )["transport_contract"]
+    assert mapping_contract["camera_image_raw_publishers"] == {
+        "reliability": "best_effort",
+        "durability": "volatile",
+        "history": "keep_last",
+        "depth": 1,
+        "profile_key": "best_effort_depth_1",
+    }
+    assert mapping_contract["network_interface"] == "lo"
+    assert mapping_contract["ros_localhost_only"] is False
+    assert mapping_contract["cyclonedds_config_sha256"] == cyclone_sha
+
+
+def test_centered_rviz_front_camera_reader_is_bounded_best_effort_depth1():
+    config = load_yaml(PACKAGE / "rviz/autoware_vad_carla.rviz")
+
+    def named_display(value, name):
+        if isinstance(value, dict):
+            if value.get("Name") == name:
+                return value
+            for child in value.values():
+                found = named_display(child, name)
+                if found is not None:
+                    return found
+        elif isinstance(value, list):
+            for child in value:
+                found = named_display(child, name)
+                if found is not None:
+                    return found
+        return None
+
+    front = named_display(
+        config["Visualization Manager"]["Displays"], "VAD Front Camera"
+    )
+    assert front["Topic"]["Reliability Policy"] == "Best Effort"
+    assert front["Topic"]["History Policy"] == "Keep Last"
+    assert front["Topic"]["Depth"] == 1
 
 
 def test_reliable_reader_override_extends_queue32_without_changing_base_candidate():
@@ -550,6 +709,79 @@ def test_speed_30_pid_changes_only_allowlisted_simulation_limits():
     ).hexdigest()
 
 
+def test_speed_30_pid_i40_ab_changes_only_integral_effort_limit():
+    baseline = ros_parameters(SPEED_30_PID_PARAMS)
+    candidate = ros_parameters(SPEED_30_PID_I40_AB_PARAMS)
+    expected = deepcopy(baseline)
+    expected["max_i_effort"] = 0.4
+
+    assert candidate == expected
+    metadata = json.loads(
+        SPEED_30_PID_I40_AB_METADATA.read_text(encoding="utf-8")
+    )
+    assert metadata["profile_id"] == "carla_vad_30kph_v2"
+    assert metadata["variant_id"] == "carla_vad_30kph_pid_i40_ab_v1"
+    assert metadata["scope"] == "CARLA simulation A/B screening only"
+    assert metadata["base_sha256"] == hashlib.sha256(
+        SPEED_30_PID_PARAMS.read_bytes()
+    ).hexdigest()
+    assert metadata["isolated_override"] == {
+        "max_i_effort": {"baseline": 0.3, "candidate": 0.4}
+    }
+    assert metadata["unchanged_limits"] == {
+        "max_out": 1.5,
+        "max_p_effort": 1.5,
+        "command_gate_longitudinal_acceleration_cap_mps2": 1.5,
+    }
+    assert metadata["real_vehicle_ready"] is False
+
+
+def test_speed_60_gate_changes_only_allowlisted_straight_pilot_limits():
+    stock = ros_parameters(STOCK_VEHICLE_CMD_GATE_PARAMS)
+    speed_60 = ros_parameters(SPEED_60_GATE_PARAMS)
+    expected = deepcopy(stock)
+    expected["nominal"]["vel_lim"] = 16.666666666666668
+    expected["nominal"]["lon_acc_lim_for_lon_vel"] = [1.5] * 4
+    expected["nominal"]["lat_acc_lim_for_steer_cmd"] = [1.2] * 4
+    expected["on_transition"]["vel_lim"] = 16.666666666666668
+    expected["on_transition"]["lat_acc_lim_for_steer_cmd"] = [1.2] * 2
+
+    assert speed_60 == expected
+    metadata = json.loads(SPEED_60_GATE_METADATA.read_text(encoding="utf-8"))
+    assert metadata["profile_id"] == "carla_vad_60kph_straight_pilot_v1"
+    assert metadata["scope"] == (
+        "CARLA simulation straight-route exploratory pilot only"
+    )
+    assert metadata["route_scope"] == "straight_only"
+    assert metadata["validation_state"] == (
+        "carla_60kph_straight_pilot_v1_exploratory"
+    )
+    assert metadata["speed_limit_source"] == "explicit_simulation_profile"
+    assert metadata["real_vehicle_ready"] is False
+    assert metadata["source_sha256"] == hashlib.sha256(
+        STOCK_VEHICLE_CMD_GATE_PARAMS.read_bytes()
+    ).hexdigest()
+
+
+def test_speed_60_pid_matches_speed_30_dynamics_with_distinct_provenance():
+    speed_30 = ros_parameters(SPEED_30_PID_PARAMS)
+    speed_60 = ros_parameters(SPEED_60_PID_PARAMS)
+
+    assert speed_60 == speed_30
+    metadata = json.loads(SPEED_60_PID_METADATA.read_text(encoding="utf-8"))
+    assert metadata["profile_id"] == "carla_vad_60kph_straight_pilot_v1"
+    assert metadata["scope"] == (
+        "CARLA simulation straight-route exploratory pilot only"
+    )
+    assert metadata["matches_dynamics_profile"] == "carla_vad_30kph_v2"
+    assert metadata["route_scope"] == "straight_only"
+    assert metadata["command_gate_longitudinal_acceleration_cap_mps2"] == 1.5
+    assert metadata["real_vehicle_ready"] is False
+    assert metadata["source_sha256"] == hashlib.sha256(
+        CARLA_PID_PARAMS.read_bytes()
+    ).hexdigest()
+
+
 def test_speed_30_turn_grade_envelope_matches_longitudinal_controller_limits():
     speed_30 = ros_parameters(SPEED_30_PID_PARAMS)
     matrix = load_yaml(TOWN_MATRIX)
@@ -778,9 +1010,34 @@ def make_fake_runtime(tmp_path):
         package_share / "config" / RELIABLE_FAST_IMU_MAPPING.name,
     )
     shutil.copy2(
+        RELIABLE_CAMERA_SOURCE_5HZ_MAPPING,
+        package_share / "config" / RELIABLE_CAMERA_SOURCE_5HZ_MAPPING.name,
+    )
+    shutil.copy2(
         CAMERA_SOURCE_5HZ_MAPPING,
         package_share / "config" / CAMERA_SOURCE_5HZ_MAPPING.name,
     )
+    shutil.copy2(
+        CAMERA_SOURCE_5HZ_MAPPING_METADATA,
+        package_share / "config" / CAMERA_SOURCE_5HZ_MAPPING_METADATA.name,
+    )
+    shutil.copy2(
+        CAMERA_SOURCE_5HZ_VAD_PARAMS,
+        package_share / "config" / CAMERA_SOURCE_5HZ_VAD_PARAMS.name,
+    )
+    shutil.copy2(
+        CAMERA_SOURCE_5HZ_VAD_METADATA,
+        package_share / "config" / CAMERA_SOURCE_5HZ_VAD_METADATA.name,
+    )
+    for profile_file in (
+        CAMERA_SOURCE_5HZ_DEPTH1_MAPPING,
+        CAMERA_SOURCE_5HZ_DEPTH1_MAPPING_METADATA,
+        CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS,
+        CAMERA_SOURCE_5HZ_DEPTH1_VAD_METADATA,
+        CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE,
+        CAMERA_SOURCE_5HZ_DEPTH1_CYCLONE_METADATA,
+    ):
+        shutil.copy2(profile_file, package_share / "config" / profile_file.name)
     shutil.copy2(
         RELIABLE_SYNC_QUEUE32_PARAMS,
         package_share / "config" / RELIABLE_SYNC_QUEUE32_PARAMS.name,
@@ -805,6 +1062,30 @@ def make_fake_runtime(tmp_path):
         SPEED_30_PID_METADATA,
         package_share / "config" / SPEED_30_PID_METADATA.name,
     )
+    shutil.copy2(
+        SPEED_30_PID_I40_AB_PARAMS,
+        package_share / "config" / SPEED_30_PID_I40_AB_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_30_PID_I40_AB_METADATA,
+        package_share / "config" / SPEED_30_PID_I40_AB_METADATA.name,
+    )
+    shutil.copy2(
+        SPEED_60_GATE_PARAMS,
+        package_share / "config" / SPEED_60_GATE_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_60_GATE_METADATA,
+        package_share / "config" / SPEED_60_GATE_METADATA.name,
+    )
+    shutil.copy2(
+        SPEED_60_PID_PARAMS,
+        package_share / "config" / SPEED_60_PID_PARAMS.name,
+    )
+    shutil.copy2(
+        SPEED_60_PID_METADATA,
+        package_share / "config" / SPEED_60_PID_METADATA.name,
+    )
     shutil.copy2(FAST_VAD_LAUNCH, package_share / "launch" / FAST_VAD_LAUNCH.name)
 
     ros2 = bin_dir / "ros2"
@@ -827,6 +1108,14 @@ def make_route(tmp_path):
     )
     route["spawn_point"] = "1.0,0.0,0.5,0.0,0.0,0.0"
     path = tmp_path / "route.json"
+    path.write_text(json.dumps(route), encoding="utf-8")
+    return path
+
+
+def make_scenario_route(tmp_path, scenario):
+    path = make_route(tmp_path)
+    route = json.loads(path.read_text(encoding="utf-8"))
+    route["scenario"] = scenario
     path.write_text(json.dumps(route), encoding="utf-8")
     return path
 
@@ -1055,6 +1344,177 @@ def test_fast_wrapper_builds_guarded_speed_30_profile(tmp_path):
     assert "maximum_speed_mps:=2.5" not in arguments
 
 
+def test_fast_wrapper_builds_isolated_speed_30_pid_i40_candidate(tmp_path):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert (
+        "longitudinal_controller_param_path:="
+        f"{package_config / SPEED_30_PID_I40_AB_PARAMS.name}"
+    ) in arguments
+    assert "curvature_speed_preview_m:=3.0" in arguments
+    assert "maximum_longitudinal_acceleration_mps2:=1.5" in arguments
+
+
+def test_fast_wrapper_builds_isolated_speed_30_turn_preview_candidate(tmp_path):
+    route = make_scenario_route(tmp_path, "left")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--control-ab-turn-preview-5m",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert "curvature_speed_preview_m:=5.0" in arguments
+    assert (
+        f"longitudinal_controller_param_path:={package_config / SPEED_30_PID_PARAMS.name}"
+        in arguments
+    )
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--control-ab-pid-i40"],
+        ["--control-ab-turn-preview-5m"],
+        [
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-turn-preview-5m",
+        ],
+    ],
+)
+def test_fast_wrapper_rejects_invalid_control_ab_selection(tmp_path, arguments):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), *arguments, str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert "A/B" in completed.stderr
+
+
+def test_fast_wrapper_builds_straight_only_speed_60_pilot(tmp_path):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-60kph-pilot",
+            "--camera-source-5hz",
+            "--visualize",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert "carla_vad_full.launch.xml" in arguments
+    assert (
+        f"sensor_mapping_file:={package_config / CAMERA_SOURCE_5HZ_DEPTH1_MAPPING.name}"
+        in arguments
+    )
+    assert (
+        f"vad_model_override_file:={package_config / CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS.name}"
+        in arguments
+    )
+    assert "controller_stop_offset_m:=0.60" in arguments
+    assert "comfortable_deceleration_mps2:=2.0" in arguments
+    assert "maximum_longitudinal_acceleration_mps2:=1.5" in arguments
+    assert "longitudinal_velocity_source:=explicit_simulation_nominal" in arguments
+    assert "nominal_cruise_speed_mps:=16.666666666666668" in arguments
+    assert "maneuver_lookahead_m:=6.0" in arguments
+    assert "maneuver_exit_lookahead_m:=3.5" in arguments
+    assert "maximum_lateral_acceleration_mps2:=1.0" in arguments
+    assert "curvature_speed_preview_m:=6.0" in arguments
+    assert "route_curvature_lookahead_m:=40.0" in arguments
+    assert "max_route_deviation_m:=1.0" in arguments
+    assert "maximum_speed_mps:=16.666666666666668" in arguments
+    assert (
+        f"vehicle_cmd_gate_param_path:={package_config / SPEED_60_GATE_PARAMS.name}"
+        in arguments
+    )
+    assert (
+        f"longitudinal_controller_param_path:={package_config / SPEED_60_PID_PARAMS.name}"
+        in arguments
+    )
+    assert "use_vad_imu_acceleration:=true" in arguments
+    assert "rviz:=true" in arguments
+
+
+@pytest.mark.parametrize("scenario", ["left", "right", "unknown"])
+def test_fast_wrapper_rejects_non_straight_speed_60_pilot(tmp_path, scenario):
+    route = make_scenario_route(tmp_path, scenario)
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--speed-60kph-pilot", str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "requires a straight route" in completed.stderr
+
+
+def test_fast_wrapper_rejects_speed_30_and_speed_60_together(tmp_path):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--speed-60kph-pilot",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "mutually exclusive" in completed.stderr
+
+
 def test_fast_wrapper_builds_camera_source_5hz_ab_profile(tmp_path):
     route = make_route(tmp_path)
     completed = subprocess.run(
@@ -1076,7 +1536,11 @@ def test_fast_wrapper_builds_camera_source_5hz_ab_profile(tmp_path):
     arguments = completed.stdout.splitlines()
     package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
     assert (
-        f"sensor_mapping_file:={package_config / CAMERA_SOURCE_5HZ_MAPPING.name}"
+        f"sensor_mapping_file:={package_config / CAMERA_SOURCE_5HZ_DEPTH1_MAPPING.name}"
+        in arguments
+    )
+    assert (
+        f"vad_model_override_file:={package_config / CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS.name}"
         in arguments
     )
     assert "nominal_cruise_speed_mps:=8.333333333333334" in arguments
@@ -1084,11 +1548,14 @@ def test_fast_wrapper_builds_camera_source_5hz_ab_profile(tmp_path):
     assert "rviz:=true" in arguments
 
 
+@pytest.mark.parametrize("speed_option", ["--speed-30kph", "--speed-60kph-pilot"])
 @pytest.mark.parametrize("experimental", ["--tight-corridor", "--trajectory-stability"])
-def test_fast_wrapper_screens_speed_30_independently(tmp_path, experimental):
-    route = make_route(tmp_path)
+def test_fast_wrapper_screens_speed_profiles_independently(
+    tmp_path, speed_option, experimental
+):
+    route = make_scenario_route(tmp_path, "straight")
     completed = subprocess.run(
-        [str(FAST_WRAPPER), "--speed-30kph", experimental, str(route)],
+        [str(FAST_WRAPPER), speed_option, experimental, str(route)],
         cwd=ROOT,
         env=wrapper_environment(tmp_path),
         text=True,

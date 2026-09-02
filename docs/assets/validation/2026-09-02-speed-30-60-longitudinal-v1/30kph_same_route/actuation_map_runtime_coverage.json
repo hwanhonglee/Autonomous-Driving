@@ -1,0 +1,118 @@
+{
+  "analysis": "raw_vehicle_command_converter_velocity_coverage",
+  "map_velocity_axis_maximum_kph": 50.004000000000005,
+  "map_velocity_axis_maximum_mps": 13.89,
+  "map_velocity_axis_minimum_kph": 0.0,
+  "map_velocity_axis_minimum_mps": 0.0,
+  "profile_id": "carla_vad_30kph_v2",
+  "provenance": {
+    "converter_implementations": {
+      "accel_map.cpp": {
+        "path": "/home/a/autoware_e2e/src/universe/autoware_universe/vehicle/autoware_raw_vehicle_cmd_converter/src/accel_map.cpp",
+        "sha256": "0c2fa0fd56d08a7c90f25ced06328b59eca8fc72eee12edd47f1d12ead81dcc0",
+        "velocity_lookup": "clamp_to_csv_axis_then_linear_interpolation"
+      },
+      "brake_map.cpp": {
+        "path": "/home/a/autoware_e2e/src/universe/autoware_universe/vehicle/autoware_raw_vehicle_cmd_converter/src/brake_map.cpp",
+        "sha256": "04d57f9ed82eff795744b385d2167f8caf3e64e4f9e104199f5c9350aa421124",
+        "velocity_lookup": "clamp_to_csv_axis_then_linear_interpolation"
+      }
+    },
+    "converter_node": {
+      "map_velocity_input": "absolute_current_odometry_longitudinal_speed_mps",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/vehicle/autoware_raw_vehicle_cmd_converter/src/node.cpp",
+      "sha256": "272eef566c0f3433af4145a94e0bc13a6953ad7251bd29ec8b2f869656b1bbef",
+      "target_cruise_speed_is_direct_lookup_input": false,
+      "verified_map_lookups": {
+        "accel_map": {
+          "absolute_current_velocity_verified": true,
+          "function": "calculateAccelMap",
+          "lookup": "accel_map_.getThrottle",
+          "velocity_arguments": [
+            "std::abs(current_velocity)"
+          ]
+        },
+        "brake_map": {
+          "absolute_current_velocity_verified": true,
+          "function": "calculateBrakeMap",
+          "lookup": "brake_map_.getBrake",
+          "velocity_arguments": [
+            "std::abs(current_velocity)"
+          ]
+        }
+      }
+    },
+    "manifest": {
+      "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/actuation_config_provenance/manifest.json",
+      "sha256": "d1ea2a8ac49b21239020f90c32d4c430339650a36df65325c5a0a467f8ae2c22"
+    },
+    "maps": {
+      "accel_map": {
+        "artifact": "accel_map.csv",
+        "maximum_velocity_mps": 13.89,
+        "minimum_velocity_mps": 0.0,
+        "sha256": "9178f51957f0b29afcf4c92a15e2904a2fc1fc214454c305f139789173b6e3cc",
+        "target_within_axis": true,
+        "velocity_axis_mps": [
+          0.0,
+          1.39,
+          2.78,
+          4.17,
+          5.56,
+          6.94,
+          8.33,
+          9.72,
+          11.11,
+          12.5,
+          13.89
+        ]
+      },
+      "brake_map": {
+        "artifact": "brake_map.csv",
+        "maximum_velocity_mps": 13.89,
+        "minimum_velocity_mps": 0.0,
+        "sha256": "30fc1cea193cc21d3dc2bda990848363541334a037338959d78fb3396d22353f",
+        "target_within_axis": true,
+        "velocity_axis_mps": [
+          0.0,
+          1.39,
+          2.78,
+          4.17,
+          5.56,
+          6.94,
+          8.33,
+          9.72,
+          11.11,
+          12.5,
+          13.89
+        ]
+      }
+    },
+    "root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/trial/attempt_002/actuation_config_provenance"
+  },
+  "runtime_lookup_observation": {
+    "available": true,
+    "classification": "OBSERVED_LOOKUPS_WITHIN_MAP_AXIS",
+    "maximum_absolute_current_speed_kph": 27.865506009953688,
+    "maximum_absolute_current_speed_mps": 7.740418336098246,
+    "velocity_axis_clamping_observed": false,
+    "within_map_velocity_axis": true
+  },
+  "schema_version": 1,
+  "status": "PASS",
+  "target_envelope_classification": "TARGET_ENVELOPE_COVERED_BY_MAP_AXIS",
+  "target_envelope_extension_authorized_for_exploratory_simulation": false,
+  "target_excess_mps": 0.0,
+  "target_shortfall_mps": 0.0,
+  "target_speed_kph": 30.000000000000004,
+  "target_speed_mps": 8.333333333333334,
+  "target_within_map_velocity_axis": true,
+  "validation_boundary": {
+    "converter_lookup_velocity_source": "absolute_current_odometry_longitudinal_speed_mps",
+    "map_coverage_above_axis": false,
+    "real_vehicle_ready": false,
+    "route_result_pass_is_high_speed_actuation_calibration": false,
+    "simulation_only": true,
+    "target_speed_is_converter_lookup_velocity": false
+  }
+}

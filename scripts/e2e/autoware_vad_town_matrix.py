@@ -90,13 +90,23 @@ VAD_COMMANDS = {
 }
 TERMINAL_MAP_STATUSES = {"PASS", "BLOCKED", "FAILED"}
 CAMERA_SOURCE_5HZ_SELECTOR = "speed_30kph_camera_source_5hz"
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR = (
+    "speed_30kph_camera_source_5hz_best_effort_image"
+)
+CAMERA_SOURCE_5HZ_SELECTORS = frozenset(
+    {
+        CAMERA_SOURCE_5HZ_SELECTOR,
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
+    }
+)
 SPEED_30KPH_PROFILE_SELECTORS = frozenset(
-    {"speed_30kph", CAMERA_SOURCE_5HZ_SELECTOR}
+    {"speed_30kph", *CAMERA_SOURCE_5HZ_SELECTORS}
 )
 RUNTIME_PROFILE_SELECTORS = (
     "recommended",
     "speed_30kph",
     CAMERA_SOURCE_5HZ_SELECTOR,
+    CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
 )
 RUNTIME_WRAPPER_OPTIONS = {
     "recommended": ["--recommended", "--visualize", "--capture-desktop"],
@@ -107,6 +117,13 @@ RUNTIME_WRAPPER_OPTIONS = {
         "--capture-desktop",
     ],
     CAMERA_SOURCE_5HZ_SELECTOR: [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ],
+    CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR: [
         "--recommended",
         "--speed-30kph",
         "--camera-source-5hz",
@@ -125,6 +142,64 @@ CAMERA_SOURCE_5HZ_CONTRACT = {
     "qos_profile": "reliable",
     "only_semantic_delta": "camera_parameters_sensor_tick",
     "imu_gnss_unchanged": True,
+}
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT = {
+    "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v1",
+    "sensor_count": 6,
+    "sensor_tick_sec": 0.2,
+    "source_frequency_hz": 5.0,
+    "ros_publish_frequency_hz": 5.0,
+    "maximum_stamp_gap_sec": 0.25,
+    "maximum_raw_image_stamp_span_sec": 0.001,
+    "maximum_raw_image_supersession_percent": 1.0,
+    "camera_image_publish_qos": "best_effort",
+    "camera_info_publish_qos": "reliable",
+    "vad_image_subscription_qos": "best_effort",
+    "rviz_image_subscription_qos": "best_effort",
+    "sensor_mapping_file": (
+        "sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml"
+    ),
+    "vad_model_override_file": (
+        "vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml"
+    ),
+    "only_semantic_delta": (
+        "six_camera_sensor_tick_and_raw_image_transport_reliability"
+    ),
+    "imu_gnss_unchanged": True,
+    "real_vehicle_ready": False,
+}
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT = {
+    "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "sensor_count": 6,
+    "sensor_tick_sec": 0.2,
+    "source_frequency_hz": 5.0,
+    "ros_publish_frequency_hz": 5.0,
+    "maximum_stamp_gap_sec": 0.25,
+    "maximum_raw_image_stamp_span_sec": 0.001,
+    "maximum_raw_image_supersession_percent": 1.0,
+    "camera_image_publish_qos": "best_effort",
+    "camera_image_publish_history": "keep_last",
+    "camera_image_publish_depth": 1,
+    "camera_info_publish_qos": "reliable",
+    "camera_info_publish_depth": 1,
+    "vad_image_subscription_qos": "best_effort",
+    "vad_image_subscription_depth": 1,
+    "rviz_image_subscription_qos": "best_effort",
+    "rviz_image_subscription_depth": 1,
+    "rmw_implementation": "rmw_cyclonedds_cpp",
+    "ros_localhost_only": "0",
+    "sensor_mapping_file": (
+        "sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
+    ),
+    "vad_model_override_file": (
+        "vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    ),
+    "cyclonedds_config_file": "cyclonedds_camera_depth1_localhost_v2.xml",
+    "only_semantic_delta": (
+        "six_camera_5hz_bounded_latest_image_transport_and_localhost_dds"
+    ),
+    "imu_gnss_unchanged": True,
+    "real_vehicle_ready": False,
 }
 CUSTOM_MAP_INITIAL_APPROACH_CONTRACT = {
     "enabled": True,
@@ -296,6 +371,8 @@ CAMPAIGN_EXECUTION_CONTRACT_PATHS = (
     "scripts/e2e/mission_planner_build_provenance.py",
     "scripts/e2e/apply_vad_object_safety_patches.sh",
     "scripts/e2e/vad_object_safety_build_provenance.py",
+    "scripts/e2e/apply_carla_camera_qos_split_patch.sh",
+    "patches/autoware_carla_interface_camera_qos_split.patch",
     "scripts/e2e/workspace_runtime_lock.sh",
     "scripts/e2e/build.sh",
     "scripts/e2e/build_full.sh",
@@ -309,6 +386,7 @@ CAMPAIGN_EXECUTION_CONTRACT_PATHS = (
     "scripts/e2e/inventory_carla_training_maps.py",
     "scripts/e2e/run_carla_map.sh",
     "scripts/e2e/probe_carla_server.py",
+    "scripts/e2e/probe_runtime_health.py",
     "scripts/e2e/run_recorded_route_trial.sh",
     "scripts/e2e/run_route_vad_fast.sh",
     "scripts/e2e/run_route_vad_full.sh",
@@ -334,6 +412,16 @@ CAMPAIGN_EXECUTION_CONTRACT_PATHS = (
     "autoware_e2e_vad_launch/launch/vad_carla_tiny_fast.launch.xml",
     "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
     "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+    "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml",
+    "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml.metadata.json",
+    "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml",
+    "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml.metadata.json",
+    "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml",
+    "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml.metadata.json",
+    "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml",
+    "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml.metadata.json",
+    "autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+    "autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml.metadata.json",
     "autoware_e2e_vad_launch/scripts/vad_aeb_configurator.py",
     "autoware_e2e_vad_launch/scripts/carla_map_aligned_odometry.py",
     "autoware_e2e_vad_launch/scripts/vad_imu_acceleration_adapter.py",
@@ -353,6 +441,10 @@ CAMPAIGN_EXECUTION_CONTRACT_PATHS = (
     "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/CMakeLists.txt",
     "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp",
     "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp",
+    "src/universe/autoware_universe/simulator/autoware_carla_interface/README.md",
+    "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py",
+    "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py",
+    "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py",
     "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp",
     "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp",
     "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/node.cpp",
@@ -1068,8 +1160,13 @@ def _validate_runtime_profile(
     if selector in SPEED_30KPH_PROFILE_SELECTORS:
         _validate_speed_30kph_contract(profile)
     camera_contract = profile.get("camera_source_contract")
-    if selector == CAMERA_SOURCE_5HZ_SELECTOR:
-        if camera_contract != CAMERA_SOURCE_5HZ_CONTRACT:
+    if selector in CAMERA_SOURCE_5HZ_SELECTORS:
+        expected_camera_contract = (
+            CAMERA_SOURCE_5HZ_CONTRACT
+            if selector == CAMERA_SOURCE_5HZ_SELECTOR
+            else CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT
+        )
+        if camera_contract != expected_camera_contract:
             raise MatrixError(
                 "camera-source 5 Hz runtime profile contract is not pinned"
             )
@@ -4826,7 +4923,17 @@ def _camera_source_5hz_evidence(
                 "runtime enabled the camera-source A/B outside its fixed profile"
             )
         return None
-    if contract != CAMERA_SOURCE_5HZ_CONTRACT:
+    legacy_reliable_profile = contract == CAMERA_SOURCE_5HZ_CONTRACT
+    best_effort_image_v1_profile = (
+        contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT
+    )
+    best_effort_image_depth1_profile = (
+        contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT
+    )
+    best_effort_image_profile = (
+        best_effort_image_v1_profile or best_effort_image_depth1_profile
+    )
+    if not legacy_reliable_profile and not best_effort_image_profile:
         raise MatrixError("camera-source 5 Hz evidence contract changed")
     if runtime.get("CAMERA_SOURCE_5HZ") != "true":
         raise MatrixError("runtime did not enable the camera-source 5 Hz profile")
@@ -4847,6 +4954,8 @@ def _camera_source_5hz_evidence(
     runtime_mapping = Path(runtime.get("SENSOR_MAPPING_FILE", ""))
     expected_name = (
         "sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+        if legacy_reliable_profile
+        else str(contract["sensor_mapping_file"])
     )
     if runtime_mapping.name != expected_name:
         raise MatrixError("runtime selected a different camera-source mapping")
@@ -4855,10 +4964,7 @@ def _camera_source_5hz_evidence(
         "autoware_e2e_vad_launch/config/"
         "sensor_mapping_vad_fast_reliable_imu.yaml"
     )
-    candidate_path = ROOT / (
-        "autoware_e2e_vad_launch/config/"
-        "sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
-    )
+    candidate_path = ROOT / "autoware_e2e_vad_launch/config" / expected_name
     if mapping_sha256 != sha256_file(candidate_path):
         raise MatrixError("recorded camera-source mapping differs from the campaign")
     baseline = _yaml_mapping(baseline_path, "baseline sensor mapping")
@@ -4878,11 +4984,215 @@ def _camera_source_5hz_evidence(
         if not isinstance(camera_id, str) or not isinstance(parameters, dict):
             raise MatrixError("baseline camera mapping is incomplete")
         parameters["sensor_tick"] = 0.2
+        if best_effort_image_profile:
+            ros_config = sensor.get("ros_config")
+            if not isinstance(ros_config, dict):
+                raise MatrixError("baseline camera ROS mapping is incomplete")
+            ros_config["image_qos_profile"] = (
+                "best_effort_depth_1"
+                if best_effort_image_depth1_profile
+                else "best_effort"
+            )
+            ros_config["camera_info_qos_profile"] = "reliable"
         camera_ids.append(camera_id)
     if len(camera_ids) != int(contract["sensor_count"]) or candidate != expected:
-        raise MatrixError(
-            "camera-source mapping changed fields other than six camera sensor_tick values"
+        expected_delta = (
+            "six camera sensor_tick and split image/camera_info QoS values"
+            if best_effort_image_profile
+            else "six camera sensor_tick values"
         )
+        raise MatrixError(f"camera-source mapping changed fields other than {expected_delta}")
+
+    model_override_sha256: str | None = None
+    cyclonedds_sha256: str | None = None
+    if best_effort_image_profile:
+        model_provenance_root = trial_dir / "vad_model_override_provenance"
+        model_path = model_provenance_root / "model_override.param.yaml"
+        model_sums_path = model_provenance_root / "SHA256SUMS"
+        if not model_path.is_file() or not model_sums_path.is_file():
+            raise MatrixError(
+                "best-effort camera-source profile lacks VAD-model provenance"
+            )
+        model_override_sha256 = sha256_file(model_path)
+        model_sums = _sha256_manifest(model_sums_path)
+        if model_sums != {"model_override.param.yaml": model_override_sha256}:
+            raise MatrixError(
+                "best-effort camera-source VAD-model SHA256 manifest changed"
+            )
+        if runtime.get("VAD_MODEL_OVERRIDE_SHA256") != model_override_sha256:
+            raise MatrixError(
+                "runtime best-effort camera-source VAD-model digest changed"
+            )
+        runtime_model = Path(runtime.get("VAD_MODEL_OVERRIDE_FILE", ""))
+        expected_model_name = str(contract["vad_model_override_file"])
+        if runtime_model.name != expected_model_name:
+            raise MatrixError(
+                "runtime selected a different best-effort camera-source VAD model"
+            )
+        expected_model_path = (
+            ROOT / "autoware_e2e_vad_launch/config" / expected_model_name
+        )
+        if model_override_sha256 != sha256_file(expected_model_path):
+            raise MatrixError(
+                "recorded best-effort camera-source VAD model differs from the campaign"
+            )
+        baseline_model_path = ROOT / (
+            "autoware_e2e_vad_launch/config/"
+            "vad_carla_tiny_recommended.param.yaml"
+        )
+        baseline_model = _yaml_mapping(
+            baseline_model_path, "baseline VAD model override"
+        )
+        expected_model = deepcopy(baseline_model)
+        try:
+            expected_model["/**"]["ros__parameters"]["sync_params"][
+                "image_reliability"
+            ] = "best_effort"
+            if best_effort_image_depth1_profile:
+                expected_model["/**"]["ros__parameters"]["sync_params"][
+                    "image_queue_depth"
+                ] = 1
+        except (KeyError, TypeError) as error:
+            raise MatrixError(
+                "baseline VAD model lacks image-reliability configuration"
+            ) from error
+        recorded_model = _yaml_mapping(
+            model_path, "best-effort camera-source VAD model override"
+        )
+        if recorded_model != expected_model:
+            allowed_fields = (
+                "image_reliability and image_queue_depth"
+                if best_effort_image_depth1_profile
+                else "image_reliability"
+            )
+            raise MatrixError(
+                "best-effort camera-source VAD model changed fields other than "
+                f"{allowed_fields}"
+            )
+
+        expected_runtime_transport = {
+            "CAMERA_TRANSPORT_PROFILE_ID": contract["profile_id"],
+            "CAMERA_IMAGE_PUBLISH_QOS": contract["camera_image_publish_qos"],
+            "CAMERA_INFO_PUBLISH_QOS": contract["camera_info_publish_qos"],
+            "VAD_IMAGE_SUBSCRIPTION_QOS": contract[
+                "vad_image_subscription_qos"
+            ],
+            "RVIZ_IMAGE_SUBSCRIPTION_QOS": contract[
+                "rviz_image_subscription_qos"
+            ],
+            "CAMERA_TRANSPORT_SENSOR_MAPPING_SHA256": mapping_sha256,
+            "CAMERA_TRANSPORT_VAD_OVERRIDE_SHA256": model_override_sha256,
+        }
+        if best_effort_image_depth1_profile:
+            expected_runtime_transport.update(
+                {
+                    "CAMERA_IMAGE_PUBLISH_HISTORY": contract[
+                        "camera_image_publish_history"
+                    ],
+                    "CAMERA_IMAGE_PUBLISH_DEPTH": str(
+                        contract["camera_image_publish_depth"]
+                    ),
+                    "CAMERA_INFO_PUBLISH_DEPTH": str(
+                        contract["camera_info_publish_depth"]
+                    ),
+                    "VAD_IMAGE_SUBSCRIPTION_DEPTH": str(
+                        contract["vad_image_subscription_depth"]
+                    ),
+                    "RVIZ_IMAGE_SUBSCRIPTION_DEPTH": str(
+                        contract["rviz_image_subscription_depth"]
+                    ),
+                    "RMW_IMPLEMENTATION": contract["rmw_implementation"],
+                    "ROS_LOCALHOST_ONLY": contract["ros_localhost_only"],
+                }
+            )
+        for key, expected_value in expected_runtime_transport.items():
+            if runtime.get(key) != expected_value:
+                raise MatrixError(
+                    f"runtime best-effort camera transport contract changed: {key}"
+                )
+        if best_effort_image_depth1_profile:
+            cyclone_name = str(contract["cyclonedds_config_file"])
+            expected_cyclone_path = (
+                ROOT / "autoware_e2e_vad_launch/config" / cyclone_name
+            )
+            cyclonedds_sha256 = sha256_file(expected_cyclone_path)
+            cyclone_root = trial_dir / "camera_transport_provenance"
+            captured_cyclone = cyclone_root / "cyclonedds.xml"
+            captured_metadata = cyclone_root / "cyclonedds.xml.metadata.json"
+            cyclone_sums_path = cyclone_root / "SHA256SUMS"
+            if not all(
+                path.is_file()
+                for path in (
+                    captured_cyclone,
+                    captured_metadata,
+                    cyclone_sums_path,
+                )
+            ):
+                raise MatrixError(
+                    "depth-1 camera profile lacks CycloneDDS provenance"
+                )
+            captured_metadata_sha256 = sha256_file(captured_metadata)
+            if _sha256_manifest(cyclone_sums_path) != {
+                "cyclonedds.xml": cyclonedds_sha256,
+                "cyclonedds.xml.metadata.json": captured_metadata_sha256,
+            }:
+                raise MatrixError("CycloneDDS provenance manifest changed")
+            expected_metadata = Path(f"{expected_cyclone_path}.metadata.json")
+            if (
+                sha256_file(captured_cyclone) != cyclonedds_sha256
+                or captured_metadata_sha256 != sha256_file(expected_metadata)
+            ):
+                raise MatrixError(
+                    "captured CycloneDDS profile differs from the campaign"
+                )
+            runtime_uri = runtime.get("CYCLONEDDS_URI", "")
+            if (
+                not runtime_uri.startswith("file:///")
+                or Path(runtime_uri.removeprefix("file://")).name != cyclone_name
+                or runtime.get("CAMERA_TRANSPORT_CYCLONEDDS_SHA256")
+                != cyclonedds_sha256
+            ):
+                raise MatrixError("runtime CycloneDDS profile/hash changed")
+
+            rviz_path = (
+                trial_dir
+                / "rviz_capture_provenance"
+                / "autoware_vad_carla.rviz"
+            )
+            rviz = _yaml_mapping(rviz_path, "captured RViz configuration")
+
+            def find_named_display(value: Any, name: str) -> Mapping[str, Any] | None:
+                if isinstance(value, dict):
+                    if value.get("Name") == name:
+                        return value
+                    for child in value.values():
+                        found = find_named_display(child, name)
+                        if found is not None:
+                            return found
+                elif isinstance(value, list):
+                    for child in value:
+                        found = find_named_display(child, name)
+                        if found is not None:
+                            return found
+                return None
+
+            front_display = find_named_display(
+                rviz.get("Visualization Manager", {}).get("Displays", []),
+                "VAD Front Camera",
+            )
+            front_topic = (
+                front_display.get("Topic", {})
+                if isinstance(front_display, dict)
+                else {}
+            )
+            if (
+                front_topic.get("Reliability Policy") != "Best Effort"
+                or front_topic.get("History Policy") != "Keep Last"
+                or front_topic.get("Depth") != 1
+            ):
+                raise MatrixError(
+                    "captured RViz front-image reader is not Best-Effort depth 1"
+                )
 
     bundle = latency.get("camera_bundle")
     acceptance = latency.get("candidate_front_acceptance")
@@ -4991,6 +5301,73 @@ def _camera_source_5hz_evidence(
         raise MatrixError(
             "camera-source stack log has no timestamped VAD queue counters"
         )
+    raw_six_image_queue_integrity: dict[str, Any] | None = None
+    if best_effort_image_profile:
+        raw_queue_counters = [
+            (
+                int(image_mask, 0),
+                int(camera_info_mask, 0),
+                float(image_span_ms) / 1000.0,
+                int(assembled),
+                int(superseded),
+                int(received_min),
+                int(received_max),
+            )
+            for (
+                image_mask,
+                camera_info_mask,
+                image_span_ms,
+                assembled,
+                superseded,
+                received_min,
+                received_max,
+            ) in re.findall(
+                r"VAD frame queued: source_stamp_ns=\d+.*?"
+                r"image_mask=(0x[0-9a-fA-F]+).*?"
+                r"camera_info_mask=(0x[0-9a-fA-F]+).*?"
+                r"image_span_ms=([0-9]+(?:\.[0-9]+)?).*?"
+                r"assembled=(\d+).*?superseded=(\d+).*?"
+                r"received_images_min=(\d+).*?received_images_max=(\d+)",
+                stack_log,
+            )
+        ]
+        expected_mask = (1 << int(contract["sensor_count"])) - 1
+        maximum_raw_span_sec = _finite_number(
+            contract["maximum_raw_image_stamp_span_sec"],
+            "best-effort raw-image maximum stamp span contract",
+        )
+        if len(raw_queue_counters) != len(queue_counters):
+            raise MatrixError(
+                "best-effort camera-source log lacks raw six-image queue evidence"
+            )
+        if any(
+            image_mask != expected_mask
+            or camera_info_mask != expected_mask
+            or not math.isfinite(image_span_sec)
+            or image_span_sec > maximum_raw_span_sec + 1.0e-9
+            for (
+                image_mask,
+                camera_info_mask,
+                image_span_sec,
+                _,
+                _,
+                _,
+                _,
+            ) in raw_queue_counters
+        ):
+            raise MatrixError(
+                "best-effort camera-source raw six-image queue integrity changed"
+            )
+        raw_six_image_queue_integrity = {
+            "status": "PASS",
+            "sampled_queue_record_count": len(raw_queue_counters),
+            "expected_image_mask": f"0x{expected_mask:x}",
+            "expected_camera_info_mask": f"0x{expected_mask:x}",
+            "maximum_image_stamp_span_sec": max(
+                item[2] for item in raw_queue_counters
+            ),
+            "maximum_allowed_image_stamp_span_sec": maximum_raw_span_sec,
+        }
     published, mailbox_taken, coalesced_drops = inference_counters[-1]
     (
         _,
@@ -5004,16 +5381,101 @@ def _camera_source_5hz_evidence(
         _,
     ) = queue_counters[-1]
     initial_superseded = int(queue_counters[0][4])
-    startup_superseded = initial_superseded == 1
-    queue_integrity_failed = any(
-        int(item[3]) != 0
-        or int(item[4]) != initial_superseded
-        or int(item[6]) != 0
-        or int(item[2]) != int(item[5])
-        for item in queue_counters
+    startup_superseded = (
+        legacy_reliable_profile and initial_superseded == 1
     )
-    if initial_superseded not in {0, 1}:
-        queue_integrity_failed = True
+    queue_integrity_failed = False
+    supersession_percent = 0.0
+    maximum_supersession_percent = 0.0
+    if best_effort_image_profile:
+        queue_integrity_failed = any(
+            int(item[3]) != 0
+            or int(item[6]) != 0
+            or int(item[2]) != int(item[5])
+            or not (
+                int(item[2])
+                <= int(item[7])
+                <= int(item[8])
+                == int(item[2]) + int(item[4])
+            )
+            for item in queue_counters
+        )
+        queue_integrity_failed = queue_integrity_failed or any(
+            not (
+                float(current[0]) > float(previous[0])
+                and int(current[1]) > int(previous[1])
+                and int(current[2]) > int(previous[2])
+                and int(current[4]) >= int(previous[4])
+                and int(current[5]) > int(previous[5])
+                and int(current[7]) >= int(previous[7])
+                and int(current[8]) >= int(previous[8])
+            )
+            for previous, current in zip(queue_counters, queue_counters[1:])
+        )
+        queue_integrity_failed = queue_integrity_failed or any(
+            published_count != mailbox_taken_count
+            or inference_coalesced_drops != 0
+            for (
+                published_count,
+                mailbox_taken_count,
+                inference_coalesced_drops,
+            ) in inference_counters
+        )
+        queue_integrity_failed = queue_integrity_failed or any(
+            not (
+                current[0] > previous[0]
+                and current[1] > previous[1]
+                and current[2] >= previous[2]
+            )
+            for previous, current in zip(
+                inference_counters, inference_counters[1:]
+            )
+        )
+        maximum_supersession_percent = _finite_number(
+            contract["maximum_raw_image_supersession_percent"],
+            "best-effort raw-image maximum supersession-percent contract",
+        )
+        supersession_denominator = int(assembled) + int(superseded)
+        if supersession_denominator <= 0:
+            queue_integrity_failed = True
+        else:
+            supersession_percent = (
+                100.0 * int(superseded) / supersession_denominator
+            )
+        if supersession_percent > maximum_supersession_percent + 1.0e-9:
+            raise MatrixError(
+                "best-effort camera-source raw-image supersession exceeds "
+                f"{maximum_supersession_percent:.3f}%: "
+                f"{supersession_percent:.6f}% "
+                f"({superseded}/{supersession_denominator})"
+            )
+        if raw_six_image_queue_integrity is None:
+            raise MatrixError(
+                "best-effort camera-source raw six-image queue evidence is absent"
+            )
+        raw_six_image_queue_integrity.update(
+            {
+                "superseded_frame_count": int(superseded),
+                "supersession_denominator_frame_count": supersession_denominator,
+                "supersession_percent": supersession_percent,
+                "maximum_allowed_supersession_percent": (
+                    maximum_supersession_percent
+                ),
+                "counter_contract": (
+                    "monotonic_full_mask_zero_capacity_and_mailbox_loss"
+                ),
+            }
+        )
+    else:
+        queue_integrity_failed = any(
+            int(item[3]) != 0
+            or int(item[4]) != initial_superseded
+            or int(item[6]) != 0
+            or int(item[2]) != int(item[5])
+            for item in queue_counters
+        )
+        if initial_superseded not in {0, 1}:
+            queue_integrity_failed = True
     recorder_start_wall_sec: float | None = None
     if startup_superseded:
         try:
@@ -5063,18 +5525,68 @@ def _camera_source_5hz_evidence(
             f"capacity_pruned={capacity_pruned}, superseded={superseded}, "
             f"coalesced_drops={max(coalesced_drops, queued_coalesced)}"
         )
-    return {
+    semantic_delta: dict[str, Any] = {
+        "camera_ids": sorted(camera_ids),
+        "field": "parameters.sensor_tick",
+        "baseline_sec": 0.0,
+        "candidate_sec": 0.2,
+        "other_fields_equal": True,
+    }
+    if best_effort_image_profile:
+        semantic_delta = {
+            "camera_ids": sorted(camera_ids),
+            "mapping_fields": {
+                "parameters.sensor_tick": {
+                    "baseline": 0.0,
+                    "candidate": 0.2,
+                },
+                "ros_config.image_qos_profile": {
+                    "baseline": "inherited_reliable",
+                    "candidate": (
+                        "best_effort_depth_1"
+                        if best_effort_image_depth1_profile
+                        else "best_effort"
+                    ),
+                },
+                "ros_config.camera_info_qos_profile": {
+                    "baseline": "inherited_reliable",
+                    "candidate": "reliable",
+                },
+            },
+            "model_field": {
+                "sync_params.image_reliability": {
+                    "baseline": "reliable",
+                    "candidate": "best_effort",
+                },
+                **(
+                    {
+                        "sync_params.image_queue_depth": {
+                            "baseline": 32,
+                            "candidate": 1,
+                        }
+                    }
+                    if best_effort_image_depth1_profile
+                    else {}
+                ),
+            },
+            "dds_scope": (
+                {
+                    "rmw_implementation": contract["rmw_implementation"],
+                    "ros_localhost_only": contract["ros_localhost_only"],
+                    "network_interface": "lo",
+                }
+                if best_effort_image_depth1_profile
+                else None
+            ),
+            "imu_gnss_unchanged": True,
+            "other_fields_equal": True,
+        }
+    evidence = {
         "status": "PASS",
         "contract": dict(contract),
         "mapping_sha256": mapping_sha256,
         "baseline_mapping_sha256": sha256_file(baseline_path),
-        "semantic_delta": {
-            "camera_ids": sorted(camera_ids),
-            "field": "parameters.sensor_tick",
-            "baseline_sec": 0.0,
-            "candidate_sec": 0.2,
-            "other_fields_equal": True,
-        },
+        "semantic_delta": semantic_delta,
         "bundle_coverage_percent": coverage,
         "maximum_camera_stamp_gap_sec": max(camera_stamp_gaps.values()),
         "camera_stamp_gap_sec": camera_stamp_gaps,
@@ -5088,12 +5600,54 @@ def _camera_source_5hz_evidence(
             "capacity_pruned": capacity_pruned,
             "superseded": superseded,
             "superseded_classification": (
-                "startup_before_recorder" if startup_superseded else "none"
+                "bounded_best_effort"
+                if best_effort_image_profile and superseded > 0
+                else "startup_before_recorder"
+                if startup_superseded
+                else "none"
             ),
             "recorder_start_wall_sec": recorder_start_wall_sec,
             "coalesced_drops": coalesced_drops,
         },
     }
+    if best_effort_image_profile:
+        evidence["raw_six_image_queue_integrity"] = (
+            raw_six_image_queue_integrity
+        )
+        evidence["transport_provenance"] = {
+            "profile_id": contract["profile_id"],
+            "sensor_mapping_sha256": mapping_sha256,
+            "vad_model_override_sha256": model_override_sha256,
+            "camera_image_publish_qos": contract["camera_image_publish_qos"],
+            "camera_info_publish_qos": contract["camera_info_publish_qos"],
+            "vad_image_subscription_qos": contract[
+                "vad_image_subscription_qos"
+            ],
+            "rviz_image_subscription_qos": contract[
+                "rviz_image_subscription_qos"
+            ],
+        }
+        if best_effort_image_depth1_profile:
+            evidence["transport_provenance"].update(
+                {
+                    "camera_image_publish_history": contract[
+                        "camera_image_publish_history"
+                    ],
+                    "camera_image_publish_depth": contract[
+                        "camera_image_publish_depth"
+                    ],
+                    "vad_image_subscription_depth": contract[
+                        "vad_image_subscription_depth"
+                    ],
+                    "rviz_image_subscription_depth": contract[
+                        "rviz_image_subscription_depth"
+                    ],
+                    "rmw_implementation": contract["rmw_implementation"],
+                    "ros_localhost_only": contract["ros_localhost_only"],
+                    "cyclonedds_config_sha256": cyclonedds_sha256,
+                }
+            )
+    return evidence
 
 
 def _rosbag_manifest(path: Path, label: str) -> dict[str, Any]:

@@ -28,7 +28,9 @@ Options:
   --port PORT                 CARLA RPC port (default: 2100)
   --maps ID[,ID...]           run this subset of admitted maps
   --runtime-profile PROFILE   recommended, speed_30kph, or
-                              speed_30kph_camera_source_5hz (default: recommended)
+                              speed_30kph_camera_source_5hz, or
+                              speed_30kph_camera_source_5hz_best_effort_image
+                              (default: recommended)
   --resume                    strictly validate and skip completed trials
   --fail-fast                 stop after the first trial failure
   --startup-timeout-sec SEC   CARLA cold-start timeout (default: 180)
@@ -98,11 +100,11 @@ done
 speed_30kph_profile=0
 case "${runtime_profile}" in
   recommended) ;;
-  speed_30kph|speed_30kph_camera_source_5hz)
+  speed_30kph|speed_30kph_camera_source_5hz|speed_30kph_camera_source_5hz_best_effort_image)
     speed_30kph_profile=1
     ;;
   *)
-    echo "--runtime-profile must be recommended, speed_30kph, or speed_30kph_camera_source_5hz" >&2
+    echo "unsupported --runtime-profile: ${runtime_profile}" >&2
     exit 2
     ;;
 esac

@@ -33,6 +33,8 @@ try:
         validated_job,
     )
     from autoware_vad_town_matrix import (
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT,
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR as MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
         CAMERA_SOURCE_5HZ_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_CONTRACT,
         MatrixError as MatrixValidationError,
         _camera_source_5hz_evidence as _matrix_camera_source_5hz_evidence,
@@ -50,6 +52,8 @@ except ModuleNotFoundError:
         validated_job,
     )
     from scripts.e2e.autoware_vad_town_matrix import (
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT,
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR as MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
         CAMERA_SOURCE_5HZ_CONTRACT as MATRIX_CAMERA_SOURCE_5HZ_CONTRACT,
         MatrixError as MatrixValidationError,
         _camera_source_5hz_evidence as _matrix_camera_source_5hz_evidence,
@@ -99,6 +103,11 @@ CAMERA_SOURCE_5HZ_PROVENANCE_NAMES = (
     "vad_route_manager.params.yaml",
     "sensor_mapping_provenance/sensor_mapping.yaml",
     "sensor_mapping_provenance/SHA256SUMS",
+)
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_PROVENANCE_NAMES = (
+    *CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+    "vad_model_override_provenance/model_override.param.yaml",
+    "vad_model_override_provenance/SHA256SUMS",
 )
 SPEED_30KPH_VISUAL_EVIDENCE_NAMES = (
     "desktop_capture.json",
@@ -199,13 +208,23 @@ BASICAGENT_AGGREGATE_NAME = "carla_basicagent_sweep_aggregate.json"
 VAD_MATRIX_AGGREGATE_NAME = "autoware_vad_matrix_aggregate.json"
 VAD_MATRIX_PLAN_NAME = "autoware_vad_matrix_plan.json"
 CAMERA_SOURCE_5HZ_SELECTOR = "speed_30kph_camera_source_5hz"
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR = (
+    MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR
+)
+CAMERA_SOURCE_5HZ_SELECTORS = frozenset(
+    {
+        CAMERA_SOURCE_5HZ_SELECTOR,
+        CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
+    }
+)
 SPEED_30KPH_RUNTIME_PROFILE_SELECTORS = frozenset(
-    {"speed_30kph", CAMERA_SOURCE_5HZ_SELECTOR}
+    {"speed_30kph", *CAMERA_SOURCE_5HZ_SELECTORS}
 )
 VAD_RUNTIME_PROFILE_SELECTORS = (
     "recommended",
     "speed_30kph",
     CAMERA_SOURCE_5HZ_SELECTOR,
+    CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
 )
 VAD_RUNTIME_WRAPPER_OPTIONS = {
     "recommended": ["--recommended", "--visualize", "--capture-desktop"],
@@ -222,11 +241,21 @@ VAD_RUNTIME_WRAPPER_OPTIONS = {
         "--visualize",
         "--capture-desktop",
     ],
+    CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR: [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ],
 }
 SPEED_30KPH_RUNTIME_PROFILE_IDS = {
     "speed_30kph": "vad_carla_30kph_visualized_v2",
     CAMERA_SOURCE_5HZ_SELECTOR: (
         "vad_carla_30kph_camera_source_5hz_visualized_v1"
+    ),
+    CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR: (
+        "vad_carla_30kph_camera_source_5hz_best_effort_image_visualized_v1"
     ),
 }
 SPEED_30KPH_PROFILE_ID = "carla_vad_30kph_v2"
@@ -242,6 +271,9 @@ SPEED_30KPH_PUBLICATION_INTERPRETATION = {
     "real_vehicle_ready": False,
 }
 CAMERA_SOURCE_5HZ_CONTRACT = dict(MATRIX_CAMERA_SOURCE_5HZ_CONTRACT)
+CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT = dict(
+    MATRIX_CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT
+)
 
 
 class PublicationError(RuntimeError):
@@ -674,33 +706,86 @@ def _is_speed_30kph_profile(selector: str) -> bool:
     return selector in SPEED_30KPH_RUNTIME_PROFILE_SELECTORS
 
 
+def _is_camera_source_5hz_profile(selector: str) -> bool:
+    return selector in CAMERA_SOURCE_5HZ_SELECTORS
+
+
+def _camera_source_5hz_contract(selector: str) -> dict[str, Any]:
+    if selector == CAMERA_SOURCE_5HZ_SELECTOR:
+        return dict(CAMERA_SOURCE_5HZ_CONTRACT)
+    if selector == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR:
+        return dict(CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT)
+    raise PublicationError(
+        f"runtime profile {selector!r} is not a camera-source 5 Hz profile"
+    )
+
+
+def _camera_source_5hz_provenance_names(
+    camera_contract: Mapping[str, Any],
+) -> tuple[str, ...]:
+    if camera_contract == CAMERA_SOURCE_5HZ_CONTRACT:
+        return CAMERA_SOURCE_5HZ_PROVENANCE_NAMES
+    if camera_contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT:
+        return CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_PROVENANCE_NAMES
+    raise PublicationError("camera-source 5 Hz runtime contract is not pinned")
+
+
 def _speed_30kph_publication_interpretation(
     selector: str,
 ) -> dict[str, Any]:
     interpretation = dict(SPEED_30KPH_PUBLICATION_INTERPRETATION)
-    if selector == CAMERA_SOURCE_5HZ_SELECTOR:
+    if _is_camera_source_5hz_profile(selector):
+        camera_contract = _camera_source_5hz_contract(selector)
         interpretation.update(
             {
-                "camera_source_profile_id": CAMERA_SOURCE_5HZ_CONTRACT[
+                "camera_source_profile_id": camera_contract[
                     "profile_id"
                 ],
-                "camera_sensor_count": CAMERA_SOURCE_5HZ_CONTRACT[
+                "camera_sensor_count": camera_contract[
                     "sensor_count"
                 ],
-                "camera_sensor_tick_sec": CAMERA_SOURCE_5HZ_CONTRACT[
+                "camera_sensor_tick_sec": camera_contract[
                     "sensor_tick_sec"
                 ],
-                "camera_source_frequency_hz": CAMERA_SOURCE_5HZ_CONTRACT[
+                "camera_source_frequency_hz": camera_contract[
                     "source_frequency_hz"
                 ],
-                "camera_ros_publish_frequency_hz": CAMERA_SOURCE_5HZ_CONTRACT[
+                "camera_ros_publish_frequency_hz": camera_contract[
                     "ros_publish_frequency_hz"
                 ],
-                "maximum_camera_stamp_gap_sec": CAMERA_SOURCE_5HZ_CONTRACT[
+                "maximum_camera_stamp_gap_sec": camera_contract[
                     "maximum_stamp_gap_sec"
                 ],
             }
         )
+        if selector == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR:
+            interpretation.update(
+                {
+                    "maximum_raw_image_stamp_span_sec": camera_contract[
+                        "maximum_raw_image_stamp_span_sec"
+                    ],
+                    "maximum_raw_image_supersession_percent": camera_contract[
+                        "maximum_raw_image_supersession_percent"
+                    ],
+                    "camera_image_publish_qos": camera_contract[
+                        "camera_image_publish_qos"
+                    ],
+                    "camera_info_publish_qos": camera_contract[
+                        "camera_info_publish_qos"
+                    ],
+                    "vad_image_subscription_qos": camera_contract[
+                        "vad_image_subscription_qos"
+                    ],
+                    "rviz_image_subscription_qos": camera_contract[
+                        "rviz_image_subscription_qos"
+                    ],
+                    "sensor_mapping_file": camera_contract["sensor_mapping_file"],
+                    "vad_model_override_file": camera_contract[
+                        "vad_model_override_file"
+                    ],
+                    "real_vehicle_ready": camera_contract["real_vehicle_ready"],
+                }
+            )
     return interpretation
 
 
@@ -790,8 +875,8 @@ def _validate_matrix_runtime_profile(
                 f"speed_30kph speed_contract.{field} is not pinned to {expected!r}"
             )
     camera_contract = runtime_profile.get("camera_source_contract")
-    if requested_selector == CAMERA_SOURCE_5HZ_SELECTOR:
-        if camera_contract != CAMERA_SOURCE_5HZ_CONTRACT:
+    if _is_camera_source_5hz_profile(requested_selector):
+        if camera_contract != _camera_source_5hz_contract(requested_selector):
             raise PublicationError(
                 "camera-source 5 Hz runtime contract is not pinned"
             )
@@ -1409,7 +1494,7 @@ def discover_vad_matrix_trial_specs(
                     "speed-profile evidence"
                 )
             validation_camera = validation.get("camera_source_contract")
-            if runtime_profile_selector == CAMERA_SOURCE_5HZ_SELECTOR:
+            if _is_camera_source_5hz_profile(runtime_profile_selector):
                 _validated_camera_source_5hz_evidence(
                     attempt,
                     runtime_profile,
@@ -2269,8 +2354,14 @@ def _validated_camera_source_5hz_evidence(
     recorded_evidence: Any,
     label: str,
 ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    camera_contract = runtime_profile.get("camera_source_contract")
     provenance = _validated_camera_source_5hz_provenance_files(
-        directory, recorded_evidence, label
+        directory,
+        recorded_evidence,
+        label,
+        (
+            camera_contract if isinstance(camera_contract, Mapping) else None
+        ),
     )
     fresh = _fresh_camera_source_5hz_evidence(
         directory, runtime_profile, label
@@ -2338,14 +2429,21 @@ def _validated_camera_source_5hz_provenance_files(
     directory: Path,
     recorded_evidence: Any,
     label: str,
+    camera_contract: Mapping[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
     if not isinstance(recorded_evidence, Mapping):
         raise PublicationError(
             f"{label} camera-source matrix validation has no evidence object"
         )
+    effective_contract = (
+        CAMERA_SOURCE_5HZ_CONTRACT
+        if camera_contract is None
+        else camera_contract
+    )
+    provenance_names = _camera_source_5hz_provenance_names(effective_contract)
     paths: dict[str, Path] = {}
     for name in (
-        *CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+        *provenance_names,
         "runtime.env",
         "latency/e2e_latency.json",
     ):
@@ -2372,6 +2470,43 @@ def _validated_camera_source_5hz_provenance_files(
         raise PublicationError(
             f"{label} camera-source sensor-mapping provenance changed"
         )
+    if effective_contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT:
+        model_name = "vad_model_override_provenance/model_override.param.yaml"
+        model_manifest_name = "vad_model_override_provenance/SHA256SUMS"
+        model_sha256 = _sha256(paths[model_name])
+        transport = recorded_evidence.get("transport_provenance")
+        raw_integrity = recorded_evidence.get("raw_six_image_queue_integrity")
+        expected_transport = {
+            "profile_id": effective_contract["profile_id"],
+            "sensor_mapping_sha256": mapping_sha256,
+            "vad_model_override_sha256": model_sha256,
+            "camera_image_publish_qos": effective_contract[
+                "camera_image_publish_qos"
+            ],
+            "camera_info_publish_qos": effective_contract[
+                "camera_info_publish_qos"
+            ],
+            "vad_image_subscription_qos": effective_contract[
+                "vad_image_subscription_qos"
+            ],
+            "rviz_image_subscription_qos": effective_contract[
+                "rviz_image_subscription_qos"
+            ],
+        }
+        if (
+            recorded_evidence.get("contract") != effective_contract
+            or transport != expected_transport
+            or not isinstance(raw_integrity, Mapping)
+            or raw_integrity.get("status") != "PASS"
+            or _read_sha256_manifest(
+                paths[model_manifest_name],
+                f"{label} camera-source VAD-model SHA256SUMS",
+            )
+            != {"model_override.param.yaml": model_sha256}
+        ):
+            raise PublicationError(
+                f"{label} best-effort camera-source transport/model provenance changed"
+            )
     return {
         name: {
             "source": str(path),
@@ -2721,7 +2856,7 @@ def collect_camera_source_campaign_diagnostics(
     runtime_profile: Mapping[str, Any] | None,
     trials: Sequence[VadTrial],
 ) -> dict[str, Any] | None:
-    if runtime_profile_selector != CAMERA_SOURCE_5HZ_SELECTOR:
+    if not _is_camera_source_5hz_profile(runtime_profile_selector):
         return None
     if matrix_root_value is None or not isinstance(runtime_profile, Mapping):
         raise PublicationError("camera-source diagnostics require the matrix profile")
@@ -2748,7 +2883,15 @@ def collect_camera_source_campaign_diagnostics(
             candidate = _inside(
                 matrix_root, candidate, "camera-source rejected retry attempt"
             )
-            required = [candidate / name for name in CAMERA_SOURCE_RETRY_RAW_NAMES]
+            camera_contract = _camera_source_5hz_contract(runtime_profile_selector)
+            retry_raw_names = CAMERA_SOURCE_RETRY_RAW_NAMES
+            if camera_contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT:
+                retry_raw_names = (
+                    *retry_raw_names,
+                    "vad_model_override_provenance/model_override.param.yaml",
+                    "vad_model_override_provenance/SHA256SUMS",
+                )
+            required = [candidate / name for name in retry_raw_names]
             if any(not path.is_file() or path.is_symlink() for path in required):
                 continue
             result = _read_object(candidate / "result.json", "retry result")
@@ -2790,6 +2933,12 @@ def collect_camera_source_campaign_diagnostics(
                 "aligned_route.json",
                 "launch_args.txt",
                 "sensor_mapping_provenance/sensor_mapping.yaml",
+                *(
+                    ("vad_model_override_provenance/model_override.param.yaml",)
+                    if camera_contract
+                    == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT
+                    else ()
+                ),
                 "rviz_capture_provenance/autoware_vad_carla.rviz",
             ):
                 rejected_digest = _sha256(candidate / name)
@@ -2845,7 +2994,7 @@ def collect_camera_source_campaign_diagnostics(
                     f"{retry_directory}/{name}",
                     f"{identity} {candidate.name} {name}",
                 )
-                for name in CAMERA_SOURCE_RETRY_RAW_NAMES
+                for name in retry_raw_names
             }
             retry_records.append(
                 {
@@ -5017,7 +5166,13 @@ def _copy_vad_trial(
             "published_files": centered_files,
         }
     published_camera_source_provenance = None
-    if trial.runtime_profile_selector == CAMERA_SOURCE_5HZ_SELECTOR:
+    if _is_camera_source_5hz_profile(trial.runtime_profile_selector):
+        camera_contract = _camera_source_5hz_contract(
+            trial.runtime_profile_selector
+        )
+        camera_provenance_names = _camera_source_5hz_provenance_names(
+            camera_contract
+        )
         validation = _read_object(
             trial.directory / "matrix_validation.json",
             f"{trial.map_id}:{trial.trial_id} matrix validation",
@@ -5042,7 +5197,7 @@ def _copy_vad_trial(
         fresh_camera_evidence, raw_provenance = validated_camera_source
         provenance_files: dict[str, dict[str, Any]] = {}
         for name in (
-            *CAMERA_SOURCE_5HZ_PROVENANCE_NAMES,
+            *camera_provenance_names,
             "runtime.env",
             "latency/e2e_latency.json",
         ):
@@ -5090,9 +5245,20 @@ def _copy_vad_trial(
                 ]["published_file"],
             }
         )
+        if camera_contract == CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT:
+            file_roles.update(
+                {
+                    "vad_model_override": provenance_files[
+                        "vad_model_override_provenance/model_override.param.yaml"
+                    ]["published_file"],
+                    "vad_model_override_checksums": provenance_files[
+                        "vad_model_override_provenance/SHA256SUMS"
+                    ]["published_file"],
+                }
+            )
         published_camera_source_provenance = {
             "status": "PASS",
-            "contract": dict(CAMERA_SOURCE_5HZ_CONTRACT),
+            "contract": camera_contract,
             "validation": fresh_camera_evidence,
             "files": provenance_files,
         }

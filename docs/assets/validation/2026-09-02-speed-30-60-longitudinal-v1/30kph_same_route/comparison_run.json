@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "comparison_id": "town06_same_445m_route_30kph_v1",
+  "generated_at": "2026-09-02T06:35:58.584231+00:00",
+  "attempt": "trial/attempt_002",
+  "attempt_history": [
+    {
+      "attempt": "trial/attempt_001",
+      "selected": false,
+      "status": "PRE_TRIAL_REJECTED",
+      "vehicle_or_autoware_started": false,
+      "reason": "The orchestration preflight JSON was placed inside the guarded trial directory before run_recorded_route_trial.sh; the stale-artifact prevention contract correctly rejected the directory.",
+      "retry_policy": "Preserve attempt_001 and use a fresh attempt_002 with lifecycle evidence outside the guarded trial directory.",
+      "records": {
+        "trial/attempt_001/orchestration_failure.json": {
+          "path": "trial/attempt_001/orchestration_failure.json",
+          "sha256": "d611896a2a100c8366baadcbe22405f15f31955a2762dc92750b97a757344064",
+          "size_bytes": 434
+        },
+        "trial/attempt_001/comparison_carla_preflight.json": {
+          "path": "trial/attempt_001/comparison_carla_preflight.json",
+          "sha256": "53b2e8a45659b251eed24ce52b7da11e974359f46cf251f41a30c7fa226ec958",
+          "size_bytes": 994
+        },
+        "trial/attempt_001/comparison_carla_cleanup.json": {
+          "path": "trial/attempt_001/comparison_carla_cleanup.json",
+          "sha256": "117edd9d1922d59582aed3b48b0745177e9686fa8182285003a16cad706790d0",
+          "size_bytes": 799
+        }
+      }
+    },
+    {
+      "attempt": "trial/attempt_002",
+      "selected": true,
+      "status": "PASS",
+      "carla_lifecycle_records": {
+        "carla_lifecycle/attempt_002/preflight.json": {
+          "path": "carla_lifecycle/attempt_002/preflight.json",
+          "sha256": "329f1f80fae4b8ee4675f84f33426a3d2defddfa4cea5c048de926be9ddd4071",
+          "size_bytes": 994
+        },
+        "carla_lifecycle/attempt_002/cleanup.json": {
+          "path": "carla_lifecycle/attempt_002/cleanup.json",
+          "sha256": "d31af047ec9d0638930d79e37735338e685b446708fb07b0c371772c2d018929",
+          "size_bytes": 802
+        },
+        "carla_lifecycle/attempt_002/post_run_owned_telemetry_cleanup.json": {
+          "path": "carla_lifecycle/attempt_002/post_run_owned_telemetry_cleanup.json",
+          "sha256": "0501a2bf8b4f4c6c74406a60132a9fd61b0ef7ed6ed86496a72acfd722335e5b",
+          "size_bytes": 734
+        }
+      }
+    }
+  ],
+  "exit_statuses": {
+    "carla_cleanup": 0,
+    "telemetry_cleanup": 0,
+    "trial": 0
+  },
+  "problems": [],
+  "source_60kph_route": {
+    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/catalog/routes/town06/straight/town06_straight_s0000_p00.json",
+    "sha256": "ae019ba6f839935919e7b11fa3a3131255849bfbc7ae191b8a517a3182233018"
+  },
+  "camera_source_5hz": {
+    "status": "PASS",
+    "contract": {
+      "profile_id": "carla_camera_source_5hz_ab_v1",
+      "baseline_selector": "speed_30kph",
+      "sensor_count": 6,
+      "sensor_tick_sec": 0.2,
+      "source_frequency_hz": 5.0,
+      "ros_publish_frequency_hz": 5.0,
+      "maximum_stamp_gap_sec": 0.25,
+      "qos_profile": "reliable",
+      "only_semantic_delta": "camera_parameters_sensor_tick",
+      "imu_gnss_unchanged": true
+    },
+    "validation_file": "trial/attempt_002/camera_source_5hz_validation.json",
+    "validation_sha256": "71065d767a427b6739d79a85c84d1222339f8b9f1874ac5a6cfb9a169370517c",
+    "validator": {
+      "path": "scripts/e2e/autoware_vad_town_matrix.py",
+      "sha256": "67459ddd0b19ef477ccc1ca687a935fbe77c973e4aba303a46ec719ad6f0f818",
+      "helper": "_camera_source_5hz_evidence"
+    },
+    "mapping_sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+    "baseline_mapping_sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865",
+    "bundle_coverage_percent": 99.7289972899729,
+    "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+    "candidate_front_acceptance_percent": 100.0,
+    "candidate_count": 369,
+    "front_count": 369,
+    "vad_inference": {
+      "published_count": 386,
+      "mailbox_taken": 386,
+      "mailbox_submitted": 364,
+      "capacity_pruned": 0,
+      "superseded": 0,
+      "superseded_classification": "none",
+      "recorder_start_wall_sec": null,
+      "coalesced_drops": 0
+    }
+  },
+  "visual_contact_sheet": {
+    "file": "trial/attempt_002/autoware_rviz_five_frame_contact.png",
+    "sha256": "d80bcda70b22dc8c3a107b3979bd75d77628523cefc851af9f28c0ac42a1cc15",
+    "size_bytes": 108941,
+    "dimensions": [
+      1920,
+      216
+    ],
+    "frame_count": 5,
+    "layout": "5x1",
+    "panel_dimensions": [
+      384,
+      216
+    ],
+    "source_recording": "trial/attempt_002/autoware_rviz_capture.mkv",
+    "source_recording_sha256": "be352bb44a3052e62e9b9198f718ff15dccb1cc4be0b851a2668c44e096e75f0",
+    "ffmpeg_filter": "fps=1/60,scale=384:216,tile=5x1"
+  },
+  "source_records": {
+    "actuation_map_coverage.json": {
+      "sha256": "731d71b24e7cd5c66b6dffc7167db54b3c51c8954254733cf5373716b43358d3",
+      "size_bytes": 3709
+    },
+    "actuation_map_runtime_coverage.json": {
+      "sha256": "1b112a3faf91c994dd6d439b97a7cafc8806a6ec5b31d7c467b4eea2ea199a5e",
+      "size_bytes": 3870
+    },
+    "aligned_route.json": {
+      "sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+      "size_bytes": 185078
+    },
+    "autoware_rviz_candidate.png": {
+      "sha256": "4cc59de481f252946bdbf7927b188e16248a28b6fc9a56054e1ffee3829d3533",
+      "size_bytes": 136497
+    },
+    "autoware_rviz_capture.mkv": {
+      "sha256": "be352bb44a3052e62e9b9198f718ff15dccb1cc4be0b851a2668c44e096e75f0",
+      "size_bytes": 48580657
+    },
+    "autoware_rviz_drive.gif": {
+      "sha256": "2c994d38dbfd3a0674aec6e8aadb05f58de7d79353eb66bb43a011846c4be356",
+      "size_bytes": 29264307
+    },
+    "autoware_rviz_five_frame_contact.png": {
+      "sha256": "d80bcda70b22dc8c3a107b3979bd75d77628523cefc851af9f28c0ac42a1cc15",
+      "size_bytes": 108941
+    },
+    "autoware_rviz_fullscreen.png": {
+      "sha256": "2446dcd4ee614ddb9fefa9f416e0ed7fae3451dc72179ec83825e4831472f76d",
+      "size_bytes": 290992
+    },
+    "camera_source_5hz_validation.json": {
+      "sha256": "71065d767a427b6739d79a85c84d1222339f8b9f1874ac5a6cfb9a169370517c",
+      "size_bytes": 1663
+    },
+    "desktop_capture.json": {
+      "sha256": "cbb150afe6098efbfc65b01fb6108ea2cf99ba6b81efcf883b21c5d94ca0226e",
+      "size_bytes": 3535
+    },
+    "diagnosis.json": {
+      "sha256": "8e76b639edd69427687345593959d4b7df3cd4c3e99a9ff762d5f5bff4b574e8",
+      "size_bytes": 13481
+    },
+    "latency/e2e_latency.json": {
+      "sha256": "ba2084041099318c5246904f8faac05f6e3f0e5caf78a9a4e8b53e97c16955ae",
+      "size_bytes": 20970
+    },
+    "path_vs_control.png": {
+      "sha256": "fead87d92e5df5614e66fced7fd9192f5ccdb7226c4bdf36bf62bf5b766c9156",
+      "size_bytes": 391736
+    },
+    "recorder.log": {
+      "sha256": "398f0f87d4e7122a43614376bc8e3b0af28aa87cd581cdab93c623ddd208bad0",
+      "size_bytes": 9479
+    },
+    "result.json": {
+      "sha256": "85c3e6332e35661360dce406533156031fc09973e0cb336de030d1d083e7c8ae",
+      "size_bytes": 368455
+    },
+    "route_result.png": {
+      "sha256": "02c9d54a0834ee79b9dc377d25682f94a66d50c96b18d64d177fd459badd0f89",
+      "size_bytes": 102151
+    },
+    "runtime.env": {
+      "sha256": "ca98dd7dd5b276077994c32cb527f9a5e21700b3b10d53eef5a01b9e39bf76f9",
+      "size_bytes": 6138
+    },
+    "sensor_mapping_provenance/SHA256SUMS": {
+      "sha256": "f681871db10b5f150771d75fa7bb69b7c6d601a5cc6f31f024c4518f1126d778",
+      "size_bytes": 86
+    },
+    "sensor_mapping_provenance/sensor_mapping.yaml": {
+      "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+      "size_bytes": 3946
+    },
+    "source_route.json": {
+      "sha256": "ae019ba6f839935919e7b11fa3a3131255849bfbc7ae191b8a517a3182233018",
+      "size_bytes": 184534
+    },
+    "speed_profile.json": {
+      "sha256": "cc2355bea23d3743540c21329fb4db66ce571f4272d9fd72f8bc3efd6608044b",
+      "size_bytes": 1247358
+    },
+    "stack.log": {
+      "sha256": "098f6d70bc9824f011318ae84adb77d997e3ddd222f5d4297e833848ede2f169",
+      "size_bytes": 278321
+    },
+    "carla_lifecycle/attempt_002/post_run_owned_telemetry_cleanup.json": {
+      "path": "carla_lifecycle/attempt_002/post_run_owned_telemetry_cleanup.json",
+      "sha256": "0501a2bf8b4f4c6c74406a60132a9fd61b0ef7ed6ed86496a72acfd722335e5b",
+      "size_bytes": 734,
+      "path_base": "comparison_root"
+    }
+  },
+  "summary": {
+    "goal_reached": true,
+    "maximum_observed_speed_mps": 7.740418336098246,
+    "maximum_observed_speed_kph": 27.865506009953688,
+    "maximum_sustained_speed_duration_sec": 45.800000682,
+    "maximum_absolute_cte_m": 0.5322219133377075,
+    "maximum_lateral_acceleration_mps2": 0.42346379262382583,
+    "traveled_distance_m": 445.129085231153,
+    "sim_elapsed_sec": 70.65000105300001,
+    "wall_elapsed_sec": 284.3666070390027,
+    "real_time_factor": 0.2484468967318301,
+    "runtime_lookup_classification": "OBSERVED_LOOKUPS_WITHIN_MAP_AXIS",
+    "camera_bundle_coverage_percent": 99.7289972899729,
+    "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+    "candidate_front_acceptance_percent": 100.0,
+    "candidate_count": 369,
+    "front_count": 369,
+    "vad_published_count": 386,
+    "vad_mailbox_taken": 386,
+    "vad_capacity_pruned": 0,
+    "vad_superseded": 0,
+    "vad_coalesced_drops": 0
+  }
+}

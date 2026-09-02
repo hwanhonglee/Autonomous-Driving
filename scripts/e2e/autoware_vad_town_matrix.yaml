@@ -247,6 +247,46 @@ runtime_profiles:
       only_semantic_delta: camera_parameters_sensor_tick
       imu_gnss_unchanged: true
 
+  # Versioned runtime-stutter remediation. Unlike the immutable Reliable
+  # camera-source A/B above, raw-image DDS histories are bounded to the latest
+  # sample and isolated to loopback; camera_info, IMU, and GNSS remain Reliable.
+  # Exact mapping/model/DDS provenance is validated after every trial.
+  speed_30kph_camera_source_5hz_best_effort_image:
+    <<: *speed_30kph_profile
+    id: vad_carla_30kph_camera_source_5hz_best_effort_image_visualized_v2
+    wrapper_options:
+      - --recommended
+      - --speed-30kph
+      - --camera-source-5hz
+      - --visualize
+      - --capture-desktop
+    camera_source_contract:
+      profile_id: carla_vad_camera_source_5hz_best_effort_image_v2
+      sensor_count: 6
+      sensor_tick_sec: 0.2
+      source_frequency_hz: 5.0
+      ros_publish_frequency_hz: 5.0
+      maximum_stamp_gap_sec: 0.25
+      maximum_raw_image_stamp_span_sec: 0.001
+      maximum_raw_image_supersession_percent: 1.0
+      camera_image_publish_qos: best_effort
+      camera_image_publish_history: keep_last
+      camera_image_publish_depth: 1
+      camera_info_publish_qos: reliable
+      camera_info_publish_depth: 1
+      vad_image_subscription_qos: best_effort
+      vad_image_subscription_depth: 1
+      rviz_image_subscription_qos: best_effort
+      rviz_image_subscription_depth: 1
+      rmw_implementation: rmw_cyclonedds_cpp
+      ros_localhost_only: '0'
+      sensor_mapping_file: sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml
+      vad_model_override_file: vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml
+      cyclonedds_config_file: cyclonedds_camera_depth1_localhost_v2.xml
+      only_semantic_delta: six_camera_5hz_bounded_latest_image_transport_and_localhost_dds
+      imu_gnss_unchanged: true
+      real_vehicle_ready: false
+
 route_contract:
   weather: ClearNoon
   seed: 0

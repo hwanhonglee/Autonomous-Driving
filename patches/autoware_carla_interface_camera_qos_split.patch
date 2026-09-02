@@ -1,0 +1,126 @@
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py
+@@ -60,17 +60,18 @@ class ROSPublisherManager:
+         self.qos_profiles = {
+             "reliable": self._create_reliable_qos(),
+             "best_effort": self._create_best_effort_qos(),
++            "best_effort_depth_1": self._create_best_effort_qos(depth=1),
+         }
+ 
+     def _create_reliable_qos(self) -> QoSProfile:
+         """Create reliable QoS profile."""
+         qos = QoSProfile(depth=1)
+         qos.reliability = ReliabilityPolicy.RELIABLE
+         return qos
+ 
+-    def _create_best_effort_qos(self) -> QoSProfile:
+-        """Create best effort QoS profile."""
+-        qos = QoSProfile(depth=10)
++    def _create_best_effort_qos(self, depth: int = 10) -> QoSProfile:
++        """Create a KEEP_LAST best-effort QoS profile with explicit depth."""
++        qos = QoSProfile(depth=depth)
+         qos.reliability = ReliabilityPolicy.BEST_EFFORT
+         return qos
+ 
+@@ -153,25 +153,44 @@ class ROSPublisherManager:
+             True if created successfully
+ 
+         """
+-        qos = self.get_qos_profile(sensor_config.qos_profile)
++        # Large raw images are perishable sensor samples and may need a
++        # best-effort writer to prevent reliable DDS history backpressure.
++        # CameraInfo is small calibration metadata, so keep its QoS separately
++        # configurable.  Both fields fall back to the legacy shared profile.
++        image_qos_name = (
++            sensor_config.image_qos_profile or sensor_config.qos_profile
++        )
++        camera_info_qos_name = (
++            sensor_config.camera_info_qos_profile or sensor_config.qos_profile
++        )
++        image_qos = self.get_qos_profile(image_qos_name)
++        camera_info_qos = self.get_qos_profile(camera_info_qos_name)
+ 
+         # Image publisher
+         if sensor_config.topic_image:
+-            publisher = self.ros_node.create_publisher(Image, sensor_config.topic_image, qos)
++            publisher = self.ros_node.create_publisher(
++                Image, sensor_config.topic_image, image_qos
++            )
+             self.camera_publishers[sensor_config.sensor_id] = publisher
+             sensor_config.publisher = publisher
+ 
+-            self.logger.info(f"Created camera publisher: {sensor_config.topic_image}")
++            self.logger.info(
++                f"Created camera publisher: {sensor_config.topic_image} "
++                f"(qos={image_qos_name})"
++            )
+ 
+         # Camera info publisher
+         if sensor_config.topic_info:
+             info_publisher = self.ros_node.create_publisher(
+-                CameraInfo, sensor_config.topic_info, qos
++                CameraInfo, sensor_config.topic_info, camera_info_qos
+             )
+             self.camera_info_publishers[sensor_config.sensor_id] = info_publisher
+             sensor_config.publisher_info = info_publisher
+ 
+-            self.logger.info(f"Created camera info publisher: {sensor_config.topic_info}")
++            self.logger.info(
++                f"Created camera info publisher: {sensor_config.topic_info} "
++                f"(qos={camera_info_qos_name})"
++            )
+ 
+         return True
+ 
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py
+@@ -629,6 +629,8 @@ class SensorKitLoader:
+             topic_info=topic_info,
+             frequency_hz=ros_config.get("frequency_hz", 20.0),
+             qos_profile=ros_config.get("qos_profile", "reliable"),
++            image_qos_profile=ros_config.get("image_qos_profile"),
++            camera_info_qos_profile=ros_config.get("camera_info_qos_profile"),
+             parameters=mapping.get("parameters", {}),
+             transform=transform,
+             covariance=mapping.get("covariance"),
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py
+@@ -37,6 +37,8 @@ class SensorConfig:
+     topic_info: Optional[str] = None
+     frequency_hz: float = 20.0
+     qos_profile: str = "reliable"
++    image_qos_profile: Optional[str] = None
++    camera_info_qos_profile: Optional[str] = None
+     parameters: Dict[str, Any] = field(default_factory=dict)
+     transform: Optional[Dict[str, float]] = None
+     covariance: Optional[Dict[str, float]] = None
+diff --git a/simulator/autoware_carla_interface/README.md b/simulator/autoware_carla_interface/README.md
+--- a/simulator/autoware_carla_interface/README.md
++++ b/simulator/autoware_carla_interface/README.md
+@@ -206,11 +206,22 @@ sensor_mappings:
+       topic_info: /sensing/camera/CAM_FRONT/camera_info
+       frequency_hz: 11
+       qos_profile: reliable
++      image_qos_profile: best_effort
++      camera_info_qos_profile: reliable
+     parameters:
+       image_size_x: 1600
+       image_size_y: 900
+       fov: 70.0
+ ```
+ 
++Camera mappings may set `image_qos_profile` and `camera_info_qos_profile`
++independently. This is useful when large, perishable raw images should use
++Best Effort delivery while the smaller calibration metadata remains Reliable.
++If either optional key is omitted, that publisher falls back to the shared
++`qos_profile`, preserving existing sensor mappings.
++The optional `best_effort_depth_1` profile is a simulation-only bounded-latest
++variant for large raw images: it uses Best Effort, Volatile, KEEP_LAST history
++with depth 1. The existing `best_effort` profile retains depth 10.
++
+ For CARLA sensor parameters, see [CARLA Sensor Reference](https://carla.readthedocs.io/en/latest/ref_sensors/).
+ 
+ ##### Light-Weight Sensor Mapping

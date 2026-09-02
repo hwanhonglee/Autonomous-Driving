@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "profile_id": "carla_vad_30kph_v2",
+  "variant_id": "carla_vad_30kph_pid_i40_ab_v1",
+  "scope": "CARLA simulation A/B screening only",
+  "base_file": "autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml",
+  "base_sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+  "isolated_override": {
+    "max_i_effort": {
+      "baseline": 0.3,
+      "candidate": 0.4
+    }
+  },
+  "unchanged_limits": {
+    "max_out": 1.5,
+    "max_p_effort": 1.5,
+    "command_gate_longitudinal_acceleration_cap_mps2": 1.5
+  },
+  "speed_limit_source": "explicit_simulation_profile",
+  "real_vehicle_ready": false
+}

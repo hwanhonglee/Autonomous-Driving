@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "COMPLETE_WITH_60KPH_TRIAL_FAILURE",
+  "generated_at": "2026-09-02T16:22:00+09:00",
+  "repository": {
+    "branch": "autoware-e2e/v1.9.0-vad-carla",
+    "head_before_uncommitted_validation_changes": "cc06f1d77a7bc4964414508ea6cccdea98eea3b7"
+  },
+  "scope": {
+    "real_vehicle_ready": false,
+    "longitudinal_speed_source": "explicit_simulation_nominal",
+    "vad_geometry_evaluated": true,
+    "vad_velocity_evaluated": false,
+    "camera_source_frequency_hz": 5.0,
+    "camera_sensor_count": 6
+  },
+  "source_artifacts": {
+    "pilot_60kph": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1",
+    "same_route_reference_30kph": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1",
+    "same_route_comparison": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town06_same_route_30_vs_60_analysis_v1",
+    "matrix_30kph": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1"
+  },
+  "authoritative_records": {
+    "same_route_comparison": {
+      "path": "same_route_30_vs_60.json",
+      "sha256": "179b5916c9476f8fc634f41c69ed9cd42d20c282213913cd522001f149a56d29"
+    },
+    "pilot_60kph": {
+      "path": "60kph/pilot_summary.json",
+      "sha256": "25386d221a14b10cef70aa754bcb550ee1330c4fe48caac133ce6131b58087d7",
+      "trial_verdict": "FAIL",
+      "evidence_status": "COMPLETE",
+      "maximum_observed_speed_kph": 35.19527263069984,
+      "target_attainment_percent": 58.658787717833064
+    },
+    "same_route_reference_30kph": {
+      "path": "30kph_same_route/comparison_run.json",
+      "sha256": "684c698628b986b2ead557a855089c5edd02ae89e7c88a8a877dd46e75e2e71c",
+      "trial_verdict": "PASS",
+      "maximum_observed_speed_kph": 27.865506009953688
+    },
+    "matrix_longitudinal": {
+      "path": "all_towns_30kph/matrix_longitudinal_response.json",
+      "sha256": "b60559716dcfd605273f9c8c553ea8bc798f05d4e28b43f8d48b4ebb0f82f99f",
+      "status": "COMPLETE",
+      "selected_trial_count": 18,
+      "runtime_velocity_clamping_observed_count": 0
+    },
+    "all_towns_vehicle_centered_visual_audit": {
+      "path": "all_towns_visual_audit/v16_owned_window_contact_sheet.png",
+      "sha256": "9e638f26e329bd4d2262cff7d169bff97cf4d8e5c8b282c0e55b2ba7c1515b7c",
+      "passed_trial_count": 18
+    }
+  },
+  "same_route_contract": {
+    "town": "Town06",
+    "scenario": "straight",
+    "route_length_m": 445.8799516556895,
+    "aligned_route_sha256": "092125a8bf07276719242b0cb9e8a087031838b9e8fb0f9cb8f37f4cd4b75996",
+    "byte_identical_between_30_and_60": true
+  },
+  "visual_contract": {
+    "owned_rviz_window_only": true,
+    "representative_png_dimensions": [1920, 1080],
+    "gif_dimensions": [960, 540],
+    "vehicle_centered": true,
+    "candidate_observed": true
+  },
+  "integrity": {
+    "payload_file_count_before_readme_manifest_and_checksums": 66,
+    "checksums": "SHA256SUMS",
+    "checksums_cover_readme_and_manifest": true,
+    "checksums_exclude_the_checksum_file_itself": true
+  }
+}

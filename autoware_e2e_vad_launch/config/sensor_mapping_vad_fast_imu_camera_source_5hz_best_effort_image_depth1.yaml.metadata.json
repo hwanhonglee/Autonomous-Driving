@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+  "scope": "localhost-only CARLA simulation publish-backpressure remediation",
+  "base_file": "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml",
+  "base_sha256": "17f1a1f110fae297131b9f7e06d7bff7237fd88ce7638745d4f7415b5fcdce4d",
+  "effective_file_sha256": "5c2877aeff20d3a58bcc7211a2f37116b6e17126e62839d8742f79fc185c38ef",
+  "transport_contract": {
+    "camera_image_raw_publishers": {
+      "reliability": "best_effort",
+      "durability": "volatile",
+      "history": "keep_last",
+      "depth": 1,
+      "profile_key": "best_effort_depth_1"
+    },
+    "camera_info_publishers": {
+      "reliability": "reliable",
+      "history": "keep_last",
+      "depth": 1
+    },
+    "imu_publisher": "reliable",
+    "gnss_publisher": "reliable",
+    "camera_count": 6,
+    "camera_source_period_seconds": 0.2,
+    "camera_publish_rate_hz": 5,
+    "network_interface": "lo",
+    "ros_localhost_only": false,
+    "cyclonedds_config_file": "cyclonedds_camera_depth1_localhost_v2.xml",
+    "cyclonedds_config_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289"
+  },
+  "isolated_change": "bound six Best-Effort raw-image writer histories to KEEP_LAST depth 1 and localhost-only CycloneDDS",
+  "real_vehicle_ready": false
+}

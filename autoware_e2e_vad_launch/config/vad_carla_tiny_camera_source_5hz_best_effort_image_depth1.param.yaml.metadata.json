@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+  "scope": "localhost-only CARLA simulation publish-backpressure remediation",
+  "base_file": "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml",
+  "base_sha256": "e825dc6d4cc98ba2bc3f78571d37b1d34e425c98f2573a4baab040a77d7a9e03",
+  "effective_file_sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb",
+  "transport_contract": {
+    "vad_image_subscriptions": {
+      "reliability": "best_effort",
+      "durability": "volatile",
+      "history": "keep_last",
+      "depth": 1
+    },
+    "frame_buffer_size": 32,
+    "network_interface": "lo",
+    "ros_localhost_only": false,
+    "cyclonedds_config_file": "cyclonedds_camera_depth1_localhost_v2.xml",
+    "cyclonedds_config_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289"
+  },
+  "isolated_change": "VAD raw-image DDS KEEP_LAST depth 32 to depth 1",
+  "real_vehicle_ready": false
+}

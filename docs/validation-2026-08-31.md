@@ -1,7 +1,8 @@
 # Validation evidence
 
-> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 5 Hz camera-source 30 kph
-> 9-map/18-trial 결과와 차량 중심 전체화면 PNG/GIF는
+> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 30/60 kph 비교와 종방향
+> 고도화 결과는 [2026-09-02 속도·종방향 검증 보고서](validation-2026-09-02-speed-30-60-longitudinal.md),
+> 5 Hz camera-source 9-map/18-trial 원본은
 > [2026-09-02 전체 Town 검증 보고서](validation-2026-09-02-all-towns-camera-source-5hz.md)를
 > 사용한다. [2026-09-01 보고서](validation-2026-09-01.md)는 이전 30 kph 기준선이다.
 

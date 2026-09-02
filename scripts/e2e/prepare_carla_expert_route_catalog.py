@@ -97,14 +97,20 @@ TURN_GEOMETRY_ARGUMENTS = (
 )
 SPAWN_POINT_ENDPOINT_SOURCE = "spawn_points"
 GENERATED_WAYPOINT_ENDPOINT_SOURCE = "generated_waypoints"
-PHYSICAL_STRAIGHT_PROFILES = ("speed_30kph",)
+PHYSICAL_STRAIGHT_PROFILES = (
+    "speed_30kph",
+    "speed_60kph_straight_pilot",
+)
 PHYSICAL_TURN_PROFILES = ("speed_30kph",)
 ENDPOINT_JUNCTION_POLICIES = ("include", "exclude")
 CANDIDATE_ENUMERATION_POLICIES = (
     "all_pairs",
     "directed_topology_straight_v1",
 )
-STRAIGHT_CAPACITY_PROFILES = ("town10hd_opt_30kph_compact_v1",)
+STRAIGHT_CAPACITY_PROFILES = (
+    "town10hd_opt_30kph_compact_v1",
+    "town06_60kph_straight_pilot_v1",
+)
 TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE: dict[str, Any] = {
     "profile_id": "town10hd_opt_30kph_compact_v1",
     "scope": "CARLA-only Town10HD_Opt 30 kph straight capacity screening",
@@ -129,6 +135,43 @@ TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE: dict[str, Any] = {
         "exact serialized physical-straight geometry remains mandatory"
     ),
     "real_vehicle_ready": False,
+}
+TOWN06_60KPH_STRAIGHT_CAPACITY_PROVENANCE: dict[str, Any] = {
+    "profile_id": "town06_60kph_straight_pilot_v1",
+    "scope": "simulation-only CARLA Town06 60 kph straight pilot sizing",
+    "simulation_only": True,
+    "real_vehicle_ready": False,
+    "calibration_claim": False,
+    "measurement_source": (
+        "observed 30 kph Town06 threshold-entry distance plus conservative "
+        "quadratic speed scaling and analytical exposure/stopping distances"
+    ),
+    "target_speed_mps": 16.666666666666668,
+    "minimum_sustained_speed_mps": 15.0,
+    "minimum_sustained_speed_duration_sec": 1.0,
+    "observed_30kph_threshold_entry_distance_m": 73.58,
+    "threshold_entry_speed_scaling": "quadratic_30kph_to_60kph",
+    "threshold_entry_speed_scale_factor": 4.0,
+    "threshold_entry_distance_m": 294.32,
+    "minimum_exposure_distance_m": 15.0,
+    "assumed_deceleration_mps2": 2.0,
+    "minimum_stop_distance_m": 69.444,
+    "derived_required_distance_m": 378.764,
+    "minimum_route_length_m": 430.0,
+    "minimum_route_margin_m": 51.236,
+    "derivation": (
+        "73.58 * (60 / 30)^2 = 294.32; exposure = 15.0 m at "
+        ">=15.0 m/s for 1.0 s; stop = 16.666666666666668^2 / "
+        "(2 * 2.0) = 69.444 m; 294.32 + 15.0 + 69.444 = 378.764; "
+        "430.0 - 378.764 = 51.236"
+    ),
+    "claim_limit": (
+        "simulation pilot route sizing only; this is not a vehicle or control "
+        "calibration claim"
+    ),
+    "postfilter_authority": (
+        "exact serialized physical-straight geometry remains mandatory"
+    ),
 }
 # The in-tree Autoware CARLA bridge applies this in
 # InitializeInterface._parse_spawn_point before actor creation.  The route keeps
@@ -701,7 +744,7 @@ def physical_straight_contract(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def straight_capacity_contract(args: argparse.Namespace) -> dict[str, Any]:
-    """Validate the sole map/profile-specific compact straight generation mode."""
+    """Validate a map/profile-specific straight generation mode."""
     profile = getattr(args, "straight_capacity_profile", None)
     junction_policy = getattr(args, "endpoint_junction_policy", "include")
     enumeration_policy = getattr(args, "candidate_enumeration_policy", "all_pairs")
@@ -721,18 +764,52 @@ def straight_capacity_contract(args: argparse.Namespace) -> dict[str, Any]:
     if profile not in STRAIGHT_CAPACITY_PROFILES:
         raise CatalogError(f"unsupported straight-capacity profile: {profile!r}")
 
-    expected_integers = {
-        "pairs_per_seed": 8,
-        "max_traces": 20000,
-    }
-    expected_numbers = {
-        "min_distance": 170.0,
-        "max_distance": 182.0,
-        "preferred_distance": 172.0,
-        "sampling_resolution": 1.0,
-        "endpoint_waypoint_spacing_m": 0.5,
-        "max_endpoint_offset": 2.0,
-    }
+    if profile == "town10hd_opt_30kph_compact_v1":
+        expected_integers = {
+            "pairs_per_seed": 8,
+            "max_traces": 20000,
+        }
+        expected_numbers = {
+            "min_distance": 170.0,
+            "max_distance": 182.0,
+            "preferred_distance": 172.0,
+            "sampling_resolution": 1.0,
+            "endpoint_waypoint_spacing_m": 0.5,
+            "max_endpoint_offset": 2.0,
+        }
+        expected_identity = {
+            "map_id": "town10hd_opt",
+            "scenarios": ("straight",),
+            "seeds": (0,),
+            "physical_straight_profile": "speed_30kph",
+            "weather": "ClearNoon",
+            "endpoint_junction_policy": "exclude",
+            "candidate_enumeration_policy": "directed_topology_straight_v1",
+        }
+        provenance = TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE
+    else:
+        expected_integers = {
+            "pairs_per_seed": 1,
+            "max_traces": 20000,
+        }
+        expected_numbers = {
+            "min_distance": 430.0,
+            "max_distance": 460.0,
+            "preferred_distance": 445.0,
+            "sampling_resolution": 1.0,
+            "endpoint_waypoint_spacing_m": 0.5,
+            "max_endpoint_offset": 2.0,
+        }
+        expected_identity = {
+            "map_id": "town06",
+            "scenarios": ("straight",),
+            "seeds": (0,),
+            "physical_straight_profile": "speed_60kph_straight_pilot",
+            "weather": "ClearNoon",
+            "endpoint_junction_policy": "exclude",
+            "candidate_enumeration_policy": "directed_topology_straight_v1",
+        }
+        provenance = TOWN06_60KPH_STRAIGHT_CAPACITY_PROVENANCE
     mismatches = []
     for field, expected in expected_integers.items():
         value = getattr(args, field, None)
@@ -749,15 +826,6 @@ def straight_capacity_contract(args: argparse.Namespace) -> dict[str, Any]:
             )
         ):
             mismatches.append(f"{field}={value!r} (expected {expected!r})")
-    expected_identity = {
-        "map_id": "town10hd_opt",
-        "scenarios": ("straight",),
-        "seeds": (0,),
-        "physical_straight_profile": "speed_30kph",
-        "weather": "ClearNoon",
-        "endpoint_junction_policy": "exclude",
-        "candidate_enumeration_policy": "directed_topology_straight_v1",
-    }
     for field, expected in expected_identity.items():
         value = getattr(args, field, None)
         if value != expected:
@@ -770,13 +838,13 @@ def straight_capacity_contract(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "enabled": True,
         "profile_id": profile,
-        "map_id": "town10hd_opt",
+        "map_id": expected_identity["map_id"],
         "scenario": "straight",
         "endpoint_waypoint_spacing_m": 0.5,
         "endpoint_junction_policy": "exclude",
         "candidate_enumeration_policy": "directed_topology_straight_v1",
         "admission_policy": "prefilter_then_exact_serialized_physical_postfilter",
-        "provenance": dict(TOWN10HD_OPT_STRAIGHT_CAPACITY_PROVENANCE),
+        "provenance": dict(provenance),
     }
 
 

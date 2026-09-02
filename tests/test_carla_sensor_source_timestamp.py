@@ -14,6 +14,23 @@ CARLA_INTERFACE_SRC = (
 )
 
 
+class RecordingTimingMonitor:
+    def __init__(self):
+        self.next_token = 0
+        self.slow_calls = []
+        self.events = []
+
+    def start(self):
+        self.next_token += 1
+        return self.next_token
+
+    def warn_if_slow(self, stage, started_ns, **fields):
+        self.slow_calls.append((stage, started_ns, fields))
+
+    def warn_event(self, stage, **fields):
+        self.events.append((stage, fields))
+
+
 @pytest.fixture()
 def bridge(monkeypatch):
     monkeypatch.syspath_prepend(str(CARLA_INTERFACE_SRC))
@@ -261,12 +278,71 @@ def test_stale_or_duplicate_measurement_is_not_published(bridge, measurement_sta
 
 def test_camera_bundle_worker_publishes_every_camera_serially(bridge) -> None:
     calls = []
+    timing = RecordingTimingMonitor()
+    bridge._runtime_timing = timing
     bridge.camera = lambda *args: calls.append(args)
     measurements = ((object(), "front", 1.0), (object(), "back", 1.0))
 
     bridge._publish_camera_bundle(measurements)
 
     assert calls == list(measurements)
+    assert timing.slow_calls == [
+        (
+            "camera_bundle_total",
+            1,
+            {"camera_count": 2, "source_stamp_sec": 1.0},
+        )
+    ]
+
+
+def test_camera_timing_wraps_each_publish_stage_without_reordering(bridge) -> None:
+    actions = []
+    timing = RecordingTimingMonitor()
+    header = object()
+    camera_info = SimpleNamespace(header=None)
+    image_message = SimpleNamespace(header=None)
+    image_publisher = SimpleNamespace(
+        get_subscription_count=lambda: 1,
+        publish=lambda message: actions.append(("image_publish", message)),
+    )
+    info_publisher = SimpleNamespace(
+        get_subscription_count=lambda: 1,
+        publish=lambda message: actions.append(("info_publish", message)),
+    )
+    bridge._runtime_timing = timing
+    bridge.sensor_registry = SimpleNamespace(
+        get_sensor=lambda _: SimpleNamespace(frame_id="front_optical")
+    )
+    bridge.pub_camera = {"front": image_publisher}
+    bridge.pub_camera_info = {"front": info_publisher}
+    bridge.camera_info_cache = {"front": camera_info}
+    bridge.get_msg_header = lambda **_: header
+    bridge.cv_bridge = SimpleNamespace(
+        cv2_to_imgmsg=lambda image, encoding: actions.append(
+            ("cv_bridge", image.shape, encoding)
+        )
+        or image_message
+    )
+    measurement = SimpleNamespace(height=1, width=1, raw_data=bytes(4))
+
+    bridge.camera(measurement, "front", timestamp=2.25)
+
+    assert actions == [
+        ("info_publish", camera_info),
+        ("cv_bridge", (1, 1, 4), "bgra8"),
+        ("image_publish", image_message),
+    ]
+    assert camera_info.header is header
+    assert image_message.header is header
+    assert [call[0] for call in timing.slow_calls] == [
+        "camera_info_publish",
+        "camera_cv_bridge",
+        "camera_image_publish",
+    ]
+    assert all(
+        call[2] == {"camera": "front", "source_stamp_sec": 2.25}
+        for call in timing.slow_calls
+    )
 
 
 def test_run_step_submits_six_cameras_as_one_all_or_none_worker_item(bridge) -> None:
@@ -369,8 +445,11 @@ def test_camera_bundle_worker_drops_a_whole_stale_bundle_when_slow(bridge) -> No
         else:
             completed.set()
 
-    logger = SimpleNamespace(debug=lambda *_: None, error=lambda *_: None)
-    worker = module.SensorPublishWorker("camera_bundle_test", logger, queue_size=1)
+    logger = SimpleNamespace(warning=lambda *_: None, error=lambda *_: None)
+    timing = RecordingTimingMonitor()
+    worker = module.SensorPublishWorker(
+        "camera_bundle", logger, queue_size=1, timing_monitor=timing
+    )
     worker.submit(publish, (first,))
     assert started.wait(timeout=2.0)
     worker.submit(publish, (stale,))
@@ -380,6 +459,24 @@ def test_camera_bundle_worker_drops_a_whole_stale_bundle_when_slow(bridge) -> No
     worker.stop()
 
     assert published == [first, latest]
+    assert [call[0] for call in timing.slow_calls] == [
+        "camera_bundle_queue_wait",
+        "camera_bundle_queue_wait",
+    ]
+    assert all(
+        call[2] == {"worker": "camera_bundle"}
+        for call in timing.slow_calls
+    )
+    assert timing.events == [
+        (
+            "sensor_publish_drop",
+            {
+                "worker": "camera_bundle",
+                "dropped_this_submit": 1,
+                "dropped_total": 1,
+            },
+        )
+    ]
 
 
 def make_sensor_interface(bridge):

@@ -149,6 +149,120 @@ def test_trial_records_and_enforces_guarded_speed_30_contract() -> None:
     assert "longitudinal_controller.param.yaml.metadata.json" in source
     assert "vehicle_cmd_gate.params.yaml" in source
     assert 'speed_exposure_mode="curvature_limited_turn"' in source
+    assert "scripts/e2e/analyze_actuation_map_coverage.py" in source
+    assert (
+        'actuation_coverage_arguments+=(--allow-target-envelope-beyond-axis)'
+        in source
+    )
+    assert "ACTUATION_MAP_COVERAGE_STATUS" in source
+    assert "ACTUATION_MAP_TARGET_ENVELOPE_CLASSIFICATION" in source
+    assert "ACTUATION_TARGET_WITHIN_MAP_VELOCITY_AXIS" in source
+    assert "actuation_map_runtime_coverage.json" in source
+    assert "--observed-maximum-speed-mps" in source
+    assert "scripts/e2e/analyze_longitudinal_response.py" in source
+    assert "longitudinal_response_analysis.log" in source
+    assert "--actuation-map-coverage" in source
+
+
+def test_trial_records_isolated_speed_30_control_ab_candidates() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "--control-ab-pid-i40" in source
+    assert "--control-ab-turn-preview-5m" in source
+    assert "pid_carla_vad_30kph_i40_ab.param.yaml" in source
+    assert 'curvature_speed_preview_m="5.0"' in source
+    assert "CONTROL_AB_CANDIDATE_ID=%s" in source
+    assert "CONTROL_AB_ISOLATED_SINGLE_KNOB=true" in source
+    assert 'stack_command+=(--control-ab-pid-i40)' in source
+    assert 'stack_command+=(--control-ab-turn-preview-5m)' in source
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    (
+        ("--control-ab-pid-i40",),
+        ("--control-ab-turn-preview-5m",),
+        (
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-turn-preview-5m",
+        ),
+    ),
+)
+def test_trial_rejects_invalid_control_ab_selection(arguments: tuple[str, ...]) -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "A/B" in completed.stderr
+
+
+def test_trial_records_and_enforces_straight_speed_60_pilot_contract() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "--speed-60kph-pilot" in source
+    assert 'speed_profile_id="carla_vad_60kph_straight_pilot_v1"' in source
+    assert 'target_speed_mps="16.666666666666668"' in source
+    assert "TARGET_SPEED_KPH=60.0" in source
+    assert 'minimum_sustained_speed_mps="15.0"' in source
+    assert 'minimum_sustained_speed_sec="1.0"' in source
+    assert 'maximum_observed_speed_mps="18.0"' in source
+    assert 'maximum_lateral_acceleration_limit_mps2="1.2"' in source
+    assert 'maximum_lateral_acceleration_mps2="1.0"' in source
+    assert 'maneuver_lookahead_m="6.0"' in source
+    assert 'maneuver_exit_lookahead_m="3.5"' in source
+    assert 'curvature_speed_preview_m="6.0"' in source
+    assert 'route_curvature_lookahead_m="40.0"' in source
+    assert 'max_route_deviation_m="1.0"' in source
+    assert "SPEED_60KPH_PILOT=%s" in source
+    assert "SIMULATION_ONLY_EXPLORATORY=true" in source
+    assert "ROUTE_SCOPE=straight_only" in source
+    assert "carla_60kph_straight_pilot_v1_exploratory" in source
+    assert "REAL_VEHICLE_READY=false" in source
+    assert 'stack_command+=(--speed-60kph-pilot)' in source
+    assert "vehicle_cmd_gate_carla_60kph_pilot.param.yaml" in source
+    assert "pid_carla_vad_60kph_pilot.param.yaml" in source
+
+
+def test_trial_rejects_speed_30_and_speed_60_together() -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), "--speed-30kph", "--speed-60kph-pilot"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "mutually exclusive" in completed.stderr
+
+
+def test_trial_rejects_non_straight_speed_60_route(tmp_path: Path) -> None:
+    route = tmp_path / "turn.json"
+    route.write_text('{"town": "Town01", "scenario": "left"}\n', encoding="utf-8")
+    completed = subprocess.run(
+        [
+            str(TRIAL_SCRIPT),
+            "--speed-60kph-pilot",
+            str(tmp_path / "result"),
+            str(route),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            key: value
+            for key, value in os.environ.items()
+            if key != "AUTOWARE_E2E_NVIDIA_COMPAT_ROOT"
+        },
+    )
+
+    assert completed.returncode == 2
+    assert "requires a straight route" in completed.stderr
+    assert not (tmp_path / "result").exists()
 
 
 def test_visualize_is_available_to_the_full_profile() -> None:
@@ -298,10 +412,13 @@ def test_speed_30_rejects_protected_launch_argument(
     assert "Recommended profile argument is controlled" in completed.stderr
 
 
+@pytest.mark.parametrize("speed_option", ("--speed-30kph", "--speed-60kph-pilot"))
 @pytest.mark.parametrize("experimental", ("--tight-corridor", "--trajectory-stability"))
-def test_speed_30_rejects_experimental_combinations(experimental: str) -> None:
+def test_speed_profiles_reject_experimental_combinations(
+    speed_option: str, experimental: str
+) -> None:
     completed = subprocess.run(
-        [str(TRIAL_SCRIPT), "--speed-30kph", experimental],
+        [str(TRIAL_SCRIPT), speed_option, experimental],
         check=False,
         capture_output=True,
         text=True,

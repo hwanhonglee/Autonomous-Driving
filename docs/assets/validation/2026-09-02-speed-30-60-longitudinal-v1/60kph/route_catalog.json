@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "map_id": "town06",
+  "canonical_name": "Town06",
+  "load_name": "/Game/Carla/Maps/Town06",
+  "map_status": "ready",
+  "server_profile": "packaged_0915",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 2100,
+    "client_version": "0.9.15-dev-dirty",
+    "server_version": "0.9.15-dev-dirty",
+    "active_server_profile": "packaged_0915",
+    "initial_map_name": "Carla/Maps/Town06",
+    "active_map_name": "Carla/Maps/Town06",
+    "map_load_allowed": false,
+    "map_load_performed": false,
+    "map_lifecycle_managed": false,
+    "pre_read_settle_sec": 0.0,
+    "map_load_settle_sec": 0.0,
+    "map_load_warning": null,
+    "server_lifecycle_managed": false
+  },
+  "generation": {
+    "weather": "ClearNoon",
+    "scenarios": [
+      "straight"
+    ],
+    "seeds": [
+      0
+    ],
+    "pairs_per_seed": 1,
+    "minimum_distance_m": 430.0,
+    "maximum_distance_m": 460.0,
+    "preferred_distance_m": 445.0,
+    "sampling_resolution_m": 1.0,
+    "maximum_endpoint_offset_m": 2.0,
+    "initial_approach_contract": {
+      "enabled": false,
+      "distance_m": 0.0,
+      "maximum_lateral_deviation_m": null,
+      "maximum_heading_change_deg": null
+    },
+    "physical_straight_contract": {
+      "enabled": true,
+      "profile_id": "speed_60kph_straight_pilot",
+      "measurement_source": "exact_serialized_route_with_terminal_goal",
+      "admission_policy": "reject_before_accepted_pair_quota",
+      "limits": {
+        "maximum_arc_to_direct_ratio": 1.005,
+        "maximum_chord_deviation_m": 2.5,
+        "maximum_endpoint_tangent_to_chord_deg": 10.0,
+        "maximum_net_heading_change_deg": 10.0,
+        "maximum_cumulative_heading_change_deg": 25.0,
+        "maximum_p95_abs_curvature_per_m": 0.01,
+        "maximum_abs_curvature_per_m": 0.02592
+      }
+    },
+    "max_traces_per_scenario": 20000,
+    "endpoint_source": "generated_waypoints",
+    "endpoint_waypoint_spacing_m": 0.5,
+    "endpoint_junction_policy": "exclude",
+    "candidate_enumeration_policy": "directed_topology_straight_v1",
+    "straight_capacity_contract": {
+      "enabled": true,
+      "profile_id": "town06_60kph_straight_pilot_v1",
+      "map_id": "town06",
+      "scenario": "straight",
+      "endpoint_waypoint_spacing_m": 0.5,
+      "endpoint_junction_policy": "exclude",
+      "candidate_enumeration_policy": "directed_topology_straight_v1",
+      "admission_policy": "prefilter_then_exact_serialized_physical_postfilter",
+      "provenance": {
+        "profile_id": "town06_60kph_straight_pilot_v1",
+        "scope": "simulation-only CARLA Town06 60 kph straight pilot sizing",
+        "simulation_only": true,
+        "real_vehicle_ready": false,
+        "calibration_claim": false,
+        "measurement_source": "observed 30 kph Town06 threshold-entry distance plus conservative quadratic speed scaling and analytical exposure/stopping distances",
+        "target_speed_mps": 16.666666666666668,
+        "minimum_sustained_speed_mps": 15.0,
+        "minimum_sustained_speed_duration_sec": 1.0,
+        "observed_30kph_threshold_entry_distance_m": 73.58,
+        "threshold_entry_speed_scaling": "quadratic_30kph_to_60kph",
+        "threshold_entry_speed_scale_factor": 4.0,
+        "threshold_entry_distance_m": 294.32,
+        "minimum_exposure_distance_m": 15.0,
+        "assumed_deceleration_mps2": 2.0,
+        "minimum_stop_distance_m": 69.444,
+        "derived_required_distance_m": 378.764,
+        "minimum_route_length_m": 430.0,
+        "minimum_route_margin_m": 51.236,
+        "derivation": "73.58 * (60 / 30)^2 = 294.32; exposure = 15.0 m at >=15.0 m/s for 1.0 s; stop = 16.666666666666668^2 / (2 * 2.0) = 69.444 m; 294.32 + 15.0 + 69.444 = 378.764; 430.0 - 378.764 = 51.236",
+        "claim_limit": "simulation pilot route sizing only; this is not a vehicle or control calibration claim",
+        "postfilter_authority": "exact serialized physical-straight geometry remains mandatory"
+      }
+    },
+    "endpoint_count": 38266,
+    "eligible_endpoint_count": 38266,
+    "endpoint_ordering": "deduplicated_lexicographic_transform_x_y_z_roll_pitch_yaw",
+    "spawn_point_count": 436,
+    "endpoint_api_count": 51221,
+    "endpoint_eligible_api_count": 38266,
+    "endpoint_junction_waypoint_count": 12955,
+    "endpoint_junction_excluded_count": 12955,
+    "endpoint_duplicate_transform_count": 0,
+    "endpoint_deduplication": "exact_full_transform_keep_first_api_occurrence",
+    "spawn_height_contract": {
+      "catalog_z_offset_m": 0.0,
+      "bridge_z_offset_m": 2.0,
+      "offset_owner": "autoware_carla_interface_bridge",
+      "bridge_source": "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py::InitializeInterface._parse_spawn_point"
+    },
+    "trace_coverage": {
+      "attempted": 4,
+      "accepted": 1,
+      "skipped": 3,
+      "planner_errors": 0,
+      "no_route": 0,
+      "endpoint_rejected": 0,
+      "scenario_mismatch": 3,
+      "distance_rejected": 0,
+      "physical_straight_rejected": 0,
+      "physical_straight_rejection_samples": [],
+      "initial_approach_rejected": 0,
+      "planner_error_types": {},
+      "planner_error_samples": [],
+      "endpoint_count": 38266,
+      "eligible_endpoint_count": 38266
+    }
+  },
+  "scenario_results": [
+    {
+      "scenario": "straight",
+      "status": "READY",
+      "route_count": 1,
+      "traces": 4,
+      "candidate_enumeration": [
+        {
+          "seed": 0,
+          "policy": "directed_topology_straight_v1",
+          "input_endpoint_count": 38266,
+          "planar_chord_heading_candidate_count": 2676539,
+          "directed_reachable_candidate_count": 2676539,
+          "directed_graph_node_count": 441,
+          "directed_graph_edge_count": 810,
+          "necessary_chord_minimum_m": 427.860696517413,
+          "necessary_chord_maximum_m": 460.0,
+          "maximum_endpoint_heading_to_chord_deg": 10.0,
+          "ranking": "preferred_chord_distance_bucket_then_seeded_sha256",
+          "postfilter_authority": "exact serialized route distance and physical-straight analysis",
+          "real_vehicle_ready": false
+        }
+      ],
+      "trace_coverage": {
+        "attempted": 4,
+        "accepted": 1,
+        "skipped": 3,
+        "planner_errors": 0,
+        "no_route": 0,
+        "endpoint_rejected": 0,
+        "scenario_mismatch": 3,
+        "distance_rejected": 0,
+        "physical_straight_rejected": 0,
+        "physical_straight_rejection_samples": [],
+        "initial_approach_rejected": 0,
+        "planner_error_types": {},
+        "planner_error_samples": []
+      },
+      "reason": null
+    }
+  ],
+  "routes": [
+    {
+      "id": "town06_straight_s0000_p00",
+      "status": "ready",
+      "scenario": "straight",
+      "seed": 0,
+      "pair_index": 0,
+      "endpoint_source": "generated_waypoints",
+      "start_endpoint_index": 27470,
+      "goal_endpoint_index": 9917,
+      "route_length_m": 445.8799516556895,
+      "initial_approach_preflight": null,
+      "physical_straight_preflight": {
+        "status": "PASS",
+        "route_length_m": 445.8799516556895,
+        "direct_distance_m": 445.87997166049666,
+        "arc_to_direct_ratio": 0.9999999551340979,
+        "maximum_chord_deviation_m": 2.051629450513544e-06,
+        "maximum_endpoint_tangent_to_chord_deg": 9.431178775532306e-06,
+        "absolute_net_heading_change_deg": 0.0,
+        "cumulative_absolute_heading_change_deg": 6.103515628608805e-05,
+        "p95_absolute_curvature_per_m": 0.0,
+        "maximum_absolute_curvature_per_m": 4.798495090983971e-07,
+        "limits": {
+          "maximum_arc_to_direct_ratio": 1.005,
+          "maximum_chord_deviation_m": 2.5,
+          "maximum_endpoint_tangent_to_chord_deg": 10.0,
+          "maximum_net_heading_change_deg": 10.0,
+          "maximum_cumulative_heading_change_deg": 25.0,
+          "maximum_p95_abs_curvature_per_m": 0.01,
+          "maximum_abs_curvature_per_m": 0.02592
+        },
+        "failure_reasons": []
+      },
+      "path": "routes/town06/straight/town06_straight_s0000_p00.json",
+      "sha256": "ae019ba6f839935919e7b11fa3a3131255849bfbc7ae191b8a517a3182233018"
+    }
+  ]
+}

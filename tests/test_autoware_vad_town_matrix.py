@@ -1536,6 +1536,8 @@ def test_campaign_plan_fail_closed_binds_execution_code_sha256() -> None:
         "scripts/e2e/mission_planner_build_provenance.py",
         "scripts/e2e/apply_vad_object_safety_patches.sh",
         "scripts/e2e/vad_object_safety_build_provenance.py",
+        "scripts/e2e/apply_carla_camera_qos_split_patch.sh",
+        "patches/autoware_carla_interface_camera_qos_split.patch",
         "scripts/e2e/workspace_runtime_lock.sh",
         "scripts/e2e/build.sh",
         "scripts/e2e/build_full.sh",
@@ -1546,6 +1548,7 @@ def test_campaign_plan_fail_closed_binds_execution_code_sha256() -> None:
         "scripts/e2e/serialized_custom_turn_geometry.py",
         "scripts/e2e/physical_straight_geometry.py",
         "scripts/e2e/physical_turn_geometry.py",
+        "scripts/e2e/probe_runtime_health.py",
         "scripts/e2e/run_recorded_route_trial.sh",
         "scripts/e2e/route_test.py",
         "scripts/e2e/align_carla_route_to_map.py",
@@ -1553,6 +1556,10 @@ def test_campaign_plan_fail_closed_binds_execution_code_sha256() -> None:
         "scripts/e2e/analyze_speed_profile.py",
         "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
         "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+        "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml",
+        "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml.metadata.json",
+        "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml",
+        "autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml.metadata.json",
         "src/universe/autoware_universe/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp",
         "src/universe/autoware_universe/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp",
         "src/core/autoware_core/planning/autoware_route_handler/include/autoware/route_handler/route_handler.hpp",
@@ -1560,6 +1567,10 @@ def test_campaign_plan_fail_closed_binds_execution_code_sha256() -> None:
         "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/CMakeLists.txt",
         "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp",
         "src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp",
+        "src/universe/autoware_universe/simulator/autoware_carla_interface/README.md",
+        "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py",
+        "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py",
+        "src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py",
         "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp",
         "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp",
         "src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/node.cpp",
@@ -1858,6 +1869,44 @@ def test_camera_source_5hz_plan_changes_only_profile_identity_and_mapping_option
     ]
 
 
+def test_best_effort_camera_source_5hz_plan_is_versioned_and_pinned() -> None:
+    manifest, path = matrix.load_matrix(MATRIX_PATH)
+    baseline = matrix.build_campaign_plan(manifest, path, "speed_30kph")
+    legacy = matrix.build_campaign_plan(
+        manifest, path, matrix.CAMERA_SOURCE_5HZ_SELECTOR
+    )
+    candidate = matrix.build_campaign_plan(
+        manifest,
+        path,
+        matrix.CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_SELECTOR,
+    )
+
+    assert candidate["route_contract"] == baseline["route_contract"]
+    assert candidate["route_generation_contracts"] == baseline[
+        "route_generation_contracts"
+    ]
+    assert candidate["runtime_profile"]["id"] == (
+        "vad_carla_30kph_camera_source_5hz_best_effort_image_visualized_v2"
+    )
+    assert candidate["runtime_profile"]["camera_source_contract"] == (
+        matrix.CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT
+    )
+    assert legacy["runtime_profile"]["camera_source_contract"] == (
+        matrix.CAMERA_SOURCE_5HZ_CONTRACT
+    )
+    assert (
+        candidate["runtime_profile"]["camera_source_contract"]
+        != legacy["runtime_profile"]["camera_source_contract"]
+    )
+    assert candidate["runtime_profile"]["wrapper_options"] == [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ]
+
+
 def make_camera_source_5hz_evidence(
     tmp_path: Path, *, superseded: int = 0, recorder_wall_sec: float = 1001.0
 ) -> tuple[Path, dict[str, str], dict, dict]:
@@ -1912,6 +1961,7 @@ def make_camera_source_5hz_evidence(
         "\n".join(
             (
                 "[INFO 1000.000] VAD frame queued: source_stamp_ns=1 "
+                "image_mask=0x3f camera_info_mask=0x3f image_span_ms=0.000 "
                 f"assembled=1 capacity_pruned=0 superseded={superseded} "
                 "mailbox_submitted=1 coalesced_drops=0 "
                 f"received_images_min={1 + received_offset} "
@@ -1920,6 +1970,7 @@ def make_camera_source_5hz_evidence(
                 "inference_ms=30.0 published=true published_count=1 "
                 "mailbox_taken=1 coalesced_drops=0",
                 "[INFO 1000.200] VAD frame queued: source_stamp_ns=2 "
+                "image_mask=0x3f camera_info_mask=0x3f image_span_ms=0.000 "
                 f"assembled=2 capacity_pruned=0 superseded={superseded} "
                 "mailbox_submitted=2 coalesced_drops=0 "
                 f"received_images_min={2 + received_offset} "
@@ -1946,6 +1997,150 @@ def make_camera_source_5hz_evidence(
     return tmp_path, runtime, profile, latency
 
 
+def make_best_effort_camera_source_5hz_evidence(
+    tmp_path: Path,
+) -> tuple[Path, dict[str, str], dict, dict]:
+    trial, runtime, _, latency = make_camera_source_5hz_evidence(tmp_path)
+    config_root = ROOT / "autoware_e2e_vad_launch/config"
+    contract = dict(matrix.CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_CONTRACT)
+
+    mapping_path = config_root / contract["sensor_mapping_file"]
+    recorded_mapping = trial / "sensor_mapping_provenance/sensor_mapping.yaml"
+    recorded_mapping.write_bytes(mapping_path.read_bytes())
+    mapping_digest = matrix.sha256_file(recorded_mapping)
+    (recorded_mapping.parent / "SHA256SUMS").write_text(
+        f"{mapping_digest}  sensor_mapping.yaml\n", encoding="utf-8"
+    )
+
+    model_path = config_root / contract["vad_model_override_file"]
+    model_provenance = trial / "vad_model_override_provenance"
+    model_provenance.mkdir()
+    recorded_model = model_provenance / "model_override.param.yaml"
+    recorded_model.write_bytes(model_path.read_bytes())
+    model_digest = matrix.sha256_file(recorded_model)
+    (model_provenance / "SHA256SUMS").write_text(
+        f"{model_digest}  model_override.param.yaml\n", encoding="utf-8"
+    )
+
+    runtime.update(
+        {
+            "SENSOR_MAPPING_FILE": f"/installed/config/{mapping_path.name}",
+            "SENSOR_MAPPING_SHA256": mapping_digest,
+            "VAD_MODEL_OVERRIDE_FILE": f"/installed/config/{model_path.name}",
+            "VAD_MODEL_OVERRIDE_SHA256": model_digest,
+            "CAMERA_TRANSPORT_PROFILE_ID": contract["profile_id"],
+            "CAMERA_IMAGE_PUBLISH_QOS": "best_effort",
+            "CAMERA_INFO_PUBLISH_QOS": "reliable",
+            "VAD_IMAGE_SUBSCRIPTION_QOS": "best_effort",
+            "RVIZ_IMAGE_SUBSCRIPTION_QOS": "best_effort",
+            "CAMERA_TRANSPORT_SENSOR_MAPPING_SHA256": mapping_digest,
+            "CAMERA_TRANSPORT_VAD_OVERRIDE_SHA256": model_digest,
+        }
+    )
+    return trial, runtime, {"camera_source_contract": contract}, latency
+
+
+def make_depth1_camera_source_5hz_evidence(
+    tmp_path: Path,
+) -> tuple[Path, dict[str, str], dict, dict]:
+    trial, runtime, _, latency = make_best_effort_camera_source_5hz_evidence(
+        tmp_path
+    )
+    config_root = ROOT / "autoware_e2e_vad_launch/config"
+    contract = dict(matrix.CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT)
+
+    mapping_path = config_root / contract["sensor_mapping_file"]
+    recorded_mapping = trial / "sensor_mapping_provenance/sensor_mapping.yaml"
+    recorded_mapping.write_bytes(mapping_path.read_bytes())
+    mapping_digest = matrix.sha256_file(recorded_mapping)
+    (recorded_mapping.parent / "SHA256SUMS").write_text(
+        f"{mapping_digest}  sensor_mapping.yaml\n", encoding="utf-8"
+    )
+
+    model_path = config_root / contract["vad_model_override_file"]
+    recorded_model = trial / "vad_model_override_provenance/model_override.param.yaml"
+    recorded_model.write_bytes(model_path.read_bytes())
+    model_digest = matrix.sha256_file(recorded_model)
+    (recorded_model.parent / "SHA256SUMS").write_text(
+        f"{model_digest}  model_override.param.yaml\n", encoding="utf-8"
+    )
+
+    cyclone_path = config_root / contract["cyclonedds_config_file"]
+    cyclone_metadata = Path(f"{cyclone_path}.metadata.json")
+    cyclone_provenance = trial / "camera_transport_provenance"
+    cyclone_provenance.mkdir()
+    recorded_cyclone = cyclone_provenance / "cyclonedds.xml"
+    recorded_cyclone.write_bytes(cyclone_path.read_bytes())
+    recorded_metadata = cyclone_provenance / "cyclonedds.xml.metadata.json"
+    recorded_metadata.write_bytes(cyclone_metadata.read_bytes())
+    cyclone_digest = matrix.sha256_file(recorded_cyclone)
+    metadata_digest = matrix.sha256_file(recorded_metadata)
+    (cyclone_provenance / "SHA256SUMS").write_text(
+        f"{cyclone_digest}  cyclonedds.xml\n"
+        f"{metadata_digest}  cyclonedds.xml.metadata.json\n",
+        encoding="utf-8",
+    )
+
+    rviz_provenance = trial / "rviz_capture_provenance"
+    rviz_provenance.mkdir()
+    (rviz_provenance / "autoware_vad_carla.rviz").write_bytes(
+        (ROOT / "autoware_e2e_vad_launch/rviz/autoware_vad_carla.rviz").read_bytes()
+    )
+    runtime.update(
+        {
+            "SENSOR_MAPPING_FILE": f"/installed/config/{mapping_path.name}",
+            "SENSOR_MAPPING_SHA256": mapping_digest,
+            "VAD_MODEL_OVERRIDE_FILE": f"/installed/config/{model_path.name}",
+            "VAD_MODEL_OVERRIDE_SHA256": model_digest,
+            "CAMERA_TRANSPORT_PROFILE_ID": contract["profile_id"],
+            "CAMERA_IMAGE_PUBLISH_QOS": "best_effort",
+            "CAMERA_IMAGE_PUBLISH_HISTORY": "keep_last",
+            "CAMERA_IMAGE_PUBLISH_DEPTH": "1",
+            "CAMERA_INFO_PUBLISH_QOS": "reliable",
+            "CAMERA_INFO_PUBLISH_DEPTH": "1",
+            "VAD_IMAGE_SUBSCRIPTION_QOS": "best_effort",
+            "VAD_IMAGE_SUBSCRIPTION_DEPTH": "1",
+            "RVIZ_IMAGE_SUBSCRIPTION_QOS": "best_effort",
+            "RVIZ_IMAGE_SUBSCRIPTION_DEPTH": "1",
+            "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+            "ROS_LOCALHOST_ONLY": "0",
+            "CYCLONEDDS_URI": f"file:///installed/config/{cyclone_path.name}",
+            "CAMERA_TRANSPORT_SENSOR_MAPPING_SHA256": mapping_digest,
+            "CAMERA_TRANSPORT_VAD_OVERRIDE_SHA256": model_digest,
+            "CAMERA_TRANSPORT_CYCLONEDDS_SHA256": cyclone_digest,
+        }
+    )
+    return trial, runtime, {"camera_source_contract": contract}, latency
+
+
+def write_best_effort_queue_evidence(
+    trial: Path,
+    samples: list[tuple[int, int, int, int]],
+) -> None:
+    lines = []
+    for index, (assembled, superseded, received_min, received_max) in enumerate(
+        samples, 1
+    ):
+        wall_time = 1000.0 + index
+        source_stamp_ns = assembled * 200_000_000
+        lines.extend(
+            (
+                f"[INFO {wall_time:.3f}] VAD frame queued: "
+                f"source_stamp_ns={source_stamp_ns} image_mask=0x3f "
+                "camera_info_mask=0x3f image_span_ms=0.000 "
+                f"assembled={assembled} capacity_pruned=0 "
+                f"superseded={superseded} mailbox_submitted={assembled} "
+                f"coalesced_drops=0 received_images_min={received_min} "
+                f"received_images_max={received_max}",
+                f"[INFO {wall_time + 0.01:.3f}] VAD inference complete: "
+                f"source_stamp_ns={source_stamp_ns} inference_ms=30.0 "
+                f"published=true published_count={assembled} "
+                f"mailbox_taken={assembled} coalesced_drops=0",
+            )
+        )
+    (trial / "stack.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def test_camera_source_5hz_evidence_requires_continuous_six_camera_stamps(
     tmp_path: Path,
 ) -> None:
@@ -1961,6 +2156,230 @@ def test_camera_source_5hz_evidence_requires_continuous_six_camera_stamps(
     front = latency["event_rates"]["/sensing/camera/CAM_FRONT/camera_info"]
     front["stamp_period_sec"]["max"] = 0.4
     with pytest.raises(matrix.MatrixError, match="maximum stamp gap exceeds"):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_best_effort_camera_source_5hz_evidence_pins_transport_and_hashes(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+
+    evidence = matrix._camera_source_5hz_evidence(
+        trial, runtime, profile, latency
+    )
+
+    assert evidence is not None
+    assert evidence["status"] == "PASS"
+    assert evidence["bundle_coverage_percent"] == pytest.approx(100.0)
+    assert evidence["raw_six_image_queue_integrity"] == {
+        "status": "PASS",
+        "sampled_queue_record_count": 2,
+        "expected_image_mask": "0x3f",
+        "expected_camera_info_mask": "0x3f",
+        "maximum_image_stamp_span_sec": 0.0,
+        "maximum_allowed_image_stamp_span_sec": 0.001,
+        "superseded_frame_count": 0,
+        "supersession_denominator_frame_count": 2,
+        "supersession_percent": 0.0,
+        "maximum_allowed_supersession_percent": 1.0,
+        "counter_contract": "monotonic_full_mask_zero_capacity_and_mailbox_loss",
+    }
+    assert evidence["semantic_delta"]["mapping_fields"] == {
+        "parameters.sensor_tick": {"baseline": 0.0, "candidate": 0.2},
+        "ros_config.image_qos_profile": {
+            "baseline": "inherited_reliable",
+            "candidate": "best_effort",
+        },
+        "ros_config.camera_info_qos_profile": {
+            "baseline": "inherited_reliable",
+            "candidate": "reliable",
+        },
+    }
+    assert evidence["semantic_delta"]["model_field"] == {
+        "sync_params.image_reliability": {
+            "baseline": "reliable",
+            "candidate": "best_effort",
+        }
+    }
+    assert evidence["transport_provenance"] == {
+        "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v1",
+        "sensor_mapping_sha256": runtime["SENSOR_MAPPING_SHA256"],
+        "vad_model_override_sha256": runtime["VAD_MODEL_OVERRIDE_SHA256"],
+        "camera_image_publish_qos": "best_effort",
+        "camera_info_publish_qos": "reliable",
+        "vad_image_subscription_qos": "best_effort",
+        "rviz_image_subscription_qos": "best_effort",
+    }
+
+    runtime["CAMERA_TRANSPORT_PROFILE_ID"] = "unreviewed-profile"
+    with pytest.raises(
+        matrix.MatrixError,
+        match="runtime best-effort camera transport contract changed",
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+    runtime["CAMERA_TRANSPORT_PROFILE_ID"] = profile[
+        "camera_source_contract"
+    ]["profile_id"]
+    latency["camera_bundle"]["camera_count"] = 5
+    with pytest.raises(matrix.MatrixError, match="six-camera bundle coverage"):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+    latency["camera_bundle"]["camera_count"] = 6
+    stack_log = trial / "stack.log"
+    stack_log.write_text(
+        stack_log.read_text(encoding="utf-8").replace(
+            "image_mask=0x3f", "image_mask=0x3e", 1
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        matrix.MatrixError, match="raw six-image queue integrity changed"
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_depth1_camera_source_evidence_pins_histories_and_loopback_dds(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = make_depth1_camera_source_5hz_evidence(
+        tmp_path
+    )
+
+    evidence = matrix._camera_source_5hz_evidence(
+        trial, runtime, profile, latency
+    )
+
+    assert evidence is not None
+    assert evidence["status"] == "PASS"
+    assert evidence["semantic_delta"]["mapping_fields"][
+        "ros_config.image_qos_profile"
+    ]["candidate"] == "best_effort_depth_1"
+    assert evidence["semantic_delta"]["model_field"][
+        "sync_params.image_queue_depth"
+    ] == {"baseline": 32, "candidate": 1}
+    transport = evidence["transport_provenance"]
+    assert transport["profile_id"] == (
+        "carla_vad_camera_source_5hz_best_effort_image_v2"
+    )
+    assert transport["camera_image_publish_history"] == "keep_last"
+    assert transport["camera_image_publish_depth"] == 1
+    assert transport["vad_image_subscription_depth"] == 1
+    assert transport["rviz_image_subscription_depth"] == 1
+    assert transport["rmw_implementation"] == "rmw_cyclonedds_cpp"
+    assert transport["ros_localhost_only"] == "0"
+    assert transport["cyclonedds_config_sha256"] == runtime[
+        "CAMERA_TRANSPORT_CYCLONEDDS_SHA256"
+    ]
+
+    runtime["CAMERA_IMAGE_PUBLISH_DEPTH"] = "10"
+    with pytest.raises(
+        matrix.MatrixError,
+        match="runtime best-effort camera transport contract changed",
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_best_effort_camera_source_5hz_allows_one_percent_supersession_boundary(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+    write_best_effort_queue_evidence(
+        trial,
+        [(99, 1, 99, 100), (198, 2, 198, 200)],
+    )
+
+    evidence = matrix._camera_source_5hz_evidence(
+        trial, runtime, profile, latency
+    )
+
+    assert evidence is not None
+    raw_integrity = evidence["raw_six_image_queue_integrity"]
+    assert raw_integrity["superseded_frame_count"] == 2
+    assert raw_integrity["supersession_denominator_frame_count"] == 200
+    assert raw_integrity["supersession_percent"] == pytest.approx(1.0)
+    assert raw_integrity["maximum_allowed_supersession_percent"] == 1.0
+    assert evidence["vad_inference"]["superseded_classification"] == (
+        "bounded_best_effort"
+    )
+
+
+def test_best_effort_camera_source_5hz_rejects_supersession_above_one_percent(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+    write_best_effort_queue_evidence(
+        trial,
+        [(99, 1, 99, 100), (198, 3, 198, 201)],
+    )
+    with pytest.raises(
+        matrix.MatrixError, match="raw-image supersession exceeds 1.000%"
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_best_effort_camera_source_5hz_evidence_rejects_contract_drift(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+    profile["camera_source_contract"]["profile_id"] = "unreviewed-profile"
+
+    with pytest.raises(
+        matrix.MatrixError, match="camera-source 5 Hz evidence contract changed"
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_best_effort_camera_source_5hz_evidence_rejects_mapping_hash_drift(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+    recorded = trial / "sensor_mapping_provenance/sensor_mapping.yaml"
+    recorded.write_text(recorded.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    changed_digest = matrix.sha256_file(recorded)
+    (recorded.parent / "SHA256SUMS").write_text(
+        f"{changed_digest}  sensor_mapping.yaml\n", encoding="utf-8"
+    )
+    runtime["SENSOR_MAPPING_SHA256"] = changed_digest
+    runtime["CAMERA_TRANSPORT_SENSOR_MAPPING_SHA256"] = changed_digest
+
+    with pytest.raises(
+        matrix.MatrixError, match="recorded camera-source mapping differs"
+    ):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_best_effort_camera_source_5hz_evidence_rejects_vad_model_hash_drift(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = (
+        make_best_effort_camera_source_5hz_evidence(tmp_path)
+    )
+    recorded = (
+        trial / "vad_model_override_provenance/model_override.param.yaml"
+    )
+    recorded.write_text(recorded.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    changed_digest = matrix.sha256_file(recorded)
+    (recorded.parent / "SHA256SUMS").write_text(
+        f"{changed_digest}  model_override.param.yaml\n", encoding="utf-8"
+    )
+    runtime["VAD_MODEL_OVERRIDE_SHA256"] = changed_digest
+    runtime["CAMERA_TRANSPORT_VAD_OVERRIDE_SHA256"] = changed_digest
+
+    with pytest.raises(
+        matrix.MatrixError,
+        match="recorded best-effort camera-source VAD model differs",
+    ):
         matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
 
 
@@ -4187,6 +4606,7 @@ def test_runner_has_owned_cold_start_and_fixed_profile_contract() -> None:
     assert "--runtime-profile PROFILE" in source
     assert "recommended, speed_30kph" in source
     assert "speed_30kph|speed_30kph_camera_source_5hz" in source
+    assert "speed_30kph_camera_source_5hz_best_effort_image" in source
     assert '"${trial_wrapper_options[@]}"' in source
     assert "--runtime-profile \"${runtime_profile}\"" in source
     assert "--map-load-settle-sec 0" in source

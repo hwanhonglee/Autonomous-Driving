@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "cleanup_reason": "An owned pidstat telemetry process retained the workspace lock file descriptor after the trial wrapper returned.",
+  "target": {
+    "pid": 2460883,
+    "pgid": 2460883,
+    "command": "pidstat -urd -h -p ALL 1",
+    "ownership": "attempt_002_host_telemetry"
+  },
+  "method": "e2e_stop_owned_process_group",
+  "verification": {
+    "target_process_present": false,
+    "carla_or_ros_record_processes_present": false,
+    "carla_ports_2000_or_2100_listening": false,
+    "workspace_runtime_lock_free": true
+  },
+  "verified_at": "2026-09-02T15:32:42+09:00",
+  "recoverability": "No run evidence was deleted or modified; only the owned telemetry process was stopped."
+}

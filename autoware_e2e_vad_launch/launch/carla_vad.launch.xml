@@ -236,6 +236,10 @@
     output="screen"
     if="$(var use_route_manager)"
   >
+    <env name="OPENBLAS_NUM_THREADS" value="1"/>
+    <env name="OMP_NUM_THREADS" value="1"/>
+    <env name="MKL_NUM_THREADS" value="1"/>
+    <env name="NUMEXPR_NUM_THREADS" value="1"/>
     <param name="use_sim_time" value="true"/>
     <param from="$(find-pkg-share autoware_e2e_vad_launch)/config/vad_route_manager.param.yaml"/>
     <param name="route_file" value="$(var route_file)"/>

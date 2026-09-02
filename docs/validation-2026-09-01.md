@@ -2,6 +2,11 @@
 
 > The following campaign summary is an operator-reviewed, SHA-bound narrative supplement. The generated provenance and result tables below remain authoritative.
 
+> 2026-09-02 후속 검증: CTrack에서 여섯 CARLA camera source를 5 Hz로 제한한
+> 30 kph 직진·좌회전 A/B와 끊김 원인 분석은
+> [`validation-2026-09-02-camera-cadence.md`](validation-2026-09-02-camera-cadence.md)에
+> 있다. 아래 9-map, 18-trial 결과는 전체 Town 기준 결과로 그대로 유지된다.
+
 ## 2026-09-01 최종 요약
 
 - 최종 v16은 실행 가능한 CARLA/Autoware full-map 9개에서 직진·회전 두 경로씩

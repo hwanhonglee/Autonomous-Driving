@@ -27,7 +27,8 @@ they are never mislabeled as executed VAD trials.
 Options:
   --port PORT                 CARLA RPC port (default: 2100)
   --maps ID[,ID...]           run this subset of admitted maps
-  --runtime-profile PROFILE   recommended or speed_30kph (default: recommended)
+  --runtime-profile PROFILE   recommended, speed_30kph, or
+                              speed_30kph_camera_source_5hz (default: recommended)
   --resume                    strictly validate and skip completed trials
   --fail-fast                 stop after the first trial failure
   --startup-timeout-sec SEC   CARLA cold-start timeout (default: 180)
@@ -94,10 +95,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+speed_30kph_profile=0
 case "${runtime_profile}" in
-  recommended|speed_30kph) ;;
+  recommended) ;;
+  speed_30kph|speed_30kph_camera_source_5hz)
+    speed_30kph_profile=1
+    ;;
   *)
-    echo "--runtime-profile must be recommended or speed_30kph" >&2
+    echo "--runtime-profile must be recommended, speed_30kph, or speed_30kph_camera_source_5hz" >&2
     exit 2
     ;;
 esac
@@ -649,7 +654,7 @@ for row in "${runnable_rows[@]}"; do
       case "${catalog_id}" in
         straight)
           catalog_scenario_args=(--scenarios straight)
-          if [[ "${runtime_profile}" == "speed_30kph" && \
+          if [[ "${speed_30kph_profile}" == "1" && \
                 "${bundle_schema}" == "packaged_town" ]]; then
             catalog_waypoint_spacing="${catalog_waypoint_spacing:-10.0}"
             catalog_endpoint_source_args=(
@@ -667,7 +672,7 @@ for row in "${runnable_rows[@]}"; do
           ;;
         turn)
           catalog_scenario_args=(--scenarios left,right)
-          if [[ "${runtime_profile}" == "speed_30kph" && \
+          if [[ "${speed_30kph_profile}" == "1" && \
                 "${bundle_schema}" == "packaged_town" ]]; then
             catalog_endpoint_source_args=(
               --physical-turn-profile speed_30kph
@@ -683,7 +688,7 @@ for row in "${runnable_rows[@]}"; do
     fi
     if [[ -n "${catalog_capacity_profile}" && \
           ( "${catalog_id}" != "straight" || \
-            "${runtime_profile}" != "speed_30kph" || \
+            "${speed_30kph_profile}" != "1" || \
             "${bundle_schema}" != "packaged_town" ) ]]; then
       echo "invalid map-specific straight capacity contract for ${map_id}/${catalog_id}" >&2
       catalog_failed=1

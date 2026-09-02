@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+from copy import deepcopy
 from pathlib import Path
 import subprocess
 from unittest.mock import patch
@@ -1008,6 +1009,10 @@ def add_speed_30kph_evidence(
         ],
         "SPEED_LIMIT_SOURCE": gate_contract["speed_limit_source"],
         "REAL_VEHICLE_READY": "false",
+        "VAD_ROUTE_MANAGER_OPENBLAS_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_OMP_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_MKL_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_NUMEXPR_NUM_THREADS": "1",
         "VEHICLE_CMD_GATE_PARAM_FILE": str(gate_source),
         "VEHICLE_CMD_GATE_PARAM_SHA256": gate_sha256,
         "VEHICLE_CMD_GATE_METADATA_SHA256": metadata_sha256,
@@ -1547,6 +1552,7 @@ def test_campaign_plan_fail_closed_binds_execution_code_sha256() -> None:
         "scripts/e2e/validate_route_map.py",
         "scripts/e2e/analyze_speed_profile.py",
         "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
+        "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
         "src/universe/autoware_universe/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp",
         "src/universe/autoware_universe/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp",
         "src/core/autoware_core/planning/autoware_route_handler/include/autoware/route_handler/route_handler.hpp",
@@ -1814,6 +1820,171 @@ def test_speed_30kph_plan_is_opt_in_and_preserves_the_default_profile() -> None:
     assert speed["admission_contract_sha256"] != baseline[
         "admission_contract_sha256"
     ]
+
+
+def test_camera_source_5hz_plan_changes_only_profile_identity_and_mapping_option() -> None:
+    manifest, path = matrix.load_matrix(MATRIX_PATH)
+    baseline = matrix.build_campaign_plan(manifest, path, "speed_30kph")
+    candidate = matrix.build_campaign_plan(
+        manifest, path, "speed_30kph_camera_source_5hz"
+    )
+
+    assert candidate["route_contract"] == baseline["route_contract"]
+    assert candidate["route_generation_contracts"] == baseline[
+        "route_generation_contracts"
+    ]
+    assert candidate["route_selection_overrides"] == baseline[
+        "route_selection_overrides"
+    ]
+    assert candidate["turn_route_selection_policy"] == baseline[
+        "turn_route_selection_policy"
+    ]
+    baseline_profile = deepcopy(baseline["runtime_profile"])
+    candidate_profile = deepcopy(candidate["runtime_profile"])
+    assert candidate_profile.pop("camera_source_contract") == (
+        matrix.CAMERA_SOURCE_5HZ_CONTRACT
+    )
+    baseline_profile.pop("id")
+    candidate_profile.pop("id")
+    baseline_profile.pop("wrapper_options")
+    candidate_profile.pop("wrapper_options")
+    assert candidate_profile == baseline_profile
+    assert candidate["runtime_profile"]["wrapper_options"] == [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ]
+
+
+def make_camera_source_5hz_evidence(
+    tmp_path: Path, *, superseded: int = 0, recorder_wall_sec: float = 1001.0
+) -> tuple[Path, dict[str, str], dict, dict]:
+    candidate_path = ROOT / (
+        "autoware_e2e_vad_launch/config/"
+        "sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+    )
+    provenance = tmp_path / "sensor_mapping_provenance"
+    provenance.mkdir(parents=True)
+    recorded = provenance / "sensor_mapping.yaml"
+    recorded.write_bytes(candidate_path.read_bytes())
+    digest = matrix.sha256_file(recorded)
+    (provenance / "SHA256SUMS").write_text(
+        f"{digest}  sensor_mapping.yaml\n", encoding="utf-8"
+    )
+    mapping = yaml.safe_load(recorded.read_text(encoding="utf-8"))
+    camera_ids = sorted(
+        sensor["id"]
+        for sensor in mapping["sensor_mappings"].values()
+        if sensor.get("carla_type") == "sensor.camera.rgb"
+    )
+    event_rates = {
+        f"/sensing/camera/{camera_id}/camera_info": {
+            "count": 100,
+            "stamp_rate_hz": 5.0,
+            "stamp_period_sec": {
+                "available": True,
+                "count": 99,
+                "mean": 0.2,
+                "median": 0.2,
+                "max": 0.2,
+            },
+        }
+        for camera_id in camera_ids
+    }
+    latency = {
+        "event_rates": event_rates,
+        "camera_bundle": {
+            "available": True,
+            "camera_count": 6,
+            "bundle_coverage_percent": 100.0,
+        },
+        "candidate_front_acceptance": {
+            "available": True,
+            "candidate_count": 100,
+            "front_count": 100,
+            "acceptance_percent": 100.0,
+        },
+    }
+    received_offset = 1 if superseded else 0
+    (tmp_path / "stack.log").write_text(
+        "\n".join(
+            (
+                "[INFO 1000.000] VAD frame queued: source_stamp_ns=1 "
+                f"assembled=1 capacity_pruned=0 superseded={superseded} "
+                "mailbox_submitted=1 coalesced_drops=0 "
+                f"received_images_min={1 + received_offset} "
+                f"received_images_max={1 + received_offset}",
+                "[INFO 1000.010] VAD inference complete: source_stamp_ns=1 "
+                "inference_ms=30.0 published=true published_count=1 "
+                "mailbox_taken=1 coalesced_drops=0",
+                "[INFO 1000.200] VAD frame queued: source_stamp_ns=2 "
+                f"assembled=2 capacity_pruned=0 superseded={superseded} "
+                "mailbox_submitted=2 coalesced_drops=0 "
+                f"received_images_min={2 + received_offset} "
+                f"received_images_max={2 + received_offset}",
+                "[INFO 1000.210] VAD inference complete: source_stamp_ns=2 "
+                "inference_ms=30.0 published=true published_count=2 "
+                "mailbox_taken=2 coalesced_drops=0",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "recorder.log").write_text(
+        f"[INFO {recorder_wall_sec:.3f}] Recording...\n", encoding="utf-8"
+    )
+    runtime = {
+        "CAMERA_SOURCE_5HZ": "true",
+        "CAMERA_SOURCE_SENSOR_TICK_SEC": "0.2",
+        "CAMERA_ROS_PUBLISH_HZ": "5.0",
+        "SENSOR_MAPPING_FILE": f"/installed/config/{candidate_path.name}",
+        "SENSOR_MAPPING_SHA256": digest,
+    }
+    profile = {"camera_source_contract": dict(matrix.CAMERA_SOURCE_5HZ_CONTRACT)}
+    return tmp_path, runtime, profile, latency
+
+
+def test_camera_source_5hz_evidence_requires_continuous_six_camera_stamps(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = make_camera_source_5hz_evidence(tmp_path)
+    evidence = matrix._camera_source_5hz_evidence(
+        trial, runtime, profile, latency
+    )
+
+    assert evidence is not None
+    assert evidence["maximum_camera_stamp_gap_sec"] == pytest.approx(0.2)
+    assert evidence["vad_inference"]["superseded_classification"] == "none"
+
+    front = latency["event_rates"]["/sensing/camera/CAM_FRONT/camera_info"]
+    front["stamp_period_sec"]["max"] = 0.4
+    with pytest.raises(matrix.MatrixError, match="maximum stamp gap exceeds"):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
+
+
+def test_camera_source_5hz_allows_only_proven_startup_supersession(
+    tmp_path: Path,
+) -> None:
+    trial, runtime, profile, latency = make_camera_source_5hz_evidence(
+        tmp_path, superseded=1
+    )
+    evidence = matrix._camera_source_5hz_evidence(
+        trial, runtime, profile, latency
+    )
+
+    assert evidence is not None
+    assert evidence["vad_inference"]["superseded"] == 1
+    assert evidence["vad_inference"]["superseded_classification"] == (
+        "startup_before_recorder"
+    )
+
+    (trial / "recorder.log").write_text(
+        "[INFO 999.000] Recording...\n", encoding="utf-8"
+    )
+    with pytest.raises(matrix.MatrixError, match="loss or coalescing"):
+        matrix._camera_source_5hz_evidence(trial, runtime, profile, latency)
 
 
 def test_speed_route_selection_overrides_are_map_scoped_and_digest_bound() -> None:
@@ -3568,6 +3739,7 @@ def test_speed_30kph_rejects_result_profile_context_drift(tmp_path: Path) -> Non
         ("LONGITUDINAL_SPEED_SOURCE", "vad_prediction"),
         ("VAD_GEOMETRY_SOURCE", "false"),
         ("MAXIMUM_SPEED_SAMPLE_GAP_SEC", "0.30"),
+        ("VAD_ROUTE_MANAGER_OPENBLAS_NUM_THREADS", "24"),
     ),
 )
 def test_speed_30kph_rejects_runtime_contract_drift(
@@ -4013,7 +4185,8 @@ def test_runner_has_owned_cold_start_and_fixed_profile_contract() -> None:
     assert "setsid \"${server_tool}\"" in source
     assert "e2e_stop_owned_process_group" in source
     assert "--runtime-profile PROFILE" in source
-    assert "recommended|speed_30kph" in source
+    assert "recommended, speed_30kph" in source
+    assert "speed_30kph|speed_30kph_camera_source_5hz" in source
     assert '"${trial_wrapper_options[@]}"' in source
     assert "--runtime-profile \"${runtime_profile}\"" in source
     assert "--map-load-settle-sec 0" in source
@@ -4028,7 +4201,7 @@ def test_runner_has_owned_cold_start_and_fixed_profile_contract() -> None:
     assert "catalog_scenario_args=(--scenarios left,right)" in source
     assert '"${catalog_scenario_args[@]}"' in source
     assert '"${catalog_endpoint_source_args[@]}"' in source
-    assert '"${runtime_profile}" == "speed_30kph"' in source
+    assert '"${speed_30kph_profile}" == "1"' in source
     assert '"${bundle_schema}" == "packaged_town"' in source
     assert 'route_catalog_specs_for_map "${map_id}"' in source
     assert '--endpoint-waypoint-spacing-m "${catalog_waypoint_spacing}"' in source

@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-02T03:22:03+09:00",
+  "scope": "CTrack camera-source cadence official A/B",
+  "interpretation": {
+    "global_cpu_or_gpu_saturation_observed": false,
+    "camera_stamp_cadence_hz": 5.0,
+    "maximum_camera_stamp_gap_sec": 0.200000003,
+    "apparent_stutter_primary_mechanism": "wall-time frame holding while CARLA real-time factor is below one",
+    "confirmed_prior_local_contention": "vad_route_manager OpenBLAS oversubscription before the per-node one-thread cap",
+    "causality_warning": "The baseline straight run was the first cold-start trial and recovered near its end. The single-pair RTF delta must not be attributed solely to sensor_tick without randomized paired repeats."
+  },
+  "campaign_window": {
+    "baseline": {
+      "vmstat_samples": 536,
+      "cpu_user_percent_mean": 9.03,
+      "cpu_system_percent_mean": 2.53,
+      "cpu_idle_percent_mean": 88.42,
+      "cpu_idle_below_50_percent_samples": 2,
+      "gpu_samples": 509,
+      "gpu_sm_percent_mean": 37.43,
+      "gpu_sm_percent_max": 98.0,
+      "gpu_power_w_mean": 128.63
+    },
+    "candidate": {
+      "vmstat_samples": 425,
+      "cpu_user_percent_mean": 9.54,
+      "cpu_system_percent_mean": 2.65,
+      "cpu_idle_percent_mean": 87.76,
+      "cpu_idle_below_50_percent_samples": 2,
+      "gpu_samples": 403,
+      "gpu_sm_percent_mean": 41.79,
+      "gpu_sm_percent_max": 98.0,
+      "gpu_power_w_mean": 126.52
+    }
+  },
+  "route_window": {
+    "baseline": {
+      "straight": {
+        "cpu_busy_percent_mean": 10.5,
+        "cpu_busy_percent_max": 17.0,
+        "cpu_idle_percent_min": 83.0,
+        "gpu_sm_percent_mean": 18.3,
+        "gpu_sm_percent_max": 55.0,
+        "carla_process_cpu_percent_mean": 116.6,
+        "vad_route_manager_cpu_percent_mean": 9.5,
+        "real_time_factor": 0.319011
+      },
+      "turn": {
+        "cpu_busy_percent_mean": 16.5,
+        "cpu_busy_percent_max": 19.0,
+        "cpu_idle_percent_min": 81.0,
+        "gpu_sm_percent_mean": 26.3,
+        "gpu_sm_percent_max": 36.0,
+        "carla_process_cpu_percent_mean": 156.8,
+        "vad_route_manager_cpu_percent_mean": 25.6,
+        "real_time_factor": 0.998307
+      }
+    },
+    "candidate": {
+      "straight": {
+        "cpu_busy_percent_mean": 15.2,
+        "cpu_busy_percent_max": 17.0,
+        "cpu_idle_percent_min": 83.0,
+        "gpu_sm_percent_mean": 16.7,
+        "gpu_sm_percent_max": 23.0,
+        "carla_process_cpu_percent_mean": 124.3,
+        "vad_route_manager_cpu_percent_mean": 32.4,
+        "real_time_factor": 0.999625
+      },
+      "turn": {
+        "cpu_busy_percent_mean": 14.5,
+        "cpu_busy_percent_max": 16.0,
+        "cpu_idle_percent_min": 84.0,
+        "gpu_sm_percent_mean": 34.3,
+        "gpu_sm_percent_max": 40.0,
+        "carla_process_cpu_percent_mean": 122.5,
+        "vad_route_manager_cpu_percent_mean": 25.6,
+        "real_time_factor": 0.999539
+      }
+    }
+  },
+  "raw_sources": {
+    "baseline": {
+      "root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/host_telemetry",
+      "vmstat_sha256": "f703d506695bff08e40b8ff8216f24abb4f459a691a3b11dc5586f939feaa574",
+      "nvidia_smi_dmon_sha256": "c8081fe4366ffc2d77625e371fb49ba980a2abd208e6bd42450c3bb17a19751c",
+      "pidstat_sha256": "b9e3dd0f5aba87555ab2025c25d7a31e24b93398b04be1821b9e6192307c9550"
+    },
+    "candidate": {
+      "root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/host_telemetry",
+      "vmstat_sha256": "1d90a260147a4e3baaa43695e927330eedd23ee7ffa99c9c22519c931e7368dd",
+      "nvidia_smi_dmon_sha256": "385d9efe66acc5de7fd20c7f55913fdb79df184a35b3d01ada1b7d38fa30a661",
+      "pidstat_sha256": "1d768278c747e84fa0aafa8b3e127b4dd04cb306dd5bf2d97c378d7e0880c809"
+    }
+  }
+}

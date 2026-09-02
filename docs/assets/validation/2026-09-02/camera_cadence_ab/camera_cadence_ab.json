@@ -1,0 +1,703 @@
+{
+  "acceptance_gates": {
+    "all_six_camera_stamp_gaps_at_most_0_25_sec": true,
+    "functional_route_and_speed_pass": true,
+    "mapping_delta_exactly_six_camera_sensor_ticks": true,
+    "route_manager_blas_threads_pinned_to_one": true,
+    "runtime_profile_invariants_equal": true,
+    "source_route_sha_and_payload_equal": true,
+    "terminal_c_track_straight_turn_pass": true,
+    "vad_no_runtime_supersession_pruning_or_coalescing": true,
+    "vad_published_equals_mailbox_taken": true,
+    "whole_bag_candidate_front_boundary_gate": true,
+    "whole_bag_six_camera_coverage_at_least_99_percent": true
+  },
+  "analysis_id": "c_track_camera_source_cadence_ab_v1",
+  "arms": {
+    "baseline": {
+      "aggregate_sha256": "1e283e7b9d2ab8ed86263395f66cbdaa2fed6429537249983e79ee983bc1cf90",
+      "aggregate_status": "INCOMPLETE",
+      "matrix_plan_sha256": "d7fef5866e6722cecc4509eaf4fdd977d021ac8666474ed51b8a728a11f7462d",
+      "matrix_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1",
+      "runtime_profile_id": "vad_carla_30kph_visualized_v2",
+      "runtime_profile_selector": "speed_30kph",
+      "sensor_mapping_sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865",
+      "status_sha256": "3f54006b242d2ac2584dd7ea54eb9adbfb50fbd35a3ad23e0f3d0d0e0f10338e",
+      "trials": {
+        "straight": {
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001",
+          "camera_vad": {
+            "bundle": {
+              "camera_count": 6,
+              "coverage_percent": 100.0,
+              "front_frame_count": 257,
+              "matched_bundle_count": 257,
+              "maximum_stamp_span_sec": 0.0
+            },
+            "camera_stamp_gap_sec": {
+              "CAM_BACK": 0.20000000300000664,
+              "CAM_BACK_LEFT": 0.20000000300000664,
+              "CAM_BACK_RIGHT": 0.20000000300000664,
+              "CAM_FRONT": 0.20000000300000664,
+              "CAM_FRONT_LEFT": 0.20000000300000664,
+              "CAM_FRONT_RIGHT": 0.20000000300000664
+            },
+            "candidate_front_acceptance": {
+              "acceptance_percent": 100.0,
+              "candidate_count": 257,
+              "count_delta": 0,
+              "front_count": 257,
+              "gate": "whole-bag acceptance >=99% and absolute count delta <=1",
+              "interpretation": "whole-bag boundary-compatible count ratio only; this is not a route-window exactness claim and the VAD output does not preserve causal front-camera source identity"
+            },
+            "data_quality_warnings": [
+              "receipt_latency_sec uses rosbag recorder receipt time (wall/system clock)",
+              "stamp_delta_sec uses only ROS message stamps (simulation/physics clock)",
+              "receipt timestamps are never subtracted from message stamps",
+              "sensor-to-VAD pairing is a lower-bound inference: VAD output does not preserve the front-camera source stamp"
+            ],
+            "front_count": 257,
+            "front_effective_receipt_rate_hz": 1.7367074296367728,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "front_topic": "/sensing/camera/CAM_FRONT/camera_info",
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "route_window": {
+              "exact_bundle_or_acceptance_claimed": false,
+              "reason": "this analyzer does not reread the rosbag",
+              "status": "UNAVAILABLE"
+            },
+            "window": "whole_rosbag"
+          },
+          "functional": {
+            "goal_reached": true,
+            "maximum_absolute_cte_m": 0.5185761451721191,
+            "maximum_lateral_acceleration_mps2": 0.3708954955079032,
+            "maximum_observed_speed_mps": 7.7590278271506685,
+            "maximum_speed_sample_gap_sec": 0.10000000200000159,
+            "maximum_sustained_speed_duration_sec": 7.650000114000001,
+            "maximum_trajectory_correction_m": 1.4003750085830688,
+            "minimum_sustained_speed_sec": 1.0,
+            "reason": "goal reached",
+            "route_completion": "PASS",
+            "rtf": 0.319010527512113,
+            "sim_elapsed_sec": 43.350000646,
+            "speed_status": "PASS",
+            "success": true,
+            "wall_elapsed_sec": 135.88893439999083
+          },
+          "input_files": {
+            "latency_sha256": "c2fa9f9f76d1461ba2c7aa16561bf90ab6c77969c13baf114b73ceb5b56767c3",
+            "matrix_validation_sha256": "d5b5bce35adaa4dbc3059dcb8f3ed47cc276ceae9e663c80338c5247d9133014",
+            "recorder_log_sha256": "b1d1e040443a1d8e7e50a5e7920ae60297d519f45bcd8ba963ee9c51458c2098",
+            "result_sha256": "3df64c9c05aa6d55fda1ef7ba35473f4873455fd60647af74b04084a2eeac31b",
+            "runtime_env_sha256": "79ce4b2007838dbc1fb99ad132108f81998c35162f8f28b57c5f89ded02afc01",
+            "stack_log_sha256": "817af2baf57f09553ce4dc9397c999a505f0411df0310974b3e5e6cb169448c3"
+          },
+          "measurement": {
+            "front_effective_receipt_rate_hz": 1.7367074296367728,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "receipt_efficiency_ratio": 1.0888088673634362,
+            "rtf": 0.319010527512113
+          },
+          "scenario": "straight",
+          "sensor_mapping": {
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001/sensor_mapping_provenance/sensor_mapping.yaml",
+            "runtime_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
+            "sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865"
+          },
+          "source_route": {
+            "canonical_payload_sha256": "37077830d72430ea58ec3ff14096bce55ac8124586f387f46d812d96bbbecf58",
+            "goal_spawn_index": 377,
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001/source_route.json",
+            "route_length_m": 209.46992832422256,
+            "sha256": "38376adb07bf8c07bb1f503d3ea915114ce7dffc4799004f2ac1a85b610fee43",
+            "start_spawn_index": 189
+          },
+          "trial_id": "straight",
+          "vad_runtime": {
+            "capacity_pruned_max": 0,
+            "coalesced_drops_max": 0,
+            "inference_complete_observation_count": 286,
+            "inference_ms": {
+              "cold_start_included": true,
+              "count": 286,
+              "max": 65.683,
+              "mean": 35.93643006993007,
+              "median": 35.9835,
+              "min": 26.592,
+              "p95": 38.074250000000006,
+              "p99": 38.7314
+            },
+            "last_observed_assembled": 264,
+            "last_observed_mailbox_submitted": 264,
+            "mailbox_taken": 286,
+            "published_count": 286,
+            "queue_observation_count": 11,
+            "recorder_start_wall_sec": null,
+            "scope": "full_stack_process_lifetime",
+            "superseded_classification": "none",
+            "superseded_max": 0
+          }
+        },
+        "turn": {
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001",
+          "camera_vad": {
+            "bundle": {
+              "camera_count": 6,
+              "coverage_percent": 100.0,
+              "front_frame_count": 233,
+              "matched_bundle_count": 233,
+              "maximum_stamp_span_sec": 0.0
+            },
+            "camera_stamp_gap_sec": {
+              "CAM_BACK": 0.20000000300000664,
+              "CAM_BACK_LEFT": 0.20000000300000664,
+              "CAM_BACK_RIGHT": 0.20000000300000664,
+              "CAM_FRONT": 0.20000000300000664,
+              "CAM_FRONT_LEFT": 0.20000000300000664,
+              "CAM_FRONT_RIGHT": 0.20000000300000664
+            },
+            "candidate_front_acceptance": {
+              "acceptance_percent": 100.42918454935622,
+              "candidate_count": 234,
+              "count_delta": 1,
+              "front_count": 233,
+              "gate": "whole-bag acceptance >=99% and absolute count delta <=1",
+              "interpretation": "whole-bag boundary-compatible count ratio only; this is not a route-window exactness claim and the VAD output does not preserve causal front-camera source identity"
+            },
+            "data_quality_warnings": [
+              "receipt_latency_sec uses rosbag recorder receipt time (wall/system clock)",
+              "stamp_delta_sec uses only ROS message stamps (simulation/physics clock)",
+              "receipt timestamps are never subtracted from message stamps",
+              "sensor-to-VAD pairing is a lower-bound inference: VAD output does not preserve the front-camera source stamp"
+            ],
+            "front_count": 233,
+            "front_effective_receipt_rate_hz": 4.992800880049445,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "front_topic": "/sensing/camera/CAM_FRONT/camera_info",
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "route_window": {
+              "exact_bundle_or_acceptance_claimed": false,
+              "reason": "this analyzer does not reread the rosbag",
+              "status": "UNAVAILABLE"
+            },
+            "window": "whole_rosbag"
+          },
+          "functional": {
+            "goal_reached": true,
+            "maximum_absolute_cte_m": 0.5127356648445129,
+            "maximum_lateral_acceleration_mps2": 0.6577714151149239,
+            "maximum_observed_speed_mps": 4.703407416552168,
+            "maximum_speed_sample_gap_sec": 0.05000000100000079,
+            "maximum_sustained_speed_duration_sec": 0.0,
+            "maximum_trajectory_correction_m": 13.857209205627441,
+            "minimum_sustained_speed_sec": 0.0,
+            "reason": "goal reached",
+            "route_completion": "PASS",
+            "rtf": 0.9983071788379403,
+            "sim_elapsed_sec": 36.700000546999995,
+            "speed_status": "PASS",
+            "success": true,
+            "wall_elapsed_sec": 36.762232432025485
+          },
+          "input_files": {
+            "latency_sha256": "debc20041453f9fa8b82ed69dcd9909621e994b8a747acc36cc3940f96582f66",
+            "matrix_validation_sha256": "ef302566a979ee1199795e3837f9d01877558e3cdbdf967864291ebc082e225e",
+            "recorder_log_sha256": "bad417c88f2f3c6840ef4dc101edd131e0ac55d86829328884474205e08bb40a",
+            "result_sha256": "3482a5ec21e956d162cc4f86369ef26a8df3e1956b14f4f1ededdda78ff9f2b5",
+            "runtime_env_sha256": "5989ed7e7a9025e19e8838a9fb10f88c91b862e0a173be26982bb73c80b05994",
+            "stack_log_sha256": "0aca9bf4127a1d36783fda7a763d58c6ef58261e0b27dd341e3b88a44f1ebdb4"
+          },
+          "measurement": {
+            "front_effective_receipt_rate_hz": 4.992800880049445,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "receipt_efficiency_ratio": 1.0002534411809434,
+            "rtf": 0.9983071788379403
+          },
+          "scenario": "left",
+          "sensor_mapping": {
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001/sensor_mapping_provenance/sensor_mapping.yaml",
+            "runtime_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
+            "sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865"
+          },
+          "source_route": {
+            "canonical_payload_sha256": "6fb7685b1839c2b8b035cee10a859b26f6211857fc5b2488de4f14ca194fb096",
+            "goal_spawn_index": 171,
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001/source_route.json",
+            "route_length_m": 73.85833728313446,
+            "sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "start_spawn_index": 71
+          },
+          "trial_id": "turn",
+          "vad_runtime": {
+            "capacity_pruned_max": 0,
+            "coalesced_drops_max": 0,
+            "inference_complete_observation_count": 272,
+            "inference_ms": {
+              "cold_start_included": true,
+              "count": 272,
+              "max": 64.706,
+              "mean": 36.3523125,
+              "median": 36.2215,
+              "min": 32.537,
+              "p95": 38.576,
+              "p99": 40.048049999999996
+            },
+            "last_observed_assembled": 264,
+            "last_observed_mailbox_submitted": 264,
+            "mailbox_taken": 272,
+            "published_count": 272,
+            "queue_observation_count": 11,
+            "recorder_start_wall_sec": null,
+            "scope": "full_stack_process_lifetime",
+            "superseded_classification": "none",
+            "superseded_max": 0
+          }
+        }
+      }
+    },
+    "candidate": {
+      "aggregate_sha256": "ef827aab7a1b0ae005d03afd14e230cab374707c8b7f635208bf60cd872515f2",
+      "aggregate_status": "INCOMPLETE",
+      "matrix_plan_sha256": "5ded35c59d135282f9a10876a913e094aa37a11ef20b22e98e909c47b7164cde",
+      "matrix_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1",
+      "runtime_profile_id": "vad_carla_30kph_camera_source_5hz_visualized_v1",
+      "runtime_profile_selector": "speed_30kph_camera_source_5hz",
+      "sensor_mapping_sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+      "status_sha256": "17f07569571f506b12a66528782d14c6fc4140bfbb50961fabbd3504b51962ea",
+      "trials": {
+        "straight": {
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001",
+          "camera_vad": {
+            "bundle": {
+              "camera_count": 6,
+              "coverage_percent": 100.0,
+              "front_frame_count": 277,
+              "matched_bundle_count": 277,
+              "maximum_stamp_span_sec": 0.0
+            },
+            "camera_stamp_gap_sec": {
+              "CAM_BACK": 0.20000000300001375,
+              "CAM_BACK_LEFT": 0.20000000300001375,
+              "CAM_BACK_RIGHT": 0.20000000300001375,
+              "CAM_FRONT": 0.20000000300001375,
+              "CAM_FRONT_LEFT": 0.20000000300001375,
+              "CAM_FRONT_RIGHT": 0.20000000300001375
+            },
+            "candidate_front_acceptance": {
+              "acceptance_percent": 100.0,
+              "candidate_count": 277,
+              "count_delta": 0,
+              "front_count": 277,
+              "gate": "whole-bag acceptance >=99% and absolute count delta <=1",
+              "interpretation": "whole-bag boundary-compatible count ratio only; this is not a route-window exactness claim and the VAD output does not preserve causal front-camera source identity"
+            },
+            "data_quality_warnings": [
+              "receipt_latency_sec uses rosbag recorder receipt time (wall/system clock)",
+              "stamp_delta_sec uses only ROS message stamps (simulation/physics clock)",
+              "receipt timestamps are never subtracted from message stamps",
+              "sensor-to-VAD pairing is a lower-bound inference: VAD output does not preserve the front-camera source stamp"
+            ],
+            "front_count": 277,
+            "front_effective_receipt_rate_hz": 4.992644217339142,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "front_topic": "/sensing/camera/CAM_FRONT/camera_info",
+            "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+            "route_window": {
+              "exact_bundle_or_acceptance_claimed": false,
+              "reason": "this analyzer does not reread the rosbag",
+              "status": "UNAVAILABLE"
+            },
+            "window": "whole_rosbag"
+          },
+          "functional": {
+            "goal_reached": true,
+            "maximum_absolute_cte_m": 0.5286594033241272,
+            "maximum_lateral_acceleration_mps2": 0.4695172672924588,
+            "maximum_observed_speed_mps": 7.71151213514909,
+            "maximum_speed_sample_gap_sec": 0.05000000100000079,
+            "maximum_sustained_speed_duration_sec": 6.250000093000004,
+            "maximum_trajectory_correction_m": 1.234799861907959,
+            "minimum_sustained_speed_sec": 1.0,
+            "reason": "goal reached",
+            "route_completion": "PASS",
+            "rtf": 0.9996246843990585,
+            "sim_elapsed_sec": 44.850000669,
+            "speed_status": "PASS",
+            "success": true,
+            "wall_elapsed_sec": 44.86683989397716
+          },
+          "input_files": {
+            "latency_sha256": "222a0ddafff8c68eb622f14a7c8f3eae068b036183d0abd76713762428bd511c",
+            "matrix_validation_sha256": "389f65f5391b08125fc666ea20a05445767f9bc48cc8dcf02cad3a1aad4e77cd",
+            "recorder_log_sha256": "e7677d1391305e2d30347861e75e27b1d349541d292d63d74a94c6c174ccb19a",
+            "result_sha256": "849c7f033c397dd029b2808ff048c03a2f331414337bb69dfc80e7890803157f",
+            "runtime_env_sha256": "2dee153cd90f8e162af5b1e4055e8acd22795cd9df5f4a5dc00ab2c8b8acd80a",
+            "stack_log_sha256": "dd8035dcca4b075364ceb96c02586d40e0d76687b5a58c07c5745b413c7515e4"
+          },
+          "measurement": {
+            "front_effective_receipt_rate_hz": 4.992644217339142,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+            "receipt_efficiency_ratio": 0.9989037626117061,
+            "rtf": 0.9996246843990585
+          },
+          "scenario": "straight",
+          "sensor_mapping": {
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001/sensor_mapping_provenance/sensor_mapping.yaml",
+            "runtime_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+            "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d"
+          },
+          "source_route": {
+            "canonical_payload_sha256": "37077830d72430ea58ec3ff14096bce55ac8124586f387f46d812d96bbbecf58",
+            "goal_spawn_index": 377,
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/straight/attempt_001/source_route.json",
+            "route_length_m": 209.46992832422256,
+            "sha256": "38376adb07bf8c07bb1f503d3ea915114ce7dffc4799004f2ac1a85b610fee43",
+            "start_spawn_index": 189
+          },
+          "trial_id": "straight",
+          "vad_runtime": {
+            "capacity_pruned_max": 0,
+            "coalesced_drops_max": 0,
+            "inference_complete_observation_count": 324,
+            "inference_ms": {
+              "cold_start_included": true,
+              "count": 324,
+              "max": 57.063,
+              "mean": 29.98111419753086,
+              "median": 30.130499999999998,
+              "min": 25.362,
+              "p95": 31.317000000000004,
+              "p99": 31.61278
+            },
+            "last_observed_assembled": 314,
+            "last_observed_mailbox_submitted": 314,
+            "mailbox_taken": 324,
+            "published_count": 324,
+            "queue_observation_count": 13,
+            "recorder_start_wall_sec": null,
+            "scope": "full_stack_process_lifetime",
+            "superseded_classification": "none",
+            "superseded_max": 0
+          }
+        },
+        "turn": {
+          "attempt_directory": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001",
+          "camera_vad": {
+            "bundle": {
+              "camera_count": 6,
+              "coverage_percent": 100.0,
+              "front_frame_count": 230,
+              "matched_bundle_count": 230,
+              "maximum_stamp_span_sec": 0.0
+            },
+            "camera_stamp_gap_sec": {
+              "CAM_BACK": 0.20000000300000664,
+              "CAM_BACK_LEFT": 0.20000000300000664,
+              "CAM_BACK_RIGHT": 0.20000000300000664,
+              "CAM_FRONT": 0.20000000300000664,
+              "CAM_FRONT_LEFT": 0.20000000300000664,
+              "CAM_FRONT_RIGHT": 0.20000000300000664
+            },
+            "candidate_front_acceptance": {
+              "acceptance_percent": 100.43478260869566,
+              "candidate_count": 231,
+              "count_delta": 1,
+              "front_count": 230,
+              "gate": "whole-bag acceptance >=99% and absolute count delta <=1",
+              "interpretation": "whole-bag boundary-compatible count ratio only; this is not a route-window exactness claim and the VAD output does not preserve causal front-camera source identity"
+            },
+            "data_quality_warnings": [
+              "receipt_latency_sec uses rosbag recorder receipt time (wall/system clock)",
+              "stamp_delta_sec uses only ROS message stamps (simulation/physics clock)",
+              "receipt timestamps are never subtracted from message stamps",
+              "sensor-to-VAD pairing is a lower-bound inference: VAD output does not preserve the front-camera source stamp"
+            ],
+            "front_count": 230,
+            "front_effective_receipt_rate_hz": 4.992597256953188,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "front_topic": "/sensing/camera/CAM_FRONT/camera_info",
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "route_window": {
+              "exact_bundle_or_acceptance_claimed": false,
+              "reason": "this analyzer does not reread the rosbag",
+              "status": "UNAVAILABLE"
+            },
+            "window": "whole_rosbag"
+          },
+          "functional": {
+            "goal_reached": true,
+            "maximum_absolute_cte_m": 0.5141685605049133,
+            "maximum_lateral_acceleration_mps2": 0.680660088204348,
+            "maximum_observed_speed_mps": 4.724383357257597,
+            "maximum_speed_sample_gap_sec": 0.05000000100000079,
+            "maximum_sustained_speed_duration_sec": 0.0,
+            "maximum_trajectory_correction_m": 13.67581558227539,
+            "minimum_sustained_speed_sec": 0.0,
+            "reason": "goal reached",
+            "route_completion": "PASS",
+            "rtf": 0.9995391923372189,
+            "sim_elapsed_sec": 36.350000542,
+            "speed_status": "PASS",
+            "success": true,
+            "wall_elapsed_sec": 36.36675862304401
+          },
+          "input_files": {
+            "latency_sha256": "f673435aa45bfcfdb58657cf1ac6bb3a2da909a7a63e0f5065eaf507f2cf712d",
+            "matrix_validation_sha256": "d0512f36eb29a6c58f310c2e78d8009b95e113b9104c28ea510152233187a8e8",
+            "recorder_log_sha256": "33a6c9f226da9fef6fb61105cae783d129895e2841042a75c5d072a7ab151171",
+            "result_sha256": "3a28c2a3c9ae783d5f3390bea90f066a36c348a4a5bbd543d6d5b35ba7b1b46f",
+            "runtime_env_sha256": "61fe72f9e426350bd1922e5b258a46c141eccf5bdb9e886d2ddabec6b6c47cc2",
+            "stack_log_sha256": "34c7a3de5a1cde1d1d2ee6693a256c6578f11398de2362c79b4d2cbb343a9e8d"
+          },
+          "measurement": {
+            "front_effective_receipt_rate_hz": 4.992597256953188,
+            "front_stamp_rate_hz": 4.9999999250000124,
+            "maximum_camera_stamp_gap_sec": 0.20000000300000664,
+            "receipt_efficiency_ratio": 0.9989798039170354,
+            "rtf": 0.9995391923372189
+          },
+          "scenario": "left",
+          "sensor_mapping": {
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001/sensor_mapping_provenance/sensor_mapping.yaml",
+            "runtime_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+            "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d"
+          },
+          "source_route": {
+            "canonical_payload_sha256": "6fb7685b1839c2b8b035cee10a859b26f6211857fc5b2488de4f14ca194fb096",
+            "goal_spawn_index": 171,
+            "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1/maps/c_track_1_0_7/trials/turn/attempt_001/source_route.json",
+            "route_length_m": 73.85833728313446,
+            "sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "start_spawn_index": 71
+          },
+          "trial_id": "turn",
+          "vad_runtime": {
+            "capacity_pruned_max": 0,
+            "coalesced_drops_max": 0,
+            "inference_complete_observation_count": 272,
+            "inference_ms": {
+              "cold_start_included": true,
+              "count": 272,
+              "max": 55.435,
+              "mean": 30.047654411764707,
+              "median": 30.35,
+              "min": 27.288,
+              "p95": 31.49315,
+              "p99": 31.988360000000007
+            },
+            "last_observed_assembled": 264,
+            "last_observed_mailbox_submitted": 264,
+            "mailbox_taken": 272,
+            "published_count": 272,
+            "queue_observation_count": 11,
+            "recorder_start_wall_sec": null,
+            "scope": "full_stack_process_lifetime",
+            "superseded_classification": "none",
+            "superseded_max": 0
+          }
+        }
+      }
+    }
+  },
+  "comparison_valid": true,
+  "comparisons": {
+    "straight": {
+      "front_effective_receipt_rate_hz": {
+        "baseline": 1.7367074296367728,
+        "candidate": 4.992644217339142,
+        "candidate_change_percent": 187.4775642770952,
+        "candidate_to_baseline_ratio": 2.874775642770952
+      },
+      "front_stamp_rate_hz": {
+        "baseline": 4.9999999250000124,
+        "candidate": 4.9999999250000124,
+        "candidate_change_percent": 0.0,
+        "candidate_to_baseline_ratio": 1.0
+      },
+      "inference_mean_ms": {
+        "baseline": 35.93643006993007,
+        "candidate": 29.98111419753086,
+        "candidate_change_percent": -16.571807107190484,
+        "candidate_to_baseline_ratio": 0.8342819289280952
+      },
+      "inference_p95_ms": {
+        "baseline": 38.074250000000006,
+        "candidate": 31.317000000000004,
+        "candidate_change_percent": -17.7475590458118,
+        "candidate_to_baseline_ratio": 0.822524409541882
+      },
+      "maximum_camera_stamp_gap_sec": {
+        "baseline": 0.20000000300000664,
+        "candidate": 0.20000000300001375,
+        "candidate_change_percent": 3.552713678800501e-12,
+        "candidate_to_baseline_ratio": 1.0000000000000355
+      },
+      "receipt_efficiency_ratio": {
+        "baseline": 1.0888088673634362,
+        "candidate": 0.9989037626117061,
+        "candidate_change_percent": -8.257198067227023,
+        "candidate_to_baseline_ratio": 0.9174280193277298
+      },
+      "rtf": {
+        "baseline": 0.319010527512113,
+        "candidate": 0.9996246843990585,
+        "candidate_change_percent": 213.35162892425305,
+        "candidate_to_baseline_ratio": 3.1335162892425306
+      }
+    },
+    "turn": {
+      "front_effective_receipt_rate_hz": {
+        "baseline": 4.992800880049445,
+        "candidate": 4.992597256953188,
+        "candidate_change_percent": -0.004078334008283946,
+        "candidate_to_baseline_ratio": 0.9999592166599172
+      },
+      "front_stamp_rate_hz": {
+        "baseline": 4.9999999250000124,
+        "candidate": 4.9999999250000124,
+        "candidate_change_percent": 0.0,
+        "candidate_to_baseline_ratio": 1.0
+      },
+      "inference_mean_ms": {
+        "baseline": 36.3523125,
+        "candidate": 30.047654411764707,
+        "candidate_change_percent": -17.343210526800156,
+        "candidate_to_baseline_ratio": 0.8265678947319984
+      },
+      "inference_p95_ms": {
+        "baseline": 38.576,
+        "candidate": 31.49315,
+        "candidate_change_percent": -18.36076835338034,
+        "candidate_to_baseline_ratio": 0.8163923164661966
+      },
+      "maximum_camera_stamp_gap_sec": {
+        "baseline": 0.20000000300000664,
+        "candidate": 0.20000000300000664,
+        "candidate_change_percent": 0.0,
+        "candidate_to_baseline_ratio": 1.0
+      },
+      "receipt_efficiency_ratio": {
+        "baseline": 1.0002534411809434,
+        "candidate": 0.9989798039170354,
+        "candidate_change_percent": -0.12733145535638313,
+        "candidate_to_baseline_ratio": 0.9987266854464362
+      },
+      "rtf": {
+        "baseline": 0.9983071788379403,
+        "candidate": 0.9995391923372189,
+        "candidate_change_percent": 0.12341026143001255,
+        "candidate_to_baseline_ratio": 1.0012341026143001
+      }
+    }
+  },
+  "decision": "VALID_DESCRIPTIVE_COMPARISON",
+  "decision_scope": "Functional/integrity gates passed. Performance deltas are descriptive; this analyzer does not impose an optimization-adoption threshold.",
+  "map_id": "c_track_1_0_7",
+  "measurement_windows": {
+    "camera_rates": "whole rosbag from latency/e2e_latency.json; no rosbag reread",
+    "receipt_efficiency_ratio": "front whole-bag effective receipt Hz / (front whole-bag stamp Hz * route-window RTF); cross-window descriptive sanity ratio",
+    "route_window_camera_metrics": "UNAVAILABLE without rosbag reread; whole-bag coverage/acceptance are boundary-compatible proxies, not route-window exactness",
+    "rtf": "route evaluation window from result.metrics.sim_elapsed_sec and wall_elapsed_sec",
+    "vad_runtime": "full stack process lifetime from stack.log"
+  },
+  "route_identity": {
+    "straight": {
+      "canonical_payload_sha256": "37077830d72430ea58ec3ff14096bce55ac8124586f387f46d812d96bbbecf58",
+      "goal_spawn_index": 377,
+      "payload_equal": true,
+      "route_length_m": 209.46992832422256,
+      "scenario": "straight",
+      "sha256": "38376adb07bf8c07bb1f503d3ea915114ce7dffc4799004f2ac1a85b610fee43",
+      "start_spawn_index": 189,
+      "status": "PASS"
+    },
+    "turn": {
+      "canonical_payload_sha256": "6fb7685b1839c2b8b035cee10a859b26f6211857fc5b2488de4f14ca194fb096",
+      "goal_spawn_index": 171,
+      "payload_equal": true,
+      "route_length_m": 73.85833728313446,
+      "scenario": "left",
+      "sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+      "start_spawn_index": 71,
+      "status": "PASS"
+    }
+  },
+  "schema_version": 1,
+  "single_variable_contract": {
+    "baseline_selector": "speed_30kph",
+    "candidate_selector": "speed_30kph_camera_source_5hz",
+    "runtime_profile": {
+      "baseline_wrapper_options": [
+        "--recommended",
+        "--speed-30kph",
+        "--visualize",
+        "--capture-desktop"
+      ],
+      "candidate_wrapper_options": [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop"
+      ],
+      "other_runtime_profile_fields_equal": true
+    },
+    "sensor_mapping": {
+      "baseline_sec": 0.0,
+      "camera_count": 6,
+      "camera_keys": [
+        "CAM_BACK/camera_link",
+        "CAM_BACK_LEFT/camera_link",
+        "CAM_BACK_RIGHT/camera_link",
+        "CAM_FRONT/camera_link",
+        "CAM_FRONT_LEFT/camera_link",
+        "CAM_FRONT_RIGHT/camera_link"
+      ],
+      "candidate_sec": 0.2,
+      "field": "parameters.sensor_tick",
+      "other_fields_equal": true,
+      "semantic_changes": [
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_BACK/camera_link.parameters.sensor_tick"
+        },
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_BACK_LEFT/camera_link.parameters.sensor_tick"
+        },
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_BACK_RIGHT/camera_link.parameters.sensor_tick"
+        },
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_FRONT/camera_link.parameters.sensor_tick"
+        },
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_FRONT_LEFT/camera_link.parameters.sensor_tick"
+        },
+        {
+          "baseline": 0.0,
+          "candidate": 0.2,
+          "path": "sensor_mappings.CAM_FRONT_RIGHT/camera_link.parameters.sensor_tick"
+        }
+      ],
+      "status": "PASS"
+    }
+  },
+  "status": "PASS",
+  "trial_ids": [
+    "straight",
+    "turn"
+  ]
+}

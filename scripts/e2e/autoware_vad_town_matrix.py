@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import importlib.util
@@ -88,7 +89,15 @@ VAD_COMMANDS = {
     "CHANGELANERIGHT": 5,
 }
 TERMINAL_MAP_STATUSES = {"PASS", "BLOCKED", "FAILED"}
-RUNTIME_PROFILE_SELECTORS = ("recommended", "speed_30kph")
+CAMERA_SOURCE_5HZ_SELECTOR = "speed_30kph_camera_source_5hz"
+SPEED_30KPH_PROFILE_SELECTORS = frozenset(
+    {"speed_30kph", CAMERA_SOURCE_5HZ_SELECTOR}
+)
+RUNTIME_PROFILE_SELECTORS = (
+    "recommended",
+    "speed_30kph",
+    CAMERA_SOURCE_5HZ_SELECTOR,
+)
 RUNTIME_WRAPPER_OPTIONS = {
     "recommended": ["--recommended", "--visualize", "--capture-desktop"],
     "speed_30kph": [
@@ -97,6 +106,25 @@ RUNTIME_WRAPPER_OPTIONS = {
         "--visualize",
         "--capture-desktop",
     ],
+    CAMERA_SOURCE_5HZ_SELECTOR: [
+        "--recommended",
+        "--speed-30kph",
+        "--camera-source-5hz",
+        "--visualize",
+        "--capture-desktop",
+    ],
+}
+CAMERA_SOURCE_5HZ_CONTRACT = {
+    "profile_id": "carla_camera_source_5hz_ab_v1",
+    "baseline_selector": "speed_30kph",
+    "sensor_count": 6,
+    "sensor_tick_sec": 0.2,
+    "source_frequency_hz": 5.0,
+    "ros_publish_frequency_hz": 5.0,
+    "maximum_stamp_gap_sec": 0.25,
+    "qos_profile": "reliable",
+    "only_semantic_delta": "camera_parameters_sensor_tick",
+    "imu_gnss_unchanged": True,
 }
 CUSTOM_MAP_INITIAL_APPROACH_CONTRACT = {
     "enabled": True,
@@ -305,6 +333,7 @@ CAMPAIGN_EXECUTION_CONTRACT_PATHS = (
     "autoware_e2e_vad_launch/launch/vad_visualization.launch.xml",
     "autoware_e2e_vad_launch/launch/vad_carla_tiny_fast.launch.xml",
     "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
+    "autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
     "autoware_e2e_vad_launch/scripts/vad_aeb_configurator.py",
     "autoware_e2e_vad_launch/scripts/carla_map_aligned_odometry.py",
     "autoware_e2e_vad_launch/scripts/vad_imu_acceleration_adapter.py",
@@ -695,7 +724,7 @@ def _runtime_route_selection_overrides(
                 "recommended profile must not define route-selection overrides"
             )
         return {}
-    if selector != "speed_30kph":
+    if selector not in SPEED_30KPH_PROFILE_SELECTORS:
         raise MatrixError(f"unknown runtime profile selector: {selector!r}")
     resolved = _validate_route_selection_overrides(
         declared,
@@ -730,7 +759,7 @@ def _runtime_turn_route_selection_policy(
                 "recommended profile must not define a turn-route ranking policy"
             )
         return None
-    if selector != "speed_30kph":
+    if selector not in SPEED_30KPH_PROFILE_SELECTORS:
         raise MatrixError(f"unknown runtime profile selector: {selector!r}")
     if declared != SPEED_30KPH_TURN_ROUTE_SELECTION_POLICY:
         raise MatrixError("speed_30kph turn-route ranking policy is not pinned")
@@ -1036,8 +1065,18 @@ def _validate_runtime_profile(
         raise MatrixError("runtime-profile launch_arguments must be strings")
     _runtime_route_selection_overrides(profile, selector)
     _runtime_turn_route_selection_policy(profile, selector)
-    if selector == "speed_30kph":
+    if selector in SPEED_30KPH_PROFILE_SELECTORS:
         _validate_speed_30kph_contract(profile)
+    camera_contract = profile.get("camera_source_contract")
+    if selector == CAMERA_SOURCE_5HZ_SELECTOR:
+        if camera_contract != CAMERA_SOURCE_5HZ_CONTRACT:
+            raise MatrixError(
+                "camera-source 5 Hz runtime profile contract is not pinned"
+            )
+    elif camera_contract is not None:
+        raise MatrixError(
+            f"runtime profile {selector!r} must not define camera_source_contract"
+        )
     return profile
 
 
@@ -1075,8 +1114,8 @@ def load_matrix(path: Path = DEFAULT_MATRIX) -> tuple[dict[str, Any], Path]:
         ),
         "matrix manifest",
     )
-    select_runtime_profile(value, "recommended")
-    select_runtime_profile(value, "speed_30kph")
+    for selector in RUNTIME_PROFILE_SELECTORS:
+        select_runtime_profile(value, selector)
     trials = value["route_contract"].get("trials")
     if not isinstance(trials, list) or [item.get("id") for item in trials] != list(
         TRIAL_IDS
@@ -1085,11 +1124,12 @@ def load_matrix(path: Path = DEFAULT_MATRIX) -> tuple[dict[str, Any], Path]:
     _route_generation_contracts(
         value["route_contract"], value["runtime_profile"], "recommended"
     )
-    _route_generation_contracts(
-        value["route_contract"],
-        value["runtime_profiles"]["speed_30kph"],
-        "speed_30kph",
-    )
+    for selector in SPEED_30KPH_PROFILE_SELECTORS:
+        _route_generation_contracts(
+            value["route_contract"],
+            value["runtime_profiles"][selector],
+            selector,
+        )
     bundles = value["validated_full_map_bundles"]
     if not isinstance(bundles, dict) or any(
         not MAP_ID_RE.fullmatch(str(map_id)) for map_id in bundles
@@ -1270,7 +1310,7 @@ def _resolved_map_route_generation_contracts(
     map_id: str,
 ) -> dict[str, dict[str, Any]]:
     contracts = _route_generation_contracts(route_contract, profile, selector)
-    if selector != "speed_30kph" or map_id != "town10hd_opt":
+    if selector not in SPEED_30KPH_PROFILE_SELECTORS or map_id != "town10hd_opt":
         return contracts
     if not isinstance(profile, Mapping):
         raise MatrixError("speed_30kph runtime profile must be an object")
@@ -3720,7 +3760,7 @@ def _validate_route_matrix_provenance(
         )
     expected_selection_method = (
         SPEED_30KPH_TURN_ROUTE_SELECTION_METHOD
-        if selector == "speed_30kph" and trial_id == "turn"
+        if selector in SPEED_30KPH_PROFILE_SELECTORS and trial_id == "turn"
         else (
             ROUTE_SELECTION_POLICY
             if expected_selection_override is not None
@@ -3831,7 +3871,7 @@ def _validate_route_matrix_provenance(
         raise MatrixError(
             f"route matrix {trial_id} route violates its exact selection override"
         )
-    if selector == "speed_30kph" and trial_id == "turn":
+    if selector in SPEED_30KPH_PROFILE_SELECTORS and trial_id == "turn":
         if turn_selection_policy is None or expected_selection_override is not None:
             raise MatrixError("speed turn ranking plan is inconsistent")
         if not isinstance(catalog_routes, list):
@@ -4046,7 +4086,8 @@ def select_routes(
             "turn": turn_catalog_path.expanduser().resolve(),
         }
     if (
-        plan.get("runtime_profile_selector", "recommended") == "speed_30kph"
+        plan.get("runtime_profile_selector", "recommended")
+        in SPEED_30KPH_PROFILE_SELECTORS
         and catalog_paths["straight"] == catalog_paths["turn"]
     ):
         raise MatrixError(
@@ -4102,7 +4143,7 @@ def select_routes(
         _validate_catalog_generation(
             catalogs[path], generation_contracts[trial_id], trial_id
         )
-        if plan.get("runtime_profile_selector") == "speed_30kph":
+        if plan.get("runtime_profile_selector") in SPEED_30KPH_PROFILE_SELECTORS:
             _validate_speed_catalog_endpoint_policy(
                 catalogs[path],
                 trial_id,
@@ -4131,7 +4172,7 @@ def select_routes(
         selected_turn_geometry: dict[str, Any] | None = None
         selected_custom_turn_geometry: dict[str, Any] | None = None
         if (
-            plan.get("runtime_profile_selector") == "speed_30kph"
+            plan.get("runtime_profile_selector") in SPEED_30KPH_PROFILE_SELECTORS
             and trial_id == "straight"
         ):
             physically_admissible = []
@@ -4177,7 +4218,7 @@ def select_routes(
                 )
             candidates = physically_admissible
         if (
-            plan.get("runtime_profile_selector") == "speed_30kph"
+            plan.get("runtime_profile_selector") in SPEED_30KPH_PROFILE_SELECTORS
             and trial_id == "turn"
         ):
             turn_policy = _plan_turn_route_selection_policy(plan)
@@ -4290,7 +4331,7 @@ def select_routes(
             generation_contracts[trial_id]
         )
         if (
-            plan.get("runtime_profile_selector") == "speed_30kph"
+            plan.get("runtime_profile_selector") in SPEED_30KPH_PROFILE_SELECTORS
             and trial_id == "straight"
         ):
             analysis["physical_straight_preflight"] = (
@@ -4317,7 +4358,7 @@ def select_routes(
                 else "capacity_170_199"
             )
         if (
-            plan.get("runtime_profile_selector") == "speed_30kph"
+            plan.get("runtime_profile_selector") in SPEED_30KPH_PROFILE_SELECTORS
             and trial_id == "turn"
         ):
             if selected_turn_geometry is None:
@@ -4429,7 +4470,10 @@ def select_routes(
             }
         )
     campaign_preflight = None
-    if plan.get("runtime_profile_selector", "recommended") == "speed_30kph":
+    if (
+        plan.get("runtime_profile_selector", "recommended")
+        in SPEED_30KPH_PROFILE_SELECTORS
+    ):
         campaign_preflight = _campaign_route_map_preflight(
             output_root, plan, entry, selected
         )
@@ -4769,6 +4813,289 @@ def _sha256_manifest(path: Path) -> dict[str, str]:
     return values
 
 
+def _camera_source_5hz_evidence(
+    trial_dir: Path,
+    runtime: Mapping[str, str],
+    profile: Mapping[str, Any],
+    latency: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    contract = profile.get("camera_source_contract")
+    if contract is None:
+        if runtime.get("CAMERA_SOURCE_5HZ") not in {None, "false"}:
+            raise MatrixError(
+                "runtime enabled the camera-source A/B outside its fixed profile"
+            )
+        return None
+    if contract != CAMERA_SOURCE_5HZ_CONTRACT:
+        raise MatrixError("camera-source 5 Hz evidence contract changed")
+    if runtime.get("CAMERA_SOURCE_5HZ") != "true":
+        raise MatrixError("runtime did not enable the camera-source 5 Hz profile")
+    _runtime_number(runtime, "CAMERA_SOURCE_SENSOR_TICK_SEC", 0.2)
+    _runtime_number(runtime, "CAMERA_ROS_PUBLISH_HZ", 5.0)
+
+    provenance_root = trial_dir / "sensor_mapping_provenance"
+    mapping_path = provenance_root / "sensor_mapping.yaml"
+    sums_path = provenance_root / "SHA256SUMS"
+    if not mapping_path.is_file() or not sums_path.is_file():
+        raise MatrixError("camera-source profile lacks sensor-mapping provenance")
+    mapping_sha256 = sha256_file(mapping_path)
+    sums = _sha256_manifest(sums_path)
+    if sums != {"sensor_mapping.yaml": mapping_sha256}:
+        raise MatrixError("camera-source sensor-mapping SHA256 manifest changed")
+    if runtime.get("SENSOR_MAPPING_SHA256") != mapping_sha256:
+        raise MatrixError("runtime camera-source sensor-mapping digest changed")
+    runtime_mapping = Path(runtime.get("SENSOR_MAPPING_FILE", ""))
+    expected_name = (
+        "sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+    )
+    if runtime_mapping.name != expected_name:
+        raise MatrixError("runtime selected a different camera-source mapping")
+
+    baseline_path = ROOT / (
+        "autoware_e2e_vad_launch/config/"
+        "sensor_mapping_vad_fast_reliable_imu.yaml"
+    )
+    candidate_path = ROOT / (
+        "autoware_e2e_vad_launch/config/"
+        "sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+    )
+    if mapping_sha256 != sha256_file(candidate_path):
+        raise MatrixError("recorded camera-source mapping differs from the campaign")
+    baseline = _yaml_mapping(baseline_path, "baseline sensor mapping")
+    candidate = _yaml_mapping(mapping_path, "camera-source sensor mapping")
+    expected = deepcopy(baseline)
+    sensor_mappings = expected.get("sensor_mappings")
+    if not isinstance(sensor_mappings, dict):
+        raise MatrixError("baseline sensor mapping lacks sensor_mappings")
+    camera_ids: list[str] = []
+    for sensor in sensor_mappings.values():
+        if not isinstance(sensor, dict) or sensor.get("carla_type") != (
+            "sensor.camera.rgb"
+        ):
+            continue
+        camera_id = sensor.get("id")
+        parameters = sensor.get("parameters")
+        if not isinstance(camera_id, str) or not isinstance(parameters, dict):
+            raise MatrixError("baseline camera mapping is incomplete")
+        parameters["sensor_tick"] = 0.2
+        camera_ids.append(camera_id)
+    if len(camera_ids) != int(contract["sensor_count"]) or candidate != expected:
+        raise MatrixError(
+            "camera-source mapping changed fields other than six camera sensor_tick values"
+        )
+
+    bundle = latency.get("camera_bundle")
+    acceptance = latency.get("candidate_front_acceptance")
+    event_rates = latency.get("event_rates")
+    if (
+        not isinstance(bundle, dict)
+        or not isinstance(acceptance, dict)
+        or not isinstance(event_rates, dict)
+    ):
+        raise MatrixError("camera-source trial lacks camera/VAD cadence evidence")
+    coverage = _finite_number(
+        bundle.get("bundle_coverage_percent"),
+        "camera-source six-camera bundle coverage",
+    )
+    acceptance_percent = _finite_number(
+        acceptance.get("acceptance_percent"),
+        "camera-source VAD candidate acceptance",
+    )
+    candidate_count = acceptance.get("candidate_count")
+    front_count = acceptance.get("front_count")
+    if any(
+        isinstance(value, bool) or not isinstance(value, int) or value <= 0
+        for value in (candidate_count, front_count)
+    ):
+        raise MatrixError("camera-source candidate/front counts are invalid")
+    if (
+        bundle.get("available") is not True
+        or int(bundle.get("camera_count", 0)) != int(contract["sensor_count"])
+        or coverage < 99.0
+    ):
+        raise MatrixError(
+            f"camera-source six-camera bundle coverage is below 99%: {coverage:.3f}%"
+        )
+    # The recorder may start or stop one topic one message before another at
+    # the bag boundary. Keep the whole-bag compatibility gate strict to one
+    # frame; the cross-arm report separately identifies this boundary effect.
+    if (
+        acceptance.get("available") is not True
+        or acceptance_percent < 99.0
+        or abs(int(candidate_count) - int(front_count)) > 1
+    ):
+        raise MatrixError(
+            "camera-source VAD candidate/front whole-bag coverage is below "
+            f"the one-boundary-frame gate: {acceptance_percent:.3f}% "
+            f"({candidate_count}/{front_count})"
+        )
+
+    maximum_stamp_gap_sec = _finite_number(
+        contract["maximum_stamp_gap_sec"],
+        "camera-source maximum stamp gap contract",
+    )
+    camera_stamp_gaps: dict[str, float] = {}
+    for camera_id in sorted(camera_ids):
+        topic = f"/sensing/camera/{camera_id}/camera_info"
+        rate = event_rates.get(topic)
+        if not isinstance(rate, dict):
+            raise MatrixError(f"camera-source latency lacks event rate for {topic}")
+        stamp_period = rate.get("stamp_period_sec")
+        if not isinstance(stamp_period, dict) or stamp_period.get("available") is not True:
+            raise MatrixError(f"camera-source stamp-period evidence is unavailable for {topic}")
+        maximum_gap = _finite_number(
+            stamp_period.get("max"), f"camera-source maximum stamp gap for {topic}"
+        )
+        stamp_rate_hz = _finite_number(
+            rate.get("stamp_rate_hz"), f"camera-source stamp rate for {topic}"
+        )
+        if maximum_gap > maximum_stamp_gap_sec + 1.0e-9:
+            raise MatrixError(
+                f"camera-source maximum stamp gap exceeds {maximum_stamp_gap_sec:.3f} s "
+                f"for {topic}: {maximum_gap:.6f} s"
+            )
+        if not 4.9 <= stamp_rate_hz <= 5.1:
+            raise MatrixError(
+                f"camera-source stamp rate is not approximately 5 Hz for {topic}: "
+                f"{stamp_rate_hz:.6f} Hz"
+            )
+        camera_stamp_gaps[camera_id] = maximum_gap
+
+    try:
+        stack_log = (trial_dir / "stack.log").read_text(
+            encoding="utf-8", errors="replace"
+        )
+    except OSError as error:
+        raise MatrixError(f"cannot read camera-source stack log: {error}") from error
+    inference_counters = [
+        tuple(int(value) for value in match)
+        for match in re.findall(
+            r"published_count=(\d+).*?mailbox_taken=(\d+).*?coalesced_drops=(\d+)",
+            stack_log,
+        )
+    ]
+    if not inference_counters:
+        raise MatrixError("camera-source stack log has no VAD inference counters")
+    queue_counters = [
+        tuple(int(value) if index else float(value) for index, value in enumerate(match))
+        for match in re.findall(
+            r"\[INFO\s+([0-9]+(?:\.[0-9]+)?)\].*?VAD frame queued: "
+            r"source_stamp_ns=(\d+).*?assembled=(\d+).*?"
+            r"capacity_pruned=(\d+).*?superseded=(\d+).*?"
+            r"mailbox_submitted=(\d+).*?coalesced_drops=(\d+).*?"
+            r"received_images_min=(\d+).*?received_images_max=(\d+)",
+            stack_log,
+        )
+    ]
+    if not queue_counters:
+        raise MatrixError(
+            "camera-source stack log has no timestamped VAD queue counters"
+        )
+    published, mailbox_taken, coalesced_drops = inference_counters[-1]
+    (
+        _,
+        _,
+        assembled,
+        capacity_pruned,
+        superseded,
+        mailbox_submitted,
+        queued_coalesced,
+        _,
+        _,
+    ) = queue_counters[-1]
+    initial_superseded = int(queue_counters[0][4])
+    startup_superseded = initial_superseded == 1
+    queue_integrity_failed = any(
+        int(item[3]) != 0
+        or int(item[4]) != initial_superseded
+        or int(item[6]) != 0
+        or int(item[2]) != int(item[5])
+        for item in queue_counters
+    )
+    if initial_superseded not in {0, 1}:
+        queue_integrity_failed = True
+    recorder_start_wall_sec: float | None = None
+    if startup_superseded:
+        try:
+            recorder_log = (trial_dir / "recorder.log").read_text(
+                encoding="utf-8", errors="replace"
+            )
+        except OSError as error:
+            raise MatrixError(
+                f"cannot read camera-source recorder log: {error}"
+            ) from error
+        recorder_match = re.search(
+            r"\[INFO\s+([0-9]+(?:\.[0-9]+)?)\].*?Recording\.\.\.",
+            recorder_log,
+        )
+        if recorder_match is None:
+            raise MatrixError(
+                "camera-source recorder log lacks a timestamped Recording marker"
+            )
+        recorder_start_wall_sec = float(recorder_match.group(1))
+        first_queue_wall_sec = float(queue_counters[0][0])
+        startup_relation_failed = any(
+            int(item[7]) != int(item[8])
+            or int(item[7]) != int(item[2]) + 1
+            for item in queue_counters
+        )
+        if (
+            first_queue_wall_sec >= recorder_start_wall_sec
+            or startup_relation_failed
+            or not math.isclose(coverage, 100.0, rel_tol=0.0, abs_tol=1.0e-9)
+            or candidate_count != front_count
+            or not math.isclose(
+                acceptance_percent, 100.0, rel_tol=0.0, abs_tol=1.0e-9
+            )
+        ):
+            queue_integrity_failed = True
+    if (
+        published <= 0
+        or mailbox_taken != published
+        or coalesced_drops != 0
+        or any(item[2] != 0 for item in inference_counters)
+        or queue_integrity_failed
+    ):
+        raise MatrixError(
+            "camera-source VAD queue/mailbox evidence reports loss or coalescing: "
+            f"published={published}, mailbox_taken={mailbox_taken}, "
+            f"mailbox_submitted={mailbox_submitted}, "
+            f"capacity_pruned={capacity_pruned}, superseded={superseded}, "
+            f"coalesced_drops={max(coalesced_drops, queued_coalesced)}"
+        )
+    return {
+        "status": "PASS",
+        "contract": dict(contract),
+        "mapping_sha256": mapping_sha256,
+        "baseline_mapping_sha256": sha256_file(baseline_path),
+        "semantic_delta": {
+            "camera_ids": sorted(camera_ids),
+            "field": "parameters.sensor_tick",
+            "baseline_sec": 0.0,
+            "candidate_sec": 0.2,
+            "other_fields_equal": True,
+        },
+        "bundle_coverage_percent": coverage,
+        "maximum_camera_stamp_gap_sec": max(camera_stamp_gaps.values()),
+        "camera_stamp_gap_sec": camera_stamp_gaps,
+        "candidate_front_acceptance_percent": acceptance_percent,
+        "candidate_count": candidate_count,
+        "front_count": front_count,
+        "vad_inference": {
+            "published_count": published,
+            "mailbox_taken": mailbox_taken,
+            "mailbox_submitted": mailbox_submitted,
+            "capacity_pruned": capacity_pruned,
+            "superseded": superseded,
+            "superseded_classification": (
+                "startup_before_recorder" if startup_superseded else "none"
+            ),
+            "recorder_start_wall_sec": recorder_start_wall_sec,
+            "coalesced_drops": coalesced_drops,
+        },
+    }
+
+
 def _rosbag_manifest(path: Path, label: str) -> dict[str, Any]:
     root = path.expanduser()
     if root.is_symlink():
@@ -4948,6 +5275,10 @@ def _speed_contract_evidence(
         "CLOSED_LOOP_VALIDATION_STATE": str(contract["validation_state"]),
         "SPEED_LIMIT_SOURCE": str(gate_contract["speed_limit_source"]),
         "REAL_VEHICLE_READY": "false",
+        "VAD_ROUTE_MANAGER_OPENBLAS_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_OMP_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_MKL_NUM_THREADS": "1",
+        "VAD_ROUTE_MANAGER_NUMEXPR_NUM_THREADS": "1",
     }
     for field, expected in string_runtime.items():
         if runtime.get(field) != expected:
@@ -5768,6 +6099,14 @@ def validate_trial(
                 "rviz_capture_provenance/SHA256SUMS",
             )
         )
+    if profile.get("camera_source_contract") is not None:
+        required_files.extend(
+            (
+                "sensor_mapping_provenance/sensor_mapping.yaml",
+                "sensor_mapping_provenance/SHA256SUMS",
+                "stack.log",
+            )
+        )
     for relative in required_files:
         if not (trial_dir / relative).is_file():
             raise MatrixError(f"trial is missing required evidence: {relative}")
@@ -5842,6 +6181,9 @@ def validate_trial(
         or int(candidate_rate.get("count", 0)) <= 0
     ):
         raise MatrixError("recorded route analysis contains no VAD candidate output")
+    camera_source_evidence = _camera_source_5hz_evidence(
+        trial_dir, runtime, profile, latency
+    )
     png_size = _image_size(trial_dir / "autoware_rviz_fullscreen.png", "PNG")
     gif_size = _image_size(trial_dir / "autoware_rviz_drive.gif", "GIF")
     if gif_size[0] != 960:
@@ -5892,6 +6234,7 @@ def validate_trial(
         ),
         "runtime_profile": profile,
         "speed_contract": speed_contract,
+        "camera_source_contract": camera_source_evidence,
         "campaign_route_map_preflight": route_preflight,
         "carla_lifecycle": carla_lifecycle,
         "desktop_capture": desktop,

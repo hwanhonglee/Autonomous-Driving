@@ -36,6 +36,7 @@ Usage: run_recorded_route_trial.sh [options] OUTPUT_DIR ROUTE_JSON [launch argum
 Options:
   --recommended          Run the repeat-screened full-stack parameter profile
   --speed-30kph          Add the guarded 8.333 m/s screening profile
+  --camera-source-5hz    Render six CARLA cameras at 5 sim-Hz in recommended mode
   --visualize            Start RViz (and the front-camera view outside capture mode)
   --capture-desktop      Record 1920x1080 owned-RViz PNG/GIF evidence after a VAD candidate
   --tight-corridor       Screen the recommended profile with a +/-0.20 m corridor
@@ -60,6 +61,8 @@ smart_mpc=false
 fp16_heads=false
 recommended=false
 speed_30kph=false
+camera_source_5hz=false
+camera_source_sensor_tick_sec=0.0
 visualize=false
 capture_desktop=false
 trajectory_stability=false
@@ -85,6 +88,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --speed-30kph)
       speed_30kph=true
+      recommended=true
+      shift
+      ;;
+    --camera-source-5hz)
+      camera_source_5hz=true
+      camera_source_sensor_tick_sec=0.2
       recommended=true
       shift
       ;;
@@ -163,6 +172,10 @@ if [[ "${recommended}" == "true" ]]; then
     echo "--recommended cannot be combined with experimental controller, precision, model, or sensor options." >&2
     exit 2
   fi
+fi
+if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
+  exit 2
 fi
 if [[ "${speed_30kph}" == "true" && \
       ( "${tight_corridor}" == "true" || "${trajectory_stability}" == "true" ) ]]; then
@@ -306,6 +319,9 @@ if [[ "${recommended}" == "true" ]]; then
   package_share="$(ros2 pkg prefix autoware_e2e_vad_launch)/share/autoware_e2e_vad_launch"
   model_override="${package_share}/config/vad_carla_tiny_recommended.param.yaml"
   sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu.yaml"
+  if [[ "${camera_source_5hz}" == "true" ]]; then
+    sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+  fi
   recommended_mpc="${package_share}/config/mpc_carla_recommended.param.yaml"
   required_profile_files=("${model_override}" "${sensor_mapping}" "${recommended_mpc}")
   if [[ "${speed_30kph}" == "true" ]]; then
@@ -634,8 +650,13 @@ printf 'CARLA_LIFECYCLE=cold_start_owned_process_group_per_trial\nCARLA_GENERATI
   "${output_dir}/runtime.env"
 printf 'SOURCE_ROUTE_FILE=%s\nEFFECTIVE_ROUTE_FILE=%s\nFULL_MAP_PATH=%s\n' \
   "${source_route_file}" "${route_file}" "${full_map_path}" >> "${output_dir}/runtime.env"
+printf 'VAD_ROUTE_MANAGER_OPENBLAS_NUM_THREADS=1\nVAD_ROUTE_MANAGER_OMP_NUM_THREADS=1\nVAD_ROUTE_MANAGER_MKL_NUM_THREADS=1\nVAD_ROUTE_MANAGER_NUMEXPR_NUM_THREADS=1\n' >> \
+  "${output_dir}/runtime.env"
 printf 'RECOMMENDED=%s\nVISUALIZE=%s\nCAPTURE_DESKTOP=%s\nTIGHT_CORRIDOR_CANDIDATE=%s\nTRAJECTORY_STABILITY_CANDIDATE=%s\nSMART_MPC=%s\nFP16_HEADS=%s\n' \
   "${recommended}" "${visualize}" "${capture_desktop}" "${tight_corridor}" "${trajectory_stability}" "${smart_mpc}" "${fp16_heads}" >> \
+  "${output_dir}/runtime.env"
+printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=5.0\n' \
+  "${camera_source_5hz}" "${camera_source_sensor_tick_sec}" >> \
   "${output_dir}/runtime.env"
 if [[ "${capture_desktop}" == "true" ]]; then
   printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\n' \
@@ -1154,6 +1175,9 @@ if [[ "${recommended}" == "true" ]]; then
   stack_command=(scripts/e2e/run_route_vad_fast.sh --recommended)
   if [[ "${speed_30kph}" == "true" ]]; then
     stack_command+=(--speed-30kph)
+  fi
+  if [[ "${camera_source_5hz}" == "true" ]]; then
+    stack_command+=(--camera-source-5hz)
   fi
   if [[ "${visualize}" == "true" ]]; then
     if [[ "${capture_desktop}" == "true" ]]; then

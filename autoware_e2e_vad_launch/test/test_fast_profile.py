@@ -25,6 +25,9 @@ RELIABLE_FAST_MAPPING = PACKAGE / "config/sensor_mapping_vad_fast_reliable.yaml"
 RELIABLE_FAST_IMU_MAPPING = (
     PACKAGE / "config/sensor_mapping_vad_fast_reliable_imu.yaml"
 )
+CAMERA_SOURCE_5HZ_MAPPING = PACKAGE / (
+    "config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+)
 SYNC_QUEUE32_PARAMS = PACKAGE / "test/fixtures/vad/sync_queue32.param.yaml"
 RELIABLE_SYNC_QUEUE32_PARAMS = PACKAGE / "config/vad_carla_tiny_recommended.param.yaml"
 RECOMMENDED_MPC_PARAMS = PACKAGE / "config/mpc_carla_recommended.param.yaml"
@@ -51,6 +54,12 @@ FAST_VAD_LAUNCH = PACKAGE / "launch/vad_carla_tiny_fast.launch.xml"
 VAD_COMPONENT_MONITOR = PACKAGE / "config/component_state_monitor_vad.yaml"
 VAD_DIAGNOSTIC_GRAPH = PACKAGE / "config/diagnostic_graph_vad.yaml"
 VAD_ROUTE_MANAGER_PARAMS = PACKAGE / "config/vad_route_manager.param.yaml"
+VAD_ROUTE_MANAGER_THREAD_ENV = {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+}
 STANDARD_DIAGNOSTIC_DIR = (
     ROOT / "src/launcher/autoware_launch/autoware_launch/config/system/diagnostics"
 )
@@ -221,6 +230,30 @@ def test_reliable_fast_mapping_uses_exact_frame_capture_and_reliable_qos():
         config["parameters"]["sensor_tick"] == pytest.approx(0.0)
         for config in camera_mappings(candidate).values()
     )
+
+
+def test_camera_source_5hz_mapping_changes_only_six_camera_ticks():
+    baseline = load_yaml(RELIABLE_FAST_IMU_MAPPING)
+    candidate = load_yaml(CAMERA_SOURCE_5HZ_MAPPING)
+
+    expected = deepcopy(baseline)
+    for config in camera_mappings(expected).values():
+        config["parameters"]["sensor_tick"] = 0.2
+
+    assert candidate == expected
+    cameras = camera_mappings(candidate)
+    assert set(cameras) == set(CAMERAS)
+    assert all(
+        config["parameters"]["sensor_tick"] == pytest.approx(0.2)
+        and config["ros_config"]["frequency_hz"] == 5
+        and config["ros_config"]["qos_profile"] == "reliable"
+        for config in cameras.values()
+    )
+    imu = candidate["sensor_mappings"]["tamagawa/imu_link"]
+    assert imu == baseline["sensor_mappings"]["tamagawa/imu_link"]
+    assert candidate["sensor_mappings"]["gnss_link"] == baseline[
+        "sensor_mappings"
+    ]["gnss_link"]
 
 
 def test_reliable_reader_override_extends_queue32_without_changing_base_candidate():
@@ -401,6 +434,30 @@ def test_route_postprocessing_is_opt_in_and_launch_parameters_are_wired(launch_p
     }
     for name in expected_defaults:
         assert parameters[name] == f"$(var {name})"
+
+
+@pytest.mark.parametrize("launch_path", [MINIMAL_LAUNCH, FULL_LAUNCH])
+def test_vad_route_manager_blas_thread_cap_is_process_local(launch_path):
+    root = parse_xml(launch_path)
+    managers = [
+        node for node in root.iter("node") if node.get("exec") == "vad_route_manager.py"
+    ]
+    assert len(managers) == 1
+    manager = managers[0]
+    manager_environment = manager.findall("./env")
+    assert len(manager_environment) == len(VAD_ROUTE_MANAGER_THREAD_ENV)
+    assert {
+        environment.get("name"): environment.get("value")
+        for environment in manager_environment
+    } == VAD_ROUTE_MANAGER_THREAD_ENV
+
+    protected_names = set(VAD_ROUTE_MANAGER_THREAD_ENV)
+    for node in root.iter("node"):
+        if node is manager:
+            continue
+        assert protected_names.isdisjoint(
+            environment.get("name") for environment in node.findall("./env")
+        )
 
 
 def test_full_launch_standard_mpc_parameter_override_is_opt_in():
@@ -721,6 +778,10 @@ def make_fake_runtime(tmp_path):
         package_share / "config" / RELIABLE_FAST_IMU_MAPPING.name,
     )
     shutil.copy2(
+        CAMERA_SOURCE_5HZ_MAPPING,
+        package_share / "config" / CAMERA_SOURCE_5HZ_MAPPING.name,
+    )
+    shutil.copy2(
         RELIABLE_SYNC_QUEUE32_PARAMS,
         package_share / "config" / RELIABLE_SYNC_QUEUE32_PARAMS.name,
     )
@@ -992,6 +1053,35 @@ def test_fast_wrapper_builds_guarded_speed_30_profile(tmp_path):
     )
     assert "comfortable_deceleration_mps2:=0.60" not in arguments
     assert "maximum_speed_mps:=2.5" not in arguments
+
+
+def test_fast_wrapper_builds_camera_source_5hz_ab_profile(tmp_path):
+    route = make_route(tmp_path)
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--camera-source-5hz",
+            "--visualize",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert (
+        f"sensor_mapping_file:={package_config / CAMERA_SOURCE_5HZ_MAPPING.name}"
+        in arguments
+    )
+    assert "nominal_cruise_speed_mps:=8.333333333333334" in arguments
+    assert "use_vad_imu_acceleration:=true" in arguments
+    assert "rviz:=true" in arguments
 
 
 @pytest.mark.parametrize("experimental", ["--tight-corridor", "--trajectory-stability"])

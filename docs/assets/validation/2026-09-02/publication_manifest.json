@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "publication_id": "ctrack_camera_source_5hz_ab_2026_09_02_v1",
+  "generated_at": "2026-09-02T03:22:03+09:00",
+  "status": "PASS",
+  "scope": {
+    "map_id": "c_track_1_0_7",
+    "selected_runnable_maps": 1,
+    "declared_runnable_maps": 9,
+    "canonical_maps": 19,
+    "blocked_maps": 10,
+    "trial_ids": [
+      "straight",
+      "turn"
+    ],
+    "matrix_status": "INCOMPLETE",
+    "reason": "Focused CTrack functional and integrity A/B; not an all-Town replacement."
+  },
+  "source_revision": {
+    "base_git_commit": "9bfa8057c311fa861ff61013d8276baa9a1f8ead",
+    "note": "The official runs include working-tree implementation changes whose exact launch, mapping, route-manager, runtime, and comparison inputs are SHA-bound in trial provenance and the comparison report."
+  },
+  "arms": {
+    "baseline": {
+      "runtime_profile_selector": "speed_30kph",
+      "camera_source_sensor_tick_sec": 0.0,
+      "source_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p0_blas1_official_v1",
+      "matrix_plan_sha256": "d7fef5866e6722cecc4509eaf4fdd977d021ac8666474ed51b8a728a11f7462d",
+      "aggregate_sha256": "1e283e7b9d2ab8ed86263395f66cbdaa2fed6429537249983e79ee983bc1cf90"
+    },
+    "candidate": {
+      "runtime_profile_selector": "speed_30kph_camera_source_5hz",
+      "camera_source_sensor_tick_sec": 0.2,
+      "source_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/c_track_sensor_tick_0p2_blas1_official_v1",
+      "matrix_plan_sha256": "5ded35c59d135282f9a10876a913e094aa37a11ef20b22e98e909c47b7164cde",
+      "aggregate_sha256": "ef827aab7a1b0ae005d03afd14e230cab374707c8b7f635208bf60cd872515f2"
+    }
+  },
+  "comparison": {
+    "source_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/camera_cadence_ab/comparison_blas1_official_v1",
+    "json_sha256": "e34b36c984a3518c80626ba6621f1e670a385995c265710a1c7a1557c6ff545f",
+    "png_sha256": "44f6974b374dd5a147069c4d9e25f911f7cf3c3b11319a9cbf168e7fbf1eb6f7",
+    "integrity_gate_count": 11,
+    "integrity_status": "PASS",
+    "performance_decision": "descriptive_only"
+  },
+  "route_identity": {
+    "straight_sha256": "38376adb07bf8c07bb1f503d3ea915114ce7dffc4799004f2ac1a85b610fee43",
+    "turn_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+    "baseline_candidate_byte_and_canonical_payload_equal": true
+  },
+  "runtime_contract": {
+    "target_speed_kph": 30.0,
+    "straight_minimum_sustained_speed_mps": 7.5,
+    "straight_minimum_sustained_duration_sec": 1.0,
+    "turn_speed_exposure": "curvature_limited_turn",
+    "camera_ros_publish_hz": 5.0,
+    "candidate_camera_stamp_hz": 5.0,
+    "candidate_maximum_camera_stamp_gap_sec": 0.200000003,
+    "maximum_allowed_camera_stamp_gap_sec": 0.25,
+    "vad_route_manager_blas_threads": 1,
+    "planning_architecture": "vad_route_manager_hybrid",
+    "longitudinal_speed_source": "explicit_simulation_profile",
+    "vad_geometry_evaluated": true,
+    "vad_velocity_evaluated": false,
+    "real_vehicle_ready": false
+  },
+  "media_contract": {
+    "fullscreen_png": {
+      "width_px": 1920,
+      "height_px": 1080,
+      "owned_rviz_window_only": true,
+      "vehicle_centered_in_map_viewport": true,
+      "path_candidate_actual_trajectory_front_camera_and_autoware_state_visible": true
+    },
+    "drive_gif": {
+      "width_px": 960,
+      "height_px": 540
+    },
+    "visual_audit_sample_frames": [
+      0,
+      25,
+      50,
+      75,
+      99
+    ],
+    "straight_fullscreen_sha256": "4be847709bee6e025a84fc9ee6a1be03696b19567a7dc671123120ac1278828e",
+    "straight_drive_gif_sha256": "67b03de1aaa8e26b3e9634d3de6d2ca12678f15c73024834455449c76eb65d84",
+    "turn_fullscreen_sha256": "c50c71953949a17dfce1fc1fefef4724d00afba9afb3cc487380eeb389d80d60",
+    "turn_drive_gif_sha256": "d29645f610364bbfae75c7db4234ffd66f8432ecbbffcb26b280830bffe04454"
+  },
+  "integrity": {
+    "sha256_manifest": "SHA256SUMS",
+    "sha256_manifest_excludes_itself": true,
+    "git_lfs_media_patterns": [
+      "*.png",
+      "*.gif"
+    ]
+  }
+}

@@ -30,7 +30,7 @@ runtime_profile:
 # contract. Opt-in profiles are selected explicitly by the runner and become
 # part of the immutable campaign-plan digest.
 runtime_profiles:
-  speed_30kph:
+  speed_30kph: &speed_30kph_profile
     id: vad_carla_30kph_visualized_v2
     trial_wrapper: run_recorded_route_trial.sh
     wrapper_options:
@@ -222,6 +222,30 @@ runtime_profiles:
             initial_approach_distance_m: 15.0
             maximum_initial_lateral_deviation_m: 1.5
             maximum_initial_heading_change_deg: 30.0
+
+  # Controlled camera-cadence A/B. The inherited route, weather, speed,
+  # controller, CARLA, visualization, and safety contracts are identical to
+  # speed_30kph; only the immutable sensor mapping changes camera sensor_tick.
+  speed_30kph_camera_source_5hz:
+    <<: *speed_30kph_profile
+    id: vad_carla_30kph_camera_source_5hz_visualized_v1
+    wrapper_options:
+      - --recommended
+      - --speed-30kph
+      - --camera-source-5hz
+      - --visualize
+      - --capture-desktop
+    camera_source_contract:
+      profile_id: carla_camera_source_5hz_ab_v1
+      baseline_selector: speed_30kph
+      sensor_count: 6
+      sensor_tick_sec: 0.2
+      source_frequency_hz: 5.0
+      ros_publish_frequency_hz: 5.0
+      maximum_stamp_gap_sec: 0.25
+      qos_profile: reliable
+      only_semantic_delta: camera_parameters_sensor_tick
+      imu_gnss_unchanged: true
 
 route_contract:
   weather: ClearNoon

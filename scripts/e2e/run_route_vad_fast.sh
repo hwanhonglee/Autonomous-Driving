@@ -7,7 +7,7 @@ source scripts/e2e/env.sh
 
 usage() {
   cat >&2 <<EOF
-Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
+Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph] [--camera-source-5hz] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
 
   default       Minimal Autoware control shell and the lowest runtime load
   --full        Full Autoware shell; RViz stays off unless a visual option is set
@@ -15,6 +15,9 @@ Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph] [--
   --rviz-only   Full mode only: start RViz without the external camera window
   --recommended Run the repeat-screened full-stack parameter profile
   --speed-30kph Add the guarded 8.333 m/s screening profile to --recommended
+  --camera-source-5hz
+                With --recommended, render all six CARLA cameras at 5 sim-Hz
+                while retaining reliable ROS 5 Hz transport and continuous IMU
   --tight-corridor
                 With --recommended, constrain every route command to +/-0.20 m
   --trajectory-stability
@@ -32,6 +35,7 @@ visualize=false
 rviz_only=false
 recommended=false
 speed_30kph=false
+camera_source_5hz=false
 trajectory_stability=false
 tight_corridor=false
 fp16_heads=false
@@ -58,6 +62,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --speed-30kph)
       speed_30kph=true
+      recommended=true
+      full=true
+      shift
+      ;;
+    --camera-source-5hz)
+      camera_source_5hz=true
       recommended=true
       full=true
       shift
@@ -116,6 +126,11 @@ if [[ "${recommended}" == "true" ]]; then
     echo "--recommended controls precision, VAD synchronization, and camera transport." >&2
     exit 2
   fi
+fi
+
+if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
+  exit 2
 fi
 
 if [[ "${speed_30kph}" == "true" && \
@@ -204,6 +219,9 @@ speed_30kph_gate=""
 speed_30kph_pid=""
 if [[ "${recommended}" == "true" ]]; then
   fast_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu.yaml"
+  if [[ "${camera_source_5hz}" == "true" ]]; then
+    fast_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml"
+  fi
   model_override="${package_share}/config/vad_carla_tiny_recommended.param.yaml"
   recommended_mpc="${package_share}/config/mpc_carla_recommended.param.yaml"
   required_profile_files=("${fast_mapping}" "${model_override}" "${recommended_mpc}")
@@ -297,7 +315,7 @@ if [[ "${trajectory_stability}" == "true" ]]; then
   echo "NOTICE: this outlier filter is HOLD after repeated closed-loop screening; it is not the recommended profile." >&2
 fi
 
-echo "VAD fast profile: 6x 640x360 raw cameras at 5 Hz; recommended=${recommended}; speed30=${speed_30kph}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}" >&2
+echo "VAD fast profile: 6x 640x360 raw cameras at 5 Hz; recommended=${recommended}; speed30=${speed_30kph}; camera source 5 sim-Hz=${camera_source_5hz}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}" >&2
 if [[ "${full}" == "true" ]]; then
   rviz_enabled=false
   if [[ "${visualize}" == "true" || "${rviz_only}" == "true" ]]; then

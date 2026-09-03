@@ -32,6 +32,95 @@ python3 -m portable_e2e.validate --help
 
 This smoke never imports PyTorch, Pillow, ROS, or CARLA.
 
+## Fresh CARLA Common10 quick start
+
+As of 2026-09-04, one fresh Town07 straight run has passed native collection
+and `common_10hz_v1` planning validation at a 30 km/h target. This is a data
+pipeline result, not proof of closed-loop autonomy.
+
+This workflow needs the repository's packaged CARLA 0.9.15 setup. It does not
+install Python packages. From terminal A, keep the exact map server running:
+
+```bash
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+
+scripts/e2e/run_carla_map.sh Town07 \
+  --port 2100 --quality Low \
+  -- -windowed -ResX=1280 -ResY=720 -nosound
+```
+
+Wait for `CARLA_READY`. In terminal B, collect into a new, nonexistent run
+path. Do not add `--allow-map-load`; cold-start a different map instead.
+
+```bash
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+source scripts/e2e/env.sh
+
+route_file="$REPO_ROOT/docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json"
+native_episode="$REPO_ROOT/datasets/raw/carla/common10_v1/2026-09-04/30kph/town07/straight/ClearNoon/seed_0000/run_001/episode"
+test -f "$route_file"
+test ! -e "$native_episode"
+mkdir -p "$(dirname "$native_episode")"
+
+python3 scripts/e2e/collect_carla_vad_expert.py \
+  "$native_episode" "$route_file" \
+  --host 127.0.0.1 --port 2100 \
+  --physics-hz 20 --capture-hz 10 \
+  --target-speed-kmh 30 --max-duration-sec 60 \
+  --stationary-warmup-sec 3.5 --stationary-tail-sec 6.5 \
+  --spawn-z-offset-m 0.5 --weather ClearNoon --seed 0
+```
+
+The three declared phases are `stationary_warmup`, `driving`, and
+`stationary_tail`. They provide real history and 6.4-second stopping context
+without retiming or duplicating camera frames. Each state contains a physical
+front-wheel measurement converted to ROS-positive-left
+`steering_tire_angle_rad`, plus `speed_limit_mps` converted from CARLA's
+measured speed-limit API. Missing fields fail closed.
+
+Convert a clean-HEAD native episode with the exact adapter interface below.
+The example license identifier records internal/manual-review status; it is
+not a grant of dataset use or redistribution rights.
+
+```bash
+export PORTABLE_E2E_ROOT="${PORTABLE_E2E_ROOT:-$HOME/portable_e2e}"
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+
+native_episode="$REPO_ROOT/datasets/raw/carla/common10_v1/2026-09-04/30kph/town07/straight/ClearNoon/seed_0000/run_001/episode"
+dataset_id='carla-common10-30kph-20260904-v1'
+prepared_dataset="$PORTABLE_E2E_ROOT/datasets/prepared/$dataset_id"
+test -d "$native_episode"
+test ! -e "$prepared_dataset"
+test -z "$(git status --porcelain)"
+mkdir -p "$(dirname "$prepared_dataset")"
+
+CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+python3 scripts/e2e/prepare_carla_common10_dataset.py \
+  --episode "train=$native_episode" \
+  --output "$prepared_dataset" \
+  --dataset-id "$dataset_id" \
+  --license-id project-generated-carla-internal-review \
+  --image-mode copy \
+  --validate-mode planning
+```
+
+The verified run produced 309 train samples over 30.800000459 seconds at
+9.999999851 Hz, with 100.000002 ms p99 gap, zero camera bundle skew, and 100%
+valid future points. `schema`, planning, image hashes, native frame binding,
+and canonical route reconstruction passed. The report deliberately leaves raw
+source content review and pixel decode as `NOT_RUN`, records no online runtime
+test or independent raw-state trajectory recomputation, and still requires
+manual release review. An offline 1 ms bundle PASS is a timestamp-skew gate,
+not inference latency.
+
+The historical short `c_track/turn` and `Town03/turn` routes are currently for
+centered PNG/GIF and control visualization only. Collect longer turn routes
+before treating those maps as Common10 training data; do not concatenate short
+runs or relabel them as qualified.
+
 ## Read-only raw archive verification
 
 Large ZIP files can be checked before extraction with the standard-library-only
@@ -126,11 +215,31 @@ qualification. Read Bench2Drive's `common_10hz_qualification` and
 contain absolute source paths; keep raw reports private unless paths are
 explicitly scrubbed and the publication copy is revalidated.
 
+The nuPlan mini DB, map, and camera-group-0 archives have passed full payload
+CRC checks and archive-level log/member correspondence only. Dataset Terms and
+intended use are still awaiting explicit review. SQLite
+record-to-JPEG-to-calibration-to-ego-to-map joins, calibration-based mapping
+from eight native cameras to six Common10 roles, deterministic route creation,
+and a policy for native scenes shorter than 30 seconds are not yet evaluated.
+The nuPlan Common10 adapter and training path therefore remain blocked.
+
 ## Real image-based trainer
 
-The real trainer additionally requires an approved isolated environment with
-PyTorch, NumPy, and Pillow. Do not install those packages into system Python,
-Conda `base`, or another user's environment.
+The real trainer additionally requires the user's personal project venv. The
+2026-09-04 verified environment uses Python 3.12.3, PyTorch `2.13.0+cu130`,
+NumPy `2.5.2`, and Pillow `12.3.0`. Activate only
+`$PORTABLE_E2E_ROOT/venvs/py312`; never install into system Python, Conda
+`base`, another project, or another user's environment.
+
+```bash
+export PORTABLE_E2E_ROOT="${PORTABLE_E2E_ROOT:-$HOME/portable_e2e}"
+source "$PORTABLE_E2E_ROOT/venvs/py312/bin/activate"
+export PIP_REQUIRE_VIRTUALENV=true
+export PYTHONNOUSERSITE=1
+export CUDA_VISIBLE_DEVICES=''
+```
+
+Start with CPU while the GPU remains hidden:
 
 ```bash
 python -m portable_e2e.train /path/to/common10_dataset \
@@ -169,7 +278,28 @@ python -m portable_e2e.train /path/to/common10_dataset \
 ```
 
 GPU use is never automatic: only an explicit `--device cuda:<index>` can create
-a CUDA context. Existing run or evaluation directories are not overwritten.
+a CUDA context. This project is restricted to physical GPU 0. Query that
+device's UUID immediately before a run and expose only the UUID; inside the
+process the single visible device is named `cuda:0`.
+
+```bash
+gpu_uuid="$(nvidia-smi -i 0 --query-gpu=uuid --format=csv,noheader | tr -d '[:space:]')"
+case "$gpu_uuid" in GPU-*) ;; *) printf 'GPU 0 UUID lookup failed\n' >&2; exit 2 ;; esac
+
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train \
+  /path/to/common10_dataset \
+  --run-dir /path/to/new_gpu_run \
+  --split train \
+  --device cuda:0 \
+  --limit-samples 4 \
+  --batch-size 1 \
+  --num-workers 0 \
+  --max-steps 1
+```
+
+If physical GPU 0 has another compute process, wait. Never expose physical GPU
+1, kill another user's process, reset a GPU, or reboot the shared server for a
+training run. Existing run or evaluation directories are not overwritten.
 Evaluation runs one unmeasured batch warm-up and records its batch/sample count.
 Compared reports must have identical warm-up counts, batch size, device,
 runtime—including PyTorch/OMP/MKL thread settings—hardware, and evaluation

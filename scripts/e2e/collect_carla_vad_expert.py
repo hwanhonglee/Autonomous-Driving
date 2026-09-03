@@ -43,6 +43,11 @@ MODEL_CAMERA_ORDER = (
 )
 WHEELBASE_M = 2.850
 MANEUVER_COMMANDS = frozenset((0, 1, 2, 4, 5))
+CAPTURE_PHASE_ORDER = (
+    "stationary_warmup",
+    "driving",
+    "stationary_tail",
+)
 
 
 class CollectionError(RuntimeError):
@@ -81,6 +86,164 @@ class CatalogGoalStatus:
     reached: bool
     remaining_route_m: float
     planar_distance_m: float
+
+
+def capture_phase_schedule(
+    physics_hz: float,
+    maximum_duration_sec: float,
+    stationary_warmup_sec: float,
+    stationary_tail_sec: float,
+) -> dict[str, Any]:
+    """Build a tick-exact phase schedule bounded by the total duration."""
+    values = (
+        physics_hz,
+        maximum_duration_sec,
+        stationary_warmup_sec,
+        stationary_tail_sec,
+    )
+    if not all(math.isfinite(value) for value in values):
+        raise CollectionError("capture phase durations and physics Hz must be finite")
+    if physics_hz <= 0.0 or maximum_duration_sec <= 0.0:
+        raise CollectionError("physics Hz and maximum duration must be positive")
+    if stationary_warmup_sec < 0.0 or stationary_tail_sec < 0.0:
+        raise CollectionError("stationary phase durations must be non-negative")
+
+    # A requested stationary duration is rounded up so that it is never silently
+    # shortened.  The total limit is rounded down, so the capture never exceeds it.
+    def requested_ticks(duration_sec: float) -> int:
+        return int(math.ceil(duration_sec * physics_hz - 1.0e-12))
+
+    warmup_ticks = requested_ticks(stationary_warmup_sec)
+    tail_ticks = requested_ticks(stationary_tail_sec)
+    maximum_total_ticks = int(
+        math.floor(maximum_duration_sec * physics_hz + 1.0e-12)
+    )
+    maximum_driving_ticks = maximum_total_ticks - warmup_ticks - tail_ticks
+    if maximum_driving_ticks < 1:
+        raise CollectionError(
+            "maximum duration must leave at least one physics tick for driving "
+            "after stationary warmup and tail"
+        )
+
+    return {
+        "order": list(CAPTURE_PHASE_ORDER),
+        "maximum_total_duration_sec": float(maximum_duration_sec),
+        "maximum_total_ticks": maximum_total_ticks,
+        "rounding_policy": {
+            "stationary_duration": "ceil_to_physics_tick",
+            "maximum_total_duration": "floor_to_physics_tick",
+        },
+        "stationary_warmup": {
+            "control_source": "full_service_brake",
+            "requested_duration_sec": float(stationary_warmup_sec),
+            "scheduled_ticks": warmup_ticks,
+            "scheduled_duration_sec": warmup_ticks / physics_hz,
+        },
+        "driving": {
+            "control_source": "carla.BasicAgent",
+            "maximum_ticks": maximum_driving_ticks,
+            "maximum_duration_sec": maximum_driving_ticks / physics_hz,
+        },
+        "stationary_tail": {
+            "control_source": "full_service_brake",
+            "requested_duration_sec": float(stationary_tail_sec),
+            "scheduled_ticks": tail_ticks,
+            "scheduled_duration_sec": tail_ticks / physics_hz,
+        },
+    }
+
+
+def summarize_capture_phases(
+    schedule: Mapping[str, Any],
+    observations: Mapping[str, Mapping[str, Any]],
+    physics_hz: float,
+) -> dict[str, Any]:
+    """Combine planned phase bounds with observed records for the manifest."""
+    result: dict[str, Any] = {
+        "order": list(CAPTURE_PHASE_ORDER),
+        "maximum_total_duration_sec": float(schedule["maximum_total_duration_sec"]),
+        "maximum_total_ticks": int(schedule["maximum_total_ticks"]),
+    }
+    total_ticks = 0
+    for phase in CAPTURE_PHASE_ORDER:
+        observation = observations[phase]
+        state_count = int(observation["state_count"])
+        total_ticks += state_count
+        first_timestamp = observation.get("first_timestamp")
+        last_timestamp = observation.get("last_timestamp")
+        timestamp_span_sec = (
+            float(last_timestamp) - float(first_timestamp)
+            if state_count > 1
+            else 0.0
+        )
+        result[phase] = {
+            **dict(schedule[phase]),
+            "state_count": state_count,
+            "camera_anchor_count": int(observation["camera_anchor_count"]),
+            "first_timestamp": first_timestamp,
+            "last_timestamp": last_timestamp,
+            "timestamp_span_sec": timestamp_span_sec,
+            "elapsed_sim_sec": state_count / physics_hz,
+        }
+    result["observed_total_ticks"] = total_ticks
+    result["observed_total_elapsed_sim_sec"] = total_ticks / physics_hz
+    return result
+
+
+def front_steering_measurement(
+    front_left_carla_deg: float, front_right_carla_deg: float
+) -> dict[str, float]:
+    """Convert measured CARLA front-wheel angles to ROS-positive-left radians.
+
+    CARLA's vehicle control/wheel convention is positive-right.  The two physical
+    wheel angles are retained verbatim and converted independently.  The virtual
+    center tire angle uses the Ackermann harmonic-tangent relation, avoiding any
+    use of the normalized VehicleControl.steer command as an angle.
+    """
+    if not all(
+        math.isfinite(value)
+        for value in (front_left_carla_deg, front_right_carla_deg)
+    ):
+        raise CollectionError("measured front-wheel steer angles must be finite")
+    front_left_ros_rad = -math.radians(front_left_carla_deg)
+    front_right_ros_rad = -math.radians(front_right_carla_deg)
+    if max(abs(front_left_ros_rad), abs(front_right_ros_rad)) >= math.pi / 2.0:
+        raise CollectionError("measured front-wheel steer angles must be within 90 degrees")
+
+    left_tangent = math.tan(front_left_ros_rad)
+    right_tangent = math.tan(front_right_ros_rad)
+    # Treat only sub-resolution disagreement around straight ahead as zero; a
+    # material left/right disagreement is a corrupt physical measurement.
+    straight_tolerance = math.tan(math.radians(0.1))
+    if max(abs(left_tangent), abs(right_tangent)) <= straight_tolerance:
+        virtual_angle = 0.5 * (front_left_ros_rad + front_right_ros_rad)
+    else:
+        if left_tangent * right_tangent <= 0.0:
+            raise CollectionError(
+                "measured front-wheel steer angles have inconsistent directions"
+            )
+        virtual_tangent = (
+            2.0 * left_tangent * right_tangent / (left_tangent + right_tangent)
+        )
+        virtual_angle = math.atan(virtual_tangent)
+
+    return {
+        "front_left_wheel_steer_angle_carla_deg": float(front_left_carla_deg),
+        "front_right_wheel_steer_angle_carla_deg": float(front_right_carla_deg),
+        "front_left_wheel_steer_angle_ros_rad": front_left_ros_rad,
+        "front_right_wheel_steer_angle_ros_rad": front_right_ros_rad,
+        "steering_tire_angle_rad": virtual_angle,
+    }
+
+
+def speed_limit_measurement(speed_limit_kmh: float) -> dict[str, float]:
+    """Convert CARLA's measured speed-limit value from km/h to m/s."""
+    if not math.isfinite(speed_limit_kmh) or speed_limit_kmh < 0.0:
+        raise CollectionError("measured speed limit must be finite and non-negative")
+    return {
+        "speed_limit_carla_kmh": float(speed_limit_kmh),
+        "speed_limit_mps": float(speed_limit_kmh) / 3.6,
+    }
 
 
 def utc_now() -> str:
@@ -428,6 +591,26 @@ def control_dict(control: Any) -> dict[str, Any]:
     }
 
 
+def measured_vehicle_fields(ego: Any, carla: Any) -> dict[str, float]:
+    """Read physical steering and map speed-limit labels for the current tick."""
+    steering = front_steering_measurement(
+        float(
+            ego.get_wheel_steer_angle(
+                carla.VehicleWheelLocation.FL_Wheel
+            )
+        ),
+        float(
+            ego.get_wheel_steer_angle(
+                carla.VehicleWheelLocation.FR_Wheel
+            )
+        ),
+    )
+    return {
+        **steering,
+        **speed_limit_measurement(float(ego.get_speed_limit())),
+    }
+
+
 def capture_interval(physics_hz: float, camera_hz: float) -> int:
     if not math.isfinite(physics_hz) or physics_hz <= 0.0:
         raise CollectionError("physics Hz must be positive and finite")
@@ -691,6 +874,24 @@ def collect_episode(
     from agents.navigation.basic_agent import BasicAgent
     from agents.navigation.global_route_planner import GlobalRoutePlanner
 
+    stationary_warmup_sec = float(getattr(args, "stationary_warmup_sec", 0.0))
+    stationary_tail_sec = float(getattr(args, "stationary_tail_sec", 0.0))
+    phase_schedule = capture_phase_schedule(
+        args.physics_hz,
+        args.max_duration_sec,
+        stationary_warmup_sec,
+        stationary_tail_sec,
+    )
+    phase_observations: dict[str, dict[str, Any]] = {
+        phase: {
+            "state_count": 0,
+            "camera_anchor_count": 0,
+            "first_timestamp": None,
+            "last_timestamp": None,
+        }
+        for phase in CAPTURE_PHASE_ORDER
+    }
+
     random.seed(args.seed)
     try:
         import numpy as np
@@ -825,13 +1026,26 @@ def collect_episode(
         )
         agent.set_global_plan(plan)
 
+        # CARLA 0.9.15 can report the actor at the origin until its first world
+        # tick.  Advance one disclosed, unrecorded setup tick under full brake so
+        # every state labelled "driving" was produced by a BasicAgent control.
+        bootstrap_control = _blank_brake_control(carla)
+        ego.apply_control(bootstrap_control)
+        bootstrap_frame = int(world.tick(args.timeout))
+        bootstrap_snapshot = world.get_snapshot()
+        if int(bootstrap_snapshot.frame) != bootstrap_frame:
+            raise CollectionError(
+                "world snapshot frame does not match pre-capture bootstrap tick"
+            )
+        capture_origin_timestamp = float(
+            bootstrap_snapshot.timestamp.elapsed_seconds
+        )
+
         projector = RouteProjector(route)
         final_route_point = route["route"][-1]
         progress_m = 0.0
         interval = capture_interval(args.physics_hz, args.capture_hz)
-        deadline_sim = args.max_duration_sec
         tick_index = 0
-        start_sim_time = None
         image_root = partial / "images"
         for name in MODEL_CAMERA_ORDER:
             (image_root / name).mkdir(parents=True, exist_ok=False)
@@ -857,12 +1071,27 @@ def collect_episode(
                 "y": float(final_route_point["y"]),
             },
             "basic_agent_plan_points": len(plan),
+            "capture_origin_timestamp": capture_origin_timestamp,
+            "pre_capture_bootstrap": {
+                "frame": bootstrap_frame,
+                "timestamp": capture_origin_timestamp,
+                "control": control_dict(bootstrap_control),
+                "recorded": False,
+                "included_in_maximum_total_duration": False,
+                "reason": "initialize CARLA actor state before BasicAgent control",
+            },
+            "capture_phase_schedule": phase_schedule,
         }
         _write_json(partial / "manifest.json", manifest)
 
-        while True:
+        def tick_and_record(phase: str) -> tuple[CatalogGoalStatus, bool, str | None]:
+            nonlocal progress_m, tick_index
             if stop_requested:
                 raise CollectionInterrupted("capture interrupted by signal")
+            if tick_index >= int(phase_schedule["maximum_total_ticks"]):
+                raise CollectionError(
+                    "capture reached the tick-exact maximum total duration"
+                )
             frame = int(world.tick(args.timeout))
             snapshot = world.get_snapshot()
             if int(snapshot.frame) != frame:
@@ -870,13 +1099,6 @@ def collect_episode(
                     f"world snapshot frame {snapshot.frame} does not match tick {frame}"
                 )
             timestamp = float(snapshot.timestamp.elapsed_seconds)
-            if start_sim_time is None:
-                start_sim_time = timestamp
-            if timestamp - start_sim_time > deadline_sim:
-                raise CollectionError(
-                    "BasicAgent did not finish within "
-                    f"{args.max_duration_sec:.1f} simulation seconds"
-                )
 
             transform = ego.get_transform()
             state = base_link_state(
@@ -886,6 +1108,7 @@ def collect_episode(
                 float(ego.get_angular_velocity().z),
                 args.wheelbase_m,
             )
+            vehicle_fields = measured_vehicle_fields(ego, carla)
             projection = projector.project(state["x"], state["y"], progress_m)
             progress_m = projection.progress_m
             command = projector.command_at(
@@ -902,12 +1125,18 @@ def collect_episode(
                 args.goal_tolerance_m,
             )
             basic_agent_done = bool(agent.done())
-            stop_reason = termination_reason(
-                basic_agent_done=basic_agent_done,
-                catalog_goal_reached=goal_status.reached,
+            stop_reason = (
+                termination_reason(
+                    basic_agent_done=basic_agent_done,
+                    catalog_goal_reached=goal_status.reached,
+                )
+                if phase == "driving"
+                else None
             )
             next_control = (
-                _blank_brake_control(carla) if stop_reason else agent.run_step()
+                agent.run_step()
+                if phase == "driving" and stop_reason is None
+                else _blank_brake_control(carla)
             )
             suppress_stopped_brake_steering(
                 next_control,
@@ -918,7 +1147,9 @@ def collect_episode(
                 {
                     "frame": frame,
                     "timestamp": timestamp,
+                    "capture_phase": phase,
                     **state,
+                    **vehicle_fields,
                     "command": command,
                     "route_progress_m": progress_m,
                     "route_cte_m": projection.cross_track_error_m,
@@ -928,6 +1159,11 @@ def collect_episode(
                     "lane_invasion": [],
                 }
             )
+            observation = phase_observations[phase]
+            observation["state_count"] += 1
+            if observation["first_timestamp"] is None:
+                observation["first_timestamp"] = timestamp
+            observation["last_timestamp"] = timestamp
 
             if tick_index % interval == 0:
                 bundle = exact_camera_bundle(queues, frame, args.sensor_timeout_sec)
@@ -945,6 +1181,7 @@ def collect_episode(
                     {
                         "frame": frame,
                         "timestamp": timestamp,
+                        "capture_phase": phase,
                         "camera_order": list(MODEL_CAMERA_ORDER),
                         "images": image_paths,
                         "source_timestamps": source_timestamps,
@@ -952,13 +1189,55 @@ def collect_episode(
                         "jpeg_quality": args.jpeg_quality,
                     }
                 )
+                observation["camera_anchor_count"] += 1
 
             ego.apply_control(next_control)
             tick_index += 1
-            if stop_reason:
+            return goal_status, basic_agent_done, stop_reason
+
+        if int(phase_schedule["stationary_warmup"]["scheduled_ticks"]):
+            ego.apply_control(_blank_brake_control(carla))
+        for _ in range(int(phase_schedule["stationary_warmup"]["scheduled_ticks"])):
+            tick_and_record("stationary_warmup")
+
+        initial_drive_control = agent.run_step()
+        velocity = _vector_tuple(ego.get_velocity())
+        suppress_stopped_brake_steering(
+            initial_drive_control,
+            math.sqrt(sum(component * component for component in velocity)),
+            enabled=not args.allow_stopped_steering,
+        )
+        ego.apply_control(initial_drive_control)
+        if state_records and state_records[-1]["capture_phase"] == "stationary_warmup":
+            state_records[-1]["next_control"] = control_dict(initial_drive_control)
+
+        goal_status: CatalogGoalStatus | None = None
+        basic_agent_done = False
+        stop_reason: str | None = None
+        while True:
+            if (
+                int(phase_observations["driving"]["state_count"])
+                >= int(phase_schedule["driving"]["maximum_ticks"])
+            ):
+                raise CollectionError(
+                    "BasicAgent did not finish within the driving budget reserved by "
+                    "the maximum total duration and stationary tail"
+                )
+            goal_status, basic_agent_done, stop_reason = tick_and_record("driving")
+            if stop_reason is not None:
                 break
 
         ego.apply_control(_blank_brake_control(carla))
+        if goal_status is None:
+            raise CollectionError("driving phase produced no state")
+        termination_route_progress_m = progress_m
+        if goal_status.reached:
+            for _ in range(int(phase_schedule["stationary_tail"]["scheduled_ticks"])):
+                tick_and_record("stationary_tail")
+
+        phase_results = summarize_capture_phases(
+            phase_schedule, phase_observations, args.physics_hz
+        )
         manifest["result"] = {
             "goal_reached": goal_status.reached,
             "termination_reason": stop_reason,
@@ -966,7 +1245,10 @@ def collect_episode(
             "state_count": len(state_records),
             "camera_anchor_count": len(camera_records),
             "duration_sec": state_records[-1]["timestamp"] - state_records[0]["timestamp"],
-            "final_route_progress_m": progress_m,
+            "elapsed_sim_sec": phase_results["observed_total_elapsed_sim_sec"],
+            "capture_phases": phase_results,
+            "final_route_progress_m": termination_route_progress_m,
+            "post_capture_route_progress_m": progress_m,
             "route_length_m": projector.length_m,
             "final_remaining_route_m": goal_status.remaining_route_m,
             "final_catalog_goal_distance_m": goal_status.planar_distance_m,
@@ -1000,6 +1282,9 @@ def collect_episode(
         result = manifest.setdefault("result", {})
         result["collision_event_count"] = sum(map(len, collisions.values()))
         result["lane_invasion_event_count"] = sum(map(len, lane_invasions.values()))
+        result["capture_phases"] = summarize_capture_phases(
+            phase_schedule, phase_observations, args.physics_hz
+        )
         if server_available:
             try:
                 world.set_weather(original_weather)
@@ -1035,6 +1320,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--capture-hz", type=float, default=10.0)
     parser.add_argument("--target-speed-kmh", type=float, default=9.0)
     parser.add_argument("--max-duration-sec", type=float, default=180.0)
+    parser.add_argument(
+        "--stationary-warmup-sec",
+        type=float,
+        default=0.0,
+        help="simulation seconds recorded under full brake before BasicAgent drives",
+    )
+    parser.add_argument(
+        "--stationary-tail-sec",
+        type=float,
+        default=0.0,
+        help="simulation seconds recorded under full brake after the catalog goal",
+    )
     parser.add_argument("--sensor-timeout-sec", type=float, default=5.0)
     parser.add_argument("--jpeg-quality", type=int, default=95)
     parser.add_argument("--seed", type=int, default=0)
@@ -1078,6 +1375,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         parser.error("goal-tolerance-m must be positive and finite")
     try:
         capture_interval(args.physics_hz, args.capture_hz)
+        args.capture_phase_schedule = capture_phase_schedule(
+            args.physics_hz,
+            args.max_duration_sec,
+            args.stationary_warmup_sec,
+            args.stationary_tail_sec,
+        )
     except CollectionError as error:
         parser.error(str(error))
     return args
@@ -1095,6 +1398,12 @@ def run(args: argparse.Namespace) -> Path:
     calibration_path = args.calibration.expanduser().resolve()
     route = load_route(route_path)
     specs = load_camera_specs(mapping_path, calibration_path, args.wheelbase_m)
+    phase_schedule = capture_phase_schedule(
+        args.physics_hz,
+        args.max_duration_sec,
+        float(getattr(args, "stationary_warmup_sec", 0.0)),
+        float(getattr(args, "stationary_tail_sec", 0.0)),
+    )
 
     partial.mkdir(parents=True)
     shutil.copy2(route_path, partial / "route.json")
@@ -1109,6 +1418,15 @@ def run(args: argparse.Namespace) -> Path:
             "ego_frame": "ROS rear-axle base_link: x forward, y left, z up",
             "pose_fields": ["x", "y", "z", "yaw"],
             "dynamics_fields": ["vx", "vy", "ax", "ay", "yaw_rate"],
+            "measured_vehicle_fields": [
+                "front_left_wheel_steer_angle_carla_deg",
+                "front_right_wheel_steer_angle_carla_deg",
+                "front_left_wheel_steer_angle_ros_rad",
+                "front_right_wheel_steer_angle_ros_rad",
+                "steering_tire_angle_rad",
+                "speed_limit_carla_kmh",
+                "speed_limit_mps",
+            ],
             "wheelbase_m": args.wheelbase_m,
         },
         "capture_contract": {
@@ -1119,6 +1437,9 @@ def run(args: argparse.Namespace) -> Path:
             "image_encoding": "jpeg_bgr8",
             "jpeg_quality": args.jpeg_quality,
             "target_speed_kmh": args.target_speed_kmh,
+            "maximum_total_duration_sec": args.max_duration_sec,
+            "capture_phase_field": "capture_phase",
+            "capture_phase_schedule": phase_schedule,
             "seed": args.seed,
             "spawn_z_offset_m": args.spawn_z_offset_m,
             "command_lookahead_m": args.command_lookahead_m,
@@ -1126,6 +1447,21 @@ def run(args: argparse.Namespace) -> Path:
             "goal_tolerance_m": args.goal_tolerance_m,
             "stopped_brake_steering_suppressed": not args.allow_stopped_steering,
             "client_map_loading_allowed": args.allow_map_load,
+            "measured_vehicle_state": {
+                "steering_source": (
+                    "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)"
+                ),
+                "steering_source_unit": "degree",
+                "carla_steering_sign": "positive-right",
+                "ros_steering_sign": "positive-left",
+                "wheel_conversion": "ros_rad=-radians(carla_deg)",
+                "virtual_tire_conversion": "Ackermann harmonic mean of wheel tangents",
+                "normalized_vehicle_control_steer_used_as_angle": False,
+                "speed_limit_source": "carla.Vehicle.get_speed_limit",
+                "speed_limit_source_unit": "km/h",
+                "speed_limit_output_unit": "m/s",
+                "speed_limit_conversion": "m/s=(km/h)/3.6",
+            },
         },
         "provenance": {
             "source_route": str(route_path),
@@ -1137,6 +1473,12 @@ def run(args: argparse.Namespace) -> Path:
             "collector_file": str(Path(__file__).resolve()),
             "collector_sha256": sha256_file(Path(__file__).resolve()),
             "spawn_z_offset_m": args.spawn_z_offset_m,
+            "runtime_measurements": {
+                "front_wheel_steering": (
+                    "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)"
+                ),
+                "speed_limit": "carla.Vehicle.get_speed_limit",
+            },
         },
         "cameras": [asdict(spec) for spec in specs],
         "files": {

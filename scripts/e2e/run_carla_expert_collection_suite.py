@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 import math
@@ -68,6 +69,68 @@ def parse_scenarios(text: str) -> tuple[str, ...]:
     return values
 
 
+def parse_route_ids(text: str) -> tuple[str, ...]:
+    if any(not item.strip() for item in text.split(",")):
+        raise SuiteError("route-ids must not contain empty values")
+    return parse_string_list(text, "route-ids")
+
+
+def parse_export_horizons(text: str) -> tuple[float, ...]:
+    """Parse explicit seconds or an exact inclusive START:STEP:STOP grid."""
+    if ":" in text:
+        if "," in text:
+            raise SuiteError(
+                "export horizons must use either CSV or START:STEP:STOP, not both"
+            )
+        parts = tuple(part.strip() for part in text.split(":"))
+        if len(parts) != 3 or any(not part for part in parts):
+            raise SuiteError("export horizon grid must be START:STEP:STOP")
+        try:
+            start, step, stop = (Decimal(part) for part in parts)
+        except InvalidOperation as error:
+            raise SuiteError("export horizon grid values must be decimal numbers") from error
+        if not all(value.is_finite() and value > 0 for value in (start, step, stop)):
+            raise SuiteError("export horizon grid values must be finite and positive")
+        if stop < start:
+            raise SuiteError("export horizon grid STOP must not precede START")
+        try:
+            quotient, remainder = divmod(stop - start, step)
+        except InvalidOperation as error:
+            raise SuiteError("export horizon grid is outside supported precision") from error
+        if remainder != 0:
+            raise SuiteError("export horizon grid must land exactly on STOP")
+        if quotient >= 4096:
+            raise SuiteError("export horizons may contain at most 4096 values")
+        count = int(quotient) + 1
+        values = tuple(float(start + index * step) for index in range(count))
+        if any(not math.isfinite(value) or value <= 0.0 for value in values):
+            raise SuiteError("export horizon grid is outside finite float range")
+        if any(second <= first for first, second in zip(values, values[1:])):
+            raise SuiteError("export horizon grid loses resolution as floating point")
+        return values
+
+    items = tuple(item.strip() for item in text.split(","))
+    if any(not item for item in items):
+        raise SuiteError("export horizons CSV must not contain empty values")
+    try:
+        values = tuple(float(item) for item in items)
+    except ValueError as error:
+        raise SuiteError("export horizons must be comma-separated numbers") from error
+    if not values or len(values) > 4096:
+        raise SuiteError("export horizons must contain between 1 and 4096 values")
+    if any(not math.isfinite(value) or value <= 0.0 for value in values):
+        raise SuiteError("export horizons must be finite and positive")
+    if any(second <= first for first, second in zip(values, values[1:])):
+        raise SuiteError("export horizons must be strictly increasing")
+    return values
+
+
+def format_export_horizons(values: Sequence[float]) -> str:
+    # repr(float) is the shortest round-trippable spelling; lower precision can
+    # collapse distinct, valid horizons into duplicate exporter arguments.
+    return ",".join(repr(float(value)) for value in values)
+
+
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -89,11 +152,25 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=",".join(SCENARIOS),
         help="unique comma-separated subset of lane_follow,straight,left,right",
     )
+    parser.add_argument(
+        "--route-ids",
+        help="optional exact, unique comma-separated catalog route IDs",
+    )
     parser.add_argument("--max-duration-sec", type=float, default=180.0)
     parser.add_argument("--physics-hz", type=float, default=20.0)
     parser.add_argument("--capture-hz", type=float, default=10.0)
     parser.add_argument("--target-speed-kmh", type=float, default=9.0)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
+    parser.add_argument("--spawn-z-offset-m", type=float, default=0.0)
+    parser.add_argument("--stationary-warmup-sec", type=float, default=0.0)
+    parser.add_argument("--stationary-tail-sec", type=float, default=0.0)
+    parser.add_argument(
+        "--export-horizons",
+        help=(
+            "optional future horizons as CSV or inclusive START:STEP:STOP seconds; "
+            "Common10 is 0.1:0.1:6.4"
+        ),
+    )
     parser.add_argument("--server-timeout-sec", type=float, default=30.0)
     parser.add_argument(
         "--map-load-settle-sec",
@@ -122,6 +199,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         args.seeds = parse_integer_list(args.seeds)
         args.weathers = parse_string_list(args.weathers, "weathers")
         args.scenarios = parse_scenarios(args.scenarios)
+        args.route_ids = (
+            parse_route_ids(args.route_ids)
+            if args.route_ids is not None
+            else None
+        )
+        args.export_horizons = (
+            parse_export_horizons(args.export_horizons)
+            if args.export_horizons is not None
+            else None
+        )
     except SuiteError as error:
         parser.error(str(error))
     if not 0 < args.port <= 65535:
@@ -140,9 +227,29 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             parser.error(f"--{name.replace('_', '-')} must be finite and positive")
     if not math.isfinite(args.map_load_settle_sec) or args.map_load_settle_sec < 0.0:
         parser.error("--map-load-settle-sec must be finite and non-negative")
+    for name in (
+        "spawn_z_offset_m",
+        "stationary_warmup_sec",
+        "stationary_tail_sec",
+    ):
+        value = getattr(args, name)
+        if not math.isfinite(value) or value < 0.0:
+            parser.error(f"--{name.replace('_', '-')} must be finite and non-negative")
     ratio = args.physics_hz / args.capture_hz
     if abs(ratio - round(ratio)) > 1.0e-9:
         parser.error("physics-hz must be an integer multiple of capture-hz")
+    stationary_ticks = sum(
+        int(math.ceil(value * args.physics_hz - 1.0e-12))
+        for value in (args.stationary_warmup_sec, args.stationary_tail_sec)
+    )
+    maximum_ticks = int(
+        math.floor(args.max_duration_sec * args.physics_hz + 1.0e-12)
+    )
+    if maximum_ticks - stationary_ticks < 1:
+        parser.error(
+            "maximum duration must leave at least one physics tick for driving "
+            "after stationary warmup and tail"
+        )
     return args
 
 
@@ -245,6 +352,122 @@ def _manifest_status(path: Path, expected: str) -> bool:
     return isinstance(payload, dict) and payload.get("status") == expected
 
 
+def _configured_resume_mismatch(
+    args: argparse.Namespace,
+    job: Mapping[str, Any],
+    episode_manifest_path: Path,
+    export_manifest_path: Path,
+) -> str | None:
+    """Reject reuse unless existing artifacts match the current job inputs.
+
+    The collection values have CLI defaults, but those defaults are still part of
+    the requested contract.  Therefore they must be checked on every resume, not
+    only when one of the newer controls is non-zero.  Provenance fields already
+    emitted by the collector/exporter bind the reusable artifacts to the current
+    route, collector implementation, and native episode files.
+    """
+    warmup = float(getattr(args, "stationary_warmup_sec", 0.0))
+    tail = float(getattr(args, "stationary_tail_sec", 0.0))
+    spawn = float(getattr(args, "spawn_z_offset_m", 0.0))
+    horizons = getattr(args, "export_horizons", None)
+    try:
+        episode = _read_json(episode_manifest_path, "episode manifest")
+    except SuiteError as error:
+        return str(error)
+    capture = episode.get("capture_contract")
+    runtime = episode.get("runtime")
+    if not isinstance(capture, Mapping) or not isinstance(runtime, Mapping):
+        return "episode lacks capture/runtime contract metadata"
+    expected_numbers = {
+        "physics_hz": args.physics_hz,
+        "camera_hz": args.capture_hz,
+        "target_speed_kmh": args.target_speed_kmh,
+        "goal_tolerance_m": args.goal_tolerance_m,
+        "spawn_z_offset_m": spawn,
+        "maximum_total_duration_sec": args.max_duration_sec,
+    }
+    for key, expected in expected_numbers.items():
+        value = capture.get(key)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            return f"episode capture contract lacks {key}"
+        if not math.isclose(float(value), float(expected), rel_tol=0.0, abs_tol=1.0e-12):
+            return f"episode capture contract {key} differs"
+    if capture.get("seed") != job["seed"] or runtime.get("weather") != job["weather"]:
+        return "episode seed/weather differs"
+    schedule = capture.get("capture_phase_schedule")
+    if not isinstance(schedule, Mapping) or capture.get("capture_phase_field") != "capture_phase":
+        return "episode lacks capture phase contract"
+    for phase, expected in (
+        ("stationary_warmup", warmup),
+        ("stationary_tail", tail),
+    ):
+        phase_contract = schedule.get(phase)
+        if not isinstance(phase_contract, Mapping):
+            return f"episode {phase} duration differs"
+        observed_duration = phase_contract.get("requested_duration_sec")
+        if (
+            not isinstance(observed_duration, (int, float))
+            or isinstance(observed_duration, bool)
+            or not math.isclose(
+                float(observed_duration),
+                expected,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+        ):
+            return f"episode {phase} duration differs"
+
+    provenance = episode.get("provenance")
+    if not isinstance(provenance, Mapping):
+        return "episode lacks provenance metadata"
+    route_path_value = job.get("route_path")
+    if not isinstance(route_path_value, str) or not route_path_value:
+        return "resume job lacks a route path"
+    try:
+        current_route_hash = _sha256_file(Path(route_path_value))
+        current_collector_hash = _sha256_file(args.collector.expanduser().resolve())
+    except OSError as error:
+        return f"cannot hash current resume input: {error}"
+    if provenance.get("route_sha256") != current_route_hash:
+        return "episode route SHA-256 differs from the current route"
+    if provenance.get("collector_sha256") != current_collector_hash:
+        return "episode collector SHA-256 differs from the current collector"
+
+    if not _manifest_status(export_manifest_path, "validated"):
+        return None
+    try:
+        exported = _read_json(export_manifest_path, "export manifest")
+    except SuiteError as error:
+        return str(error)
+    source_hashes = exported.get("source_hashes")
+    if not isinstance(source_hashes, Mapping):
+        return "export manifest lacks native source hashes"
+    episode_root = episode_manifest_path.parent
+    for name in ("manifest.json", "route.json", "states.jsonl", "camera_frames.jsonl"):
+        source_path = episode_root / name
+        try:
+            actual_hash = _sha256_file(source_path)
+        except OSError as error:
+            return f"cannot hash resumed episode {name}: {error}"
+        if source_hashes.get(name) != actual_hash:
+            return f"export source hash differs for {name}"
+    if source_hashes.get("route.json") != current_route_hash:
+        return "export source route differs from the current route"
+
+    if horizons is not None:
+        observed = exported.get("future_horizons_s")
+        if not isinstance(observed, list) or len(observed) != len(horizons):
+            return "export future horizons differ"
+        if any(
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isclose(float(value), expected, rel_tol=0.0, abs_tol=1.0e-12)
+            for value, expected in zip(observed, horizons)
+        ):
+            return "export future horizons differ"
+    return None
+
+
 def _nonempty_file(path: Path) -> bool:
     try:
         return path.is_file() and path.stat().st_size > 0
@@ -290,8 +513,14 @@ def _commands_for_job(args: argparse.Namespace, job: Mapping[str, Any]) -> dict[
             str(args.target_speed_kmh),
             "--goal-tolerance-m",
             str(args.goal_tolerance_m),
+            "--spawn-z-offset-m",
+            str(getattr(args, "spawn_z_offset_m", 0.0)),
             "--max-duration-sec",
             str(args.max_duration_sec),
+            "--stationary-warmup-sec",
+            str(getattr(args, "stationary_warmup_sec", 0.0)),
+            "--stationary-tail-sec",
+            str(getattr(args, "stationary_tail_sec", 0.0)),
             "--seed",
             str(job["seed"]),
             "--weather",
@@ -318,6 +547,11 @@ def _commands_for_job(args: argparse.Namespace, job: Mapping[str, Any]) -> dict[
             preview_gif,
         ],
     }
+    export_horizons = getattr(args, "export_horizons", None)
+    if export_horizons is not None:
+        commands["exporter"].extend(
+            ["--horizons", format_export_horizons(export_horizons)]
+        )
     if getattr(args, "allow_map_load", False):
         commands["collector"].append("--allow-map-load")
     return commands
@@ -330,11 +564,62 @@ def build_plan(
 ) -> dict[str, Any]:
     output_root = args.output_root.expanduser().resolve()
     allow_map_load = getattr(args, "allow_map_load", False)
+    spawn_z_offset_m = float(getattr(args, "spawn_z_offset_m", 0.0))
+    stationary_warmup_sec = float(getattr(args, "stationary_warmup_sec", 0.0))
+    stationary_tail_sec = float(getattr(args, "stationary_tail_sec", 0.0))
+    export_horizons = getattr(args, "export_horizons", None)
     selected_scenarios = tuple(getattr(args, "scenarios", SCENARIOS))
     selected_scenario_set = frozenset(selected_scenarios)
+    requested_route_ids = tuple(getattr(args, "route_ids", None) or ())
+    requested_route_id_set = frozenset(requested_route_ids)
     catalog_route_count = sum(len(catalog["routes"]) for catalog in catalogs)
+    if requested_route_ids:
+        route_id_matches = {
+            route_id: [
+                (catalog["map_id"], route)
+                for catalog in catalogs
+                for route in catalog["routes"]
+                if route["id"] == route_id
+            ]
+            for route_id in requested_route_ids
+        }
+        missing = [
+            route_id for route_id, matches in route_id_matches.items() if not matches
+        ]
+        if missing:
+            raise SuiteError(f"requested route ids are missing: {missing}")
+        ambiguous = {
+            route_id: [map_id for map_id, _route in matches]
+            for route_id, matches in route_id_matches.items()
+            if len(matches) != 1
+        }
+        if ambiguous:
+            raise SuiteError(
+                "requested route ids are ambiguous across catalogs: "
+                f"{ambiguous}"
+            )
+        scenario_excluded = [
+            route_id
+            for route_id, matches in route_id_matches.items()
+            if matches[0][1].get("scenario") not in selected_scenario_set
+        ]
+        if scenario_excluded:
+            raise SuiteError(
+                "requested route ids are excluded by --scenarios: "
+                f"{scenario_excluded}"
+            )
+
+    def route_selected(route: Mapping[str, Any]) -> bool:
+        return (
+            route.get("scenario") in selected_scenario_set
+            and (
+                not requested_route_id_set
+                or route.get("id") in requested_route_id_set
+            )
+        )
+
     selected_route_count = sum(
-        route.get("scenario") in selected_scenario_set
+        route_selected(route)
         for catalog in catalogs
         for route in catalog["routes"]
     )
@@ -347,6 +632,7 @@ def build_plan(
         catalog["server_profile"]
         for catalog in catalogs
         if catalog.get("server_profile") is not None
+        and any(route_selected(route) for route in catalog["routes"])
     }
     active_profile = args.active_server_profile
     if active_profile is not None and active_profile not in manifest["server_profiles"]:
@@ -362,10 +648,12 @@ def build_plan(
         selected_routes = [
             route
             for route in catalog["routes"]
-            if route.get("scenario") in selected_scenario_set
+            if route_selected(route)
         ]
         blocked_reason = None
-        if map_entry["status"] == "unavailable":
+        if not selected_routes:
+            catalog_status = "FILTERED"
+        elif map_entry["status"] == "unavailable":
             blocked_reason = f"unavailable map: {map_entry['reason']}"
         elif profile_mismatch:
             blocked_reason = "catalogs use different server profiles"
@@ -384,13 +672,19 @@ def build_plan(
             )
         elif catalog.get("status") != "complete":
             blocked_reason = f"catalog status is {catalog.get('status')!r}"
+        if selected_routes:
+            catalog_status = "BLOCKED" if blocked_reason else "READY"
         catalog_records.append(
             {
                 "path": catalog["catalog_path"],
                 "map_id": catalog["map_id"],
                 "server_profile": catalog.get("server_profile"),
-                "status": "BLOCKED" if blocked_reason else "READY",
-                "reason": blocked_reason,
+                "status": catalog_status,
+                "reason": (
+                    "no route selected by route/scenario filters"
+                    if not selected_routes
+                    else blocked_reason
+                ),
                 "route_count": len(catalog["routes"]),
                 "selected_route_count": len(selected_routes),
                 "filtered_route_count": len(catalog["routes"]) - len(selected_routes),
@@ -420,19 +714,44 @@ def build_plan(
                         "preview_png": str(job_root / "preview" / "overview.png"),
                         "preview_gif": str(job_root / "preview" / "drive.gif"),
                     }
+                    episode_manifest_path = Path(paths["episode"]) / "manifest.json"
+                    export_manifest_path = Path(paths["export"]) / "manifest.json"
+                    episode_complete = _manifest_status(
+                        episode_manifest_path, "complete"
+                    )
+                    export_complete = _manifest_status(
+                        export_manifest_path, "validated"
+                    )
+                    resume_complete = (
+                        episode_complete
+                        and export_complete
+                        and _preview_status(paths)
+                    )
+                    resume_mismatch = (
+                        _configured_resume_mismatch(
+                            args,
+                            {
+                                "seed": seed,
+                                "weather": weather,
+                                "route_path": str(route_path),
+                            },
+                            episode_manifest_path,
+                            export_manifest_path,
+                        )
+                        if episode_complete
+                        else None
+                    )
                     if blocked_reason:
                         status, reason = "BLOCKED", blocked_reason
                     elif route_problem:
                         status, reason = "SKIP", route_problem
-                    elif (
-                        _manifest_status(
-                            Path(paths["episode"]) / "manifest.json", "complete"
+                    elif resume_mismatch:
+                        status = "SKIP"
+                        reason = (
+                            "existing reusable artifacts do not match requested "
+                            f"contract: {resume_mismatch}"
                         )
-                        and _manifest_status(
-                            Path(paths["export"]) / "manifest.json", "validated"
-                        )
-                        and _preview_status(paths)
-                    ):
+                    elif resume_complete:
                         status, reason = "SKIP_RESUME_VALIDATED", "episode complete and export validated"
                     else:
                         status, reason = "PENDING", None
@@ -496,9 +815,18 @@ def build_plan(
             "physics_hz": args.physics_hz,
             "capture_hz": args.capture_hz,
             "maximum_duration_s": args.max_duration_sec,
+            "stationary_warmup_s": stationary_warmup_sec,
+            "stationary_tail_s": stationary_tail_sec,
+            "spawn_z_offset_m": spawn_z_offset_m,
+            "export_horizons_s": (
+                list(export_horizons) if export_horizons is not None else None
+            ),
         },
         "route_selection": {
             "selected_scenarios": list(selected_scenarios),
+            "requested_route_ids": (
+                list(requested_route_ids) if requested_route_ids else None
+            ),
             "catalog_route_count": catalog_route_count,
             "selected_route_count": selected_route_count,
             "filtered_route_count": catalog_route_count - selected_route_count,

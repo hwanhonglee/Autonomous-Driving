@@ -36,6 +36,7 @@ COLORS = {
     "background": "#f3f5f7",
     "panel": "#ffffff",
     "border": "#c8d0d8",
+    "grid": "#e2e7eb",
     "route": "#697581",
     "history": "#087e8b",
     "future": "#e4572e",
@@ -135,6 +136,120 @@ def _map_transform(
     return transform
 
 
+def _ego_centered_transform(
+    ego_xy: tuple[float, float],
+    ego_yaw: float,
+    reference_xy: Sequence[tuple[float, float]],
+    box: tuple[int, int, int, int],
+):
+    """Return a heading-up transform whose origin is always the panel center.
+
+    ``reference_xy`` determines only the zoom.  In particular, adding a long
+    route cannot move the ego marker away from the center as it did in the
+    original whole-route view.
+    """
+
+    left, top, right, bottom = box
+    cosine = math.cos(ego_yaw)
+    sine = math.sin(ego_yaw)
+
+    def to_local(point: tuple[float, float]) -> tuple[float, float]:
+        delta_x = point[0] - ego_xy[0]
+        delta_y = point[1] - ego_xy[1]
+        # base_link convention: x is forward and y is left.
+        return (
+            cosine * delta_x + sine * delta_y,
+            -sine * delta_x + cosine * delta_y,
+        )
+
+    local_reference = [to_local(point) for point in reference_xy]
+    maximum_forward = max((abs(point[0]) for point in local_reference), default=0.0)
+    maximum_lateral = max((abs(point[1]) for point in local_reference), default=0.0)
+    # Keep a useful neighbourhood visible while allowing a 6.4 s trajectory
+    # at road speed to zoom the panel out as needed.
+    forward_extent_m = max(24.0, maximum_forward * 1.15)
+    lateral_extent_m = max(12.0, maximum_lateral * 1.15)
+    padding = 22
+    half_width_px = max(1.0, 0.5 * (right - left) - padding)
+    half_height_px = max(1.0, 0.5 * (bottom - top) - padding)
+    scale = min(
+        half_width_px / lateral_extent_m,
+        half_height_px / forward_extent_m,
+        14.0,
+    )
+    center_x = 0.5 * (left + right)
+    center_y = 0.5 * (top + bottom)
+
+    def transform(point: tuple[float, float]) -> tuple[int, int]:
+        forward, lateral = to_local(point)
+        return (
+            int(round(center_x - lateral * scale)),
+            int(round(center_y - forward * scale)),
+        )
+
+    return transform, scale
+
+
+def _format_number(value: float) -> str:
+    return f"{value:.3f}".rstrip("0").rstrip(".")
+
+
+def _future_horizons(sample: Mapping[str, Any]) -> tuple[float, ...]:
+    future = sample.get("future_expert")
+    if not isinstance(future, Mapping) or "horizons_s" not in future:
+        return ()
+    raw_horizons = future["horizons_s"]
+    if not isinstance(raw_horizons, Sequence) or isinstance(raw_horizons, (str, bytes)):
+        raise ValueError("future_expert.horizons_s must be an array")
+    horizons = tuple(float(value) for value in raw_horizons)
+    positions = future.get("positions_xy")
+    if isinstance(positions, Sequence) and not isinstance(positions, (str, bytes)):
+        if len(horizons) != len(positions):
+            raise ValueError("future horizons and positions must have equal length")
+    if not horizons or any(not math.isfinite(value) or value <= 0.0 for value in horizons):
+        raise ValueError("future horizons must be finite and positive")
+    if any(second <= first for first, second in zip(horizons, horizons[1:])):
+        raise ValueError("future horizons must be strictly increasing")
+    return horizons
+
+
+def _future_timing_summary(sample: Mapping[str, Any]) -> str:
+    future = sample.get("future_expert")
+    positions = future.get("positions_xy", ()) if isinstance(future, Mapping) else ()
+    point_count = len(positions) if isinstance(positions, Sequence) else 0
+    horizons = _future_horizons(sample)
+    if not horizons:
+        return f"timing not exported ({point_count} points)"
+
+    horizon_text = f"{_format_number(horizons[0])}\u2013{_format_number(horizons[-1])} s"
+    if len(horizons) < 2:
+        return f"{horizon_text} ({len(horizons)} point)"
+    intervals = [second - first for first, second in zip(horizons, horizons[1:])]
+    mean_interval = sum(intervals) / len(intervals)
+    tolerance = max(1.0e-6, mean_interval * 1.0e-3)
+    if all(abs(interval - mean_interval) <= tolerance for interval in intervals):
+        rate_text = _format_number(1.0 / mean_interval)
+        return f"{rate_text} Hz, {horizon_text} ({len(horizons)} points)"
+    return f"non-uniform, {horizon_text} ({len(horizons)} points)"
+
+
+def _future_legend_label(sample: Mapping[str, Any]) -> str:
+    horizons = _future_horizons(sample)
+    if horizons:
+        return f"future label (to {_format_number(horizons[-1])} s)"
+    future = sample.get("future_expert")
+    positions = future.get("positions_xy", ()) if isinstance(future, Mapping) else ()
+    point_count = len(positions) if isinstance(positions, Sequence) else 0
+    return f"future label ({point_count} points)"
+
+
+def _route_length(route_xy: Sequence[tuple[float, float]]) -> float:
+    return sum(
+        math.hypot(second[0] - first[0], second[1] - first[1])
+        for first, second in zip(route_xy, route_xy[1:])
+    )
+
+
 def _draw_polyline(
     draw: ImageDraw.ImageDraw,
     transform,
@@ -144,6 +259,149 @@ def _draw_polyline(
 ) -> None:
     if len(points) >= 2:
         draw.line([transform(point) for point in points], fill=fill, width=width, joint="curve")
+
+
+def _draw_ego_marker(draw: ImageDraw.ImageDraw, center: tuple[int, int]) -> None:
+    """Draw a high-contrast, heading-up ego arrow around an exact center."""
+
+    center_x, center_y = center
+    draw.ellipse(
+        (center_x - 19, center_y - 19, center_x + 19, center_y + 19),
+        fill=COLORS["panel"],
+        outline=COLORS["vehicle"],
+        width=2,
+    )
+    outer = (
+        (center_x, center_y - 17),
+        (center_x - 11, center_y + 12),
+        (center_x, center_y + 7),
+        (center_x + 11, center_y + 12),
+    )
+    inner = (
+        (center_x, center_y - 12),
+        (center_x - 7, center_y + 8),
+        (center_x, center_y + 4),
+        (center_x + 7, center_y + 8),
+    )
+    draw.polygon(outer, fill="white")
+    draw.polygon(inner, fill=COLORS["vehicle"])
+
+
+def _draw_map_panel(
+    canvas: Image.Image,
+    box: tuple[int, int, int, int],
+    route_xy: Sequence[tuple[float, float]],
+    history_xy: Sequence[tuple[float, float]],
+    recent_history_xy: Sequence[tuple[float, float]],
+    future_xy: Sequence[tuple[float, float]],
+    sample: Mapping[str, Any],
+) -> None:
+    """Draw an ego-centred local map plus a north-up full-route inset."""
+
+    left, top, right, bottom = box
+    panel_width = right - left
+    panel_height = bottom - top
+    panel = Image.new("RGB", (panel_width, panel_height), COLORS["panel"])
+    draw = ImageDraw.Draw(panel)
+    ego_xy = future_xy[0]
+    ego_yaw = float(sample["pose_map_xyz_yaw"][3])
+    transform, scale = _ego_centered_transform(
+        ego_xy,
+        ego_yaw,
+        [ego_xy, *recent_history_xy, *future_xy[1:]],
+        (0, 0, panel_width, panel_height),
+    )
+    center = transform(ego_xy)
+
+    draw.line((center[0], 0, center[0], panel_height), fill=COLORS["grid"], width=1)
+    draw.line((0, center[1], panel_width, center[1]), fill=COLORS["grid"], width=1)
+    _draw_polyline(draw, transform, route_xy, COLORS["route"], 4)
+    _draw_polyline(draw, transform, history_xy, COLORS["history"], 6)
+    _draw_polyline(draw, transform, future_xy, COLORS["future"], 6)
+    marker_stride = max(1, math.ceil(max(1, len(future_xy) - 1) / 16))
+    marked_indices = set(range(1, len(future_xy), marker_stride))
+    if len(future_xy) > 1:
+        marked_indices.add(len(future_xy) - 1)
+    for index in sorted(marked_indices):
+        screen = transform(future_xy[index])
+        draw.ellipse(
+            (screen[0] - 3, screen[1] - 3, screen[0] + 3, screen[1] + 3),
+            fill=COLORS["future"],
+        )
+    _draw_ego_marker(draw, center)
+    draw.rounded_rectangle((10, 10, 202, 91), radius=7, fill="#ffffff", outline=COLORS["border"])
+    legend_y = 19
+    for color, label in (
+        (COLORS["route"], "route"),
+        (COLORS["history"], "expert history"),
+        (COLORS["future"], _future_legend_label(sample)),
+    ):
+        draw.line((20, legend_y + 8, 47, legend_y + 8), fill=color, width=5)
+        draw.text((55, legend_y), label, fill=COLORS["text"], font=_font(14))
+        legend_y += 23
+
+    inset_width = max(118, min(178, panel_width // 3))
+    inset_height = max(92, min(132, panel_height // 4))
+    inset = (
+        panel_width - inset_width - 11,
+        10,
+        panel_width - 10,
+        10 + inset_height,
+    )
+    draw.rounded_rectangle(inset, radius=7, fill="#ffffff", outline=COLORS["border"], width=2)
+    route_length = _route_length(route_xy)
+    route_progress = float(sample.get("route_progress_m", 0.0))
+    progress_percent = 0.0 if route_length <= 0.0 else 100.0 * route_progress / route_length
+    progress_percent = max(0.0, min(100.0, progress_percent))
+    draw.text(
+        (inset[0] + 8, inset[1] + 6),
+        f"FULL ROUTE  {progress_percent:.0f}%",
+        fill=COLORS["muted"],
+        font=_font(12, True),
+    )
+    inset_inner = (inset[0] + 7, inset[1] + 25, inset[2] - 7, inset[3] - 7)
+    inset_transform = _map_transform(route_xy, inset_inner)
+    _draw_polyline(draw, inset_transform, route_xy, COLORS["route"], 2)
+    _draw_polyline(draw, inset_transform, history_xy, COLORS["history"], 3)
+    inset_vehicle = inset_transform(ego_xy)
+    inset_heading = inset_transform(
+        (ego_xy[0] + 3.0 * math.cos(ego_yaw), ego_xy[1] + 3.0 * math.sin(ego_yaw))
+    )
+    draw.line((*inset_vehicle, *inset_heading), fill=COLORS["vehicle"], width=2)
+    draw.ellipse(
+        (
+            inset_vehicle[0] - 4,
+            inset_vehicle[1] - 4,
+            inset_vehicle[0] + 4,
+            inset_vehicle[1] + 4,
+        ),
+        fill=COLORS["vehicle"],
+        outline="white",
+        width=1,
+    )
+
+    scale_bar_m = next(
+        (distance for distance in (5, 10, 20, 50, 100) if distance * scale >= 42),
+        100,
+    )
+    scale_bar_px = int(round(scale_bar_m * scale))
+    scale_bar_px = min(scale_bar_px, max(1, panel_width - 40))
+    scale_y = panel_height - 23
+    draw.line((18, scale_y, 18 + scale_bar_px, scale_y), fill=COLORS["vehicle"], width=3)
+    draw.line((18, scale_y - 4, 18, scale_y + 4), fill=COLORS["vehicle"], width=2)
+    draw.line(
+        (18 + scale_bar_px, scale_y - 4, 18 + scale_bar_px, scale_y + 4),
+        fill=COLORS["vehicle"],
+        width=2,
+    )
+    draw.text(
+        (20, scale_y - 20),
+        f"{scale_bar_m} m   EGO CENTERED / HEADING UP",
+        fill=COLORS["muted"],
+        font=_font(12, True),
+    )
+    canvas.paste(panel, (left, top))
+    ImageDraw.Draw(canvas).rectangle(box, outline=COLORS["border"], width=1)
 
 
 def _draw_camera(
@@ -221,50 +479,38 @@ def render_frame(
             bottom = camera_box[3] if row == 1 else top + camera_height
             _draw_camera(canvas, episode, sample, name, (left, top, right, bottom))
 
-    draw.rectangle(map_box, fill=COLORS["panel"], outline=COLORS["border"], width=1)
     route_xy = _route_xy(route)
     sample_time = float(sample["timestamp_ns"]) * 1.0e-9
-    history_xy = [
-        (state_pose(state)[0], state_pose(state)[1])
+    history_with_time = [
+        (state_time(state), (state_pose(state)[0], state_pose(state)[1]))
         for state in states
         if state_time(state) <= sample_time + 1.0e-6
     ]
+    history_xy = [point for _, point in history_with_time]
+    recent_history_xy = [
+        point for timestamp, point in history_with_time if timestamp >= sample_time - 4.0
+    ]
     future_xy = _sample_future_world(sample)
-    transform = _map_transform(route_xy + history_xy + future_xy, map_box)
-    _draw_polyline(draw, transform, route_xy, COLORS["route"], 4)
-    _draw_polyline(draw, transform, history_xy, COLORS["history"], 6)
-    _draw_polyline(draw, transform, future_xy, COLORS["future"], 6)
-    vehicle = transform(future_xy[0])
-    radius = 7
-    draw.ellipse(
-        (vehicle[0] - radius, vehicle[1] - radius, vehicle[0] + radius, vehicle[1] + radius),
-        fill=COLORS["vehicle"],
-        outline="white",
-        width=2,
+    _draw_map_panel(
+        canvas,
+        map_box,
+        route_xy,
+        history_xy,
+        recent_history_xy,
+        future_xy,
+        sample,
     )
-    for point in future_xy[1:]:
-        screen = transform(point)
-        draw.ellipse((screen[0] - 4, screen[1] - 4, screen[0] + 4, screen[1] + 4), fill=COLORS["future"])
-    legend_y = map_box[1] + 14
-    for color, label in (
-        (COLORS["route"], "route"),
-        (COLORS["history"], "expert history"),
-        (COLORS["future"], "future label (3.0 s)"),
-    ):
-        draw.line((map_box[0] + 14, legend_y + 8, map_box[0] + 42, legend_y + 8), fill=color, width=5)
-        draw.text((map_box[0] + 50, legend_y), label, fill=COLORS["text"], font=_font(15))
-        legend_y += 25
 
     footer_top = height - margin - footer_height + 16
     draw.text(
         (margin, footer_top),
-        "Expert: CARLA BasicAgent   Labels: 0.5 s intervals, anchor base_link x-forward/y-left",
+        f"Expert: CARLA BasicAgent   Labels: {_future_timing_summary(sample)}",
         fill=COLORS["text"],
         font=_font(18, True),
     )
     draw.text(
         (margin, footer_top + 30),
-        "Camera display is spatial; dataset stores explicit private Tiny and public Bench2Drive orders.",
+        "Anchor: base_link x-forward/y-left. Camera display is spatial; stored orders are explicit.",
         fill=COLORS["muted"],
         font=_font(16),
     )

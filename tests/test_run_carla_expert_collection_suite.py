@@ -80,6 +80,86 @@ def arguments(module, tmp_path, catalog, execute=False):
     return module.parse_args(values)
 
 
+def write_resume_artifacts(
+    module,
+    args,
+    route_path: Path,
+    job_root: Path,
+    *,
+    weather: str = "ClearNoon",
+    seed: int = 3,
+    include_export: bool = True,
+    include_preview: bool = True,
+):
+    episode = job_root / "episode"
+    episode.mkdir(parents=True)
+    (episode / "route.json").write_bytes(route_path.read_bytes())
+    (episode / "states.jsonl").write_text("{}\n", encoding="utf-8")
+    (episode / "camera_frames.jsonl").write_text("{}\n", encoding="utf-8")
+    route_hash = module._sha256_file(route_path)
+    episode_manifest = {
+        "status": "complete",
+        "capture_contract": {
+            "physics_hz": args.physics_hz,
+            "camera_hz": args.capture_hz,
+            "target_speed_kmh": args.target_speed_kmh,
+            "goal_tolerance_m": args.goal_tolerance_m,
+            "spawn_z_offset_m": args.spawn_z_offset_m,
+            "maximum_total_duration_sec": args.max_duration_sec,
+            "seed": seed,
+            "capture_phase_field": "capture_phase",
+            "capture_phase_schedule": {
+                "stationary_warmup": {
+                    "requested_duration_sec": args.stationary_warmup_sec,
+                },
+                "stationary_tail": {
+                    "requested_duration_sec": args.stationary_tail_sec,
+                },
+            },
+        },
+        "runtime": {"weather": weather},
+        "provenance": {
+            "route_sha256": route_hash,
+            "collector_sha256": module._sha256_file(args.collector.resolve()),
+        },
+    }
+    (episode / "manifest.json").write_text(
+        json.dumps(episode_manifest), encoding="utf-8"
+    )
+    if include_export:
+        export = job_root / "export"
+        export.mkdir()
+        source_hashes = {
+            name: module._sha256_file(episode / name)
+            for name in (
+                "manifest.json",
+                "route.json",
+                "states.jsonl",
+                "camera_frames.jsonl",
+            )
+        }
+        (export / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "status": "validated",
+                    "source_hashes": source_hashes,
+                    "future_horizons_s": (
+                        list(args.export_horizons)
+                        if args.export_horizons is not None
+                        else [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+                    ),
+                }
+            ),
+            encoding="utf-8",
+        )
+    if include_preview:
+        preview = job_root / "preview"
+        preview.mkdir()
+        (preview / "overview.png").write_bytes(b"png")
+        (preview / "drive.gif").write_bytes(b"gif")
+    return episode_manifest
+
+
 def test_dry_plan_builds_route_weather_seed_matrix_and_storage(tmp_path):
     module = load_module()
     manifest, _ = module.load_manifest(MANIFEST)
@@ -99,6 +179,7 @@ def test_dry_plan_builds_route_weather_seed_matrix_and_storage(tmp_path):
     ]
     assert plan["route_selection"] == {
         "selected_scenarios": ["lane_follow", "straight", "left", "right"],
+        "requested_route_ids": None,
         "catalog_route_count": 1,
         "selected_route_count": 1,
         "filtered_route_count": 0,
@@ -128,6 +209,7 @@ def test_scenario_filter_runs_only_matching_catalog_routes(tmp_path):
     assert {job["route_id"] for job in plan["jobs"]} == {"route_b"}
     assert plan["route_selection"] == {
         "selected_scenarios": ["lane_follow"],
+        "requested_route_ids": None,
         "catalog_route_count": 3,
         "selected_route_count": 1,
         "filtered_route_count": 2,
@@ -147,6 +229,75 @@ def test_scenario_filter_fails_when_no_catalog_route_matches(tmp_path):
 
     with pytest.raises(module.SuiteError, match="no catalog route matches"):
         module.build_plan(args, manifest, [catalog])
+
+
+def test_exact_route_id_filter_selects_only_requested_catalog_routes(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(
+        tmp_path / "catalog", scenarios=("right", "lane_follow", "left")
+    )
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+    args.route_ids = ("route_b",)
+
+    plan = module.build_plan(args, manifest, [catalog])
+
+    assert {job["route_id"] for job in plan["jobs"]} == {"route_b"}
+    assert plan["route_selection"] == {
+        "selected_scenarios": ["lane_follow", "straight", "left", "right"],
+        "requested_route_ids": ["route_b"],
+        "catalog_route_count": 3,
+        "selected_route_count": 1,
+        "filtered_route_count": 2,
+    }
+
+
+def test_exact_route_id_filter_fails_closed_for_missing_excluded_or_ambiguous(
+    tmp_path,
+):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog", scenarios=("right", "lane_follow"))
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+
+    args.route_ids = ("missing",)
+    with pytest.raises(module.SuiteError, match="route ids are missing"):
+        module.build_plan(args, manifest, [catalog])
+
+    args.route_ids = ("route_a",)
+    args.scenarios = ("lane_follow",)
+    with pytest.raises(module.SuiteError, match="excluded by --scenarios"):
+        module.build_plan(args, manifest, [catalog])
+
+    second_path = write_catalog(tmp_path / "second")
+    second = module.load_catalog(second_path, manifest)
+    args.route_ids = ("route_a",)
+    args.scenarios = ("lane_follow", "straight", "left", "right")
+    with pytest.raises(module.SuiteError, match="ambiguous across catalogs"):
+        module.build_plan(args, manifest, [catalog, second])
+
+
+def test_exact_route_filter_ignores_unselected_catalog_server_profile(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    selected_path = write_catalog(tmp_path / "selected", map_id="town01")
+    unrelated_path = write_catalog(tmp_path / "unrelated", map_id="town12")
+    catalogs = [
+        module.load_catalog(selected_path, manifest),
+        module.load_catalog(unrelated_path, manifest),
+    ]
+    catalogs[1]["routes"][0]["id"] = "unrelated_route"
+    args = arguments(module, tmp_path, selected_path)
+    args.route_ids = ("route_a",)
+
+    plan = module.build_plan(args, manifest, catalogs)
+
+    assert plan["status"] == "READY"
+    assert {job["map_id"] for job in plan["jobs"]} == {"town01"}
+    assert plan["server"]["server_profiles"] == ["packaged_0915"]
+    assert plan["catalogs"][1]["status"] == "FILTERED"
 
 
 def test_source_editor_catalog_is_blocked(tmp_path):
@@ -220,22 +371,124 @@ def test_resume_skips_complete_and_validated_job(tmp_path):
     args.weathers = ("ClearNoon",)
     args.seeds = (3,)
     job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
-    (job_root / "episode").mkdir(parents=True)
-    (job_root / "export").mkdir()
-    (job_root / "episode" / "manifest.json").write_text(
-        json.dumps({"status": "complete"}), encoding="utf-8"
-    )
-    (job_root / "export" / "manifest.json").write_text(
-        json.dumps({"status": "validated"}), encoding="utf-8"
-    )
-    (job_root / "preview").mkdir()
-    (job_root / "preview" / "overview.png").write_bytes(b"png")
-    (job_root / "preview" / "drive.gif").write_bytes(b"gif")
+    route_path = Path(catalog["routes"][0]["resolved_path"])
+    write_resume_artifacts(module, args, route_path, job_root)
 
     plan = module.build_plan(args, manifest, [catalog])
 
     assert plan["jobs"][0]["status"] == "SKIP_RESUME_VALIDATED"
     assert plan["status"] == "COMPLETE"
+
+
+def test_resume_rejects_legacy_artifacts_for_explicit_common10_contract(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog")
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+    args.weathers = ("ClearNoon",)
+    args.seeds = (3,)
+    args.stationary_warmup_sec = 1.0
+    args.stationary_tail_sec = 6.4
+    args.export_horizons = module.parse_export_horizons("0.1:0.1:6.4")
+    job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
+    (job_root / "episode").mkdir(parents=True)
+    (job_root / "export").mkdir()
+    (job_root / "preview").mkdir()
+    (job_root / "episode" / "manifest.json").write_text(
+        json.dumps({"status": "complete"}), encoding="utf-8"
+    )
+    (job_root / "export" / "manifest.json").write_text(
+        json.dumps({"status": "validated", "future_horizons_s": [0.5, 1.0]}),
+        encoding="utf-8",
+    )
+    (job_root / "preview" / "overview.png").write_bytes(b"png")
+    (job_root / "preview" / "drive.gif").write_bytes(b"gif")
+
+    plan = module.build_plan(args, manifest, [catalog])
+
+    assert plan["jobs"][0]["status"] == "SKIP"
+    assert "do not match requested contract" in plan["jobs"][0]["reason"]
+    assert plan["status"] == "BLOCKED"
+
+
+def test_resume_rejects_default_collection_contract_mismatch_even_without_preview(
+    tmp_path,
+):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog")
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+    args.weathers = ("ClearNoon",)
+    args.seeds = (3,)
+    job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
+    route_path = Path(catalog["routes"][0]["resolved_path"])
+    episode_manifest = write_resume_artifacts(
+        module,
+        args,
+        route_path,
+        job_root,
+        include_preview=False,
+    )
+    episode_manifest["capture_contract"]["target_speed_kmh"] = 30.0
+    (job_root / "episode" / "manifest.json").write_text(
+        json.dumps(episode_manifest), encoding="utf-8"
+    )
+
+    plan = module.build_plan(args, manifest, [catalog])
+
+    assert plan["jobs"][0]["status"] == "SKIP"
+    assert "target_speed_kmh differs" in plan["jobs"][0]["reason"]
+    assert plan["status"] == "BLOCKED"
+
+
+def test_resume_rejects_route_collector_and_export_source_hash_drift(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+
+    def make_case(name):
+        case_root = tmp_path / name
+        path = write_catalog(case_root / "catalog")
+        catalog = module.load_catalog(path, manifest)
+        args = arguments(module, case_root, path)
+        args.weathers = ("ClearNoon",)
+        args.seeds = (3,)
+        collector = case_root / "collector.py"
+        collector.write_text("# collector v1\n", encoding="utf-8")
+        args.collector = collector
+        job_root = (
+            case_root
+            / "output"
+            / "town01"
+            / "route_a"
+            / "ClearNoon"
+            / "seed_0003"
+        )
+        route_path = Path(catalog["routes"][0]["resolved_path"])
+        write_resume_artifacts(module, args, route_path, job_root)
+        return catalog, args, job_root, route_path
+
+    catalog, args, _job_root, route_path = make_case("route-drift")
+    route_path.write_text('{"changed":true}', encoding="utf-8")
+    catalog["routes"][0]["sha256"] = module._sha256_file(route_path)
+    plan = module.build_plan(args, manifest, [catalog])
+    assert plan["jobs"][0]["status"] == "SKIP"
+    assert "route SHA-256 differs" in plan["jobs"][0]["reason"]
+
+    catalog, args, _job_root, _route_path = make_case("collector-drift")
+    args.collector.write_text("# collector v2\n", encoding="utf-8")
+    plan = module.build_plan(args, manifest, [catalog])
+    assert plan["jobs"][0]["status"] == "SKIP"
+    assert "collector SHA-256 differs" in plan["jobs"][0]["reason"]
+
+    catalog, args, job_root, _route_path = make_case("source-drift")
+    (job_root / "episode" / "states.jsonl").write_text(
+        '{"changed":true}\n', encoding="utf-8"
+    )
+    plan = module.build_plan(args, manifest, [catalog])
+    assert plan["jobs"][0]["status"] == "SKIP"
+    assert "source hash differs for states.jsonl" in plan["jobs"][0]["reason"]
 
 
 def test_resume_reruns_only_missing_renderer_output(tmp_path):
@@ -247,13 +500,13 @@ def test_resume_reruns_only_missing_renderer_output(tmp_path):
     args.weathers = ("ClearNoon",)
     args.seeds = (3,)
     job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
-    (job_root / "episode").mkdir(parents=True)
-    (job_root / "export").mkdir()
-    (job_root / "episode" / "manifest.json").write_text(
-        json.dumps({"status": "complete"}), encoding="utf-8"
-    )
-    (job_root / "export" / "manifest.json").write_text(
-        json.dumps({"status": "validated"}), encoding="utf-8"
+    route_path = Path(catalog["routes"][0]["resolved_path"])
+    write_resume_artifacts(
+        module,
+        args,
+        route_path,
+        job_root,
+        include_preview=False,
     )
 
     plan = module.build_plan(args, manifest, [catalog])
@@ -276,6 +529,32 @@ def test_resume_reruns_only_missing_renderer_output(tmp_path):
 
     assert calls == ["render_carla_vad_expert"]
     assert plan["jobs"][0]["status"] == "COMPLETE"
+
+
+def test_resume_reuses_compatible_episode_when_export_is_missing(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog")
+    catalog = module.load_catalog(path, manifest)
+    args = arguments(module, tmp_path, path)
+    args.weathers = ("ClearNoon",)
+    args.seeds = (3,)
+    job_root = tmp_path / "output" / "town01" / "route_a" / "ClearNoon" / "seed_0003"
+    route_path = Path(catalog["routes"][0]["resolved_path"])
+    write_resume_artifacts(
+        module,
+        args,
+        route_path,
+        job_root,
+        include_export=False,
+        include_preview=False,
+    )
+
+    plan = module.build_plan(args, manifest, [catalog])
+
+    assert plan["jobs"][0]["status"] == "PENDING"
+    assert plan["jobs"][0]["reason"] is None
+    assert plan["status"] == "READY"
 
 
 def test_execute_job_calls_collector_exporter_renderer_in_order(tmp_path):
@@ -385,6 +664,11 @@ def test_default_mode_is_dry_run_and_output_root_is_required(tmp_path):
     assert args.allow_map_load is False
     assert args.capture_hz == pytest.approx(10.0)
     assert args.scenarios == ("lane_follow", "straight", "left", "right")
+    assert args.route_ids is None
+    assert args.spawn_z_offset_m == pytest.approx(0.0)
+    assert args.stationary_warmup_sec == pytest.approx(0.0)
+    assert args.stationary_tail_sec == pytest.approx(0.0)
+    assert args.export_horizons is None
 
     opted_in = module.parse_args(
         [
@@ -409,6 +693,18 @@ def test_default_mode_is_dry_run_and_output_root_is_required(tmp_path):
     )
     assert lane_follow.scenarios == ("lane_follow",)
 
+    exact_routes = module.parse_args(
+        [
+            "--catalog",
+            str(catalog),
+            "--output-root",
+            str(tmp_path / "exact-routes-out"),
+            "--route-ids",
+            "route_a,route_b",
+        ]
+    )
+    assert exact_routes.route_ids == ("route_a", "route_b")
+
     for invalid in ("lane_follow,lane_follow", "curve", "left,unsafe/value"):
         with pytest.raises(SystemExit):
             module.parse_args(
@@ -422,8 +718,119 @@ def test_default_mode_is_dry_run_and_output_root_is_required(tmp_path):
                 ]
             )
 
+    for invalid_route_ids in ("route_a,route_a", "unsafe/value", "route_a,"):
+        with pytest.raises(SystemExit):
+            module.parse_args(
+                [
+                    "--catalog",
+                    str(catalog),
+                    "--output-root",
+                    str(tmp_path / "invalid-route-out"),
+                    "--route-ids",
+                    invalid_route_ids,
+                ]
+            )
+
     with pytest.raises(SystemExit):
         module.parse_args(["--catalog", str(catalog)])
+
+
+def test_common10_horizon_grid_and_capture_controls_pass_through(tmp_path):
+    module = load_module()
+    manifest, _ = module.load_manifest(MANIFEST)
+    path = write_catalog(tmp_path / "catalog")
+    catalog = module.load_catalog(path, manifest)
+    args = module.parse_args(
+        [
+            "--catalog",
+            str(path),
+            "--output-root",
+            str(tmp_path / "output"),
+            "--weathers",
+            "ClearNoon",
+            "--seeds",
+            "0",
+            "--max-duration-sec",
+            "30",
+            "--spawn-z-offset-m",
+            "1.4",
+            "--stationary-warmup-sec",
+            "1.0",
+            "--stationary-tail-sec",
+            "6.4",
+            "--export-horizons",
+            "0.1:0.1:6.4",
+        ]
+    )
+
+    assert len(args.export_horizons) == 64
+    assert args.export_horizons[0] == pytest.approx(0.1)
+    assert args.export_horizons[-1] == pytest.approx(6.4)
+    plan = module.build_plan(args, manifest, [catalog])
+    commands = plan["jobs"][0]["commands"]
+
+    collector = commands["collector"]
+    assert collector[collector.index("--spawn-z-offset-m") + 1] == "1.4"
+    assert collector[collector.index("--stationary-warmup-sec") + 1] == "1.0"
+    assert collector[collector.index("--stationary-tail-sec") + 1] == "6.4"
+    exporter = commands["exporter"]
+    horizons = exporter[exporter.index("--horizons") + 1].split(",")
+    assert len(horizons) == 64
+    assert horizons[0] == "0.1"
+    assert horizons[-1] == "6.4"
+    assert plan["matrix"]["export_horizons_s"][-1] == pytest.approx(6.4)
+
+    close_values = (1.000000000000001, 1.000000000000002)
+    serialized = module.format_export_horizons(close_values)
+    assert tuple(float(value) for value in serialized.split(",")) == close_values
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        "0.1:0.2:6.4",
+        "0.1:0:6.4",
+        "0.2:0.1:0.1",
+        "0.1,0.1",
+        "0.1,nan",
+    ),
+)
+def test_export_horizons_fail_closed(value, tmp_path):
+    module = load_module()
+    catalog = write_catalog(tmp_path / "catalog")
+    with pytest.raises(SystemExit):
+        module.parse_args(
+            [
+                "--catalog",
+                str(catalog),
+                "--output-root",
+                str(tmp_path / "out"),
+                "--export-horizons",
+                value,
+            ]
+        )
+
+
+def test_stationary_reservation_must_leave_a_driving_tick(tmp_path):
+    module = load_module()
+    catalog = write_catalog(tmp_path / "catalog")
+    with pytest.raises(SystemExit):
+        module.parse_args(
+            [
+                "--catalog",
+                str(catalog),
+                "--output-root",
+                str(tmp_path / "out"),
+                "--physics-hz",
+                "20",
+                "--max-duration-sec",
+                "1",
+                "--stationary-warmup-sec",
+                "0.5",
+                "--stationary-tail-sec",
+                "0.5",
+            ]
+        )
 
 
 def test_duplicate_catalog_jobs_are_rejected(tmp_path):

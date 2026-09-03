@@ -12,6 +12,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts/e2e"))
 
+import collect_carla_vad_expert as collector_module  # noqa: E402
 from collect_carla_vad_expert import (  # noqa: E402
     _carla_location,
     _server_available_for_cleanup,
@@ -26,12 +27,17 @@ from collect_carla_vad_expert import (  # noqa: E402
     base_link_state,
     catalog_goal_status,
     capture_interval,
+    capture_phase_schedule,
     exact_camera_bundle,
     finalize_output,
+    front_steering_measurement,
     load_camera_specs,
+    measured_vehicle_fields,
     parse_args,
     ros_extrinsic_to_carla_vehicle_center,
     shift_transform_local_x,
+    speed_limit_measurement,
+    summarize_capture_phases,
     suppress_stopped_brake_steering,
     termination_reason,
 )
@@ -120,6 +126,206 @@ def test_spawn_z_offset_cli_defaults_and_validation(tmp_path: Path) -> None:
     for invalid in ("-0.01", "nan", "inf"):
         with pytest.raises(SystemExit):
             parse_args(positional + ["--spawn-z-offset-m", invalid])
+
+
+def test_stationary_phase_cli_defaults_and_tick_exact_total_bound(
+    tmp_path: Path,
+) -> None:
+    positional = [str(tmp_path / "episode"), str(tmp_path / "route.json")]
+
+    defaults = parse_args(positional)
+    assert defaults.stationary_warmup_sec == pytest.approx(0.0)
+    assert defaults.stationary_tail_sec == pytest.approx(0.0)
+    schedule = capture_phase_schedule(20.0, 10.0, 0.12, 6.4)
+    assert schedule["maximum_total_ticks"] == 200
+    assert schedule["stationary_warmup"] == {
+        "control_source": "full_service_brake",
+        "requested_duration_sec": pytest.approx(0.12),
+        "scheduled_ticks": 3,
+        "scheduled_duration_sec": pytest.approx(0.15),
+    }
+    assert schedule["driving"]["maximum_ticks"] == 69
+    assert schedule["stationary_tail"]["scheduled_ticks"] == 128
+
+    explicit = parse_args(
+        positional
+        + [
+            "--max-duration-sec",
+            "10",
+            "--stationary-warmup-sec",
+            "0.12",
+            "--stationary-tail-sec",
+            "6.4",
+        ]
+    )
+    assert explicit.capture_phase_schedule == schedule
+
+    for option, value in (
+        ("--stationary-warmup-sec", "-0.01"),
+        ("--stationary-tail-sec", "nan"),
+    ):
+        with pytest.raises(SystemExit):
+            parse_args(positional + [option, value])
+    with pytest.raises(SystemExit):
+        parse_args(
+            positional
+            + [
+                "--max-duration-sec",
+                "1",
+                "--stationary-warmup-sec",
+                "0.5",
+                "--stationary-tail-sec",
+                "0.5",
+            ]
+        )
+
+
+def test_capture_phase_summary_reports_planned_and_observed_durations() -> None:
+    schedule = capture_phase_schedule(20.0, 20.0, 1.0, 6.4)
+    observations = {
+        "stationary_warmup": {
+            "state_count": 20,
+            "camera_anchor_count": 10,
+            "first_timestamp": 1.05,
+            "last_timestamp": 2.0,
+        },
+        "driving": {
+            "state_count": 100,
+            "camera_anchor_count": 50,
+            "first_timestamp": 2.05,
+            "last_timestamp": 7.0,
+        },
+        "stationary_tail": {
+            "state_count": 128,
+            "camera_anchor_count": 64,
+            "first_timestamp": 7.05,
+            "last_timestamp": 13.4,
+        },
+    }
+
+    result = summarize_capture_phases(schedule, observations, 20.0)
+
+    assert result["order"] == [
+        "stationary_warmup",
+        "driving",
+        "stationary_tail",
+    ]
+    assert result["observed_total_ticks"] == 248
+    assert result["observed_total_elapsed_sim_sec"] == pytest.approx(12.4)
+    assert result["stationary_warmup"]["elapsed_sim_sec"] == pytest.approx(1.0)
+    assert result["stationary_tail"]["timestamp_span_sec"] == pytest.approx(6.35)
+
+
+def test_measured_front_steering_uses_ros_positive_left_and_not_control_ratio() -> None:
+    left_turn = front_steering_measurement(-12.0, -10.0)
+
+    assert left_turn["front_left_wheel_steer_angle_carla_deg"] == pytest.approx(-12.0)
+    assert left_turn["front_right_wheel_steer_angle_carla_deg"] == pytest.approx(-10.0)
+    assert left_turn["front_left_wheel_steer_angle_ros_rad"] == pytest.approx(
+        math.radians(12.0)
+    )
+    expected_virtual = math.atan(
+        2.0
+        * math.tan(math.radians(12.0))
+        * math.tan(math.radians(10.0))
+        / (math.tan(math.radians(12.0)) + math.tan(math.radians(10.0)))
+    )
+    assert left_turn["steering_tire_angle_rad"] == pytest.approx(expected_virtual)
+
+    right_turn = front_steering_measurement(10.0, 12.0)
+    assert right_turn["steering_tire_angle_rad"] < 0.0
+    assert front_steering_measurement(0.0, 0.0)["steering_tire_angle_rad"] == 0.0
+    with pytest.raises(CollectionError, match="inconsistent directions"):
+        front_steering_measurement(-10.0, 10.0)
+    with pytest.raises(CollectionError, match="finite"):
+        front_steering_measurement(math.nan, 0.0)
+
+
+def test_measured_vehicle_fields_reads_physical_wheels_and_speed_limit() -> None:
+    locations = type(
+        "WheelLocations", (), {"FL_Wheel": "front-left", "FR_Wheel": "front-right"}
+    )
+    carla = type("Carla", (), {"VehicleWheelLocation": locations})
+
+    class Ego:
+        @staticmethod
+        def get_wheel_steer_angle(location):
+            return {"front-left": -12.0, "front-right": -10.0}[location]
+
+        @staticmethod
+        def get_speed_limit():
+            return 30.0
+
+    fields = measured_vehicle_fields(Ego(), carla)
+
+    assert fields["steering_tire_angle_rad"] > 0.0
+    assert fields["speed_limit_carla_kmh"] == pytest.approx(30.0)
+    assert fields["speed_limit_mps"] == pytest.approx(30.0 / 3.6)
+    assert speed_limit_measurement(0.0)["speed_limit_mps"] == 0.0
+    for invalid in (-0.1, math.nan, math.inf):
+        with pytest.raises(CollectionError, match="speed limit"):
+            speed_limit_measurement(invalid)
+
+
+def test_episode_manifest_declares_phase_and_measured_vehicle_contracts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    route_path = tmp_path / "route.json"
+    route_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "coordinate_reference": "base_link",
+                "town": "Town01",
+                "start_carla_transform": {"x": 0.0, "y": 0.0, "z": 0.0},
+                "goal_carla_transform": {"x": 10.0, "y": 0.0, "z": 0.0},
+                "route": [
+                    {"x": 0.0, "y": 0.0, "distance_m": 0.0, "vad_command": 3},
+                    {"x": 10.0, "y": 0.0, "distance_m": 10.0, "vad_command": 3},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "episode"
+    args = parse_args(
+        [
+            str(output),
+            str(route_path),
+            "--max-duration-sec",
+            "20",
+            "--stationary-warmup-sec",
+            "1",
+            "--stationary-tail-sec",
+            "6.4",
+        ]
+    )
+
+    def fake_collect(
+        _args, _route, _specs, _partial, state_records, _camera_records, manifest
+    ):
+        assert manifest["capture_contract"]["capture_phase_field"] == "capture_phase"
+        state_records.append({"frame": 1, "timestamp": 0.05})
+
+    monkeypatch.setattr(collector_module, "collect_episode", fake_collect)
+
+    collector_module.run(args)
+    manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
+
+    schedule = manifest["capture_contract"]["capture_phase_schedule"]
+    assert schedule["order"] == [
+        "stationary_warmup",
+        "driving",
+        "stationary_tail",
+    ]
+    assert schedule["stationary_tail"]["scheduled_ticks"] == 128
+    measurement = manifest["capture_contract"]["measured_vehicle_state"]
+    assert measurement["normalized_vehicle_control_steer_used_as_angle"] is False
+    assert measurement["ros_steering_sign"] == "positive-left"
+    assert measurement["speed_limit_conversion"] == "m/s=(km/h)/3.6"
+    assert manifest["provenance"]["runtime_measurements"]["speed_limit"] == (
+        "carla.Vehicle.get_speed_limit"
+    )
 
 
 def test_goal_tolerance_cli_defaults_and_requires_positive_finite_value(

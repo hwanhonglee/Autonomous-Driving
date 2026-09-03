@@ -1,6 +1,6 @@
 # Portable E2E 학습·운용 가이드
 
-> 기준일: 2026-09-03
+> 기준일: 2026-09-04
 > 이 문서는 현재 저장소에 실제로 존재하는 기능과 앞으로 실행할 절차를 구분한다.
 > 아직 학습된 checkpoint도, 입증된 주행 성능도, 실차 제어 승인도 없다.
 
@@ -20,6 +20,10 @@
    report A/B comparison
 9. `carla`/`real` 비율을 고정하는 무복원 weighted-interleave sampler와 domain별 평가
 10. 원본을 풀지 않고 Bench2Drive Mini와 nuScenes mini/CAN 구조·시간 품질을 계측하는 inspector
+11. CARLA를 20 Hz physics/10 Hz six-camera로 새로 수집하고, 정지 준비·주행·정지 tail을
+    보존하는 native expert collector
+12. 실제 앞바퀴 조향각과 CARLA 제한속도가 있는 native episode만 `common_10hz_v1`로 옮기는
+    fail-closed CARLA adapter
 
 `portable_e2e.control_flow_smoke`는 실제 영상을 열지 않고 PyTorch, CUDA, ROS 2, CARLA를
 import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode하고 신경망을
@@ -138,16 +142,16 @@ git -C "$REPO_ROOT" rev-parse HEAD
 첫 명령에 수정 파일이 나오면 pull하지 말고 원인을 먼저 확인한다. 원격에서
 `git reset --hard`, 강제 checkout 또는 `git clean`으로 다른 작업을 지우지 않는다.
 
-## 3. 2026-09-03에 확인된 학습 환경 상태
+## 3. 2026-09-04에 확인된 학습 환경 상태
 
 프로젝트 전용 Python 환경은 다음 상태다.
 
 - Python: 3.12.3
 - 위치: `$PORTABLE_E2E_ROOT/venvs/py312`
-- package: `pip 24.0`만 존재
-- PyTorch, NumPy, Pillow: **아직 설치하지 않음**
-- 확인 과정에서 시스템 Python, Conda base, CUDA driver 또는 다른 프로젝트 환경에 설치한
-  항목: 없음
+- 설치가 확인된 package: PyTorch `2.13.0+cu130`, NumPy `2.5.2`, Pillow `12.3.0`
+- package 설치 범위: **사용자 개인 `$PORTABLE_E2E_ROOT/venvs/py312`만 사용**
+- 시스템 Python, Conda base, CUDA driver와 다른 프로젝트 환경은 수정하지 않음
+- CPU import 검사와 physical GPU 0을 UUID로 한정한 CUDA smoke/짧은 benchmark를 확인함
 
 공유 GPU의 점유 상태는 계속 바뀌므로 문서에 특정 사용자·프로세스·메모리 관측값을 남기지
 않는다. 실행 직전에 9절의 query로 다시 확인하고, 다른 작업을 종료하거나 reset하지 않는다.
@@ -250,9 +254,13 @@ mini DB의 해당 log와 일대일로 대응했다. 검증 후 중복 임시 분
 SHA와 JSON report만 보존했다.
 
 이 3-file 구성은 완전한 nuPlan devkit dataset이 아니라 7개 log의 custom camera adapter
-smoke용 제한 subset이다. 최종 archive 검사를 통과해도 약관·용도 승인, 안전한 압축 해제,
-DB↔camera join, common10 변환과 학습은 별도 단계다. nuPlan dataset terms는 devkit code의
-Apache-2.0 license와 별개이며, 익명 download 경로가 이용조건을 면제하지 않는다.
+smoke용 제한 subset이다. 위 `DB↔camera 구조 검사 PASS`는 ZIP member와 DB log-name의
+archive-level 대응만 뜻한다. SQLite record↔JPEG↔calibration↔ego pose↔map의 의미론적 join,
+8개 native camera에서 Common10 6개 role을 고르는 calibration 기반 규칙, 약 20초 scene을
+최소 30초 episode 정책에 맞추는 방법과 route centerline 생성은 **NOT_EVALUATED**다.
+Dataset Terms와 intended use의 명시적 승인도 끝나지 않았으므로 adapter 변환과 학습은
+`BLOCKED` 상태다. nuPlan dataset terms는 devkit code의 Apache-2.0 license와 별개이며,
+익명 download 경로가 이용조건을 면제하지 않는다.
 
 ## 4. 매 SSH 접속 때 하는 안전한 환경 설정
 
@@ -410,6 +418,175 @@ version 경로를 사용하고, 내용을 검토한 뒤 의도적으로 교체�
 4/5 Hz legacy 자료와 아직 변환하지 않은 Bench2Drive archive를 `dataset_root`로 직접 넣으면
 안 된다.
 
+### 6.1 처음부터 다시 만드는 CARLA 10 Hz / 30 km/h 예제
+
+이 절은 2026-09-04에 실제로 통과한 Town07 직진 수집 조건을 새 clone에서도 같은 형태로
+재현하는 절차다. CARLA는 로컬 시뮬레이터 PC에서 실행하고, 학습 서버에는 마지막에 완성된
+prepared dataset만 전송한다. 이 절에는 `pip`, `apt` 또는 Conda 설치 명령이 없다.
+
+먼저 다음 전제 조건을 확인한다.
+
+- 저장소는 2.1절대로 clone되어 있고 working tree가 clean하다.
+- 로컬 PC에 packaged CARLA 0.9.15가 있으며 `scripts/e2e/env.sh`가 `CARLA_ROOT`와 Python
+  API를 찾는다.
+- Town07 route JSON이 존재한다. 다른 map을 시험할 때는 해당 map의 route JSON으로
+  바꾸고 CARLA도 그 map으로 **cold start**한다.
+- 아래 output은 모두 새 경로다. 실패한 폴더를 지우고 같은 `run_001`을 재사용하지 말고
+  `run_002`, `run_003`처럼 새 이름을 쓴다.
+
+터미널 A에서 저장소 root로 이동하고 Town07 서버를 foreground로 실행한다.
+
+```bash
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+
+scripts/e2e/run_carla_map.sh Town07 \
+  --port 2100 \
+  --quality Low \
+  -- -windowed -ResX=1280 -ResY=720 -nosound
+```
+
+`CARLA_READY ... Town07 ... port=2100`이 출력된 뒤 터미널 A를 그대로 둔다. 수집 도중
+`client.load_world`로 map을 바꾸지 않는다. 특히 packaged/custom map은 client-side map
+전환 중 불안정할 수 있으므로 map을 바꿀 때 터미널 A를 `Ctrl-C`로 정상 종료하고 정확한
+map 이름으로 다시 cold start한다.
+
+터미널 B에서 같은 저장소의 환경을 읽고 30 km/h native episode를 수집한다.
+
+```bash
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+source scripts/e2e/env.sh
+
+route_file="$REPO_ROOT/docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json"
+native_episode="$REPO_ROOT/datasets/raw/carla/common10_v1/2026-09-04/30kph/town07/straight/ClearNoon/seed_0000/run_001/episode"
+
+test -f "$route_file"
+test ! -e "$native_episode"
+mkdir -p "$(dirname "$native_episode")"
+
+python3 scripts/e2e/collect_carla_vad_expert.py \
+  "$native_episode" \
+  "$route_file" \
+  --host 127.0.0.1 \
+  --port 2100 \
+  --physics-hz 20 \
+  --capture-hz 10 \
+  --target-speed-kmh 30 \
+  --max-duration-sec 60 \
+  --stationary-warmup-sec 3.5 \
+  --stationary-tail-sec 6.5 \
+  --spawn-z-offset-m 0.5 \
+  --weather ClearNoon \
+  --seed 0
+```
+
+`--max-duration-sec 60`은 전체 capture 상한이다. 이 중 warmup과 tail tick을 먼저 예약하고
+남은 시간만 driving budget으로 사용하므로, 세 phase를 몰래 잘라내지 않는다.
+
+| phase | 기록 내용 | 이 예제의 설정 |
+|---|---|---:|
+| `stationary_warmup` | full brake 상태의 과거 ego history | 3.5초 |
+| `driving` | CARLA `BasicAgent`의 실제 주행 | goal 도달 또는 남은 상한까지 |
+| `stationary_tail` | full brake 상태의 정지 future label context | 6.5초 |
+
+각 state에는 `capture_phase`가 기록된다. 조향각은 normalized control 값을 각도로 가장하지
+않고 `Vehicle.get_wheel_steer_angle()`로 좌·우 앞바퀴를 직접 읽어 ROS positive-left
+Ackermann virtual tire angle인 `steering_tire_angle_rad`로 변환한다. 제한속도도
+`Vehicle.get_speed_limit()`의 km/h를 m/s로 변환한 `speed_limit_mps`다. 이 두 실측 field나
+phase 선언이 없으면 아래 adapter는 값을 만들어 내지 않고 중단한다.
+
+2026-09-04 Town07 `run_001`의 native 결과는 다음과 같았다.
+
+- 전체 37.30초, physics state 747개, 10 Hz camera anchor 374개
+- phase별 state: warmup 70, driving 547, tail 130개
+- driving 27.35초, 최고속도 30.33 km/h, route 길이 210.598 m
+- collision 0, lane-invasion event 0, goal tolerance 내 도달
+- 여섯 camera의 관측 period가 모두 약 100.000 ms
+
+이는 이 episode의 계측 결과이지 다른 Town, 회전, 장애물 회피 또는 closed-loop 성능을
+대신하지 않는다.
+
+### 6.2 native CARLA episode를 Common10으로 변환하기
+
+변환 전 `git status --porcelain`이 비어 있어야 한다. 그러면 adapter가 현재 clean HEAD의
+40자리 commit을 자동으로 provenance에 넣는다. 검토하지 않은 commit을 강제로 지정해
+dirty tree를 우회하지 않는다. `--license-id`는 adapter가 추측하지 않으므로 프로젝트에서
+검토한 식별자를 명시해야 한다. 아래 식별자는 **내부 연구·수동 검토 필요 상태를 기록하는
+예시일 뿐**, dataset 사용·배포 권리를 부여하지 않는다.
+
+```bash
+export PORTABLE_E2E_ROOT="${PORTABLE_E2E_ROOT:-$HOME/portable_e2e}"
+export REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+
+native_episode="$REPO_ROOT/datasets/raw/carla/common10_v1/2026-09-04/30kph/town07/straight/ClearNoon/seed_0000/run_001/episode"
+dataset_id='carla-common10-30kph-20260904-v1'
+prepared_dataset="$PORTABLE_E2E_ROOT/datasets/prepared/$dataset_id"
+carla_data_license_id='project-generated-carla-internal-review'
+
+test -d "$native_episode"
+test ! -e "$prepared_dataset"
+test -z "$(git status --porcelain)"
+mkdir -p "$(dirname "$prepared_dataset")"
+
+CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+python3 scripts/e2e/prepare_carla_common10_dataset.py \
+  --episode "train=$native_episode" \
+  --output "$prepared_dataset" \
+  --dataset-id "$dataset_id" \
+  --license-id "$carla_data_license_id" \
+  --image-mode copy \
+  --validate-mode planning
+```
+
+`--episode`은 `train=...`, `val=...`, `test=...` 형태로 반복할 수 있다. 단, 같은 연속
+주행을 잘라 서로 다른 split에 넣으면 안 된다. 현재 단일 Town07 예제는 `train`만 있으므로
+CPU/GPU pipeline smoke에는 쓸 수 있지만 8·9절의 정식 `val` 평가는 아직 할 수 없다.
+
+`copy`는 원본과 독립적인 전송용 결과를 만든다. `hardlink`는 같은 filesystem의 일회성 로컬
+검사에만 사용하며 다른 filesystem으로 자동 fallback하지 않는다. adapter는 새 partial
+directory에 쓴 뒤 전체 validator가 성공해야 최종 경로로 승격하며, 기존 output을
+덮어쓰지 않는다.
+
+이 episode로 수행한 실제 planning 변환 검사는 **PASS**였다. 309개 train sample,
+30.800000459초, effective 9.999999851 Hz, p99 gap 100.000002 ms, 208.444 m motion,
+future point 100%, 최대 six-camera skew와 state delta 모두 0 ms였다. tail의 state는 앞선
+sample의 6.4초 future label context로 사용했다. tail camera anchor 65개는 원본 감사 목록에는
+남기되 학습 sample이나 prepared image로 선택하지 않았다.
+
+`validation_report.json`의 PASS 범위는 정확히 구분한다.
+
+- `schema`, `common_10hz_planning`, image SHA-256, native frame/manifest/timestamp binding,
+  canonical causal route와 offline 1 ms **dataset bundle 기준**: `PASS`
+- `raw_source_artifact_content`: `NOT_RUN_REQUIRES_RAW_SOURCE_REVIEW`
+- `image_pixel_decode`: `NOT_RUN_REQUIRES_APPROVED_IMAGE_LIBRARY`
+- 실제 online runtime 실행: `false`
+- validator가 raw state로 trajectory geometry를 독립 재계산했는지: `false`
+- `manual_release_review_required`: `true`
+
+adapter 자체는 native `states.jsonl`에서 0.1~6.4초 future를 계산하지만, validator의 마지막
+`false`는 이를 별도의 독립 구현으로 재검산하지 않았다는 뜻이다. 또한 offline 1 ms PASS는
+timestamp skew 조건이지 inference latency나 CARLA closed-loop 합격이 아니다.
+
+원하면 adapter가 만든 report와 별개인 새 report 경로로 planning 검사를 한 번 더 실행한다.
+
+```bash
+validation_report="$PORTABLE_E2E_ROOT/runs/dataset-validation/$dataset_id-planning-v1.json"
+mkdir -p "$(dirname "$validation_report")"
+test ! -e "$validation_report"
+
+CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+python3 -m portable_e2e.validate "$prepared_dataset" \
+  --mode planning \
+  --output "$validation_report"
+```
+
+현재 과거 `c_track/turn`과 `Town03/turn` 약 74 m route는 차량 중심 PNG/GIF 및 제어 동작을
+확인하는 visual/control 자료로만 사용한다. 10 Hz Common10 정식 회전 학습 자료로 이름만
+바꾸거나 여러 짧은 주행을 이어 붙이지 않는다. 충분한 driving 구간과 6.4초 future를 동시에
+확보하는 더 긴 회전 route를 새로 만든 뒤 같은 절차로 수집·검증해야 한다.
+
 ## 7. 승인된 전용 venv 설치와 재현
 
 2026-09-04에 Python 3.12 전용 venv 안에서 PyTorch `2.13.0+cu130`, NumPy `2.5.2`,
@@ -513,7 +690,7 @@ CUDA_VISIBLE_DEVICES='' python -m portable_e2e.evaluate "$dataset_root" \
 `train` sample을 평가용으로 다시 쓰면 evaluator가 거부한다. `metrics.json`과
 `trajectories/*.png`가 생겨도 이는 open-loop random/one-step 결과이며 성능 claim이 아니다.
 
-## 9. GPU가 실제로 빈 뒤 한 번만 짧게 실행하기
+## 9. physical GPU 0이 실제로 빈 뒤 UUID로 한정해 짧게 실행하기
 
 먼저 별도 terminal에서 GPU 상태를 확인한다.
 
@@ -524,17 +701,18 @@ nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name,used_gpu_memory \
   --format=csv
 ```
 
-선택할 physical GPU에 다른 compute process가 없고 메모리와 utilization이 안정적으로
-비어 있는지 다시 확인한다. process가 보이면 기다린다. PID 종료, `nvidia-smi --gpu-reset`,
-reboot는 하지 않는다.
+이 프로젝트에 허용된 장치는 **physical GPU 0 한 장뿐**이다. GPU 0에 다른 compute
+process가 없고 메모리와 utilization이 안정적으로 비어 있는지 다시 확인한다. process가
+보이면 기다린다. physical GPU 1은 조회 결과를 식별하는 것 외에는 노출하거나 사용하지
+않으며, 다른 사용자의 PID 종료, `nvidia-smi --gpu-reset`, reboot도 하지 않는다.
 
-아래 `gpu_index=0`은 예시다. **확인한 idle physical index로만** 바꾼 뒤 UUID를 얻어 사용한다.
-숫자 index 대신 UUID를 `CUDA_VISIBLE_DEVICES`에 넣으면 장치 열거 순서가 바뀌어도 다른 GPU를
-잘못 노출하지 않는다. Python 안에서는 선택한 한 장만 `cuda:0`이다.
+숫자 index를 학습 process에 직접 넘기지 않는다. physical index 0의 UUID를 실행 직전에
+조회해 `CUDA_VISIBLE_DEVICES`에 넣으면 장치 열거 순서가 바뀌어도 GPU 1을 잘못 노출하지
+않는다. Python 안에서는 선택한 한 장만 보이므로 그 장치 이름이 `cuda:0`이다.
 
 ```bash
-gpu_index=0
-gpu_uuid="$(nvidia-smi -i "$gpu_index" --query-gpu=uuid --format=csv,noheader | tr -d '[:space:]')"
+gpu_physical_index=0
+gpu_uuid="$(nvidia-smi -i "$gpu_physical_index" --query-gpu=uuid --format=csv,noheader | tr -d '[:space:]')"
 case "$gpu_uuid" in GPU-*) ;; *) printf 'GPU UUID lookup failed\n' >&2; exit 2 ;; esac
 dataset_root="$PORTABLE_E2E_ROOT/datasets/prepared/<dataset_id>"
 gpu_run="$PORTABLE_E2E_ROOT/runs/<run_id>-gpu-one-step"
@@ -715,7 +893,7 @@ REMOTE_ALIAS='training-server'
 REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
 : "${LOCAL_DATASET:?export LOCAL_DATASET=/absolute/path/to/dataset}"
 : "${REMOTE_PORTABLE_E2E_ROOT:?export REMOTE_PORTABLE_E2E_ROOT=/absolute/remote/path/to/portable_e2e}"
-DATASET_ID='my-drive-2026-09-03-v1'
+DATASET_ID='my-drive-2026-09-04-v1'
 REPORT_DIR="$REPO_ROOT/runs/transfer-validation"
 LOCAL_REPORT="$REPORT_DIR/$DATASET_ID.local.json"
 REMOTE_REPORT="$REPORT_DIR/$DATASET_ID.remote.json"
@@ -792,16 +970,19 @@ rsync -rcn --delete --itemize-changes \
 
 현재 다음 순서가 안전하다.
 
-1. 완료: Bench2Drive Mini 추출 없는 구조/time/non-finite audit와 차단 사유 기록
-2. legacy 11쌍 adapter를 만들되 4/5 Hz `NOT_QUALIFIED`를 그대로 기록
-3. 신규 CARLA 10 Hz straight/turn/stop 자료를 36.4초 이상 수집하고 planning validation
-4. 완료: 격리된 nuScenes mini/CAN 추출 없는 schema·timing·route audit
+1. 완료: Town07 직진 30 km/h native 10 Hz 수집과 CARLA→Common10 planning 변환 검사
+2. 충분히 긴 `c_track/turn`, `Town03/turn` route를 만든 뒤 동일한 3-phase 조건으로 새로
+   수집하고, map/route별로 planning validation
+3. legacy 11쌍 adapter를 만들되 4/5 Hz `NOT_QUALIFIED`를 그대로 기록
+4. 완료: Bench2Drive Mini 추출 없는 구조/time/non-finite audit와 차단 사유 기록
+5. 완료: 격리된 nuScenes mini/CAN 추출 없는 schema·timing·route audit
    (`common_10hz_v1` planning은 별도 profile/contract 전까지 불통과)
-5. nuPlan 약관·intended-use 승인 후 필요한 7-log staging과 DB join/adapter smoke
-6. 내일 별도 승인 후 전용 venv package 설치와 CPU one-step
-7. GPU가 실제 idle일 때 단일 GPU one-step과 val one-sample 평가
-8. 32~128 sample overfit → M1 baseline → 같은 조건의 model A/B
-9. CARLA 30 km/h closed-loop → real replay/shadow → 별도 60 km/h gate
+6. nuPlan 약관·intended-use 승인 후에만 7-log staging, 의미론적 DB join과 adapter smoke
+7. 검증된 prepared tree를 manifest 대조 후 서버 개인 dataset 폴더로 전송하고, 이미 준비한
+   개인 venv에서 CPU one-step
+8. physical GPU 0이 idle일 때 UUID로 한정한 GPU one-step과 별도 `val` one-sample 평가
+9. 32~128 sample overfit → M1 baseline → 같은 조건의 model A/B
+10. CARLA 30 km/h closed-loop → real replay/shadow → 별도 60 km/h gate
 
 실차용이라고 부르려면 최소한 provenance가 고정된 train/val/test, unseen real replay,
 Autoware adapter의 reject/fallback, independent safety gate, target PC 10 Hz latency, CARLA

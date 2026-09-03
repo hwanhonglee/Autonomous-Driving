@@ -113,6 +113,7 @@ def test_spawn_z_offset_only_changes_actor_center_spawn_height() -> None:
 def test_spawn_z_offset_cli_defaults_and_validation(tmp_path: Path) -> None:
     positional = [str(tmp_path / "episode"), str(tmp_path / "route.json")]
 
+    assert parse_args(positional).capture_hz == pytest.approx(10.0)
     assert parse_args(positional).spawn_z_offset_m == pytest.approx(0.0)
     explicit = parse_args(positional + ["--spawn-z-offset-m", "1.4"])
     assert explicit.spawn_z_offset_m == pytest.approx(1.4)

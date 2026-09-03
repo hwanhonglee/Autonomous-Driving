@@ -383,6 +383,7 @@ def test_default_mode_is_dry_run_and_output_root_is_required(tmp_path):
     assert args.map_load_settle_sec == pytest.approx(10.0)
     assert args.active_server_profile is None
     assert args.allow_map_load is False
+    assert args.capture_hz == pytest.approx(10.0)
     assert args.scenarios == ("lane_follow", "straight", "left", "right")
 
     opted_in = module.parse_args(

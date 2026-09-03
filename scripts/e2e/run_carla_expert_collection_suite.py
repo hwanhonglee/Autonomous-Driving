@@ -91,7 +91,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--max-duration-sec", type=float, default=180.0)
     parser.add_argument("--physics-hz", type=float, default=20.0)
-    parser.add_argument("--capture-hz", type=float, default=5.0)
+    parser.add_argument("--capture-hz", type=float, default=10.0)
     parser.add_argument("--target-speed-kmh", type=float, default=9.0)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     parser.add_argument("--server-timeout-sec", type=float, default=30.0)

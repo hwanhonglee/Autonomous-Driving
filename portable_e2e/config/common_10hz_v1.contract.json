@@ -1,0 +1,85 @@
+{
+  "schema_id": "autoware-e2e.common10.contract.v1",
+  "schema_version": 1,
+  "contract_id": "common_10hz_v1",
+  "description": "Canonical 10 Hz six-camera contract shared by CARLA and real-vehicle data.",
+  "camera_order": [
+    "CAM_FRONT",
+    "CAM_BACK",
+    "CAM_FRONT_LEFT",
+    "CAM_BACK_LEFT",
+    "CAM_FRONT_RIGHT",
+    "CAM_BACK_RIGHT"
+  ],
+  "image": {
+    "width_px": 640,
+    "height_px": 360,
+    "source_encoding": "bgr8",
+    "storage_codec": "jpeg",
+    "decoded_training_encoding": "rgb8",
+    "rectified": true
+  },
+  "coordinates": {
+    "world_handedness": "right_handed",
+    "map_frame": "map",
+    "base_frame": "base_link",
+    "base_axes": "x_forward_y_left_z_up",
+    "camera_optical_axes": "x_right_y_down_z_forward",
+    "extrinsic": "T_base_from_camera_row_major"
+  },
+  "capture": {
+    "nominal_rate_hz": 10.0,
+    "minimum_effective_rate_hz": 9.5,
+    "minimum_episode_duration_s": 30.0,
+    "minimum_motion_distance_m": 5.0,
+    "minimum_median_period_ms": 80.0,
+    "maximum_median_period_ms": 120.0,
+    "maximum_p99_gap_ms": 150.0,
+    "maximum_absolute_gap_ms": 250.0,
+    "dataset_bundle_skew_ms": 20.0,
+    "runtime_bundle_skew_ms": 1.0,
+    "maximum_state_delta_ms": 100.0,
+    "maximum_command_age_ms": 500.0,
+    "minimum_bundle_coverage_percent": 99.0,
+    "maximum_count_imbalance_percent": 1.0,
+    "maximum_pose_step_m": 10.0,
+    "maximum_speed_consistency_error_mps": 5.0
+  },
+  "trajectory": {
+    "frame": "base_link_at_anchor",
+    "step_s": 0.1,
+    "horizon_s": 6.4,
+    "point_count": 64,
+    "first_horizon_s": 0.1,
+    "legacy_view_step_s": 0.5,
+    "legacy_view_horizon_s": 3.0,
+    "minimum_valid_point_percent": 95.0,
+    "invalid_value": null
+  },
+  "navigation": {
+    "route_source": "episode_route_geometry",
+    "route_resample_spacing_m": 1.0,
+    "route_lookahead_m": 120.0,
+    "maximum_anchor_distance_m": 5.0,
+    "maximum_coordinate_error_m": 0.05
+  },
+  "commands": {
+    "0": "left",
+    "1": "right",
+    "2": "straight",
+    "3": "lane_follow",
+    "4": "change_left",
+    "5": "change_right"
+  },
+  "domains": [
+    "carla",
+    "real"
+  ],
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "split_policy": "route_site_day_holdout_v1",
+  "missing_label_policy": "available_flag_and_valid_mask_never_zero_fill"
+}

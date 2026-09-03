@@ -20,6 +20,7 @@ from portable_e2e.dataset import TrainingExample  # noqa: E402
 from portable_e2e.evaluate import evaluate_model  # noqa: E402
 from portable_e2e.losses import TrajectoryLossConfig, trajectory_loss  # noqa: E402
 from portable_e2e.model import (  # noqa: E402
+    ConvImageEncoder,
     ModelConfig,
     PerspectiveTrajectoryModel,
     parameter_count,
@@ -190,6 +191,48 @@ def test_model_config_mapping_requires_the_complete_checkpoint_abi() -> None:
     extra = {**mapping, "unreviewed_field": 1}
     with pytest.raises(ContractError, match="unknown model config fields"):
         ModelConfig.from_mapping(extra)
+
+
+def test_model_config_rejects_nondivisible_downsampled_pooling_grid_axes() -> None:
+    with pytest.raises(ContractError, match="image_grid_width must exactly divide"):
+        replace(_small_model_config(), image_width=33).validate()
+    with pytest.raises(ContractError, match="image_grid_height must exactly divide"):
+        replace(
+            _small_model_config(), image_height=17, image_grid_height=3
+        ).validate()
+
+
+def test_fixed_grid_pool_matches_adaptive_pool_for_divisible_default_shape() -> None:
+    encoder = ConvImageEncoder(
+        input_channels=3,
+        base_channels=4,
+        output_width=8,
+        grid_height=3,
+        grid_width=5,
+        input_height=180,
+        input_width=320,
+    )
+    features = torch.arange(12 * 20, dtype=torch.float32).reshape(1, 1, 12, 20)
+    expected = torch.nn.functional.adaptive_avg_pool2d(features, (3, 5))
+
+    with torch.no_grad():
+        encoded = encoder.features(torch.zeros(1, 3, 180, 320))
+    assert encoded.shape[-2:] == (12, 20)
+    assert isinstance(encoder.pool, torch.nn.AvgPool2d)
+    assert torch.equal(encoder.pool(features), expected)
+
+
+def test_fixed_pool_strictly_loads_the_legacy_default_state_dict() -> None:
+    torch.manual_seed(20260904)
+    legacy = PerspectiveTrajectoryModel()
+    legacy.image_encoder.pool = torch.nn.AdaptiveAvgPool2d((3, 5))
+    replacement = PerspectiveTrajectoryModel()
+
+    incompatible = replacement.load_state_dict(legacy.state_dict(), strict=True)
+
+    assert incompatible.missing_keys == []
+    assert incompatible.unexpected_keys == []
+    assert parameter_count(replacement) == parameter_count(legacy) == 1_053_278
 
 
 def test_model_route_encoding_preserves_point_order() -> None:

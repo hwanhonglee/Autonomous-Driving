@@ -410,28 +410,30 @@ version 경로를 사용하고, 내용을 검토한 뒤 의도적으로 교체�
 4/5 Hz legacy 자료와 아직 변환하지 않은 Bench2Drive archive를 `dataset_root`로 직접 넣으면
 안 된다.
 
-## 7. 내일 제안할 전용 venv 설치
+## 7. 승인된 전용 venv 설치와 재현
 
-이 절의 명령은 **오늘 실행한 기록이 아니라, GPU 사용 전 검토할 제안**이다. 사용자 승인
-후 프로젝트 전용 venv 안에서만 실행한다. `PIP_REQUIRE_VIRTUALENV=true` 때문에 가상환경이
-활성화되지 않았으면 pip가 중단한다.
+2026-09-04에 Python 3.12 전용 venv 안에서 PyTorch `2.13.0+cu130`, NumPy `2.5.2`,
+Pillow `12.3.0` 설치와 import를 확인했다. 새 환경에서 재현할 때도 사용자 승인을 받은 개인
+프로젝트 venv 안에서만 실행한다. `PIP_REQUIRE_VIRTUALENV=true` 때문에 가상환경이 활성화되지
+않았으면 pip가 중단한다. `PORTABLE_E2E_ROOT`는 승인받은 절대경로로 먼저 지정해야 한다.
 
 ```bash
-export PORTABLE_E2E_ROOT="${PORTABLE_E2E_ROOT:-$HOME/portable_e2e}"
+: "${PORTABLE_E2E_ROOT:?export PORTABLE_E2E_ROOT=/approved/personal/portable_e2e}"
 export REPO_ROOT="$PORTABLE_E2E_ROOT/autoware_e2e"
 
 source "$PORTABLE_E2E_ROOT/venvs/py312/bin/activate"
 export PIP_CACHE_DIR="$PORTABLE_E2E_ROOT/cache/pip"
 export PIP_REQUIRE_VIRTUALENV=true
+export PYTHONNOUSERSITE=1
 export CUDA_VISIBLE_DEVICES=''
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 cd "$REPO_ROOT"
 
-python -m pip install \
+python -m pip install --no-input \
   --index-url https://download.pytorch.org/whl/cu130 \
   'torch==2.13.0'
 
-python -m pip install \
+python -m pip install --no-input \
   --requirement portable_e2e/config/training_py312.requirements.txt
 ```
 
@@ -518,7 +520,7 @@ CUDA_VISIBLE_DEVICES='' python -m portable_e2e.evaluate "$dataset_root" \
 ```bash
 nvidia-smi --query-gpu=index,name,memory.total,memory.used,utilization.gpu \
   --format=csv
-nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name,used_memory \
+nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name,used_gpu_memory \
   --format=csv
 ```
 
@@ -526,15 +528,18 @@ nvidia-smi --query-compute-apps=gpu_uuid,pid,process_name,used_memory \
 비어 있는지 다시 확인한다. process가 보이면 기다린다. PID 종료, `nvidia-smi --gpu-reset`,
 reboot는 하지 않는다.
 
-아래 `gpu_index=0`은 예시다. **확인한 idle physical index로만** 바꾼다.
-`CUDA_VISIBLE_DEVICES`로 한 장만 노출했기 때문에 Python 안에서는 그 카드가 `cuda:0`이다.
+아래 `gpu_index=0`은 예시다. **확인한 idle physical index로만** 바꾼 뒤 UUID를 얻어 사용한다.
+숫자 index 대신 UUID를 `CUDA_VISIBLE_DEVICES`에 넣으면 장치 열거 순서가 바뀌어도 다른 GPU를
+잘못 노출하지 않는다. Python 안에서는 선택한 한 장만 `cuda:0`이다.
 
 ```bash
 gpu_index=0
+gpu_uuid="$(nvidia-smi -i "$gpu_index" --query-gpu=uuid --format=csv,noheader | tr -d '[:space:]')"
+case "$gpu_uuid" in GPU-*) ;; *) printf 'GPU UUID lookup failed\n' >&2; exit 2 ;; esac
 dataset_root="$PORTABLE_E2E_ROOT/datasets/prepared/<dataset_id>"
 gpu_run="$PORTABLE_E2E_ROOT/runs/<run_id>-gpu-one-step"
 
-CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
   --run-dir "$gpu_run" \
   --split train \
   --device cuda:0 \
@@ -550,7 +555,7 @@ GPU one-step이 끝난 뒤 같은 logical device에서 별도 `val` sample을 �
 ```bash
 gpu_eval="$PORTABLE_E2E_ROOT/runs/<run_id>-gpu-eval-val"
 
-CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.evaluate "$dataset_root" \
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.evaluate "$dataset_root" \
   --checkpoint "$gpu_run/checkpoints/latest.pt" \
   --output-dir "$gpu_eval" \
   --split val \
@@ -586,7 +591,7 @@ epoch별 무작위 순서를 만들고, domain 순서는 weighted interleave한�
 checkpoint에 기록된다. 임의 시점에 끝난 prefix도 목표 누적량과 최대 1 sample 차이다.
 
 ```bash
-CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
   --run-dir "$PORTABLE_E2E_ROOT/runs/<balanced-run-id>" \
   --split train \
   --device cuda:0 \
@@ -604,7 +609,7 @@ CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
 혼합 corpus smoke에서는 validation report의 domain count를 먼저 확인한다.
 
 ```bash
-CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
   --run-dir "$gpu_run" \
   --split train \
   --device cuda:0 \

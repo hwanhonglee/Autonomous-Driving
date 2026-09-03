@@ -75,7 +75,7 @@ route와 future target은 contiguous prefix다. shape, dtype, device와 NaN/Inf�
 ```text
 각 camera RGB
   → 공유 4-stage stride-2 Conv + GroupNorm + ReLU
-  → adaptive 3×5 spatial grid
+  → 겹치지 않는 고정 평균 3×5 spatial grid
   → grid 전체를 96차원으로 projection
   → camera ID embedding + 16차원 calibration embedding
   → 여섯 view를 flatten하여 192차원 camera feature
@@ -89,6 +89,10 @@ route (최대 128×2)
 따라서 image encoder는 최소 3×5 공간 배열을 보존하고, route는 점 순서를 바꾸면 같은 평균이
 나오는 구조가 아니다. 다만 이것은 dense BEV projection이나 cross-view attention이 아니다.
 3×5 grid를 96차원으로 압축하고 여섯 view를 flatten하는 작은 wiring baseline이다.
+기본 180×320 입력은 네 번의 stride-2 convolution 뒤 12×20 feature map이 되고, 이를
+4×4 cell의 3×5 grid로 평균낸다. grid 크기는 downsampled feature 크기를 정확히 나눠야 하며
+그렇지 않은 config는 시작 전에 거부한다. 이 고정·비중첩 pooling은 엄격한 CUDA 결정론 모드의
+backward를 지원하기 위한 계약이다.
 
 ego history는 13→64 projection 뒤 64차원 GRU의 마지막 causal state를 사용한다. camera 192,
 ego 64, route 96을 이어 붙인 352차원 feature를 256차원 fusion MLP에 통과시킨다.

@@ -21,6 +21,14 @@ from .dataset import CALIBRATION_FEATURE_NAMES, FEATURE_NAMES
 
 
 MODEL_ID = "portable_e2e.perspective_trajectory.v0"
+IMAGE_ENCODER_DOWNSAMPLE_STAGES = 4
+
+
+def _downsampled_image_dimension(value: int) -> int:
+    """Return the spatial size after the encoder's stride-two convolutions."""
+    for _ in range(IMAGE_ENCODER_DOWNSAMPLE_STAGES):
+        value = (value + 1) // 2
+    return value
 
 
 @dataclass(frozen=True)
@@ -99,6 +107,18 @@ class ModelConfig:
                 raise ContractError(
                     f"model.{name} must be finite and in [{minimum}, {maximum}]"
                 )
+        feature_height = _downsampled_image_dimension(self.image_height)
+        feature_width = _downsampled_image_dimension(self.image_width)
+        if feature_height % self.image_grid_height != 0:
+            raise ContractError(
+                "model.image_grid_height must exactly divide the downsampled "
+                f"image height {feature_height}"
+            )
+        if feature_width % self.image_grid_width != 0:
+            raise ContractError(
+                "model.image_grid_width must exactly divide the downsampled "
+                f"image width {feature_width}"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         self.validate()
@@ -131,6 +151,8 @@ class ConvImageEncoder(nn.Module):
         output_width: int,
         grid_height: int,
         grid_width: int,
+        input_height: int,
+        input_width: int,
     ) -> None:
         super().__init__()
         widths = (base_channels, base_channels * 2, base_channels * 4, base_channels * 6)
@@ -149,7 +171,16 @@ class ConvImageEncoder(nn.Module):
             )
             previous = width
         self.features = nn.Sequential(*layers)
-        self.pool = nn.AdaptiveAvgPool2d((grid_height, grid_width))
+        feature_height = _downsampled_image_dimension(input_height)
+        feature_width = _downsampled_image_dimension(input_width)
+        kernel_size = (
+            feature_height // grid_height,
+            feature_width // grid_width,
+        )
+        # Non-overlapping fixed average pooling has a deterministic CUDA
+        # backward path. AdaptiveAvgPool2d does not under PyTorch's strict
+        # deterministic-algorithm mode, even for this divisible default grid.
+        self.pool = nn.AvgPool2d(kernel_size=kernel_size, stride=kernel_size)
         self.projection = nn.Linear(previous * grid_height * grid_width, output_width)
 
     def forward(self, images: Tensor) -> Tensor:
@@ -172,6 +203,8 @@ class PerspectiveTrajectoryModel(nn.Module):
             cfg.image_embedding,
             cfg.image_grid_height,
             cfg.image_grid_width,
+            cfg.image_height,
+            cfg.image_width,
         )
         self.camera_embedding = nn.Parameter(
             torch.empty(cfg.camera_count, cfg.image_embedding)

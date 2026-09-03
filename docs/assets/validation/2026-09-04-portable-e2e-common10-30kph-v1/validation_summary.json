@@ -1,0 +1,165 @@
+{
+  "schema_id": "autoware-e2e.portable-common10-evidence-summary.v1",
+  "schema_version": 1,
+  "evidence_date": "2026-09-04",
+  "campaign_completion": "IN_PROGRESS",
+  "completed_scope_status": "PASS",
+  "completed_scope": {
+    "map_id": "Town07",
+    "route_id": "town07_straight_s0000_p00",
+    "maneuver": "straight",
+    "target_speed_kmh": 30.0,
+    "weather": "ClearNoon"
+  },
+  "scope_matrix": [
+    {
+      "map_id": "Town07",
+      "maneuver": "straight",
+      "common10_formal_status": "PASS"
+    },
+    {
+      "map_id": "c_track_1_0_7",
+      "maneuver": "turn",
+      "common10_formal_status": "PENDING"
+    },
+    {
+      "map_id": "Town03",
+      "maneuver": "turn",
+      "common10_formal_status": "PENDING"
+    },
+    {
+      "map_id": "all_supported_towns",
+      "maneuver": "straight_and_turn",
+      "common10_formal_status": "PENDING"
+    }
+  ],
+  "provenance": {
+    "domain": "carla",
+    "source_dataset_id": "carla_basicagent_expert",
+    "source_dataset_version": "carla-0.9.15-native-expert-v1",
+    "source_controller": "carla.BasicAgent",
+    "license_id": "project-generated-carla-internal-review",
+    "adapter_id": "carla_native_expert_to_common10_v1",
+    "git_commit": "0eb9b1bf50d29e362020ac33265e10ff6aea6c23",
+    "autoware_vad_runtime_capture": false,
+    "learned_model_inference_capture": false
+  },
+  "dataset": {
+    "dataset_id": "carla-common10-30kph-20260904-v1",
+    "contract_id": "common_10hz_v1",
+    "contract_sha256": "eb8f44c98a5bee6e560f4983c6ecbc67122c4fe043d4d50fe2ea3737bda9c722",
+    "episode_count": 1,
+    "split_sample_counts": {
+      "train": 309
+    },
+    "scenario_sample_counts": {
+      "lane_follow": 309,
+      "straight": 309
+    },
+    "camera_order": [
+      "CAM_FRONT",
+      "CAM_BACK",
+      "CAM_FRONT_LEFT",
+      "CAM_BACK_LEFT",
+      "CAM_FRONT_RIGHT",
+      "CAM_BACK_RIGHT"
+    ],
+    "image_mode": "copy",
+    "raw_state_count": 747,
+    "raw_anchor_count": 374,
+    "eligible_anchor_count": 309,
+    "selected_bundle_count": 309,
+    "stationary_tail_context_anchor_count": 65,
+    "prepared_duration_s": 30.800000459000003,
+    "effective_rate_hz": 9.999999850974028,
+    "median_period_ms": 100.000001,
+    "p99_gap_ms": 100.000002,
+    "maximum_gap_ms": 100.000002,
+    "motion_distance_m": 208.4440665985935,
+    "bundle_coverage_percent": 100.0,
+    "valid_future_point_percent": 100.0,
+    "maximum_bundle_skew_ms": 0.0,
+    "maximum_state_delta_ms": 0.0,
+    "maximum_command_age_ms": 0.0,
+    "minimum_unique_jpeg_scan_percent": 100.0,
+    "maximum_consecutive_identical_jpeg_scans": 1,
+    "cross_camera_duplicate_bundle_count": 0,
+    "goal_reached": true,
+    "termination_reason": "catalog_goal_tolerance",
+    "route_length_m": 210.5975914062836,
+    "final_catalog_goal_distance_m": 2.3683169969315316,
+    "goal_tolerance_m": 2.5,
+    "collision_event_count": 0,
+    "lane_invasion_event_count": 0
+  },
+  "capture_contract": {
+    "physics_hz": 20.0,
+    "camera_hz": 10.0,
+    "camera_interval_ticks": 2,
+    "stationary_warmup_s": 3.5,
+    "stationary_tail_s": 6.5,
+    "future_horizon_point_count": 64,
+    "future_horizon_period_s": 0.1,
+    "future_horizon_s": 6.4
+  },
+  "qualification": {
+    "schema": "PASS",
+    "common_10hz_planning": "PASS",
+    "image_payload_sha256": "PASS",
+    "native_source_frame_identity": "PASS",
+    "native_source_manifest_binding": "PASS",
+    "camera_timestamp_equals_native_source": "PASS",
+    "raw_source_artifact_content": "NOT_RUN_REQUIRES_RAW_SOURCE_REVIEW",
+    "canonical_causal_route_reconstruction": "PASS",
+    "jpeg_scan_payload_reuse_diagnostic": "MEASURED_NOT_A_QUALIFICATION_GATE",
+    "image_pixel_decode": "NOT_RUN_REQUIRES_APPROVED_IMAGE_LIBRARY",
+    "offline_1ms_bundle_readiness": "PASS",
+    "runtime_execution_tested": false,
+    "trajectory_geometry_recomputed_from_source_state": false,
+    "manual_release_review_required": true
+  },
+  "integrity": {
+    "dataset_manifest_sha256": "f399423c40939e6799e1a66ad3b618f4165b70d0afc38d2e3de4f65179858c4c",
+    "dataset_fingerprint_sha256": "eb1900c327a4e33dae2f49391d27069861591fcdac2327896fc41d37f4863605",
+    "prepared_tree_manifest_sha256": "990bade233bc037bc6892cdf9d51e877b70c4669e11424ee59eb5cbab7f7c016",
+    "prepared_tree_file_count": 1862,
+    "prepared_tree_directory_count": 11,
+    "prepared_tree_total_size_bytes": 218460407,
+    "local_planning_validation_report_sha256": "bf744dee894ab12ed55eddaaad10ff93379898b85c1326132cc6f1cef9a77e2b"
+  },
+  "visuals": [
+    {
+      "path": "town07_straight/town07_straight_30kph_common10_centered_overview.png",
+      "media_type": "image/png",
+      "width_px": 1600,
+      "height_px": 900,
+      "size_bytes": 832480,
+      "sha256": "cfc95a3bac2f3fb5a42ffa606c701c4a0784f192688bc00c212e46e1134d05e0",
+      "layout": "ego_centered_heading_up"
+    },
+    {
+      "path": "town07_straight/town07_straight_30kph_common10_centered_drive.gif",
+      "media_type": "image/gif",
+      "width_px": 1600,
+      "height_px": 900,
+      "size_bytes": 20769844,
+      "sha256": "fe13ff04c95e85b91bf75bebb1c4a8019fd67f538e23796eb55103f3c3b01e87",
+      "frame_count": 60,
+      "review_fps": 5.0,
+      "duration_s": 12.0,
+      "layout": "ego_centered_heading_up",
+      "review_fps_is_not_sensor_cadence": true
+    }
+  ],
+  "reports": {
+    "prepared_dataset_validation": "datasets/prepared/carla-common10-30kph-20260904-v1/validation_report.json",
+    "local_planning_revalidation": "artifacts/validation/2026-09-04/portable_e2e_common10_30kph_v1/reports/local_planning_validation.json",
+    "training_smoke_summary": "docs/assets/validation/2026-09-04-portable-e2e-common10-30kph-v1/reports/training_smoke_summary.json"
+  },
+  "related_autoware_vad_runtime_evidence": {
+    "relationship": "separate_historical_runtime_campaign_not_this_common10_capture",
+    "campaign_readme": "docs/assets/validation/2026-09-02-runtime-control-campaign-v1/README.md",
+    "town07_straight_centered_png": "docs/assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png",
+    "town07_straight_drive_gif": "docs/assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/02_autoware_drive.gif"
+  }
+}

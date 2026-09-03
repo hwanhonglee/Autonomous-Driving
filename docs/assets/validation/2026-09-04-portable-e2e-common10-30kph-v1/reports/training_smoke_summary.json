@@ -1,0 +1,111 @@
+{
+  "schema_id": "autoware-e2e.portable-training-smoke-summary.v1",
+  "schema_version": 1,
+  "evidence_date": "2026-09-04",
+  "dataset_id": "carla-common10-30kph-20260904-v1",
+  "dataset_scope": "Town07 straight, ClearNoon, 30 km/h, CARLA BasicAgent expert",
+  "overall_status": "PASS_PIPELINE_SMOKE_ONLY",
+  "remote_transfer_verification": {
+    "status": "PASS",
+    "staging_validated_before_atomic_promotion": true,
+    "final_path_revalidated_after_promotion": true,
+    "rsync_checksum_dry_run_difference_count": 0,
+    "prepared_tree_file_count": 1862,
+    "prepared_tree_total_size_bytes": 218460407,
+    "prepared_tree_manifest_sha256": "990bade233bc037bc6892cdf9d51e877b70c4669e11424ee59eb5cbab7f7c016",
+    "dataset_manifest_sha256": "f399423c40939e6799e1a66ad3b618f4165b70d0afc38d2e3de4f65179858c4c",
+    "dataset_fingerprint_sha256": "eb1900c327a4e33dae2f49391d27069861591fcdac2327896fc41d37f4863605"
+  },
+  "runtime": {
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "torch_cuda": "13.0",
+    "numpy": "2.5.2",
+    "pillow": "12.3.0",
+    "personal_project_venv_only": true,
+    "deterministic_algorithms": true,
+    "cudnn_deterministic": true,
+    "cudnn_benchmark": false,
+    "cuda_matmul_allow_tf32": false,
+    "cublas_workspace_config": ":4096:8"
+  },
+  "runs": [
+    {
+      "run_id": "carla-common10-30kph-20260904-v1-cpu-one-step",
+      "status": "TRAINING_TARGET_REACHED",
+      "device": "cpu",
+      "selected_dataset_size": 4,
+      "batch_size": 1,
+      "global_steps": 1,
+      "samples_seen": 1,
+      "model_parameter_count": 1053278,
+      "last_loss": 6.630497932434082,
+      "checkpoint_size_bytes": 12701893,
+      "artifacts": {
+        "run_json_sha256": "8508593293daa474d2d88fd794f8712569fd0543eeecadd0602f50c43f1c5cf1",
+        "metrics_jsonl_sha256": "e448a9f25bb096d768bde150fdbd3377405040b43bd317312bc38c450067772a",
+        "checkpoint_sha256": "5460ac08b9142271c3d012e3a9825f374fec1b7951dd50df8a08845d9511ca20"
+      }
+    },
+    {
+      "run_id": "carla-common10-30kph-20260904-v1-gpu0-one-step",
+      "status": "TRAINING_TARGET_REACHED",
+      "device": "cuda:0",
+      "physical_gpu_index": 0,
+      "gpu_exposure": "single-device UUID allowlist",
+      "selected_dataset_size": 4,
+      "batch_size": 1,
+      "global_steps": 1,
+      "samples_seen": 1,
+      "model_parameter_count": 1053278,
+      "last_loss": 6.629924297332764,
+      "checkpoint_size_bytes": 12703247,
+      "artifacts": {
+        "run_json_sha256": "43bfec1c79fbca25d5962e074280fde81bd72ba844da1729156b21ada4fcdbb1",
+        "metrics_jsonl_sha256": "ebf5bfa4e53c6b55ee93405d5d698c10c5e865f512c3b5e6635f609d05457414",
+        "checkpoint_sha256": "55e63c1c7e7f82c5a2f7a79098d775ced6351aa86e7206b176084a79d8c3a2d6"
+      }
+    },
+    {
+      "run_id": "carla-common10-30kph-20260904-v1-gpu0-overfit-smoke-32s-5step",
+      "status": "TRAINING_TARGET_REACHED",
+      "device": "cuda:0",
+      "physical_gpu_index": 0,
+      "gpu_exposure": "single-device UUID allowlist",
+      "selected_dataset_size": 32,
+      "batch_size": 4,
+      "global_steps": 5,
+      "samples_seen": 20,
+      "model_parameter_count": 1053278,
+      "loss_by_step": [
+        12.745591163635254,
+        12.850083351135254,
+        8.140975952148438,
+        6.407230854034424,
+        7.065676689147949
+      ],
+      "checkpoint_size_bytes": 12703247,
+      "artifacts": {
+        "run_json_sha256": "fef951911b657da5c10c646c4477ac286581de6d62c7f978c97d663edd9a3cfa",
+        "metrics_jsonl_sha256": "fdcd1989bac48c39ed8bc123651f7fd69c0576c9e20a7334ab9d9bc877df1166",
+        "checkpoint_sha256": "a0e5a24df16f5f8033e7c2131565adc4334e752d2155d161cbed9c3a403c9004"
+      }
+    }
+  ],
+  "gpu_postcondition": {
+    "physical_gpu_index": 0,
+    "memory_used_mib": 0,
+    "utilization_percent": 0,
+    "compute_process_count": 0,
+    "status": "PASS"
+  },
+  "qualification_limits": {
+    "validation_split_evaluation": "NOT_RUN_NO_VAL_SPLIT",
+    "closed_loop_runtime": "NOT_RUN",
+    "obstacle_avoidance": "NOT_TESTED",
+    "lane_change": "NOT_TESTED",
+    "real_vehicle_control": "NOT_APPROVED",
+    "checkpoint_warning": "RESEARCH CHECKPOINT — NOT APPROVED FOR VEHICLE CONTROL",
+    "loss_interpretation": "Pipeline connectivity diagnostic only; not a driving-performance claim."
+  }
+}

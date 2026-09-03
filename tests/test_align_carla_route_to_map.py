@@ -364,6 +364,42 @@ def test_full_wrapper_rejects_manual_alignment_override(tmp_path):
     assert "controlled by map_bundle.json" in completed.stderr
 
 
+def test_full_wrapper_rejects_legacy_three_file_map_without_bundle(tmp_path):
+    map_path = tmp_path / "Town99_full"
+    map_path.mkdir()
+    for name in ("lanelet2_map.osm", "pointcloud_map.pcd", "map_projector_info.yaml"):
+        (map_path / name).write_text("legacy fixture\n", encoding="utf-8")
+
+    cuda_root = tmp_path / "cuda"
+    (cuda_root / "bin").mkdir(parents=True)
+    nvcc = cuda_root / "bin/nvcc"
+    nvcc.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    nvcc.chmod(0o755)
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "AUTOWARE_E2E_CUDA_ROOT": str(cuda_root),
+            "AUTOWARE_E2E_SKIP_INSTALL": "1",
+            "AUTOWARE_E2E_FULL_MAP_PATH": str(map_path),
+        }
+    )
+    route = ROOT / "autoware_e2e_vad_launch/test/fixtures/route_map/town99_route.json"
+
+    completed = subprocess.run(
+        [str(ROOT / "scripts/e2e/run_route_vad_full.sh"), str(route)],
+        cwd=ROOT,
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "Complete Autoware map not found" in completed.stderr
+    assert "map_bundle.json" in completed.stderr
+
+
 @pytest.mark.parametrize(
     "argument",
     (

@@ -206,7 +206,7 @@ def test_town_metadata_and_map_path_mismatch_is_rejected(tmp_path):
     payload["town"] = "Town98"
     route.write_text(json.dumps(payload), encoding="utf-8")
 
-    with pytest.raises(ValidationError, match="does not uniquely match"):
+    with pytest.raises(ValidationError, match="does not match map bundle identity"):
         validate_route_map(route, map_path)
 
 

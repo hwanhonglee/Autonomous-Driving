@@ -1,3 +1,35 @@
+# Autonomous-Driving: Autoware VAD + CARLA E2E
+
+이 브랜치는 Autoware 1.9.0, TensorRT VAD, CARLA 0.9.15를 묶어 기본 Town과
+커스텀 맵에서 직진·회전 경로를 반복 검증하는 프로젝트다. 처음 사용하는 사람은
+아래 세 명령으로 저장소를 받은 뒤, 사전진단이 표시하는 다음 명령을 순서대로
+실행하면 된다.
+
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git clone \
+  --branch autoware-e2e/v1.9.0-vad-carla \
+  --single-branch \
+  https://github.com/hwanhonglee/Autonomous-Driving.git
+cd Autonomous-Driving
+bash scripts/e2e/bootstrap_preflight.sh
+```
+
+전체 CARLA 주행은 현재 검증된 **Ubuntu 22.04 x86_64 + NVIDIA GPU** 환경과 별도
+CARLA·모델·맵 데이터가 필요하다. 이 대용량/라이선스 의존 파일은 Git에 넣지 않는다.
+대신 사전진단 자체는 깨끗한 클론에서도 다운로드나 시스템 변경 없이 실행되며,
+현재 단계와 누락 항목을 `PASS`, `WARN`, `BLOCK`으로 설명한다.
+
+- 처음 설치하는 사람: [한국어 초보자 Quick Start](docs/BEGINNER_QUICKSTART_KO.md)
+- 모든 옵션과 설계 경계: [E2E 상세 가이드](E2E_SETUP.md)
+- 최신 30/60 kph 결과: [runtime·control 검증 보고서](docs/validation-2026-09-02-runtime-control-campaign.md)
+- 차량 중심 PNG/GIF: [발행된 검증 화면](docs/assets/validation/2026-09-02-runtime-control-campaign-v1/)
+
+> `GIT_LFS_SKIP_SMUDGE=1`은 2 GB가 넘는 과거 화면·MCAP 자료를 첫 클론에서
+> 생략하기 위한 선택 사항이다. 실행 코드는 그대로 받아지며, 필요한 화면만 받는
+> 명령은 Quick Start에 설명되어 있다.
+
+---
+
 # Autoware - the world's leading open-source software project for autonomous driving
 
 ![Autoware_RViz](https://user-images.githubusercontent.com/63835446/158918717-58d6deaf-93fb-47f9-891d-e242b02cba7b.png)

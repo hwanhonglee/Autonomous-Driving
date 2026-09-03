@@ -1,13 +1,19 @@
-# Autoware 1.9.0 + TensorRT VAD + CARLA 0.9.15 단일 가이드
+# Autoware 1.9.0 + TensorRT VAD + CARLA 0.9.15 상세 가이드
 
 이 문서는 이 워크스페이스에서 CARLA 시작점부터 목표점까지 VAD 기반으로
 주행하고, 경로와 날씨를 바꿔 반복 평가하는 방법을 설명한다. 기존에 사용하던
 Autoware와 섞이지 않도록 기본 ROS domain은 42이며, 새 CARLA는 다른 포트로
 띄울 수 있다.
 
-이 프로젝트의 설치, 실행, 맵 변경, 평가, 시각화, 성능 최적화는 **이 파일 하나를
-기준 문서로 사용한다.** 별도 quick-start 문서를 만들지 않는다. 처음 실행할 때는
-바로 아래 절을 사용하고, 구조와 안전 경계가 필요할 때 뒤의 상세 절을 읽는다.
+이 파일은 설치 이후의 실행, 맵 변경, 평가, 시각화, 성능 최적화를 설명하는
+**상세 기준 문서**다. Git, 터미널, ROS를 처음 접하거나 새 PC에서 시작한다면 먼저
+[한국어 초보자 Quick Start](docs/BEGINNER_QUICKSTART_KO.md)의 클론 직후 사전진단부터
+따른다. 그 문서는 실제 파일을 내려받기 전에 지원 환경과 누락 의존성을 확인하고,
+이 문서의 해당 상세 절로 연결한다.
+
+이 문서 뒤쪽의 `/home/a/...`, `/home/hong/...` 경로는 해당 workstation에서 수집한
+역사 증거 또는 source provenance다. 새 PC의 실행 경로로 복사하지 말고, 명령 예시의
+workspace 위치와 외부 CARLA·맵 경로는 자신의 절대경로 또는 안내된 환경변수로 지정한다.
 
 ## 30 kph all-Town VAD 검증 상태와 끊김 진단 (2026-09-01)
 
@@ -1502,8 +1508,10 @@ Town01 map source 위치와 세부 조건은 뒤의 `준비와 빌드` 절을 �
 ```bash
 cd /home/a/autoware_e2e
 scripts/e2e/download_vad_models.sh
-scripts/e2e/setup_town01_full_map.sh --dry-run
-scripts/e2e/setup_town01_full_map.sh
+export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
+export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
 scripts/e2e/build_full.sh
 ```
 
@@ -1786,8 +1794,8 @@ scripts/e2e/run_route_vad_full.sh data/routes/townxx_route.json
 trial `18/18 PASS`다. standard `town02`, `town05`, `town10hd`는 각 optimized variant와
 다른 map identity이므로 여전히 `BLOCKED`다. Woraksan도 현재 packaged runtime asset과
 승인된 full-map bundle이 없어 `BLOCKED`이며, 과거 고정 route 검증을 v16 전체 matrix
-결과로 해석하지 않는다. `setup_town01_full_map.sh`는 Town01 전용이며 custom
-map에는 `setup_custom_full_map.py`를 사용한다.
+결과로 해석하지 않는다. packaged Town은 `prepare_packaged_town_full_maps.py`의 고정
+manifest를 사용하며 custom map은 `setup_custom_full_map.py`의 별도 계약을 사용한다.
 
 이 Full Autoware map 조건은 VAD 폐루프와 RViz 표준 map 표시에 필요한 것이다. 문서
 앞부분의 BasicAgent expert collection만 수행할 때는 CARLA level과 OpenDRIVE가 있으면
@@ -2156,28 +2164,24 @@ driver/package 정합성 복구를 대신하지 않는다.
 ### Town01 full map
 
 Minimal launch는 CARLA town 이름만 필요하지만, full Autoware map stack은
-Lanelet2, point cloud, `map_projector_info.yaml`이 들어 있는 directory가
-필요하다. 기본 Town01 bundle은 다음 순서로 준비한다.
+Lanelet2, point cloud, `map_projector_info.yaml`, `map_bundle.json`이 들어 있는
+directory가 필요하다. 기본 Town01 bundle은 다음 순서로 준비한다. 첫 명령은 읽기 전용
+inventory이고, `READY_TO_PREPARE`와 오류 0건을 확인한 뒤에만 두 번째 명령을 실행한다.
 
 ```bash
-scripts/e2e/setup_town01_full_map.sh --dry-run
-scripts/e2e/setup_town01_full_map.sh
+export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
+export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
+bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 ```
 
-기본 source는 다음 두 파일이다.
-
-```text
-~/Downloads/sample-planning-map/vector_maps/lanelet2/CARLA Town/Town01_light.osm
-~/Downloads/sample-planning-map/point_cloud_maps/CARLA Town/Town01.pcd
-```
-
-스크립트는 source hash, Lanelet2 구조와 PCD 좌표 범위를 검사하고 source를
-복사하거나 수정하지 않는다. Target의 OSM/PCD는 source를 가리키는 symlink이며,
-Local projector metadata만 새로 만든다. 결과는
-`data/maps/Town01_full`이다. 다른 source와 target은 `--osm-source`,
-`--pcd-source`, `--target-dir` 또는 대응 환경변수로 지정한다. Custom map은
-이 script에 넣지 않는다. C-track/월악산은 asset hash, transform과 파생 OSM 규칙을
-고정한 `scripts/e2e/setup_custom_full_map.py`를 사용한다.
+도구는 `packaged_town_full_maps.yaml`의 source/runtime hash, Lanelet2 구조, PCD 변환과
+좌표 정합을 검사한다. Target OSM/PCD symlink, Local projector metadata와 provenance
+`map_bundle.json`까지 모두 만든 결과가 `data/maps/Town01_full`이다. 기존
+`setup_town01_full_map.sh`는 이 4-file admission 계약 이전의 legacy 3-file helper라
+새 runtime 준비에 사용하지 않는다. C-track/월악산은 asset hash, transform과 파생 OSM
+규칙을 고정한 `scripts/e2e/setup_custom_full_map.py`를 사용한다.
 
 `run_route_vad_full.sh`는 CARLA world 이름 `Town01`과 Autoware map directory
 `Town01_full`을 별도 launch argument로 전달한다. Directory 이름을 CARLA town
@@ -2468,7 +2472,11 @@ CARLA server를 2100번 port에 시작하고, bridge가 아직 없는 상태에�
 방법으로 route JSON을 준비한다. Town01 full map이 없다면 한 번 준비한다.
 
 ```bash
-scripts/e2e/setup_town01_full_map.sh
+export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
+export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
+bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 
 export CARLA_PORT=2100
 scripts/e2e/prepare_carla_route.sh \

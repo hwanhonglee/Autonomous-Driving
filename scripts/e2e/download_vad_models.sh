@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  cat <<'EOF'
+Usage: scripts/e2e/download_vad_models.sh
+
+Download the four pinned VAD v0.1 ONNX/JSON artifacts and verify SHA-256.
+The destination is AUTOWARE_E2E_DATA_PATH/vad/v0.1 or data/ml_models/vad/v0.1.
+
+Options:
+  -h, --help  Show this help without creating files or downloading data.
+EOF
+}
+
+if (( $# > 0 )); then
+  if (( $# == 1 )) && [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  printf 'ERROR: download_vad_models.sh accepts no arguments.\n' >&2
+  usage >&2
+  exit 2
+fi
+
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 dest="${AUTOWARE_E2E_DATA_PATH:-${root}/data/ml_models}/vad/v0.1"
 base_url="https://awf.ml.dev.web.auto/planning/models/tensorrt_vad/carla_tiny/v0.1"

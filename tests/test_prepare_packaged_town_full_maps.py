@@ -1,4 +1,6 @@
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import sys
 
@@ -90,6 +92,72 @@ def test_existing_regular_bundle_asset_is_never_replaced(tmp_path):
     with pytest.raises(module.TownMapError, match="regular bundle asset"):
         module._ensure_symlink(target, source)
     assert target.read_text(encoding="utf-8") == "owned"
+
+
+def test_prepare_entry_creates_the_four_file_admission_bundle(tmp_path):
+    module = load_module()
+    lanelet_root = tmp_path / "lanelet-source"
+    lanelet = lanelet_root / "Town01/lanelet2_map.osm"
+    lanelet.parent.mkdir(parents=True)
+    lanelet.write_bytes(b"lanelet fixture\n")
+    generated_root = tmp_path / "generated"
+    generated_pcd = generated_root / "Town01/pointcloud_map.pcd"
+    generated_pcd.parent.mkdir(parents=True)
+    generated_pcd.write_bytes(b"generated pointcloud fixture\n")
+    generated_sha = hashlib.sha256(generated_pcd.read_bytes()).hexdigest()
+    entry = {
+        "id": "town01",
+        "canonical_carla_map": "/Game/Carla/Maps/Town01",
+        "target_name": "Town01_full",
+        "pcd_source_town": "Town01",
+        "lanelet2": {"relative_path": "Town01/lanelet2_map.osm"},
+        "pointcloud": {
+            "relative_path": "HDMaps/Town01.pcd",
+            "transformed_size_bytes": generated_pcd.stat().st_size,
+            "transformed_sha256": generated_sha,
+        },
+    }
+    inspection = {
+        "status": "READY_TO_PREPARE",
+        "pointcloud_generated": {"exists": True, "match": True},
+        "lanelet2": {
+            "file": {
+                "sha256": hashlib.sha256(lanelet.read_bytes()).hexdigest(),
+                "size_bytes": lanelet.stat().st_size,
+            }
+        },
+        "pointcloud_source": {"file": {"sha256": "0" * 64, "size_bytes": 1}},
+        "alignment": {"status": "PASS"},
+        "runtime": {"level": {"match": True}, "opendrive": {"match": True}},
+    }
+
+    class Helper:
+        @staticmethod
+        def inspect_pcd(_path):
+            return {"points": 1}
+
+    target_root = tmp_path / "maps"
+    module.prepare_entry(
+        entry,
+        inspection,
+        lanelet_root,
+        tmp_path / "carla",
+        generated_root,
+        target_root,
+        Helper,
+    )
+
+    target = target_root / "Town01_full"
+    assert sorted(path.name for path in target.iterdir()) == [
+        "lanelet2_map.osm",
+        "map_bundle.json",
+        "map_projector_info.yaml",
+        "pointcloud_map.pcd",
+    ]
+    metadata = json.loads((target / "map_bundle.json").read_text(encoding="utf-8"))
+    assert metadata["schema_version"] == 1
+    assert metadata["status"] == "full_map_structurally_ready_not_vad_validated"
+    assert metadata["pointcloud_generated"]["sha256"] == generated_sha
 
 
 def test_route_catalog_requires_straight_and_turn(tmp_path, monkeypatch):

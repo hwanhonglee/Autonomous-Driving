@@ -228,6 +228,41 @@ def test_trial_records_and_enforces_straight_speed_60_pilot_contract() -> None:
     assert "pid_carla_vad_60kph_pilot.param.yaml" in source
 
 
+def test_trial_records_and_forwards_isolated_speed_60_geometry_candidate() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "--geometry-ab-route-corridor-0p2" in source
+    assert 'geometry_ab_candidate_id="baseline_corridor_0p5"' in source
+    assert 'geometry_ab_candidate_id="route_corridor_0p2"' in source
+    assert "GEOMETRY_AB_CANDIDATE_ID=%s" in source
+    assert "GEOMETRY_AB_ROUTE_CORRIDOR_0P2=%s" in source
+    assert "GEOMETRY_AB_BEHAVIORAL_SINGLE_KNOB=true" in source
+    assert "GEOMETRY_AB_PARAMETER_CHANGE_COUNT=2" in source
+    assert "GEOMETRY_AB_COUPLED_PARAMETER_REASON=" in source
+    assert "ROUTE_CORRIDOR_HALF_WIDTH_M=%s" in source
+    assert "TURN_OUTWARD_CORRIDOR_HALF_WIDTH_M=%s" in source
+    assert 'stack_command+=(--geometry-ab-route-corridor-0p2)' in source
+
+
+def test_trial_rejects_geometry_candidate_without_speed_60() -> None:
+    completed = subprocess.run(
+        [str(TRIAL_SCRIPT), "--geometry-ab-route-corridor-0p2"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "requires --speed-60kph-pilot" in completed.stderr
+
+
+def test_trial_protects_geometry_candidate_from_trailing_override() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    assert "route_corridor_half_width_m:=*" in source
+    assert "turn_outward_corridor_half_width_m:=*" in source
+
+
 def test_trial_rejects_speed_30_and_speed_60_together() -> None:
     completed = subprocess.run(
         [str(TRIAL_SCRIPT), "--speed-30kph", "--speed-60kph-pilot"],

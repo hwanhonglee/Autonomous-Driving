@@ -10,15 +10,19 @@ hierarchy and seals every managed output in a deterministic manifest.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
+import errno
+import fcntl
 import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import shutil
+import stat
 import sys
 import tempfile
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -58,6 +62,43 @@ SELECTED_30KPH_REGRESSION_ATTEMPT = "attempt_001"
 SELECTED_30KPH_REGRESSION_VARIANT = "selected_baseline_regression"
 SELECTED_30KPH_TRANSPORT_PROFILE = (
     "carla_vad_camera_source_5hz_best_effort_image_v2"
+)
+
+GEOMETRY_60KPH_DIRECTORY = "town06_straight_60kph_geometry_corridor_0p2_v4"
+GEOMETRY_60KPH_BASELINE_DIRECTORY = (
+    "town06_straight_60kph_pilot_best_effort_image_depth1_v3"
+)
+GEOMETRY_60KPH_TRIAL_RELATIVE_PATH = (
+    Path("30_60kph")
+    / GEOMETRY_60KPH_DIRECTORY
+    / "trial"
+    / "attempt_001"
+)
+GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH = Path(
+    "50_reports/town06_60kph_geometry_corridor_ab_v4.json"
+)
+GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH = Path(
+    "50_reports/town06_60kph_geometry_corridor_ab_v4.png"
+)
+GEOMETRY_60KPH_VARIANT = "geometry_corridor_0p2_hold"
+GEOMETRY_60KPH_DESTINATION = Path(
+    "60kph/town06_straight/B_geometry_corridor_0p2_hold"
+)
+GEOMETRY_60KPH_COMPARISON_DESTINATION = Path(
+    "60kph/town06_straight/comparison"
+)
+GEOMETRY_60KPH_EVIDENCE_FILES = frozenset(
+    {
+        "aligned_route.json",
+        "camera_source_5hz_validation.json",
+        "diagnosis.json",
+        "latency/e2e_latency.json",
+        "result.json",
+        "route_alignment.json",
+        "runtime_health.json",
+        "source_route.json",
+        "speed_profile.json",
+    }
 )
 
 CORE_ASSETS = (
@@ -104,6 +145,29 @@ EXACT_TRIAL_CORE_FILES = {
     "drive": "autoware_rviz_drive.gif",
     "path_control": "path_vs_control.png",
 }
+GEOMETRY_60KPH_ADDITIONAL_ASSETS = (
+    (
+        "route_result",
+        "route_result.png",
+        "06_route_result.png",
+        "Route result analysis",
+        "image/png",
+    ),
+    (
+        "runtime_load",
+        "runtime_load_analysis.png",
+        "07_runtime_load_analysis.png",
+        "Runtime load analysis",
+        "image/png",
+    ),
+    (
+        "longitudinal_response",
+        "longitudinal_response.png",
+        "08_longitudinal_response.png",
+        "Longitudinal response analysis",
+        "image/png",
+    ),
+)
 
 TERMINAL_60KPH_STATUSES = {
     "COMPLETE_PASS",
@@ -113,10 +177,76 @@ TERMINAL_60KPH_STATUSES = {
 NONTERMINAL_60KPH_STATUSES = {"ABSENT", "IN_PROGRESS"}
 BANNED_SOURCE_SUFFIXES = {".mkv", ".mp4", ".db3", ".mcap", ".log", ".bag"}
 HEX_DIGITS = frozenset("0123456789abcdef")
+DIRECTORY_OPEN_FLAGS = (
+    os.O_RDONLY
+    | getattr(os, "O_CLOEXEC", 0)
+    | getattr(os, "O_DIRECTORY", 0)
+    | getattr(os, "O_NOFOLLOW", 0)
+)
+FILE_OPEN_FLAGS = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(
+    os, "O_NOFOLLOW", 0
+)
 
 
 class CurationError(RuntimeError):
     """Raised before publication when an evidence or ownership check fails."""
+
+
+@contextmanager
+def _publication_locks(
+    targets: Sequence[tuple[Path, str]],
+) -> Iterator[None]:
+    descriptors: list[int] = []
+    try:
+        lock_root = Path(tempfile.gettempdir()) / (
+            f"autoware-e2e-curator-locks-{os.geteuid()}"
+        )
+        lock_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        lock_status = lock_root.lstat()
+        if (
+            lock_root.is_symlink()
+            or not stat.S_ISDIR(lock_status.st_mode)
+            or lock_status.st_uid != os.geteuid()
+            or stat.S_IMODE(lock_status.st_mode) & 0o077
+        ):
+            raise CurationError(f"publication lock root is unsafe: {lock_root}")
+        for output_root, _target in sorted(targets, key=lambda item: str(item[0])):
+            lock_name = _sha256_bytes(str(output_root).encode("utf-8"))
+            lock_path = lock_root / f"{lock_name}.lock"
+            flags = (
+                os.O_RDWR
+                | os.O_CREAT
+                | getattr(os, "O_CLOEXEC", 0)
+                | getattr(os, "O_NOFOLLOW", 0)
+            )
+            try:
+                descriptor = os.open(lock_path, flags, 0o600)
+            except OSError as error:
+                raise CurationError(
+                    f"cannot open publication lock without following symlinks: {lock_path}"
+                ) from error
+            try:
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise CurationError(
+                        f"publication lock is not a regular file: {lock_path}"
+                    )
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError as error:
+                    raise CurationError(
+                        f"publication target is locked: {output_root}"
+                    ) from error
+            except Exception:
+                os.close(descriptor)
+                raise
+            descriptors.append(descriptor)
+        yield
+    finally:
+        for descriptor in reversed(descriptors):
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+            finally:
+                os.close(descriptor)
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -608,6 +738,538 @@ def _collect_exact_trial_assets(
     return collected
 
 
+def _nested_mapping(
+    value: Mapping[str, Any], *keys: str, label: str
+) -> Mapping[str, Any]:
+    current: Any = value
+    for key in keys:
+        if not isinstance(current, Mapping) or key not in current:
+            raise CurationError(f"{label} lacks {'.'.join(keys)}")
+        current = current[key]
+    if not isinstance(current, Mapping):
+        raise CurationError(f"{label} {'.'.join(keys)} must be an object")
+    return current
+
+
+def _resolved_binding_path(value: Any, base: Path, label: str) -> Path:
+    if not isinstance(value, str) or not value:
+        raise CurationError(f"{label} must be a non-empty path")
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = base / path
+    try:
+        return path.resolve(strict=True)
+    except OSError as error:
+        raise CurationError(f"cannot resolve {label}: {path}: {error}") from error
+
+
+def _regular_binding_within(
+    root: Path, value: Any, base: Path, label: str
+) -> Path:
+    resolved = _resolved_binding_path(value, base, label)
+    try:
+        relative = resolved.relative_to(root)
+    except ValueError as error:
+        raise CurationError(f"{label} escapes campaign root: {resolved}") from error
+    return _regular_within(root, relative, label)
+
+
+def _verify_trial_digest_map(
+    trial_directory: Path,
+    recorded: Any,
+    expected_paths: frozenset[str],
+    label: str,
+) -> dict[str, str]:
+    if not isinstance(recorded, Mapping) or set(recorded) != expected_paths:
+        raise CurationError(f"{label} file set is not the exact v4 contract")
+    verified: dict[str, str] = {}
+    for relative_text in sorted(expected_paths):
+        relative = _safe_relative(relative_text, f"{label} path")
+        expected_sha = recorded.get(relative_text)
+        if not _valid_sha256(expected_sha):
+            raise CurationError(f"{label} has an invalid SHA-256 for {relative_text}")
+        source = _regular_within(
+            trial_directory, relative, f"{label} {relative_text}"
+        )
+        actual_sha = _sha256(source)
+        if actual_sha != expected_sha:
+            raise CurationError(
+                f"{label} hash drift for {relative_text}: "
+                f"expected {expected_sha}, observed {actual_sha}"
+            )
+        verified[relative_text] = actual_sha
+    return verified
+
+
+def _verify_geometry_bag_manifest(
+    trial_directory: Path, recorded: Any
+) -> dict[str, Any]:
+    if not isinstance(recorded, Mapping) or recorded.get("schema_version") != 1:
+        raise CurationError("60 kph geometry candidate bag manifest is malformed")
+    bag_directory = _resolved_binding_path(
+        recorded.get("root"), trial_directory, "geometry candidate bag root"
+    )
+    expected_bag_directory = (trial_directory / "bag").resolve(strict=True)
+    if bag_directory != expected_bag_directory or not bag_directory.is_dir():
+        raise CurationError("60 kph geometry candidate bag root is not trial-local")
+    files = recorded.get("files")
+    if not isinstance(files, list) or not files:
+        raise CurationError("60 kph geometry candidate bag manifest has no files")
+    verified_files: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in files:
+        if not isinstance(row, Mapping):
+            raise CurationError("60 kph geometry candidate bag record is malformed")
+        relative = _safe_relative(row.get("path"), "geometry candidate bag file")
+        relative_text = relative.as_posix()
+        size = row.get("size_bytes")
+        digest = row.get("sha256")
+        if (
+            relative_text in seen
+            or isinstance(size, bool)
+            or not isinstance(size, int)
+            or size <= 0
+            or not _valid_sha256(digest)
+        ):
+            raise CurationError("60 kph geometry candidate bag record is invalid")
+        source = _regular_within(
+            bag_directory, relative, f"geometry candidate bag file {relative_text}"
+        )
+        if source.stat().st_size != size or _sha256(source) != digest:
+            raise CurationError(
+                f"60 kph geometry candidate bag hash drift: {relative_text}"
+            )
+        seen.add(relative_text)
+        verified_files.append(
+            {"path": relative_text, "sha256": digest, "size_bytes": size}
+        )
+    if [row["path"] for row in verified_files] != sorted(seen):
+        raise CurationError("60 kph geometry candidate bag files are not deterministic")
+    if "metadata.yaml" not in seen:
+        raise CurationError("60 kph geometry candidate bag lacks metadata.yaml")
+    expected_manifest_sha = recorded.get("sha256")
+    actual_manifest_sha = _canonical_digest(
+        {"schema_version": 1, "files": verified_files}
+    )
+    if expected_manifest_sha != actual_manifest_sha:
+        raise CurationError("60 kph geometry candidate bag-manifest digest mismatch")
+    return {
+        "schema_version": 1,
+        "root": str(bag_directory),
+        "files": verified_files,
+        "sha256": actual_manifest_sha,
+    }
+
+
+def _validate_geometry_analysis_bindings(
+    campaign_root: Path,
+    trial_directory: Path,
+    report_candidate: Mapping[str, Any],
+    evidence_sha256: Mapping[str, str],
+    bag_manifest: Mapping[str, Any],
+) -> None:
+    aligned_path = (trial_directory / "aligned_route.json").resolve(strict=True)
+    result_path = (trial_directory / "result.json").resolve(strict=True)
+    bag_path = (trial_directory / "bag").resolve(strict=True)
+    aligned = _read_json(aligned_path, "60 kph geometry aligned route")
+    result = _read_json(result_path, "60 kph geometry route result")
+    speed = _read_json(
+        trial_directory / "speed_profile.json", "60 kph geometry speed profile"
+    )
+    diagnosis = _read_json(
+        trial_directory / "diagnosis.json", "60 kph geometry diagnosis"
+    )
+    alignment = _read_json(
+        trial_directory / "route_alignment.json", "60 kph geometry alignment"
+    )
+    runtime_health = _read_json(
+        trial_directory / "runtime_health.json", "60 kph geometry runtime health"
+    )
+
+    if (
+        _resolved_binding_path(
+            result.get("route_file"), trial_directory, "geometry result route"
+        )
+        != aligned_path
+        or result.get("success") is not False
+        or not isinstance(result.get("speed_exposure"), Mapping)
+        or result["speed_exposure"].get("status") != "FAIL"
+    ):
+        raise CurationError("60 kph geometry route-result/speed binding is invalid")
+    if (
+        runtime_health.get("status") != "PASS"
+        or not isinstance(runtime_health.get("camera_image_graph"), Mapping)
+        or runtime_health["camera_image_graph"].get("status") != "PASS"
+    ):
+        raise CurationError("60 kph geometry runtime/camera health did not pass")
+
+    coordinate_alignment = _nested_mapping(
+        aligned, "coordinate_alignment", label="60 kph geometry aligned route"
+    )
+    source_route_sha = evidence_sha256["source_route.json"]
+    aligned_sha = evidence_sha256["aligned_route.json"]
+    alignment_source_path = _regular_binding_within(
+        campaign_root,
+        alignment.get("source_route"),
+        trial_directory,
+        "geometry canonical catalog source",
+    )
+    coordinate_source_path = _regular_binding_within(
+        campaign_root,
+        coordinate_alignment.get("source_route"),
+        trial_directory,
+        "geometry canonical catalog source",
+    )
+    canonical_source_parent = (
+        campaign_root
+        / "30_60kph"
+        / GEOMETRY_60KPH_DIRECTORY
+        / "catalog/routes/town06/straight"
+    ).resolve(strict=True)
+    if (
+        alignment_source_path != coordinate_source_path
+        or alignment_source_path.parent != canonical_source_parent
+        or coordinate_alignment.get("source_route_sha256") != source_route_sha
+        or alignment.get("status") != "PASS"
+        or alignment.get("source_route_sha256") != source_route_sha
+        or alignment.get("aligned_route_sha256") != aligned_sha
+        or _resolved_binding_path(
+            alignment.get("aligned_route"),
+            trial_directory,
+            "geometry alignment output",
+        )
+        != aligned_path
+        or _sha256(alignment_source_path) != source_route_sha
+        or _sha256(coordinate_source_path) != source_route_sha
+    ):
+        raise CurationError("60 kph geometry route-alignment SHA binding is invalid")
+
+    speed_inputs = _nested_mapping(
+        speed, "inputs", label="60 kph geometry speed profile"
+    )
+    source_identity = _nested_mapping(
+        speed, "source_identity", label="60 kph geometry speed profile"
+    )
+    identity_without_sha = dict(source_identity)
+    identity_sha = identity_without_sha.pop("sha256", None)
+    if identity_sha != _canonical_digest(identity_without_sha):
+        raise CurationError("60 kph geometry speed source-identity digest mismatch")
+    effective_route = _nested_mapping(
+        source_identity,
+        "effective_route",
+        label="60 kph geometry speed source identity",
+    )
+    route_result = _nested_mapping(
+        source_identity,
+        "route_result",
+        label="60 kph geometry speed source identity",
+    )
+    bound_bag = _nested_mapping(
+        source_identity, "rosbag", label="60 kph geometry speed source identity"
+    )
+    if (
+        _resolved_binding_path(
+            speed_inputs.get("bag"), trial_directory, "geometry speed-profile bag"
+        )
+        != bag_path
+        or speed_inputs.get("profile_id") != "carla_vad_60kph_straight_pilot_v1"
+        or _resolved_binding_path(
+            effective_route.get("path"),
+            trial_directory,
+            "geometry speed-profile route",
+        )
+        != aligned_path
+        or effective_route.get("sha256") != aligned_sha
+        or _resolved_binding_path(
+            route_result.get("path"),
+            trial_directory,
+            "geometry speed-profile result",
+        )
+        != result_path
+        or route_result.get("sha256") != evidence_sha256["result.json"]
+        or _resolved_binding_path(
+            bound_bag.get("root"), trial_directory, "geometry speed-profile rosbag"
+        )
+        != bag_path
+        or bound_bag.get("files") != bag_manifest["files"]
+        or bound_bag.get("sha256") != bag_manifest["sha256"]
+    ):
+        raise CurationError("60 kph geometry speed-profile SHA binding is invalid")
+
+    diagnosis_inputs = _nested_mapping(
+        diagnosis, "inputs", label="60 kph geometry diagnosis"
+    )
+    if (
+        _resolved_binding_path(
+            diagnosis_inputs.get("bag"), trial_directory, "geometry diagnosis bag"
+        )
+        != bag_path
+        or _resolved_binding_path(
+            diagnosis_inputs.get("route_file"),
+            trial_directory,
+            "geometry diagnosis route",
+        )
+        != aligned_path
+        or diagnosis_inputs.get("town") != "Town06"
+        or diagnosis_inputs.get("scenario") != "straight"
+    ):
+        raise CurationError("60 kph geometry diagnosis source binding is invalid")
+
+    report_route = _nested_mapping(
+        report_candidate, "route", label="60 kph geometry comparison candidate"
+    )
+    if (
+        report_route.get("town") != "Town06"
+        or report_route.get("scenario") != "straight"
+        or report_route.get("source_route_sha256") != source_route_sha
+        or report_route.get("aligned_route_file_sha256") != aligned_sha
+    ):
+        raise CurationError("60 kph geometry comparison route binding is invalid")
+
+
+def _collect_60kph_geometry_ab(
+    campaign_root: Path, selected_pilot: Mapping[str, Any] | None
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    required = (
+        campaign_root / GEOMETRY_60KPH_TRIAL_RELATIVE_PATH / "result.json",
+        campaign_root / GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH,
+        campaign_root / GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH,
+    )
+    present = [path.exists() or path.is_symlink() for path in required]
+    if not any(present):
+        return None, []
+    if not all(present):
+        raise CurationError("60 kph geometry A/B exact v4 evidence set is incomplete")
+    expected_baseline = f"30_60kph/{GEOMETRY_60KPH_BASELINE_DIRECTORY}"
+    if (
+        not isinstance(selected_pilot, Mapping)
+        or selected_pilot.get("campaign_relative_directory") != expected_baseline
+    ):
+        raise CurationError(
+            "60 kph geometry A/B may not replace the active selected pilot v3"
+        )
+
+    report_path = _regular_within(
+        campaign_root,
+        GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH,
+        "60 kph geometry A/B JSON report",
+    )
+    report_png = _regular_within(
+        campaign_root,
+        GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH,
+        "60 kph geometry A/B PNG report",
+    )
+    report = _read_json(report_path, "60 kph geometry A/B report")
+    pair_contract = report.get("pair_contract")
+    geometry_outcome = report.get("geometry_outcome")
+    speed_contract = report.get("speed_contract")
+    if (
+        report.get("schema_version") != 1
+        or report.get("analysis") != "town06_60kph_geometry_only_corridor_ab"
+        or not isinstance(pair_contract, Mapping)
+        or pair_contract.get("status") != "PASS"
+        or not isinstance(geometry_outcome, Mapping)
+        or geometry_outcome.get("decision") != "HOLD"
+        or not isinstance(speed_contract, Mapping)
+        or speed_contract.get("decision") != "FAIL"
+        or speed_contract.get("independent_from_geometry_acceptance") is not True
+        or report.get("real_vehicle_ready") is not False
+    ):
+        raise CurationError(
+            "60 kph geometry A/B decision contract is not pair PASS / geometry HOLD / speed FAIL"
+        )
+
+    trial_directory = _regular_within(
+        campaign_root,
+        GEOMETRY_60KPH_TRIAL_RELATIVE_PATH / "result.json",
+        "60 kph geometry candidate route result",
+    ).parent
+    candidate = report.get("candidate")
+    baseline = report.get("baseline")
+    if (
+        not isinstance(candidate, Mapping)
+        or candidate.get("role") != "candidate"
+        or _resolved_binding_path(
+            candidate.get("trial_directory"),
+            campaign_root,
+            "geometry candidate trial",
+        )
+        != trial_directory
+        or not isinstance(baseline, Mapping)
+        or _resolved_binding_path(
+            baseline.get("trial_directory"),
+            campaign_root,
+            "geometry baseline trial",
+        )
+        != (
+            campaign_root
+            / "30_60kph"
+            / GEOMETRY_60KPH_BASELINE_DIRECTORY
+            / "trial/attempt_001"
+        ).resolve(strict=True)
+    ):
+        raise CurationError("60 kph geometry A/B trial selection is not exact")
+    candidate_geometry = candidate.get("geometry_metadata")
+    candidate_health = candidate.get("health")
+    candidate_outcomes = candidate.get("outcomes")
+    candidate_environment = candidate.get("environment")
+    if (
+        not isinstance(candidate_geometry, Mapping)
+        or candidate_geometry.get("candidate_id") != "route_corridor_0p2"
+        or candidate_geometry.get("route_corridor_0p2") != "true"
+        or not isinstance(candidate_health, Mapping)
+        or candidate_health.get("status") != "PASS"
+        or candidate_health.get("runtime_health_status") != "PASS"
+        or candidate_health.get("camera_validation_status") != "PASS"
+        or not isinstance(candidate_outcomes, Mapping)
+        or candidate_outcomes.get("goal_reached") is not True
+        or candidate_outcomes.get("speed_exposure_status") != "FAIL"
+        or not isinstance(candidate_environment, Mapping)
+        or candidate_environment.get("GEOMETRY_AB_CANDIDATE_ID")
+        != "route_corridor_0p2"
+        or candidate_environment.get("GEOMETRY_AB_ROUTE_CORRIDOR_0P2") != "true"
+        or candidate_environment.get("REAL_VEHICLE_READY") != "false"
+    ):
+        raise CurationError("60 kph geometry candidate outcome/provenance is invalid")
+
+    evidence_sha256 = _verify_trial_digest_map(
+        trial_directory,
+        candidate.get("evidence_sha256"),
+        GEOMETRY_60KPH_EVIDENCE_FILES,
+        "60 kph geometry candidate evidence",
+    )
+    provenance_value = candidate.get("provenance_sha256")
+    if not isinstance(provenance_value, Mapping) or not provenance_value:
+        raise CurationError("60 kph geometry candidate provenance is missing")
+    provenance_paths = frozenset(str(path) for path in provenance_value)
+    provenance_sha256 = _verify_trial_digest_map(
+        trial_directory,
+        provenance_value,
+        provenance_paths,
+        "60 kph geometry candidate provenance",
+    )
+    bag_manifest = _verify_geometry_bag_manifest(
+        trial_directory, candidate.get("bag_manifest")
+    )
+    _validate_geometry_analysis_bindings(
+        campaign_root, trial_directory, candidate, evidence_sha256, bag_manifest
+    )
+
+    pair_route = _nested_mapping(
+        pair_contract,
+        "effective_route_identity",
+        label="60 kph geometry pair contract",
+    )
+    candidate_route = _nested_mapping(
+        candidate, "route", label="60 kph geometry comparison candidate"
+    )
+    if (
+        pair_route.get("source_route_sha256")
+        != evidence_sha256["source_route.json"]
+        or pair_route.get("candidate_aligned_file_sha256")
+        != evidence_sha256["aligned_route.json"]
+        or pair_route.get("canonical_geometry_identity_sha256")
+        != candidate_route.get("canonical_geometry_identity_sha256")
+        or pair_contract.get("fixed_provenance_sha256") != provenance_sha256
+    ):
+        raise CurationError("60 kph geometry pair-contract SHA binding is invalid")
+
+    desktop_path = _regular_within(
+        trial_directory,
+        Path("desktop_capture.json"),
+        "60 kph geometry candidate desktop capture",
+    )
+    desktop_reference = {
+        "campaign_relative_path": desktop_path.relative_to(campaign_root).as_posix(),
+        "sha256": _sha256(desktop_path),
+        "size_bytes": desktop_path.stat().st_size,
+    }
+    candidate_record = {"evidence": {"desktop_capture.json": desktop_reference}}
+    _validate_desktop_capture(
+        campaign_root,
+        candidate_record,
+        trial_directory,
+        "60 kph geometry candidate",
+    )
+
+    collected = _collect_exact_trial_assets(
+        campaign_root,
+        candidate_record,
+        trial_directory=trial_directory,
+        speed_class="60kph",
+        scenario="town06_straight",
+        variant=GEOMETRY_60KPH_VARIANT,
+        variant_title="B geometry corridor 0.20 m (HOLD)",
+        destination_directory=GEOMETRY_60KPH_DESTINATION,
+    )
+    for kind, source_name, filename, title, mime_type in (
+        GEOMETRY_60KPH_ADDITIONAL_ASSETS
+    ):
+        collected.append(
+            _source_asset(
+                asset_id=f"60kph.town06_straight.{GEOMETRY_60KPH_VARIANT}.{kind}",
+                title=f"Town06 straight · B geometry corridor 0.20 m (HOLD) · {title}",
+                speed_class="60kph",
+                scenario="town06_straight",
+                variant=GEOMETRY_60KPH_VARIANT,
+                kind=kind,
+                mime_type=mime_type,
+                source=trial_directory / source_name,
+                campaign_root=campaign_root,
+                destination=GEOMETRY_60KPH_DESTINATION / filename,
+            )
+        )
+    collected.append(
+        _source_asset(
+            asset_id="60kph.town06_straight.geometry_corridor_ab_comparison",
+            title="Town06 straight · selected pilot v3 vs corridor 0.20 m v4 · HOLD",
+            speed_class="60kph",
+            scenario="town06_straight",
+            variant="geometry_comparison",
+            kind="comparison",
+            mime_type="image/png",
+            source=report_png,
+            campaign_root=campaign_root,
+            destination=(
+                GEOMETRY_60KPH_COMPARISON_DESTINATION
+                / "09_A_selected_pilot_v3_vs_B_geometry_corridor_0p2_HOLD.png"
+            ),
+        )
+    )
+    metadata = {
+        "status": "HOLD",
+        "speed_contract": "FAIL",
+        "real_vehicle_ready": False,
+        "candidate_id": "route_corridor_0p2",
+        "campaign_relative_directory": (
+            Path("30_60kph") / GEOMETRY_60KPH_DIRECTORY
+        ).as_posix(),
+        "trial_relative_directory": GEOMETRY_60KPH_TRIAL_RELATIVE_PATH.as_posix(),
+        "comparison_report": {
+            "json_campaign_relative_path": (
+                GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH.as_posix()
+            ),
+            "json_sha256": _sha256(report_path),
+            "png_campaign_relative_path": (
+                GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH.as_posix()
+            ),
+            "png_sha256": _sha256(report_png),
+        },
+        "candidate_evidence_sha256": evidence_sha256,
+        "candidate_provenance_sha256": provenance_sha256,
+        "candidate_bag_manifest": {
+            "schema_version": 1,
+            "campaign_relative_root": (
+                GEOMETRY_60KPH_TRIAL_RELATIVE_PATH / "bag"
+            ).as_posix(),
+            "files": bag_manifest["files"],
+            "sha256": bag_manifest["sha256"],
+        },
+        "desktop_capture_sha256": desktop_reference["sha256"],
+    }
+    return metadata, collected
+
+
 def _validate_upstream(
     campaign_root: Path,
 ) -> tuple[dict[str, Any], dict[str, Any], Path, Path]:
@@ -844,6 +1506,11 @@ def collect_assets(campaign_root: Path) -> tuple[dict[str, Any], list[dict[str, 
     else:
         raise CurationError(f"unsupported 60 kph status: {sixty_status}")
 
+    geometry_ab, geometry_assets = _collect_60kph_geometry_ab(
+        root, selected_pilot
+    )
+    collected.extend(geometry_assets)
+
     ids = [asset["id"] for asset in collected]
     destinations = [asset["published_relative_path"] for asset in collected]
     if len(ids) != len(set(ids)) or len(destinations) != len(set(destinations)):
@@ -858,8 +1525,124 @@ def collect_assets(campaign_root: Path) -> tuple[dict[str, Any], list[dict[str, 
         "overall_control_decision": summary.get("overall_control_decision"),
         "selected_30kph_regressions": selected_regressions,
         "selected_60kph_pilot": selected_pilot,
+        "60kph_geometry_ab": geometry_ab,
     }
     return metadata, collected
+
+
+def _revalidate_geometry_sources(
+    campaign_root: Path, geometry: Mapping[str, Any] | None
+) -> None:
+    if geometry is None:
+        return
+    comparison = geometry.get("comparison_report")
+    evidence = geometry.get("candidate_evidence_sha256")
+    provenance = geometry.get("candidate_provenance_sha256")
+    bag_manifest = geometry.get("candidate_bag_manifest")
+    if (
+        not isinstance(comparison, Mapping)
+        or not isinstance(evidence, Mapping)
+        or not isinstance(provenance, Mapping)
+        or not isinstance(bag_manifest, Mapping)
+    ):
+        raise CurationError("60 kph geometry publication metadata is malformed")
+    report_paths = (
+        (
+            GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH,
+            comparison.get("json_sha256"),
+        ),
+        (
+            GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH,
+            comparison.get("png_sha256"),
+        ),
+    )
+    for relative, expected_sha in report_paths:
+        source = _regular_within(
+            campaign_root, relative, "60 kph geometry comparison report"
+        )
+        if _sha256(source) != expected_sha:
+            raise CurationError("60 kph geometry comparison changed while staged")
+
+    trial_directory = campaign_root / GEOMETRY_60KPH_TRIAL_RELATIVE_PATH
+    for records, label in (
+        (evidence, "evidence"),
+        (provenance, "provenance"),
+    ):
+        for relative_text, expected_sha in records.items():
+            relative = _safe_relative(relative_text, f"geometry {label} path")
+            source = _regular_within(
+                trial_directory, relative, f"60 kph geometry {label}"
+            )
+            if _sha256(source) != expected_sha:
+                raise CurationError(
+                    f"60 kph geometry {label} changed while staged: {relative_text}"
+                )
+    desktop = _regular_within(
+        trial_directory,
+        Path("desktop_capture.json"),
+        "60 kph geometry desktop capture",
+    )
+    if _sha256(desktop) != geometry.get("desktop_capture_sha256"):
+        raise CurationError("60 kph geometry desktop capture changed while staged")
+
+    alignment = _read_json(
+        trial_directory / "route_alignment.json",
+        "60 kph geometry alignment",
+    )
+    aligned = _read_json(
+        trial_directory / "aligned_route.json",
+        "60 kph geometry aligned route",
+    )
+    coordinate_alignment = _nested_mapping(
+        aligned,
+        "coordinate_alignment",
+        label="60 kph geometry aligned route",
+    )
+    alignment_source = _regular_binding_within(
+        campaign_root,
+        alignment.get("source_route"),
+        trial_directory,
+        "geometry canonical catalog source",
+    )
+    coordinate_source = _regular_binding_within(
+        campaign_root,
+        coordinate_alignment.get("source_route"),
+        trial_directory,
+        "geometry canonical catalog source",
+    )
+    canonical_source_parent = (
+        campaign_root
+        / "30_60kph"
+        / GEOMETRY_60KPH_DIRECTORY
+        / "catalog/routes/town06/straight"
+    ).resolve(strict=True)
+    source_sha = evidence.get("source_route.json")
+    if (
+        alignment_source != coordinate_source
+        or alignment_source.parent != canonical_source_parent
+        or _sha256(alignment_source) != source_sha
+    ):
+        raise CurationError(
+            "60 kph geometry canonical source changed while staged"
+        )
+
+    files = bag_manifest.get("files")
+    if not isinstance(files, list):
+        raise CurationError("60 kph geometry bag metadata changed while staged")
+    for row in files:
+        if not isinstance(row, Mapping):
+            raise CurationError("60 kph geometry bag metadata changed while staged")
+        relative = _safe_relative(row.get("path"), "geometry bag path")
+        source = _regular_within(
+            trial_directory / "bag", relative, "60 kph geometry bag evidence"
+        )
+        if (
+            source.stat().st_size != row.get("size_bytes")
+            or _sha256(source) != row.get("sha256")
+        ):
+            raise CurationError(
+                f"60 kph geometry bag changed while staged: {relative.as_posix()}"
+            )
 
 
 def _render_readme(
@@ -935,10 +1718,39 @@ def _render_readme(
             ]
         )
         for asset in assets:
-            if asset["speed_class"] == "60kph":
+            if asset["speed_class"] == "60kph" and asset["variant"] == "pilot":
                 lines.append(
                     f"| {asset['kind']} | [{Path(asset['published_relative_path']).name}]({asset['published_relative_path']}) |"
                 )
+    lines.extend(["", "## 60 km/h geometry A/B", ""])
+    geometry = metadata.get("60kph_geometry_ab")
+    if geometry is None:
+        lines.append("No exact Town06 corridor geometry A/B v4 evidence was published.")
+    else:
+        lines.extend(
+            [
+                "The corridor 0.20 m candidate is diagnostic evidence only; it does not replace the selected pilot v3.",
+                "",
+                f"- Geometry decision: `{geometry['status']}`",
+                f"- Independent speed contract: `{geometry['speed_contract']}`",
+                f"- Real-vehicle ready: `{str(geometry['real_vehicle_ready']).lower()}`",
+                f"- Exact candidate source: `{geometry['campaign_relative_directory']}`",
+                f"- Comparison JSON: `{geometry['comparison_report']['json_campaign_relative_path']}`",
+                "",
+                "| Variant | Evidence | File |",
+                "|---|---|---|",
+            ]
+        )
+        for asset in assets:
+            if asset["variant"] not in {
+                GEOMETRY_60KPH_VARIANT,
+                "geometry_comparison",
+            }:
+                continue
+            lines.append(
+                f"| {asset['variant']} | {asset['kind']} "
+                f"| [{Path(asset['published_relative_path']).name}]({asset['published_relative_path']}) |"
+            )
     lines.extend(
         [
             "",
@@ -961,6 +1773,73 @@ def _manifest_signature(payload: Mapping[str, Any]) -> str:
 
 def _public_asset(asset: Mapping[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in asset.items() if not key.startswith("_")}
+
+
+def _expected_prior_asset_identity(asset: Mapping[str, Any]) -> tuple[str, str]:
+    speed_class = asset.get("speed_class")
+    scenario = asset.get("scenario")
+    variant = asset.get("variant")
+    kind = asset.get("kind")
+    if not all(
+        isinstance(value, str)
+        for value in (speed_class, scenario, variant, kind)
+    ):
+        raise CurationError("prior asset identity fields must be strings")
+    standard_filenames = {
+        row[0]: row[2] for row in (*CORE_ASSETS, *DERIVED_ASSETS)
+    }
+    geometry_filenames = {
+        **standard_filenames,
+        **{row[0]: row[2] for row in GEOMETRY_60KPH_ADDITIONAL_ASSETS},
+    }
+
+    if speed_class == "30kph" and scenario in SCENARIO_ORDER:
+        if variant == "comparison" and kind == "comparison":
+            return (
+                f"30kph.{scenario}.comparison",
+                (
+                    Path("30kph")
+                    / str(scenario)
+                    / "comparison/06_A_baseline_vs_B_candidate_control_decision.png"
+                ).as_posix(),
+            )
+        directories = {
+            "baseline": "A_baseline",
+            "candidate": "B_candidate",
+            SELECTED_30KPH_REGRESSION_VARIANT: "C_selected_baseline_regression",
+        }
+        directory = directories.get(variant)
+        filename = standard_filenames.get(kind)
+        if directory is not None and filename is not None:
+            return (
+                f"30kph.{scenario}.{variant}.{kind}",
+                (Path("30kph") / str(scenario) / directory / filename).as_posix(),
+            )
+
+    if speed_class == "60kph" and scenario == "town06_straight":
+        if variant == "pilot" and kind in standard_filenames:
+            return (
+                f"60kph.town06_straight.pilot.{kind}",
+                (
+                    Path("60kph/town06_straight/selected_pilot")
+                    / standard_filenames[kind]
+                ).as_posix(),
+            )
+        if variant == GEOMETRY_60KPH_VARIANT and kind in geometry_filenames:
+            return (
+                f"60kph.town06_straight.{GEOMETRY_60KPH_VARIANT}.{kind}",
+                (GEOMETRY_60KPH_DESTINATION / geometry_filenames[kind]).as_posix(),
+            )
+        if variant == "geometry_comparison" and kind == "comparison":
+            return (
+                "60kph.town06_straight.geometry_corridor_ab_comparison",
+                (
+                    GEOMETRY_60KPH_COMPARISON_DESTINATION
+                    / "09_A_selected_pilot_v3_vs_B_geometry_corridor_0p2_HOLD.png"
+                ).as_posix(),
+            )
+
+    raise CurationError("prior asset identity is outside the curator schema")
 
 
 def _stage_publication(
@@ -1035,6 +1914,7 @@ def _stage_publication(
                 "selected_30kph_regressions"
             ),
             "selected_60kph_pilot": metadata.get("selected_60kph_pilot"),
+            "60kph_geometry_ab": metadata.get("60kph_geometry_ab"),
             "asset_count": len(assets),
             "assets": [_public_asset(asset) for asset in assets],
             "managed_files": managed_files,
@@ -1095,6 +1975,65 @@ def _validate_prior_manifest(
         or not isinstance(prior_assets, list)
     ):
         raise CurationError("prior publication ownership body is malformed")
+    asset_count = prior.get("asset_count")
+    if (
+        isinstance(asset_count, bool)
+        or not isinstance(asset_count, int)
+        or asset_count != len(prior_assets)
+    ):
+        raise CurationError("prior publication asset count is invalid")
+
+    asset_ids: set[str] = set()
+    asset_paths: dict[str, Mapping[str, Any]] = {}
+    for asset in prior_assets:
+        if not isinstance(asset, dict):
+            raise CurationError("prior source asset record is malformed")
+        expected_id, expected_destination = _expected_prior_asset_identity(asset)
+        asset_id = asset.get("id")
+        if asset_id != expected_id or asset_id in asset_ids:
+            raise CurationError("prior asset identity is invalid or duplicated")
+        published = _safe_relative(
+            asset.get("published_relative_path"), "prior published asset"
+        )
+        published_text = published.as_posix()
+        if (
+            published_text != expected_destination
+            or published_text in asset_paths
+            or published.parts[0] not in {"30kph", "60kph"}
+        ):
+            raise CurationError("prior asset destination is invalid or duplicated")
+        relative = _safe_relative(
+            asset.get("source_campaign_relative_path"), "prior source asset"
+        )
+        allowed_geometry_report = (
+            relative == GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH
+        )
+        if (
+            relative.parts[0] not in {"20_30kph_control_ab", "30_60kph"}
+            and not allowed_geometry_report
+        ):
+            raise CurationError(
+                "prior publication source points outside canonical evidence"
+            )
+        source_sha = asset.get("source_sha256")
+        source_size = asset.get("source_size_bytes")
+        if (
+            not _valid_sha256(source_sha)
+            or isinstance(source_size, bool)
+            or not isinstance(source_size, int)
+            or source_size <= 0
+            or asset.get("published_sha256") != source_sha
+            or asset.get("published_size_bytes") != source_size
+        ):
+            raise CurationError("prior asset source/publication digest is invalid")
+        source = _regular_within(campaign_root, relative, "prior source asset")
+        if source.stat().st_size != source_size or _sha256(source) != source_sha:
+            raise CurationError(
+                f"prior publication source hash drift: {relative.as_posix()}"
+            )
+        asset_ids.add(str(asset_id))
+        asset_paths[published_text] = asset
+
     managed_paths: set[str] = set()
     for value in managed_paths_value:
         relative = _safe_relative(value, "prior managed path")
@@ -1106,15 +2045,21 @@ def _validate_prior_manifest(
         if relative_text in managed_paths:
             raise CurationError("prior managed paths are duplicated")
         managed_paths.add(relative_text)
-    if PUBLICATION_MANIFEST not in managed_paths:
-        raise CurationError("prior publication manifest does not own itself")
-    file_paths: set[str] = set()
+    asset_derived_paths = set(asset_paths) | {
+        README,
+        CHECKSUMS,
+        PUBLICATION_MANIFEST,
+    }
+    if managed_paths != asset_derived_paths:
+        raise CurationError("prior asset-derived ownership does not match managed paths")
+
+    file_records: dict[str, Mapping[str, Any]] = {}
     for row in managed_files:
         if not isinstance(row, dict):
             raise CurationError("prior managed file record is malformed")
         relative = _safe_relative(row.get("relative_path"), "prior managed file")
         relative_text = relative.as_posix()
-        if relative_text == PUBLICATION_MANIFEST or relative_text in file_paths:
+        if relative_text == PUBLICATION_MANIFEST or relative_text in file_records:
             raise CurationError("prior managed file identities are invalid")
         if relative_text not in managed_paths:
             raise CurationError("prior managed file is not authorized by managed_paths")
@@ -1125,25 +2070,26 @@ def _validate_prior_manifest(
         path = _regular_within(output_root, relative, f"prior managed file {relative_text}")
         if path.stat().st_size != expected_size or _sha256(path) != expected_sha:
             raise CurationError(f"prior managed output drift: {relative_text}")
-        file_paths.add(relative_text)
-    if managed_paths != file_paths | {PUBLICATION_MANIFEST}:
-        raise CurationError("prior managed path/file sets differ")
-
-    for asset in prior_assets:
-        if not isinstance(asset, dict):
-            raise CurationError("prior source asset record is malformed")
-        relative = _safe_relative(
-            asset.get("source_campaign_relative_path"), "prior source asset"
+        expected_role = (
+            "readme"
+            if relative_text == README
+            else "checksums"
+            if relative_text == CHECKSUMS
+            else "visual_asset"
         )
-        if relative.parts[0] not in {"20_30kph_control_ab", "30_60kph"}:
-            raise CurationError("prior publication source points outside canonical evidence")
-        source = _regular_within(campaign_root, relative, "prior source asset")
+        if row.get("role") != expected_role:
+            raise CurationError(f"prior managed-file role is invalid: {relative_text}")
+        file_records[relative_text] = row
+    if set(file_records) != asset_derived_paths - {PUBLICATION_MANIFEST}:
+        raise CurationError("prior asset-derived ownership does not match managed files")
+    for relative_text, asset in asset_paths.items():
+        row = file_records[relative_text]
         if (
-            source.stat().st_size != asset.get("source_size_bytes")
-            or _sha256(source) != asset.get("source_sha256")
+            row.get("sha256") != asset.get("published_sha256")
+            or row.get("size_bytes") != asset.get("published_size_bytes")
         ):
             raise CurationError(
-                f"prior publication source hash drift: {relative.as_posix()}"
+                f"prior asset-derived ownership digest mismatch: {relative_text}"
             )
     return prior, managed_paths
 
@@ -1186,6 +2132,211 @@ def _same_publication(
     return manifest == desired
 
 
+def _open_output_directory(output_root: Path) -> int:
+    try:
+        output_root.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(output_root, DIRECTORY_OPEN_FLAGS)
+    except OSError as error:
+        raise CurationError(
+            f"cannot open output root without following symlinks: {output_root}"
+        ) from error
+    if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+        os.close(descriptor)
+        raise CurationError(f"output root is not a directory: {output_root}")
+    return descriptor
+
+
+def _open_relative_directory(
+    root_descriptor: int,
+    relative: Path,
+    *,
+    create: bool,
+    label: str,
+) -> int:
+    current = os.dup(root_descriptor)
+    try:
+        for part in relative.parts:
+            try:
+                child = os.open(part, DIRECTORY_OPEN_FLAGS, dir_fd=current)
+            except FileNotFoundError:
+                if not create:
+                    raise CurationError(f"missing {label}: {relative}") from None
+                try:
+                    os.mkdir(part, mode=0o755, dir_fd=current)
+                except FileExistsError:
+                    pass
+                try:
+                    child = os.open(part, DIRECTORY_OPEN_FLAGS, dir_fd=current)
+                except OSError as error:
+                    raise CurationError(
+                        f"cannot open {label} without following symlinks: {relative}"
+                    ) from error
+            except OSError as error:
+                raise CurationError(
+                    f"cannot open {label} without following symlinks: {relative}"
+                ) from error
+            os.close(current)
+            current = child
+        return current
+    except Exception:
+        os.close(current)
+        raise
+
+
+def _entry_status(parent_descriptor: int, name: str) -> os.stat_result | None:
+    try:
+        return os.stat(name, dir_fd=parent_descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return None
+
+
+def _replace_staged_file(
+    stage: Path,
+    output_descriptor: int,
+    relative_text: str,
+    prior_managed: set[str],
+) -> None:
+    relative = _safe_relative(relative_text, "staged output")
+    parent = _open_relative_directory(
+        output_descriptor,
+        relative.parent,
+        create=True,
+        label="planned output directory",
+    )
+    try:
+        existing = _entry_status(parent, relative.name)
+        if existing is not None:
+            if not stat.S_ISREG(existing.st_mode):
+                raise CurationError(
+                    f"refusing to replace non-file output: {relative_text}"
+                )
+            if relative_text not in prior_managed:
+                raise CurationError(
+                    f"refusing to replace unmanaged output: {relative_text}"
+                )
+        try:
+            os.replace(stage / relative, relative.name, dst_dir_fd=parent)
+        except OSError as error:
+            raise CurationError(
+                f"cannot install staged output safely: {relative_text}"
+            ) from error
+    finally:
+        os.close(parent)
+
+
+def _sha256_descriptor(descriptor: int) -> str:
+    digest = hashlib.sha256()
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            break
+        digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _prior_file_records(prior: Mapping[str, Any] | None) -> dict[str, Mapping[str, Any]]:
+    if prior is None:
+        return {}
+    records = prior.get("managed_files")
+    if not isinstance(records, list):
+        raise CurationError("prior publication ownership body is malformed")
+    return {
+        str(record["relative_path"]): record
+        for record in records
+        if isinstance(record, Mapping)
+    }
+
+
+def _unlink_managed_file(
+    output_descriptor: int,
+    relative_text: str,
+    expected: Mapping[str, Any],
+) -> None:
+    relative = _safe_relative(relative_text, "stale managed output")
+    parent = _open_relative_directory(
+        output_descriptor,
+        relative.parent,
+        create=False,
+        label="managed output directory",
+    )
+    file_descriptor: int | None = None
+    try:
+        try:
+            file_descriptor = os.open(
+                relative.name,
+                FILE_OPEN_FLAGS,
+                dir_fd=parent,
+            )
+        except OSError as error:
+            raise CurationError(
+                f"cannot open stale managed output safely: {relative_text}"
+            ) from error
+        observed = os.fstat(file_descriptor)
+        if (
+            not stat.S_ISREG(observed.st_mode)
+            or observed.st_size != expected.get("size_bytes")
+            or _sha256_descriptor(file_descriptor) != expected.get("sha256")
+        ):
+            raise CurationError(
+                f"stale managed output changed before cleanup: {relative_text}"
+            )
+        current = _entry_status(parent, relative.name)
+        if (
+            current is None
+            or current.st_dev != observed.st_dev
+            or current.st_ino != observed.st_ino
+        ):
+            raise CurationError(
+                f"stale managed output changed before cleanup: {relative_text}"
+            )
+        try:
+            os.unlink(relative.name, dir_fd=parent)
+        except OSError as error:
+            raise CurationError(
+                f"cannot remove stale managed output safely: {relative_text}"
+            ) from error
+    finally:
+        if file_descriptor is not None:
+            os.close(file_descriptor)
+        os.close(parent)
+
+
+def _remove_empty_managed_directories(
+    output_descriptor: int, stale_paths: Iterable[str]
+) -> None:
+    directories: set[Path] = set()
+    for relative_text in stale_paths:
+        parent = _safe_relative(relative_text, "stale managed output").parent
+        while parent.parts:
+            directories.add(parent)
+            parent = parent.parent
+    for relative in sorted(directories, key=lambda path: len(path.parts), reverse=True):
+        parent = _open_relative_directory(
+            output_descriptor,
+            relative.parent,
+            create=False,
+            label="managed output directory",
+        )
+        try:
+            observed = _entry_status(parent, relative.name)
+            if observed is None:
+                continue
+            if not stat.S_ISDIR(observed.st_mode):
+                raise CurationError(
+                    f"managed output directory changed before cleanup: {relative}"
+                )
+            try:
+                os.rmdir(relative.name, dir_fd=parent)
+            except OSError as error:
+                if error.errno not in {errno.ENOTEMPTY, errno.EEXIST, errno.ENOENT}:
+                    raise CurationError(
+                        f"cannot remove managed output directory safely: {relative}"
+                    ) from error
+        finally:
+            os.close(parent)
+
+
 def _install_stage(
     stage: Path,
     output_root: Path,
@@ -1198,38 +2349,36 @@ def _install_stage(
     if prior is not None and _same_publication(output_root, prior, desired):
         shutil.rmtree(stage)
         return "UNCHANGED"
-    output_root.mkdir(parents=True, exist_ok=True)
-    for relative_text in sorted(planned - {PUBLICATION_MANIFEST}):
-        source = stage / relative_text
-        destination = output_root / relative_text
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        os.replace(source, destination)
-    # Commit the ownership record last.  A valid prior manifest remains the
-    # authority until every desired content file is installed.
-    os.replace(stage / PUBLICATION_MANIFEST, output_root / PUBLICATION_MANIFEST)
-
-    for relative_text in sorted(prior_managed - planned, reverse=True):
-        path = output_root / relative_text
-        if path.is_symlink() or (path.exists() and not path.is_file()):
-            raise CurationError(f"refusing to remove non-file managed path: {path}")
-        path.unlink(missing_ok=True)
-    for category in (output_root / "30kph", output_root / "60kph"):
-        if not category.exists() or not category.is_dir() or category.is_symlink():
-            continue
-        directories = sorted(
-            (path for path in category.rglob("*") if path.is_dir() and not path.is_symlink()),
-            key=lambda path: len(path.parts),
-            reverse=True,
+    output_descriptor = _open_output_directory(output_root)
+    try:
+        for relative_text in sorted(planned - {PUBLICATION_MANIFEST}):
+            _replace_staged_file(
+                stage,
+                output_descriptor,
+                relative_text,
+                prior_managed,
+            )
+        # Commit the ownership record last. A valid prior manifest remains the
+        # authority until every desired content file is installed.
+        _replace_staged_file(
+            stage,
+            output_descriptor,
+            PUBLICATION_MANIFEST,
+            prior_managed,
         )
-        for directory in directories:
-            try:
-                directory.rmdir()
-            except OSError:
-                pass
-        try:
-            category.rmdir()
-        except OSError:
-            pass
+
+        stale = prior_managed - planned
+        records = _prior_file_records(prior)
+        for relative_text in sorted(stale, reverse=True):
+            expected = records.get(relative_text)
+            if expected is None:
+                raise CurationError(
+                    f"stale managed output lacks prior digest: {relative_text}"
+                )
+            _unlink_managed_file(output_descriptor, relative_text, expected)
+        _remove_empty_managed_directories(output_descriptor, stale)
+    finally:
+        os.close(output_descriptor)
     shutil.rmtree(stage)
     return "UPDATED"
 
@@ -1243,7 +2392,6 @@ def curate(
     if supplied.is_symlink() or not supplied.is_dir():
         raise CurationError(f"campaign root is not a regular directory: {supplied}")
     root = supplied.resolve()
-    metadata, assets = collect_assets(root)
     targets = [(root / PUBLICATION_ROOT_RELATIVE_PATH, "campaign")]
     if docs_root is not None:
         docs_supplied = docs_root.expanduser()
@@ -1255,44 +2403,62 @@ def curate(
             raise CurationError("docs publication root duplicates campaign output root")
         targets.append((docs_resolved, "docs_mirror"))
 
-    staged: list[tuple[Path, Path, str, dict[str, Any], dict[str, Any] | None, set[str]]] = []
-    try:
-        # Validate and stage every target before mutating any destination.
-        for output_root, target in targets:
-            prior, prior_managed = _validate_prior_manifest(output_root, root, target)
-            stage, desired = _stage_publication(output_root, metadata, assets, target)
-            _validate_destination_collisions(
-                output_root, _planned_paths(desired), prior_managed
-            )
-            staged.append(
-                (stage, output_root, target, desired, prior, prior_managed)
-            )
-        if (
-            _sha256(root / SUMMARY_RELATIVE_PATH)
-            != metadata["source_summary_sha256"]
-            or _sha256(root / REFERENCE_MANIFEST_RELATIVE_PATH)
-            != metadata["source_visual_manifest_sha256"]
-        ):
-            raise CurationError("upstream report changed while assets were staged")
-        results: list[dict[str, Any]] = []
-        for stage, output_root, target, desired, prior, prior_managed in staged:
-            status = _install_stage(
-                stage, output_root, desired, prior, prior_managed
-            )
-            results.append(
-                {
-                    "target": target,
-                    "output_root": str(output_root),
-                    "status": status,
-                    "asset_count": desired["asset_count"],
-                    "manifest_payload_sha256": desired["manifest_payload_sha256"],
-                }
-            )
-        return results
-    finally:
-        for stage, *_ in staged:
-            if stage.exists():
-                shutil.rmtree(stage, ignore_errors=True)
+    with _publication_locks(targets):
+        metadata, assets = collect_assets(root)
+        staged: list[
+            tuple[
+                Path,
+                Path,
+                str,
+                dict[str, Any],
+                dict[str, Any] | None,
+                set[str],
+            ]
+        ] = []
+        try:
+            # Validate and stage every target before mutating any destination.
+            for output_root, target in targets:
+                prior, prior_managed = _validate_prior_manifest(
+                    output_root, root, target
+                )
+                stage, desired = _stage_publication(
+                    output_root, metadata, assets, target
+                )
+                _validate_destination_collisions(
+                    output_root, _planned_paths(desired), prior_managed
+                )
+                staged.append(
+                    (stage, output_root, target, desired, prior, prior_managed)
+                )
+            if (
+                _sha256(root / SUMMARY_RELATIVE_PATH)
+                != metadata["source_summary_sha256"]
+                or _sha256(root / REFERENCE_MANIFEST_RELATIVE_PATH)
+                != metadata["source_visual_manifest_sha256"]
+            ):
+                raise CurationError("upstream report changed while assets were staged")
+            _revalidate_geometry_sources(root, metadata.get("60kph_geometry_ab"))
+            results: list[dict[str, Any]] = []
+            for stage, output_root, target, desired, prior, prior_managed in staged:
+                status = _install_stage(
+                    stage, output_root, desired, prior, prior_managed
+                )
+                results.append(
+                    {
+                        "target": target,
+                        "output_root": str(output_root),
+                        "status": status,
+                        "asset_count": desired["asset_count"],
+                        "manifest_payload_sha256": desired[
+                            "manifest_payload_sha256"
+                        ],
+                    }
+                )
+            return results
+        finally:
+            for stage, *_ in staged:
+                if stage.exists():
+                    shutil.rmtree(stage, ignore_errors=True)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

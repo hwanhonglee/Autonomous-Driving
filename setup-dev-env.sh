@@ -33,7 +33,7 @@ while [ "$1" != "" ]; do
     case "$1" in
     --help | -h)
         print_help
-        exit 1
+        exit 0
         ;;
     -y)
         # Use non-interactive mode.
@@ -74,6 +74,25 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
+# This fork intentionally does not vendor the upstream Ansible collection.
+# Fail before the confirmation prompt or any apt/pip mutation so a fresh clone
+# cannot perform a partial host installation and then fail at ansible-galaxy.
+if [ ! -f "$SCRIPT_DIR/ansible/galaxy.yml" ] || \
+    [ ! -f "$SCRIPT_DIR/ansible/playbooks/install_dev_env.yaml" ] || \
+    [ ! -d "$SCRIPT_DIR/ansible/roles" ]; then
+    cat >&2 <<'EOF'
+ERROR: this checkout does not contain a complete upstream ./ansible collection.
+No package has been installed or changed.
+
+Do not use this legacy entrypoint from a fresh clone. Follow the pinned
+upstream provisioning steps in docs/BEGINNER_QUICKSTART_KO.md, section 5,
+then return to this workspace and run:
+
+  bash scripts/e2e/bootstrap_preflight.sh
+EOF
+    exit 2
+fi
 
 # Select installation type
 target_playbook="autoware.dev_env.universe" # default
@@ -154,7 +173,7 @@ fi
 
 # Add env args
 # shellcheck disable=SC2013
-for env_name in $(sed -e "s/^\s*//" -e "/^#/d" -e "s/=.*//" <amd64.env); do
+for env_name in $(sed -e "s/^\s*//" -e "/^#/d" -e "s/=.*//" <"$SCRIPT_DIR/amd64.env"); do
     ansible_args+=("--extra-vars" "${env_name}=${!env_name}")
 done
 

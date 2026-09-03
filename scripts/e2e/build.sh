@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  cat <<'EOF'
+Usage: scripts/e2e/build.sh
+
+Build the minimal Autoware/CARLA VAD runtime. This command accepts no
+positional arguments. Configure build parallelism with environment variables:
+  CMAKE_BUILD_PARALLEL_LEVEL=N  compiler jobs per package (default: 2)
+  COLCON_WORKERS=N              colcon package workers (default: 3)
+EOF
+}
+
+if (( $# > 0 )); then
+  if (( $# == 1 )) && [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  echo "build.sh accepts no arguments: $*" >&2
+  usage >&2
+  exit 2
+fi
+
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
 source scripts/e2e/workspace_runtime_lock.sh

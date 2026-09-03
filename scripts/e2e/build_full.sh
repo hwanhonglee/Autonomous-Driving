@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  cat <<'EOF'
+Usage: scripts/e2e/build_full.sh
+
+Build the full Autoware/CARLA VAD stack. This command accepts no positional
+arguments. Configure it with environment variables:
+  CMAKE_BUILD_PARALLEL_LEVEL=N     compiler jobs per package (default: 2)
+  COLCON_WORKERS=N                 colcon workers (default: 2)
+  AUTOWARE_E2E_FULL_BUILD_RESUME=1 skip packages already built, then rebuild
+                                   the patched safety-critical runtime subset
+EOF
+}
+
+if (( $# > 0 )); then
+  if (( $# == 1 )) && [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  echo "build_full.sh accepts no arguments: $*" >&2
+  usage >&2
+  exit 2
+fi
+
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
 source scripts/e2e/workspace_runtime_lock.sh

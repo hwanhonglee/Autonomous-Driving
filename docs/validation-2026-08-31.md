@@ -1,7 +1,10 @@
 # Validation evidence
 
-> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 30/60 kph 비교와 종방향
-> 고도화 결과는 [2026-09-02 속도·종방향 검증 보고서](validation-2026-09-02-speed-30-60-longitudinal.md),
+> 이 문서는 2026-08-31의 역사적 snapshot이다. 최신 화면 끊김·30 kph A/B·60 kph
+> geometry 고도화의 통합 상태는
+> [2026-09-02 runtime·제어 캠페인 보고서](validation-2026-09-02-runtime-control-campaign.md),
+> 기존 30/60 kph 비교와 종방향 결과는
+> [2026-09-02 속도·종방향 검증 보고서](validation-2026-09-02-speed-30-60-longitudinal.md),
 > 5 Hz camera-source 9-map/18-trial 원본은
 > [2026-09-02 전체 Town 검증 보고서](validation-2026-09-02-all-towns-camera-source-5hz.md)를
 > 사용한다. [2026-09-01 보고서](validation-2026-09-01.md)는 이전 30 kph 기준선이다.

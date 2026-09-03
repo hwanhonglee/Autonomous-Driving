@@ -42,6 +42,8 @@ Options:
   --control-ab-pid-i40   30 kph A/B: PID max_i_effort 0.30 -> 0.40 only
   --control-ab-turn-preview-5m
                          30 kph turn A/B: curvature preview 3 m -> 5 m only
+  --geometry-ab-route-corridor-0p2
+                         60 kph geometry A/B: route corridor 0.50 m -> 0.20 m only
   --visualize            Start RViz (and the front-camera view outside capture mode)
   --capture-desktop      Record 1920x1080 owned-RViz PNG/GIF evidence after a VAD candidate
   --tight-corridor       Screen the recommended profile with a +/-0.20 m corridor
@@ -81,6 +83,7 @@ visualize=false
 capture_desktop=false
 trajectory_stability=false
 tight_corridor=false
+geometry_ab_route_corridor_0p2=false
 comfortable_deceleration_mps2=""
 maximum_longitudinal_acceleration_mps2=""
 maximum_lateral_acceleration_mps2=""
@@ -101,6 +104,9 @@ sensor_mapping=""
 control_ab_pid_i40=false
 control_ab_turn_preview_5m=false
 control_ab_candidate_id="baseline"
+geometry_ab_candidate_id="baseline_corridor_0p5"
+route_corridor_half_width_m="0.50"
+turn_outward_corridor_half_width_m="0.50"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --recommended)
@@ -133,6 +139,13 @@ while [[ $# -gt 0 ]]; do
       control_ab_candidate_id="turn_preview_5m"
       shift
       ;;
+    --geometry-ab-route-corridor-0p2)
+      geometry_ab_route_corridor_0p2=true
+      geometry_ab_candidate_id="route_corridor_0p2"
+      route_corridor_half_width_m="0.20"
+      turn_outward_corridor_half_width_m="0.20"
+      shift
+      ;;
     --visualize)
       visualize=true
       shift
@@ -148,6 +161,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tight-corridor)
       tight_corridor=true
+      route_corridor_half_width_m="0.20"
+      turn_outward_corridor_half_width_m="0.20"
       shift
       ;;
     --smart-mpc)
@@ -236,6 +251,11 @@ if [[ ( "${control_ab_pid_i40}" == "true" || \
         "${control_ab_turn_preview_5m}" == "true" ) && \
       "${speed_30kph}" != "true" ]]; then
   echo "Control A/B candidates require --speed-30kph." >&2
+  exit 2
+fi
+if [[ "${geometry_ab_route_corridor_0p2}" == "true" && \
+      "${speed_60kph_pilot}" != "true" ]]; then
+  echo "--geometry-ab-route-corridor-0p2 requires --speed-60kph-pilot." >&2
   exit 2
 fi
 if [[ "${speed_30kph}" == "true" && \
@@ -344,7 +364,7 @@ for argument in "${launch_arguments[@]}"; do
   if [[ "${recommended}" == "true" ]]; then
     # Keep this list aligned with run_route_vad_fast.sh's recommended profile.
     case "${argument}" in
-      use_vad_imu_acceleration:=*|use_fast_vad:=*|vad_use_fp16_heads:=*|use_light_weight_sensor_mapping:=*|rviz:=*|launch_fast_camera_view:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
+      use_vad_imu_acceleration:=*|use_fast_vad:=*|vad_use_fp16_heads:=*|use_light_weight_sensor_mapping:=*|rviz:=*|launch_fast_camera_view:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|route_corridor_half_width_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
         echo "Recommended profile argument is controlled by this wrapper: ${argument%%:=*}" >&2
         exit 2
         ;;
@@ -941,6 +961,10 @@ printf 'CAMERA_TRANSPORT_PROFILE_ID=%s\nCAMERA_IMAGE_PUBLISH_QOS=%s\nCAMERA_IMAG
 printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
   "${control_ab_candidate_id}" "${control_ab_pid_i40}" \
   "${control_ab_turn_preview_5m}" >> "${output_dir}/runtime.env"
+printf 'GEOMETRY_AB_CANDIDATE_ID=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_0P2=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_BASELINE_M=0.50\nGEOMETRY_AB_ROUTE_CORRIDOR_CANDIDATE_M=0.20\nGEOMETRY_AB_BEHAVIORAL_SINGLE_KNOB=true\nGEOMETRY_AB_PARAMETER_CHANGE_COUNT=2\nGEOMETRY_AB_COUPLED_PARAMETER_REASON=turn_width_must_not_exceed_route_width\nGEOMETRY_AB_ROUTE_SCOPE=straight_only\nROUTE_CORRIDOR_HALF_WIDTH_M=%s\nTURN_OUTWARD_CORRIDOR_HALF_WIDTH_M=%s\n' \
+  "${geometry_ab_candidate_id}" "${geometry_ab_route_corridor_0p2}" \
+  "${route_corridor_half_width_m}" "${turn_outward_corridor_half_width_m}" >> \
+  "${output_dir}/runtime.env"
 runtime_health_probe_sha256="$(sha256sum -- "${runtime_health_probe}" | awk '{print $1}')"
 printf 'RUNTIME_HEALTH_GATE_ENABLED=%s\nRUNTIME_HEALTH_GATE_MODE=%s\nRUNTIME_HEALTH_TIMEOUT_SEC=%s\nRUNTIME_HEALTH_WINDOW_SEC=%s\nRUNTIME_HEALTH_REQUIRED_CONSECUTIVE_PASSES=3\nRUNTIME_HEALTH_EVIDENCE_FILE=runtime_health.json\nRUNTIME_HEALTH_PROBE_FILE=%s\nRUNTIME_HEALTH_PROBE_SHA256=%s\nRUNTIME_HEALTH_GATE_PHASE=after_optional_rviz_recorder_before_rosbag_and_engagement\n' \
   "${runtime_health_gate}" "${runtime_health_gate_mode}" \
@@ -1019,7 +1043,11 @@ validation_state="experimental"
 if [[ "${speed_30kph}" == "true" ]]; then
   validation_state="carla_30kph_v2_screening"
 elif [[ "${speed_60kph_pilot}" == "true" ]]; then
-  validation_state="carla_60kph_straight_pilot_v1_exploratory"
+  if [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+    validation_state="carla_60kph_geometry_ab_route_corridor_0p2_exploratory"
+  else
+    validation_state="carla_60kph_straight_pilot_v1_exploratory"
+  fi
 elif [[ "${tight_corridor}" == "true" && "${trajectory_stability}" == "true" ]]; then
   validation_state="combined_tight_corridor_and_trajectory_stability_experimental"
 elif [[ "${tight_corridor}" == "true" ]]; then
@@ -1523,6 +1551,9 @@ if [[ "${recommended}" == "true" ]]; then
   fi
   if [[ "${camera_source_5hz}" == "true" ]]; then
     stack_command+=(--camera-source-5hz)
+  fi
+  if [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+    stack_command+=(--geometry-ab-route-corridor-0p2)
   fi
   if [[ "${control_ab_pid_i40}" == "true" ]]; then
     stack_command+=(--control-ab-pid-i40)

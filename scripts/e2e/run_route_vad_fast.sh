@@ -7,7 +7,7 @@ source scripts/e2e/env.sh
 
 usage() {
   cat >&2 <<EOF
-Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
+Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m] [--geometry-ab-route-corridor-0p2] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
 
   default       Minimal Autoware control shell and the lowest runtime load
   --full        Full Autoware shell; RViz stays off unless a visual option is set
@@ -26,6 +26,9 @@ Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--sp
                 30 kph A/B only: change PID max_i_effort from 0.30 to 0.40
   --control-ab-turn-preview-5m
                 30 kph A/B only: change curvature speed preview from 3 m to 5 m
+  --geometry-ab-route-corridor-0p2
+                60 kph A/B only: change route corridor from +/-0.50 m to
+                +/-0.20 m; keep speed, controller, gate, map, and throttle fixed
   --tight-corridor
                 With --recommended, constrain every route command to +/-0.20 m
   --trajectory-stability
@@ -52,6 +55,9 @@ model_override=""
 sensor_mapping=""
 control_ab_pid_i40=false
 control_ab_turn_preview_5m=false
+geometry_ab_route_corridor_0p2=false
+route_corridor_half_width_m="0.50"
+turn_outward_corridor_half_width_m="0.50"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --full)
@@ -95,6 +101,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --control-ab-turn-preview-5m)
       control_ab_turn_preview_5m=true
+      shift
+      ;;
+    --geometry-ab-route-corridor-0p2)
+      geometry_ab_route_corridor_0p2=true
       shift
       ;;
     --trajectory-stability)
@@ -172,6 +182,12 @@ if [[ ( "${control_ab_pid_i40}" == "true" || \
         "${control_ab_turn_preview_5m}" == "true" ) && \
       "${speed_30kph}" != "true" ]]; then
   echo "Control A/B candidates require --speed-30kph." >&2
+  exit 2
+fi
+
+if [[ "${geometry_ab_route_corridor_0p2}" == "true" && \
+      "${speed_60kph_pilot}" != "true" ]]; then
+  echo "--geometry-ab-route-corridor-0p2 requires --speed-60kph-pilot." >&2
   exit 2
 fi
 
@@ -267,7 +283,7 @@ for argument in "$@"; do
   esac
   if [[ "${recommended}" == "true" ]]; then
     case "${argument}" in
-      use_vad_imu_acceleration:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
+      use_vad_imu_acceleration:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|route_corridor_half_width_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
         echo "Recommended profile argument is controlled by this wrapper: ${argument%%:=*}" >&2
         exit 2
         ;;
@@ -281,6 +297,12 @@ fast_launch="${package_share}/launch/vad_carla_tiny_fast.launch.xml"
 if [[ ! -f "${fast_mapping}" || ! -f "${fast_launch}" ]]; then
   echo "Fast profile is not installed. Run scripts/e2e/build.sh first." >&2
   exit 1
+fi
+
+if [[ "${tight_corridor}" == "true" || \
+      "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+  route_corridor_half_width_m="0.20"
+  turn_outward_corridor_half_width_m="0.20"
 fi
 
 recommended_mpc=""
@@ -373,7 +395,9 @@ if [[ "${recommended}" == "true" ]]; then
     "use_lateral_controller_param_override:=true"
     "lateral_controller_param_path:=${recommended_mpc}"
     "use_longitudinal_controller_param_override:=true"
+    "route_corridor_half_width_m:=${route_corridor_half_width_m}"
     "turn_inward_corridor_half_width_m:=0.20"
+    "turn_outward_corridor_half_width_m:=${turn_outward_corridor_half_width_m}"
     "trajectory_geometry_smoothing_strength:=10.0"
   )
   if [[ "${speed_30kph}" == "true" ]]; then
@@ -428,13 +452,6 @@ if [[ "${recommended}" == "true" ]]; then
   fi
 fi
 
-if [[ "${tight_corridor}" == "true" ]]; then
-  profile_arguments+=(
-    "route_corridor_half_width_m:=0.20"
-    "turn_outward_corridor_half_width_m:=0.20"
-  )
-fi
-
 if [[ "${trajectory_stability}" == "true" ]]; then
   profile_arguments+=(
     "right_turn_trajectory_lateral_filter_gain:=0.75"
@@ -446,7 +463,7 @@ if [[ "${trajectory_stability}" == "true" ]]; then
   echo "NOTICE: this outlier filter is HOLD after repeated closed-loop screening; it is not the recommended profile." >&2
 fi
 
-echo "VAD fast profile: 6x 640x360 raw cameras at 5 Hz; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
+echo "VAD fast profile: 6x 640x360 raw cameras at 5 Hz; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; geometry AB route-corridor-0p2=${geometry_ab_route_corridor_0p2}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
 if [[ "${full}" == "true" ]]; then
   rviz_enabled=false
   if [[ "${visualize}" == "true" || "${rviz_only}" == "true" ]]; then

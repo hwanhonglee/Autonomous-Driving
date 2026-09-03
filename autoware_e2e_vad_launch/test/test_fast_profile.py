@@ -1477,6 +1477,100 @@ def test_fast_wrapper_builds_straight_only_speed_60_pilot(tmp_path):
     assert "rviz:=true" in arguments
 
 
+def test_fast_wrapper_builds_isolated_speed_60_geometry_corridor_candidate(
+    tmp_path,
+):
+    route = make_scenario_route(tmp_path, "straight")
+    common = [
+        str(FAST_WRAPPER),
+        "--speed-60kph-pilot",
+        "--camera-source-5hz",
+    ]
+    environment = wrapper_environment(tmp_path)
+    baseline = subprocess.run(
+        [*common, str(route)],
+        cwd=ROOT,
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    candidate = subprocess.run(
+        [*common, "--geometry-ab-route-corridor-0p2", str(route)],
+        cwd=ROOT,
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert baseline.returncode == 0, baseline.stderr
+    assert candidate.returncode == 0, candidate.stderr
+
+    baseline_arguments = baseline.stdout.splitlines()
+    candidate_arguments = candidate.stdout.splitlines()
+    assert "route_corridor_half_width_m:=0.50" in baseline_arguments
+    assert "turn_outward_corridor_half_width_m:=0.50" in baseline_arguments
+    assert "route_corridor_half_width_m:=0.20" in candidate_arguments
+    assert "turn_outward_corridor_half_width_m:=0.20" in candidate_arguments
+    assert "trajectory_lateral_filter_gain:=0.75" not in candidate_arguments
+    assert set(candidate_arguments) - set(baseline_arguments) == {
+        "route_corridor_half_width_m:=0.20",
+        "turn_outward_corridor_half_width_m:=0.20",
+    }
+    assert set(baseline_arguments) - set(candidate_arguments) == {
+        "route_corridor_half_width_m:=0.50",
+        "turn_outward_corridor_half_width_m:=0.50",
+    }
+
+
+def test_fast_wrapper_rejects_geometry_corridor_candidate_without_speed_60(
+    tmp_path,
+):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--geometry-ab-route-corridor-0p2", str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert "requires --speed-60kph-pilot" in completed.stderr
+
+
+@pytest.mark.parametrize(
+    "protected_argument",
+    [
+        "route_corridor_half_width_m:=0.3",
+        "turn_outward_corridor_half_width_m:=0.3",
+    ],
+)
+def test_fast_wrapper_rejects_trailing_geometry_override(
+    tmp_path, protected_argument
+):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-60kph-pilot",
+            str(route),
+            protected_argument,
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert "controlled by this wrapper" in completed.stderr
+
+
 @pytest.mark.parametrize("scenario", ["left", "right", "unknown"])
 def test_fast_wrapper_rejects_non_straight_speed_60_pilot(tmp_path, scenario):
     route = make_scenario_route(tmp_path, scenario)

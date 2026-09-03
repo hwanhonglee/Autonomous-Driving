@@ -18,11 +18,16 @@ check_file() {
 
 printf 'Autoware root: %s\nROS distro: %s\nROS domain: %s\n' \
   "${AUTOWARE_E2E_ROOT}" "${ROS_DISTRO}" "${ROS_DOMAIN_ID}"
-if gpu_info="$(nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>&1)"; then
+if gpu_info="$(timeout 10s nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>&1)"; then
   printf '[ok] NVIDIA GPU: %s\n' "${gpu_info}"
 else
-  printf '[gpu unavailable] %s\n' "${gpu_info}"
-  printf 'A driver/library version mismatch normally requires a reboot.\n'
+  gpu_status=$?
+  if [[ ${gpu_status} -eq 124 ]]; then
+    printf '[gpu unavailable] nvidia-smi timed out after 10 seconds; possible driver/NVML hang.\n'
+  else
+    printf '[gpu unavailable] %s\n' "${gpu_info}"
+    printf 'A driver/library version mismatch normally requires a reboot.\n'
+  fi
   failures=$((failures + 1))
 fi
 

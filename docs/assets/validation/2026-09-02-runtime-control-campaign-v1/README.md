@@ -83,6 +83,28 @@ These are the exact post-fix depth-1 loopback regressions; the curator never sca
 | steering_tracking | [04_steering_tracking.png](60kph/town06_straight/selected_pilot/04_steering_tracking.png) |
 | speed_profile | [05_speed_profile.png](60kph/town06_straight/selected_pilot/05_speed_profile.png) |
 
+## 60 km/h geometry A/B
+
+The corridor 0.20 m candidate is diagnostic evidence only; it does not replace the selected pilot v3.
+
+- Geometry decision: `HOLD`
+- Independent speed contract: `FAIL`
+- Real-vehicle ready: `false`
+- Exact candidate source: `30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4`
+- Comparison JSON: `50_reports/town06_60kph_geometry_corridor_ab_v4.json`
+
+| Variant | Evidence | File |
+|---|---|---|
+| geometry_corridor_0p2_hold | fullscreen | [01_autoware_vehicle_centered_fullscreen.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/01_autoware_vehicle_centered_fullscreen.png) |
+| geometry_corridor_0p2_hold | drive | [02_autoware_drive.gif](60kph/town06_straight/B_geometry_corridor_0p2_hold/02_autoware_drive.gif) |
+| geometry_corridor_0p2_hold | path_vs_control | [03_path_vs_control.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/03_path_vs_control.png) |
+| geometry_corridor_0p2_hold | steering_tracking | [04_steering_tracking.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/04_steering_tracking.png) |
+| geometry_corridor_0p2_hold | speed_profile | [05_speed_profile.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/05_speed_profile.png) |
+| geometry_corridor_0p2_hold | route_result | [06_route_result.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/06_route_result.png) |
+| geometry_corridor_0p2_hold | runtime_load | [07_runtime_load_analysis.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/07_runtime_load_analysis.png) |
+| geometry_corridor_0p2_hold | longitudinal_response | [08_longitudinal_response.png](60kph/town06_straight/B_geometry_corridor_0p2_hold/08_longitudinal_response.png) |
+| geometry_comparison | comparison | [09_A_selected_pilot_v3_vs_B_geometry_corridor_0p2_HOLD.png](60kph/town06_straight/comparison/09_A_selected_pilot_v3_vs_B_geometry_corridor_0p2_HOLD.png) |
+
 ## Integrity
 
 `publication_manifest.json` records the source and published SHA-256 for each asset. A later run replaces or removes only paths authorized by the previously verified manifest; unmanaged files and canonical source evidence are never removed.

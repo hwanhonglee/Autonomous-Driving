@@ -20,6 +20,7 @@ from vad_route_logic import (  # noqa: E402
     RoutePlan,
     RoutePoint,
     constrain_trajectory_points_to_route,
+    endpoint_tapered_c1_corridor_offsets,
     endpoint_fixed_whittaker,
     limit_trajectory_speed_for_acceleration,
     limit_trajectory_speed_for_curvature,
@@ -1083,6 +1084,106 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
         self.assertEqual(result.stop_distance_m, stop_distance)
         self.assertEqual(points, original)
 
+    def test_endpoint_tapered_c1_offset_helper_is_pure_and_bounded(self):
+        offsets = [[0.0, 0.2], [0.0, 0.35], [0.0, -0.35], [0.0, -0.2]]
+        original = copy.deepcopy(offsets)
+
+        result = endpoint_tapered_c1_corridor_offsets(
+            offsets,
+            [[0.0, 1.0]] * 4,
+            [0.0, 1.0, 2.0, 3.0],
+            corridor_half_width_m=0.2,
+            transition_width_m=0.1,
+            endpoint_taper_m=0.0,
+        )
+
+        self.assertEqual(offsets, original)
+        self.assertEqual(tuple(result[0]), (0.0, 0.2))
+        self.assertEqual(tuple(result[-1]), (0.0, -0.2))
+        self.assertLessEqual(max(abs(value) for value in result[:, 1]), 0.2)
+
+    def test_endpoint_tapered_c1_offset_helper_has_matching_boundary_slopes(self):
+        def saturate(value):
+            return endpoint_tapered_c1_corridor_offsets(
+                [[0.0, 0.0], [0.0, value], [0.0, 0.0]],
+                [[0.0, 1.0]] * 3,
+                [0.0, 1.0, 2.0],
+                corridor_half_width_m=0.2,
+                transition_width_m=0.1,
+                endpoint_taper_m=0.0,
+            )[1, 1]
+
+        epsilon = 1.0e-6
+        inner_left = (saturate(0.1) - saturate(0.1 - epsilon)) / epsilon
+        inner_right = (saturate(0.1 + epsilon) - saturate(0.1)) / epsilon
+        outer_left = (saturate(0.3) - saturate(0.3 - epsilon)) / epsilon
+        outer_right = (saturate(0.3 + epsilon) - saturate(0.3)) / epsilon
+
+        self.assertAlmostEqual(inner_left, 1.0, places=6)
+        self.assertAlmostEqual(inner_right, 1.0, places=5)
+        self.assertAlmostEqual(outer_left, 0.0, places=5)
+        self.assertAlmostEqual(outer_right, 0.0, places=6)
+
+    def test_endpoint_taper_reduces_fixed_anchor_tangent_change(self):
+        common = {
+            "offsets_xy": [[0.0, 0.2], [0.0, 0.2], [0.0, 0.0]],
+            "normals_xy": [[0.0, 1.0]] * 3,
+            "sample_distances": [0.0, 0.25, 2.0],
+            "corridor_half_width_m": 0.2,
+            "transition_width_m": 0.1,
+        }
+
+        untapered = endpoint_tapered_c1_corridor_offsets(
+            **common, endpoint_taper_m=0.0
+        )
+        tapered = endpoint_tapered_c1_corridor_offsets(
+            **common, endpoint_taper_m=2.0
+        )
+
+        self.assertLess(
+            abs(tapered[1, 1] - tapered[0, 1]),
+            abs(untapered[1, 1] - untapered[0, 1]),
+        )
+        self.assertEqual(tuple(tapered[0]), (0.0, 0.2))
+
+    def test_endpoint_taper_has_zero_spatial_correction_slope_at_anchor(self):
+        epsilon = 1.0e-3
+        result = endpoint_tapered_c1_corridor_offsets(
+            [[0.0, 0.2]] * 4,
+            [[0.0, 1.0]] * 4,
+            [0.0, epsilon, 2.0 * epsilon, 1.0],
+            corridor_half_width_m=0.2,
+            transition_width_m=0.1,
+            endpoint_taper_m=1.0,
+        )
+
+        correction_slope = (result[1, 1] - result[0, 1]) / epsilon
+        self.assertLess(abs(correction_slope), 1.0e-5)
+
+    def test_endpoint_taper_fails_closed_when_anchor_tangent_exits_corridor(self):
+        with self.assertRaisesRegex(
+            ValueError, "cannot preserve the anchor tangent"
+        ):
+            endpoint_tapered_c1_corridor_offsets(
+                [[0.0, 0.2], [0.0, 0.3], [0.0, 0.3], [0.0, 0.2]],
+                [[0.0, 1.0]] * 4,
+                [0.0, 0.25, 4.75, 5.0],
+                corridor_half_width_m=0.2,
+                transition_width_m=0.1,
+                endpoint_taper_m=5.0,
+            )
+
+    def test_endpoint_tapered_c1_rejects_fixed_point_outside_corridor(self):
+        with self.assertRaisesRegex(ValueError, "fixed point 0 lies outside"):
+            endpoint_tapered_c1_corridor_offsets(
+                [[0.0, 0.21], [0.0, 0.0]],
+                [[0.0, 1.0], [0.0, 1.0]],
+                [0.0, 1.0],
+                corridor_half_width_m=0.2,
+                transition_width_m=0.1,
+                endpoint_taper_m=1.0,
+            )
+
     def test_endpoints_and_exact_stop_distance_point_are_fixed(self):
         points = self._zigzag_points()
         source_distances = trajectory_arc_lengths(points)
@@ -1217,6 +1318,24 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
         self.assertTrue(
             all(abs(point.pose.orientation.z) < 1.0e-10 for point in points)
         )
+
+    def test_default_smoothing_is_exactly_explicit_legacy_saturation(self):
+        implicit = self._zigzag_points()
+        explicit = copy.deepcopy(implicit)
+
+        self._smooth(implicit)
+        smooth_trajectory_geometry(
+            explicit,
+            self.route,
+            progress_m=0.0,
+            strength=100.0,
+            interval_m=0.25,
+            max_deviation_m=5.0,
+            corridor_half_width_m=5.0,
+            corridor_saturation_mode="legacy",
+        )
+
+        self.assertEqual(implicit, explicit)
 
     def test_smoothing_reduces_curvature_roughness(self):
         points = self._zigzag_points()

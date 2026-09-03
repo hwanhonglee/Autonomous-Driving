@@ -48,10 +48,12 @@ fi
 map_path="${AUTOWARE_E2E_FULL_MAP_PATH:-${root}/data/maps/${town}_full}"
 if [[ ! -f "${map_path}/lanelet2_map.osm" || \
       ! -f "${map_path}/pointcloud_map.pcd" || \
-      ! -f "${map_path}/map_projector_info.yaml" ]]; then
+      ! -f "${map_path}/map_projector_info.yaml" || \
+      ! -f "${map_path}/map_bundle.json" ]]; then
   echo "Complete Autoware map not found: ${map_path}" >&2
+  echo "Required: lanelet2_map.osm, pointcloud_map.pcd, map_projector_info.yaml, map_bundle.json" >&2
   if [[ "${town}" == "Town01" ]]; then
-    echo "Run scripts/e2e/setup_town01_full_map.sh first." >&2
+    echo "Run the pinned packaged-map inventory/prepare procedure in docs/BEGINNER_QUICKSTART_KO.md section 9.2." >&2
   fi
   exit 2
 fi
@@ -63,27 +65,25 @@ alignment_y_m="0.0"
 alignment_z_m="0.0"
 alignment_yaw_rad="0.0"
 map_bundle="${map_path}/map_bundle.json"
-if [[ -f "${map_bundle}" ]]; then
-  runtime_route_dir="${AUTOWARE_E2E_RUNTIME_DIR:-${XDG_RUNTIME_DIR:-/tmp/autoware_e2e_${UID}}/autoware_e2e}/aligned_routes"
-  alignment_output="$(
-    python3 scripts/e2e/align_carla_route_to_map.py \
-      "${source_route_file}" "${map_bundle}" \
-      --runtime-dir "${runtime_route_dir}" \
-      --shell-values
-  )"
-  mapfile -t alignment_values <<<"${alignment_output}"
-  if [[ ${#alignment_values[@]} -ne 6 ]]; then
-    echo "Invalid map alignment output for ${map_bundle}" >&2
-    exit 2
-  fi
-  route_file="${alignment_values[0]}"
-  alignment_enabled="${alignment_values[1]}"
-  alignment_x_m="${alignment_values[2]}"
-  alignment_y_m="${alignment_values[3]}"
-  alignment_z_m="${alignment_values[4]}"
-  alignment_yaw_rad="${alignment_values[5]}"
-  echo "Map alignment: route=${route_file}, x=${alignment_x_m}, y=${alignment_y_m}, z=${alignment_z_m}, yaw=${alignment_yaw_rad}" >&2
+runtime_route_dir="${AUTOWARE_E2E_RUNTIME_DIR:-${XDG_RUNTIME_DIR:-/tmp/autoware_e2e_${UID}}/autoware_e2e}/aligned_routes"
+alignment_output="$(
+  python3 scripts/e2e/align_carla_route_to_map.py \
+    "${source_route_file}" "${map_bundle}" \
+    --runtime-dir "${runtime_route_dir}" \
+    --shell-values
+)"
+mapfile -t alignment_values <<<"${alignment_output}"
+if [[ ${#alignment_values[@]} -ne 6 ]]; then
+  echo "Invalid map alignment output for ${map_bundle}" >&2
+  exit 2
 fi
+route_file="${alignment_values[0]}"
+alignment_enabled="${alignment_values[1]}"
+alignment_x_m="${alignment_values[2]}"
+alignment_y_m="${alignment_values[3]}"
+alignment_z_m="${alignment_values[4]}"
+alignment_yaw_rad="${alignment_values[5]}"
+echo "Map alignment: route=${route_file}, x=${alignment_x_m}, y=${alignment_y_m}, z=${alignment_z_m}, yaw=${alignment_yaw_rad}" >&2
 
 mapfile -t route_values < <(
   python3 - "${route_file}" <<'PY'

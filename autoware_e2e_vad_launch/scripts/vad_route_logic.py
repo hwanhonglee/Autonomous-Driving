@@ -714,6 +714,211 @@ def _corridor_entry_envelope(
     )
 
 
+def _c1_saturate_positive(value, limit, transition_width):
+    """Return a bounded value with a continuous first derivative.
+
+    ``transition_width`` defines an input band on both sides of ``limit``.
+    Below ``limit - transition_width`` this is the identity; above
+    ``limit + transition_width`` it is the constant ``limit``.  The quadratic
+    bridge has matching slopes one and zero at those boundaries.  A zero width
+    intentionally reduces to the legacy hard clamp.
+    """
+    if transition_width <= 0.0:
+        return min(value, limit)
+    inner = limit - transition_width
+    outer = limit + transition_width
+    if value <= inner:
+        return value
+    if value >= outer:
+        return limit
+    ratio = (value - inner) / (2.0 * transition_width)
+    return inner + transition_width * (2.0 * ratio - ratio * ratio)
+
+
+def endpoint_tapered_c1_corridor_offsets(
+    offsets_xy,
+    normals_xy,
+    sample_distances,
+    corridor_half_width_m,
+    transition_width_m,
+    endpoint_taper_m,
+    lateral_offset_min_m=None,
+    lateral_offset_max_m=None,
+    fixed_indices=(),
+):
+    """Pure C1 corridor saturation for route-relative planar offsets.
+
+    The returned array never aliases or mutates ``offsets_xy``.  Saturation is
+    C1 across the corridor transition band.  Its correction is multiplied by
+    a product of quintic smoothsteps between fixed positions, so correction
+    value and station derivative are zero at every endpoint/stop anchor when
+    the incoming route-relative offset is C1.  If that tangent-preserving
+    blend cannot remain in the corridor, the helper rejects it rather than
+    silently falling back to a hard corner.
+
+    Fixed positions are validated and copied exactly.  This helper is
+    deliberately opt-in: the route manager does not select it.
+    """
+    offsets = np.asarray(offsets_xy, dtype=float)
+    normals = np.asarray(normals_xy, dtype=float)
+    distances = np.asarray(sample_distances, dtype=float)
+    if offsets.ndim != 2 or offsets.shape[1] != 2:
+        raise ValueError("corridor offsets must be an Nx2 array")
+    if normals.shape != offsets.shape:
+        raise ValueError("corridor normals must match the offset array")
+    if distances.ndim != 1 or len(distances) != len(offsets):
+        raise ValueError("corridor sample distances must match the offset array")
+    if len(offsets) < 2:
+        raise ValueError("C1 corridor requires at least two points")
+    if not (
+        np.all(np.isfinite(offsets))
+        and np.all(np.isfinite(normals))
+        and np.all(np.isfinite(distances))
+    ):
+        raise ValueError("C1 corridor input contains a non-finite value")
+    if np.any(np.diff(distances) < -1.0e-9):
+        raise ValueError("C1 corridor sample distances must be monotonic")
+    if not math.isfinite(corridor_half_width_m) or corridor_half_width_m <= 0.0:
+        raise ValueError("C1 corridor half width must be positive and finite")
+    if (
+        not math.isfinite(transition_width_m)
+        or transition_width_m < 0.0
+        or transition_width_m > corridor_half_width_m
+    ):
+        raise ValueError(
+            "C1 corridor transition width must be finite and inside the corridor"
+        )
+    if not math.isfinite(endpoint_taper_m) or endpoint_taper_m < 0.0:
+        raise ValueError("C1 corridor endpoint taper must be finite and non-negative")
+
+    normal_lengths = np.linalg.norm(normals, axis=1)
+    if np.any(np.abs(normal_lengths - 1.0) > 1.0e-6):
+        raise ValueError("C1 corridor normals must be unit length")
+    lateral_min = (
+        -corridor_half_width_m
+        if lateral_offset_min_m is None
+        else float(lateral_offset_min_m)
+    )
+    lateral_max = (
+        corridor_half_width_m
+        if lateral_offset_max_m is None
+        else float(lateral_offset_max_m)
+    )
+    if not all(math.isfinite(value) for value in (lateral_min, lateral_max)):
+        raise ValueError("C1 corridor lateral bounds must be finite")
+    if (
+        lateral_min < -corridor_half_width_m
+        or lateral_max > corridor_half_width_m
+        or lateral_min > 0.0
+        or lateral_max < 0.0
+        or lateral_min >= lateral_max
+    ):
+        raise ValueError(
+            "C1 corridor lateral bounds must straddle zero inside the corridor"
+        )
+
+    anchors = {0, len(offsets) - 1}
+    for raw_index in fixed_indices:
+        index = int(raw_index)
+        if index != raw_index or not 0 <= index < len(offsets):
+            raise ValueError(f"invalid C1 corridor anchor index {raw_index!r}")
+        anchors.add(index)
+    ordered_anchors = sorted(anchors)
+
+    result = offsets.copy()
+    symmetric_lateral_bounds = math.isclose(
+        lateral_min, -corridor_half_width_m, rel_tol=0.0, abs_tol=1.0e-12
+    ) and math.isclose(
+        lateral_max, corridor_half_width_m, rel_tol=0.0, abs_tol=1.0e-12
+    )
+    for index, offset in enumerate(offsets):
+        radial_error = float(np.linalg.norm(offset))
+        lateral_offset = float(np.dot(offset, normals[index]))
+        if index in anchors:
+            if (
+                radial_error > corridor_half_width_m + 1.0e-6
+                or lateral_offset < lateral_min - 1.0e-6
+                or lateral_offset > lateral_max + 1.0e-6
+            ):
+                raise ValueError(
+                    f"C1 corridor fixed point {index} lies outside corridor"
+                )
+            continue
+
+        if endpoint_taper_m == 0.0:
+            correction_taper = 1.0
+        else:
+            left_anchor = max(anchor for anchor in ordered_anchors if anchor < index)
+            right_anchor = min(
+                anchor for anchor in ordered_anchors if anchor > index
+            )
+            left_ratio = min(
+                1.0,
+                max(
+                    0.0,
+                    (distances[index] - distances[left_anchor]) / endpoint_taper_m,
+                ),
+            )
+            right_ratio = min(
+                1.0,
+                max(
+                    0.0,
+                    (distances[right_anchor] - distances[index]) / endpoint_taper_m,
+                ),
+            )
+            left_taper = left_ratio**3 * (
+                10.0 + left_ratio * (-15.0 + 6.0 * left_ratio)
+            )
+            right_taper = right_ratio**3 * (
+                10.0 + right_ratio * (-15.0 + 6.0 * right_ratio)
+            )
+            correction_taper = left_taper * right_taper
+
+        saturated = offset.copy()
+
+        constrained_radial_error = _c1_saturate_positive(
+            radial_error, corridor_half_width_m, transition_width_m
+        )
+        if radial_error > 1.0e-12 and constrained_radial_error < radial_error:
+            saturated *= constrained_radial_error / radial_error
+
+        # A radial bound already proves the symmetric lateral bound.  Avoid a
+        # second saturation pass, which would otherwise shrink the same normal
+        # component twice on straight routes.
+        if not symmetric_lateral_bounds:
+            lateral_offset = float(np.dot(saturated, normals[index]))
+            tangent_component = saturated - lateral_offset * normals[index]
+            if lateral_offset > lateral_max:
+                magnitude = _c1_saturate_positive(
+                    lateral_offset,
+                    lateral_max,
+                    min(transition_width_m, lateral_max),
+                )
+                saturated = tangent_component + magnitude * normals[index]
+            elif lateral_offset < lateral_min:
+                magnitude = _c1_saturate_positive(
+                    -lateral_offset,
+                    -lateral_min,
+                    min(transition_width_m, -lateral_min),
+                )
+                saturated = tangent_component - magnitude * normals[index]
+
+        result[index] = offset + correction_taper * (saturated - offset)
+        final_radial_error = float(np.linalg.norm(result[index]))
+        final_lateral_offset = float(np.dot(result[index], normals[index]))
+        if (
+            final_radial_error > corridor_half_width_m + 1.0e-6
+            or final_lateral_offset < lateral_min - 1.0e-6
+            or final_lateral_offset > lateral_max + 1.0e-6
+        ):
+            raise ValueError(
+                "C1 corridor endpoint taper cannot preserve the anchor tangent "
+                f"at point {index} without leaving the corridor"
+            )
+
+    return result
+
+
 def constrain_trajectory_points_to_route(
     points,
     route,
@@ -1079,6 +1284,75 @@ def _constrain_smoothed_geometry_to_route(
         raise ValueError("geometry smoothing corridor collapsed a segment")
 
 
+def _constrain_smoothed_geometry_to_route_endpoint_tapered_c1(
+    points,
+    sample_distances,
+    route,
+    progress_m,
+    corridor_half_width_m,
+    search_window_m,
+    lateral_offset_min_m,
+    lateral_offset_max_m,
+    transition_width_m,
+    endpoint_taper_m,
+    entry_distance_m=0.0,
+    fixed_indices=(),
+):
+    """Apply the isolated endpoint-tapered C1 prototype to smoothed points."""
+    if len(points) != len(sample_distances):
+        raise ValueError("C1 smoothing corridor station count mismatch")
+    if entry_distance_m != 0.0:
+        raise ValueError("C1 smoothing corridor does not support an entry ramp")
+    references = [
+        _nearest_route_reference(
+            route,
+            point.pose.position.x,
+            point.pose.position.y,
+            progress_m + sample_distance,
+            search_window_m,
+        )
+        for point, sample_distance in zip(points, sample_distances)
+    ]
+    offsets = np.asarray(
+        [
+            (
+                point.pose.position.x - reference.x,
+                point.pose.position.y - reference.y,
+            )
+            for point, reference in zip(points, references)
+        ],
+        dtype=float,
+    )
+    normals = np.asarray(
+        [(-math.sin(reference.yaw), math.cos(reference.yaw)) for reference in references],
+        dtype=float,
+    )
+    constrained = endpoint_tapered_c1_corridor_offsets(
+        offsets,
+        normals,
+        sample_distances,
+        corridor_half_width_m,
+        transition_width_m,
+        endpoint_taper_m,
+        lateral_offset_min_m=lateral_offset_min_m,
+        lateral_offset_max_m=lateral_offset_max_m,
+        fixed_indices=fixed_indices,
+    )
+    for point, reference, offset in zip(points, references, constrained):
+        point.pose.position.x = reference.x + float(offset[0])
+        point.pose.position.y = reference.y + float(offset[1])
+
+    if any(
+        math.hypot(
+            second.pose.position.x - first.pose.position.x,
+            second.pose.position.y - first.pose.position.y,
+        )
+        <= 1.0e-4
+        for first, second in zip(points, points[1:])
+    ):
+        raise ValueError("C1 smoothing corridor collapsed a segment")
+
+
 def _maximum_bidirectional_polyline_deviation(first_xy, second_xy):
     def point_to_polyline_distances(points, polyline):
         starts = polyline[:-1]
@@ -1122,6 +1396,9 @@ def smooth_trajectory_geometry(
     lateral_offset_max_m=None,
     stop_distance_m=None,
     entry_distance_m=0.0,
+    corridor_saturation_mode="legacy",
+    corridor_transition_width_m=0.0,
+    corridor_endpoint_taper_m=0.0,
 ):
     """Apply guarded Whittaker smoothing and return correction/stop station.
 
@@ -1143,6 +1420,14 @@ def smooth_trajectory_geometry(
         raise ValueError("geometry smoothing requires at least three points")
     if stop_distance_m is not None and not math.isfinite(stop_distance_m):
         raise ValueError("geometry smoothing stop distance must be finite")
+    if corridor_saturation_mode not in ("legacy", "endpoint_tapered_c1"):
+        raise ValueError(
+            f"unsupported smoothing corridor saturation {corridor_saturation_mode!r}"
+        )
+    if corridor_saturation_mode == "legacy" and (
+        corridor_transition_width_m != 0.0 or corridor_endpoint_taper_m != 0.0
+    ):
+        raise ValueError("legacy smoothing corridor does not accept C1 parameters")
 
     source_distances = trajectory_arc_lengths(points)
     if source_distances[-1] <= 1.0e-6:
@@ -1194,19 +1479,39 @@ def smooth_trajectory_geometry(
         point.pose.position.x = float(position[0])
         point.pose.position.y = float(position[1])
 
-    _constrain_smoothed_geometry_to_route(
-        candidate,
-        baseline_sample_distances,
-        route,
-        progress_m,
-        corridor_half_width_m,
-        max(3.0, 4.0 * corridor_half_width_m, 4.0 * interval_m),
-        mode=mode,
-        lateral_offset_min_m=lateral_offset_min_m,
-        lateral_offset_max_m=lateral_offset_max_m,
-        entry_distance_m=entry_distance_m,
-        fixed_indices={0, len(candidate) - 1, *fixed_indices},
-    )
+    fixed_corridor_indices = {0, len(candidate) - 1, *fixed_indices}
+    search_window_m = max(3.0, 4.0 * corridor_half_width_m, 4.0 * interval_m)
+    if corridor_saturation_mode == "endpoint_tapered_c1":
+        if mode != "hard":
+            raise ValueError("C1 smoothing corridor prototype requires hard mode")
+        _constrain_smoothed_geometry_to_route_endpoint_tapered_c1(
+            candidate,
+            baseline_sample_distances,
+            route,
+            progress_m,
+            corridor_half_width_m,
+            search_window_m,
+            lateral_offset_min_m,
+            lateral_offset_max_m,
+            corridor_transition_width_m,
+            corridor_endpoint_taper_m,
+            entry_distance_m=entry_distance_m,
+            fixed_indices=fixed_corridor_indices,
+        )
+    else:
+        _constrain_smoothed_geometry_to_route(
+            candidate,
+            baseline_sample_distances,
+            route,
+            progress_m,
+            corridor_half_width_m,
+            search_window_m,
+            mode=mode,
+            lateral_offset_min_m=lateral_offset_min_m,
+            lateral_offset_max_m=lateral_offset_max_m,
+            entry_distance_m=entry_distance_m,
+            fixed_indices=fixed_corridor_indices,
+        )
 
     displacements = [
         math.hypot(
@@ -1231,7 +1536,7 @@ def smooth_trajectory_geometry(
             f"exceeds {max_deviation_m:.3f} m guard"
         )
 
-    for index in {0, len(candidate) - 1, *fixed_indices}:
+    for index in fixed_corridor_indices:
         if displacements[index] > 1.0e-8:
             raise ValueError(
                 f"geometry smoothing moved fixed point {index} by "

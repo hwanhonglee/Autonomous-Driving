@@ -20,8 +20,28 @@ module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(module)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_publication_locks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Keep per-test lock identities out of the workstation-wide /tmp pool."""
+    lock_tmp = tmp_path / "publication-lock-tmp"
+    lock_tmp.mkdir()
+    monkeypatch.setattr(module.tempfile, "gettempdir", lambda: str(lock_tmp))
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _canonical_digest(payload: object) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _write_json(path: Path, payload: object) -> None:
@@ -195,10 +215,235 @@ def _selected_regression(campaign: Path, scenario: str, map_name: str) -> None:
     )
 
 
+def _geometry_60kph_candidate(campaign: Path) -> Path:
+    owner = campaign / "30_60kph" / module.GEOMETRY_60KPH_DIRECTORY
+    trial = campaign / module.GEOMETRY_60KPH_TRIAL_RELATIVE_PATH
+    trial.mkdir(parents=True, exist_ok=True)
+
+    source_payload = {
+        "schema_version": 1,
+        "town": "Town06",
+        "scenario": "straight",
+        "route": [{"x": 0.0, "y": 0.0}, {"x": 445.0, "y": 0.0}],
+    }
+    catalog_source = owner / "catalog/routes/town06/straight/route.json"
+    copied_source = trial / "source_route.json"
+    _write_json(catalog_source, source_payload)
+    _write_json(copied_source, source_payload)
+    source_sha = _sha256(copied_source)
+
+    aligned_path = trial / "aligned_route.json"
+    _write_json(
+        aligned_path,
+        {
+            "schema_version": 1,
+            "town": "Town06",
+            "scenario": "straight",
+            "route_length_m": 445.0,
+            "route": source_payload["route"],
+            "coordinate_alignment": {
+                "source_route": str(catalog_source),
+                "source_route_sha256": source_sha,
+            },
+        },
+    )
+    aligned_sha = _sha256(aligned_path)
+    _write_json(
+        trial / "route_alignment.json",
+        {
+            "status": "PASS",
+            "source_route": str(catalog_source),
+            "source_route_sha256": source_sha,
+            "aligned_route": str(aligned_path),
+            "aligned_route_sha256": aligned_sha,
+        },
+    )
+    result_path = trial / "result.json"
+    _write_json(
+        result_path,
+        {
+            "schema_version": 1,
+            "route_file": str(aligned_path),
+            "success": False,
+            "speed_exposure": {"status": "FAIL"},
+        },
+    )
+    _write_json(
+        trial / "runtime_health.json",
+        {
+            "schema_version": 1,
+            "status": "PASS",
+            "camera_image_graph": {"status": "PASS"},
+        },
+    )
+    bag = trial / "bag"
+    bag.mkdir()
+    (bag / "bag_0.db3").write_bytes(b"fixture sqlite bag\n")
+    (bag / "metadata.yaml").write_text("fixture: true\n", encoding="utf-8")
+    bag_files = [
+        {
+            "path": path.name,
+            "sha256": _sha256(path),
+            "size_bytes": path.stat().st_size,
+        }
+        for path in sorted(bag.iterdir())
+    ]
+    bag_manifest = {
+        "schema_version": 1,
+        "root": str(bag),
+        "files": bag_files,
+        "sha256": _canonical_digest(
+            {"schema_version": 1, "files": bag_files}
+        ),
+    }
+    source_identity = {
+        "schema_version": 1,
+        "effective_route": {
+            "path": str(aligned_path),
+            "sha256": aligned_sha,
+            "town": "Town06",
+            "scenario": "straight",
+        },
+        "route_result": {
+            "path": str(result_path),
+            "sha256": _sha256(result_path),
+            "success": False,
+        },
+        "rosbag": bag_manifest,
+    }
+    source_identity["sha256"] = _canonical_digest(source_identity)
+    _write_json(
+        trial / "speed_profile.json",
+        {
+            "schema_version": 1,
+            "inputs": {
+                "bag": str(bag),
+                "profile_id": "carla_vad_60kph_straight_pilot_v1",
+            },
+            "source_identity": source_identity,
+        },
+    )
+    _write_json(
+        trial / "diagnosis.json",
+        {
+            "schema_version": 1,
+            "inputs": {
+                "bag": str(bag),
+                "route_file": str(aligned_path),
+                "town": "Town06",
+                "scenario": "straight",
+            },
+        },
+    )
+    _write_json(trial / "camera_source_5hz_validation.json", {"status": "PASS"})
+    _write_json(trial / "latency/e2e_latency.json", {"status": "PASS"})
+    provenance_path = trial / "trajectory_code_provenance/vad_route_manager.py"
+    provenance_path.parent.mkdir(parents=True)
+    provenance_path.write_text("# fixture provenance\n", encoding="utf-8")
+    provenance = {
+        "trajectory_code_provenance/vad_route_manager.py": _sha256(
+            provenance_path
+        )
+    }
+
+    for filename, mime_type in (
+        ("autoware_rviz_fullscreen.png", "image/png"),
+        ("autoware_rviz_drive.gif", "image/gif"),
+        ("path_vs_control.png", "image/png"),
+        ("steering_tracking.png", "image/png"),
+        ("speed_profile.png", "image/png"),
+        ("route_result.png", "image/png"),
+        ("runtime_load_analysis.png", "image/png"),
+        ("longitudinal_response.png", "image/png"),
+    ):
+        _write_media(trial / filename, mime_type, f"geometry-v4-{filename}")
+    _desktop(campaign, trial)
+
+    evidence = {
+        relative: _sha256(trial / relative)
+        for relative in module.GEOMETRY_60KPH_EVIDENCE_FILES
+    }
+    geometry_identity = "c" * 64
+    report = {
+        "schema_version": 1,
+        "analysis": "town06_60kph_geometry_only_corridor_ab",
+        "baseline": {
+            "trial_directory": str(
+                campaign
+                / "30_60kph"
+                / module.GEOMETRY_60KPH_BASELINE_DIRECTORY
+                / "trial/attempt_001"
+            )
+        },
+        "candidate": {
+            "role": "candidate",
+            "trial_directory": str(trial),
+            "evidence_sha256": evidence,
+            "provenance_sha256": provenance,
+            "bag_manifest": bag_manifest,
+            "geometry_metadata": {
+                "candidate_id": "route_corridor_0p2",
+                "route_corridor_0p2": "true",
+            },
+            "health": {
+                "status": "PASS",
+                "runtime_health_status": "PASS",
+                "camera_validation_status": "PASS",
+            },
+            "outcomes": {
+                "goal_reached": True,
+                "route_result_success": False,
+                "speed_exposure_status": "FAIL",
+            },
+            "environment": {
+                "GEOMETRY_AB_CANDIDATE_ID": "route_corridor_0p2",
+                "GEOMETRY_AB_ROUTE_CORRIDOR_0P2": "true",
+                "REAL_VEHICLE_READY": "false",
+            },
+            "route": {
+                "town": "Town06",
+                "scenario": "straight",
+                "source_route_sha256": source_sha,
+                "aligned_route_file_sha256": aligned_sha,
+                "canonical_geometry_identity_sha256": geometry_identity,
+            },
+        },
+        "pair_contract": {
+            "status": "PASS",
+            "effective_route_identity": {
+                "source_route_sha256": source_sha,
+                "candidate_aligned_file_sha256": aligned_sha,
+                "canonical_geometry_identity_sha256": geometry_identity,
+            },
+            "fixed_provenance_sha256": provenance,
+        },
+        "geometry_outcome": {
+            "decision": "HOLD",
+            "diagnostic_effect": "PARTIAL_IMPROVEMENT_INSUFFICIENT",
+        },
+        "speed_contract": {
+            "decision": "FAIL",
+            "independent_from_geometry_acceptance": True,
+        },
+        "real_vehicle_ready": False,
+    }
+    _write_json(campaign / module.GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH, report)
+    _write_media(
+        campaign / module.GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH,
+        "image/png",
+        "geometry-v4-comparison",
+    )
+    decoy = campaign / "30_60kph/town06_straight_60kph_geometry_v999"
+    decoy.mkdir()
+    (decoy / "DO_NOT_COPY.png").write_bytes(b"not selected\n")
+    return trial
+
+
 def _build_campaign(
     tmp_path: Path,
     *,
     include_60kph: bool = False,
+    include_60kph_geometry_ab: bool = False,
     sixty_selection_mode: str = "explicit_argument",
 ) -> Path:
     campaign = tmp_path / "campaign_v1"
@@ -256,7 +501,11 @@ def _build_campaign(
 
     top_evidence: list[dict[str, object]] = []
     if include_60kph:
-        pilot_name = "town06_straight_60kph_pilot_explicit_v3"
+        pilot_name = (
+            module.GEOMETRY_60KPH_BASELINE_DIRECTORY
+            if include_60kph_geometry_ab
+            else "town06_straight_60kph_pilot_explicit_v3"
+        )
         pilot = _trial(
             campaign,
             "town06_straight",
@@ -287,6 +536,8 @@ def _build_campaign(
         decoy = campaign / "30_60kph/town06_straight_60kph_pilot_v999"
         decoy.mkdir(parents=True)
         (decoy / "DO_NOT_COPY.png").write_bytes(b"not selected\n")
+        if include_60kph_geometry_ab:
+            _geometry_60kph_candidate(campaign)
     else:
         (campaign / "30_60kph").mkdir()
         sixty = {"status": "ABSENT", "reason": "fixture has no pilot"}
@@ -517,6 +768,212 @@ def test_explicit_60kph_adds_only_selected_pilot_assets(tmp_path: Path) -> None:
     assert not any(path.name == "DO_NOT_COPY.png" for path in output.rglob("*"))
 
 
+def test_geometry_60kph_v4_is_published_without_replacing_selected_v3(
+    tmp_path: Path,
+) -> None:
+    campaign = _build_campaign(
+        tmp_path,
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    docs = tmp_path / "docs-assets"
+
+    first = module.curate(campaign, docs_root=docs)
+
+    assert [row["asset_count"] for row in first] == [62, 62]
+    for output in (campaign / "40_visuals", docs):
+        manifest = _load_manifest(output)
+        assert manifest["asset_count"] == 62
+        assert manifest["selected_60kph_pilot"][
+            "campaign_relative_directory"
+        ] == f"30_60kph/{module.GEOMETRY_60KPH_BASELINE_DIRECTORY}"
+        geometry = manifest["60kph_geometry_ab"]
+        assert geometry["status"] == "HOLD"
+        assert geometry["speed_contract"] == "FAIL"
+        assert geometry["real_vehicle_ready"] is False
+        candidate = [
+            asset
+            for asset in manifest["assets"]
+            if asset["variant"] == module.GEOMETRY_60KPH_VARIANT
+        ]
+        assert len(candidate) == 8
+        assert {asset["kind"] for asset in candidate} == {
+            "fullscreen",
+            "drive",
+            "path_vs_control",
+            "steering_tracking",
+            "speed_profile",
+            "route_result",
+            "runtime_load",
+            "longitudinal_response",
+        }
+        comparison = [
+            asset
+            for asset in manifest["assets"]
+            if asset["variant"] == "geometry_comparison"
+        ]
+        assert len(comparison) == 1
+        assert comparison[0]["source_campaign_relative_path"] == (
+            module.GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH.as_posix()
+        )
+        assert all(
+            Path(asset["source_campaign_relative_path"]).suffix.lower()
+            not in module.BANNED_SOURCE_SUFFIXES
+            for asset in manifest["assets"]
+        )
+        assert (
+            output
+            / module.GEOMETRY_60KPH_DESTINATION
+            / "01_autoware_vehicle_centered_fullscreen.png"
+        ).is_file()
+        assert (
+            output
+            / module.GEOMETRY_60KPH_COMPARISON_DESTINATION
+            / "09_A_selected_pilot_v3_vs_B_geometry_corridor_0p2_HOLD.png"
+        ).is_file()
+        readme = (output / "README.md").read_text(encoding="utf-8")
+        assert "does not replace the selected pilot v3" in readme
+        assert "Independent speed contract: `FAIL`" in readme
+        assert "Real-vehicle ready: `false`" in readme
+        assert not any(path.name == "DO_NOT_COPY.png" for path in output.rglob("*"))
+
+    second = module.curate(campaign, docs_root=docs)
+    assert [row["status"] for row in second] == ["UNCHANGED", "UNCHANGED"]
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_value"),
+    (
+        ("pair_contract", "FAIL"),
+        ("geometry_outcome", "ACCEPT"),
+        ("speed_contract", "PASS"),
+        ("real_vehicle_ready", True),
+    ),
+)
+def test_geometry_60kph_decision_contract_fails_closed(
+    tmp_path: Path, field: str, bad_value: object
+) -> None:
+    campaign = _build_campaign(
+        tmp_path,
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    report_path = campaign / module.GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if field == "pair_contract":
+        report[field]["status"] = bad_value
+    elif field in {"geometry_outcome", "speed_contract"}:
+        report[field]["decision"] = bad_value
+    else:
+        report[field] = bad_value
+    _write_json(report_path, report)
+
+    with pytest.raises(module.CurationError, match="decision contract"):
+        module.curate(campaign)
+    assert not (campaign / "40_visuals/publication_manifest.json").exists()
+
+
+def test_geometry_60kph_candidate_sha_and_centered_capture_fail_closed(
+    tmp_path: Path,
+) -> None:
+    campaign = _build_campaign(
+        tmp_path / "sha-drift",
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    speed = campaign / module.GEOMETRY_60KPH_TRIAL_RELATIVE_PATH / "speed_profile.json"
+    speed.write_bytes(speed.read_bytes() + b"drift\n")
+    with pytest.raises(module.CurationError, match="evidence hash drift"):
+        module.curate(campaign)
+
+    campaign = _build_campaign(
+        tmp_path / "not-centered",
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    desktop_path = (
+        campaign
+        / module.GEOMETRY_60KPH_TRIAL_RELATIVE_PATH
+        / "desktop_capture.json"
+    )
+    desktop = json.loads(desktop_path.read_text(encoding="utf-8"))
+    desktop["rviz_view_contract"]["vehicle_centered"] = False
+    _write_json(desktop_path, desktop)
+    with pytest.raises(module.CurationError, match="vehicle-centered"):
+        module.curate(campaign)
+
+
+def test_geometry_60kph_partial_exact_evidence_fails_closed(tmp_path: Path) -> None:
+    campaign = _build_campaign(
+        tmp_path,
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    (campaign / module.GEOMETRY_60KPH_REPORT_PNG_RELATIVE_PATH).unlink()
+
+    with pytest.raises(module.CurationError, match="exact v4 evidence set is incomplete"):
+        module.curate(campaign)
+
+
+def test_geometry_route_alignment_rejects_external_source(tmp_path: Path) -> None:
+    campaign = _build_campaign(
+        tmp_path,
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    trial = campaign / module.GEOMETRY_60KPH_TRIAL_RELATIVE_PATH
+    alignment_path = trial / "route_alignment.json"
+    alignment = json.loads(alignment_path.read_text(encoding="utf-8"))
+    external_source = tmp_path / "outside-campaign-route.json"
+    external_source.write_bytes(Path(alignment["source_route"]).read_bytes())
+    alignment["source_route"] = str(external_source)
+    _write_json(alignment_path, alignment)
+
+    if "route_alignment.json" in module.GEOMETRY_60KPH_EVIDENCE_FILES:
+        report_path = campaign / module.GEOMETRY_60KPH_REPORT_JSON_RELATIVE_PATH
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        report["candidate"]["evidence_sha256"]["route_alignment.json"] = _sha256(
+            alignment_path
+        )
+        _write_json(report_path, report)
+
+    with pytest.raises(module.CurationError, match="canonical catalog source"):
+        module.curate(campaign)
+    assert not (campaign / "40_visuals/publication_manifest.json").exists()
+
+
+def test_geometry_route_alignment_mutation_while_staged_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    campaign = _build_campaign(
+        tmp_path,
+        include_60kph=True,
+        include_60kph_geometry_ab=True,
+    )
+    alignment_path = (
+        campaign
+        / module.GEOMETRY_60KPH_TRIAL_RELATIVE_PATH
+        / "route_alignment.json"
+    )
+    original_stage = module._stage_publication
+    mutated = False
+
+    def stage_then_mutate(*args: object, **kwargs: object) -> object:
+        nonlocal mutated
+        staged = original_stage(*args, **kwargs)
+        if not mutated:
+            alignment_path.write_bytes(alignment_path.read_bytes() + b"\n")
+            mutated = True
+        return staged
+
+    monkeypatch.setattr(module, "_stage_publication", stage_then_mutate)
+
+    with pytest.raises(module.CurationError, match="geometry evidence changed while staged"):
+        module.curate(campaign)
+    assert mutated is True
+    assert not (campaign / "40_visuals/publication_manifest.json").exists()
+
+
 def test_prior_output_drift_fails_and_unmanaged_file_is_preserved(
     tmp_path: Path,
 ) -> None:
@@ -553,6 +1010,36 @@ def test_prior_manifest_signature_tamper_fails_closed(tmp_path: Path) -> None:
 
     with pytest.raises(module.CurationError, match="signature mismatch"):
         module.curate(campaign)
+
+
+def test_resigned_prior_manifest_cannot_claim_unmanaged_file(tmp_path: Path) -> None:
+    campaign = _build_campaign(tmp_path)
+    module.curate(campaign)
+    output = campaign / "40_visuals"
+    unmanaged = output / "60kph/reviewer_unmanaged.txt"
+    unmanaged.parent.mkdir(parents=True, exist_ok=True)
+    unmanaged.write_text("must survive\n", encoding="utf-8")
+
+    manifest_path = output / "publication_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    relative = unmanaged.relative_to(output).as_posix()
+    manifest["managed_paths"].append(relative)
+    manifest["managed_paths"].sort()
+    manifest["managed_files"].append(
+        {
+            "relative_path": relative,
+            "role": "visual_asset",
+            "sha256": _sha256(unmanaged),
+            "size_bytes": unmanaged.stat().st_size,
+        }
+    )
+    manifest["managed_files"].sort(key=lambda row: row["relative_path"])
+    manifest["manifest_payload_sha256"] = module._manifest_signature(manifest)
+    _write_json(manifest_path, manifest)
+
+    with pytest.raises(module.CurationError, match="asset-derived ownership"):
+        module.curate(campaign)
+    assert unmanaged.read_text(encoding="utf-8") == "must survive\n"
 
 
 def test_cleanup_removes_only_previously_managed_stale_files(tmp_path: Path) -> None:
@@ -595,3 +1082,62 @@ def test_cleanup_removes_only_previously_managed_stale_files(tmp_path: Path) -> 
         campaign
         / "30_60kph/town06_straight_60kph_pilot_explicit_v3/trial/attempt_001/autoware_rviz_drive.gif"
     ).is_file()
+
+
+def test_cleanup_parent_symlink_swap_cannot_delete_external_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    campaign = _build_campaign(tmp_path, include_60kph=True)
+    module.curate(campaign)
+    output = campaign / "40_visuals"
+
+    reference_path = campaign / "40_visuals/visual_manifest.json"
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    reference["assets"] = [
+        asset for asset in reference["assets"] if asset["speed_class"] != "60kph"
+    ]
+    reference["asset_count"] = len(reference["assets"])
+    reference["source_snapshot_sha256"] = "b" * 64
+    _write_json(reference_path, reference)
+
+    summary_path = campaign / "50_reports/runtime_control_campaign_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["source_snapshot_sha256"] = "b" * 64
+    summary["60kph_pilot"] = {"status": "ABSENT", "reason": "superseded fixture"}
+    summary["evidence"] = []
+    _write_json(summary_path, summary)
+
+    selected_parent = output / "60kph/town06_straight/selected_pilot"
+    moved_parent = tmp_path / "moved-selected-pilot"
+    external_parent = tmp_path / "outside-publication"
+    external_parent.mkdir()
+    external_victim = external_parent / "02_autoware_drive.gif"
+    external_victim.write_bytes(b"outside victim\n")
+    original_replace = module.os.replace
+    swapped = False
+
+    def replace_then_swap(
+        source: object, destination: object, *args: object, **kwargs: object
+    ) -> None:
+        nonlocal swapped
+        original_replace(source, destination, *args, **kwargs)
+        if Path(destination).name == module.PUBLICATION_MANIFEST and not swapped:
+            selected_parent.rename(moved_parent)
+            selected_parent.symlink_to(external_parent, target_is_directory=True)
+            swapped = True
+
+    monkeypatch.setattr(module.os, "replace", replace_then_swap)
+
+    with pytest.raises(module.CurationError, match="managed output directory"):
+        module.curate(campaign)
+    assert swapped is True
+    assert external_victim.read_bytes() == b"outside victim\n"
+
+
+def test_publication_lock_rejects_concurrent_curator(tmp_path: Path) -> None:
+    campaign = _build_campaign(tmp_path)
+    target = (campaign / module.PUBLICATION_ROOT_RELATIVE_PATH, "campaign")
+
+    with module._publication_locks([target]):
+        with pytest.raises(module.CurationError, match="publication target is locked"):
+            module.curate(campaign)

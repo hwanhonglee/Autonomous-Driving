@@ -175,7 +175,8 @@ $PORTABLE_E2E_ROOT/tmp/downloads/
 └── bench2drive/legacy-mini-10-research-only/archives
 ```
 
-공식 legacy Mini manifest의 archive 10/10개를 size와 SHA-256으로 검증했다. 아직 압축을
+공식 legacy Mini manifest의 archive 10/10개를 size와 SHA-256으로 검증하고, 각 archive의
+gzip CRC/EOF와 TAR member/path/type/resource 검사를 full-stream으로 통과했다. 아직 압축을
 풀거나 common10으로 변환하거나 학습하지 않았다. 라이선스 표기가 배포 위치에 따라
 일치하지 않으므로 현재는 **research/parser smoke 전용**이다. 차량용·상업용 데이터나
 재배포 가능한 산출물로 간주하지 않는다. 세부 source와 검증 명령은
@@ -190,13 +191,17 @@ $PORTABLE_E2E_ROOT/datasets/raw/nuscenes/v1.0-mini/
 
 - 공식 익명 tutorial URL에서 받은 byte: **4,167,696,325**
 - SHA-256: `943037abbb3b26b3070dc76504a43eb440503b00baf9ac2f1538d9c03fc9298f`
-- streaming tar audit: 31,252 entries, regular file 31,224개, directory 28개
+- bounded full-stream tar/gzip audit: **PASS**, 31,252 entries, regular file 31,224개,
+  directory 28개
 - symlink/hardlink/기타 entry, 위험 경로와 중복 이름: 모두 0
 - 상태: **archive intact, 미해제·미변환·미학습**
 
 다운로드 허용과 실차·상업용 학습 권리는 같은 말이 아니다. 그래서 약관 검토가 끝날 때까지
-research-only 경로에 두며 Git에 넣거나 재배포하지 않는다. CAN bus expansion도 아직 받지
-않았으므로 route까지 준비됐다고 표현하지 않는다.
+research-only 경로에 두며 Git에 넣거나 재배포하지 않는다. CAN bus expansion은
+780,974,697 bytes, local SHA-256
+`3c68b94c001e8bd05a19886ecb2c6854e0cd69d7005ed9a94d13d45d2951e83f`로 받았고,
+7,834 members의 전체 ZIP payload CRC가 **PASS**했다. 다만 아직 미해제이고 ideal route의
+scene 대응·누락률·timestamp는 adapter에서 검증하지 않았으므로 route 준비 완료는 아니다.
 
 ### 3.4 nuPlan v1.1 mini 제한 subset 원본 반입
 
@@ -205,19 +210,22 @@ $PORTABLE_E2E_ROOT/datasets/raw/nuplan/v1.1-mini/
 └── research-only-pending-terms-review
     ├── nuplan-v1.1_mini.zip
     ├── nuplan-maps-v1.0.zip
-    └── nuplan-v1.1_mini_camera_0.zip  # 분할 다운로드 진행 중
+    └── nuplan-v1.1_mini_camera_0.zip
 ```
 
 | archive | official object byte | 현재 검증 상태 |
 |---|---:|---|
 | mini DB | 8,550,100,030 | exact byte + local SHA-256 기록 + 전체 ZIP payload CRC PASS, 미해제 |
 | map v1.0 | 971,557,640 | exact byte + local SHA-256 기록 + 전체 ZIP payload CRC PASS, 미해제 |
-| mini camera group 0 | 52,219,710,368 | 분할 다운로드 진행 중; final archive 검증 전 |
+| mini camera group 0 | 52,219,710,368 | exact byte + local SHA-256 + 242,385 members 전체 ZIP payload CRC PASS, 미해제 |
 
-계획 압축 합계는 61,741,368,038 bytes다. 완료된 DB와 map은 원본을 추출하지 않고 모든
-member payload를 읽어 CRC를 확인했다. SHA-256은 공개 official checksum과 대조한 값이
-아니라 local provenance 기록이다. camera group 0도 최종 조립 후 exact byte, local SHA-256,
-전체 payload CRC를 모두 통과해야 완료로 표시한다.
+세 archive의 압축 합계는 61,741,368,038 bytes다. 원본을 추출하지 않고 모든 member
+payload를 읽어 CRC를 확인했다. camera group 0의 local SHA-256은
+`f04c3975bc6c4398d32167c6760331102655dee6d0fcaf8fbfa5e509a1e10c46`이다. 이 값들은
+공개 official checksum과 대조한 값이 아니라 이번에 받은 archive의 local provenance다.
+DB↔camera 구조 검사도 **PASS**하여 camera group 0의 JPEG 242,320장, 7개 log, 8개 channel이
+mini DB의 해당 log와 일대일로 대응했다. 검증 후 중복 임시 분할 조각은 제거하고 최종 ZIP,
+SHA와 JSON report만 보존했다.
 
 이 3-file 구성은 완전한 nuPlan devkit dataset이 아니라 7개 log의 custom camera adapter
 smoke용 제한 subset이다. 최종 archive 검사를 통과해도 약관·용도 승인, 안전한 압축 해제,
@@ -564,10 +572,10 @@ benchmark를 대신하지 않으며, 이 표도 closed-loop 또는 차량 제어
    p99 150 ms planning cadence gate를 통과하지 못한다. 실측 후 별도 profile/contract를
    검토·고정하기 전에는 정식 common10 학습 corpus에 넣지 않고, 20초 scene를 여러 개
    이어 붙여 30초라고 만들지 않는다.
-4. nuPlan mini DB와 map의 raw archive 반입·전체 payload CRC 검사는 끝났고 camera group
-   0은 분할 다운로드 중이다. 최종 archive 검사가 끝나도 바로 설치·압축 해제·학습하지
-   않는다. Dataset Terms와 intended use를 기록한 뒤 별도 staging에서 group 0의 7개 log만
-   mini DB와 fail-closed로 join하는 adapter smoke를 수행한다.
+4. nuPlan mini DB, map과 camera group 0의 raw archive 반입·전체 payload CRC 및 archive
+   수준 DB↔camera 대응 검사는 끝났다. 그래도 바로 설치·압축 해제·학습하지 않는다.
+   Dataset Terms와 intended use를 기록한 뒤 별도 staging에서 group 0의 7개 log만 실제 DB
+   record와 fail-closed로 join하고 timestamp/calibration을 읽는 adapter smoke를 수행한다.
 5. download URL, version, license/terms URL, 동의일, 원본 filename/size/SHA-256과 변환 code
    commit을 source manifest에 보존한다.
 6. 원본은 `datasets/raw` 또는 `tmp/downloads`, 변환 중 자료는 `datasets/staging`, validator를

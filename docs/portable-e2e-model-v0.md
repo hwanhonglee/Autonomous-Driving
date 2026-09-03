@@ -295,15 +295,16 @@ $PORTABLE_E2E_ROOT/
 
 아직 미해제·미변환·미학습 상태이며 research/parser smoke 전용이다. 첫 real
 schema/adapter smoke 후보는 nuScenes mini이며, 공식 원본 4,167,696,325 bytes의 다운로드와
-streaming archive audit까지 마쳤다. 다만 research-only/terms-review-pending 경로의
-미해제·미변환·미학습 상태이고 CAN route expansion도 아직 없다.
+streaming archive audit까지 마쳤다. CAN expansion도 exact byte, local SHA-256과 전체 ZIP
+payload CRC 검사를 통과했다. 다만 research-only/terms-review-pending 경로의 미해제·미변환·
+미학습 상태이고 CAN route와 scene의 실제 대응은 아직 adapter로 검증하지 않았다.
 
 장시간 10 Hz 실세계 route source 후보인 nuPlan v1.1은 mini DB, map v1.0과 camera group
-0의 제한 subset만 raw 격리 경로에 반입 중이다. DB와 map은 exact byte 및 전체 ZIP payload
-CRC를 통과했고 camera archive는 아직 다운로드 중이다. 세 archive 모두 미해제·미변환·
-미학습이며, raw archive 확보는 checkpoint 또는 성능 결과가 생겼다는 뜻이 아니다. nuPlan
-dataset terms는 devkit code의 Apache-2.0 license와 별개다. 정확한 byte·local SHA-256·CRC·
-license 상태는
+0의 제한 subset만 raw 격리 경로에 반입했다. DB, map과 camera archive는 모두 exact byte 및
+전체 ZIP payload CRC를 통과했고, archive-level 검사에서 camera JPEG 242,320장·7개 log·8개
+channel과 mini DB 대응도 통과했다. 세 archive 모두 미해제·미변환·미학습이며, raw archive
+확보는 checkpoint 또는 성능 결과가 생겼다는 뜻이 아니다. nuPlan dataset terms는 devkit
+code의 Apache-2.0 license와 별개다. 정확한 byte·local SHA-256·CRC·license 상태는
 [데이터셋 조사 문서](portable-e2e-datasets.md)에 있다.
 
 nuScenes의 12 Hz image를 복제·합성 없이 10 Hz로 thinning하면 약 166.7 ms gap이 생겨

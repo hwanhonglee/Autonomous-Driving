@@ -35,6 +35,7 @@ Waymo Open Dataset E2E와 Argoverse 2는 기술적으로 참고할 가치는 있
 | 예상 archive 전체 존재 확인 | **PASS: 10/10** | tag `0.0.3` 공식 Mini manifest의 정확한 10개 파일이 있다. |
 | 파일 크기·SHA-256 확인 | **PASS** | 내장 공식 size/SHA verifier가 2,812,733,742 / 2,812,733,742 bytes를 검증했다. |
 | 예상 밖 파일·partial·symlink 검사 | **PASS** | fail-closed verifier 전체 결과가 PASS다. |
+| archive full-stream 검사 | **PASS: 10/10** | gzip CRC/EOF와 TAR member/path/type/resource limit를 원본 전체에서 검사했다. |
 | 압축 해제 | **아직 안 함** | 검증된 `.tar.gz` archive만 있으며 dataset tree는 아직 없다. |
 | common10 변환 | 아직 안 함 | camera 순서, 좌표계, trajectory, route를 아직 맞추지 않았다. |
 | 변환 데이터 검증 | 아직 안 함 | 10 Hz, timestamp gap, bundle skew, horizon을 아직 판정하지 않았다. |
@@ -42,7 +43,8 @@ Waymo Open Dataset E2E와 Argoverse 2는 기술적으로 참고할 가치는 있
 
 따라서 현재 상태를 한 문장으로 표현하면 다음과 같다.
 
-> Bench2Drive legacy Mini 10개 archive의 다운로드와 공식 size/SHA 검증은 완료됐고, 압축 해제·common10 변환·학습은 아직 수행되지 않았다.
+> Bench2Drive legacy Mini 10개 archive의 다운로드, 공식 size/SHA 및 full TAR/gzip 검증은
+> 완료됐고, 압축 해제·common10 변환·학습은 아직 수행되지 않았다.
 
 현재 분류는 **다운로드/무결성 검증 완료, 미해제·미변환·미학습**이다.
 
@@ -60,8 +62,11 @@ nuScenes v1.0-mini 원본 archive도 공식 tutorial URL에서 별도 격리 경
 | 현재 상태 | **미해제·미변환·미학습, terms review pending** |
 
 이 검사는 gzip/tar stream 전체를 읽어 container 손상과 기본 경로 안전성만 확인했다. CAN bus
-expansion은 아직 받지 않았고 camera cadence, calibration, route와 label 적합성도 아직
-검증하지 않았다. 따라서 이 archive는 데이터 준비나 실차 사용 승인을 뜻하지 않는다.
+expansion도 780,974,697 bytes로 받고 local SHA-256
+`3c68b94c001e8bd05a19886ecb2c6854e0cd69d7005ed9a94d13d45d2951e83f` 및 7,834 members
+전체 ZIP payload CRC를 통과했다. 하지만 camera cadence, calibration, CAN route의 scene 대응과
+label 적합성은 아직 검증하지 않았다. 따라서 이 archive들은 데이터 준비나 실차 사용 승인을
+뜻하지 않는다.
 
 nuPlan v1.1 mini도 전체 mini가 아니라 custom camera adapter smoke에 필요한 제한 subset만
 격리 경로로 반입하고 있다.
@@ -73,13 +78,15 @@ nuPlan v1.1 mini도 전체 mini가 아니라 custom camera adapter smoke에 필�
 |---|---:|---|---|
 | `nuplan-v1.1_mini.zip` | 8,550,100,030 | **다운로드 완료, 미해제** | exact byte 일치, local SHA-256 `a3fe40afd81cc634884f8d0b7ea3604f2e617e365d5c258c61cfdd833c8d987b`, 전체 ZIP payload CRC PASS |
 | `nuplan-maps-v1.0.zip` | 971,557,640 | **다운로드 완료, 미해제** | exact byte 일치, local SHA-256 `d0310009fa9e8dd88014038336538aca678842c009fbf03fae76ed28f702ffc6`, 전체 ZIP payload CRC PASS |
-| `nuplan-v1.1_mini_camera_0.zip` | 52,219,710,368 | **분할 다운로드 진행 중** | final archive 조립 후 exact byte, local SHA-256, 전체 payload CRC를 검증해야 완료 |
+| `nuplan-v1.1_mini_camera_0.zip` | 52,219,710,368 | **다운로드 완료, 미해제** | exact byte, local SHA-256 `f04c3975bc6c4398d32167c6760331102655dee6d0fcaf8fbfa5e509a1e10c46`, 242,385 members 전체 ZIP payload CRC PASS |
 
-세 파일의 계획 압축 합계는 **61,741,368,038 bytes**다. 완료된 ZIP은 원본을 추출하지
-않고 모든 member payload를 읽어 CRC를 확인했다. 위 SHA-256은 이번에 받은 파일의 local
-provenance 값이며 공개된 공식 checksum이라고 표현하지 않는다. camera group 0까지 최종
-검증을 통과해도 압축 해제·common10 변환·학습은 별도 단계다. package 설치와 GPU 사용도
-수행하지 않았다.
+세 파일의 압축 합계는 **61,741,368,038 bytes**다. 원본을 추출하지 않고 모든 member
+payload를 읽어 CRC를 확인했다. archive-level subset 검사도 **PASS**하여 camera JPEG
+242,320장, 7개 log, 8개 channel이 mini DB의 해당 log와 일대일로 대응했다. 위 SHA-256은
+이번에 받은 파일의 local provenance 값이며 공개된 공식 checksum이라고 표현하지 않는다.
+검증 완료 뒤 중복 임시 분할 조각만 제거했고 최종 archive와 report는 보존했다. 압축 해제·
+SQLite record join·common10 변환·학습은 별도 단계이며 package 설치와 GPU 사용도 수행하지
+않았다.
 
 `research-only-pending-terms-review`는 데이터 이용조건이 적용되지 않는다는 뜻이 아니다.
 프로젝트의 intended use, 변환본·checkpoint 처리와 실차 사용 범위를 내부 승인하기 전이라는
@@ -503,6 +510,7 @@ Argoverse 2 Sensor Dataset은 약 1 TB, 1,000개 scenario, scenario당 약 15초
 - 결과: **PASS, 10/10 archives**
 - 검증 byte: **2,812,733,742 / 2,812,733,742**
 - 검증 범위: 정확한 파일명, 파일별 byte, 파일별 SHA-256, missing/extra/partial, symlink와 non-regular entry
+- 추가 full-stream 범위: 10개 모두 gzip CRC/EOF, TAR member/path/type/collision과 expansion/resource limit **PASS**
 - 변경 범위: archive를 읽었을 뿐 download·extract·repair·rename·delete를 하지 않음
 
 실행한 것과 같은 verifier 명령은 다음과 같다. 이 script는 tag `0.0.3`의 공식 10개 size/SHA-256을 code 안에 고정한 fail-closed 읽기 전용 검사기다.
@@ -576,12 +584,13 @@ validation이나 정식 common10 학습 자격을 만들지 않는다.
 이 단계에서도 full trainval download나 장기 학습은 하지 않는다. 측정 결과에 맞는 별도
 profile/contract가 검토·고정되기 전에는 변환 결과를 정식 common10 학습 corpus에 넣지 않는다.
 
-### Stage 3A — 진행 중: nuPlan 제한 subset 원본 반입
+### Stage 3A — 완료: nuPlan 제한 subset 원본 반입
 
-사용자 승인 아래 official mini DB, map v1.0과 camera group 0만 골라 격리 경로에 받고 있다.
-DB와 map은 exact byte, local SHA-256 기록과 전체 ZIP payload CRC까지 통과했다. camera group
-0은 최종 archive의 같은 검사가 끝나기 전까지 진행 중이다. 원본 반입 순서는 앞당겼지만
-아직 Terms/intended-use review, 압축 해제, adapter 변환과 학습 승인은 아니다.
+사용자 승인 아래 official mini DB, map v1.0과 camera group 0만 골라 격리 경로에 받았다.
+세 archive 모두 exact byte, local SHA-256 기록과 전체 ZIP payload CRC를 통과했다. camera
+group 0은 242,385 members, 52,344,077,641 uncompressed bytes까지 전부 읽어 검증했다. 원본
+반입은 끝났지만 아직 Terms/intended-use review, 압축 해제, SQLite record join, adapter 변환과
+학습 승인은 아니다.
 
 ### Stage 3B — archive·약관·용도 gate
 

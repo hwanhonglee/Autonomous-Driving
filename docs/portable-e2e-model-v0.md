@@ -123,6 +123,9 @@ trainer는 loss, regression/score loss, selected ADE/FDE, speed/yaw/kinematic sp
 gradient norm을 `metrics.jsonl`에 기록한다. evaluator는 별도 `val` 또는 `test` split에서
 1.0/3.0/6.4초 horizon metric과 차량 중심 trajectory PNG를 만든다. 유효 label이 해당
 horizon까지 없는 sample은 그 horizon의 분모에 포함하지 않고 count를 함께 기록한다.
+전체 평균과 별도로 `carla`/`real` sample 수, metric, metric별 분모도 기록한다. A/B
+comparison은 이 domain 구성이 같지 않거나 domain metric 구조가 잘못되면 거부하고 두 domain을
+별도 표로 출력한다.
 
 이 metric이 finite라는 사실은 주행이 좋다는 뜻이 아니다. random initialization이나
 one-step checkpoint도 finite metric과 PNG를 만들 수 있다.
@@ -138,8 +141,13 @@ one-step checkpoint도 finite metric과 PNG를 만들 수 있다.
 - image를 symlink 추종 없이 열고 읽는 중 inode/size/time 변경 검사
 - run directory 중복·동시 writer 거부, metrics/checkpoint 원자적 기록
 - checkpoint resume 시 model/train/loss config, cursor, sample count, runtime/device ABI 검사
+- sampling plan hash, weighted-interleave algorithm, domain별 실제 누적 노출 수 검사
 - checkpoint load는 `weights_only=True`를 지원하는 PyTorch 요구
-- report 비교 시 split/sample/device/runtime/hardware와 metric 분모가 다르면 거부
+- report 비교 시 split/sample/domain/device/runtime/hardware와 metric 분모가 다르면 거부
+
+sampling과 report schema가 추가된 현재 trainer/checkpoint/evaluation/comparison ID는 v1이다.
+구형 v0 checkpoint를 같은 형식이라고 가장해 재개하지 않고 명시적으로 거부한다. 현재 보존할
+실제 v0 학습 checkpoint는 없으므로 자동 migration은 제공하지 않는다.
 
 이 검사는 데이터 오염과 실수 가능성을 낮추지만 모델의 안전성 또는 보안 인증을 대신하지
 않는다. 신뢰할 수 없는 외부 checkpoint를 실행하거나 배포 대상으로 사용하지 않는다.
@@ -262,9 +270,31 @@ frame 단위 random split하는 방식은 사용하지 않는다.
 1. CARLA 10 Hz로 M1 배선과 closed-loop scenario를 빠르게 반복한다.
 2. 공개/자체 실차 자료는 license, timestamp, calibration, ego/route/future pose 적합성을
    검증한 뒤 별도 provenance로 변환한다.
-3. CARLA와 real의 batch 비율을 명시하는 domain-balanced sampler를 추가한다.
-4. domain별 validation을 따로 보고, real fine-tuning 때 CARLA replay를 남겨 망각을 측정한다.
+3. 구현된 `domain_balanced_without_replacement` sampler로 CARLA와 real의 비율을 명시한다.
+   각 domain 안에서는 epoch별로 섞고, domain 사이에는 weighted interleave를 적용해 학습이
+   epoch 중간에 끝나도 목표 누적량과의 차이가 1 sample 이내가 되게 한다.
+4. 구현된 domain별 validation을 따로 보고, real fine-tuning 때 CARLA replay를 남겨 망각을
+   측정한다.
 5. final test는 model/threshold 선택에 쓰지 않는다.
+
+기본 `uniform_without_replacement`도 모든 sample을 한 번씩 사용한다는 의미의 uniform이며,
+전역 permutation을 균등하게 뽑는 정책은 아니다. 두 domain이 있으면 원래 dataset 비율로
+domain 순서를 고르게 interleave한다. balanced 정책은 그 비율을 명시적으로 교체하고 큰
+domain의 초과분을 기록한 뒤 제외한다.
+
+예를 들어 1:1 학습은 다음 옵션을 사용한다. 두 domain이 모두 planning validation을 통과한
+corpus에 있어야 하며, 작은 domain을 복원 추출하지 않는다. 따라서 epoch 크기는 가능한 최대
+1:1 subset으로 정해지고 큰 domain의 남는 sample 수가 sampling plan에 기록된다.
+
+```bash
+python -m portable_e2e.train <common10-dataset> \
+  --run-dir <new-run-directory> \
+  --split train \
+  --device cpu \
+  --sampling-policy domain_balanced_without_replacement \
+  --domain-ratio carla=1 \
+  --domain-ratio real=1
+```
 
 split 최소 group은 다음과 같다.
 
@@ -293,11 +323,21 @@ $PORTABLE_E2E_ROOT/
   tmp/downloads/bench2drive/legacy-mini-10-research-only/archives
 ```
 
-아직 미해제·미변환·미학습 상태이며 research/parser smoke 전용이다. 첫 real
-schema/adapter smoke 후보는 nuScenes mini이며, 공식 원본 4,167,696,325 bytes의 다운로드와
-streaming archive audit까지 마쳤다. CAN expansion도 exact byte, local SHA-256과 전체 ZIP
-payload CRC 검사를 통과했다. 다만 research-only/terms-review-pending 경로의 미해제·미변환·
-미학습 상태이고 CAN route와 scene의 실제 대응은 아직 adapter로 검증하지 않았다.
+추출 없는 구조 검사도 10/10 PASS하여 총 2,295 frames와 주변 camera 13,770장, 1600×900
+JPEG/calibration 일치를 확인했다. 그러나 검사한 annotation 최상위의 인식 가능한 native
+timestamp가 10/10 없고, 8개 archive의
+553 annotation frames에서 `bounding_boxes/*/brake` NaN 788건을 확인했다. explicit timestamp와
+non-finite 처리 정책이 없고 변환 후 canonical validation도 실행되지 않았으므로 converter
+readiness는 0/10 `BLOCKED_FAIL_CLOSED`다.
+
+첫 real schema/adapter smoke 후보는 nuScenes mini이며, 공식 원본 4,167,696,325 bytes의
+다운로드와 streaming archive audit까지 마쳤다. CAN expansion도 exact byte, local SHA-256과
+전체 ZIP payload CRC 검사를 통과했다. 추출 없는 adapter audit 결과 10 scenes/404 samples,
+6-camera 14,008 frames, CAN scene/route 대응 10/10은 구조 PASS였다. 하지만 404/404 camera
+bundle이 20 ms skew gate를 넘고 최대 43.251 ms, selection-only 10 Hz pooled p99 gap
+150.012 ms와 stream별 p99 최댓값 250.0 ms,
+최소 scene 19.149566초여서 planning은 `NOT_QUALIFIED`다. 두 원본 모두 미해제·미변환·미학습
+상태다.
 
 장시간 10 Hz 실세계 route source 후보인 nuPlan v1.1은 mini DB, map v1.0과 camera group
 0의 제한 subset만 raw 격리 경로에 반입했다. DB, map과 camera archive는 모두 exact byte 및
@@ -307,9 +347,10 @@ channel과 mini DB 대응도 통과했다. 세 archive 모두 미해제·미변�
 code의 Apache-2.0 license와 별개다. 정확한 byte·local SHA-256·CRC·license 상태는
 [데이터셋 조사 문서](portable-e2e-datasets.md)에 있다.
 
-nuScenes의 12 Hz image를 복제·합성 없이 10 Hz로 thinning하면 약 166.7 ms gap이 생겨
-현재 `common_10hz_v1`의 p99 150 ms planning cadence gate를 통과하지 못한다. 따라서
-nuScenes mini는 schema/adapter smoke 전용이며, 실측 후 별도 profile/contract를 검토·고정하기
+nuScenes mini를 복제·합성 없이 selection-only 10 Hz로 thinning한 실측은 pooled p99
+150.012 ms, stream별 p99 최댓값 250.0 ms라 현재 `common_10hz_v1`의 p99 150 ms planning
+cadence gate를 통과하지 못한다. 따라서 schema/adapter smoke 전용이며, 이 실측값을 바탕으로
+별도 profile/contract를 검토·고정하기
 전에는 정식 common10 학습 corpus에서 제외한다. 4/5 Hz image도 복제하거나 interpolation해서
 정식 10 Hz 관측이라고 표시하지 않는다.
 
@@ -396,17 +437,18 @@ adapter를 붙인다.
 현재 원격 GPU 여유와 관계없이 먼저 할 수 있는 일은 parser/adapter, dataset manifest와 CPU
 검사다. 상세 명령은 [학습·운용 가이드](portable-e2e-training.md)에 있다.
 
-1. Bench2Drive Mini archive 구조·parser reproducibility 확인
+1. Bench2Drive Mini archive 구조·시간·non-finite audit — 완료, converter 차단 사유 기록
 2. legacy 11쌍을 변환하되 4/5 Hz `NOT_QUALIFIED` 보존
 3. CARLA 10 Hz straight/turn/stop 신규 수집 및 train/val/test group 고정
-4. nuScenes/nuPlan Terms·intended-use gate와 별도 staging adapter smoke
-5. 제안 dependency를 전용 py312 venv에 승인 후 설치
-6. CPU one-step train/eval
-7. GPU가 실제 idle인 것을 확인한 후 explicit single-GPU one-step train/eval
-8. 32~128 sample overfit
-9. full Perspective-Token과 Geometry-BEV를 같은 조건으로 A/B
-10. M2~M4 label/head를 하나씩 추가
-11. 30 km/h CARLA gate, real replay/shadow, 별도 60 km/h gate
+4. nuScenes archive adapter audit — 완료, planning 부적격 사유 기록
+5. nuPlan Terms·intended-use gate와 별도 staging adapter smoke
+6. 제안 dependency를 전용 py312 venv에 승인 후 설치
+7. CPU one-step train/eval
+8. GPU가 실제 idle인 것을 확인한 후 explicit single-GPU one-step train/eval
+9. 32~128 sample overfit
+10. full Perspective-Token과 Geometry-BEV를 같은 조건으로 A/B
+11. M2~M4 label/head를 하나씩 추가
+12. 30 km/h CARLA gate, real replay/shadow, 별도 60 km/h gate
 
 ## 11. v0 완료 정의
 

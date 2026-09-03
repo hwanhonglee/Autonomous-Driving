@@ -36,15 +36,20 @@ Waymo Open Dataset E2E와 Argoverse 2는 기술적으로 참고할 가치는 있
 | 파일 크기·SHA-256 확인 | **PASS** | 내장 공식 size/SHA verifier가 2,812,733,742 / 2,812,733,742 bytes를 검증했다. |
 | 예상 밖 파일·partial·symlink 검사 | **PASS** | fail-closed verifier 전체 결과가 PASS다. |
 | archive full-stream 검사 | **PASS: 10/10** | gzip CRC/EOF와 TAR member/path/type/resource limit를 원본 전체에서 검사했다. |
+| 추출 없는 구조 검사 | **PASS: 10/10** | 총 2,295 frames, 주변 6-camera JPEG 13,770장, 1600×900 JPEG/calibration 일치와 연속 frame ID를 확인했다. |
+| 인식 가능한 timestamp | **annotation 최상위 0/10** | 공식 nominal 10 Hz 설명은 native timestamp 증거가 아니므로 frame index에서 시간을 합성하지 않는다. |
+| 비표준 JSON 상수 | **NaN 788건** | 8개 archive, 553 annotation frames의 `bounding_boxes/*/brake`; Infinity/−Infinity는 0이다. |
 | 압축 해제 | **아직 안 함** | 검증된 `.tar.gz` archive만 있으며 dataset tree는 아직 없다. |
 | common10 변환 | 아직 안 함 | camera 순서, 좌표계, trajectory, route를 아직 맞추지 않았다. |
-| 변환 데이터 검증 | 아직 안 함 | 10 Hz, timestamp gap, bundle skew, horizon을 아직 판정하지 않았다. |
+| 변환 준비 gate | **BLOCKED_FAIL_CLOSED: 0/10** | native timestamp 증거와 NaN 처리/mask 정책이 없고, 변환 후 canonical validator도 실행되지 않았다. silent retiming·치환을 금지한다. |
 | 학습 | **아직 시작하지 않음** | checkpoint나 학습 결과가 생성된 상태가 아니다. |
 
 따라서 현재 상태를 한 문장으로 표현하면 다음과 같다.
 
-> Bench2Drive legacy Mini 10개 archive의 다운로드, 공식 size/SHA 및 full TAR/gzip 검증은
-> 완료됐고, 압축 해제·common10 변환·학습은 아직 수행되지 않았다.
+> Bench2Drive legacy Mini 10개 archive의 다운로드·공식 size/SHA·full TAR/gzip·raw 구조
+> 검사는 완료됐지만 annotation 최상위의 인식 가능한 native timestamp와 NaN 정책 gate 때문에
+> common10 변환 준비는 차단됐고,
+> 압축 해제·변환·학습은 수행되지 않았다.
 
 현재 분류는 **다운로드/무결성 검증 완료, 미해제·미변환·미학습**이다.
 
@@ -61,11 +66,19 @@ nuScenes v1.0-mini 원본 archive도 공식 tutorial URL에서 별도 격리 경
 | link/기타/위험 경로/중복 이름 | 모두 0 |
 | 현재 상태 | **미해제·미변환·미학습, terms review pending** |
 
-이 검사는 gzip/tar stream 전체를 읽어 container 손상과 기본 경로 안전성만 확인했다. CAN bus
+이 검사는 gzip/tar stream 전체를 읽어 container 손상과 기본 경로 안전성을 확인했다. CAN bus
 expansion도 780,974,697 bytes로 받고 local SHA-256
 `3c68b94c001e8bd05a19886ecb2c6854e0cd69d7005ed9a94d13d45d2951e83f` 및 7,834 members
-전체 ZIP payload CRC를 통과했다. 하지만 camera cadence, calibration, CAN route의 scene 대응과
-label 적합성은 아직 검증하지 않았다. 따라서 이 archive들은 데이터 준비나 실차 사용 승인을
+전체 ZIP payload CRC를 통과했다. 추출 없는 adapter audit에서 exact six-camera mapping,
+camera sample-data↔calibration/ego-pose/image join과 CAN mini scene/route 대응 10/10은 구조
+PASS했다. LiDAR/RADAR sample-data stream semantics는 이 camera adapter audit의 평가 범위 밖이다.
+
+실측값은 10 scenes/404 samples, 31,206 sample-data와 ego-pose records, camera frame
+14,008장이다. 모든 404 keyframe bundle이 20 ms skew gate를 넘었고 최대 43.251 ms였다.
+source camera 60 streams는 11.227~12.010 Hz였으며, image를 합성하지 않고 선택만 하는 10 Hz
+가정에서 pooled p99 gap은 150.012 ms, stream별 p99 최댓값은 250.0 ms였다. 최소 scene
+duration은 19.149566초였다. 따라서 현
+`common_10hz_v1`은 `NOT_QUALIFIED`이고, 이 archive들은 데이터 준비나 실차 사용 승인을
 뜻하지 않는다.
 
 nuPlan v1.1 mini도 전체 mini가 아니라 custom camera adapter smoke에 필요한 제한 subset만
@@ -227,7 +240,7 @@ export 폴더만 복사하면 안 되는 조건도 지켜졌다. `samples.jsonl`
 |---|---|---|---|---:|---|---|
 | Bench2Drive Mini | RGB 6개, 수집 10 Hz | 연속 ego pose에서 생성 가능 | near/far command·target, HD map | 공식 약 4 GB; Mini 10개 archive 합계 2,812,733,742 bytes | camera 배열 순서 변환, 6.4초 trajectory와 route polyline 파생 필요 | **1순위 parser smoke** |
 | Bench2Drive v0.0.4 | RGB 6개, 10 Hz | pose 기반 생성 | command·target·HD map | no-depth 약 400 GB, depth 포함 7.3 TB | version/format 차이, 라이선스 제약 | Mini 통과 후 별도 승인 |
-| nuScenes v1.0-mini | camera 6개, 12 Hz | ego pose/CAN에서 생성 | CAN ideal route 존재, 약 3% scene 누락 | mini archive 약 4.168 GB; full CAN 약 0.781 GB | scene 20초; 10 Hz thinning 시 약 166.7 ms gap으로 현재 p99 150 ms gate 불통과; camera skew audit 필요 | **2순위 schema/real-adapter smoke 전용** |
+| nuScenes v1.0-mini | camera 6개, 12 Hz | ego pose/CAN에서 생성 | CAN ideal route 존재, 약 3% scene 누락 | mini archive 약 4.168 GB; full CAN 약 0.781 GB | scene 20초; selection-only 10 Hz의 stream별 p99 최댓값 250.0 ms, 404/404 bundle skew 실패(최대 43.251 ms) | **2순위 schema/real-adapter smoke 전용** |
 | nuScenes trainval cameras | camera 6개, 12 Hz | 동일 | 동일 | camera archive 합계 약 177.288 GB | 30초 episode 불가, 현 planning cadence gate 불통과, non-commercial | 별도 profile/contract 검토 전 정식 corpus 제외 |
 | nuPlan raw | camera 8개, 10 Hz | 10 Hz ego pose와 dynamics | route roadblock IDs, mission goal, HD map | 최소 mini DB+map+camera group 0 약 61.741 GB; 전체 mini camera 약 450.668 GB | 8→6 선택, 2000×1200 보정 resize, skew audit | **3순위 본격 real source** |
 | NAVSIM/OpenScene | nuPlan 8 cameras, 보통 2 Hz history | 출력 trajectory 4초/10 Hz | left/straight/right/unknown | trainval logs 14 GB, sensors 2 TB 초과; navtrain sensor 300~445 GB | 입력 2 Hz, horizon 4초, command가 너무 거침 | framework/evaluation 참고 |
@@ -291,7 +304,7 @@ FRONT, BACK, FRONT_LEFT, BACK_LEFT, FRONT_RIGHT, BACK_RIGHT
 
 파일을 읽을 때 이름으로 매핑해야 하며, 배열 index를 그대로 사용하면 뒤/좌/우 image가 잘못 연결될 수 있다.
 
-또한 raw annotation에 이미 common10 형식의 `64 × (x, y, yaw)` tensor가 들어 있다고 가정하면 안 된다. 연속 ego pose와 원본 timestamp를 이용해 각 anchor 이후 6.4초 trajectory를 anchor의 `base_link` 좌표로 변환하고, scene 끝에서 부족한 점은 `valid_mask=false`로 표시해야 한다.
+또한 raw annotation에 이미 common10 형식의 `64 × (x, y, yaw)` tensor가 들어 있다고 가정하면 안 된다. 신뢰할 수 있는 source-carried timestamp 증거와 연속 ego pose가 있을 때만 각 anchor 이후 6.4초 trajectory를 anchor의 `base_link` 좌표로 변환하고, scene 끝에서 부족한 점은 `valid_mask=false`로 표시해야 한다. 검사한 legacy Mini의 annotation 최상위에는 인식 가능한 native timestamp가 없으므로 외부 증거 없이 이 변환을 수행하지 않는다.
 
 near/far target은 route 조건의 한 형태이지만, 미래 ego trajectory와 route polyline은 다르다. route는 HD map과 route metadata에서 만들고, expert가 실제로 간 미래 위치를 route인 것처럼 누설하지 않는다.
 
@@ -337,13 +350,15 @@ CAM_BACK_RIGHT
 
 - scene이 20초라서 common10 최소 30초를 만족하지 않는다.
 - 12 Hz camera에서 image를 복제·합성하지 않고 10 Hz만 고르면 일부 연속 frame 사이가
-  약 166.7 ms가 된다. 이는 현재 p99 gap 150 ms planning cadence gate를 통과하지 못한다.
-- camera가 lidar sweep을 기준으로 서로 다른 시점에 trigger될 수 있어, 6장이 20 ms 이내인지 실제 파일별로 측정해야 한다.
-- CAN route는 일부 scene에서 누락된다. 공식 CAN 문서는 약 3% 누락을 언급한다.
+  길어진다. 실제 Mini 60개 stream의 p99 최댓값은 250.0 ms로 현재 150 ms planning cadence
+  gate를 통과하지 못했다.
+- 실제 Mini의 404/404 keyframe bundle이 20 ms skew gate를 넘었고 최대 43.251 ms였다.
+- 검사한 Mini의 CAN route 대응은 10/10 통과했지만, route projection과 source-manifest를
+  묶는 canonical route reconstruction은 아직 `NOT_RUN`이다.
 - 20초 scene의 끝을 넘어 다른 scene의 pose를 연결하면 안 된다.
 
 따라서 nuScenes mini는 현재 **schema/adapter smoke 전용**이며 `common_10hz_v1` planning
-validation 대상이 아니다. 실제 timestamp를 모두 측정한 뒤 `source_profile=nuscenes_20s`
+validation 대상이 아니다. 이 실측값을 바탕으로 `source_profile=nuscenes_20s`
 같은 별도 profile/contract를 설계·검토·고정하기 전에는 정식 common10 학습 corpus에서
 제외한다. 현재 validator에는 이 예외 profile이 구현되어 있지 않다. 20초 scene을 억지로
 이어 붙여 30초로 만들지 않는다.
@@ -534,55 +549,88 @@ Bench2Drive legacy Mini archive verification: PASS
 Verified: 10/10 archives (2812733742 / 2812733742 bytes)
 ```
 
-검사 중에는 2.8 GB 전체의 SHA-256을 계산하므로 마지막 요약이 나올 때까지 화면 출력이 없을 수 있다. 이것은 학습 멈춤이 아니다. 이 PASS는 official archive byte의 무결성까지만 보장하며, 압축 해제 후 file structure나 common10 label 품질을 아직 보장하지 않는다.
+검사 중에는 2.8 GB 전체의 SHA-256을 계산하므로 마지막 요약이 나올 때까지 화면 출력이 없을
+수 있다. 이것은 학습 멈춤이 아니다. 이 PASS는 official archive byte의 무결성까지만
+보장하며 아래 Stage 1 구조·품질 판정과는 별개다.
 
-### Stage 1 — Bench2Drive Mini parser smoke
+### Stage 1A — 완료: Bench2Drive Mini 추출 없는 구조·품질 audit
 
-hash는 모두 맞았다. 다음 단계에서 먼저 archive 내부 목록과 필요한 여유 공간을 확인한 뒤 별도 staging 경로에만 압축을 푼다. 현재 문서 갱신 시점에는 **아직 압축을 풀지 않았다**. 원본 archive는 수정하지 않는다.
-
-아래 목록 명령은 archive를 추출하지 않는다. 실제 10개 모두에 대해 구조가 같은지 확인한 다음에 extraction을 승인한다.
+원본 10개를 다시 full-stream 검사한 동일 inode/size/SHA에 구조 검사를 묶었다. 압축 해제,
+image decode, package 설치와 GPU 사용은 하지 않았다.
 
 ```bash
-export PORTABLE_E2E_ROOT="${PORTABLE_E2E_ROOT:-$HOME/portable_e2e}"
-B2D_ARCHIVE_DIR="$PORTABLE_E2E_ROOT/tmp/downloads/bench2drive/legacy-mini-10-research-only/archives"
-ARCHIVE_NAME='<exact-archive-name.tar.gz>'
-tar -tzf "$B2D_ARCHIVE_DIR/$ARCHIVE_NAME" | sed -n '1,80p'
+(
+  set -o noclobber
+  python scripts/e2e/inspect_bench2drive_mini_archives.py \
+    "$B2D_ARCHIVE_DIR" > /path/to/new-structure-report.json
+)
 ```
 
-검사 순서는 다음과 같다.
+결과는 raw structure 10/10 PASS, 2,295 frames, 주변 6-camera JPEG 13,770장,
+1600×900 JPEG/calibration 일치다. 그러나 다음 세 gate 때문에 conversion readiness는
+0/10 `BLOCKED_FAIL_CLOSED`다.
 
-1. 10개 archive와 scene 수를 센다.
-2. 각 scene의 첫·중간·마지막 frame을 연다.
-3. frame마다 6 camera가 모두 있는지 센다.
-4. source timestamp가 단조 증가하는지, 중앙 period가 약 100 ms인지 계산한다.
-5. camera intrinsic/extrinsic과 해상도를 읽는다.
-6. ego pose, speed, command, target, HD map 참조를 확인한다.
-7. 이름 기반 camera permutation을 적용한다.
-8. common10 staging sample을 만든다.
-9. 6.4초 trajectory와 route를 각각 검증한다.
-10. validation report가 통과한 뒤 dataloader 1 batch와 model forward 1회를 실행한다.
+- 검사한 annotation 최상위에는 인식 가능한 native timestamp field가 10/10 없다. frame
+  index로 0.1초 timestamp를 만들지 않는다.
+- 8개 archive, 553 annotation frames의 `bounding_boxes/*/brake`에 비표준 `NaN` 788건이
+  있다. Infinity/−Infinity는 0이다.
+- 별도 prepared tree를 만든 뒤 전체 `common_10hz_v1` validator를 아직 실행하지 않았다.
+
+### Stage 1B — 보류: Bench2Drive 변환 정책과 parser smoke
+
+원본 archive는 아직 풀지 않았다. 먼저 NaN을 unknown/missing mask로 다룰지 해당 object field를
+제외할지 label owner와 정하고, 선택을 source manifest에 기록하는 테스트를 만든다. 검사한
+annotation 최상위에는 인식 가능한 native timestamp가 없으므로 Mini를 정식
+`common_10hz_v1` corpus로 승격하지 않는다. 필요하면 별도의
+`legacy_nominal_10hz` parser fixture로만 변환하고 학습 자격과 분리한다.
+
+허용된 정책 뒤의 parser 확인 순서는 다음과 같다.
+
+1. 별도 staging에 필요한 member만 안전하게 푼다.
+2. 이름 기반 camera permutation과 calibration overlay를 확인한다.
+3. ego pose, speed, command, target, map 참조를 연결한다.
+4. non-finite 처리 수와 제외 sample을 report/source manifest에 고정한다.
+5. 반복 변환한 manifest/checksum이 같은지 확인한다.
+6. `NOT_QUALIFIED_COMMON10` 표시는 끝까지 유지한다.
 
 Mini 단계의 완료 조건은 “학습 loss가 좋아졌다”가 아니라 **같은 원본을 반복 변환했을 때 동일한 sample manifest와 checksum이 나온다**는 것이다.
 
-### Stage 2 — nuScenes schema/real-adapter smoke
+### Stage 2A — 완료: nuScenes 추출 없는 schema/timing/CAN audit
 
-official `v1.0-mini` archive 다운로드와 streaming 구조 검사는 완료됐다. 약관·용도 검토 후
-별도 staging에만 풀고 다음 adapter 검사를 진행한다. CAN route 검증은 version에 맞는 별도
-CAN bus expansion을 받기 전까지 완료로 표시하지 않는다. 이 단계는 현재 planning
-validation이나 정식 common10 학습 자격을 만들지 않는다.
+official `v1.0-mini`와 CAN archive를 받은 뒤 generic full audit에 현재 archive SHA를 다시
+묶어 read-only adapter 검사를 수행했다.
 
-확인 항목:
+```bash
+(
+  set -o noclobber
+  python scripts/e2e/inspect_nuscenes_mini_adapter.py \
+    /path/to/v1.0-mini.tgz /path/to/can_bus.zip \
+    --nuscenes-audit-report /path/to/tar-full-audit.json \
+    --can-bus-audit-report /path/to/zip-full-audit.json \
+    > /path/to/new-adapter-report.json
+)
+```
 
-- 정확한 6-camera 이름 매핑
-- camera별 실제 timestamp와 bundle skew
-- calibration 적용 전/후 image와 갱신된 intrinsic
-- ego pose와 CAN pose의 timestamp 차이
-- ideal route 존재 여부와 누락 flag
-- native timestamp를 보존한 cadence report와 10 Hz thinning 시 약 166.7 ms gap 확인
-- 20초 scene 경계의 trajectory valid mask
+두 inspector의 원본 JSON에는 archive와 audit report의 절대경로가 포함된다. 원격
+verification 폴더에 비공개로 보관하고, 경로를 제거한 게시용 사본을 다시 검증하기 전에는
+`docs/assets`나 Git에 넣지 않는다.
 
-이 단계에서도 full trainval download나 장기 학습은 하지 않는다. 측정 결과에 맞는 별도
-profile/contract가 검토·고정되기 전에는 변환 결과를 정식 common10 학습 corpus에 넣지 않는다.
+구조 결과는 exact six-camera mapping, camera sample-data↔calibration/ego-pose/image join,
+10 scenes/404 samples, camera frame 14,008장, CAN mini scene/route 10/10 PASS다.
+LiDAR/RADAR stream semantics는 평가하지 않았다. 시간 자격은 다음 실측으로
+`NOT_QUALIFIED`다.
+
+- 404/404 keyframe bundle이 20 ms 초과, 최대 43.251 ms
+- 60 camera streams의 source rate 11.227~12.010 Hz
+- selection-only 10 Hz의 pooled p99 gap 150.012 ms, stream별 p99 최댓값 250.0 ms
+- 최소 scene duration 19.149566초
+
+### Stage 2B — 보류: nuScenes staging adapter smoke
+
+약관·용도 검토 후 별도 staging에 필요한 member만 풀어 image/calibration overlay, ego/CAN
+시간 정렬과 20초 scene 경계의 future valid mask를 확인할 수 있다. full trainval download나
+장기 학습은 하지 않는다. 측정 결과에 맞는 별도 profile/contract가 검토·고정되기 전에는
+변환 결과를 정식 common10 학습 corpus에 넣지 않는다.
 
 ### Stage 3A — 완료: nuPlan 제한 subset 원본 반입
 
@@ -660,8 +708,9 @@ frame 번호를 가짜 nanosecond timestamp로 바꾸거나, resample 후 원본
 
 camera rate를 줄이는 모든 실험은 미래 frame을 보지 않는 causal/latest 규칙과 원본
 timestamp를 보존한다. 그러나 downsampling 가능 여부와 common10 planning 자격은 다르다.
-특히 nuScenes의 12 Hz image를 복제·합성 없이 10 Hz로 thinning하면 약 166.7 ms gap이 생겨
-현재 p99 150 ms gate를 통과하지 못한다. 측정 후 별도 profile/contract가 고정되기 전에는
+실제 Mini를 복제·합성 없이 selection-only 10 Hz로 thinning한 결과는 pooled p99 150.012 ms,
+stream별 p99 최댓값 250.0 ms로 현재 150 ms planning cadence gate를 통과하지 못한다. 이
+실측값을 바탕으로 별도 profile/contract가 고정되기 전에는
 schema/adapter smoke에만 사용한다. 4 Hz→10 Hz처럼 늘려야 하는 경우에도 JPG를 반복하거나
 합성하여 common10 정식 data로 만들지 않는다.
 
@@ -715,11 +764,17 @@ manifests/    # URL, version, license, SHA-256, split
 
 ## 최종 선택
 
-현재 첫 학습을 곧바로 시작하는 것이 다음 행동은 아니다. Bench2Drive Mini 다운로드와 공식 SHA 검증은 완료됐으므로, 다음은 archive 구조 확인·별도 staging 압축 해제·parser/common10 변환 smoke다.
+현재 첫 학습을 곧바로 시작하는 것이 다음 행동은 아니다. Bench2Drive Mini의 archive 구조
+검사까지 끝났고 annotation 최상위의 인식 가능한 native timestamp 부재와 NaN 정책 미정이
+확인됐다. 따라서 다음은 이 한계를
+숨기는 압축 해제·변환이 아니라, timestamp를 실제로 보존하는 신규 CARLA 10 Hz 수집과
+Bench2Drive non-finite mask/정제 정책의 명시적 설계다. nuScenes mini도 구조 adapter smoke는
+끝났으나 timing/길이 gate 때문에 정식 planning corpus로 승격하지 않는다.
 
-- **CARLA 시작점**: Bench2Drive Mini — pipeline 검증 전용
-- **실세계 빠른 시작점**: nuScenes mini — exact 6-camera와 CAN 연결을 보는
-  schema/adapter smoke 전용; 현 planning gate 불통과
+- **CARLA 시작점**: 신규 자체 CARLA 10 Hz straight/turn/stop 수집 — 정식 planning 후보;
+  Bench2Drive Mini는 parser·결측 정책 검증 전용
+- **실세계 빠른 시작점**: nuScenes mini — exact 6-camera와 CAN 연결 구조는 확인했지만
+  timing/scene 길이 때문에 현 planning gate 불통과인 adapter smoke 전용
 - **실세계 planner 연구·adapter 후보**: nuPlan 제한 subset — 10 Hz, 장시간 log, mission route
 - **평가 framework 참고**: NAVSIM/OpenScene
 - **현재 deployable 학습에서 제외**: Waymo E2E, Argoverse 2

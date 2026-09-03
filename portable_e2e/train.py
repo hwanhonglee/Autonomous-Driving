@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 import fcntl
 from functools import wraps
@@ -40,8 +40,17 @@ from .model import ModelConfig, PerspectiveTrajectoryModel, parameter_count
 from .torch_dataset import Common10TorchDataset
 
 
-TRAINER_ID = "portable_e2e.pytorch_trainer.v0"
-CHECKPOINT_ID = "portable_e2e.pytorch_checkpoint.v0"
+TRAINER_ID = "portable_e2e.pytorch_trainer.v1"
+CHECKPOINT_ID = "portable_e2e.pytorch_checkpoint.v1"
+KNOWN_DOMAINS = ("carla", "real")
+UNIFORM_SAMPLING_POLICY = "uniform_without_replacement"
+DOMAIN_BALANCED_SAMPLING_POLICY = "domain_balanced_without_replacement"
+UNIFORM_ORDER_ALGORITHM = "proportional_weighted_interleave_v1"
+BALANCED_ORDER_ALGORITHM = "ratio_weighted_interleave_v1"
+# Public checkpoint resource contract. The portable baseline is intentionally
+# much smaller than this ceiling; the headroom preserves existing research
+# checkpoints while rejecting oversized files before hashing or deserialization.
+MAX_CHECKPOINT_FILE_BYTES = 8 * 1024 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -55,6 +64,8 @@ class TrainConfig:
     num_workers: int = 0
     maximum_gradient_norm: float = 5.0
     verify_image_sha256: bool = True
+    sampling_policy: str = UNIFORM_SAMPLING_POLICY
+    domain_ratios: tuple[tuple[str, int], ...] = ()
 
     def validate(self) -> None:
         integer_limits = {
@@ -86,6 +97,37 @@ class TrainConfig:
                 )
         if not isinstance(self.verify_image_sha256, bool):
             raise ContractError("train.verify_image_sha256 must be boolean")
+        if self.sampling_policy not in (
+            UNIFORM_SAMPLING_POLICY,
+            DOMAIN_BALANCED_SAMPLING_POLICY,
+        ):
+            raise ContractError("train.sampling_policy is not supported")
+        if not isinstance(self.domain_ratios, tuple) or any(
+            not isinstance(item, tuple) or len(item) != 2
+            for item in self.domain_ratios
+        ):
+            raise ContractError("train.domain_ratios must be canonical domain/weight pairs")
+        if self.sampling_policy == UNIFORM_SAMPLING_POLICY:
+            if self.domain_ratios:
+                raise ContractError(
+                    "uniform sampling must not define domain ratios"
+                )
+        else:
+            if tuple(domain for domain, _ in self.domain_ratios) != KNOWN_DOMAINS:
+                raise ContractError(
+                    "domain-balanced sampling requires exactly carla and real ratios "
+                    "in canonical order"
+                )
+            weights = tuple(weight for _, weight in self.domain_ratios)
+            if any(
+                isinstance(weight, bool)
+                or not isinstance(weight, int)
+                or not 1 <= weight <= 1_000_000
+                for weight in weights
+            ):
+                raise ContractError("domain ratio weights must be positive integers")
+            if math.gcd(*weights) != 1:
+                raise ContractError("domain ratio weights must be reduced to lowest terms")
 
     def to_dict(self) -> dict[str, Any]:
         self.validate()
@@ -98,6 +140,7 @@ class TrainState:
     next_batch_index: int = 0
     global_step: int = 0
     samples_seen: int = 0
+    domain_samples_seen: dict[str, int] = field(default_factory=dict)
 
 
 def _canonical_sha256(value: Mapping[str, Any]) -> str:
@@ -352,6 +395,11 @@ def _read_checkpoint_file(
         before = os.fstat(descriptor)
         if not stat.S_ISREG(before.st_mode) or before.st_size <= 0:
             raise ContractError(f"checkpoint is not a nonempty regular file: {path}")
+        if before.st_size > MAX_CHECKPOINT_FILE_BYTES:
+            raise ContractError(
+                f"checkpoint size {before.st_size} exceeds limit "
+                f"{MAX_CHECKPOINT_FILE_BYTES} bytes: {path}"
+            )
         with os.fdopen(descriptor, "rb", closefd=False) as stream:
             hasher = hashlib.sha256()
             for block in iter(lambda: stream.read(8 * 1024 * 1024), b""):
@@ -411,18 +459,278 @@ def _seed_everything(seed: int, device: torch.device) -> None:
     _configure_determinism(device)
 
 
+def _balanced_epoch_generator(seed: int, epoch: int, stream: str) -> torch.Generator:
+    """Create a stable, independent CPU RNG stream for balanced sampling."""
+    digest = hashlib.sha256(
+        f"portable-e2e-balanced-v1\0{seed}\0{epoch}\0{stream}".encode("utf-8")
+    ).digest()
+    derived_seed = int.from_bytes(digest[:8], "big") % (2**63 - 1)
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(derived_seed)
+    return generator
+
+
 def _epoch_batches(
-    size: int, *, batch_size: int, seed: int, epoch: int
+    size: int,
+    *,
+    batch_size: int,
+    seed: int,
+    epoch: int,
+    domain_indices: Mapping[str, Sequence[int]] | None = None,
+    sampling_plan: Mapping[str, Any] | None = None,
 ) -> tuple[tuple[int, ...], ...]:
     if size <= 0:
         raise ContractError("training dataset is empty")
-    generator = torch.Generator(device="cpu")
-    generator.manual_seed((seed + epoch) % (2**63 - 1))
-    order = torch.randperm(size, generator=generator).tolist()
+    if sampling_plan is None:
+        if domain_indices is not None:
+            raise ContractError("domain indices require an explicit sampling plan")
+        generator = torch.Generator(device="cpu")
+        generator.manual_seed((seed + epoch) % (2**63 - 1))
+        order = torch.randperm(size, generator=generator).tolist()
+    else:
+        if domain_indices is None:
+            raise ContractError("sampling plan requires domain indices")
+        available = {domain: len(indices) for domain, indices in domain_indices.items()}
+        if sampling_plan.get("dataset_domain_counts") != available:
+            raise ContractError("sampling plan no longer matches dataset domains")
+        policy = sampling_plan.get("policy")
+        expected_algorithm = {
+            UNIFORM_SAMPLING_POLICY: UNIFORM_ORDER_ALGORITHM,
+            DOMAIN_BALANCED_SAMPLING_POLICY: BALANCED_ORDER_ALGORITHM,
+        }.get(policy)
+        if sampling_plan.get("order_algorithm") != expected_algorithm:
+            raise ContractError("sampling plan order algorithm is not supported")
+        if policy not in (UNIFORM_SAMPLING_POLICY, DOMAIN_BALANCED_SAMPLING_POLICY):
+            raise ContractError("sampling plan policy is not supported")
+        quotas = sampling_plan.get("epoch_domain_sample_counts")
+        if not isinstance(quotas, Mapping):
+            raise ContractError("sampling plan domain quotas are missing")
+        active_domains = tuple(
+            domain for domain in KNOWN_DOMAINS if domain in domain_indices
+        )
+        if set(quotas) != set(active_domains):
+            raise ContractError("sampling plan domain quotas do not match the dataset")
+        if policy == UNIFORM_SAMPLING_POLICY and dict(quotas) != available:
+            raise ContractError("uniform sampling must use every domain sample")
+        selected_by_domain: dict[str, list[int]] = {}
+        for domain in active_domains:
+            indices = tuple(domain_indices[domain])
+            quota = quotas.get(domain)
+            if (
+                isinstance(quota, bool)
+                or not isinstance(quota, int)
+                or not 0 < quota <= len(indices)
+            ):
+                raise ContractError("sampling plan domain quota is impossible")
+            domain_generator = _balanced_epoch_generator(
+                seed, epoch, f"domain:{domain}"
+            )
+            permutation = torch.randperm(
+                len(indices), generator=domain_generator
+            ).tolist()
+            selected_by_domain[domain] = [
+                indices[index] for index in permutation[:quota]
+            ]
+
+        # Randomize only equal-deficit tie priority once per epoch.  Smooth
+        # weighted interleaving prevents an early max_steps stop from exposing
+        # an arbitrarily one-sided domain prefix under either v1 policy.
+        tie_generator = _balanced_epoch_generator(seed, epoch, "tie-priority")
+        tie_permutation = torch.randperm(
+            len(active_domains), generator=tie_generator
+        ).tolist()
+        tie_rank = {
+            active_domains[domain_index]: rank
+            for rank, domain_index in enumerate(tie_permutation)
+        }
+        used = {domain: 0 for domain in active_domains}
+        total = sum(int(quotas[domain]) for domain in active_domains)
+        order = []
+        while len(order) < total:
+            next_position = len(order) + 1
+            candidates = [
+                domain
+                for domain in active_domains
+                if used[domain] < int(quotas[domain])
+            ]
+            if not candidates:
+                raise ContractError("weighted domain interleave ended early")
+            domain = max(
+                candidates,
+                key=lambda name: (
+                    next_position * int(quotas[name]) - used[name] * total,
+                    -tie_rank[name],
+                ),
+            )
+            order.append(selected_by_domain[domain][used[domain]])
+            used[domain] += 1
+        if used != {domain: int(quotas[domain]) for domain in active_domains}:
+            raise ContractError("weighted domain interleave quota mismatch")
+        if len(order) != sampling_plan.get("epoch_sample_count"):
+            raise ContractError("sampling plan epoch size is inconsistent")
     return tuple(
         tuple(order[offset : offset + batch_size])
-        for offset in range(0, size, batch_size)
+        for offset in range(0, len(order), batch_size)
     )
+
+
+def _dataset_domain_indices(
+    dataset: Common10TorchDataset,
+) -> dict[str, tuple[int, ...]]:
+    grouped: dict[str, list[int]] = {domain: [] for domain in KNOWN_DOMAINS}
+    for index, example in enumerate(dataset.examples):
+        domain = example.domain
+        if domain not in KNOWN_DOMAINS:
+            raise ContractError(
+                f"training example {example.token!r} has unknown domain {domain!r}; "
+                f"expected one of {KNOWN_DOMAINS}"
+            )
+        grouped[domain].append(index)
+    return {
+        domain: tuple(grouped[domain])
+        for domain in KNOWN_DOMAINS
+        if grouped[domain]
+    }
+
+
+def _sampling_plan(
+    domain_indices: Mapping[str, Sequence[int]],
+    train_config: TrainConfig,
+) -> dict[str, Any]:
+    """Return the immutable, finite epoch contract used by the sampler."""
+    unknown = sorted(set(domain_indices) - set(KNOWN_DOMAINS))
+    if unknown:
+        raise ContractError("sampling plan contains unknown domains: " + ", ".join(unknown))
+    counts = {
+        domain: len(domain_indices[domain])
+        for domain in KNOWN_DOMAINS
+        if domain in domain_indices
+    }
+    if sum(counts.values()) != sum(len(indices) for indices in domain_indices.values()):
+        raise ContractError("sampling plan domain index accounting is inconsistent")
+    return _sampling_plan_from_counts(counts, train_config)
+
+
+def _sampling_plan_from_counts(
+    counts: Mapping[str, int],
+    train_config: TrainConfig,
+) -> dict[str, Any]:
+    """Build a sampling plan without allocating index arrays for claimed counts."""
+    train_config.validate()
+    unknown = sorted(set(counts) - set(KNOWN_DOMAINS))
+    if unknown:
+        raise ContractError("sampling plan contains unknown domains: " + ", ".join(unknown))
+    canonical_counts = {
+        domain: counts[domain] for domain in KNOWN_DOMAINS if domain in counts
+    }
+    if not canonical_counts or any(
+        isinstance(count, bool) or not isinstance(count, int) or count <= 0
+        for count in canonical_counts.values()
+    ):
+        raise ContractError("sampling plan requires positive known-domain counts")
+
+    if train_config.sampling_policy == UNIFORM_SAMPLING_POLICY:
+        epoch_counts = dict(canonical_counts)
+        ratios: dict[str, int] = {}
+    else:
+        if tuple(canonical_counts) != KNOWN_DOMAINS:
+            raise ContractError(
+                "domain-balanced sampling requires both carla and real samples"
+            )
+        ratios = dict(train_config.domain_ratios)
+        rounds = min(
+            canonical_counts[domain] // ratios[domain] for domain in KNOWN_DOMAINS
+        )
+        if rounds <= 0:
+            raise ContractError(
+                "domain ratio cannot form one without-replacement epoch from this dataset"
+            )
+        epoch_counts = {
+            domain: rounds * ratios[domain] for domain in KNOWN_DOMAINS
+        }
+
+    epoch_sample_count = sum(epoch_counts.values())
+    return {
+        "policy": train_config.sampling_policy,
+        "order_algorithm": (
+            UNIFORM_ORDER_ALGORITHM
+            if train_config.sampling_policy == UNIFORM_SAMPLING_POLICY
+            else BALANCED_ORDER_ALGORITHM
+        ),
+        "seed_derivation": "sha256_seed_epoch_named_stream_v1",
+        "known_domains": list(KNOWN_DOMAINS),
+        "domain_ratios": ratios,
+        "replacement": False,
+        "dataset_domain_counts": canonical_counts,
+        "epoch_domain_sample_counts": epoch_counts,
+        "epoch_discarded_sample_counts": {
+            domain: canonical_counts[domain] - epoch_counts[domain]
+            for domain in canonical_counts
+        },
+        "epoch_sample_count": epoch_sample_count,
+        "batch_size": train_config.batch_size,
+        "batches_per_epoch": (
+            epoch_sample_count + train_config.batch_size - 1
+        )
+        // train_config.batch_size,
+    }
+
+
+def _weighted_prefix_domain_counts(
+    quotas: Mapping[str, int],
+    *,
+    seed: int,
+    epoch: int,
+    prefix_size: int,
+) -> dict[str, int]:
+    """Return exact v1 weighted-interleave domain counts for one prefix."""
+    active_domains = tuple(domain for domain in KNOWN_DOMAINS if domain in quotas)
+    if not active_domains or set(quotas) != set(active_domains) or any(
+        isinstance(value, bool) or not isinstance(value, int) or value <= 0
+        for value in quotas.values()
+    ):
+        raise ContractError("weighted prefix quotas must contain positive known domains")
+    total = sum(quotas.values())
+    if (
+        isinstance(prefix_size, bool)
+        or not isinstance(prefix_size, int)
+        or not 0 <= prefix_size <= total
+    ):
+        raise ContractError("weighted prefix size is outside the epoch quota")
+    if len(active_domains) == 1:
+        return {active_domains[0]: prefix_size}
+    tie_generator = _balanced_epoch_generator(seed, epoch, "tie-priority")
+    tie_permutation = torch.randperm(
+        len(active_domains), generator=tie_generator
+    ).tolist()
+    tie_rank = {
+        active_domains[domain_index]: rank
+        for rank, domain_index in enumerate(tie_permutation)
+    }
+    first, second = active_domains
+    quotient, remainder = divmod(prefix_size * quotas[first], total)
+    first_count = quotient
+    if 2 * remainder > total or (
+        2 * remainder == total and tie_rank[first] < tie_rank[second]
+    ):
+        first_count += 1
+    return {first: first_count, second: prefix_size - first_count}
+
+
+def _parse_domain_ratios(values: Sequence[str]) -> tuple[tuple[str, int], ...]:
+    parsed: dict[str, int] = {}
+    for value in values:
+        if not isinstance(value, str) or value.count("=") != 1:
+            raise ContractError("--domain-ratio must use DOMAIN=INTEGER")
+        domain, raw_weight = value.split("=", 1)
+        if domain not in KNOWN_DOMAINS:
+            raise ContractError(f"unknown --domain-ratio domain: {domain!r}")
+        if domain in parsed:
+            raise ContractError(f"duplicate --domain-ratio domain: {domain}")
+        if not raw_weight.isdigit():
+            raise ContractError("--domain-ratio weights must be positive integers")
+        parsed[domain] = int(raw_weight)
+    return tuple((domain, parsed[domain]) for domain in KNOWN_DOMAINS if domain in parsed)
 
 
 def _move_batch(batch: Mapping[str, Any], device: torch.device) -> dict[str, Any]:
@@ -457,6 +765,7 @@ def _checkpoint_payload(
     device: torch.device,
     training_split: str,
     training_episode_ids: Sequence[str],
+    sampling_plan: Mapping[str, Any],
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "checkpoint_id": CHECKPOINT_ID,
@@ -465,6 +774,12 @@ def _checkpoint_payload(
         "corpus_fingerprint_sha256": corpus_fingerprint_sha256,
         "training_split": training_split,
         "training_episode_ids": list(training_episode_ids),
+        "sampling_plan": dict(sampling_plan),
+        "sampling_plan_sha256": _canonical_sha256(sampling_plan),
+        "sampling_metrics": {
+            "samples_seen": state.samples_seen,
+            "domain_samples_seen": dict(state.domain_samples_seen),
+        },
         "model_config": model_config.to_dict(),
         "model_config_sha256": _canonical_sha256(model_config.to_dict()),
         "train_config": train_config.to_dict(),
@@ -495,6 +810,8 @@ def _load_checkpoint(
     training_split: str,
     training_episode_ids: Sequence[str],
     dataset_size: int,
+    domain_indices: Mapping[str, Sequence[int]],
+    sampling_plan: Mapping[str, Any],
 ) -> TrainState:
     payload, _ = _read_checkpoint_file(path, device)
     if payload.get("checkpoint_id") != CHECKPOINT_ID:
@@ -511,6 +828,10 @@ def _load_checkpoint(
         raise ContractError("checkpoint training split does not match")
     if payload.get("training_episode_ids") != list(training_episode_ids):
         raise ContractError("checkpoint training episode IDs do not match")
+    if payload.get("sampling_plan") != dict(sampling_plan):
+        raise ContractError("checkpoint sampling plan does not match")
+    if payload.get("sampling_plan_sha256") != _canonical_sha256(sampling_plan):
+        raise ContractError("checkpoint sampling plan fingerprint does not match")
     if payload.get("runtime_abi") != _runtime_abi():
         raise ContractError("checkpoint runtime ABI does not match exact-resume runtime")
     if payload.get("device_abi") != _device_abi(device):
@@ -536,33 +857,74 @@ def _load_checkpoint(
     state_value = payload.get("state")
     if not isinstance(state_value, dict):
         raise ContractError("checkpoint state is missing")
-    expected_state_fields = {"epoch", "next_batch_index", "global_step", "samples_seen"}
+    expected_state_fields = {
+        "epoch",
+        "next_batch_index",
+        "global_step",
+        "samples_seen",
+        "domain_samples_seen",
+    }
     if set(state_value) != expected_state_fields:
         raise ContractError("checkpoint state fields do not match")
+    integer_state_fields = expected_state_fields - {"domain_samples_seen"}
     if any(
         isinstance(state_value[name], bool)
         or not isinstance(state_value[name], int)
         or state_value[name] < 0
-        for name in expected_state_fields
+        for name in integer_state_fields
     ):
         raise ContractError("checkpoint state must contain nonnegative integer cursors")
+    state_domains = state_value["domain_samples_seen"]
+    if (
+        not isinstance(state_domains, dict)
+        or tuple(state_domains) != tuple(domain_indices)
+        or any(
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+            for value in state_domains.values()
+        )
+    ):
+        raise ContractError("checkpoint domain sample counts are invalid")
     state = TrainState(**state_value)
+    if payload.get("sampling_metrics") != {
+        "samples_seen": state.samples_seen,
+        "domain_samples_seen": state.domain_samples_seen,
+    }:
+        raise ContractError("checkpoint sampling metrics do not match its state")
     epoch_batches = _epoch_batches(
         dataset_size,
         batch_size=train_config.batch_size,
         seed=train_config.seed,
         epoch=state.epoch,
+        domain_indices=domain_indices,
+        sampling_plan=sampling_plan,
     )
     if state.next_batch_index > len(epoch_batches):
         raise ContractError("checkpoint batch cursor exceeds its epoch")
     expected_global_step = state.epoch * len(epoch_batches) + state.next_batch_index
-    expected_samples_seen = state.epoch * dataset_size + sum(
+    epoch_sample_count = int(sampling_plan["epoch_sample_count"])
+    expected_samples_seen = state.epoch * epoch_sample_count + sum(
         len(batch) for batch in epoch_batches[: state.next_batch_index]
     )
     if state.global_step != expected_global_step:
         raise ContractError("checkpoint global step is inconsistent with its cursor")
     if state.samples_seen != expected_samples_seen:
         raise ContractError("checkpoint sample count is inconsistent with its cursor")
+    index_domains = {
+        index: domain for domain, indices in domain_indices.items() for index in indices
+    }
+    expected_domain_samples = {
+        domain: state.epoch
+        * int(sampling_plan["epoch_domain_sample_counts"][domain])
+        for domain in domain_indices
+    }
+    for batch in epoch_batches[: state.next_batch_index]:
+        for index in batch:
+            domain = index_domains[index]
+            expected_domain_samples[domain] += 1
+    if state.domain_samples_seen != expected_domain_samples:
+        raise ContractError(
+            "checkpoint domain sample counts are inconsistent with its cursor"
+        )
     if state.global_step > stored_steps:
         raise ContractError("checkpoint global step exceeds its configured target")
     try:
@@ -628,6 +990,9 @@ def train_model(
         corpus_fingerprint_sha256 = dataset_fingerprint_sha256
     _require_sha256(corpus_fingerprint_sha256, "training corpus fingerprint")
     training_episode_ids = _dataset_episode_ids(dataset)
+    domain_indices = _dataset_domain_indices(dataset)
+    sampling_plan = _sampling_plan(domain_indices, train_config)
+    sampling_plan_sha256 = _canonical_sha256(sampling_plan)
     _seed_everything(train_config.seed, device)
     run_dir = _absolute_path(run_dir)
     if run_dir.is_symlink():
@@ -658,6 +1023,10 @@ def train_model(
             raise ContractError("resume run manifest corpus fingerprint does not match")
         if resume_manifest.get("training_episode_ids") != list(training_episode_ids):
             raise ContractError("resume run manifest episode IDs do not match")
+        if resume_manifest.get("sampling_plan") != sampling_plan:
+            raise ContractError("resume run manifest sampling plan does not match")
+        if resume_manifest.get("sampling_plan_sha256") != sampling_plan_sha256:
+            raise ContractError("resume run manifest sampling fingerprint does not match")
     else:
         if run_dir.exists():
             raise ContractError(f"run directory already exists: {run_dir}")
@@ -669,7 +1038,9 @@ def train_model(
         lr=float(train_config.learning_rate),
         weight_decay=float(train_config.weight_decay),
     )
-    state = TrainState()
+    state = TrainState(
+        domain_samples_seen={domain: 0 for domain in domain_indices}
+    )
     last_metrics: dict[str, Any] = {}
     if resume:
         state = _load_checkpoint(
@@ -685,8 +1056,16 @@ def train_model(
             training_split=training_split,
             training_episode_ids=training_episode_ids,
             dataset_size=len(dataset),
+            domain_indices=domain_indices,
+            sampling_plan=sampling_plan,
         )
         last_metrics = _reconcile_metrics(metrics_path, state)
+        if state.global_step and last_metrics.get(
+            "domain_samples_seen"
+        ) != state.domain_samples_seen:
+            raise ContractError(
+                "metrics domain sample counts do not match the latest checkpoint"
+            )
         resume_manifest["status"] = "RUNNING"
         resume_manifest["resumed_at_utc"] = _utc_now()
         resume_manifest["train_config"] = train_config.to_dict()
@@ -702,6 +1081,8 @@ def train_model(
             "training_split": training_split,
             "training_episode_ids": list(training_episode_ids),
             "dataset_size": len(dataset),
+            "sampling_plan": sampling_plan,
+            "sampling_plan_sha256": sampling_plan_sha256,
             "model_parameter_count": parameter_count(model),
             "model_config": model_config.to_dict(),
             "train_config": train_config.to_dict(),
@@ -712,12 +1093,17 @@ def train_model(
         }
         _atomic_json(manifest_path, manifest)
 
+    index_domains = {
+        index: domain for domain, indices in domain_indices.items() for index in indices
+    }
     while state.global_step < train_config.max_steps:
         batches = _epoch_batches(
             len(dataset),
             batch_size=train_config.batch_size,
             seed=train_config.seed,
             epoch=state.epoch,
+            domain_indices=domain_indices,
+            sampling_plan=sampling_plan,
         )
         if state.next_batch_index >= len(batches):
             state.epoch += 1
@@ -774,12 +1160,20 @@ def train_model(
                 raise FloatingPointError("training optimizer state became NaN or Inf")
 
             state.global_step += 1
-            state.samples_seen += int(batch["images"].shape[0])
+            current_batch_size = int(batch["images"].shape[0])
+            state.samples_seen += current_batch_size
+            batch_domain_counts = {domain: 0 for domain in domain_indices}
+            for index in batches[batch_index]:
+                batch_domain_counts[index_domains[index]] += 1
+            for domain, count in batch_domain_counts.items():
+                state.domain_samples_seen[domain] += count
             state.next_batch_index = batch_index + 1
             last_metrics = {
                 "global_step": state.global_step,
                 "epoch": state.epoch,
                 "samples_seen": state.samples_seen,
+                "batch_domain_sample_counts": batch_domain_counts,
+                "domain_samples_seen": dict(state.domain_samples_seen),
                 "loss": float(total_loss.detach().cpu().item()),
                 "regression_loss": float(losses["regression_loss"].cpu().item()),
                 "candidate_score_loss": float(
@@ -817,6 +1211,7 @@ def train_model(
                         device=device,
                         training_split=training_split,
                         training_episode_ids=training_episode_ids,
+                        sampling_plan=sampling_plan,
                     ),
                 )
             if state.global_step >= train_config.max_steps:
@@ -888,6 +1283,22 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--checkpoint-interval", type=int, default=100)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--maximum-gradient-norm", type=float, default=5.0)
+    parser.add_argument(
+        "--sampling-policy",
+        choices=(UNIFORM_SAMPLING_POLICY, DOMAIN_BALANCED_SAMPLING_POLICY),
+        default=UNIFORM_SAMPLING_POLICY,
+        help=(
+            "finite epoch policy; balanced mode is without replacement and "
+            "requires explicit carla and real ratios"
+        ),
+    )
+    parser.add_argument(
+        "--domain-ratio",
+        action="append",
+        default=[],
+        metavar="DOMAIN=INTEGER",
+        help="repeat exactly once for carla and real in domain-balanced mode",
+    )
     parser.add_argument("--limit-samples", type=int)
     parser.add_argument("--resume", action="store_true")
     return parser.parse_args(argv)
@@ -914,6 +1325,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             num_workers=args.num_workers,
             maximum_gradient_norm=args.maximum_gradient_norm,
             verify_image_sha256=True,
+            sampling_policy=args.sampling_policy,
+            domain_ratios=_parse_domain_ratios(args.domain_ratio),
         )
         dataset = Common10TorchDataset(
             loaded.examples,

@@ -23,12 +23,18 @@ from .model import ModelConfig, PerspectiveTrajectoryModel, parameter_count
 from .torch_dataset import Common10TorchDataset
 from .train import (
     CHECKPOINT_ID,
+    DOMAIN_BALANCED_SAMPLING_POLICY,
+    KNOWN_DOMAINS,
+    TrainConfig,
+    UNIFORM_SAMPLING_POLICY,
     _absolute_path,
+    _weighted_prefix_domain_counts,
     _canonical_sha256,
     _device_abi,
     _read_checkpoint_file,
     _require_sha256,
     _runtime_abi,
+    _sampling_plan_from_counts,
     _seed_everything,
     _select_device,
     _slice_loaded,
@@ -36,7 +42,18 @@ from .train import (
 from .visualize import render_trajectory_png
 
 
-EVALUATION_ID = "portable_e2e.open_loop_evaluation.v0"
+EVALUATION_ID = "portable_e2e.open_loop_evaluation.v1"
+CORE_METRIC_NAMES = (
+    "loss",
+    "regression_loss",
+    "candidate_score_loss",
+    "oracle_ade_m",
+    "selected_ade_m",
+    "selected_fde_m",
+    "selected_speed_mae_mps",
+    "selected_yaw_mae_rad",
+    "selected_kinematic_speed_mae_mps",
+)
 
 
 def _utc_now() -> str:
@@ -98,6 +115,289 @@ def _horizon_sums(
             count,
         )
     return output
+
+
+def _accumulate_batch_metrics(
+    metric_sums: dict[str, float],
+    metric_counts: dict[str, int],
+    *,
+    candidate_xy: Tensor,
+    candidate_speed: Tensor,
+    candidate_logits: Tensor,
+    target_xy: Tensor,
+    target_speed: Tensor,
+    target_valid: Tensor,
+    target_yaw: Tensor,
+    loss_config: TrajectoryLossConfig,
+) -> None:
+    losses = trajectory_loss(
+        candidate_xy,
+        candidate_speed,
+        candidate_logits,
+        target_xy,
+        target_speed,
+        target_valid,
+        loss_config,
+        target_yaw=target_yaw,
+    )
+    current_batch = int(candidate_xy.shape[0])
+    for key in CORE_METRIC_NAMES:
+        metric_sums[key] = metric_sums.get(key, 0.0) + float(
+            losses[key].detach().cpu().item()
+        ) * current_batch
+        metric_counts[key] = metric_counts.get(key, 0) + current_batch
+
+    selected_indices = candidate_logits.argmax(dim=1)
+    selected_xy = _selected(candidate_xy, selected_indices)
+    selected_speed = _selected(candidate_speed, selected_indices)
+    for key, (value, count) in _horizon_sums(
+        selected_xy,
+        selected_speed,
+        target_xy,
+        target_speed,
+        target_valid,
+    ).items():
+        metric_sums[key] = metric_sums.get(key, 0.0) + value
+        metric_counts[key] = metric_counts.get(key, 0) + count
+
+
+def _evaluation_sample_domains(
+    dataset: Common10TorchDataset,
+) -> tuple[dict[str, str], dict[str, int]]:
+    by_token: dict[str, str] = {}
+    counts = {domain: 0 for domain in KNOWN_DOMAINS}
+    for example in dataset.examples:
+        if example.domain not in KNOWN_DOMAINS:
+            raise ContractError(
+                f"evaluation example {example.token!r} has unknown domain "
+                f"{example.domain!r}; expected one of {KNOWN_DOMAINS}"
+            )
+        if example.token in by_token:
+            raise ContractError(f"duplicate evaluation sample token: {example.token}")
+        by_token[example.token] = example.domain
+        counts[example.domain] += 1
+    return by_token, {domain: counts[domain] for domain in KNOWN_DOMAINS if counts[domain]}
+
+
+def _checkpoint_sampling_provenance(
+    payload: Mapping[str, Any],
+) -> tuple[str, str, dict[str, int]]:
+    def checked_counts(
+        value: Any, context: str, *, positive: bool
+    ) -> dict[str, int]:
+        minimum = 1 if positive else 0
+        if (
+            not isinstance(value, dict)
+            or not value
+            or any(domain not in KNOWN_DOMAINS for domain in value)
+            or any(
+                isinstance(count, bool)
+                or not isinstance(count, int)
+                or count < minimum
+                for count in value.values()
+            )
+        ):
+            qualifier = "positive" if positive else "nonnegative"
+            raise ContractError(
+                f"checkpoint {context} must contain {qualifier} known-domain counts"
+            )
+        return dict(value)
+
+    sampling_plan = payload.get("sampling_plan")
+    if not isinstance(sampling_plan, dict) or not sampling_plan:
+        raise ContractError("checkpoint sampling plan is missing or invalid")
+    sampling_plan_sha256 = payload.get("sampling_plan_sha256")
+    _require_sha256(sampling_plan_sha256, "checkpoint sampling plan fingerprint")
+    try:
+        calculated_sha256 = _canonical_sha256(sampling_plan)
+    except (MemoryError, OverflowError, RecursionError, TypeError, ValueError) as error:
+        raise ContractError(f"checkpoint sampling plan is not canonical JSON: {error}") from error
+    if sampling_plan_sha256 != calculated_sha256:
+        raise ContractError("checkpoint sampling plan fingerprint does not match")
+
+    sampling_policy = sampling_plan.get("policy")
+    if sampling_policy not in (
+        UNIFORM_SAMPLING_POLICY,
+        DOMAIN_BALANCED_SAMPLING_POLICY,
+    ):
+        raise ContractError("checkpoint sampling policy is not supported")
+    train_config_value = payload.get("train_config")
+    if not isinstance(train_config_value, dict) or set(train_config_value) != set(
+        TrainConfig().to_dict()
+    ):
+        raise ContractError("checkpoint training config fields do not match the v1 schema")
+    try:
+        train_config = TrainConfig(**train_config_value)
+        train_config.validate()
+    except (ContractError, TypeError) as error:
+        raise ContractError(f"checkpoint training config is invalid: {error}") from error
+    if train_config.sampling_policy != sampling_policy:
+        raise ContractError("checkpoint training config sampling policy does not match")
+
+    if sampling_plan.get("known_domains") != list(KNOWN_DOMAINS):
+        raise ContractError("checkpoint sampling plan known domains are not canonical")
+    if sampling_plan.get("replacement") is not False:
+        raise ContractError("checkpoint sampling plan must be without replacement")
+    dataset_domain_counts = checked_counts(
+        sampling_plan.get("dataset_domain_counts"),
+        "sampling plan dataset domains",
+        positive=True,
+    )
+    epoch_domain_counts = checked_counts(
+        sampling_plan.get("epoch_domain_sample_counts"),
+        "sampling plan epoch domains",
+        positive=True,
+    )
+    discarded_domain_counts = checked_counts(
+        sampling_plan.get("epoch_discarded_sample_counts"),
+        "sampling plan discarded domains",
+        positive=False,
+    )
+    if not (
+        set(dataset_domain_counts)
+        == set(epoch_domain_counts)
+        == set(discarded_domain_counts)
+    ) or any(
+        dataset_domain_counts[domain]
+        != epoch_domain_counts[domain] + discarded_domain_counts[domain]
+        for domain in dataset_domain_counts
+    ):
+        raise ContractError("checkpoint sampling plan domain accounting is inconsistent")
+    epoch_sample_count = sampling_plan.get("epoch_sample_count")
+    batch_size = sampling_plan.get("batch_size")
+    batches_per_epoch = sampling_plan.get("batches_per_epoch")
+    if (
+        isinstance(epoch_sample_count, bool)
+        or not isinstance(epoch_sample_count, int)
+        or epoch_sample_count != sum(epoch_domain_counts.values())
+        or isinstance(batch_size, bool)
+        or not isinstance(batch_size, int)
+        or batch_size <= 0
+        or train_config.batch_size != batch_size
+        or isinstance(batches_per_epoch, bool)
+        or not isinstance(batches_per_epoch, int)
+        or batches_per_epoch != (epoch_sample_count + batch_size - 1) // batch_size
+    ):
+        raise ContractError("checkpoint sampling plan epoch accounting is inconsistent")
+    domain_ratios = sampling_plan.get("domain_ratios")
+    if sampling_policy == UNIFORM_SAMPLING_POLICY:
+        if domain_ratios != {} or epoch_domain_counts != dataset_domain_counts:
+            raise ContractError("checkpoint uniform sampling plan is inconsistent")
+    else:
+        ratio_counts = checked_counts(
+            domain_ratios,
+            "sampling plan domain ratios",
+            positive=True,
+        )
+        if set(ratio_counts) != set(KNOWN_DOMAINS) or set(
+            dataset_domain_counts
+        ) != set(KNOWN_DOMAINS):
+            raise ContractError(
+                "checkpoint balanced sampling plan must contain carla and real"
+            )
+        if any(
+            epoch_domain_counts[domain] % ratio_counts[domain]
+            for domain in KNOWN_DOMAINS
+        ) or len(
+            {
+                epoch_domain_counts[domain] // ratio_counts[domain]
+                for domain in KNOWN_DOMAINS
+            }
+        ) != 1:
+            raise ContractError("checkpoint balanced sampling quotas do not match ratios")
+
+    expected_plan = _sampling_plan_from_counts(dataset_domain_counts, train_config)
+    if sampling_plan != expected_plan:
+        raise ContractError(
+            "checkpoint sampling plan does not match its validated training config"
+        )
+
+    sampling_metrics = payload.get("sampling_metrics")
+    if not isinstance(sampling_metrics, dict) or set(sampling_metrics) != {
+        "samples_seen",
+        "domain_samples_seen",
+    }:
+        raise ContractError("checkpoint sampling metrics are missing or invalid")
+    samples_seen = sampling_metrics["samples_seen"]
+    domain_samples_seen = sampling_metrics["domain_samples_seen"]
+    if (
+        isinstance(samples_seen, bool)
+        or not isinstance(samples_seen, int)
+        or samples_seen <= 0
+        or not isinstance(domain_samples_seen, dict)
+        or not domain_samples_seen
+        or any(domain not in KNOWN_DOMAINS for domain in domain_samples_seen)
+        or any(
+            isinstance(count, bool) or not isinstance(count, int) or count < 0
+            for count in domain_samples_seen.values()
+        )
+        or sum(domain_samples_seen.values()) != samples_seen
+    ):
+        raise ContractError("checkpoint domain sampling metrics are inconsistent")
+    if set(dataset_domain_counts) != set(domain_samples_seen):
+        raise ContractError("checkpoint sampling plan domains do not match its metrics")
+    state = payload.get("state")
+    state_fields = {
+        "epoch",
+        "next_batch_index",
+        "global_step",
+        "samples_seen",
+        "domain_samples_seen",
+    }
+    if not isinstance(state, dict) or set(state) != state_fields:
+        raise ContractError("checkpoint training state fields do not match the v1 schema")
+    for name in state_fields - {"domain_samples_seen"}:
+        value = state[name]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ContractError("checkpoint training state cursors must be nonnegative integers")
+    if (
+        state["global_step"] > train_config.max_steps
+        or state["epoch"] > state["global_step"]
+        or state["next_batch_index"] > state["global_step"]
+        or samples_seen > state["global_step"] * train_config.batch_size
+        or any(count > samples_seen for count in domain_samples_seen.values())
+    ):
+        raise ContractError("checkpoint training state exceeds its configured bounds")
+    if (
+        state["samples_seen"] != samples_seen
+        or state["domain_samples_seen"] != domain_samples_seen
+    ):
+        raise ContractError("checkpoint sampling metrics do not match its state")
+
+    batches_per_epoch = int(sampling_plan["batches_per_epoch"])
+    epoch_sample_count = int(sampling_plan["epoch_sample_count"])
+    next_batch = state["next_batch_index"]
+    if next_batch > batches_per_epoch:
+        raise ContractError("checkpoint training state batch cursor exceeds its epoch")
+    current_epoch_samples = min(
+        next_batch * train_config.batch_size,
+        epoch_sample_count,
+    )
+    expected_steps = state["epoch"] * batches_per_epoch + next_batch
+    expected_samples = state["epoch"] * epoch_sample_count + current_epoch_samples
+    if state["global_step"] != expected_steps or samples_seen != expected_samples:
+        raise ContractError("checkpoint training state cursor accounting is inconsistent")
+    expected_domain_samples = {
+        domain: state["epoch"]
+        * int(sampling_plan["epoch_domain_sample_counts"][domain])
+        for domain in dataset_domain_counts
+    }
+    current_domain_counts = _weighted_prefix_domain_counts(
+        sampling_plan["epoch_domain_sample_counts"],
+        seed=train_config.seed,
+        epoch=state["epoch"],
+        prefix_size=current_epoch_samples,
+    )
+    for domain, count in current_domain_counts.items():
+        expected_domain_samples[domain] += count
+    if domain_samples_seen != expected_domain_samples:
+        raise ContractError("checkpoint domain sample counts do not match its cursor")
+    if state["global_step"] > train_config.max_steps or not (
+        state["global_step"] == train_config.max_steps
+        or state["global_step"] % train_config.checkpoint_interval == 0
+    ):
+        raise ContractError("checkpoint training state is not at a valid saved step")
+    return sampling_plan_sha256, sampling_policy, dict(domain_samples_seen)
 
 
 def _warm_up_model(
@@ -181,6 +481,7 @@ def evaluate_model(
         raise ContractError("caller dataset fingerprint does not match the tensor dataset")
     if not dataset.verify_image_sha256:
         raise ContractError("release evaluation requires image SHA-256 verification")
+    sample_domains, expected_domain_sample_counts = _evaluation_sample_domains(dataset)
     # Keep the final path component unresolved so _read_checkpoint_file's
     # O_NOFOLLOW guard can reject a checkpoint symlink.
     checkpoint_path = _absolute_path(checkpoint_path)
@@ -188,6 +489,11 @@ def evaluate_model(
     _require_sha256(loaded_checkpoint_sha256, "evaluation checkpoint fingerprint")
     if payload.get("checkpoint_id") != CHECKPOINT_ID:
         raise ContractError("checkpoint kind is not supported by this evaluator")
+    (
+        training_sampling_plan_sha256,
+        training_sampling_policy,
+        training_domain_samples_seen,
+    ) = _checkpoint_sampling_provenance(payload)
     if payload.get("training_split") != "train":
         raise ContractError("evaluation checkpoint was not produced from the train split")
     training_episode_ids = payload.get("training_episode_ids")
@@ -274,6 +580,15 @@ def evaluate_model(
     )
     metric_sums: dict[str, float] = {}
     metric_counts: dict[str, int] = {}
+    per_domain_sums: dict[str, dict[str, float]] = {
+        domain: {} for domain in expected_domain_sample_counts
+    }
+    per_domain_counts: dict[str, dict[str, int]] = {
+        domain: {} for domain in expected_domain_sample_counts
+    }
+    observed_domain_sample_counts = {
+        domain: 0 for domain in expected_domain_sample_counts
+    }
     rendered = 0
     sample_count = 0
     forward_seconds = 0.0
@@ -298,46 +613,56 @@ def evaluate_model(
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             forward_seconds += time.perf_counter() - forward_start
-            losses = trajectory_loss(
-                candidate_xy,
-                candidate_speed,
-                candidate_logits,
-                tensor_batch["target_xy"],
-                tensor_batch["target_speed_mps"],
-                tensor_batch["target_valid"],
-                loss_config,
+            _accumulate_batch_metrics(
+                metric_sums,
+                metric_counts,
+                candidate_xy=candidate_xy,
+                candidate_speed=candidate_speed,
+                candidate_logits=candidate_logits,
+                target_xy=tensor_batch["target_xy"],
+                target_speed=tensor_batch["target_speed_mps"],
+                target_valid=tensor_batch["target_valid"],
                 target_yaw=tensor_batch["target_yaw_rad"],
+                loss_config=loss_config,
             )
             current_batch = int(candidate_xy.shape[0])
             sample_count += current_batch
-            for key in (
-                "loss",
-                "regression_loss",
-                "candidate_score_loss",
-                "oracle_ade_m",
-                "selected_ade_m",
-                "selected_fde_m",
-                "selected_speed_mae_mps",
-                "selected_yaw_mae_rad",
-                "selected_kinematic_speed_mae_mps",
-            ):
-                metric_sums[key] = metric_sums.get(key, 0.0) + float(
-                    losses[key].detach().cpu().item()
-                ) * current_batch
-                metric_counts[key] = metric_counts.get(key, 0) + current_batch
 
-            selected_indices = candidate_logits.argmax(dim=1)
-            selected_xy = _selected(candidate_xy, selected_indices)
-            selected_speed = _selected(candidate_speed, selected_indices)
-            for key, (value, count) in _horizon_sums(
-                selected_xy,
-                selected_speed,
-                tensor_batch["target_xy"],
-                tensor_batch["target_speed_mps"],
-                tensor_batch["target_valid"],
-            ).items():
-                metric_sums[key] = metric_sums.get(key, 0.0) + value
-                metric_counts[key] = metric_counts.get(key, 0) + count
+            raw_sample_ids = batch["sample_id"]
+            if not isinstance(raw_sample_ids, (list, tuple)) or len(
+                raw_sample_ids
+            ) != current_batch:
+                raise ContractError("evaluation batch sample IDs are invalid")
+            positions_by_domain: dict[str, list[int]] = {
+                domain: [] for domain in expected_domain_sample_counts
+            }
+            for position, raw_sample_id in enumerate(raw_sample_ids):
+                sample_id = str(raw_sample_id)
+                domain = sample_domains.get(sample_id)
+                if domain is None:
+                    raise ContractError(
+                        f"evaluation loader returned an unknown sample ID: {sample_id}"
+                    )
+                positions_by_domain[domain].append(position)
+                observed_domain_sample_counts[domain] += 1
+            for domain, positions in positions_by_domain.items():
+                if not positions:
+                    continue
+                indices = torch.tensor(positions, dtype=torch.long, device=device)
+                _accumulate_batch_metrics(
+                    per_domain_sums[domain],
+                    per_domain_counts[domain],
+                    candidate_xy=candidate_xy.index_select(0, indices),
+                    candidate_speed=candidate_speed.index_select(0, indices),
+                    candidate_logits=candidate_logits.index_select(0, indices),
+                    target_xy=tensor_batch["target_xy"].index_select(0, indices),
+                    target_speed=tensor_batch["target_speed_mps"].index_select(
+                        0, indices
+                    ),
+                    target_valid=tensor_batch["target_valid"].index_select(0, indices),
+                    target_yaw=tensor_batch["target_yaw_rad"].index_select(0, indices),
+                    loss_config=loss_config,
+                )
 
             for batch_index in range(current_batch):
                 if rendered >= render_count:
@@ -362,10 +687,27 @@ def evaluate_model(
     wall_seconds = time.perf_counter() - wall_start
     if sample_count == 0:
         raise ContractError("evaluation dataset produced no samples")
+    if observed_domain_sample_counts != expected_domain_sample_counts:
+        raise ContractError("evaluation loader domain sample counts are inconsistent")
     metrics = {
         key: metric_sums[key] / metric_counts[key] for key in sorted(metric_sums)
     }
-    if any(not math.isfinite(value) for value in metrics.values()):
+    per_domain_metrics = {
+        domain: {
+            "sample_count": observed_domain_sample_counts[domain],
+            "metrics": {
+                key: per_domain_sums[domain][key] / per_domain_counts[domain][key]
+                for key in sorted(per_domain_sums[domain])
+            },
+            "metric_counts": per_domain_counts[domain],
+        }
+        for domain in expected_domain_sample_counts
+    }
+    if any(not math.isfinite(value) for value in metrics.values()) or any(
+        not math.isfinite(value)
+        for domain_report in per_domain_metrics.values()
+        for value in domain_report["metrics"].values()
+    ):
         raise FloatingPointError("evaluation produced NaN or Inf")
     report = {
         "evaluation_id": EVALUATION_ID,
@@ -376,12 +718,17 @@ def evaluate_model(
         "checkpoint_sha256": loaded_checkpoint_sha256,
         "model_config_sha256": model_config_sha256,
         "training_dataset_fingerprint_sha256": training_dataset_fingerprint,
+        "training_sampling_plan_sha256": training_sampling_plan_sha256,
+        "training_sampling_policy": training_sampling_policy,
+        "training_domain_samples_seen": training_domain_samples_seen,
         "dataset_fingerprint_sha256": dataset_fingerprint_sha256,
         "corpus_fingerprint_sha256": corpus_fingerprint_sha256,
         "evaluation_split": evaluation_split,
         "training_episode_count": len(training_episode_ids),
         "evaluation_episode_count": len(evaluation_episode_ids),
         "sample_count": sample_count,
+        "domain_sample_counts": observed_domain_sample_counts,
+        "per_domain_metrics": per_domain_metrics,
         "rendered_trajectory_png": rendered,
         "model_parameter_count": parameter_count(model),
         "device": str(device),

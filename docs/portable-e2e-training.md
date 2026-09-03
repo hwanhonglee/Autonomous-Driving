@@ -18,6 +18,8 @@
 7. best-of-K trajectory loss, 실제 backprop/optimizer, checkpoint와 exact resume
 8. `val`/`test` 전용 open-loop evaluator, 차량 중심 trajectory PNG, 공정성 검사가 있는
    report A/B comparison
+9. `carla`/`real` 비율을 고정하는 무복원 weighted-interleave sampler와 domain별 평가
+10. 원본을 풀지 않고 Bench2Drive Mini와 nuScenes mini/CAN 구조·시간 품질을 계측하는 inspector
 
 `portable_e2e.control_flow_smoke`는 실제 영상을 열지 않고 PyTorch, CUDA, ROS 2, CARLA를
 import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode하고 신경망을
@@ -177,9 +179,19 @@ $PORTABLE_E2E_ROOT/tmp/downloads/
 
 공식 legacy Mini manifest의 archive 10/10개를 size와 SHA-256으로 검증하고, 각 archive의
 gzip CRC/EOF와 TAR member/path/type/resource 검사를 full-stream으로 통과했다. 아직 압축을
-풀거나 common10으로 변환하거나 학습하지 않았다. 라이선스 표기가 배포 위치에 따라
-일치하지 않으므로 현재는 **research/parser smoke 전용**이다. 차량용·상업용 데이터나
-재배포 가능한 산출물로 간주하지 않는다. 세부 source와 검증 명령은
+풀지 않고 추가 구조 audit도 수행했다. 10/10 archive에서 프레임 ID와 6-camera 구성이
+정상이었고 총 2,295 frames, 주변 camera JPEG 13,770장, 1600×900 해상도와 calibration
+일치를 확인했다.
+
+하지만 10/10 모두 검사한 annotation 최상위에 인식 가능한 native timestamp field가 없으므로
+`common_10hz_v1`에는
+`NOT_QUALIFIED_COMMON10`이다. 또한 8개 archive의 `bounding_boxes/*/brake`에서 RFC 8259
+표준 JSON number가 아닌 `NaN` 788건을 확인했다. 이를 조용히 0으로 바꾸거나 그대로
+통과시키지 않으며, 명시적 mask/정제 정책과 provenance가 생길 때까지 converter readiness는
+`BLOCKED_FAIL_CLOSED`다. 정책이 생겨도 별도 prepared tree가 전체 `common_10hz_v1`
+validator를 통과하기 전에는 readiness를 열지 않는다. 라이선스 표기가 배포 위치에 따라 일치하지 않으므로 현재는
+**research/parser smoke 전용**이다. 차량용·상업용 데이터나 재배포 가능한 산출물로
+간주하지 않는다. 세부 source와 검증 명령은
 [데이터셋 조사 문서](portable-e2e-datasets.md)를 따른다.
 
 ### 3.3 원본만 격리한 nuScenes v1.0-mini
@@ -200,8 +212,18 @@ $PORTABLE_E2E_ROOT/datasets/raw/nuscenes/v1.0-mini/
 research-only 경로에 두며 Git에 넣거나 재배포하지 않는다. CAN bus expansion은
 780,974,697 bytes, local SHA-256
 `3c68b94c001e8bd05a19886ecb2c6854e0cd69d7005ed9a94d13d45d2951e83f`로 받았고,
-7,834 members의 전체 ZIP payload CRC가 **PASS**했다. 다만 아직 미해제이고 ideal route의
-scene 대응·누락률·timestamp는 adapter에서 검증하지 않았으므로 route 준비 완료는 아니다.
+7,834 members의 전체 ZIP payload CRC가 **PASS**했다.
+
+두 archive를 추출하지 않은 adapter audit도 **구조 PASS**했다. 실제 결과는 10 scenes,
+404 samples, 31,206 sample-data/ego-pose records, 6-camera frame 14,008장이다. camera
+sample-data↔calibration/ego-pose/image join을 검사했으며 LiDAR/RADAR stream semantics는
+평가 범위 밖이다. CAN archive의
+979 scenes 중 mini 10/10이 대응하며 ideal route도 10/10 존재했다. 그러나 404/404 keyframe
+bundle이 20 ms skew 제한을 넘었고 최대 43.251 ms였다. source camera stream은
+11.227~12.010 Hz, 원본 frame 선택만으로 10 Hz를 구성할 때 pooled p99 gap은 150.012 ms,
+stream별 p99 최댓값은 250.0 ms였으며, 최소 scene 길이는 19.149566초다. 따라서 구조와 route
+대응은 확인됐어도 현재
+`common_10hz_v1`에는 **NOT_QUALIFIED**이고 미해제·미변환·미학습 상태다.
 
 ### 3.4 nuPlan v1.1 mini 제한 subset 원본 반입
 
@@ -302,6 +324,35 @@ python -m portable_e2e.control_flow_smoke \
 
 기존 dummy file은 기본적으로 덮어쓰지 않는다. 새로 시작하려면 다른 경로를 쓰고, 정말
 같은 dummy file을 교체하려는 경우에만 `--overwrite-dummy-checkpoint`를 사용한다.
+
+원본 archive를 풀지 않고 adapter 자격을 다시 계측할 때는 각 archive의 full audit JSON도
+함께 묶는다. 출력 JSON은 새 report 경로에 저장하고 원본 archive는 수정하지 않는다.
+
+```bash
+(
+  set -o noclobber
+  python scripts/e2e/inspect_bench2drive_mini_archives.py \
+    /path/to/bench2drive-mini-archive-directory \
+    > /path/to/new-bench2drive-structure-report.json
+)
+
+(
+  set -o noclobber
+  python scripts/e2e/inspect_nuscenes_mini_adapter.py \
+    /path/to/v1.0-mini.tgz \
+    /path/to/can_bus.zip \
+    --nuscenes-audit-report /path/to/v1.0-mini-full-audit.json \
+    --can-bus-audit-report /path/to/can-bus-full-audit.json \
+    > /path/to/new-nuscenes-adapter-report.json
+)
+```
+
+`noclobber`는 같은 이름의 기존 파일을 덮어쓰지 않는다. 두 inspector의 exit 0은 raw 구조
+검사가 통과했다는 뜻이다. Bench2Drive report의 `common_10hz_qualification`과
+`conversion_readiness`, nuScenes report의 `common_10hz_v1`을 각각 확인해야 하며,
+`NOT_QUALIFIED`/`BLOCKED_FAIL_CLOSED`를 학습 가능으로 해석하면 안 된다. report에는 검사한
+archive와 audit report의 절대경로가 들어가므로 원격 verification 폴더에 비공개로 보관하고,
+그대로 `docs/assets`나 Git에 게시하지 않는다.
 
 ## 6. 학습에 넣을 수 있는 데이터 조건
 
@@ -516,9 +567,41 @@ CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.evaluate "$dataset_root
 ## 10. 중단 재개와 A/B 비교
 
 checkpoint에는 model/train/loss config, train split fingerprint, corpus fingerprint,
-train episode ID, runtime ABI와 device ABI가 기록된다. exact resume은 기존 run과 같은
-Python/package/device를 요구하고 `max_steps`만 늘릴 수 있다. CUDA 실행에서는 7절에서 설정한
-`CUBLAS_WORKSPACE_CONFIG=:4096:8`도 유지한다.
+train episode ID, sampling plan hash, domain별 실제 누적 sample 수, runtime ABI와 device ABI가
+기록된다. 현재 trainer/checkpoint schema는 v1이며 호환되지 않는 v0 checkpoint를 자동
+migration하지 않는다. exact resume은 기존 run과 같은 Python/package/device를 요구하고
+`max_steps`만 늘릴 수 있다. CUDA 실행에서는 7절에서 설정한
+`CUBLAS_WORKSPACE_CONFIG=:4096:8`도 유지한다. loader는 8 GiB를 넘는 checkpoint를 해시·
+역직렬화 전에 거부하지만, 이 제한과 `weights_only`가 출처를 모르는 checkpoint를 안전하게
+만들지는 않는다. 기록된 provenance와 digest를 신뢰할 수 있는 파일만 읽는다.
+
+기본 `uniform_without_replacement`의 `uniform`은 전역 permutation을 균등하게 뽑는다는
+뜻이 아니다. 모든 sample을 epoch마다 정확히 한 번 사용하는 정책이며, 두 domain이 있으면
+원래 dataset 비율을 유지하면서 domain 순서를 고르게 interleave한다. 아래 balanced 정책은
+그 원래 비율을 사용자가 지정한 비율로 바꾸며, 복원 추출 없이 큰 domain의 초과분을 제외한다.
+
+CARLA와 real을 함께 넣는 정식 run은 비율을 명시한다. 아래 1:1 예시는 각 domain 안에서만
+epoch별 무작위 순서를 만들고, domain 순서는 weighted interleave한다. 복원 추출하지 않으므로
+작은 domain을 반복 복제하지 않으며, 사용·제외 수와 알고리즘/seed derivation이 `run.json`과
+checkpoint에 기록된다. 임의 시점에 끝난 prefix도 목표 누적량과 최대 1 sample 차이다.
+
+```bash
+CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
+  --run-dir "$PORTABLE_E2E_ROOT/runs/<balanced-run-id>" \
+  --split train \
+  --device cuda:0 \
+  --batch-size 4 \
+  --num-workers 0 \
+  --sampling-policy domain_balanced_without_replacement \
+  --domain-ratio carla=1 \
+  --domain-ratio real=1 \
+  --max-steps 100 \
+  --checkpoint-interval 20
+```
+
+둘 중 한 domain이 없거나 비율을 한 epoch도 만들 수 없으면 시작 전에 거부한다. `2:2` 대신
+최저항인 `1:1`을 사용한다. `--limit-samples`가 앞부분만 잘라 한 domain을 없앨 수 있으므로
+혼합 corpus smoke에서는 validation report의 domain count를 먼저 확인한다.
 
 ```bash
 CUDA_VISIBLE_DEVICES="$gpu_index" python -m portable_e2e.train "$dataset_root" \
@@ -540,6 +623,11 @@ ABI가 처음 run과 정확히 같아야 하며 `max-steps`만 늘릴 수 있다
 동일한 `val` split, sample 수, batch size, device, runtime/hardware로 생성한 두 평가만
 비교할 수 있다.
 
+trainer CLI 출력, evaluation JSON과 comparison JSON에는 run/checkpoint/input report의
+절대경로가 포함될 수 있다. 원본 report는 비공개로 보관한다. `docs/assets`나 Git에 넣기 전에는
+경로를 제거하고 게시용 사본을 다시 검증한다. 생성된 comparison Markdown에는 이 경로를
+출력하지 않는다.
+
 ```bash
 python -m portable_e2e.compare \
   "$PORTABLE_E2E_ROOT/runs/model-a-eval/metrics.json" \
@@ -548,8 +636,10 @@ python -m portable_e2e.compare \
   --output-markdown "$PORTABLE_E2E_ROOT/runs/ab-comparison/comparison.md"
 ```
 
-comparison tool은 dataset/corpus fingerprint, split, sample count, batch size, device,
-runtime/hardware나 metric set이 다르면 공정하지 않다고 거부한다. evaluator는 본 계측 전에
+comparison tool은 dataset/corpus fingerprint, split, 전체 및 domain별 sample count, batch
+size, device, runtime/hardware나 metric set·분모가 다르면 공정하지 않다고 거부한다. 전체
+평균만으로 real 성능 저하를 숨기지 않도록 JSON과 Markdown에 CARLA/real 결과를 따로 낸다.
+각 평가에는 학습 sampling policy/plan hash와 실제 domain 노출 수도 남는다. evaluator는 본 계측 전에
 첫 batch 1개를 `num_workers=0`으로 warm-up하고 그 시간은 forward latency에서 제외한다.
 A/B 비교에서는 warm-up batch/sample 수까지 같아야 하지만 실제 warm-up 소요 시간은 같을
 필요가 없다. runtime에는 PyTorch intra-op/inter-op thread 수와 OMP/MKL thread 환경도
@@ -567,9 +657,10 @@ benchmark를 대신하지 않으며, 이 표도 closed-loop 또는 차량 제어
 1. nuScenes 사용 시점의 dataset 약관을 읽고 프로젝트 용도에 맞는지 확인한다.
 2. 받은 `v1.0-mini` 원본으로 6-camera/calibration/timestamp adapter를 먼저 검증하고,
    route 검증이 필요할 때 version에 맞는 CAN bus expansion을 별도 승인해 받는다.
-3. nuScenes mini는 **schema/adapter smoke 전용**이다. 12 Hz camera를 image 복제·합성
-   없이 10 Hz로 thinning하면 약 166.7 ms gap이 생겨 현재 `common_10hz_v1`의
-   p99 150 ms planning cadence gate를 통과하지 못한다. 실측 후 별도 profile/contract를
+3. nuScenes mini는 **schema/adapter smoke 전용**이다. image 복제·합성 없이 selection-only
+   10 Hz로 thinning한 실측은 pooled p99 150.012 ms, stream별 p99 최댓값 250.0 ms라 현재
+   `common_10hz_v1`의 p99 150 ms planning cadence gate를 통과하지 못한다. 이 실측값을
+   바탕으로 별도 profile/contract를
    검토·고정하기 전에는 정식 common10 학습 corpus에 넣지 않고, 20초 scene를 여러 개
    이어 붙여 30초라고 만들지 않는다.
 4. nuPlan mini DB, map과 camera group 0의 raw archive 반입·전체 payload CRC 및 archive
@@ -696,15 +787,16 @@ rsync -rcn --delete --itemize-changes \
 
 현재 다음 순서가 안전하다.
 
-1. Bench2Drive Mini를 별도 staging에 풀고 parser/common10 변환 재현성만 검사
+1. 완료: Bench2Drive Mini 추출 없는 구조/time/non-finite audit와 차단 사유 기록
 2. legacy 11쌍 adapter를 만들되 4/5 Hz `NOT_QUALIFIED`를 그대로 기록
 3. 신규 CARLA 10 Hz straight/turn/stop 자료를 36.4초 이상 수집하고 planning validation
-4. 격리된 nuScenes mini의 약관 확인 후 schema/real-adapter smoke
+4. 완료: 격리된 nuScenes mini/CAN 추출 없는 schema·timing·route audit
    (`common_10hz_v1` planning은 별도 profile/contract 전까지 불통과)
-5. 내일 승인 후 전용 venv package 설치와 CPU one-step
-6. GPU가 실제 idle일 때 단일 GPU one-step과 val one-sample 평가
-7. 32~128 sample overfit → M1 baseline → 같은 조건의 model A/B
-8. CARLA 30 km/h closed-loop → real replay/shadow → 별도 60 km/h gate
+5. nuPlan 약관·intended-use 승인 후 필요한 7-log staging과 DB join/adapter smoke
+6. 내일 별도 승인 후 전용 venv package 설치와 CPU one-step
+7. GPU가 실제 idle일 때 단일 GPU one-step과 val one-sample 평가
+8. 32~128 sample overfit → M1 baseline → 같은 조건의 model A/B
+9. CARLA 30 km/h closed-loop → real replay/shadow → 별도 60 km/h gate
 
 실차용이라고 부르려면 최소한 provenance가 고정된 train/val/test, unseen real replay,
 Autoware adapter의 reject/fallback, independent safety gate, target PC 10 Hz latency, CARLA

@@ -40,11 +40,14 @@ verifier. Supply the exact object size and a locally recorded SHA-256. Add
 and CRC without extracting anything.
 
 ```bash
-CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
-  python3 scripts/e2e/verify_zip_archive.py /path/to/archive.zip \
-    --expected-size 123456789 \
-    --expected-sha256 '<64-lowercase-hex-characters>' \
-    --verify-payload-crc > /path/to/new-report.json
+(
+  set -o noclobber
+  CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+    python3 scripts/e2e/verify_zip_archive.py /path/to/archive.zip \
+      --expected-size 123456789 \
+      --expected-sha256 '<64-lowercase-hex-characters>' \
+      --verify-payload-crc > /path/to/new-report.json
+)
 ```
 
 The verifier fails closed on a changed file, symlink, unsafe/colliding path,
@@ -59,11 +62,14 @@ devices, sparse/vendor size overrides, duplicate portable paths, CRC/EOF
 failures, and configured expansion/resource limits.
 
 ```bash
-CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
-  python3 scripts/e2e/verify_tar_archive.py /path/to/archive.tgz \
-    --expected-size 123456789 \
-    --expected-sha256 '<64-lowercase-hex-characters>' \
-    > /path/to/new-report.json
+(
+  set -o noclobber
+  CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+    python3 scripts/e2e/verify_tar_archive.py /path/to/archive.tgz \
+      --expected-size 123456789 \
+      --expected-sha256 '<64-lowercase-hex-characters>' \
+      > /path/to/new-report.json
+)
 ```
 
 An extracted or locally collected dataset tree can be hashed and compared with
@@ -72,10 +78,13 @@ exactly the same regular-file paths and bytes: missing, changed, and extra files
 all fail.
 
 ```bash
-CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
-  python3 scripts/e2e/verify_tree_manifest.py \
-    /path/to/source_tree /path/to/copied_tree \
-    > /path/to/new-tree-comparison.json
+(
+  set -o noclobber
+  CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+    python3 scripts/e2e/verify_tree_manifest.py \
+      /path/to/source_tree /path/to/copied_tree \
+      > /path/to/new-tree-comparison.json
+)
 ```
 
 For an SSH transfer the two trees are on different machines, so generate one
@@ -90,6 +99,32 @@ accepted as arbitrary sample metadata; the validator reconstructs the fixed
 1 m-spaced, 120 m look-ahead local route from the hashed episode route and the
 anchor ego pose. Raw-source terms and artifact authenticity still require a
 human release review.
+
+Two source-specific, dependency-free inspectors can audit the downloaded raw
+archives without extraction or image decoding:
+
+```bash
+(
+  set -o noclobber
+  python3 scripts/e2e/inspect_bench2drive_mini_archives.py \
+    /path/to/exact-mini-10-archive-directory > /path/to/new-b2d-report.json
+)
+
+(
+  set -o noclobber
+  python3 scripts/e2e/inspect_nuscenes_mini_adapter.py \
+    /path/to/v1.0-mini.tgz /path/to/can_bus.zip \
+    --nuscenes-audit-report /path/to/tar-full-audit.json \
+    --can-bus-audit-report /path/to/zip-full-audit.json \
+    > /path/to/new-nuscenes-report.json
+)
+```
+
+Exit code zero means the raw structure passed; it does not imply Common-10Hz
+qualification. Read Bench2Drive's `common_10hz_qualification` and
+`conversion_readiness`, or nuScenes' `common_10hz_v1`, respectively. Reports
+contain absolute source paths; keep raw reports private unless paths are
+explicitly scrubbed and the publication copy is revalidated.
 
 ## Real image-based trainer
 
@@ -111,17 +146,47 @@ python -m portable_e2e.evaluate /path/to/common10_dataset \
   --device cpu
 ```
 
+A validated corpus containing both domains can use deterministic finite
+without-replacement balancing. Domain indices are shuffled independently, then
+weighted-interleaved so every prefix stays within one sample of its target
+exposure. Quotas, excluded samples, seed derivation, and observed counts are
+bound to the v1 run/checkpoint schema.
+
+The default `uniform_without_replacement` policy likewise uses every sample
+exactly once per epoch, but its name does not mean a uniformly random global
+permutation. With two domains it preserves the dataset's original proportions
+while smoothly interleaving domain order. The balanced policy replaces those
+proportions with explicit ratios and records any unused majority-domain samples.
+
+```bash
+python -m portable_e2e.train /path/to/common10_dataset \
+  --run-dir /path/to/new_balanced_run \
+  --split train \
+  --device cpu \
+  --sampling-policy domain_balanced_without_replacement \
+  --domain-ratio carla=1 \
+  --domain-ratio real=1
+```
+
 GPU use is never automatic: only an explicit `--device cuda:<index>` can create
 a CUDA context. Existing run or evaluation directories are not overwritten.
 Evaluation runs one unmeasured batch warm-up and records its batch/sample count.
 Compared reports must have identical warm-up counts, batch size, device,
-runtime—including PyTorch/OMP/MKL thread settings—and hardware. Forward latency
-is reference-only because this workflow does not reserve shared-system resources
-or scheduler capacity.
+runtime—including PyTorch/OMP/MKL thread settings—hardware, and evaluation
+domain composition. Aggregate and per-domain metrics/counts are both validated
+and shown; the report also carries the training sampling plan hash, policy, and
+observed domain exposure. Forward latency is reference-only because this
+workflow does not reserve shared-system resources or scheduler capacity.
 Checkpoint loading requires a PyTorch release that supports restricted
-`weights_only=True` loading, verifies the bytes it actually loads, and rejects
-symlinks. A digest still proves identity rather than publisher trust, so use
-only checkpoints whose recorded provenance you recognize.
+`weights_only=True` loading. The loader rejects symlinks and files larger than
+8 GiB before hashing or deserialization, then verifies the bytes read from the
+same open file. A digest still proves identity rather than publisher trust, so
+use only checkpoints whose recorded provenance you recognize.
+
+Trainer CLI output, evaluation JSON, and comparison JSON may contain absolute
+run, checkpoint, or input-report paths. Keep raw reports private. Before adding
+generated JSON to `docs/assets` or Git, scrub those paths and revalidate the
+publication copy; generated comparison Markdown omits them.
 
 The canonical data and model configurations are:
 

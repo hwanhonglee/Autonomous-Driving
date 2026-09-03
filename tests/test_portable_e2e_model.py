@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import replace
 import hashlib
 import inspect
@@ -79,7 +80,11 @@ def _calibration() -> tuple[tuple[float, ...], ...]:
 
 
 def _example(
-    root: Path, sequence_index: int, *, episode_id: str = "episode"
+    root: Path,
+    sequence_index: int,
+    *,
+    episode_id: str = "episode",
+    domain: str = "carla",
 ) -> TrainingExample:
     camera_paths = []
     camera_hashes = []
@@ -109,6 +114,7 @@ def _example(
         camera_calibration=_calibration(),
         route_points_base_xy_m=((0.0, 0.0), (20.0, 0.0)),
         rig_id="unit_rig",
+        domain=domain,
     )
 
 
@@ -395,6 +401,187 @@ def test_runtime_abi_records_safe_versions_and_thread_environment(
     assert runtime["mkl_num_threads"] == "5"
 
 
+def test_domain_balanced_epoch_is_deterministic_finite_and_without_replacement() -> None:
+    domain_indices = {
+        "carla": (0, 1, 2, 3, 4),
+        "real": (5, 6, 7),
+    }
+    config = TrainConfig(
+        seed=17,
+        batch_size=2,
+        sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        domain_ratios=(("carla", 1), ("real", 1)),
+    )
+    plan = train_module._sampling_plan(domain_indices, config)
+    first = train_module._epoch_batches(
+        8,
+        batch_size=config.batch_size,
+        seed=config.seed,
+        epoch=4,
+        domain_indices=domain_indices,
+        sampling_plan=plan,
+    )
+    repeated = train_module._epoch_batches(
+        8,
+        batch_size=config.batch_size,
+        seed=config.seed,
+        epoch=4,
+        domain_indices=domain_indices,
+        sampling_plan=plan,
+    )
+    flattened = tuple(index for batch in first for index in batch)
+
+    assert first == repeated
+    assert len(first) == 3
+    assert len(flattened) == len(set(flattened)) == 6
+    assert sum(index < 5 for index in flattened) == 3
+    assert sum(index >= 5 for index in flattened) == 3
+    for batch in first:
+        assert sum(index < 5 for index in batch) == 1
+        assert sum(index >= 5 for index in batch) == 1
+    for prefix_size in range(1, len(flattened) + 1):
+        carla_count = sum(index < 5 for index in flattened[:prefix_size])
+        assert abs(carla_count - prefix_size / 2.0) <= 0.5
+    assert plan == {
+        "policy": train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        "order_algorithm": train_module.BALANCED_ORDER_ALGORITHM,
+        "seed_derivation": "sha256_seed_epoch_named_stream_v1",
+        "known_domains": ["carla", "real"],
+        "domain_ratios": {"carla": 1, "real": 1},
+        "replacement": False,
+        "dataset_domain_counts": {"carla": 5, "real": 3},
+        "epoch_domain_sample_counts": {"carla": 3, "real": 3},
+        "epoch_discarded_sample_counts": {"carla": 2, "real": 0},
+        "epoch_sample_count": 6,
+        "batch_size": 2,
+        "batches_per_epoch": 3,
+    }
+
+
+def test_default_uniform_epoch_is_proportionally_interleaved_and_fingerprinted() -> None:
+    size = 7
+    kwargs = {"batch_size": 3, "seed": 29, "epoch": 2}
+    domain_indices = {"carla": (0, 1, 2, 3), "real": (4, 5, 6)}
+    uniform_config = TrainConfig(seed=29, batch_size=3)
+    uniform_plan = train_module._sampling_plan(domain_indices, uniform_config)
+    planned = train_module._epoch_batches(
+        size,
+        **kwargs,
+        domain_indices=domain_indices,
+        sampling_plan=uniform_plan,
+    )
+    balanced_plan = train_module._sampling_plan(
+        domain_indices,
+        TrainConfig(
+            seed=29,
+            batch_size=3,
+            sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+            domain_ratios=(("carla", 1), ("real", 1)),
+        ),
+    )
+
+    flattened = tuple(index for batch in planned for index in batch)
+    assert len(flattened) == len(set(flattened)) == size
+    for prefix_size in range(1, size + 1):
+        carla_count = sum(index < 4 for index in flattened[:prefix_size])
+        assert train_module._weighted_prefix_domain_counts(
+            uniform_plan["epoch_domain_sample_counts"],
+            seed=29,
+            epoch=2,
+            prefix_size=prefix_size,
+        ) == {
+            "carla": carla_count,
+            "real": prefix_size - carla_count,
+        }
+    assert train_module._canonical_sha256(uniform_plan) != (
+        train_module._canonical_sha256(balanced_plan)
+    )
+    assert uniform_plan["order_algorithm"] == train_module.UNIFORM_ORDER_ALGORITHM
+    assert uniform_plan["seed_derivation"] == "sha256_seed_epoch_named_stream_v1"
+
+
+def test_weighted_interleave_keeps_a_two_to_one_ratio_in_each_full_batch() -> None:
+    domain_indices = {
+        "carla": tuple(range(8)),
+        "real": tuple(range(8, 12)),
+    }
+    config = TrainConfig(
+        seed=11,
+        batch_size=3,
+        sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        domain_ratios=(("carla", 2), ("real", 1)),
+    )
+    plan = train_module._sampling_plan(domain_indices, config)
+    batches = train_module._epoch_batches(
+        12,
+        batch_size=config.batch_size,
+        seed=config.seed,
+        epoch=0,
+        domain_indices=domain_indices,
+        sampling_plan=plan,
+    )
+    flattened = tuple(index for batch in batches for index in batch)
+
+    assert len(flattened) == len(set(flattened)) == 12
+    for batch in batches:
+        assert sum(index < 8 for index in batch) == 2
+        assert sum(index >= 8 for index in batch) == 1
+    for prefix_size in range(1, len(flattened) + 1):
+        carla_count = sum(index < 8 for index in flattened[:prefix_size])
+        assert abs(carla_count - prefix_size * 2.0 / 3.0) <= 1.0
+        assert train_module._weighted_prefix_domain_counts(
+            plan["epoch_domain_sample_counts"],
+            seed=config.seed,
+            epoch=0,
+            prefix_size=prefix_size,
+        ) == {
+            "carla": carla_count,
+            "real": prefix_size - carla_count,
+        }
+
+
+def test_domain_balanced_policy_fails_closed_on_missing_unknown_or_invalid_ratio() -> None:
+    balanced = TrainConfig(
+        sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        domain_ratios=(("carla", 1), ("real", 1)),
+    )
+    with pytest.raises(ContractError, match="requires both carla and real"):
+        train_module._sampling_plan({"carla": (0, 1)}, balanced)
+    with pytest.raises(ContractError, match="unknown domains"):
+        train_module._sampling_plan(
+            {"carla": (0,), "real": (1,), "unreviewed": (2,)}, balanced
+        )
+    with pytest.raises(ContractError, match="cannot form one"):
+        train_module._sampling_plan(
+            {"carla": (0,), "real": (1,)},
+            TrainConfig(
+                sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+                domain_ratios=(("carla", 2), ("real", 1)),
+            ),
+        )
+    with pytest.raises(ContractError, match="lowest terms"):
+        TrainConfig(
+            sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+            domain_ratios=(("carla", 2), ("real", 2)),
+        ).validate()
+    with pytest.raises(ContractError, match="exactly carla and real"):
+        TrainConfig(
+            sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+            domain_ratios=(("carla", 1),),
+        ).validate()
+
+
+def test_domain_ratio_cli_is_canonical_and_rejects_duplicates() -> None:
+    assert train_module._parse_domain_ratios(("real=3", "carla=7")) == (
+        ("carla", 7),
+        ("real", 3),
+    )
+    with pytest.raises(ContractError, match="duplicate"):
+        train_module._parse_domain_ratios(("carla=1", "carla=2"))
+    with pytest.raises(ContractError, match="unknown"):
+        train_module._parse_domain_ratios(("synthetic=1",))
+
+
 def test_evaluation_warms_up_without_counting_warmup_as_a_sample(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -405,11 +592,24 @@ def test_evaluation_warms_up_without_counting_warmup_as_a_sample(
         split="train",
     )
     validation_dataset = Common10TorchDataset(
-        tuple(_example(tmp_path, index, episode_id="validation") for index in range(2)),
+        tuple(
+            _example(
+                tmp_path,
+                index,
+                episode_id="validation",
+                domain=("carla", "real")[index],
+            )
+            for index in range(2)
+        ),
         model_config,
         split="val",
     )
     model = PerspectiveTrajectoryModel(model_config)
+    train_config = TrainConfig(batch_size=1, max_steps=1, checkpoint_interval=1)
+    sampling_plan = train_module._sampling_plan(
+        {"carla": (0,)},
+        train_config,
+    )
     payload = {
         "checkpoint_id": train_module.CHECKPOINT_ID,
         "training_split": "train",
@@ -418,7 +618,21 @@ def test_evaluation_warms_up_without_counting_warmup_as_a_sample(
         "corpus_fingerprint_sha256": SHARED_CORPUS_SHA256,
         "model_config": model_config.to_dict(),
         "model_config_sha256": train_module._canonical_sha256(model_config.to_dict()),
+        "train_config": train_config.to_dict(),
         "loss_config": TrajectoryLossConfig().to_dict(),
+        "sampling_plan": sampling_plan,
+        "sampling_plan_sha256": train_module._canonical_sha256(sampling_plan),
+        "sampling_metrics": {
+            "samples_seen": 1,
+            "domain_samples_seen": {"carla": 1},
+        },
+        "state": {
+            "epoch": 0,
+            "next_batch_index": 1,
+            "global_step": 1,
+            "samples_seen": 1,
+            "domain_samples_seen": {"carla": 1},
+        },
         "model_state_dict": model.state_dict(),
     }
     monkeypatch.setattr(
@@ -443,6 +657,168 @@ def test_evaluation_warms_up_without_counting_warmup_as_a_sample(
     assert report["timing"]["warmup_samples"] == 2
     assert report["timing"]["warmup_seconds"] > 0.0
     assert all(count == 2 for count in report["metric_counts"].values())
+    assert report["training_sampling_plan_sha256"] == (
+        train_module._canonical_sha256(sampling_plan)
+    )
+    assert report["training_sampling_policy"] == (
+        train_module.UNIFORM_SAMPLING_POLICY
+    )
+    assert report["training_domain_samples_seen"] == {"carla": 1}
+    assert report["domain_sample_counts"] == {"carla": 1, "real": 1}
+    for domain in ("carla", "real"):
+        domain_report = report["per_domain_metrics"][domain]
+        assert domain_report["sample_count"] == 1
+        assert set(evaluate_module.CORE_METRIC_NAMES) <= set(domain_report["metrics"])
+        assert all(
+            domain_report["metric_counts"][name] == 1
+            for name in evaluate_module.CORE_METRIC_NAMES
+        )
+    for name, aggregate in report["metrics"].items():
+        weighted = sum(
+            domain_report["metrics"][name]
+            * domain_report["metric_counts"][name]
+            for domain_report in report["per_domain_metrics"].values()
+            if name in domain_report["metrics"]
+        ) / report["metric_counts"][name]
+        assert aggregate == pytest.approx(weighted, rel=1.0e-5, abs=1.0e-6)
+
+
+def test_evaluation_revalidates_checkpoint_sampling_plan_and_cursor() -> None:
+    config = TrainConfig(
+        seed=13,
+        batch_size=2,
+        max_steps=1,
+        checkpoint_interval=1,
+        sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        domain_ratios=(("carla", 1), ("real", 1)),
+    )
+    plan = train_module._sampling_plan(
+        {"carla": (0, 1, 2, 3), "real": (4, 5)},
+        config,
+    )
+    payload = {
+        "train_config": config.to_dict(),
+        "sampling_plan": plan,
+        "sampling_plan_sha256": train_module._canonical_sha256(plan),
+        "sampling_metrics": {
+            "samples_seen": 2,
+            "domain_samples_seen": {"carla": 1, "real": 1},
+        },
+        "state": {
+            "epoch": 0,
+            "next_batch_index": 1,
+            "global_step": 1,
+            "samples_seen": 2,
+            "domain_samples_seen": {"carla": 1, "real": 1},
+        },
+    }
+
+    assert evaluate_module._checkpoint_sampling_provenance(payload)[1:] == (
+        train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+        {"carla": 1, "real": 1},
+    )
+
+    bad_algorithm = copy.deepcopy(payload)
+    bad_algorithm["sampling_plan"]["order_algorithm"] = "random_domains_v0"
+    bad_algorithm["sampling_plan_sha256"] = train_module._canonical_sha256(
+        bad_algorithm["sampling_plan"]
+    )
+    with pytest.raises(ContractError, match="validated training config"):
+        evaluate_module._checkpoint_sampling_provenance(bad_algorithm)
+
+    unreduced_ratio = copy.deepcopy(payload)
+    unreduced_ratio["train_config"]["domain_ratios"] = (
+        ("carla", 2),
+        ("real", 2),
+    )
+    with pytest.raises(ContractError, match="lowest terms"):
+        evaluate_module._checkpoint_sampling_provenance(unreduced_ratio)
+
+    bad_cursor = copy.deepcopy(payload)
+    bad_cursor["state"]["next_batch_index"] = 2
+    with pytest.raises(ContractError, match="configured bounds"):
+        evaluate_module._checkpoint_sampling_provenance(bad_cursor)
+
+    bad_domain_cursor = copy.deepcopy(payload)
+    bad_domain_cursor["sampling_metrics"]["domain_samples_seen"] = {
+        "carla": 2,
+        "real": 0,
+    }
+    bad_domain_cursor["state"]["domain_samples_seen"] = {"carla": 2, "real": 0}
+    with pytest.raises(ContractError, match="do not match its cursor"):
+        evaluate_module._checkpoint_sampling_provenance(bad_domain_cursor)
+
+    invalid_save_step = copy.deepcopy(payload)
+    invalid_save_step["train_config"]["max_steps"] = 4
+    invalid_save_step["train_config"]["checkpoint_interval"] = 2
+    with pytest.raises(ContractError, match="valid saved step"):
+        evaluate_module._checkpoint_sampling_provenance(invalid_save_step)
+
+
+@pytest.mark.parametrize(
+    "failure",
+    (MemoryError("memory"), OverflowError("overflow"), RecursionError("depth")),
+)
+def test_evaluation_wraps_sampling_plan_canonicalization_resource_errors(
+    monkeypatch: pytest.MonkeyPatch, failure: BaseException
+) -> None:
+    def fail_canonicalization(value: object) -> str:
+        del value
+        raise failure
+
+    monkeypatch.setattr(evaluate_module, "_canonical_sha256", fail_canonicalization)
+    with pytest.raises(ContractError, match="sampling plan is not canonical JSON"):
+        evaluate_module._checkpoint_sampling_provenance(
+            {
+                "sampling_plan": {"policy": train_module.UNIFORM_SAMPLING_POLICY},
+                "sampling_plan_sha256": "a" * 64,
+            }
+        )
+
+
+def test_evaluation_rejects_forged_uniform_domain_exposure_without_large_allocations() -> None:
+    config = TrainConfig(
+        seed=13,
+        batch_size=2,
+        max_steps=1,
+        checkpoint_interval=1,
+    )
+    counts = {"carla": 10**12, "real": 10**12}
+    plan = train_module._sampling_plan_from_counts(counts, config)
+    first_batch_counts = train_module._weighted_prefix_domain_counts(
+        plan["epoch_domain_sample_counts"],
+        seed=config.seed,
+        epoch=0,
+        prefix_size=2,
+    )
+    payload = {
+        "train_config": config.to_dict(),
+        "sampling_plan": plan,
+        "sampling_plan_sha256": train_module._canonical_sha256(plan),
+        "sampling_metrics": {
+            "samples_seen": 2,
+            "domain_samples_seen": first_batch_counts,
+        },
+        "state": {
+            "epoch": 0,
+            "next_batch_index": 1,
+            "global_step": 1,
+            "samples_seen": 2,
+            "domain_samples_seen": first_batch_counts,
+        },
+    }
+
+    assert evaluate_module._checkpoint_sampling_provenance(payload)[2] == (
+        first_batch_counts
+    )
+    forged = copy.deepcopy(payload)
+    forged_counts = {"carla": 0, "real": 2}
+    if forged_counts == first_batch_counts:
+        forged_counts = {"carla": 2, "real": 0}
+    forged["sampling_metrics"]["domain_samples_seen"] = forged_counts
+    forged["state"]["domain_samples_seen"] = forged_counts
+    with pytest.raises(ContractError, match="do not match its cursor"):
+        evaluate_module._checkpoint_sampling_provenance(forged)
 
 
 def test_torch_dataset_rechecks_image_hash_at_decode(tmp_path: Path) -> None:
@@ -685,6 +1061,103 @@ def test_resume_matches_uninterrupted_model_optimizer_and_rng(tmp_path: Path) ->
 
 @pytest.mark.skipif(
     not HAS_SECURE_TORCH_LOAD,
+    reason="secure balanced exact-resume comparison requires weights-only loading",
+)
+def test_domain_balanced_resume_matches_uninterrupted_and_records_counts(
+    tmp_path: Path,
+) -> None:
+    model_config = _small_model_config()
+    examples = tuple(
+        _example(
+            tmp_path,
+            index,
+            episode_id="carla_training",
+            domain="carla",
+        )
+        for index in range(3)
+    ) + tuple(
+        _example(
+            tmp_path,
+            index,
+            episode_id="real_training",
+            domain="real",
+        )
+        for index in range(2)
+    )
+    dataset = Common10TorchDataset(examples, model_config, split="train")
+    loss_config = TrajectoryLossConfig()
+
+    def balanced_config(max_steps: int) -> TrainConfig:
+        return TrainConfig(
+            seed=7,
+            batch_size=2,
+            learning_rate=1.0e-3,
+            max_steps=max_steps,
+            checkpoint_interval=1,
+            sampling_policy=train_module.DOMAIN_BALANCED_SAMPLING_POLICY,
+            domain_ratios=(("carla", 1), ("real", 1)),
+        )
+
+    common = {
+        "dataset_fingerprint_sha256": dataset.fingerprint_sha256,
+        "corpus_fingerprint_sha256": SHARED_CORPUS_SHA256,
+        "model_config": model_config,
+        "loss_config": loss_config,
+    }
+    train_model(
+        dataset,
+        run_dir=tmp_path / "balanced_uninterrupted",
+        train_config=balanced_config(4),
+        **common,
+    )
+    train_model(
+        dataset,
+        run_dir=tmp_path / "balanced_resumed",
+        train_config=balanced_config(1),
+        **common,
+    )
+    train_model(
+        dataset,
+        run_dir=tmp_path / "balanced_resumed",
+        train_config=balanced_config(4),
+        resume=True,
+        **common,
+    )
+
+    uninterrupted = torch.load(
+        tmp_path / "balanced_uninterrupted" / "checkpoints" / "latest.pt",
+        map_location="cpu",
+        weights_only=True,
+    )
+    resumed = torch.load(
+        tmp_path / "balanced_resumed" / "checkpoints" / "latest.pt",
+        map_location="cpu",
+        weights_only=True,
+    )
+    assert uninterrupted["state"] == resumed["state"]
+    assert resumed["state"]["domain_samples_seen"] == {"carla": 4, "real": 4}
+    assert resumed["sampling_metrics"] == {
+        "samples_seen": 8,
+        "domain_samples_seen": {"carla": 4, "real": 4},
+    }
+    assert resumed["sampling_plan"]["replacement"] is False
+    assert resumed["sampling_plan"]["epoch_discarded_sample_counts"] == {
+        "carla": 1,
+        "real": 0,
+    }
+    for name, value in uninterrupted["model_state_dict"].items():
+        assert torch.equal(value, resumed["model_state_dict"][name]), name
+    metric_rows = [
+        json.loads(line)
+        for line in (
+            tmp_path / "balanced_resumed" / "metrics.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+    ]
+    assert metric_rows[-1]["domain_samples_seen"] == {"carla": 4, "real": 4}
+
+
+@pytest.mark.skipif(
+    not HAS_SECURE_TORCH_LOAD,
     reason="secure evaluation requires torch.load(weights_only=...)",
 )
 def test_evaluation_rejects_episode_overlap_with_training(tmp_path: Path) -> None:
@@ -831,4 +1304,33 @@ def test_safe_checkpoint_loader_rejects_final_symlink(
     monkeypatch.setattr(train_module.torch, "load", fake_secure_load)
     with pytest.raises(ContractError, match="cannot open checkpoint safely"):
         train_module._read_checkpoint_file(checkpoint, torch.device("cpu"))
+    assert not load_called
+
+
+def test_safe_checkpoint_loader_rejects_oversized_sparse_file_before_load(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint = tmp_path / "oversized-checkpoint.pt"
+    with checkpoint.open("wb") as stream:
+        stream.truncate(train_module.MAX_CHECKPOINT_FILE_BYTES + 1)
+    hash_called = False
+    load_called = False
+
+    def fake_sha256(*args: object, **kwargs: object):
+        del args, kwargs
+        nonlocal hash_called
+        hash_called = True
+        raise AssertionError("oversized checkpoint must not be hashed")
+
+    def fake_secure_load(stream, *, map_location=None, weights_only=True):
+        del stream, map_location, weights_only
+        nonlocal load_called
+        load_called = True
+        return {}
+
+    monkeypatch.setattr(train_module.hashlib, "sha256", fake_sha256)
+    monkeypatch.setattr(train_module.torch, "load", fake_secure_load)
+    with pytest.raises(ContractError, match="checkpoint size .* exceeds limit"):
+        train_module._read_checkpoint_file(checkpoint, torch.device("cpu"))
+    assert not hash_called
     assert not load_called

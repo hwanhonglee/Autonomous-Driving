@@ -8,6 +8,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -49,6 +50,21 @@ CAPTURE_PHASE_ORDER = (
     "stationary_tail",
 )
 
+# These are the CARLA 0.9.15 LocalPlanner defaults used by the collector before
+# the controls below became explicit CLI options.  Keep them stable so existing
+# commands retain the same 20 Hz behavior while every new episode discloses the
+# exact expert-controller contract.
+BASIC_AGENT_CONTROL_DEFAULTS = {
+    "base_min_distance_m": 3.0,
+    "distance_ratio_s": 0.5,
+    "lateral_pid_kp": 1.95,
+    "lateral_pid_ki": 0.05,
+    "lateral_pid_kd": 0.2,
+    "lateral_pid_dt_sec": 1.0 / 20.0,
+    "max_steering": 0.8,
+    "lane_offset_m": 0.0,
+}
+
 
 class CollectionError(RuntimeError):
     """Raised when a dataset cannot satisfy its capture contract."""
@@ -86,6 +102,173 @@ class CatalogGoalStatus:
     reached: bool
     remaining_route_m: float
     planar_distance_m: float
+
+
+def basic_agent_control_configuration(
+    args: argparse.Namespace, sampling_resolution_m: float
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resolve and validate the exact BasicAgent/LocalPlanner control options.
+
+    ``getattr`` fallbacks intentionally support older programmatic Namespace
+    fixtures.  The fallback values match the pre-option CARLA 0.9.15 behavior.
+    """
+    physics_hz = float(getattr(args, "physics_hz", 20.0))
+    target_speed_kmh = float(getattr(args, "target_speed_kmh", 9.0))
+    base_min_distance_m = float(
+        getattr(
+            args,
+            "basic_agent_base_min_distance_m",
+            BASIC_AGENT_CONTROL_DEFAULTS["base_min_distance_m"],
+        )
+    )
+    distance_ratio_s = float(
+        getattr(
+            args,
+            "basic_agent_distance_ratio",
+            BASIC_AGENT_CONTROL_DEFAULTS["distance_ratio_s"],
+        )
+    )
+    lateral_pid_kp = float(
+        getattr(
+            args,
+            "basic_agent_lateral_kp",
+            BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_kp"],
+        )
+    )
+    lateral_pid_ki = float(
+        getattr(
+            args,
+            "basic_agent_lateral_ki",
+            BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_ki"],
+        )
+    )
+    lateral_pid_kd = float(
+        getattr(
+            args,
+            "basic_agent_lateral_kd",
+            BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_kd"],
+        )
+    )
+    max_steering = float(
+        getattr(
+            args,
+            "basic_agent_max_steering",
+            BASIC_AGENT_CONTROL_DEFAULTS["max_steering"],
+        )
+    )
+    lane_offset_m = float(
+        getattr(
+            args,
+            "basic_agent_lane_offset_m",
+            BASIC_AGENT_CONTROL_DEFAULTS["lane_offset_m"],
+        )
+    )
+    sampling_resolution_m = float(sampling_resolution_m)
+
+    finite_values = {
+        "physics_hz": physics_hz,
+        "target_speed_kmh": target_speed_kmh,
+        "sampling_resolution_m": sampling_resolution_m,
+        "basic_agent_base_min_distance_m": base_min_distance_m,
+        "basic_agent_distance_ratio": distance_ratio_s,
+        "basic_agent_lateral_kp": lateral_pid_kp,
+        "basic_agent_lateral_ki": lateral_pid_ki,
+        "basic_agent_lateral_kd": lateral_pid_kd,
+        "basic_agent_max_steering": max_steering,
+        "basic_agent_lane_offset_m": lane_offset_m,
+    }
+    invalid_finite = [
+        name for name, value in finite_values.items() if not math.isfinite(value)
+    ]
+    if invalid_finite:
+        raise CollectionError(
+            "BasicAgent control values must be finite: " + ", ".join(invalid_finite)
+        )
+    if physics_hz <= 0.0 or sampling_resolution_m <= 0.0 or target_speed_kmh <= 0.0:
+        raise CollectionError(
+            "BasicAgent physics Hz, sampling resolution, and target speed must be positive"
+        )
+    if base_min_distance_m < 0.0 or distance_ratio_s < 0.0:
+        raise CollectionError(
+            "BasicAgent waypoint purge base distance and distance ratio must be "
+            "non-negative"
+        )
+    if lateral_pid_kp <= 0.0:
+        raise CollectionError("BasicAgent lateral PID Kp must be positive")
+    if lateral_pid_ki < 0.0 or lateral_pid_kd < 0.0:
+        raise CollectionError("BasicAgent lateral PID Ki and Kd must be non-negative")
+    if not 0.0 < max_steering <= 1.0:
+        raise CollectionError(
+            "BasicAgent maximum steering must be in the normalized range (0, 1]"
+        )
+
+    lateral_pid = {
+        "K_P": lateral_pid_kp,
+        "K_I": lateral_pid_ki,
+        "K_D": lateral_pid_kd,
+        # Preserve the upstream LocalPlanner default.  The existing collector's
+        # top-level opt_dict dt did not rewrite this nested controller value.
+        "dt": BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_dt_sec"],
+    }
+    options = {
+        "dt": 1.0 / physics_hz,
+        "target_speed": target_speed_kmh,
+        "sampling_resolution": sampling_resolution_m,
+        "base_min_distance": base_min_distance_m,
+        "distance_ratio": distance_ratio_s,
+        "lateral_control_dict": lateral_pid,
+        "max_steering": max_steering,
+        "offset": lane_offset_m,
+    }
+    contract = {
+        "provider": "CARLA PythonAPI BasicAgent",
+        "option_injection": "BasicAgent(..., opt_dict=effective_opt_dict)",
+        "effective_opt_dict": options,
+        "waypoint_purge_lookahead": {
+            "formula": "base_min_distance_m + distance_ratio_s * speed_mps",
+            "base_min_distance_m": base_min_distance_m,
+            "distance_ratio_s": distance_ratio_s,
+            "upstream_option_keys": ["base_min_distance", "distance_ratio"],
+        },
+        "lateral_pid": {
+            "kp": lateral_pid_kp,
+            "ki": lateral_pid_ki,
+            "kd": lateral_pid_kd,
+            "dt_sec": lateral_pid["dt"],
+            "upstream_option_key": "lateral_control_dict",
+        },
+        "normalized_max_steering": max_steering,
+        "lane_offset_m": lane_offset_m,
+        "lane_offset_sign_convention": "positive-right, negative-left",
+        "collector_cli": {
+            "--basic-agent-base-min-distance-m": base_min_distance_m,
+            "--basic-agent-distance-ratio": distance_ratio_s,
+            "--basic-agent-lateral-kp": lateral_pid_kp,
+            "--basic-agent-lateral-ki": lateral_pid_ki,
+            "--basic-agent-lateral-kd": lateral_pid_kd,
+            "--basic-agent-max-steering": max_steering,
+            "--basic-agent-lane-offset-m": lane_offset_m,
+        },
+        "compatibility_defaults": dict(BASIC_AGENT_CONTROL_DEFAULTS),
+    }
+    return options, contract
+
+
+def _python_class_source_provenance(value: Any) -> dict[str, Any]:
+    """Record the loaded controller implementation without modifying it."""
+    class_value = value if inspect.isclass(value) else type(value)
+    result: dict[str, Any] = {
+        "python_class": f"{class_value.__module__}.{class_value.__qualname__}",
+    }
+    source = inspect.getsourcefile(class_value)
+    if source is None:
+        result["source_file"] = None
+        result["source_sha256"] = None
+        return result
+    source_path = Path(source).expanduser().resolve()
+    result["source_file"] = str(source_path)
+    result["source_sha256"] = sha256_file(source_path)
+    return result
 
 
 def capture_phase_schedule(
@@ -1003,6 +1186,12 @@ def collect_episode(
 
         carla_map = world.get_map()
         sampling_resolution = float(route.get("sampling_resolution_m", 1.0))
+        basic_agent_options, basic_agent_control = basic_agent_control_configuration(
+            args, sampling_resolution
+        )
+        manifest.setdefault("capture_contract", {})[
+            "basic_agent_control"
+        ] = basic_agent_control
         planner = GlobalRoutePlanner(carla_map, sampling_resolution)
         goal_center = shift_transform_local_x(
             route["goal_carla_transform"], args.wheelbase_m / 2.0
@@ -1017,14 +1206,12 @@ def collect_episode(
         agent = BasicAgent(
             ego,
             target_speed=args.target_speed_kmh,
-            opt_dict={
-                "dt": 1.0 / args.physics_hz,
-                "sampling_resolution": sampling_resolution,
-            },
+            opt_dict=basic_agent_options,
             map_inst=carla_map,
             grp_inst=planner,
         )
         agent.set_global_plan(plan)
+        local_planner = agent.get_local_planner()
 
         # CARLA 0.9.15 can report the actor at the origin until its first world
         # tick.  Advance one disclosed, unrecorded setup tick under full brake so
@@ -1071,6 +1258,16 @@ def collect_episode(
                 "y": float(final_route_point["y"]),
             },
             "basic_agent_plan_points": len(plan),
+            "basic_agent_control": {
+                "effective_opt_dict": basic_agent_options,
+                "implementation_sources": {
+                    "basic_agent": _python_class_source_provenance(BasicAgent),
+                    "local_planner": _python_class_source_provenance(local_planner),
+                    "vehicle_controller": _python_class_source_provenance(
+                        local_planner._vehicle_controller
+                    ),
+                },
+            },
             "capture_origin_timestamp": capture_origin_timestamp,
             "pre_capture_bootstrap": {
                 "frame": bootstrap_frame,
@@ -1352,6 +1549,51 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--command-exit-lookahead-m", type=float, default=2.5)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     parser.add_argument(
+        "--basic-agent-base-min-distance-m",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["base_min_distance_m"],
+        help=(
+            "base waypoint-purge lookahead in metres; CARLA LocalPlanner option "
+            "base_min_distance"
+        ),
+    )
+    parser.add_argument(
+        "--basic-agent-distance-ratio",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["distance_ratio_s"],
+        help=(
+            "speed-scaled waypoint-purge ratio in seconds; lookahead adds this "
+            "value times vehicle speed in m/s"
+        ),
+    )
+    parser.add_argument(
+        "--basic-agent-lateral-kp",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_kp"],
+    )
+    parser.add_argument(
+        "--basic-agent-lateral-ki",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_ki"],
+    )
+    parser.add_argument(
+        "--basic-agent-lateral-kd",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["lateral_pid_kd"],
+    )
+    parser.add_argument(
+        "--basic-agent-max-steering",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["max_steering"],
+        help="maximum absolute normalized CARLA steering command in (0, 1]",
+    )
+    parser.add_argument(
+        "--basic-agent-lane-offset-m",
+        type=float,
+        default=BASIC_AGENT_CONTROL_DEFAULTS["lane_offset_m"],
+        help="lateral lane offset in metres; positive is right and negative is left",
+    )
+    parser.add_argument(
         "--allow-stopped-steering",
         action="store_true",
         help="disable the default BasicAgent red-light lateral windup guard",
@@ -1375,6 +1617,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         parser.error("goal-tolerance-m must be positive and finite")
     try:
         capture_interval(args.physics_hz, args.capture_hz)
+        basic_agent_control_configuration(args, sampling_resolution_m=1.0)
         args.capture_phase_schedule = capture_phase_schedule(
             args.physics_hz,
             args.max_duration_sec,
@@ -1403,6 +1646,10 @@ def run(args: argparse.Namespace) -> Path:
         args.max_duration_sec,
         float(getattr(args, "stationary_warmup_sec", 0.0)),
         float(getattr(args, "stationary_tail_sec", 0.0)),
+    )
+    sampling_resolution = float(route.get("sampling_resolution_m", 1.0))
+    _, basic_agent_control = basic_agent_control_configuration(
+        args, sampling_resolution
     )
 
     partial.mkdir(parents=True)
@@ -1447,6 +1694,7 @@ def run(args: argparse.Namespace) -> Path:
             "goal_tolerance_m": args.goal_tolerance_m,
             "stopped_brake_steering_suppressed": not args.allow_stopped_steering,
             "client_map_loading_allowed": args.allow_map_load,
+            "basic_agent_control": basic_agent_control,
             "measured_vehicle_state": {
                 "steering_source": (
                     "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)"
@@ -1473,6 +1721,13 @@ def run(args: argparse.Namespace) -> Path:
             "collector_file": str(Path(__file__).resolve()),
             "collector_sha256": sha256_file(Path(__file__).resolve()),
             "spawn_z_offset_m": args.spawn_z_offset_m,
+            "basic_agent_control": {
+                "configuration_reference": "capture_contract.basic_agent_control",
+                "runtime_source_reference": (
+                    "runtime.basic_agent_control.implementation_sources"
+                ),
+                "external_carla_source_patch_required": False,
+            },
             "runtime_measurements": {
                 "front_wheel_steering": (
                     "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)"

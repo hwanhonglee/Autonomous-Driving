@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from queue import SimpleQueue
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -18,6 +19,7 @@ from collect_carla_vad_expert import (  # noqa: E402
     _server_available_for_cleanup,
     _spawn_runtime_fields,
     CollectionError,
+    BASIC_AGENT_CONTROL_DEFAULTS,
     DEFAULT_CALIBRATION,
     DEFAULT_MAPPING,
     EventRecorder,
@@ -25,6 +27,7 @@ from collect_carla_vad_expert import (  # noqa: E402
     RouteProjector,
     apply_spawn_z_offset,
     base_link_state,
+    basic_agent_control_configuration,
     catalog_goal_status,
     capture_interval,
     capture_phase_schedule,
@@ -126,6 +129,95 @@ def test_spawn_z_offset_cli_defaults_and_validation(tmp_path: Path) -> None:
     for invalid in ("-0.01", "nan", "inf"):
         with pytest.raises(SystemExit):
             parse_args(positional + ["--spawn-z-offset-m", invalid])
+
+
+def test_basic_agent_control_defaults_preserve_upstream_behavior_and_old_namespace() -> None:
+    options, contract = basic_agent_control_configuration(
+        SimpleNamespace(physics_hz=10.0), sampling_resolution_m=1.25
+    )
+
+    assert options == {
+        "dt": pytest.approx(0.1),
+        "target_speed": pytest.approx(9.0),
+        "sampling_resolution": pytest.approx(1.25),
+        "base_min_distance": pytest.approx(3.0),
+        "distance_ratio": pytest.approx(0.5),
+        "lateral_control_dict": {
+            "K_P": pytest.approx(1.95),
+            "K_I": pytest.approx(0.05),
+            "K_D": pytest.approx(0.2),
+            # This intentionally remains the historical LocalPlanner default,
+            # independent of the top-level planner dt.
+            "dt": pytest.approx(0.05),
+        },
+        "max_steering": pytest.approx(0.8),
+        "offset": pytest.approx(0.0),
+    }
+    assert contract["compatibility_defaults"] == BASIC_AGENT_CONTROL_DEFAULTS
+    assert contract["waypoint_purge_lookahead"]["formula"] == (
+        "base_min_distance_m + distance_ratio_s * speed_mps"
+    )
+    assert contract["lane_offset_sign_convention"] == (
+        "positive-right, negative-left"
+    )
+
+
+def test_basic_agent_control_cli_injects_every_ab_knob(tmp_path: Path) -> None:
+    positional = [str(tmp_path / "episode"), str(tmp_path / "route.json")]
+    args = parse_args(
+        positional
+        + [
+            "--basic-agent-base-min-distance-m",
+            "2.2",
+            "--basic-agent-distance-ratio",
+            "0.35",
+            "--basic-agent-lateral-kp",
+            "2.4",
+            "--basic-agent-lateral-ki",
+            "0.02",
+            "--basic-agent-lateral-kd",
+            "0.15",
+            "--basic-agent-max-steering",
+            "0.72",
+            "--basic-agent-lane-offset-m",
+            "-0.12",
+        ]
+    )
+
+    options, contract = basic_agent_control_configuration(args, 0.75)
+
+    assert options["base_min_distance"] == pytest.approx(2.2)
+    assert options["distance_ratio"] == pytest.approx(0.35)
+    assert options["lateral_control_dict"] == pytest.approx(
+        {"K_P": 2.4, "K_I": 0.02, "K_D": 0.15, "dt": 0.05}
+    )
+    assert options["max_steering"] == pytest.approx(0.72)
+    assert options["offset"] == pytest.approx(-0.12)
+    assert contract["collector_cli"]["--basic-agent-lane-offset-m"] == pytest.approx(
+        -0.12
+    )
+
+
+@pytest.mark.parametrize(
+    ("option", "value"),
+    (
+        ("--basic-agent-base-min-distance-m", "-0.01"),
+        ("--basic-agent-distance-ratio", "-0.01"),
+        ("--basic-agent-lateral-kp", "0"),
+        ("--basic-agent-lateral-ki", "-0.01"),
+        ("--basic-agent-lateral-kd", "nan"),
+        ("--basic-agent-max-steering", "0"),
+        ("--basic-agent-max-steering", "1.01"),
+        ("--basic-agent-lane-offset-m", "inf"),
+    ),
+)
+def test_basic_agent_control_cli_rejects_unsafe_values(
+    tmp_path: Path, option: str, value: str
+) -> None:
+    positional = [str(tmp_path / "episode"), str(tmp_path / "route.json")]
+
+    with pytest.raises(SystemExit):
+        parse_args(positional + [option, value])
 
 
 def test_stationary_phase_cli_defaults_and_tick_exact_total_bound(
@@ -298,6 +390,20 @@ def test_episode_manifest_declares_phase_and_measured_vehicle_contracts(
             "1",
             "--stationary-tail-sec",
             "6.4",
+            "--basic-agent-base-min-distance-m",
+            "2.25",
+            "--basic-agent-distance-ratio",
+            "0.4",
+            "--basic-agent-lateral-kp",
+            "2.1",
+            "--basic-agent-lateral-ki",
+            "0.03",
+            "--basic-agent-lateral-kd",
+            "0.18",
+            "--basic-agent-max-steering",
+            "0.7",
+            "--basic-agent-lane-offset-m",
+            "-0.1",
         ]
     )
 
@@ -326,6 +432,23 @@ def test_episode_manifest_declares_phase_and_measured_vehicle_contracts(
     assert manifest["provenance"]["runtime_measurements"]["speed_limit"] == (
         "carla.Vehicle.get_speed_limit"
     )
+    control = manifest["capture_contract"]["basic_agent_control"]
+    assert control["effective_opt_dict"]["base_min_distance"] == pytest.approx(2.25)
+    assert control["effective_opt_dict"]["distance_ratio"] == pytest.approx(0.4)
+    assert control["lateral_pid"] == {
+        "kp": pytest.approx(2.1),
+        "ki": pytest.approx(0.03),
+        "kd": pytest.approx(0.18),
+        "dt_sec": pytest.approx(0.05),
+        "upstream_option_key": "lateral_control_dict",
+    }
+    assert control["normalized_max_steering"] == pytest.approx(0.7)
+    assert control["lane_offset_m"] == pytest.approx(-0.1)
+    assert manifest["provenance"]["basic_agent_control"] == {
+        "configuration_reference": "capture_contract.basic_agent_control",
+        "runtime_source_reference": "runtime.basic_agent_control.implementation_sources",
+        "external_carla_source_patch_required": False,
+    }
 
 
 def test_goal_tolerance_cli_defaults_and_requires_positive_finite_value(

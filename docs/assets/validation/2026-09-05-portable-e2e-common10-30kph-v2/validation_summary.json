@@ -1,0 +1,196 @@
+{
+  "schema_id": "autoware-e2e.portable-common10-evidence-summary.v2",
+  "schema_version": 2,
+  "evidence_date": "2026-09-05",
+  "campaign_status": "PASS_CURRENT_THREE_EPISODE_SCOPE",
+  "all_supported_towns_common10_status": "PENDING",
+  "scope": {
+    "target_speed_kmh": 30.0,
+    "weather": "ClearNoon",
+    "episode_count": 3,
+    "train_episode_count": 2,
+    "validation_episode_count": 1,
+    "test_episode_count": 0
+  },
+  "episodes": [
+    {
+      "map_id": "Town07",
+      "route_id": "town07_straight_s0000_p00",
+      "maneuver": "straight",
+      "split": "train",
+      "common10_sample_count": 309,
+      "goal_reached": true,
+      "collision_event_count": 0,
+      "lane_invasion_event_count": 0,
+      "raw_state_count": 747,
+      "raw_camera_anchor_count": 374,
+      "driving_elapsed_s": 27.35,
+      "mean_driving_speed_kmh": 27.385509238266533,
+      "maximum_driving_speed_kmh": 30.330260863240184,
+      "route_length_m": 210.5975914062836,
+      "final_route_progress_m": 208.2292808784447,
+      "route_cte_mean_m": 0.03723417747613226,
+      "route_cte_p95_m": 0.11843954341800153,
+      "route_cte_maximum_m": 0.12943963360090333,
+      "native_manifest_sha256": "3a1a1ee55b04c6ea66f6bbcddd4248c1bae0909460888e2447e31dc21b6fdd23",
+      "aligned_route_sha256": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9"
+    },
+    {
+      "map_id": "C_track_1_0_7",
+      "route_id": "c_track_1_0_7_left_s0000_p01",
+      "maneuver": "left_turn",
+      "split": "train",
+      "common10_sample_count": 304,
+      "goal_reached": true,
+      "collision_event_count": 0,
+      "lane_invasion_event_count": 0,
+      "raw_state_count": 737,
+      "raw_camera_anchor_count": 369,
+      "driving_elapsed_s": 26.85,
+      "mean_driving_speed_kmh": 27.301371624472086,
+      "maximum_driving_speed_kmh": 30.164984038630564,
+      "route_length_m": 206.31622010469437,
+      "final_route_progress_m": 204.15248217893884,
+      "route_cte_mean_m": 0.08238294752410913,
+      "route_cte_p95_m": 0.2910364852734952,
+      "route_cte_maximum_m": 0.3418338470720426,
+      "native_manifest_sha256": "bed0681f4ba6e494a18af3f9c8061cb9f77870fc2f241c9ce3c5f4abf051fc5a",
+      "aligned_route_sha256": "19a42a977f47939c0c301b455d45db32bf12c55a25f9a8af5d9248e8f8573122",
+      "standalone_dataset_fingerprint_sha256": "17544158202d125b69205af00f76205b5d7f2196d39dcbb4fbcd3a908b59ebfd"
+    },
+    {
+      "map_id": "Town03",
+      "route_id": "town03_right_s0000_p00",
+      "maneuver": "right_turn",
+      "split": "val",
+      "common10_sample_count": 337,
+      "goal_reached": true,
+      "collision_event_count": 0,
+      "lane_invasion_event_count": 0,
+      "raw_state_count": 804,
+      "raw_camera_anchor_count": 402,
+      "driving_elapsed_s": 30.2,
+      "mean_driving_speed_kmh": 24.588388467536646,
+      "maximum_driving_speed_kmh": 30.265161949886853,
+      "route_length_m": 208.98520161018993,
+      "final_route_progress_m": 206.61476417183695,
+      "route_cte_mean_m": 0.045400466467488486,
+      "route_cte_p95_m": 0.22154649951708869,
+      "route_cte_maximum_m": 0.5329460447506336,
+      "native_manifest_sha256": "cfc30205a0c0bfba83af6861fb7aad7dda0bc2beb4878a40c5869e598e74891b",
+      "aligned_route_sha256": "47ea507b9a4228fdce79ef58eff1e1d2cf149c02dd2df413ebadf53756f771ee",
+      "standalone_dataset_fingerprint_sha256": "8da0506b9d70b0416f7ce34c4755752a163fbd05d0303fb2cbb9e303336ba920"
+    }
+  ],
+  "control_ab": {
+    "selected_profile": "b1_compact_lookahead",
+    "selected_basic_agent_options": {
+      "base_min_distance_m": 2.0,
+      "distance_ratio_s": 0.2,
+      "lateral_pid": {
+        "kp": 1.95,
+        "ki": 0.05,
+        "kd": 0.2,
+        "dt_s": 0.05
+      },
+      "maximum_normalized_steering": 0.8,
+      "lane_offset_m": 0.0
+    },
+    "c_track_a_default": {
+      "decision": "HOLD",
+      "lane_invasion_event_count": 4
+    },
+    "c_track_b_selected": {
+      "decision": "PASS",
+      "lane_invasion_event_count": 0,
+      "collision_event_count": 0
+    },
+    "town03_first_attempt": {
+      "decision": "DIAGNOSTIC_NOT_QUALIFIED",
+      "reason": "50_second_driving_budget_consumed_by_initial_traffic_signal_wait",
+      "estimated_near_stop_s": 47.5,
+      "camera_cadence_failure": false
+    },
+    "town03_selected_attempt": {
+      "decision": "PASS",
+      "maximum_total_duration_s": 120.0,
+      "traffic_signal_behavior_preserved": true
+    }
+  },
+  "capture_contract": {
+    "physics_hz": 20.0,
+    "camera_hz": 10.0,
+    "camera_interval_ticks": 2,
+    "camera_count": 6,
+    "stationary_warmup_s": 3.5,
+    "stationary_tail_s": 6.5,
+    "future_horizon_point_count": 64,
+    "future_horizon_period_s": 0.1,
+    "future_horizon_s": 6.4,
+    "client_map_loading_allowed": false,
+    "map_lifecycle": "cold_start_only"
+  },
+  "combined_dataset": {
+    "dataset_id": "carla-common10-30kph-town07-ctrack-town03-20260905-v2",
+    "contract_id": "common_10hz_v1",
+    "episode_count": 3,
+    "sample_count": 950,
+    "split_sample_counts": {
+      "train": 613,
+      "val": 337
+    },
+    "scenario_sample_counts": {
+      "lane_follow": 950,
+      "straight": 309,
+      "turn": 641,
+      "left": 304,
+      "right": 337
+    },
+    "effective_rate_hz_approximately": 10.0,
+    "bundle_coverage_percent": 100.0,
+    "valid_future_point_percent": 100.0,
+    "maximum_bundle_skew_ms": 0.0,
+    "maximum_state_delta_ms": 0.0,
+    "maximum_command_age_ms": 0.0,
+    "planning_validation": "PASS",
+    "manual_release_review_required": true
+  },
+  "integrity": {
+    "dataset_manifest_sha256": "fdf838fcde36b7cd4259b46c9695088b77fe3dacb595c4c55c8f9915261ac3c5",
+    "dataset_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "contract_sha256": "eb8f44c98a5bee6e560f4983c6ecbc67122c4fe043d4d50fe2ea3737bda9c722",
+    "prepared_tree_manifest_sha256": "81158416448d399cfa877765de121b3e30c84fbfdc504562ed32ddc6ecfa59bb",
+    "prepared_tree_file_count": 5718,
+    "prepared_tree_directory_count": 27,
+    "prepared_tree_total_size_bytes": 597635140,
+    "local_remote_tree_match": true,
+    "rsync_checksum_dry_run_difference_count": 0,
+    "local_planning_report_sha256": "89d2b8141bff2a2879ece33994f9f70ebed5a5e5e4eb6852ed0dc15dcd364b89",
+    "adapter_git_commit": "da1483a9aa953b388de7f78af259e54303cc0fa1"
+  },
+  "visual_contract": {
+    "expert_png_resolution": "1600x900",
+    "expert_gif_resolution": "1600x900",
+    "expert_gif_frame_count": 60,
+    "expert_gif_review_fps": 5.0,
+    "sensor_cadence_hz": 10.0,
+    "review_fps_is_not_sensor_cadence": true,
+    "layout": "six_camera_plus_ego_centered_heading_up_route_history_and_6p4s_future"
+  },
+  "execution_layers": {
+    "latest_expert_data": "CARLA BasicAgent collection and Common10 labels",
+    "latest_model_result": "portable E2E open-loop Town03 validation",
+    "autoware_runtime_media": "separate historical 2026-09-02 selected-baseline regressions",
+    "latest_model_closed_loop_in_autoware": "NOT_RUN"
+  },
+  "remaining_gates": {
+    "all_supported_towns_straight_and_turn_common10": "PENDING",
+    "independent_test_split": "MISSING",
+    "carla_closed_loop_learned_model": "NOT_RUN",
+    "obstacle_avoidance": "NOT_TESTED",
+    "lane_change": "NOT_TESTED",
+    "real_data_training": "NOT_RUN",
+    "real_replay_shadow": "NOT_RUN",
+    "real_vehicle_control": "NOT_APPROVED"
+  }
+}

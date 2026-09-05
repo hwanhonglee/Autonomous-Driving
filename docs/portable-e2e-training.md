@@ -1,8 +1,9 @@
 # Portable E2E 학습·운용 가이드
 
-> 기준일: 2026-09-04
+> 기준일: 2026-09-05
 > 이 문서는 현재 저장소에 실제로 존재하는 기능과 앞으로 실행할 절차를 구분한다.
-> 아직 학습된 checkpoint도, 입증된 주행 성능도, 실차 제어 승인도 없다.
+> 3-episode CARLA corpus의 연구용 1-epoch checkpoint와 open-loop 평가는 생겼지만,
+> 입증된 closed-loop 주행 성능과 실차 제어 승인은 아직 없다.
 
 ## 1. 지금 가능한 것
 
@@ -582,10 +583,14 @@ python3 -m portable_e2e.validate "$prepared_dataset" \
   --output "$validation_report"
 ```
 
-현재 과거 `c_track/turn`과 `Town03/turn` 약 74 m route는 차량 중심 PNG/GIF 및 제어 동작을
-확인하는 visual/control 자료로만 사용한다. 10 Hz Common10 정식 회전 학습 자료로 이름만
-바꾸거나 여러 짧은 주행을 이어 붙이지 않는다. 충분한 driving 구간과 6.4초 future를 동시에
-확보하는 더 긴 회전 route를 새로 만든 뒤 같은 절차로 수집·검증해야 한다.
+위 Town07 단일-episode 명령은 변환 방법을 설명하는 2026-09-04 예시다. 이후 CTrack
+좌회전과 Town03 우회전에 충분히 긴 새 route를 만들고 같은 native 10 Hz·3-phase 계약으로
+다시 수집했다. 2026-09-05 통합 corpus는 Town07 직진 309개와 CTrack 좌회전 304개를
+`train`, Town03 우회전 337개를 `val`로 두어 총 950개이며 planning validation을 통과했다.
+수집·분할·학습·평가의 실제 결과는
+[2026-09-05 Common10 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md)를
+사용한다. 과거 약 74 m 시각화 route를 새 10 Hz 자료로 이름만 바꾼 것이 아니며, 여러 짧은
+주행을 이어 붙이지도 않았다.
 
 ## 7. 승인된 전용 venv 설치와 재현
 
@@ -893,10 +898,12 @@ REMOTE_ALIAS='training-server'
 REPO_ROOT="${REPO_ROOT:-$(git rev-parse --show-toplevel)}"
 : "${LOCAL_DATASET:?export LOCAL_DATASET=/absolute/path/to/dataset}"
 : "${REMOTE_PORTABLE_E2E_ROOT:?export REMOTE_PORTABLE_E2E_ROOT=/absolute/remote/path/to/portable_e2e}"
-DATASET_ID='my-drive-2026-09-04-v1'
+DATASET_ID='my-drive-2026-09-05-v1'
 REPORT_DIR="$REPO_ROOT/runs/transfer-validation"
 LOCAL_REPORT="$REPORT_DIR/$DATASET_ID.local.json"
-REMOTE_REPORT="$REPORT_DIR/$DATASET_ID.remote.json"
+REMOTE_STAGING_REPORT="$REPORT_DIR/$DATASET_ID.remote-staging.json"
+REMOTE_PREPARED_REPORT="$REPORT_DIR/$DATASET_ID.remote-prepared.json"
+RSYNC_DRY_RUN_REPORT="$REPORT_DIR/$DATASET_ID.rsync-checksum-dry-run.txt"
 
 # 아래 명령에 안전하게 전달할 수 있는 절대 경로만 허용한다.
 case "$REMOTE_PORTABLE_E2E_ROOT" in
@@ -908,7 +915,19 @@ case "$REMOTE_PORTABLE_E2E_ROOT" in
 esac
 
 REMOTE_REPO_ROOT="$REMOTE_PORTABLE_E2E_ROOT/autoware_e2e"
-REMOTE_DATASET="$REMOTE_PORTABLE_E2E_ROOT/datasets/staging/$DATASET_ID"
+REMOTE_PYTHON="$REMOTE_PORTABLE_E2E_ROOT/venvs/py312/bin/python"
+REMOTE_STAGING_ROOT="$REMOTE_PORTABLE_E2E_ROOT/datasets/staging"
+REMOTE_PREPARED_ROOT="$REMOTE_PORTABLE_E2E_ROOT/datasets/prepared"
+REMOTE_STAGING_DATASET="$REMOTE_STAGING_ROOT/$DATASET_ID"
+REMOTE_PREPARED_DATASET="$REMOTE_PREPARED_ROOT/$DATASET_ID"
+
+case "$REMOTE_PYTHON" in
+  /*) ;;
+  *) printf 'remote Python is not absolute\n' >&2; exit 2 ;;
+esac
+case "$REMOTE_PYTHON" in
+  *[!A-Za-z0-9_./-]*) printf 'remote Python has unsupported characters\n' >&2; exit 2 ;;
+esac
 
 case "$DATASET_ID" in
   ''|*[!a-z0-9._-]*) printf 'invalid DATASET_ID: %s\n' "$DATASET_ID" >&2; exit 2 ;;
@@ -918,7 +937,69 @@ test -d "$LOCAL_DATASET"
 test ! -L "$LOCAL_DATASET"
 mkdir -p "$REPORT_DIR"
 test ! -e "$LOCAL_REPORT"
-test ! -e "$REMOTE_REPORT"
+test ! -e "$REMOTE_STAGING_REPORT"
+test ! -e "$REMOTE_PREPARED_REPORT"
+test ! -e "$RSYNC_DRY_RUN_REPORT"
+
+compare_tree_reports() {
+  python3 - "$1" "$2" <<'PY'
+import json
+import pathlib
+import sys
+
+reports = {
+    "local": json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")),
+    "remote": json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8")),
+}
+sources = {}
+for label, report in reports.items():
+    if report.get("read_only") is not True:
+        raise SystemExit(f"{label} tree report is not read-only")
+    if report.get("error_count") != 0:
+        raise SystemExit(f"{label} tree report has top-level errors")
+    source = report.get("source")
+    if not isinstance(source, dict) or source.get("error_count") != 0:
+        raise SystemExit(f"{label} source tree validation failed")
+    if source.get("read_only") is not True:
+        raise SystemExit(f"{label} source tree report is not read-only")
+    required = (
+        "manifest_sha256",
+        "file_count",
+        "directory_count",
+        "total_size_bytes",
+    )
+    if any(key not in source for key in required):
+        raise SystemExit(f"{label} source tree report is missing required values")
+    digest = source["manifest_sha256"]
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(character not in "0123456789abcdef" for character in digest)
+    ):
+        raise SystemExit(f"{label} source manifest SHA-256 is invalid")
+    for key in ("file_count", "directory_count", "total_size_bytes"):
+        value = source[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise SystemExit(f"{label} source {key} is not a nonnegative integer")
+    if source["directory_count"] < 1:
+        raise SystemExit(f"{label} source directory_count must include the root")
+    sources[label] = source
+
+keys = (
+    "manifest_sha256",
+    "file_count",
+    "directory_count",
+    "total_size_bytes",
+)
+if any(sources["local"].get(key) != sources["remote"].get(key) for key in keys):
+    raise SystemExit("local and remote source tree manifests differ")
+print("tree manifest comparison: PASS")
+print("files:", sources["local"]["file_count"])
+print("directories:", sources["local"]["directory_count"])
+print("bytes:", sources["local"]["total_size_bytes"])
+print("sha256:", sources["local"]["manifest_sha256"])
+PY
+}
 
 cd "$REPO_ROOT"
 CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
@@ -926,63 +1007,111 @@ CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
   > "$LOCAL_REPORT"
 
 ssh "$REMOTE_ALIAS" \
-  "test ! -e '$REMOTE_DATASET' && mkdir -p '$REMOTE_DATASET'"
+  "test -x '$REMOTE_PYTHON' && \
+   test ! -e '$REMOTE_STAGING_DATASET' && \
+   test ! -L '$REMOTE_STAGING_DATASET' && \
+   test ! -e '$REMOTE_PREPARED_DATASET' && \
+   test ! -L '$REMOTE_PREPARED_DATASET' && \
+   mkdir -p '$REMOTE_STAGING_ROOT' '$REMOTE_PREPARED_ROOT' && \
+   mkdir '$REMOTE_STAGING_DATASET'"
 
 rsync -rt --partial --info=progress2 \
   "$LOCAL_DATASET/" \
-  "$REMOTE_ALIAS:$REMOTE_DATASET/"
+  "$REMOTE_ALIAS:$REMOTE_STAGING_DATASET/"
 
 ssh "$REMOTE_ALIAS" \
-  "cd '$REMOTE_REPO_ROOT' && \
+  "test -x '$REMOTE_PYTHON' && \
+   cd '$REMOTE_REPO_ROOT' && \
    CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
-   python3 scripts/e2e/verify_tree_manifest.py '$REMOTE_DATASET'" \
-  > "$REMOTE_REPORT"
+   '$REMOTE_PYTHON' scripts/e2e/verify_tree_manifest.py '$REMOTE_STAGING_DATASET'" \
+  > "$REMOTE_STAGING_REPORT"
 
-python3 - "$LOCAL_REPORT" "$REMOTE_REPORT" <<'PY'
-import json
-import pathlib
-import sys
-
-local = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-remote = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
-keys = ("manifest_sha256", "file_count", "total_size_bytes")
-if not local["valid"] or not remote["valid"]:
-    raise SystemExit("tree manifest validation failed; inspect both JSON reports")
-if any(local["source"][key] != remote["source"][key] for key in keys):
-    raise SystemExit("source and remote tree manifests differ")
-print("tree manifest comparison: PASS")
-print("files:", local["source"]["file_count"])
-print("bytes:", local["source"]["total_size_bytes"])
-print("sha256:", local["source"]["manifest_sha256"])
-PY
+compare_tree_reports "$LOCAL_REPORT" "$REMOTE_STAGING_REPORT"
 
 rsync -rcn --delete --itemize-changes \
   "$LOCAL_DATASET/" \
-  "$REMOTE_ALIAS:$REMOTE_DATASET/"
+  "$REMOTE_ALIAS:$REMOTE_STAGING_DATASET/" \
+  > "$RSYNC_DRY_RUN_REPORT"
+if test -s "$RSYNC_DRY_RUN_REPORT"; then
+  printf 'rsync checksum dry-run found differences; refusing promotion\n' >&2
+  sed -n '1,80p' "$RSYNC_DRY_RUN_REPORT" >&2
+  exit 2
+fi
+
+# 위 manifest 비교와 rsync checksum dry-run이 모두 PASS인 경우에만 승격한다.
+# 두 parent가 같은 filesystem인지 확인하므로 mv는 copy/delete로 fallback하지 않는다.
+ssh "$REMOTE_ALIAS" \
+  "set -eu; \
+   test -d '$REMOTE_STAGING_DATASET'; \
+   test ! -L '$REMOTE_STAGING_DATASET'; \
+   test ! -e '$REMOTE_PREPARED_DATASET'; \
+   test ! -L '$REMOTE_PREPARED_DATASET'; \
+   staging_device=\$(stat -c %d '$REMOTE_STAGING_DATASET'); \
+   prepared_device=\$(stat -c %d '$REMOTE_PREPARED_ROOT'); \
+   test \"\$staging_device\" = \"\$prepared_device\"; \
+   mv -Tn -- '$REMOTE_STAGING_DATASET' '$REMOTE_PREPARED_DATASET'; \
+   test ! -e '$REMOTE_STAGING_DATASET'; \
+   test ! -L '$REMOTE_STAGING_DATASET'; \
+   test -d '$REMOTE_PREPARED_DATASET'; \
+   test ! -L '$REMOTE_PREPARED_DATASET'"
+
+# 승격 뒤 최종 prepared 경로를 다시 검사한다.
+ssh "$REMOTE_ALIAS" \
+  "test -x '$REMOTE_PYTHON' && \
+   cd '$REMOTE_REPO_ROOT' && \
+   CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+   '$REMOTE_PYTHON' scripts/e2e/verify_tree_manifest.py '$REMOTE_PREPARED_DATASET'" \
+  > "$REMOTE_PREPARED_REPORT"
+
+compare_tree_reports "$LOCAL_REPORT" "$REMOTE_PREPARED_REPORT"
 ```
 
-마지막 명령에 출력이 있으면 PASS가 아니다. `--delete`가 포함돼도 `-n/--dry-run`이라 이
-명령 자체는 서버 파일을 지우지 않는다. 원인을 확인하고 새 `DATASET_ID`로 처음부터 다시
-전송한다. 검증 실패 폴더를 `prepared`로 이동하거나 학습에 넣지 않는다. remote shell
-안에서는 원격 절대 경로만 보고, 로컬 경로가 원격에도 존재한다고 가정하지 않는다.
+checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 중단한다. `--delete`가
+포함돼도 `-n/--dry-run`이라 이 명령 자체는 서버 파일을 지우지 않는다. 원인을 확인하고 새
+`DATASET_ID`로 처음부터 다시 전송한다. 승격은 같은 filesystem 안의 guarded rename만
+허용한다. `mv -Tn`이 기존 prepared 경로를 발견해 아무것도 하지 않은 경우 뒤의
+`test ! -e "$REMOTE_STAGING_DATASET"`가 실패하므로 기존 결과를 성공으로 오인하지 않는다.
+검증 실패 staging을 `prepared`로 이동하거나 학습에 넣지 않는다. remote shell 안에서는
+원격 절대 경로만 보고, 로컬 경로가 원격에도 존재한다고 가정하지 않는다.
 
 ## 12. 실행 순서와 완료 기준
 
-현재 다음 순서가 안전하다.
+2026-09-05 현재 첫 3-episode baseline은 다음 범위까지 완료됐다.
 
-1. 완료: Town07 직진 30 km/h native 10 Hz 수집과 CARLA→Common10 planning 변환 검사
-2. 충분히 긴 `c_track/turn`, `Town03/turn` route를 만든 뒤 동일한 3-phase 조건으로 새로
-   수집하고, map/route별로 planning validation
-3. legacy 11쌍 adapter를 만들되 4/5 Hz `NOT_QUALIFIED`를 그대로 기록
-4. 완료: Bench2Drive Mini 추출 없는 구조/time/non-finite audit와 차단 사유 기록
-5. 완료: 격리된 nuScenes mini/CAN 추출 없는 schema·timing·route audit
-   (`common_10hz_v1` planning은 별도 profile/contract 전까지 불통과)
-6. nuPlan 약관·intended-use 승인 후에만 7-log staging, 의미론적 DB join과 adapter smoke
-7. 검증된 prepared tree를 manifest 대조 후 서버 개인 dataset 폴더로 전송하고, 이미 준비한
-   개인 venv에서 CPU one-step
-8. physical GPU 0이 idle일 때 UUID로 한정한 GPU one-step과 별도 `val` one-sample 평가
-9. 32~128 sample overfit → M1 baseline → 같은 조건의 model A/B
-10. CARLA 30 km/h closed-loop → real replay/shadow → 별도 60 km/h gate
+1. **완료 — native 수집:** Town07 직진, CTrack 좌회전, Town03 우회전을 20 Hz physics,
+   six-camera 10 Hz, warm-up→BasicAgent driving→stationary tail로 새로 수집했다. 세 episode
+   모두 goal reached, collision 0, lane invasion 0이다.
+2. **완료 — Common10 corpus:** Town07 309개와 CTrack 304개를 `train`, Town03 337개를
+   `val`로 분리해 총 950개를 planning validation했다. 로컬과 원격 prepared tree는
+   5,718 files, 27 directories, 597,635,140 bytes 및 manifest SHA-256이 일치했고 checksum
+   dry-run 차이는 0건이었다.
+3. **완료 — 학습 경로:** 개인 venv의 CPU 1-step smoke를 통과하고, 허용된 GPU0만 노출해
+   train 613개를 replacement 없이 1 epoch, 154 optimizer step 학습했다.
+4. **완료 — 독립 route validation:** 학습에 넣지 않은 Town03 우회전 `val` 337개 전체를
+   open-loop 평가했다. 6.4초 ADE/FDE는 `8.919373/19.348828 m`이며
+   `vehicle_control_approved=false`다. 세부 provenance는
+   [2026-09-05 Common10 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md)에
+   있다.
+
+다음 실행 순서는 아래와 같다.
+
+1. **독립 `test` 확보:** 학습·validation episode를 잘라 재사용하지 않고, unseen map/route와
+   다른 weather·seed의 새 episode를 수집해 고정 `test` split을 만든다. 동시에 지원 가능한
+   모든 Town의 직진·회전 Common10 범위를 확장한다.
+2. **모델 A/B:** 고정된 train/val/test, seed, batch, runtime/hardware와 metric 분모를 유지해
+   두 개 이상의 baseline을 비교한다. training loss만으로 채택하지 않고 horizon별 ADE/FDE,
+   속도·yaw·kinematic metric과 domain/map별 퇴행 gate를 미리 정한다.
+3. **Autoware adapter와 closed-loop:** trajectory inference adapter, stale/invalid output reject,
+   fallback과 독립 safety selector를 먼저 구현한다. target PC의 전체 10 Hz latency를 측정한
+   뒤 CARLA 30 km/h 직진·회전 closed-loop를 실행한다.
+4. **기능 확장:** 정지선·신호, ACC·선행차, 정적/동적 장애물 회피, 차선 변경 순으로 scenario와
+   label/head, closed-loop 합격 기준을 각각 추가한다.
+5. **실측과 속도 확장:** 권리와 센서 provenance가 확인된 실제 데이터로 replay와 shadow를
+   거친 뒤 폐쇄 시험장으로 이동한다. 60 km/h는 30 km/h closed-loop 기준선을 통과한 뒤
+   정지거리·곡률·횡가속도·actuator saturation·fallback을 별도 gate로 검증한다.
+6. **별도 데이터 연구:** legacy 11쌍은 4/5 Hz `NOT_QUALIFIED`를 보존한다. 완료된
+   Bench2Drive·nuScenes archive audit은 Common10 합격으로 바꾸지 않으며, nuPlan은 약관과
+   intended-use 승인 뒤에만 7-log staging과 의미론적 DB join을 진행한다.
 
 실차용이라고 부르려면 최소한 provenance가 고정된 train/val/test, unseen real replay,
 Autoware adapter의 reject/fallback, independent safety gate, target PC 10 Hz latency, CARLA

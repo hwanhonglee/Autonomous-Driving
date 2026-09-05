@@ -21,8 +21,9 @@ CARLA·모델·맵 데이터가 필요하다. 이 대용량/라이선스 의존 
 
 - 처음 설치하는 사람: [한국어 초보자 Quick Start](docs/BEGINNER_QUICKSTART_KO.md)
 - 모든 옵션과 설계 경계: [E2E 상세 가이드](E2E_SETUP.md)
-- 최신 30/60 kph 결과: [runtime·control 검증 보고서](docs/validation-2026-09-02-runtime-control-campaign.md)
-- 차량 중심 PNG/GIF: [발행된 검증 화면](docs/assets/validation/2026-09-02-runtime-control-campaign-v1/)
+- 최신 Portable E2E 30 kph 학습·평가: [Common10 검증 보고서](docs/validation-2026-09-05-portable-e2e-common10-30kph.md)
+- 새 expert·open-loop·과거 Autoware 화면: [2026-09-05 발행 증거](docs/assets/validation/2026-09-05-portable-e2e-common10-30kph-v2/)
+- Autoware runtime과 30/60 kph 역사적 결과: [runtime·control 검증 보고서](docs/validation-2026-09-02-runtime-control-campaign.md)
 
 > `GIT_LFS_SKIP_SMUDGE=1`은 2 GB가 넘는 과거 화면·MCAP 자료를 첫 클론에서
 > 생략하기 위한 선택 사항이다. 실행 코드는 그대로 받아지며, 필요한 화면만 받는

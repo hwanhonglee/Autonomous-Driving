@@ -12,12 +12,37 @@ It provides:
 - an optional real PyTorch baseline that decodes all six images and predicts
   six candidate 6.4-second trajectories and speeds;
 - masked best-of-K loss, resumable checkpoints, open-loop evaluation,
-  trajectory PNG evidence, and fixed-split report comparison.
+  trajectory PNG evidence, and fixed-split report comparison;
+- a fail-closed tensor/runtime contract and an isolated Autoware shadow adapter.
 
 The learned output is a trajectory, never throttle, brake, or steering. No
-checkpoint produced here is approved for vehicle control. Obstacle avoidance,
-lane-change safety, Autoware integration, closed-loop validation, and the
-geometry-aware BEV candidate remain later gated work.
+checkpoint produced here is approved for vehicle control. The shadow adapter
+publishes only under `/planning/portable_e2e/` and has not yet run in a live
+ROS/CARLA campaign. Obstacle avoidance, lane-change safety, drivable/collision
+selection, fallback/MRM, learned closed-loop validation, and the geometry-aware
+BEV candidate remain later gated work.
+
+The current research baseline is the ten-epoch v0 checkpoint. On all 337
+Town03 validation samples it reports 6.4-second ADE/FDE of
+`6.567681/16.171295 m`, speed MAE `1.872983 m/s`, yaw MAE `0.379922 rad`,
+kinematic speed MAE `1.697376 m/s`, and model-forward time
+`0.702218 ms/sample`. These are open-loop values, not full-runtime timing. The
+runtime geometry gate v6 passed `0/337` for every candidate and the learned
+selection, while the selector chose candidate 1 for `337/337`. Selected
+failures included geometric speed, speed disagreement, step, reported/geometric
+speed rate, distance disagreement, curvature, and lateral acceleration at
+`326/337`; heading at `310/337`, backward step at `94/337`, and speed at
+`47/337`. Eleven samples were rejected first because the recorded current speed
+exceeded the strict 30 km/h input cap.
+
+The source checkpoint SHA-256
+`370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0` was
+exported to the pinned, non-executable `.runtime.npz` bundle SHA-256
+`b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`. Its local CPU
+strict load passed. A `.pt` file is accepted only by the trainer, evaluator,
+and read-only auditor; live shadow inference accepts only the pinned runtime
+bundle. This does not establish live ROS/CARLA execution or a 10 Hz pass. The
+physical v1 decoder is implemented and unit-tested but remains untrained.
 
 ## No-install contract smoke
 
@@ -34,9 +59,11 @@ This smoke never imports PyTorch, Pillow, ROS, or CARLA.
 
 ## Fresh CARLA Common10 quick start
 
-As of 2026-09-04, one fresh Town07 straight run has passed native collection
-and `common_10hz_v1` planning validation at a 30 km/h target. This is a data
-pipeline result, not proof of closed-loop autonomy.
+As of 2026-09-05, fresh Town07 straight, C-track left-turn, and Town03
+right-turn runs have passed native collection and `common_10hz_v1` planning
+validation at a 30 km/h target. Town07 309 and C-track 304 samples form the
+train split; Town03 337 samples are validation, for 950 total. This is a data
+and open-loop pipeline result, not proof of learned closed-loop autonomy.
 
 This workflow needs the repository's packaged CARLA 0.9.15 setup. It does not
 install Python packages. From terminal A, keep the exact map server running:
@@ -116,10 +143,17 @@ test or independent raw-state trajectory recomputation, and still requires
 manual release review. An offline 1 ms bundle PASS is a timestamp-skew gate,
 not inference latency.
 
-The historical short `c_track/turn` and `Town03/turn` routes are currently for
-centered PNG/GIF and control visualization only. Collect longer turn routes
-before treating those maps as Common10 training data; do not concatenate short
-runs or relabel them as qualified.
+The newly collected C-track and Town03 turn episodes are distinct from the
+historical short Autoware visualization runs. The new episodes are qualified
+Common10 expert data; the historical PNG/GIF remain evidence of a different
+VAD runtime and do not show this portable checkpoint driving Autoware. See the
+[current validation report](../docs/validation-2026-09-05-portable-e2e-common10-30kph.md)
+for the exact boundary.
+
+The one-epoch values in that 2026-09-05 report are retained as a historical
+duration baseline. The current ten-epoch comparison and its research-only
+boundary are in the
+[2026-09-06 duration A/B evidence](../docs/assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md).
 
 ## Read-only raw archive verification
 
@@ -313,6 +347,10 @@ Checkpoint loading requires a PyTorch release that supports restricted
 same open file. A digest still proves identity rather than publisher trust, so
 use only checkpoints whose recorded provenance you recognize.
 
+Those checkpoint-loading rules apply to training, evaluation, and offline
+audit. The live shadow runtime never deserializes `.pt`; it reconstructs the
+model only from a separately pinned, non-executable `.runtime.npz` bundle.
+
 Trainer CLI output, evaluation JSON, and comparison JSON may contain absolute
 run, checkpoint, or input-report paths. Keep raw reports private. Before adding
 generated JSON to `docs/assets` or Git, scrub those paths and revalidate the
@@ -322,9 +360,14 @@ The canonical data and model configurations are:
 
 - [`config/common_10hz_v1.contract.json`](config/common_10hz_v1.contract.json)
 - [`config/perspective_trajectory_v0.model.json`](config/perspective_trajectory_v0.model.json)
+- [`config/perspective_trajectory_physical_v1.model.json`](config/perspective_trajectory_physical_v1.model.json)
 
 The full beginner operating guide is
 [`../docs/portable-e2e-training.md`](../docs/portable-e2e-training.md). Dataset
 selection and model gates are documented in
 [`../docs/portable-e2e-datasets.md`](../docs/portable-e2e-datasets.md) and
-[`../docs/portable-e2e-model-v0.md`](../docs/portable-e2e-model-v0.md).
+[`../docs/portable-e2e-model-v0.md`](../docs/portable-e2e-model-v0.md). The
+shadow-only launch procedure and the feature-level release gates are in
+[`../docs/portable-e2e-shadow-runtime.md`](../docs/portable-e2e-shadow-runtime.md)
+and
+[`../docs/portable-e2e-feature-roadmap.md`](../docs/portable-e2e-feature-roadmap.md).

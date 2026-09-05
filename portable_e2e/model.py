@@ -21,7 +21,19 @@ from .dataset import CALIBRATION_FEATURE_NAMES, FEATURE_NAMES
 
 
 MODEL_ID = "portable_e2e.perspective_trajectory.v0"
+PHYSICAL_MODEL_ID = "portable_e2e.perspective_trajectory.physical.v1"
+SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID))
 IMAGE_ENCODER_DOWNSAMPLE_STAGES = 4
+# HH_260906 - Physical v1 predicts bounded 100 ms route-relative motion steps.
+PHYSICAL_TIME_STEP_S = 0.1
+PHYSICAL_MAXIMUM_SPEED_MPS = 30.0 / 3.6
+# HH_260906 - Keep float32 decoder saturation inside the 3.0 m/s2 live gate.
+PHYSICAL_MAXIMUM_ACCELERATION_MPS2 = 2.9
+PHYSICAL_MAXIMUM_ROUTE_SLIP_RAD = math.radians(7.5)
+# HH_260906 - Reserve headroom for the live gate's low-speed heading aggregation.
+PHYSICAL_MAXIMUM_CURVATURE_RAD_PER_M = 0.2
+# HH_260906 - Keep generated turns inside the 3.0 m/s2 runtime lateral gate.
+PHYSICAL_MAXIMUM_LATERAL_ACCELERATION_MPS2 = 2.8
 
 
 def _downsampled_image_dimension(value: int) -> int:
@@ -58,8 +70,10 @@ class ModelConfig:
     route_scale_m: float = 120.0
 
     def validate(self) -> None:
-        if self.model_id != MODEL_ID:
-            raise ContractError(f"model_id must be {MODEL_ID}")
+        if self.model_id not in SUPPORTED_MODEL_IDS:
+            raise ContractError(
+                f"model_id must be one of {sorted(SUPPORTED_MODEL_IDS)}"
+            )
         integer_limits = {
             "camera_count": (self.camera_count, 1, 16),
             "calibration_features": (self.calibration_features, 1, 128),
@@ -107,6 +121,11 @@ class ModelConfig:
                 raise ContractError(
                     f"model.{name} must be finite and in [{minimum}, {maximum}]"
                 )
+        # HH_260906 - Pin the physical decoder's declared step safety envelope.
+        if self.model_id == PHYSICAL_MODEL_ID and not math.isclose(
+            float(self.maximum_step_m), 1.0, rel_tol=0.0, abs_tol=1.0e-12
+        ):
+            raise ContractError("physical v1 maximum_step_m must be exactly 1.0")
         feature_height = _downsampled_image_dimension(self.image_height)
         feature_width = _downsampled_image_dimension(self.image_width)
         if feature_height % self.image_grid_height != 0:
@@ -177,9 +196,8 @@ class ConvImageEncoder(nn.Module):
             feature_height // grid_height,
             feature_width // grid_width,
         )
-        # Non-overlapping fixed average pooling has a deterministic CUDA
-        # backward path. AdaptiveAvgPool2d does not under PyTorch's strict
-        # deterministic-algorithm mode, even for this divisible default grid.
+        # HH_260906 - Use fixed pooling because its CUDA backward path is deterministic.
+        # HH_260906 - Adaptive pooling violates strict deterministic mode on this grid.
         self.pool = nn.AvgPool2d(kernel_size=kernel_size, stride=kernel_size)
         self.projection = nn.Linear(previous * grid_height * grid_width, output_width)
 
@@ -246,8 +264,11 @@ class PerspectiveTrajectoryModel(nn.Module):
             nn.Linear(cfg.hidden_width, cfg.hidden_width),
             nn.ReLU(inplace=True),
         )
+        # HH_260906 - Preserve the v0 state ABI while versioning the v1 decoder.
+        trajectory_channels = 3 if cfg.model_id == MODEL_ID else 2
         self.trajectory_head = nn.Linear(
-            cfg.hidden_width, cfg.candidate_count * cfg.future_points * 3
+            cfg.hidden_width,
+            cfg.candidate_count * cfg.future_points * trajectory_channels,
         )
         self.candidate_head = nn.Linear(cfg.hidden_width, cfg.candidate_count)
         self.reset_parameters()
@@ -399,13 +420,127 @@ class PerspectiveTrajectoryModel(nn.Module):
         route_features = route_hidden[-1]
 
         fused = self.fusion(torch.cat((camera_features, ego_features, route_features), dim=1))
+        trajectory_channels = 3 if cfg.model_id == MODEL_ID else 2
         raw = self.trajectory_head(fused).reshape(
-            batch, cfg.candidate_count, cfg.future_points, 3
+            batch, cfg.candidate_count, cfg.future_points, trajectory_channels
         )
+        if cfg.model_id == PHYSICAL_MODEL_ID:
+            trajectory_xy, trajectory_speed = self._decode_physical_v1(
+                raw, ego_history, route_xy, route_mask
+            )
+            return trajectory_xy, trajectory_speed, self.candidate_head(fused)
         step_xy = torch.tanh(raw[..., :2]) * float(cfg.maximum_step_m)
         trajectory_xy = torch.cumsum(step_xy, dim=2)
         trajectory_speed = F.softplus(raw[..., 2])
         return trajectory_xy, trajectory_speed, self.candidate_head(fused)
+
+    def _decode_physical_v1(
+        self,
+        raw: Tensor,
+        ego_history: Tensor,
+        route_xy: Tensor,
+        route_mask: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        cfg = self.config
+        acceleration = (
+            torch.tanh(raw[..., 0]) * PHYSICAL_MAXIMUM_ACCELERATION_MPS2
+        )
+        # HH_260906 - Bound small recorded velocity noise while the live gate retains the raw value.
+        current_speed = ego_history[
+            :, -1, FEATURE_NAMES.index("velocity_x_mps")
+        ].clamp(0.0, PHYSICAL_MAXIMUM_SPEED_MPS)
+        speed_steps: list[Tensor] = []
+        previous_speed = current_speed.unsqueeze(1).expand(-1, cfg.candidate_count)
+        for point_index in range(cfg.future_points):
+            previous_speed = (
+                previous_speed
+                + acceleration[:, :, point_index] * PHYSICAL_TIME_STEP_S
+            ).clamp(0.0, PHYSICAL_MAXIMUM_SPEED_MPS)
+            speed_steps.append(previous_speed)
+        trajectory_speed = torch.stack(speed_steps, dim=2)
+
+        segment_xy = route_xy[:, 1:] - route_xy[:, :-1]
+        segment_length = torch.linalg.norm(segment_xy, dim=-1)
+        segment_valid = route_mask[:, 1:] & route_mask[:, :-1]
+        usable_segment = segment_valid & (segment_length > 1.0e-6)
+        fallback_tangent = torch.zeros_like(segment_xy)
+        fallback_tangent[..., 0] = 1.0
+        route_tangent = torch.where(
+            usable_segment.unsqueeze(-1),
+            segment_xy / segment_length.clamp_min(1.0e-6).unsqueeze(-1),
+            fallback_tangent,
+        )
+        route_distance_end = torch.cumsum(
+            torch.where(segment_valid, segment_length, torch.zeros_like(segment_length)),
+            dim=1,
+        )
+        traveled_distance = torch.cumsum(
+            trajectory_speed * PHYSICAL_TIME_STEP_S, dim=2
+        )
+        segment_index = (
+            traveled_distance.unsqueeze(-1)
+            > route_distance_end[:, None, None, :]
+        ).sum(dim=-1)
+        final_segment_index = (route_mask.sum(dim=1, dtype=torch.long) - 2).clamp_min(0)
+        segment_index = torch.minimum(
+            segment_index, final_segment_index[:, None, None]
+        )
+        expanded_tangent = route_tangent[:, None, None, :, :].expand(
+            -1, cfg.candidate_count, cfg.future_points, -1, -1
+        )
+        tangent = expanded_tangent.gather(
+            3,
+            segment_index[..., None, None].expand(-1, -1, -1, 1, 2),
+        ).squeeze(3)
+
+        route_heading = torch.atan2(tangent[..., 1], tangent[..., 0])
+        route_slip = torch.tanh(raw[..., 1]) * PHYSICAL_MAXIMUM_ROUTE_SLIP_RAD
+        step_distance = trajectory_speed * PHYSICAL_TIME_STEP_S
+        desired_heading = route_heading + route_slip
+        heading_steps: list[Tensor] = []
+        previous_heading = torch.zeros_like(desired_heading[:, :, 0])
+        segment_entry_speed = torch.cat(
+            (
+                current_speed[:, None, None].expand(
+                    -1, cfg.candidate_count, 1
+                ),
+                trajectory_speed[:, :, :-1],
+            ),
+            dim=2,
+        )
+        for point_index in range(cfg.future_points):
+            heading_delta = torch.atan2(
+                torch.sin(desired_heading[:, :, point_index] - previous_heading),
+                torch.cos(desired_heading[:, :, point_index] - previous_heading),
+            )
+            point_speed = trajectory_speed[:, :, point_index]
+            lateral_speed = torch.maximum(
+                point_speed, segment_entry_speed[:, :, point_index]
+            )
+            speed_limited_curvature = (
+                PHYSICAL_MAXIMUM_LATERAL_ACCELERATION_MPS2
+                / lateral_speed.square().clamp_min(1.0e-6)
+            )
+            maximum_curvature = torch.minimum(
+                torch.full_like(
+                    point_speed, PHYSICAL_MAXIMUM_CURVATURE_RAD_PER_M
+                ),
+                speed_limited_curvature,
+            )
+            maximum_delta = (
+                step_distance[:, :, point_index] * maximum_curvature
+            )
+            # HH_260906 - Integrate a curvature and lateral-acceleration bounded heading.
+            bounded_delta = torch.maximum(
+                torch.minimum(heading_delta, maximum_delta), -maximum_delta
+            )
+            previous_heading = previous_heading + bounded_delta
+            heading_steps.append(previous_heading)
+        step_heading = torch.stack(heading_steps, dim=2)
+        step_xy = torch.stack(
+            (torch.cos(step_heading), torch.sin(step_heading)), dim=-1
+        ) * step_distance.unsqueeze(-1)
+        return torch.cumsum(step_xy, dim=2), trajectory_speed
 
 
 def parameter_count(model: nn.Module) -> int:

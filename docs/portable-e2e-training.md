@@ -1,9 +1,13 @@
 # Portable E2E 학습·운용 가이드
 
-> 기준일: 2026-09-05
+> 기준일: 2026-09-06
 > 이 문서는 현재 저장소에 실제로 존재하는 기능과 앞으로 실행할 절차를 구분한다.
-> 3-episode CARLA corpus의 연구용 1-epoch checkpoint와 open-loop 평가는 생겼지만,
+> 3-episode CARLA corpus의 연구용 v0 10-epoch checkpoint와 open-loop 평가는 생겼지만,
 > 입증된 closed-loop 주행 성능과 실차 제어 승인은 아직 없다.
+
+처음 shadow runtime을 실행하는 사람은
+[10 Hz shadow runtime 초보자 가이드](portable-e2e-shadow-runtime.md)를 먼저 보고, 기능별
+승격 기준은 [9개 상위·30개 하위 기능 로드맵](portable-e2e-feature-roadmap.md)에서 확인한다.
 
 ## 1. 지금 가능한 것
 
@@ -25,6 +29,13 @@
     보존하는 native expert collector
 12. 실제 앞바퀴 조향각과 CARLA 제한속도가 있는 native episode만 `common_10hz_v1`로 옮기는
     fail-closed CARLA adapter
+13. 고정 non-executable runtime bundle과 rig를 읽어 training과 같은 tensor를 만드는 shadow inference core
+14. exact six-camera bundle, state freshness, output geometry와 100 ms deadline을 거부 조건으로
+    쓰는 fail-closed runtime contract
+15. `/planning/portable_e2e/` 격리 namespace에만 결과·status를 발행하는 Autoware shadow node와
+    640×360 10 Hz 목표 CARLA sensor profile
+16. `val`/`test` 전체의 여섯 후보를 고정 runtime gate로 검사하고 새 JSON만 원자적으로 쓰는
+    read-only checkpoint geometry auditor
 
 `portable_e2e.control_flow_smoke`는 실제 영상을 열지 않고 PyTorch, CUDA, ROS 2, CARLA를
 import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode하고 신경망을
@@ -34,12 +45,22 @@ import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode�
 
 - 실제 데이터로 학습을 끝낸 checkpoint
 - 장애물 회피·차선 변경·정지·ACC 성능이 검증된 multi-task model
-- Autoware runtime inference adapter와 safety selector
+- 실제 ROS/CARLA에서 실행·계측을 마친 Portable E2E shadow runtime
+- drivable/collision safety selector, 기존 planner fallback과 MRM
 - CARLA closed-loop 합격 결과 또는 target PC의 10 Hz latency 결과
 - 실차 replay/shadow/폐쇄 시험장 승인
 
-따라서 지금 생성되는 `.pt`는 연구용 checkpoint일 뿐 actuator 명령으로 사용하면 안 된다.
+따라서 지금 생성되는 `.pt`와 shadow trajectory는 연구용일 뿐 actuator 명령으로 사용하면 안
+된다.
 모델 출력도 throttle/brake/steering이 아니라 후보 trajectory다.
+
+`.pt` checkpoint는 trainer, evaluator와 read-only auditor에서만 사용한다. live shadow
+runtime은 `.pt`를 직접 읽지 않으며 source checkpoint hash와 별도로 SHA-256을 고정한
+`.runtime.npz` bundle만 받는다. 현재 source checkpoint
+`370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 내보낸 bundle
+`b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`은 로컬 CPU strict
+load를 통과했지만 실제 ROS/CARLA에서 실행한
+결과는 아니다.
 
 ## 2. 로컬 PC, Git 저장소, 원격 학습 서버의 역할
 
@@ -65,6 +86,17 @@ branch: autoware-e2e/v1.9.0-vad-carla
 Autoware workspace 형태는 `autoware_e2e/src/...`가 맞다. 학습 코어는 저장소의
 `portable_e2e/`이며 학습만 할 때 `colcon build`는 필요 없다. ROS 2 adapter를 Autoware에
 통합할 때만 해당 workspace를 별도로 빌드한다.
+
+역할은 다음처럼 고정한다.
+
+| 환경 | 이 환경에서 하는 일 | 이 환경에서 하지 않는 일 |
+|---|---|---|
+| 로컬 CARLA·Autoware PC | 코드 검토·push, map/route·Common10 수집, package build, shadow/closed-loop와 화면·bag 계측 | 원격 open-loop만 보고 제어 승인, shadow output을 곧바로 actuator에 연결 |
+| SSH Pro6000 | 개인 venv의 dataset 검증, 학습, val/test, model A/B와 read-only output 감사 | CARLA/Autoware build·제어, 시스템/Conda/타 사용자 환경 변경 |
+
+Pro6000은 개인 `venvs/py312`만 사용하며 GPU 작업은 physical GPU 0 하나만 단일 allowlist로
+노출한다. 다른 GPU나 다른 사용자 process를 종료·reset하지 않는다. 로컬 runtime은
+Pro6000 venv를 복사해 쓰지 않고 로컬 ROS/Python 환경에서 별도로 검증한다.
 
 ### 2.1 처음 clone하는 PC
 
@@ -104,14 +136,14 @@ git status --short --branch
 git diff --check
 git diff
 
-# 이전 작업에서 staged된 항목이 하나라도 있으면 먼저 소유자와 내용을 확인한다.
+# HH_260906 - Stop when the index already contains changes from an earlier task.
 if ! git diff --cached --quiet --; then
   printf 'index is not empty; commit or intentionally unstage it first\n' >&2
   git diff --cached --name-status
   exit 1
 fi
 
-# 예시다. 실제로 검토한 파일만 배열에 한 줄씩 추가한다.
+# HH_260906 - Stage only paths that were explicitly reviewed for this commit.
 reviewed_paths=(
   portable_e2e/contract.py
   tests/test_portable_e2e_contract.py
@@ -695,6 +727,50 @@ CUDA_VISIBLE_DEVICES='' python -m portable_e2e.evaluate "$dataset_root" \
 `train` sample을 평가용으로 다시 쓰면 evaluator가 거부한다. `metrics.json`과
 `trajectories/*.png`가 생겨도 이는 open-loop random/one-step 결과이며 성능 claim이 아니다.
 
+### 8.1 physical v1은 반드시 별도 새 run으로 검사하기
+
+physical v1은 v0의 weight나 run directory를 재사용하지 않는다. trajectory head shape와
+decoder 의미가 다르므로 `--resume`으로 v0 checkpoint를 연결해서도 안 된다. 현재 Common10
+자료에는 30 km/h 주변의 작은 측정 오차가 있어 decoder 내부 초기속도만 `[0, 30 km/h]`로
+제한하지만, live runtime gate는 원래 raw 속도를 그대로 검사한다.
+
+```bash
+physical_config="$REPO_ROOT/portable_e2e/config/perspective_trajectory_physical_v1.model.json"
+physical_cpu_run="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-cpu-one-step"
+physical_cpu_eval="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-cpu-eval-val"
+
+test -f "$physical_config" && test ! -L "$physical_config"
+test ! -e "$physical_cpu_run"
+test ! -e "$physical_cpu_eval"
+
+CUDA_VISIBLE_DEVICES='' python -m portable_e2e.train "$dataset_root" \
+  --run-dir "$physical_cpu_run" \
+  --model-config "$physical_config" \
+  --split train \
+  --device cpu \
+  --limit-samples 4 \
+  --batch-size 1 \
+  --num-workers 0 \
+  --max-steps 1 \
+  --checkpoint-interval 1
+
+CUDA_VISIBLE_DEVICES='' python -m portable_e2e.evaluate "$dataset_root" \
+  --checkpoint "$physical_cpu_run/checkpoints/latest.pt" \
+  --output-dir "$physical_cpu_eval" \
+  --split val \
+  --device cpu \
+  --limit-samples 1 \
+  --batch-size 1 \
+  --num-workers 0 \
+  --render-count 1
+```
+
+2026-09-06 로컬의 오래된 system PyTorch에서는 secure `weights_only` checkpoint read가
+없어 두 번째 명령이 의도적으로 거부됐다. package를 로컬에 임의 설치하지 않았으며, 첫 번째
+physical v1 CPU one-step은 실제 Common10 4-sample 입력에서 finite gradient와
+`TRAINING_TARGET_REACHED`를 확인했다. 정식 evaluate/export는 7절의 승인된 개인 venv처럼
+modern `weights_only`를 지원하는 환경에서 수행한다.
+
 ## 9. physical GPU 0이 실제로 빈 뒤 UUID로 한정해 짧게 실행하기
 
 먼저 별도 terminal에서 GPU 상태를 확인한다.
@@ -720,10 +796,15 @@ gpu_physical_index=0
 gpu_uuid="$(nvidia-smi -i "$gpu_physical_index" --query-gpu=uuid --format=csv,noheader | tr -d '[:space:]')"
 case "$gpu_uuid" in GPU-*) ;; *) printf 'GPU UUID lookup failed\n' >&2; exit 2 ;; esac
 dataset_root="$PORTABLE_E2E_ROOT/datasets/prepared/<dataset_id>"
-gpu_run="$PORTABLE_E2E_ROOT/runs/<run_id>-gpu-one-step"
+physical_config="$REPO_ROOT/portable_e2e/config/perspective_trajectory_physical_v1.model.json"
+gpu_run="$PORTABLE_E2E_ROOT/runs/<run_id>-physical-v1-gpu-one-step"
+
+test -f "$physical_config" && test ! -L "$physical_config"
+test ! -e "$gpu_run"
 
 CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
   --run-dir "$gpu_run" \
+  --model-config "$physical_config" \
   --split train \
   --device cuda:0 \
   --limit-samples 4 \
@@ -736,7 +817,9 @@ CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
 GPU one-step이 끝난 뒤 같은 logical device에서 별도 `val` sample을 한 번 평가한다.
 
 ```bash
-gpu_eval="$PORTABLE_E2E_ROOT/runs/<run_id>-gpu-eval-val"
+gpu_eval="$PORTABLE_E2E_ROOT/runs/<run_id>-physical-v1-gpu-eval-val"
+
+test ! -e "$gpu_eval"
 
 CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.evaluate "$dataset_root" \
   --checkpoint "$gpu_run/checkpoints/latest.pt" \
@@ -837,6 +920,103 @@ A/B 비교에서는 warm-up batch/sample 수까지 같아야 하지만 실제 wa
 **참고값**이다. 전용 자원, 고정 power/clock, 반복 run과 p50/p95/p99를 갖춘 target PC
 benchmark를 대신하지 않으며, 이 표도 closed-loop 또는 차량 제어 승인이 아니다.
 
+### 10.1 현재 Common10에서 physical v1 10-epoch A/B 만들기
+
+8.1절 CPU one-step과 9절의 GPU one-step/evaluate가 모두 통과하고 GPU 0이 계속 비어 있을
+때만 아래 정식 후보를 시작한다. 현재 train split은 613 samples이고 batch 4에서 한 epoch가
+154 steps이므로 1,540 steps가 정확히 10 epochs다. dataset 또는 batch를 바꾸면 이 숫자를
+복사하지 말고 새 sampling plan의 `batches_per_epoch × 10`을 사용한다.
+
+```bash
+physical_config="$REPO_ROOT/portable_e2e/config/perspective_trajectory_physical_v1.model.json"
+physical_full_run="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-b4-seed20260903"
+physical_full_eval="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-val"
+physical_full_audit="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-gate-v6.json"
+
+test ! -e "$physical_full_run"
+test ! -e "$physical_full_eval"
+test ! -e "$physical_full_audit"
+
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.train "$dataset_root" \
+  --run-dir "$physical_full_run" \
+  --model-config "$physical_config" \
+  --split train \
+  --device cuda:0 \
+  --seed 20260903 \
+  --batch-size 4 \
+  --num-workers 0 \
+  --max-steps 1540 \
+  --checkpoint-interval 154
+
+physical_checkpoint="$physical_full_run/checkpoints/latest.pt"
+physical_checkpoint_sha256="$(sha256sum -- "$physical_checkpoint" | awk '{print $1}')"
+
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.evaluate "$dataset_root" \
+  --checkpoint "$physical_checkpoint" \
+  --output-dir "$physical_full_eval" \
+  --split val \
+  --device cuda:0 \
+  --batch-size 4 \
+  --num-workers 0 \
+  --render-count 12
+
+CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.audit_runtime "$dataset_root" \
+  --checkpoint "$physical_checkpoint" \
+  --checkpoint-sha256 "$physical_checkpoint_sha256" \
+  --output-json "$physical_full_audit" \
+  --split val \
+  --device cuda:0 \
+  --batch-size 4
+```
+
+학습 성공만으로 채택하지 않는다. v0와 같은 337개 Town03 분모, 같은 horizon metric, 같은
+gate v6에서 비교하고 candidate collapse, speed-rate, curvature, heading, current-speed reject를 각각
+확인한다. physical v1이 구조적으로 step/speed consistency를 제한해도 장애물·drivable area·
+신호 안전을 증명하는 것은 아니다.
+
+### 10.2 완료 checkpoint를 비실행 runtime bundle로 export하기
+
+trainer/evaluator/auditor만 신뢰한 `.pt`를 읽는다. live shadow node는 pickle 계열 checkpoint를
+직접 열지 않고, 아래처럼 SHA-256으로 고정해 export한 stored-NPY `.runtime.npz`만 읽는다.
+output bundle과 report는 반드시 존재하지 않는 private 경로로 만든다.
+
+```bash
+runtime_bundle="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1.runtime.npz"
+bundle_export_report="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-bundle-export.json"
+
+test -f "$physical_checkpoint" && test ! -L "$physical_checkpoint"
+test ! -e "$runtime_bundle" && test ! -L "$runtime_bundle"
+test ! -e "$bundle_export_report" && test ! -L "$bundle_export_report"
+
+CUDA_VISIBLE_DEVICES='' python -m portable_e2e.runtime_weight_bundle export \
+  --source-checkpoint "$physical_checkpoint" \
+  --source-checkpoint-sha256 "$physical_checkpoint_sha256" \
+  --output "$runtime_bundle" | tee "$bundle_export_report"
+
+runtime_bundle_sha256="$(python -c \
+  'import json,sys; print(json.load(open(sys.argv[1]))["bundle_sha256"])' \
+  "$bundle_export_report")"
+model_config_sha256="$(python -c \
+  'import json,sys; print(json.load(open(sys.argv[1]))["model_config_sha256"])' \
+  "$bundle_export_report")"
+corpus_fingerprint_sha256="$(python -c \
+  'import json,sys; print(json.load(open(sys.argv[1]))["corpus_fingerprint_sha256"])' \
+  "$bundle_export_report")"
+
+test "$(sha256sum -- "$runtime_bundle" | awk '{print $1}')" = "$runtime_bundle_sha256"
+
+CUDA_VISIBLE_DEVICES='' python -m portable_e2e.runtime_weight_bundle verify \
+  --bundle "$runtime_bundle" \
+  --bundle-sha256 "$runtime_bundle_sha256" \
+  --source-checkpoint-sha256 "$physical_checkpoint_sha256" \
+  --model-config-sha256 "$model_config_sha256" \
+  --corpus-fingerprint-sha256 "$corpus_fingerprint_sha256"
+```
+
+bundle은 private artifact로 유지하고 Git에 넣지 않는다. 로컬로 전달할 때 bundle SHA와 source
+checkpoint/config/corpus SHA를 별도 검증 기록에 남기고, 복사 후 `verify`를 다시 실행한다.
+그 다음에만 [shadow runtime 가이드](portable-e2e-shadow-runtime.md)의 입력으로 사용한다.
+
 ## 11. 실제 데이터 받기와 자체 자료 전송
 
 실제 환경 학습을 위해 공개 데이터를 받는 방향은 맞지만, 먼저 사용 권한과 adapter
@@ -905,7 +1085,7 @@ REMOTE_STAGING_REPORT="$REPORT_DIR/$DATASET_ID.remote-staging.json"
 REMOTE_PREPARED_REPORT="$REPORT_DIR/$DATASET_ID.remote-prepared.json"
 RSYNC_DRY_RUN_REPORT="$REPORT_DIR/$DATASET_ID.rsync-checksum-dry-run.txt"
 
-# 아래 명령에 안전하게 전달할 수 있는 절대 경로만 허용한다.
+# HH_260906 - Accept only absolute remote paths that are safe to quote below.
 case "$REMOTE_PORTABLE_E2E_ROOT" in
   /*) ;;
   *) printf 'remote root is not absolute\n' >&2; exit 2 ;;
@@ -1038,8 +1218,8 @@ if test -s "$RSYNC_DRY_RUN_REPORT"; then
   exit 2
 fi
 
-# 위 manifest 비교와 rsync checksum dry-run이 모두 PASS인 경우에만 승격한다.
-# 두 parent가 같은 filesystem인지 확인하므로 mv는 copy/delete로 fallback하지 않는다.
+# HH_260906 - Promote only after the manifest and checksum dry-run both pass.
+# HH_260906 - Require one filesystem so mv cannot fall back to copy and delete.
 ssh "$REMOTE_ALIAS" \
   "set -eu; \
    test -d '$REMOTE_STAGING_DATASET'; \
@@ -1055,7 +1235,7 @@ ssh "$REMOTE_ALIAS" \
    test -d '$REMOTE_PREPARED_DATASET'; \
    test ! -L '$REMOTE_PREPARED_DATASET'"
 
-# 승격 뒤 최종 prepared 경로를 다시 검사한다.
+# HH_260906 - Revalidate the final prepared path after atomic promotion.
 ssh "$REMOTE_ALIAS" \
   "test -x '$REMOTE_PYTHON' && \
    cd '$REMOTE_REPO_ROOT' && \
@@ -1076,7 +1256,7 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 
 ## 12. 실행 순서와 완료 기준
 
-2026-09-05 현재 첫 3-episode baseline은 다음 범위까지 완료됐다.
+2026-09-06 현재 첫 3-episode baseline은 다음 범위까지 완료됐다.
 
 1. **완료 — native 수집:** Town07 직진, CTrack 좌회전, Town03 우회전을 20 Hz physics,
    six-camera 10 Hz, warm-up→BasicAgent driving→stationary tail로 새로 수집했다. 세 episode
@@ -1086,12 +1266,32 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
    5,718 files, 27 directories, 597,635,140 bytes 및 manifest SHA-256이 일치했고 checksum
    dry-run 차이는 0건이었다.
 3. **완료 — 학습 경로:** 개인 venv의 CPU 1-step smoke를 통과하고, 허용된 GPU0만 노출해
-   train 613개를 replacement 없이 1 epoch, 154 optimizer step 학습했다.
+   train 613개를 replacement 없이 v0 10 epoch, 1,540 optimizer step 학습했다. 2026-09-05의
+   1 epoch, 154 step 결과는 역사적 duration A/B 기준선으로 보존한다.
 4. **완료 — 독립 route validation:** 학습에 넣지 않은 Town03 우회전 `val` 337개 전체를
-   open-loop 평가했다. 6.4초 ADE/FDE는 `8.919373/19.348828 m`이며
-   `vehicle_control_approved=false`다. 세부 provenance는
-   [2026-09-05 Common10 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md)에
-   있다.
+   open-loop 평가했다. 현재 6.4초 ADE/FDE는 `6.567681/16.171295 m`, speed MAE는
+   `1.872983 m/s`, yaw MAE는 `0.379922 rad`, kinematic speed MAE는 `1.697376 m/s`다.
+   model-forward `0.702218 ms/sample`은 full runtime latency가 아니며
+   `vehicle_control_approved=false`다. 1-epoch 역사적 수치는
+   [2026-09-05 Common10 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md),
+   현재 duration A/B는
+   [2026-09-06 evidence](assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md)에 있다.
+5. **완료 — runtime gate v6 사전감사, 결과는 FAIL:** Town03 `val` 전체에서 candidate
+   `c0~c5` 각각 geometry PASS는 `0/337`이고 최고 logit 선택은 index 1에 `337/337`
+   고정됐다. 완료된 최신 full-split 재감사의 selected failure는 geometric-speed·
+   speed-disagreement·step·reported/geometric-speed-rate·distance-disagreement·curvature·
+   lateral-acceleration이 각각 `326`, heading `310`, backward-step `94`, speed `47`이다.
+6. **완료 — bundle export와 로컬 strict load:** source checkpoint SHA-256
+   `370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 non-executable
+   runtime bundle SHA-256
+   `b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`을 내보내고
+   pinned CPU strict load를 확인했다. 이는 live ROS/CARLA 또는 10 Hz runtime PASS가 아니다.
+7. **완료 — shadow code 배선:** runtime bundle/source checkpoint/rig/route hash, exact camera bundle, causal state와 freshness,
+   selected-output geometry와 100 ms deadline을 검사하고 `/planning/portable_e2e/`에만
+   발행하는 코드와 launch를 추가했다. 이는 source/unit 단계이며 `P3_RUNTIME` PASS가 아니다.
+8. **완료 — physical v1 source/unit:** 100 ms acceleration-bounded speed integration,
+   30 km/h 상한과 route-relative heading을 가진 decoder는 구현·단위검사를 통과했지만 아직
+   학습하거나 CARLA에서 실행하지 않았다.
 
 다음 실행 순서는 아래와 같다.
 
@@ -1101,15 +1301,21 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 2. **모델 A/B:** 고정된 train/val/test, seed, batch, runtime/hardware와 metric 분모를 유지해
    두 개 이상의 baseline을 비교한다. training loss만으로 채택하지 않고 horizon별 ADE/FDE,
    속도·yaw·kinematic metric과 domain/map별 퇴행 gate를 미리 정한다.
-3. **Autoware adapter와 closed-loop:** trajectory inference adapter, stale/invalid output reject,
-   fallback과 독립 safety selector를 먼저 구현한다. target PC의 전체 10 Hz latency를 측정한
-   뒤 CARLA 30 km/h 직진·회전 closed-loop를 실행한다.
-4. **기능 확장:** 정지선·신호, ACC·선행차, 정적/동적 장애물 회피, 차선 변경 순으로 scenario와
+3. **모델 출력 gate 회복:** 현재 speed-disagreement/step/heading failure와 index 1 고정의 원인을
+   output scale, loss, ranking과 dataset 관점으로 분해한다. offline candidate geometry와 절대
+   trajectory gate를 통과하지 못하면 threshold를 풀어 shadow/closed-loop로 넘기지 않는다.
+   최신 속도·가감속·곡률·횡가속 검사를 포함한 gate v6 full-split 감사 결과를 기준선으로 고정한다.
+4. **Autoware shadow와 closed-loop 준비:**
+   [shadow runtime 가이드](portable-e2e-shadow-runtime.md)대로 로컬에서 exact bundle,
+   reject 전체 분모와 sensor-to-plan 10 Hz latency를 먼저 측정한다. drivable/collision selector,
+   fallback과 독립 safety boundary를 구현한 뒤에만 CARLA 30 km/h learned closed-loop를
+   검토한다.
+5. **기능 확장:** 정지선·신호, ACC·선행차, 정적/동적 장애물 회피, 차선 변경 순으로 scenario와
    label/head, closed-loop 합격 기준을 각각 추가한다.
-5. **실측과 속도 확장:** 권리와 센서 provenance가 확인된 실제 데이터로 replay와 shadow를
+6. **실측과 속도 확장:** 권리와 센서 provenance가 확인된 실제 데이터로 replay와 shadow를
    거친 뒤 폐쇄 시험장으로 이동한다. 60 km/h는 30 km/h closed-loop 기준선을 통과한 뒤
    정지거리·곡률·횡가속도·actuator saturation·fallback을 별도 gate로 검증한다.
-6. **별도 데이터 연구:** legacy 11쌍은 4/5 Hz `NOT_QUALIFIED`를 보존한다. 완료된
+7. **별도 데이터 연구:** legacy 11쌍은 4/5 Hz `NOT_QUALIFIED`를 보존한다. 완료된
    Bench2Drive·nuScenes archive audit은 Common10 합격으로 바꾸지 않으며, nuPlan은 약관과
    intended-use 승인 뒤에만 7-log staging과 의미론적 DB join을 진행한다.
 

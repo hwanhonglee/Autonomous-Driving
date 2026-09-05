@@ -495,22 +495,41 @@ class RoutePlan:
     def load(cls, path):
         route_path = Path(path).expanduser().resolve()
         payload = json.loads(route_path.read_text(encoding="utf-8"))
+        return cls.from_payload(payload, route_file=route_path)
+
+    @classmethod
+    def from_payload(cls, payload, *, route_file="<memory>"):
+        # HH_260906 - Parse caller-owned bytes without reopening a security-pinned route.
+        route_path = str(route_file)
+        # HH_260906 - Convert malformed route structures into stable validation failures.
+        if not isinstance(payload, dict):
+            raise ValueError(f"route payload must be an object in {route_path}")
         if payload.get("schema_version") != 1:
             raise ValueError(f"unsupported route schema in {route_path}")
         if payload.get("coordinate_reference", "base_link") != "base_link":
             raise ValueError(f"route coordinates must use base_link in {route_path}")
-        points = [
-            RoutePoint(
-                x=float(item["x"]),
-                y=float(item["y"]),
-                z=float(item.get("z", 0.0)),
-                yaw=float(item["yaw"]),
-                distance_m=float(item["distance_m"]),
-                vad_command=int(item["vad_command"]),
-                road_option=str(item["road_option"]),
-            )
-            for item in payload["route"]
-        ]
+        route_items = payload.get("route")
+        if not isinstance(route_items, list):
+            raise ValueError(f"route must be a list in {route_path}")
+        points = []
+        for index, item in enumerate(route_items):
+            if not isinstance(item, dict):
+                raise ValueError(f"route point {index} must be an object in {route_path}")
+            try:
+                point = RoutePoint(
+                    x=float(item["x"]),
+                    y=float(item["y"]),
+                    z=float(item.get("z", 0.0)),
+                    yaw=float(item["yaw"]),
+                    distance_m=float(item["distance_m"]),
+                    vad_command=int(item["vad_command"]),
+                    road_option=str(item["road_option"]),
+                )
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError(
+                    f"route point {index} contains invalid fields in {route_path}"
+                ) from error
+            points.append(point)
         if len(points) < 2:
             raise ValueError("route must contain at least two points")
 
@@ -555,7 +574,7 @@ class RoutePlan:
             else:
                 points[-1] = exact_goal
 
-        metadata = {**payload, "route_file": str(route_path)}
+        metadata = {**payload, "route_file": route_path}
         if goal_pose is not None:
             metadata["route_length_m"] = points[-1].distance_m
             metadata["runtime_goal_z_m"] = points[-1].z

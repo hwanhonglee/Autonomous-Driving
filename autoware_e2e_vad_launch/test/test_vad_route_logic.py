@@ -303,6 +303,14 @@ class RoutePlanTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "base_link"):
             self._load_route_payload(payload)
 
+    def test_load_reports_malformed_point_as_validation_failure(self):
+        # HH_260906 - Keep malformed pinned-route diagnostics deterministic and actionable.
+        payload = self._route_payload()
+        payload["route"] = [None, None]
+
+        with self.assertRaisesRegex(ValueError, "route point 0 must be an object"):
+            RoutePlan.from_payload(payload)
+
     @staticmethod
     def _route_payload():
         return {

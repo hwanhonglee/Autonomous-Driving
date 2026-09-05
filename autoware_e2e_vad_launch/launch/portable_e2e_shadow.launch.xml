@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- HH_260906 - Start only the isolated research shadow planner without a control connection. -->
+  <arg name="contract_file" description="Pinned regular Common10 contract JSON file"/>
+  <arg name="contract_sha256" description="Lowercase SHA-256 of contract_file"/>
+  <arg name="runtime_bundle_file" description="Pinned regular non-executable .npz weight bundle"/>
+  <arg name="runtime_bundle_sha256" description="Lowercase SHA-256 of runtime_bundle_file"/>
+  <arg name="source_checkpoint_sha256" description="Lowercase SHA-256 of the bundle source checkpoint"/>
+  <arg
+    name="corpus_fingerprint_sha256"
+    description="Training corpus fingerprint embedded in the checkpoint"
+  />
+  <arg
+    name="model_config_sha256"
+    description="Canonical model configuration fingerprint embedded in the checkpoint"
+  />
+  <arg name="rig_file" description="Pinned Common10 camera rig JSON file"/>
+  <arg name="rig_sha256" description="Lowercase SHA-256 of rig_file"/>
+  <arg name="route_file" description="Project route JSON used by the running CARLA scene"/>
+  <arg name="route_sha256" description="Lowercase SHA-256 of route_file"/>
+  <arg name="device" default="cpu" description="cpu or UUID-pinned logical cuda:0"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg
+    name="research_acknowledged"
+    default="false"
+    description="Must be true to acknowledge that this checkpoint is not approved for control"
+  />
+
+  <node
+    pkg="autoware_e2e_vad_launch"
+    exec="portable_e2e_shadow_node.py"
+    name="portable_e2e_shadow"
+    output="screen"
+  >
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="contract_file" value="$(var contract_file)"/>
+    <param name="contract_sha256" value="$(var contract_sha256)"/>
+    <param name="runtime_bundle_file" value="$(var runtime_bundle_file)"/>
+    <param name="runtime_bundle_sha256" value="$(var runtime_bundle_sha256)"/>
+    <param name="source_checkpoint_sha256" value="$(var source_checkpoint_sha256)"/>
+    <param
+      name="corpus_fingerprint_sha256"
+      value="$(var corpus_fingerprint_sha256)"
+    />
+    <param name="model_config_sha256" value="$(var model_config_sha256)"/>
+    <param name="rig_file" value="$(var rig_file)"/>
+    <param name="rig_sha256" value="$(var rig_sha256)"/>
+    <param name="route_file" value="$(var route_file)"/>
+    <param name="route_sha256" value="$(var route_sha256)"/>
+    <param name="device" value="$(var device)"/>
+    <param name="research_acknowledged" value="$(var research_acknowledged)"/>
+  </node>
+</launch>

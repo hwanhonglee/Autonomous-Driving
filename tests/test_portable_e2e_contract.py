@@ -731,6 +731,20 @@ def test_route_projection_uses_heading_to_resolve_self_intersection() -> None:
     assert goal == pytest.approx((0.0, 10.0))
 
 
+def test_route_projection_deduplicates_zero_length_endpoint_segments() -> None:
+    route, goal, anchor_arc = common10._canonical_route_in_base(
+        [(0.0, 0.0), (0.0, 0.0), (10.0, 0.0), (10.0, 0.0)],
+        position_m=(0.0, 0.0, 0.0),
+        orientation_xyzw=(0.0, 0.0, 0.0, 1.0),
+        contract=common10.load_contract(),
+        context="unit.duplicate_route",
+    )
+
+    assert anchor_arc == pytest.approx(0.0)
+    assert route[0] == pytest.approx((0.0, 0.0))
+    assert goal == pytest.approx((10.0, 0.0))
+
+
 def test_validator_rejects_bundle_over_dataset_tolerance(tmp_path: Path) -> None:
     dataset = tmp_path / "dataset"
     _write_dataset(dataset, bundle_skew_ns=21_000_000)

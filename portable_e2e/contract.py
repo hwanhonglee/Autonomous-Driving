@@ -568,6 +568,22 @@ def _canonical_route_in_base(
     context: str,
 ) -> tuple[tuple[tuple[float, float], ...], tuple[float, float], float]:
     """Derive the only accepted local route from map route and anchor pose."""
+    # HH_260906 - Remove consecutive zero-length segments before arc interpolation.
+    deduplicated_route: list[tuple[float, float]] = []
+    for index, point in enumerate(route_points):
+        if len(point) != 2:
+            raise ContractError(f"{context} route point {index} must contain x and y")
+        parsed_point = (float(point[0]), float(point[1]))
+        if not all(math.isfinite(value) for value in parsed_point):
+            raise ContractError(f"{context} route point {index} must be finite")
+        if (
+            not deduplicated_route
+            or math.dist(deduplicated_route[-1], parsed_point) > 1.0e-9
+        ):
+            deduplicated_route.append(parsed_point)
+    if len(deduplicated_route) < 2:
+        raise ContractError(f"{context} route has no nonzero segment")
+    route_points = tuple(deduplicated_route)
     cumulative = [0.0]
     for first, second in zip(route_points, route_points[1:]):
         cumulative.append(cumulative[-1] + math.dist(first, second))

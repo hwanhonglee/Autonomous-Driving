@@ -399,6 +399,32 @@ def test_loss_validates_prefix_mask_and_reports_yaw_and_kinematics() -> None:
         )
 
 
+def test_yaw_loss_backpropagates_finitely_through_stationary_steps() -> None:
+    # HH_260906 - Cover the exact stop case produced by the physical v1 decoder.
+    candidate_xy = torch.zeros(1, 2, 64, 2, requires_grad=True)
+    candidate_speed = torch.zeros(1, 2, 64, requires_grad=True)
+    logits = torch.zeros(1, 2, requires_grad=True)
+    target_xy = torch.zeros(1, 64, 2)
+    target_speed = torch.zeros(1, 64)
+    target_yaw = torch.ones(1, 64)
+    valid = torch.ones(1, 64, dtype=torch.bool)
+
+    result = trajectory_loss(
+        candidate_xy,
+        candidate_speed,
+        logits,
+        target_xy,
+        target_speed,
+        valid,
+        target_yaw=target_yaw,
+    )
+    result["loss"].backward()
+
+    assert candidate_xy.grad is not None
+    assert torch.isfinite(candidate_xy.grad).all()
+    assert result["selected_yaw_mae_rad"].item() == pytest.approx(0.0)
+
+
 def test_torch_dataset_decodes_images_and_builds_causal_history(tmp_path: Path) -> None:
     examples = (_example(tmp_path, 0), _example(tmp_path, 1))
     dataset = Common10TorchDataset(examples, _small_model_config())

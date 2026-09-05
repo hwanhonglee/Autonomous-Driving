@@ -1,0 +1,83 @@
+{
+  "evidence_id": "portable_e2e.local_ros_graph_startup_smoke.v1",
+  "status": "ROS_GRAPH_STARTUP_SMOKE_COMPLETE",
+  "scope": "Installed ROS 2 shadow node startup, provenance heartbeat, publisher isolation, and clean SIGINT shutdown without CARLA inputs",
+  "build": {
+    "package": "autoware_e2e_vad_launch",
+    "base_path_limited_discovery": true,
+    "result": "PASS"
+  },
+  "runtime": {
+    "node": "/portable_e2e_shadow",
+    "status_schema_id": "autoware-e2e.portable-shadow-status.v2",
+    "observed_state": "SHADOW_WAITING",
+    "observed_failure_code": "waiting_for_inputs",
+    "healthy_now": false,
+    "inference_inputs_healthy_now": false,
+    "calibration_extrinsics_verified": false,
+    "health_scope": "full_runtime_requires_camera_extrinsic_parity",
+    "runtime_device": "cpu",
+    "clock_mode": "ros_sim_time",
+    "watchdog_clock_mode": "steady_time",
+    "tf_extrinsic_parity": "UNIMPLEMENTED_BLOCKED",
+    "clean_sigint_shutdown": true
+  },
+  "identity": {
+    "adapter_id": "autoware-e2e.portable-shadow-node.v2",
+    "runtime_id": "portable_e2e.pytorch_shadow_runtime.v1",
+    "runtime_bundle_sha256": "b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c",
+    "source_checkpoint_sha256": "370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0",
+    "model_config_sha256": "6bb4303a1e260cbcbacd20cd9e707330cd4af9cbf684c08938525a81bef161ba",
+    "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "rig_sha256": "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+    "contract_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+    "route_sha256": "ce20d9a435c291fd4f3ea4946173ea41fdf53aa3e0a5a2e8a88fc53c5dd752d5",
+    "runtime_gate_id": "portable_e2e.runtime_geometry_gate.v6",
+    "provenance_health_scope": "runtime_inputs_except_camera_extrinsics",
+    "runtime_gate_limits": {
+      "maximum_speed_mps": 8.333333333333334,
+      "maximum_geometric_speed_mps": 8.333333333333334,
+      "maximum_speed_disagreement_mps": 0.25,
+      "maximum_integrated_distance_disagreement_m": 0.02,
+      "maximum_integrated_distance_disagreement_ratio": 0.05,
+      "maximum_acceleration_mps2": 3.0,
+      "maximum_deceleration_mps2": 6.0,
+      "maximum_lateral_acceleration_mps2": 3.0,
+      "maximum_backward_step_m": 0.002
+    }
+  },
+  "implementation_sha256": {
+    "autoware_e2e_vad_launch/scripts/portable_e2e_shadow_node.py": "9550405f4a02786cd8509c0a6556bd39227f3a3d2784789f1ea1e6ee8b6891d9",
+    "portable_e2e/runtime.py": "b285916d36a0de94611941edd16891900828ec3aa42aa2d449fe862447cae765",
+    "portable_e2e/runtime_contract.py": "ce7ec206da3325151466523a755bb1128e4c7962d36e086795eccf102f1df513",
+    "portable_e2e/runtime_weight_bundle.py": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636"
+  },
+  "publishers": [
+    "/planning/portable_e2e/latency_ms",
+    "/planning/portable_e2e/selected_candidate",
+    "/planning/portable_e2e/shadow_path",
+    "/planning/portable_e2e/shadow_trajectory",
+    "/planning/portable_e2e/status"
+  ],
+  "publisher_isolation": {
+    "only_dedicated_shadow_namespace": true,
+    "canonical_autoware_trajectory_publisher": false,
+    "vehicle_control_publisher": false,
+    "vehicle_control_approved": false
+  },
+  "observed_counters": {
+    "anchor_attempt_count": 0,
+    "accepted_count": 0,
+    "anchor_rejected_count": 0,
+    "input_event_rejected_count": 0
+  },
+  "not_executed": [
+    "camera or vehicle input ingestion",
+    "model trajectory publication",
+    "CARLA closed loop",
+    "Autoware control connection",
+    "sensor-to-plan latency",
+    "screen capture"
+  ],
+  "vehicle_control_approved": false
+}

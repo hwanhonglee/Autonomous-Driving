@@ -1,0 +1,186 @@
+{
+  "evidence_id": "portable_e2e.local_cpu_runtime_smoke.gate_v6.v1",
+  "status": "LOCAL_CPU_RUNTIME_SMOKE_COMPLETE",
+  "scope": "bundle-only strict load, 30 sampled public-runtime calls, and full Town03 validation split gate audit",
+  "not_executed": [
+    "ROS graph input and inference trajectory",
+    "CARLA closed loop",
+    "Autoware control connection",
+    "sensor-to-plan latency"
+  ],
+  "identity": {
+    "bundle_sha256": "b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c",
+    "source_checkpoint_sha256": "370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0",
+    "model_config_sha256": "6bb4303a1e260cbcbacd20cd9e707330cd4af9cbf684c08938525a81bef161ba",
+    "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "model_id": "portable_e2e.perspective_trajectory.v0",
+    "model_parameter_count": 1053278,
+    "runtime_gate_id": "portable_e2e.runtime_geometry_gate.v6"
+  },
+  "strict_load": {
+    "pass": true,
+    "bundle_only_nonexecuting_format": true,
+    "strict_model_state_load": true,
+    "runtime_load_seconds": 0.022853664006106555
+  },
+  "dataset": {
+    "split": "val",
+    "sample_count": 337,
+    "map_ids": [
+      "Town03"
+    ],
+    "image_hash_verification": true
+  },
+  "public_runtime_sample": {
+    "device": "cpu",
+    "timed_count": 30,
+    "gate_reject_count": 30,
+    "pass_count": 0,
+    "deadline_ms": 100.0,
+    "deadline_not_evaluated_after_gate_reject_count": 30,
+    "wall_over_100ms_count": 1,
+    "wall_latency_ms": {
+      "min": 34.44899898022413,
+      "p50": 46.733014460187405,
+      "p90": 69.85935247503222,
+      "p95": 91.46934349555524,
+      "p99": 99.80828799656592,
+      "max": 100.41489405557513,
+      "mean": 49.75606730828682
+    },
+    "timing_interpretation": "Observational local CPU wall time under concurrent host load; not a sensor-to-plan or 10 Hz acceptance measurement."
+  },
+  "full_town03_gate_v6_audit": {
+    "sample_count": 337,
+    "any_candidate_geometry_pass_count": 0,
+    "all_candidates_geometry_pass_count": 0,
+    "candidate_geometry_pass_counts": {
+      "c0": 0,
+      "c1": 0,
+      "c2": 0,
+      "c3": 0,
+      "c4": 0,
+      "c5": 0
+    },
+    "selected": {
+      "candidate_index": 1,
+      "selection_count": 337,
+      "geometry_pass_count": 0,
+      "failure_counts": {
+        "backward_step": 94,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 310,
+        "lateral_acceleration": 326,
+        "speed": 47,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      }
+    },
+    "candidate_failure_counts": {
+      "c0": {
+        "backward_step": 326,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 326,
+        "lateral_acceleration": 326,
+        "speed": 11,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      },
+      "c1": {
+        "backward_step": 94,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 310,
+        "lateral_acceleration": 326,
+        "speed": 47,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      },
+      "c2": {
+        "backward_step": 326,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "first_distance": 15,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 326,
+        "lateral_acceleration": 326,
+        "speed": 11,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      },
+      "c3": {
+        "backward_step": 326,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 326,
+        "lateral_acceleration": 326,
+        "speed": 11,
+        "speed_disagreement": 326,
+        "speed_rate": 321,
+        "step": 326
+      },
+      "c4": {
+        "backward_step": 326,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "first_distance": 324,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 326,
+        "lateral_acceleration": 326,
+        "speed": 11,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      },
+      "c5": {
+        "backward_step": 326,
+        "curvature": 326,
+        "distance_disagreement": 326,
+        "geometric_speed": 326,
+        "geometric_speed_rate": 326,
+        "heading": 326,
+        "lateral_acceleration": 326,
+        "speed": 11,
+        "speed_disagreement": 326,
+        "speed_rate": 326,
+        "step": 326
+      }
+    }
+  },
+  "diagnostic_same_tensor_model_forward_ms": {
+    "count": 30,
+    "min": 19.93006805423647,
+    "p50": 30.14065948082134,
+    "p95": 102.42846518522128,
+    "p99": 104.25064852228388,
+    "max": 104.60310208145529,
+    "mean": 40.179455443285406,
+    "interpretation": "Diagnostic only; excludes input synchronization, tensor construction, gating, publication, and display."
+  },
+  "implementation_sha256": {
+    "portable_e2e/audit_runtime.py": "7b19b042536a6842df6747dc8df87423702c262d84037b94ae3e1dec189f19c7",
+    "portable_e2e/model.py": "8be1ff7a2c37ec935ddeba41bef9b2d9f20a0c42b7c9580bf6a3a06cac71e9ed",
+    "portable_e2e/runtime.py": "b285916d36a0de94611941edd16891900828ec3aa42aa2d449fe862447cae765",
+    "portable_e2e/runtime_contract.py": "ce7ec206da3325151466523a755bb1128e4c7962d36e086795eccf102f1df513",
+    "portable_e2e/runtime_weight_bundle.py": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636"
+  },
+  "evidence_generator_sha256": "a588d1e2c6201a84cbead19d96555b14f4ff33b14769e9eb3dfd583f5b9e72a7",
+  "gate_was_weakened": false,
+  "vehicle_control_approved": false
+}

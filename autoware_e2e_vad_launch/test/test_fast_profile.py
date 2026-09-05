@@ -46,6 +46,8 @@ CAMERA_SOURCE_5HZ_DEPTH1_MAPPING = PACKAGE / (
 CAMERA_SOURCE_5HZ_DEPTH1_MAPPING_METADATA = Path(
     f"{CAMERA_SOURCE_5HZ_DEPTH1_MAPPING}.metadata.json"
 )
+# HH_260906 - Verify the dedicated Common10 runtime sensor profile at its native 10 Hz cadence.
+PORTABLE_E2E_10HZ_MAPPING = PACKAGE / "config/sensor_mapping_portable_e2e_10hz.yaml"
 CAMERA_SOURCE_5HZ_DEPTH1_VAD_PARAMS = PACKAGE / (
     "config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
 )
@@ -247,6 +249,50 @@ def test_fast_sensor_mapping_is_six_camera_raw_profile():
     assert len(info_topics) == len(CAMERAS)
     gnss = mapping["sensor_mappings"]["gnss_link"]
     assert gnss["ros_config"]["qos_profile"] == "reliable"
+
+
+def test_portable_e2e_sensor_mapping_matches_common10_runtime_abi():
+    mapping = load_yaml(PORTABLE_E2E_10HZ_MAPPING)
+    cameras = camera_mappings(mapping)
+
+    assert set(cameras) == set(CAMERAS)
+    assert set(mapping["enabled_sensors"]) == CAMERA_KEYS | {
+        "tamagawa/imu_link",
+        "gnss_link",
+    }
+    for camera, config in cameras.items():
+        parameters = config["parameters"]
+        ros = config["ros_config"]
+        assert parameters["image_size_x"] == 640
+        assert parameters["image_size_y"] == 360
+        assert parameters["fov"] == (110.0 if camera == "CAM_BACK" else 70.0)
+        assert parameters["sensor_tick"] == pytest.approx(0.0)
+        assert parameters["enable_postprocess_effects"] is False
+        assert ros["frequency_hz"] == 11
+        assert ros["qos_profile"] == "reliable"
+        assert ros["image_qos_profile"] == "best_effort_depth_1"
+        assert ros["camera_info_qos_profile"] == "reliable"
+        assert ros["topic_image"] == f"/sensing/camera/{camera}/image_raw"
+        assert ros["topic_info"] == f"/sensing/camera/{camera}/camera_info"
+
+    # HH_260906 - Reproduce the bridge's strict floating-point cadence check at a 20 Hz tick.
+    published_timestamps = []
+    last_publish_time = None
+    for tick in range(40):
+        timestamp = tick * 0.05
+        if (
+            last_publish_time is None
+            or timestamp - last_publish_time >= 1.0 / 11.0
+        ):
+            published_timestamps.append(timestamp)
+            last_publish_time = timestamp
+    assert len(published_timestamps) == 20
+    assert all(
+        current - previous == pytest.approx(0.1)
+        for previous, current in zip(
+            published_timestamps, published_timestamps[1:]
+        )
+    )
 
 
 def test_reliable_fast_mapping_uses_exact_frame_capture_and_reliable_qos():

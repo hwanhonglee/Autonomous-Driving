@@ -153,13 +153,25 @@ def trajectory_loss(
     ).sum(dim=2) / valid_count
 
     yaw_error: Tensor | None = None
+    yaw_point_mask: Tensor | None = None
+    yaw_valid_count: Tensor | None = None
     if target_yaw is not None:
-        predicted_yaw = torch.atan2(step_xy[..., 1], step_xy[..., 0])
+        # HH_260906 - Mask stationary steps before atan2 so physical stops have finite gradients.
+        moving = step_xy.square().sum(dim=-1) > 1.0e-8
+        safe_step_x = torch.where(
+            moving, step_xy[..., 0], torch.ones_like(step_xy[..., 0])
+        )
+        safe_step_y = torch.where(
+            moving, step_xy[..., 1], torch.zeros_like(step_xy[..., 1])
+        )
+        predicted_yaw = torch.atan2(safe_step_y, safe_step_x)
         yaw_delta = predicted_yaw - target_yaw.unsqueeze(1)
         yaw_error = torch.atan2(torch.sin(yaw_delta), torch.cos(yaw_delta)).abs()
+        yaw_point_mask = point_mask * moving.to(candidate_xy.dtype)
+        yaw_valid_count = yaw_point_mask.sum(dim=2).clamp_min(1.0)
         per_candidate = per_candidate + float(cfg.yaw_weight) * (
-            yaw_error * point_mask
-        ).sum(dim=2) / valid_count
+            yaw_error * yaw_point_mask
+        ).sum(dim=2) / yaw_valid_count
 
     last_valid = _last_valid_indices(valid_mask)
     gather_xy = last_valid.view(batch, 1, 1, 1).expand(batch, candidate_count, 1, 2)
@@ -219,7 +231,7 @@ def trajectory_loss(
         "selected_candidate_index": selected_candidate,
     }
     if yaw_error is not None:
-        result["selected_yaw_mae_rad"] = yaw_error.mul(point_mask).sum(dim=2).div(
-            valid_count
+        result["selected_yaw_mae_rad"] = yaw_error.mul(yaw_point_mask).sum(dim=2).div(
+            yaw_valid_count
         ).gather(1, selected_candidate.unsqueeze(1)).mean().detach()
     return result

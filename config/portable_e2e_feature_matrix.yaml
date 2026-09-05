@@ -1,0 +1,719 @@
+# HH_260906 - Define auditable feature requirements for the portable E2E program.
+schema_id: autoware-e2e.portable-feature-matrix.v1
+schema_version: 1
+as_of: "2026-09-06"
+scope: portable_e2e_learned_trajectory_program
+gate_revision: engineering_screening_v0_20260906
+main_feature_count: 9
+subfeature_count: 30
+vehicle_control_approved: false
+
+threshold_policy:
+  prospective: true
+  rule: "Freeze a new revision before opening its test set; never tune this revision to an observed test result."
+  interpretation: "These are project engineering gates, not regulatory or public-road approval criteria."
+
+scope_boundary:
+  current_checkpoint: "CARLA-only v0, ten epochs, open-loop Town03 validation; source checkpoint SHA-256 370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0."
+  current_runtime: "Pinned non-executable runtime bundle b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c passed local CPU strict load, and the ROS graph startup smoke passed; no sensor-fed trajectory, CARLA shadow, 10 Hz pass, or control approval."
+  current_runtime_audit: "Runtime geometry gate v6 on Town03 val 337: each candidate c0-c5 and the selected trajectory passed 0/337; selected index 1 was used for 337/337, with stricter reported/geometric speed, acceleration, backward-step, curvature, and lateral-acceleration checks."
+  physical_v1: "The acceleration-bounded 30 km/h physical decoder is implemented and unit-tested but remains untrained and unevaluated."
+  excluded_claims:
+    - "Historical Autoware VAD runtime media do not prove execution of the portable E2E checkpoint."
+    - "Expert-agent success does not prove learned-model closed-loop success."
+    - "Model-forward latency does not prove sensor-to-actuator latency."
+    - "No feature is approved for public-road or real-vehicle actuation."
+
+authoritative_evidence:
+  - id: EVIDENCE-20260905
+    path: docs/validation-2026-09-05-portable-e2e-common10-30kph.md
+    meaning: "Historical one-epoch three-episode data, training, and open-loop baseline."
+  - id: EVIDENCE-20260906-DURATION-AB
+    path: docs/assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md
+    meaning: "Current v0 ten-epoch duration A/B, Town03 open-loop metrics, and research-only evidence boundary."
+  - id: TRAINING-GUIDE
+    path: docs/portable-e2e-training.md
+    meaning: "Environment separation and safe operating sequence."
+  - id: MODEL-V0
+    path: docs/portable-e2e-model-v0.md
+    meaning: "Current model ABI, first-run limitations, runtime boundary, and planned M2-M4 heads."
+  - id: SHADOW-RUNTIME-GUIDE
+    path: docs/portable-e2e-shadow-runtime.md
+    meaning: "Fail-closed 10 Hz shadow contract, local launch guide, and current offline audit boundary."
+  - id: COMMON10-CONTRACT
+    path: portable_e2e/config/common_10hz_v1.contract.json
+    meaning: "Canonical camera, time, coordinate, trajectory, and split contract."
+  - id: HISTORICAL-AUTOWARE
+    path: docs/validation-2026-09-02-runtime-control-campaign.md
+    meaning: "Historical VAD/Autoware runtime only, never portable-checkpoint evidence."
+
+environment_responsibility:
+  local:
+    name: local_carla_autoware_pc
+    responsibilities:
+      - "Create routes, scenarios, maps, sensor rigs, and calibrated ground truth."
+      - "Collect raw episodes, adapt Common10 datasets, validate and publish evidence."
+      - "Integrate the selected model with Autoware and run CARLA closed-loop tests."
+      - "Run real replay, shadow, and closed-course tests only after their prerequisite gates pass."
+  pro6000:
+    name: isolated_training_environment
+    responsibilities:
+      - "Validate an immutable transferred dataset before training."
+      - "Run deterministic training, fixed-split open-loop evaluation, and model A/B."
+      - "Export checkpoints and parity reports without modifying system or shared environments."
+    constraints:
+      - "Install packages only in the project-owned personal venv."
+      - "Use physical GPU 0 only through a single-device allowlist after an idle check."
+      - "Never stop, reset, expose, or alter another GPU or another user's process."
+      - "Do not reboot for a project run."
+
+stage_catalog:
+  - id: P0_CONTRACT
+    exit: "Versioned input/output, label, provenance, metric, and fail-closed validator exist."
+  - id: P1_DATA
+    exit: "Scenario-qualified train/val/test episodes pass data gates without route/site/day leakage."
+  - id: P2_OPEN_LOOP
+    exit: "Frozen test, at least three seeds, absolute thresholds, and model A/B gates pass."
+  - id: P3_RUNTIME
+    exit: "Autoware adapter, export parity, health rejection, and target-PC 10 Hz latency pass."
+  - id: P4_CARLA_CLOSED_LOOP
+    exit: "Predeclared CARLA scenario matrix passes with learned output causally controlling ego."
+  - id: P5_REAL_SHADOW
+    exit: "Real replay and shadow pass with actuation disconnected and intervention mining complete."
+  - id: P6_CLOSED_COURSE
+    exit: "Calibrated real vehicle passes closed-course safety plan; public road remains separately governed."
+
+status_catalog:
+  FOUNDATION_PASS_CARLA_ONLY: "Contract/data plumbing passed for the current CARLA corpus; not a driving capability."
+  DATA_PARTIAL: "At least one qualified expert episode exists, but required train/val/test diversity is incomplete."
+  EXPERT_BEHAVIOR_ONLY: "The expert demonstrated the behavior, but the model lacks required input/label/evaluation evidence."
+  OPEN_LOOP_MEASURED_BELOW_TARGET: "Open-loop was measured, but the frozen-test requirement and/or target threshold is unmet."
+  MODEL_FORWARD_ONLY: "Only model-forward timing or wiring exists; runtime and closed-loop gates are absent."
+  NOT_STARTED: "No qualifying feature-specific data and evaluation evidence exists."
+  BLOCKED: "A named prerequisite is missing; work must fail closed."
+  CLOSED_LOOP_PASS: "Reserved for a learned-model closed-loop evidence bundle meeting every declared gate."
+
+global_gate_defaults:
+  data:
+    - "Every selected episode passes common_10hz_v1 planning validation and manual provenance review."
+    - "Native six-camera rate is at least 9.5 Hz, p99 gap at most 150 ms, absolute gap at most 250 ms, and bundle coverage at least 99%."
+    - "Each feature has independent route/site/day train, val, and untouched test groups; contiguous drives are never split across them."
+    - "Missing feature labels use availability flags and valid masks and are never silently zero-filled."
+  open_loop:
+    - "Thresholds, sample set, seeds, and metric denominators are frozen before the test set is opened."
+    - "At least three training seeds are compared with the same data, runtime, hardware class, and sampling budget."
+    - "No safety-critical subgroup may regress more than 5% against the accepted baseline."
+    - "Test results include map, weather, maneuver, and domain subgroups rather than aggregate-only metrics."
+  closed_loop:
+    - "The learned trajectory causally owns the tested planning output; expert or recorded-pose replay cannot satisfy the gate."
+    - "Each noncritical feature runs at least 20 test episodes and each safety-critical feature at least 30, across at least three seeds and three weather/lighting conditions when applicable."
+    - "Collision count is zero, critical traffic-rule violation count is zero, and sensor-to-plan health remains at 10 Hz."
+    - "Raw logs, route, configuration, model hash, PNG/GIF, metrics, failures, and denominator counts are preserved."
+
+main_features:
+  - id: MF-01
+    title_ko: "센서·상태 이해"
+    title_en: sensing_and_state
+    status: FOUNDATION_PASS_CARLA_ONLY
+    children: [SEN-01, SEN-02, SEN-03, SEN-04]
+    next_gate: "Add static geometry labels and repeat the contract on a calibrated real rig."
+  - id: MF-02
+    title_ko: "경로·차로 주행"
+    title_en: route_and_lane_execution
+    status: DATA_PARTIAL
+    children: [RTE-01, RTE-02, RTE-03, RTE-04]
+    next_gate: "Build independent straight/left/right/stop test episodes and pass model A/B."
+  - id: MF-03
+    title_ko: "속도·승차감"
+    title_en: speed_and_comfort
+    status: OPEN_LOOP_MEASURED_BELOW_TARGET
+    children: [SPD-01, SPD-02, SPD-03]
+    next_gate: "Reduce speed error and add curvature/comfort labels before closed-loop."
+  - id: MF-04
+    title_ko: "교통규칙·교차로"
+    title_en: traffic_rules_and_intersections
+    status: EXPERT_BEHAVIOR_ONLY
+    children: [TRF-01, TRF-02, TRF-03, TRF-04]
+    next_gate: "Add synchronized signal, stop-line, right-of-way, and pedestrian labels."
+  - id: MF-05
+    title_ko: "선행차 추종·ACC"
+    title_en: lead_vehicle_and_acc
+    status: NOT_STARTED
+    children: [ACC-01, ACC-02, ACC-03]
+    next_gate: "Create lead-state and cut-in scenario datasets."
+  - id: MF-06
+    title_ko: "충돌위험·장애물 대응"
+    title_en: collision_risk_and_obstacles
+    status: NOT_STARTED
+    children: [OBS-01, OBS-02, OBS-03, OBS-04]
+    next_gate: "Implement occupancy/motion labels and retain an independent AEB layer."
+  - id: MF-07
+    title_ko: "차선변경·합류"
+    title_en: lane_change_and_merge
+    status: NOT_STARTED
+    children: [LCM-01, LCM-02, LCM-03]
+    next_gate: "Collect legal-boundary, target-gap, and rear-approach labels for both directions."
+  - id: MF-08
+    title_ko: "저속 정차·주차"
+    title_en: low_speed_and_parking
+    status: NOT_STARTED
+    children: [LSP-01, LSP-02]
+    next_gate: "Define low-speed sensor coverage and terminal-pose datasets."
+  - id: MF-09
+    title_ko: "런타임 안전·실차 전환"
+    title_en: runtime_safety_and_deployment
+    status: MODEL_FORWARD_ONLY
+    children: [SAF-01, SAF-02, SAF-03]
+    next_gate: "Execute the isolated adapter, then add parity, target-PC latency, reject/fallback, replay, and shadow gates."
+
+features:
+  - id: SEN-01
+    parent_id: MF-01
+    title_ko: "6카메라 동기·프레임 완전성"
+    current_stage: P1_DATA
+    target_stage: P5_REAL_SHADOW
+    status: FOUNDATION_PASS_CARLA_ONLY
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, COMMON10-CONTRACT]
+    data_requirements:
+      - "Six native camera roles, source frame IDs/timestamps, image hashes, and one causal anchor at 10 Hz."
+      - "Repeat on every supported CARLA map and the exact real sensor rig."
+    open_loop_pass:
+      - "All selected frame-role joins and payload hashes match their source manifests; mismatch-injection tests reject 100%."
+      - "No duplicated frame may be used to fabricate cadence."
+    closed_loop_pass:
+      - "At least 99% complete six-camera bundles, runtime skew at most 1 ms, p99 source gap at most 150 ms, and zero unreported drops for every run."
+    responsibility:
+      local: "Configure/capture sensors and audit CARLA or real timestamp transport."
+      pro6000: "Verify manifest-bound loader input and report missing/duplicate frame rejection."
+
+  - id: SEN-02
+    parent_id: MF-01
+    title_ko: "카메라 보정·TF·화각 일치"
+    current_stage: P1_DATA
+    target_stage: P5_REAL_SHADOW
+    status: FOUNDATION_PASS_CARLA_ONLY
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, MODEL-V0]
+    data_requirements:
+      - "Per-rig K, distortion/rectification, resolution/crop, T_base_from_camera, FOV, and calibration hashes."
+      - "CARLA calibration values must never substitute for real-rig values."
+    open_loop_pass:
+      - "Calibration perturbation and camera-order mutation tests reject 100%; deterministic projection fixtures stay within 0.05 m."
+    closed_loop_pass:
+      - "TF lookup succeeds for 100% of accepted frames and measured reprojection error is median at most 1 px and p95 at most 2 px."
+    responsibility:
+      local: "Calibrate each rig, publish TF, and capture target-based reprojection evidence."
+      pro6000: "Bind rig hashes to checkpoints and run camera-order/calibration ablations."
+
+  - id: SEN-03
+    parent_id: MF-01
+    title_ko: "Ego motion·localization 상태"
+    current_stage: P1_DATA
+    target_stage: P5_REAL_SHADOW
+    status: FOUNDATION_PASS_CARLA_ONLY
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, COMMON10-CONTRACT]
+    data_requirements:
+      - "Timestamped map/base pose, velocity, acceleration, yaw rate, steering, validity, and source provenance."
+      - "Real replay requires an independently measured localization reference and outage labels."
+    open_loop_pass:
+      - "Pose-derived future and speed consistency checks pass; invalid, stale, discontinuous, NaN, or Inf state is rejected."
+    closed_loop_pass:
+      - "Accepted-state freshness is at least 99.9%, unexplained pose discontinuities are zero, and localization dropout always triggers the safety selector."
+    responsibility:
+      local: "Provide CARLA truth or calibrated real localization and inject stale/dropout faults."
+      pro6000: "Validate ego-history masks and quantify sensitivity to bounded state noise."
+
+  - id: SEN-04
+    parent_id: MF-01
+    title_ko: "주행가능영역·차선 경계 표현"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Drivable area, lane/road edges, ego footprint, occlusion validity, map alignment, and weather-balanced labels."
+    open_loop_pass:
+      - "Drivable IoU at least 0.70, lane-boundary F1 at least 0.90, and selected-trajectory off-road rate at most 1% on frozen test."
+    closed_loop_pass:
+      - "Ego-footprint off-road events and illegal solid-boundary crossings are zero in at least 30 episodes."
+    responsibility:
+      local: "Generate map/semantic labels and inspect alignment overlays."
+      pro6000: "Train M2 static-geometry heads and report per-map/weather metrics."
+
+  - id: RTE-01
+    parent_id: MF-02
+    title_ko: "직진 차로 유지"
+    current_stage: P1_DATA
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: DATA_PARTIAL
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, EVIDENCE-20260906-DURATION-AB]
+    data_requirements:
+      - "Independent straight train/val/test routes on at least three map/site groups with lane-boundary labels."
+      - "Current evidence contains Town07 train only; it cannot serve as its own test."
+    open_loop_pass:
+      - "Selected ADE is at most 0.5 m at 1 s, 1.0 m at 3 s, and 2.0 m at 6.4 s; FDE at 6.4 s is at most 4.0 m."
+      - "Predicted ego footprint leaves the legal lane in at most 1% of valid test anchors."
+    closed_loop_pass:
+      - "Goal success at least 95%, collision/lane-invasion zero, CTE p95 at most 0.35 m and maximum at most 0.75 m in at least 20 episodes."
+    responsibility:
+      local: "Collect straight holdouts and run learned-model CARLA/Autoware closed-loop."
+      pro6000: "Train/evaluate fixed-split straight models and publish seed distributions."
+
+  - id: RTE-02
+    parent_id: MF-02
+    title_ko: "좌회전 경로 수행"
+    current_stage: P1_DATA
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: DATA_PARTIAL
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, EVIDENCE-20260906-DURATION-AB]
+    data_requirements:
+      - "Qualified left-turn train/val/test routes with pre-turn lead, turn arc, tail, signal/right-of-way state, and lane boundaries."
+      - "Current evidence contains CTrack left-turn train only."
+    open_loop_pass:
+      - "The RTE-01 horizon thresholds pass and wrong-direction/illegal-lane candidate selection is zero on frozen test."
+    closed_loop_pass:
+      - "Correct branch 100%, goal success at least 95%, collision/lane-invasion zero, CTE p95 at most 0.40 m and maximum at most 0.75 m in at least 20 episodes."
+    responsibility:
+      local: "Build varied protected/unprotected left turns and execute closed-loop."
+      pro6000: "Run left-turn A/B and curvature/yaw subgroup analysis."
+
+  - id: RTE-03
+    parent_id: MF-02
+    title_ko: "우회전 경로 수행"
+    current_stage: P2_OPEN_LOOP
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: OPEN_LOOP_MEASURED_BELOW_TARGET
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, EVIDENCE-20260906-DURATION-AB]
+    data_requirements:
+      - "Qualified right-turn train/val/test routes with signals, stop lines, crosswalks, occlusion, and legal lane boundaries."
+      - "Current Town03 episode is val only; independent train and untouched test are missing."
+    open_loop_pass:
+      - "The RTE-01 horizon thresholds pass; current v0 ten-epoch Town03 ADE/FDE at 6.4 s is 6.567681/16.171295 m and remains below target."
+    closed_loop_pass:
+      - "Correct branch 100%, goal success at least 95%, collision/lane-invasion zero, CTE p95 at most 0.40 m and maximum at most 0.75 m in at least 20 episodes."
+    responsibility:
+      local: "Collect independent right-turn train/test routes and run closed-loop."
+      pro6000: "Reduce right-turn error through frozen-split model A/B."
+
+  - id: RTE-04
+    parent_id: MF-02
+    title_ko: "경로 종점 정지"
+    current_stage: P1_DATA
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: DATA_PARTIAL
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905]
+    data_requirements:
+      - "Natural approach-to-goal episodes with exact bumper-relative stop target, stationary tail, and no teleported or synthetic stop labels."
+    open_loop_pass:
+      - "Terminal position error at most 0.5 m, terminal speed MAE at most 0.5 m/s, and premature-stop rate at most 1%."
+    closed_loop_pass:
+      - "At least 95% stop within 1.0 m before/at goal, speed at most 0.1 m/s for 2 s, with zero overshoot collision or rollback."
+    responsibility:
+      local: "Collect goal-stop holdouts and measure bumper-relative stop error."
+      pro6000: "Train/evaluate terminal-stop trajectory and speed behavior."
+
+  - id: SPD-01
+    parent_id: MF-03
+    title_ko: "30 km/h 목표속도 추종"
+    current_stage: P2_OPEN_LOOP
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: OPEN_LOOP_MEASURED_BELOW_TARGET
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, EVIDENCE-20260906-DURATION-AB]
+    data_requirements:
+      - "Straight and turn speed profiles with speed limit, actual speed, actuator response, stop phases, grade, and curvature."
+    open_loop_pass:
+      - "Selected speed MAE at most 1.0 m/s at 1, 3, and 6.4 s; current v0 ten-epoch Town03 6.4 s selected speed MAE is 1.872983 m/s."
+    closed_loop_pass:
+      - "On eligible straight cruise, actual speed stays within plus/minus 3 km/h for at least 80% of steady-state time and never exceeds 33 km/h."
+    responsibility:
+      local: "Calibrate actuation and run same-route speed closed-loop tests."
+      pro6000: "Train speed output and compare error by grade/curvature/map."
+
+  - id: SPD-02
+    parent_id: MF-03
+    title_ko: "곡률·상황 기반 감속"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Curvature, friction/road condition, speed limit, visibility, and expert safe-speed envelope per anchor."
+    open_loop_pass:
+      - "Safe-speed-envelope violations are zero and predicted lateral acceleration is at most 2.0 m/s^2 on frozen test."
+    closed_loop_pass:
+      - "Measured lateral acceleration stays at most 2.0 m/s^2 with zero lane departure, collision, or persistent steering saturation."
+    responsibility:
+      local: "Create curvature/friction scenarios and measure vehicle response."
+      pro6000: "Train envelope-aware speed/risk heads and evaluate tail cases."
+
+  - id: SPD-03
+    parent_id: MF-03
+    title_ko: "가감속·jerk 승차감"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: false
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Calibrated longitudinal acceleration/jerk, driver intervention, road grade, and safety-brake exemption labels."
+    open_loop_pass:
+      - "Acceleration MAE at most 0.5 m/s^2 and jerk MAE at most 1.0 m/s^3 outside explicitly masked emergency events."
+    closed_loop_pass:
+      - "Normal acceleration remains between -3.0 and 2.0 m/s^2 and absolute jerk p95 at most 2.5 m/s^3 without reducing safety success."
+    responsibility:
+      local: "Measure synchronized actuation/IMU response and passenger-comfort traces."
+      pro6000: "Train comfort regularization and report safety-versus-comfort trade-offs."
+
+  - id: TRF-01
+    parent_id: MF-04
+    title_ko: "교통신호 인지·준수"
+    current_stage: P1_DATA
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: EXPERT_BEHAVIOR_ONLY
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905]
+    data_requirements:
+      - "Synchronized signal state, visibility, relevant-signal association, stop line, phase transition, and occlusion labels."
+      - "The current Town03 expert waited at a signal, but signal state is not a model input/label."
+    open_loop_pass:
+      - "Relevant-signal macro F1 at least 0.95 and red/amber go-decision false-negative count zero on safety test."
+    closed_loop_pass:
+      - "Zero red-light violations in at least 30 trials and at least 95% progress on permissive green without unsafe hesitation."
+    responsibility:
+      local: "Script signal phases/occlusions and verify stop-line crossing causality."
+      pro6000: "Train signal association/behavior heads and evaluate transition subgroups."
+
+  - id: TRF-02
+    parent_id: MF-04
+    title_ko: "정지선·정지표지 준수"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Stop-sign state, stop-line geometry, ego-front reference, required dwell, and occlusion labels."
+    open_loop_pass:
+      - "Required-stop recall 100%, stop-point error at most 0.5 m, and false-stop rate at most 1%."
+    closed_loop_pass:
+      - "Zero line overshoots and 100% required stops at speed at most 0.1 m/s for at least 2 s in 30 trials."
+    responsibility:
+      local: "Author stop-line scenes and measure ego-front stop position."
+      pro6000: "Train stop intent/trajectory and evaluate seen/unseen sign layouts."
+
+  - id: TRF-03
+    parent_id: MF-04
+    title_ko: "비보호 교차로 우선권"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Conflict-zone geometry, actor priority, arrival time, turn intent, visibility, and safe-gap labels."
+    open_loop_pass:
+      - "Unsafe-enter recall 100%, go/yield macro F1 at least 0.90, and selected path collision-proxy count zero."
+    closed_loop_pass:
+      - "Zero priority violations or collisions and at least 95% legal completion over 30 randomized conflict trials."
+    responsibility:
+      local: "Generate randomized crossing traffic and auditable right-of-way truth."
+      pro6000: "Train interaction/risk behavior and report gap-size subgroups."
+
+  - id: TRF-04
+    parent_id: MF-04
+    title_ko: "횡단보도·보행자 양보"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Pedestrian pose/velocity/intent, crosswalk geometry, visibility/occlusion, and conflict timing."
+    open_loop_pass:
+      - "Conflict-pedestrian recall at least 0.98, missed hazardous crossing count zero, and yield-decision F1 at least 0.95."
+    closed_loop_pass:
+      - "Zero pedestrian collisions or crosswalk intrusions and at least 95% progress after clearance in 30 trials."
+    responsibility:
+      local: "Create occluded/unoccluded pedestrian scenarios and safety zones."
+      pro6000: "Train dynamic interaction heads and evaluate distance/visibility tails."
+
+  - id: ACC-01
+    parent_id: MF-05
+    title_ko: "선행차 상태 추정"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Lane-associated lead identity, distance, relative speed/acceleration, occlusion, and validity."
+    open_loop_pass:
+      - "Lead association F1 at least 0.95, distance MAE at most 1.0 m, and relative-speed MAE at most 0.5 m/s."
+    closed_loop_pass:
+      - "Wrong-lead control events are zero and lead-state freshness is at least 99.9% across 30 following trials."
+    responsibility:
+      local: "Generate varied lead vehicles and verify lane association ground truth."
+      pro6000: "Train dynamic representation and report range/occlusion metrics."
+
+  - id: ACC-02
+    parent_id: MF-05
+    title_ko: "시간간격 기반 ACC"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Desired time gap, lead/ego states, speed limit, grade, actuator delay, and comfortable/emergency brake labels."
+    open_loop_pass:
+      - "Predicted time-gap error p95 at most 0.5 s and unsafe predicted TTC below 1.5 s count zero."
+    closed_loop_pass:
+      - "Collision zero, TTC below 1.5 s zero, steady time-gap error p95 at most 0.5 s, and no control oscillation in 30 trials."
+    responsibility:
+      local: "Calibrate longitudinal plant and run same-lead-profile closed-loop."
+      pro6000: "Train following trajectories and evaluate gap/speed transition subgroups."
+
+  - id: ACC-03
+    parent_id: MF-05
+    title_ko: "Cut-in·cut-out 대응"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Randomized cut-in/out onset, lateral motion, target gap, occlusion, braking, and intervention labels."
+    open_loop_pass:
+      - "Hazardous cut-in recall at least 0.95, unsafe selected trajectory count zero, and response intent within one 100 ms planning cycle."
+    closed_loop_pass:
+      - "Collision zero, TTC below 1.0 s zero, and stable recovery without unnecessary full braking in 30 randomized trials."
+    responsibility:
+      local: "Script reproducible cut-in/out trajectories and capture causality."
+      pro6000: "Train temporal interaction behavior and mine missed/late reactions."
+
+  - id: OBS-01
+    parent_id: MF-06
+    title_ko: "정적 장애물 회피"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Static occupancy/footprint, drivable corridor, visibility, pass-side legality, clearance, and no-path labels."
+    open_loop_pass:
+      - "Selected ego-footprint collision count zero, legal-clearance at least 0.5 m, and no-path recall 100%."
+    closed_loop_pass:
+      - "Collision/lane violation zero and at least 95% legal pass-or-stop success in 30 object-position trials."
+    responsibility:
+      local: "Place static obstacles across lanes/shoulders and run closed-loop."
+      pro6000: "Train static geometry/risk heads and evaluate clearance tails."
+
+  - id: OBS-02
+    parent_id: MF-06
+    title_ko: "동적 장애물 회피"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Actor tracks/flow, uncertainty, occlusion, conflict zone, ego footprint, and intervention labels."
+    open_loop_pass:
+      - "Three-second actor forecast ADE at most 1.5 m, hazardous miss count zero, and selected collision-proxy count zero."
+    closed_loop_pass:
+      - "Collision zero and at least 95% safe avoid-or-yield completion over 30 randomized speed/direction trials."
+    responsibility:
+      local: "Generate deterministic moving hazards and measure minimum clearance/TTC."
+      pro6000: "Train temporal occupancy/flow and interaction-aware trajectory candidates."
+
+  - id: OBS-03
+    parent_id: MF-06
+    title_ko: "충돌위험 예측·후보 ranking"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Candidate-wise collision, TTC, off-road, uncertainty, intervention, and counterfactual validity labels."
+    open_loop_pass:
+      - "Risk AUPRC at least 0.90, hazardous false-negative count zero on the safety set, and calibration ECE at most 0.05."
+    closed_loop_pass:
+      - "Unsafe candidate selection zero under declared ODD, with every high-risk/no-safe-path case handed to the safety selector."
+    responsibility:
+      local: "Define ego-footprint collision oracle and adversarial scenario bank."
+      pro6000: "Train/calibrate risk ranking and report false-negative exemplars."
+
+  - id: OBS-04
+    parent_id: MF-06
+    title_ko: "독립 AEB"
+    current_stage: P0_CONTRACT
+    target_stage: P6_CLOSED_COURSE
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: []
+    data_requirements:
+      - "Independent perception/TTC source, actuator delay/stopping distance, false-positive scenes, and brake health."
+    open_loop_pass:
+      - "AEB trigger recall 100% inside the declared unavoidable-collision envelope and false-trigger rate at most 1 per 100 km equivalent."
+    closed_loop_pass:
+      - "Collision avoided where physically avoidable, impact speed minimized otherwise, and trigger-to-command deadline met in every trial."
+    responsibility:
+      local: "Implement AEB outside the learned head and validate physical stopping envelopes."
+      pro6000: "Evaluate learned risk as advisory input only; never replace the independent AEB decision."
+
+  - id: LCM-01
+    parent_id: MF-07
+    title_ko: "좌측 차선변경"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [COMMON10-CONTRACT]
+    data_requirements:
+      - "change_left command, legal boundary, target-lane occupancy, front/rear gaps, blind spot, and completion label."
+    open_loop_pass:
+      - "Maneuver F1 at least 0.90, illegal-boundary selection zero, predicted collision zero, and rear TTC at least 3.0 s."
+    closed_loop_pass:
+      - "At least 95% legal completion, collision/boundary violation zero, rear TTC at least 3.0 s in 30 trials."
+    responsibility:
+      local: "Author legal/illegal left-change traffic and execute closed-loop."
+      pro6000: "Train left-change candidates and report gap/occlusion subgroups."
+
+  - id: LCM-02
+    parent_id: MF-07
+    title_ko: "우측 차선변경"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [COMMON10-CONTRACT]
+    data_requirements:
+      - "change_right command, legal boundary, target-lane occupancy, front/rear gaps, blind spot, and completion label."
+    open_loop_pass:
+      - "Maneuver F1 at least 0.90, illegal-boundary selection zero, predicted collision zero, and rear TTC at least 3.0 s."
+    closed_loop_pass:
+      - "At least 95% legal completion, collision/boundary violation zero, rear TTC at least 3.0 s in 30 trials."
+    responsibility:
+      local: "Author legal/illegal right-change traffic and execute closed-loop."
+      pro6000: "Train right-change candidates and report gap/occlusion subgroups."
+
+  - id: LCM-03
+    parent_id: MF-07
+    title_ko: "합류·추월 복합기동"
+    current_stage: P0_CONTRACT
+    target_stage: P4_CARLA_CLOSED_LOOP
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "Merge topology, route necessity, gap acceptance, passing legality, actor intent, abort, and return-lane labels."
+    open_loop_pass:
+      - "Go/yield/abort macro F1 at least 0.90, illegal pass zero, and every selected trajectory satisfies TTC/clearance gates."
+    closed_loop_pass:
+      - "At least 95% legal merge/overtake-or-abort completion with zero collision, forced cut-off, or route loss in 30 trials."
+    responsibility:
+      local: "Build merge/overtake topology and multi-actor closed-loop scenarios."
+      pro6000: "Train multi-agent behavior and analyze rare abort failures."
+
+  - id: LSP-01
+    parent_id: MF-08
+    title_ko: "안전 갓길정차·pull-over"
+    current_stage: P0_CONTRACT
+    target_stage: P6_CLOSED_COURSE
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: []
+    data_requirements:
+      - "Legal stopping area, curb/edge, rear traffic, terminal pose, hazard state, and no-safe-area labels."
+    open_loop_pass:
+      - "Safe-area selection precision 100%, terminal pose error at most 0.3 m/5 deg, and no-safe-area recall 100%."
+    closed_loop_pass:
+      - "Collision/boundary violation zero and at least 95% safe stop within 0.5 m/7 deg in 30 trials."
+    responsibility:
+      local: "Map stopping zones and test low-speed terminal control."
+      pro6000: "Train pull-over intent/trajectory and evaluate no-safe-area rejection."
+
+  - id: LSP-02
+    parent_id: MF-08
+    title_ko: "주차·후진 저속기동"
+    current_stage: P0_CONTRACT
+    target_stage: P6_CLOSED_COURSE
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: []
+    data_requirements:
+      - "Near-field 360-degree coverage, parking-slot/curb geometry, reverse state, steering limits, occupancy, and terminal pose."
+    open_loop_pass:
+      - "Collision-free path rate 100% and terminal pose error at most 0.2 m/5 deg on frozen test."
+    closed_loop_pass:
+      - "Collision/contact zero and at least 95% completion within 0.3 m/7 deg, speed at most 5 km/h, over 30 trials."
+    responsibility:
+      local: "Provide near-field sensors/parking simulator and measure contact/pose."
+      pro6000: "Train a separately gated low-speed/reverse model; do not infer coverage from the forward planner."
+
+  - id: SAF-01
+    parent_id: MF-09
+    title_ko: "모델 export·런타임 지연·freshness"
+    current_stage: P2_OPEN_LOOP
+    target_stage: P3_RUNTIME
+    status: MODEL_FORWARD_ONLY
+    safety_critical: true
+    current_evidence: [EVIDENCE-20260905, EVIDENCE-20260906-DURATION-AB, SHADOW-RUNTIME-GUIDE]
+    data_requirements:
+      - "Representative target-PC tensors, preprocessing/postprocessing traces, model hash, queue timing, and stale/drop fault cases."
+    open_loop_pass:
+      - "PyTorch versus deployed-engine maximum XY difference at most 0.05 m and speed difference at most 0.10 m/s on the full frozen set."
+      - "Current 0.702218 ms/sample is GPU model-forward only and does not satisfy this gate."
+    closed_loop_pass:
+      - "Sensor-to-trajectory p99 at most 100 ms at 10 Hz, deadline-miss and unreported-drop count zero, with stale output rejected in 100% of injected faults."
+    responsibility:
+      local: "Execute the isolated Autoware adapter and measure full target-PC pipeline/queue latency."
+      pro6000: "Export the selected checkpoint and generate deterministic parity vectors."
+
+  - id: SAF-02
+    parent_id: MF-09
+    title_ko: "불확실성·ODD 이탈·safety selector"
+    current_stage: P0_CONTRACT
+    target_stage: P5_REAL_SHADOW
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [MODEL-V0]
+    data_requirements:
+      - "In-distribution and OOD weather/rig/map samples, sensor corruption, label ambiguity, and safe fallback availability."
+    open_loop_pass:
+      - "OOD AUROC at least 0.95, injected invalid/corrupt inputs rejected 100%, and in-ODD false reject at most 1%."
+    closed_loop_pass:
+      - "No rejected/expired trajectory reaches control and every no-safe-candidate case selects the declared fallback within one cycle."
+    responsibility:
+      local: "Own ODD policy, selector, fault injection, and command mux isolation."
+      pro6000: "Calibrate confidence and mine OOD/ambiguous examples without setting vehicle policy."
+
+  - id: SAF-03
+    parent_id: MF-09
+    title_ko: "Fallback·MRM·실차 release 단계"
+    current_stage: P0_CONTRACT
+    target_stage: P6_CLOSED_COURSE
+    status: NOT_STARTED
+    safety_critical: true
+    current_evidence: [TRAINING-GUIDE]
+    data_requirements:
+      - "Fault taxonomy, independent stop path, actuator/vehicle health, intervention, replay/shadow logs, and signed rig/model provenance."
+    open_loop_pass:
+      - "Every declared sensor/model/localization fault maps to one deterministic fallback with no unknown or conflicting command owner."
+    closed_loop_pass:
+      - "CARLA fault injection reaches minimal risk without collision; then at least 10 h real shadow has zero unhandled critical fault before 30 closed-course repetitions."
+      - "Public-road actuation is outside this matrix and requires separate legal and safety authorization."
+    responsibility:
+      local: "Implement MRM/mux, conduct replay-shadow-closed-course release, and retain intervention evidence."
+      pro6000: "Provide immutable model/provenance artifacts and offline failure mining only."

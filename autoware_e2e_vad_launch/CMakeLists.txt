@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.14)
 project(autoware_e2e_vad_launch)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+
+# HH_260906 - Install the shared portable E2E package for the ROS shadow adapter.
+ament_python_install_package(
+  portable_e2e
+  PACKAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../portable_e2e"
+)
 
 install(DIRECTORY config launch rviz DESTINATION share/${PROJECT_NAME})
 install(
@@ -10,6 +17,7 @@ install(
     scripts/carla_actuation_sweep_logic.py
     scripts/carla_autoware_state_publisher.py
     scripts/carla_map_aligned_odometry.py
+    scripts/portable_e2e_shadow_node.py
     scripts/vad_aeb_configurator.py
     scripts/vad_imu_acceleration_adapter.py
     scripts/vad_route_logic.py
@@ -54,6 +62,10 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_validate_route_map test/test_validate_route_map.py)
   ament_add_pytest_test(test_prepare_carla_route test/test_prepare_carla_route.py)
   ament_add_pytest_test(test_fast_profile test/test_fast_profile.py)
+  ament_add_pytest_test(
+    test_portable_e2e_shadow
+    test/test_portable_e2e_shadow.py
+  )
   ament_add_pytest_test(test_smart_mpc_integration test/test_smart_mpc_integration.py)
   ament_add_pytest_test(
     test_carla_vehicle_status_contract

@@ -1,0 +1,177 @@
+{
+  "audit_id": "portable_e2e.runtime_geometry_audit.v1",
+  "evidence_status": "HISTORICAL_SUPERSEDED_GATE_DEFINITION",
+  "superseded_by": "local_cpu_runtime_smoke_gate_v6.json",
+  "interpretation_warning": "This preserved v1 gate result is not the current runtime decision. Use the gate v6 evidence named in superseded_by.",
+  "batch_size": 4,
+  "checkpoint_id": "portable_e2e.pytorch_checkpoint.v1",
+  "checkpoint_sha256": "370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0",
+  "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+  "created_at_utc": "2026-09-05T16:57:39.589205Z",
+  "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+  "dataset_id": "carla-common10-30kph-town07-ctrack-town03-20260905-v2",
+  "device": "cpu",
+  "domain_sample_counts": {
+    "carla": 337
+  },
+  "evaluation_episode_count": 1,
+  "evaluation_split": "val",
+  "gate": {
+    "source": "portable_e2e.runtime_contract.RuntimeGateConfig.v1_defaults",
+    "threshold_overrides": false,
+    "thresholds": {
+      "candidate_count": 6,
+      "future_points": 64,
+      "maximum_abs_x_m": 100.0,
+      "maximum_abs_y_m": 20.0,
+      "maximum_first_point_distance_m": 1.5,
+      "maximum_heading_step_rad": 0.75,
+      "maximum_speed_mps": 8.333333333333334,
+      "maximum_step_m": 1.5,
+      "minimum_first_point_x_m": -0.25,
+      "minimum_planar_extent_m": 0.05,
+      "timestep_s": 0.1
+    }
+  },
+  "geometry": {
+    "all_candidates_geometry_pass_count": 0,
+    "all_candidates_geometry_pass_rate": 0.0,
+    "any_candidate_geometry_pass_count": 16,
+    "any_candidate_geometry_pass_rate": 0.04747774480712166,
+    "candidate_results": [
+      {
+        "candidate_index": 0,
+        "failure_counts": {
+          "heading": 337,
+          "step": 337
+        },
+        "geometry_pass_count": 0,
+        "geometry_pass_rate": 0.0,
+        "geometry_reject_count": 337,
+        "sample_count": 337
+      },
+      {
+        "candidate_index": 1,
+        "failure_counts": {
+          "heading": 321,
+          "speed": 36
+        },
+        "geometry_pass_count": 16,
+        "geometry_pass_rate": 0.04747774480712166,
+        "geometry_reject_count": 321,
+        "sample_count": 337
+      },
+      {
+        "candidate_index": 2,
+        "failure_counts": {
+          "heading": 337,
+          "spatial": 337,
+          "step": 337
+        },
+        "geometry_pass_count": 0,
+        "geometry_pass_rate": 0.0,
+        "geometry_reject_count": 337,
+        "sample_count": 337
+      },
+      {
+        "candidate_index": 3,
+        "failure_counts": {
+          "heading": 337,
+          "step": 337
+        },
+        "geometry_pass_count": 0,
+        "geometry_pass_rate": 0.0,
+        "geometry_reject_count": 337,
+        "sample_count": 337
+      },
+      {
+        "candidate_index": 4,
+        "failure_counts": {
+          "first_distance": 24,
+          "heading": 337,
+          "step": 270
+        },
+        "geometry_pass_count": 0,
+        "geometry_pass_rate": 0.0,
+        "geometry_reject_count": 337,
+        "sample_count": 337
+      },
+      {
+        "candidate_index": 5,
+        "failure_counts": {
+          "heading": 337,
+          "step": 337
+        },
+        "geometry_pass_count": 0,
+        "geometry_pass_rate": 0.0,
+        "geometry_reject_count": 337,
+        "sample_count": 337
+      }
+    ],
+    "sample_count": 337,
+    "selected_result": {
+      "failure_counts": {
+        "heading": 321,
+        "speed": 36
+      },
+      "geometry_pass_count": 16,
+      "geometry_pass_rate": 0.04747774480712166,
+      "geometry_reject_count": 321,
+      "sample_count": 337
+    },
+    "selector": {
+      "distinct_selected_candidates": 1,
+      "dominant_candidate_fraction": 1.0,
+      "dominant_candidate_index": 1,
+      "invalid_selection_count": 0,
+      "normalized_selection_entropy": 0.0,
+      "selection_counts": {
+        "0": 0,
+        "1": 337,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    }
+  },
+  "implementation": {
+    "audit_runtime_sha256": "7d78a1db33e4111d668397f4e433c4de3947cf893ac2ac67522fad287bac942a",
+    "runtime_contract_sha256": "f885758bdfa3401eb51e9fc6d993abf9cb91cae4a0e904fc9d2224c73098dcd1"
+  },
+  "model_config_sha256": "6bb4303a1e260cbcbacd20cd9e707330cd4af9cbf684c08938525a81bef161ba",
+  "model_parameter_count": 1053278,
+  "runtime": {
+    "cublas_workspace_config": null,
+    "cuda_matmul_allow_tf32": false,
+    "cudnn": 92000,
+    "cudnn_allow_tf32": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "mkl_num_threads": null,
+    "numpy": "2.5.2",
+    "omp_num_threads": null,
+    "pillow": "12.3.0",
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "torch_cuda": "13.0",
+    "torch_num_interop_threads": 64,
+    "torch_num_threads": 64
+  },
+  "status": "RUNTIME_GEOMETRY_AUDIT_COMPLETE",
+  "timing": {
+    "audit_wall_seconds": 9.626606466248631,
+    "model_forward_ms_per_sample": 9.197984929873611,
+    "model_forward_seconds": 3.099720921367407
+  },
+  "training_dataset_fingerprint_sha256": "3b6dd9dd21b9ac3d9db174974c6eee724457288c3c89f99f1c5152b49c992676",
+  "training_domain_samples_seen": {
+    "carla": 6130
+  },
+  "training_episode_count": 2,
+  "training_sampling_plan_sha256": "d72c26f3f83a9d8637938ba0d9f5975ed7109538533f50bfc989fdcbd66f04c1",
+  "training_sampling_policy": "uniform_without_replacement",
+  "vehicle_control_approved": false,
+  "warning": "RESEARCH SHADOW AUDIT ONLY — NOT APPROVED FOR VEHICLE CONTROL"
+}

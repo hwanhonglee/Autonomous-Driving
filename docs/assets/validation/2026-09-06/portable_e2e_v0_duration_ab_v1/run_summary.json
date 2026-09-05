@@ -1,0 +1,102 @@
+{
+  "evidence_id": "portable_e2e.v0_duration_ab.v1",
+  "status": "TRAINING_TARGET_REACHED",
+  "warning": "RESEARCH CHECKPOINT — NOT APPROVED FOR VEHICLE CONTROL",
+  "run_id": "carla-common10-30kph-town07-ctrack-town03-20260905-v2-perspective-v0-e10-b4-seed20260903-duration-v1",
+  "training_split": "train",
+  "training_episode_count": 2,
+  "training_domains": {
+    "carla": 613
+  },
+  "dataset_size": 613,
+  "dataset_fingerprint_sha256": "3b6dd9dd21b9ac3d9db174974c6eee724457288c3c89f99f1c5152b49c992676",
+  "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+  "checkpoint_sha256": "370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0",
+  "checkpoint_bytes": 12703375,
+  "created_at_utc": "2026-09-05T16:43:42.040682Z",
+  "completed_at_utc": "2026-09-05T16:45:40.902670Z",
+  "device": {
+    "logical_device": "cuda:0",
+    "physical_assignment": "authorized GPU 0 only",
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "total_memory_bytes": 101973819392
+  },
+  "train_config": {
+    "batch_size": 4,
+    "checkpoint_interval": 154,
+    "domain_ratios": [],
+    "learning_rate": 0.0001,
+    "max_steps": 1540,
+    "maximum_gradient_norm": 5.0,
+    "num_workers": 0,
+    "sampling_policy": "uniform_without_replacement",
+    "seed": 20260903,
+    "verify_image_sha256": true,
+    "weight_decay": 0.0001
+  },
+  "completed_state": {
+    "epoch": 10,
+    "global_step": 1540,
+    "next_batch_index": 0,
+    "samples_seen": 6130,
+    "domain_samples_seen": {
+      "carla": 6130
+    }
+  },
+  "sampling_plan": {
+    "batches_per_epoch": 154,
+    "epoch_sample_count": 613,
+    "replacement": false,
+    "order_algorithm": "proportional_weighted_interleave_v1",
+    "seed_derivation": "sha256_seed_epoch_named_stream_v1",
+    "sampling_plan_sha256": "d72c26f3f83a9d8637938ba0d9f5975ed7109538533f50bfc989fdcbd66f04c1"
+  },
+  "model": {
+    "model_id": "portable_e2e.perspective_trajectory.v0",
+    "model_config_sha256": "6bb4303a1e260cbcbacd20cd9e707330cd4af9cbf684c08938525a81bef161ba",
+    "parameter_count": 1053278,
+    "camera_count": 6,
+    "candidate_count": 6,
+    "future_points": 64,
+    "ego_history_frames": 10,
+    "image_shape_chw": [
+      3,
+      180,
+      320
+    ],
+    "maximum_step_m": 3.0,
+    "route_points": 128,
+    "route_scale_m": 120.0
+  },
+  "loss_config": {
+    "candidate_score_weight": 0.1,
+    "final_displacement_weight": 0.5,
+    "kinematic_speed_weight": 0.05,
+    "speed_weight": 0.2,
+    "xy_weight": 1.0,
+    "yaw_weight": 0.1
+  },
+  "last_batch_metrics": {
+    "epoch_zero_based": 9,
+    "global_step": 1540,
+    "loss": 0.47302088141441345,
+    "regression_loss": 0.45843416452407837,
+    "candidate_score_loss": 0.14586707949638367,
+    "gradient_norm_before_clip": 124.80469512939453,
+    "selected_ade_m": 0.32104337215423584,
+    "selected_fde_m": 0.6528671383857727,
+    "selected_speed_mae_mps": 0.11660344898700714,
+    "selected_yaw_mae_rad": 0.17086368799209595,
+    "selected_kinematic_speed_mae_mps": 1.3385241031646729
+  },
+  "sanitization": {
+    "remote_absolute_paths_removed": true,
+    "host_and_ip_removed": true,
+    "gpu_uuid_removed": true
+  },
+  "vehicle_control_approved": false
+}

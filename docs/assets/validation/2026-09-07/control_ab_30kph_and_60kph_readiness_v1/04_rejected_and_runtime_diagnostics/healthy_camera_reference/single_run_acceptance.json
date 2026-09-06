@@ -1,0 +1,635 @@
+{
+  "campaign_checks": {
+    "all_runs_pass": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every supplied owned run must pass every fail-closed gate",
+      "status": "PASS"
+    },
+    "nonempty_run_set": {
+      "actual": 1,
+      "requirement": "at least one owned run directory is required",
+      "status": "PASS"
+    },
+    "unique_run_directories": {
+      "actual": [
+        "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2"
+      ],
+      "requirement": "each resolved run directory may appear only once",
+      "status": "PASS"
+    },
+    "valid_expected_route_sha256": {
+      "actual": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+      "requirement": "expected route SHA-256 must be 64 lowercase hex characters",
+      "status": "PASS"
+    }
+  },
+  "campaign_gate_checks": {
+    "cte_limit": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: maximum absolute CTE must be <= 1.0 m",
+      "status": "PASS"
+    },
+    "diagnosis_valid": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: diagnosis must be a complete schema-2 JSON object",
+      "status": "PASS"
+    },
+    "exact_route_sha256": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: owner and selected source route SHA-256 must equal the expected route SHA-256",
+      "status": "PASS"
+    },
+    "goal_reached": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: result success must be true and reason must be goal reached",
+      "status": "PASS"
+    },
+    "inference_latency": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: accepted inference p99 must be <= 100 ms",
+      "status": "PASS"
+    },
+    "lateral_acceleration_limit": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: maximum lateral acceleration must be <= 1.8 m/s^2",
+      "status": "PASS"
+    },
+    "owner_pass": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: owned_trial_summary must be schema-1 PASS",
+      "status": "PASS"
+    },
+    "path_rate": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: shadow path receipt rate must be within [9.5, 10.5] Hz",
+      "status": "PASS"
+    },
+    "runtime_health_pass": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: runtime_health must be schema-1 PASS",
+      "status": "PASS"
+    },
+    "selected_attempt_pass": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: selected attempt must record process exit 0 and runtime-health PASS",
+      "status": "PASS"
+    },
+    "selected_attempt_unambiguous": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: selected_attempt must identify exactly one contained attempt directory",
+      "status": "PASS"
+    },
+    "shadow_evidence_valid": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: Portable shadow analysis must use the expected schema and be EVIDENCE_VALID",
+      "status": "PASS"
+    },
+    "shadow_ten_hz_pass": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: Portable shadow ten-Hz claim must pass for shadow-only scope",
+      "status": "PASS"
+    },
+    "source_period_continuity": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: source period gate must pass with zero adjacent-period violations",
+      "status": "PASS"
+    },
+    "source_rate": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: source anchor rate must be within [9.5, 10.5] Hz",
+      "status": "PASS"
+    },
+    "status_wall_gap": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: maximum accepted status wall gap must be <= 0.2 s",
+      "status": "PASS"
+    },
+    "trajectory_correction_limit": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: maximum trajectory correction must be <= 15.0 m",
+      "status": "PASS"
+    },
+    "trajectory_rate": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: shadow trajectory receipt rate must be within [9.5, 10.5] Hz",
+      "status": "PASS"
+    },
+    "zero_runtime_losses": {
+      "actual": {
+        "pass_count": 1,
+        "run_count": 1
+      },
+      "requirement": "every run must satisfy: rejection, drop, stale, eviction, expiry, pending, and timeout counters must be zero",
+      "status": "PASS"
+    }
+  },
+  "expected_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+  "fail_count": 0,
+  "gate_pass_counts": {
+    "cte_limit": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "diagnosis_valid": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "exact_route_sha256": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "goal_reached": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "inference_latency": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "lateral_acceleration_limit": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "owner_pass": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "path_rate": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "runtime_health_pass": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "selected_attempt_pass": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "selected_attempt_unambiguous": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "shadow_evidence_valid": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "shadow_ten_hz_pass": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "source_period_continuity": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "source_rate": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "status_wall_gap": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "trajectory_correction_limit": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "trajectory_rate": {
+      "pass_count": 1,
+      "run_count": 1
+    },
+    "zero_runtime_losses": {
+      "pass_count": 1,
+      "run_count": 1
+    }
+  },
+  "generated_at": "2026-09-06T13:28:15.082927+00:00",
+  "limits": {
+    "maximum_cte_m": 1.0,
+    "maximum_inference_p99_ms": 100.0,
+    "maximum_lateral_acceleration_mps2": 1.8,
+    "maximum_rate_hz": 10.5,
+    "maximum_status_wall_gap_s": 0.2,
+    "maximum_trajectory_correction_m": 15.0,
+    "minimum_rate_hz": 9.5
+  },
+  "pass_count": 1,
+  "reasons": [],
+  "run_count": 1,
+  "runs": [
+    {
+      "checks": {
+        "cte_limit": {
+          "actual": 0.5487778186798096,
+          "requirement": "maximum absolute CTE must be <= 1.0 m",
+          "status": "PASS"
+        },
+        "diagnosis_valid": {
+          "actual": {
+            "classification": "path_dominant",
+            "schema_version": 2
+          },
+          "requirement": "diagnosis must be a complete schema-2 JSON object",
+          "status": "PASS"
+        },
+        "exact_route_sha256": {
+          "actual": {
+            "expected": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "owner": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "source_route": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+          },
+          "requirement": "owner and selected source route SHA-256 must equal the expected route SHA-256",
+          "status": "PASS"
+        },
+        "goal_reached": {
+          "actual": {
+            "reason": "goal reached",
+            "success": true
+          },
+          "requirement": "result success must be true and reason must be goal reached",
+          "status": "PASS"
+        },
+        "inference_latency": {
+          "actual": 40.32861175537111,
+          "requirement": "accepted inference p99 must be <= 100 ms",
+          "status": "PASS"
+        },
+        "lateral_acceleration_limit": {
+          "actual": 0.6419414458389254,
+          "requirement": "maximum lateral acceleration must be <= 1.8 m/s^2",
+          "status": "PASS"
+        },
+        "owner_pass": {
+          "actual": {
+            "schema_version": 1,
+            "status": "PASS"
+          },
+          "requirement": "owned_trial_summary must be schema-1 PASS",
+          "status": "PASS"
+        },
+        "path_rate": {
+          "actual": 9.986364466856855,
+          "requirement": "shadow path receipt rate must be within [9.5, 10.5] Hz",
+          "status": "PASS"
+        },
+        "runtime_health_pass": {
+          "actual": {
+            "schema_version": 1,
+            "status": "PASS"
+          },
+          "requirement": "runtime_health must be schema-1 PASS",
+          "status": "PASS"
+        },
+        "selected_attempt_pass": {
+          "actual": {
+            "process_exit_status": 0,
+            "runtime_health_status": "PASS"
+          },
+          "requirement": "selected attempt must record process exit 0 and runtime-health PASS",
+          "status": "PASS"
+        },
+        "selected_attempt_unambiguous": {
+          "actual": {
+            "attempt_count": 1,
+            "matching_rows": 1,
+            "selected_attempt": "attempt_001"
+          },
+          "requirement": "selected_attempt must identify exactly one contained attempt directory",
+          "status": "PASS"
+        },
+        "shadow_evidence_valid": {
+          "actual": {
+            "analysis_status": "EVIDENCE_VALID",
+            "schema_id": "autoware-e2e.portable-shadow-evidence-analysis.v2"
+          },
+          "requirement": "Portable shadow analysis must use the expected schema and be EVIDENCE_VALID",
+          "status": "PASS"
+        },
+        "shadow_ten_hz_pass": {
+          "actual": {
+            "pass": true,
+            "status": "ESTABLISHED_FOR_SHADOW_ONLY"
+          },
+          "requirement": "Portable shadow ten-Hz claim must pass for shadow-only scope",
+          "status": "PASS"
+        },
+        "source_period_continuity": {
+          "actual": {
+            "met": true,
+            "violation_count": 0
+          },
+          "requirement": "source period gate must pass with zero adjacent-period violations",
+          "status": "PASS"
+        },
+        "source_rate": {
+          "actual": 9.999999850831355,
+          "requirement": "source anchor rate must be within [9.5, 10.5] Hz",
+          "status": "PASS"
+        },
+        "status_wall_gap": {
+          "actual": 0.134672799,
+          "requirement": "maximum accepted status wall gap must be <= 0.2 s",
+          "status": "PASS"
+        },
+        "trajectory_correction_limit": {
+          "actual": 13.670496940612793,
+          "requirement": "maximum trajectory correction must be <= 15.0 m",
+          "status": "PASS"
+        },
+        "trajectory_rate": {
+          "actual": 9.986364140196084,
+          "requirement": "shadow trajectory receipt rate must be within [9.5, 10.5] Hz",
+          "status": "PASS"
+        },
+        "zero_runtime_losses": {
+          "actual": {
+            "counters": {
+              "anchor_rejected_count": 0,
+              "camera_bundle_timeout_count": 0,
+              "dropped_stale_count": 0,
+              "evicted_capacity_count": 0,
+              "expired_pending_count": 0,
+              "input_event_rejected_count": 0,
+              "input_settle_timeout_count": 0,
+              "observed_drop_count": 0,
+              "observed_rejection_count": 0,
+              "observed_timeout_count": 0,
+              "rejected_status_count": 0,
+              "rejection_stage:acceleration": 0,
+              "rejection_stage:camera_info": 0,
+              "rejection_stage:image": 0,
+              "rejection_stage:inference": 0,
+              "rejection_stage:odometry": 0,
+              "rejection_stage:steering": 0,
+              "terminal_pending_bundle_count": 0
+            },
+            "requirement_flags": {
+              "pre_startup_only_initial_waiting_and_zero_losses": true,
+              "zero_rejections_arm_to_seal": true,
+              "zero_silent_runtime_losses_arm_to_seal": true
+            }
+          },
+          "requirement": "rejection, drop, stale, eviction, expiry, pending, and timeout counters must be zero",
+          "status": "PASS"
+        }
+      },
+      "diagnosis": {
+        "classification": "path_dominant",
+        "schema_version": 2
+      },
+      "evidence": {
+        "Portable shadow evidence": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001/portable_shadow_provenance/shadow_evidence_analysis.json",
+          "sha256": "a303893a0d05f5bc6ef03d846e7ee4d0813983693934f4cbc11635cf1fad4ab1",
+          "size_bytes": 15740
+        },
+        "owned_trial_summary": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/owned_trial_summary.json",
+          "sha256": "0f37e1e3e794bc48a64e1f9dfa310015d63dc8a0cd320921f6ac73b78ea33474",
+          "size_bytes": 6067
+        },
+        "route result": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001/result.json",
+          "sha256": "09590aba1ee70d75387009a2593f7b8decec664b5a4cbe1f18caf4faa7c2aa2d",
+          "size_bytes": 142140
+        },
+        "runtime health": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001/runtime_health.json",
+          "sha256": "4e07fbc8c4f30eea2e5677e86d5ea524579bd69f201826d8da2b5a634650eb54",
+          "size_bytes": 25998
+        },
+        "source route": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001/source_route.json",
+          "sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "size_bytes": 36466
+        },
+        "turn diagnosis": {
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001/diagnosis.json",
+          "sha256": "a621442056b84590cf19f98f122840182acb27044847ecf6336baca9ee70c61c",
+          "size_bytes": 16073
+        }
+      },
+      "evidence_errors": [],
+      "metrics": {
+        "actual_to_final_cte_p95_m": 0.04490192345816524,
+        "actual_to_route_cte_p95_m": 0.5089318836229508,
+        "inference_p99_ms": 40.32861175537111,
+        "maximum_cte_m": 0.5487778186798096,
+        "maximum_lateral_acceleration_mps2": 0.6419414458389254,
+        "maximum_status_wall_gap_s": 0.134672799,
+        "maximum_trajectory_correction_m": 13.670496940612793,
+        "path_rate_hz": 9.986364466856855,
+        "raw_route_cte_p95_m": 6.756205349486984,
+        "raw_to_final_geometry_p95_m": 8.465666553528315,
+        "source_period_violation_count": 0,
+        "source_rate_hz": 9.999999850831355,
+        "trajectory_rate_hz": 9.986364140196084
+      },
+      "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2",
+      "reasons": [],
+      "run_id": "portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2",
+      "runtime_loss_counters": {
+        "anchor_rejected_count": 0,
+        "camera_bundle_timeout_count": 0,
+        "dropped_stale_count": 0,
+        "evicted_capacity_count": 0,
+        "expired_pending_count": 0,
+        "input_event_rejected_count": 0,
+        "input_settle_timeout_count": 0,
+        "observed_drop_count": 0,
+        "observed_rejection_count": 0,
+        "observed_timeout_count": 0,
+        "rejected_status_count": 0,
+        "rejection_stage:acceleration": 0,
+        "rejection_stage:camera_info": 0,
+        "rejection_stage:image": 0,
+        "rejection_stage:inference": 0,
+        "rejection_stage:odometry": 0,
+        "rejection_stage:steering": 0,
+        "terminal_pending_bundle_count": 0
+      },
+      "selected_attempt": "attempt_001",
+      "selected_attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_camera_barrier_v2/attempts/attempt_001",
+      "status": "PASS"
+    }
+  ],
+  "schema_id": "autoware-e2e.owned-route-repeat-summary.v1",
+  "scope": "CARLA simulation screening; not approved for real-vehicle control",
+  "statistics": {
+    "actual_to_final_cte_p95_m": {
+      "count": 1,
+      "maximum": 0.04490192345816524,
+      "median": 0.04490192345816524,
+      "minimum": 0.04490192345816524,
+      "values": [
+        0.04490192345816524
+      ]
+    },
+    "actual_to_route_cte_p95_m": {
+      "count": 1,
+      "maximum": 0.5089318836229508,
+      "median": 0.5089318836229508,
+      "minimum": 0.5089318836229508,
+      "values": [
+        0.5089318836229508
+      ]
+    },
+    "inference_p99_ms": {
+      "count": 1,
+      "maximum": 40.32861175537111,
+      "median": 40.32861175537111,
+      "minimum": 40.32861175537111,
+      "values": [
+        40.32861175537111
+      ]
+    },
+    "maximum_cte_m": {
+      "count": 1,
+      "maximum": 0.5487778186798096,
+      "median": 0.5487778186798096,
+      "minimum": 0.5487778186798096,
+      "values": [
+        0.5487778186798096
+      ]
+    },
+    "maximum_lateral_acceleration_mps2": {
+      "count": 1,
+      "maximum": 0.6419414458389254,
+      "median": 0.6419414458389254,
+      "minimum": 0.6419414458389254,
+      "values": [
+        0.6419414458389254
+      ]
+    },
+    "maximum_status_wall_gap_s": {
+      "count": 1,
+      "maximum": 0.134672799,
+      "median": 0.134672799,
+      "minimum": 0.134672799,
+      "values": [
+        0.134672799
+      ]
+    },
+    "maximum_trajectory_correction_m": {
+      "count": 1,
+      "maximum": 13.670496940612793,
+      "median": 13.670496940612793,
+      "minimum": 13.670496940612793,
+      "values": [
+        13.670496940612793
+      ]
+    },
+    "path_rate_hz": {
+      "count": 1,
+      "maximum": 9.986364466856855,
+      "median": 9.986364466856855,
+      "minimum": 9.986364466856855,
+      "values": [
+        9.986364466856855
+      ]
+    },
+    "raw_route_cte_p95_m": {
+      "count": 1,
+      "maximum": 6.756205349486984,
+      "median": 6.756205349486984,
+      "minimum": 6.756205349486984,
+      "values": [
+        6.756205349486984
+      ]
+    },
+    "raw_to_final_geometry_p95_m": {
+      "count": 1,
+      "maximum": 8.465666553528315,
+      "median": 8.465666553528315,
+      "minimum": 8.465666553528315,
+      "values": [
+        8.465666553528315
+      ]
+    },
+    "source_period_violation_count": {
+      "count": 1,
+      "maximum": 0.0,
+      "median": 0.0,
+      "minimum": 0.0,
+      "values": [
+        0.0
+      ]
+    },
+    "source_rate_hz": {
+      "count": 1,
+      "maximum": 9.999999850831355,
+      "median": 9.999999850831355,
+      "minimum": 9.999999850831355,
+      "values": [
+        9.999999850831355
+      ]
+    },
+    "trajectory_rate_hz": {
+      "count": 1,
+      "maximum": 9.986364140196084,
+      "median": 9.986364140196084,
+      "minimum": 9.986364140196084,
+      "values": [
+        9.986364140196084
+      ]
+    }
+  },
+  "status": "PASS"
+}

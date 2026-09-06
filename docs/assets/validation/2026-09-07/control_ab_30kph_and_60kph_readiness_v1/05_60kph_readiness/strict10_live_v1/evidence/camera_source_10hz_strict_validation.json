@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "qualification_id": "carla_six_camera_10hz_strict_transport_runtime_v1",
+  "contract": {
+    "profile_id": "carla_vad_camera_source_10hz_strict_v1",
+    "sensor_count": 6,
+    "source_frequency_hz": 10.0,
+    "minimum_camera_rate_hz": 9.5,
+    "maximum_camera_rate_hz": 10.5,
+    "minimum_bundle_coverage_percent": 99.0,
+    "maximum_camera_stamp_gap_sec": 0.100005,
+    "maximum_camera_bundle_stamp_span_sec": 5e-06,
+    "camera_image_publish_qos": "best_effort",
+    "camera_image_publish_depth": 1,
+    "camera_info_publish_qos": "reliable"
+  },
+  "qualification_boundary": {
+    "scope": "strict_six_camera_10hz_transport_runtime_only",
+    "simulation_only": true,
+    "vehicle_behavior_validated": false,
+    "portable_model_loaded": false,
+    "portable_model_60kph_validated": false,
+    "portable_model_60kph_claim_allowed": false,
+    "real_vehicle_ready": false
+  },
+  "transport_provenance": {
+    "bridge_publish_cap_hz": 11,
+    "camera_image_endpoint_depth": 1,
+    "camera_image_endpoint_durability": "volatile",
+    "camera_image_endpoint_history": "keep_last",
+    "camera_image_publisher_reliability": "best_effort",
+    "camera_info_publisher_reliability": "reliable",
+    "camera_source_sensor_tick_seconds": 0.1,
+    "cyclonedds_config_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+    "cyclonedds_loopback_interface_required": true,
+    "cyclonedds_uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+    "declared_effective_camera_rate_hz": 10.0,
+    "exact_camera_image_graph_required": true,
+    "minimum_camera_wall_rate_hz": 9.0,
+    "minimum_complete_bundle_count": 70,
+    "portable_model_60kph_claim_allowed": false,
+    "portable_model_60kph_validated": false,
+    "portable_model_loaded": false,
+    "portable_output_topics": [
+      "/planning/portable_e2e/shadow_trajectory",
+      "/planning/portable_e2e/shadow_path",
+      "/planning/portable_e2e/status",
+      "/planning/portable_e2e/latency_ms",
+      "/planning/portable_e2e/selected_candidate"
+    ],
+    "portable_runtime_graph_absence_required": true,
+    "portable_shadow_node": "/portable_e2e_shadow",
+    "probe_topics": "camera_info_plus_read_only_image_graph",
+    "profile_id": "carla_vad_camera_source_10hz_strict_v1",
+    "qualification_scope": "strict_six_camera_10hz_transport_runtime_only",
+    "real_vehicle_ready": false,
+    "rmw_implementation": "rmw_cyclonedds_cpp",
+    "ros_localhost_only_expected": "0",
+    "rviz_image_subscription_reliability": "best_effort",
+    "sensor_mapping_sha256": "c4598f8a7920ca8d1df072ed940a17176d9019ad53381ba3cc25bec666ef805c",
+    "simulation_only": true,
+    "vad_image_subscription_reliability": "best_effort",
+    "vad_model_override_sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb",
+    "vehicle_behavior_validated": false
+  },
+  "camera_delivery_contract_provenance": {
+    "bundle_dispatch_source": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py",
+      "sha256": "5b7d5721401cb4969c2f5a37fb595d441936926fff9848dad783845f1cf42b8b"
+    },
+    "bundle_dispatch_runtime": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py",
+      "sha256": "5b7d5721401cb4969c2f5a37fb595d441936926fff9848dad783845f1cf42b8b"
+    },
+    "bridge_source": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py",
+      "sha256": "09545696a376b4ebd038223cc5cbc1d1667758d99f1787565a1f365841b1577e"
+    },
+    "bridge_runtime": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py",
+      "sha256": "09545696a376b4ebd038223cc5cbc1d1667758d99f1787565a1f365841b1577e"
+    },
+    "entrypoint_source": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py",
+      "sha256": "e9ccdf751c70b146a1cae9bafbbc3411e8fcb0ae8244f507caa990c4a38e562e"
+    },
+    "entrypoint_runtime": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py",
+      "sha256": "e9ccdf751c70b146a1cae9bafbbc3411e8fcb0ae8244f507caa990c4a38e562e"
+    },
+    "publish_worker_source": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py",
+      "sha256": "d3f54be3a4e737190f48e3e854f23fc8310e2caef278fa077513bcc6571d9062"
+    },
+    "publish_worker_runtime": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py",
+      "sha256": "d3f54be3a4e737190f48e3e854f23fc8310e2caef278fa077513bcc6571d9062"
+    },
+    "interface_launch_source": {
+      "declared_path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml",
+      "sha256": "4ebfc9edc7a09797bbd500e933ec674f285fd2a01d6e97c175b93599e062bc18"
+    },
+    "interface_launch_runtime": {
+      "declared_path": "/home/a/autoware_e2e/install/autoware_carla_interface/share/autoware_carla_interface/launch/autoware_carla_interface.launch.xml",
+      "path": "/home/a/autoware_e2e/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml",
+      "sha256": "4ebfc9edc7a09797bbd500e933ec674f285fd2a01d6e97c175b93599e062bc18"
+    },
+    "delivery_patch": {
+      "declared_path": "/home/a/autoware_e2e/patches/autoware_carla_interface_camera_delivery_contract.patch",
+      "path": "/home/a/autoware_e2e/patches/autoware_carla_interface_camera_delivery_contract.patch",
+      "sha256": "2184694ffdc0fc3d8fedd1ad9e66f0157b7ab81d0c5badbb4da5f045c8a4558b"
+    },
+    "patch_application": {
+      "status": "PASS",
+      "worktree": "/home/a/autoware_e2e/src/universe/autoware_universe",
+      "verification": "git_apply_reverse_check"
+    }
+  },
+  "barrier_contract": {
+    "dispatch_policy": "exact_due_frame_barrier_fail_closed_v1",
+    "delivery_contract_id": "strict10_exact_due_frame_fail_closed_v1",
+    "scope": "strict_six_camera_10hz_transport_only",
+    "frame_stride": 2,
+    "expected_rgb_count": 6,
+    "wait_timeout_sec": 0.25,
+    "publish_deadline_sec": 0.25,
+    "pending_frame_limit": 8
+  },
+  "runtime_parameters": {
+    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-07/autoware_vad_60kph_town06_strict10_transport_v1/trial/attempt_001/strict_camera_runtime_parameters.json",
+    "sha256": "ffd8817e3ca41207af1ff4ea6b7ab4d8d97e80f575b8dad7b5500e3f4eb65153",
+    "evidence": {
+      "derivation": "sensor_tick_0.1_sec_divided_by_fixed_delta_0.05_sec",
+      "derived_camera_frame_stride": 2,
+      "node": "/autoware_carla_interface",
+      "parameters": {
+        "camera_frame_barrier_enabled": true,
+        "camera_frame_wait_timeout_sec": 0.25,
+        "camera_pending_frame_limit": 8,
+        "camera_publish_deadline_sec": 0.25,
+        "fixed_delta_seconds": 0.05,
+        "sync_mode": true
+      },
+      "read_only": true,
+      "schema_version": 1,
+      "status": "PASS"
+    }
+  },
+  "runtime_health": {
+    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-07/autoware_vad_60kph_town06_strict10_transport_v1/trial/attempt_001/runtime_health.json",
+    "sha256": "da14f2a7dbb7ba641f2e55b62e414f8bf571510e9ef9908489c283a730c20270",
+    "status": "PASS",
+    "winning_window_indexes": [
+      0,
+      1,
+      2
+    ]
+  },
+  "portable_runtime_absence": {
+    "status": "PASS",
+    "observation_scope": "winning_runtime_health_windows",
+    "observed_window_indexes": [
+      0,
+      1,
+      2
+    ],
+    "observations": [
+      {
+        "window_index": 0,
+        "status": "PASS",
+        "observed_elapsed_seconds": 8.101828539045528
+      },
+      {
+        "window_index": 1,
+        "status": "PASS",
+        "observed_elapsed_seconds": 9.102246409049258
+      },
+      {
+        "window_index": 2,
+        "status": "PASS",
+        "observed_elapsed_seconds": 10.101656600949354
+      }
+    ],
+    "portable_shadow_node_observed": false,
+    "portable_output_publisher_observed": false
+  },
+  "bundle_coverage_percent": 99.88439306358381,
+  "maximum_camera_bundle_stamp_span_sec": 0.0,
+  "minimum_camera_stamp_rate_hz": 9.999999899998786,
+  "maximum_camera_stamp_rate_hz": 9.999999899998786,
+  "maximum_camera_stamp_gap_sec": 0.10000000200000159,
+  "camera_stamp_rate_hz": {
+    "CAM_FRONT": 9.999999899998786,
+    "CAM_BACK": 9.999999899998786,
+    "CAM_FRONT_LEFT": 9.999999899998786,
+    "CAM_BACK_LEFT": 9.999999899998786,
+    "CAM_FRONT_RIGHT": 9.999999899998786,
+    "CAM_BACK_RIGHT": 9.999999899998786
+  },
+  "camera_stamp_gap_sec": {
+    "CAM_FRONT": 0.10000000200000159,
+    "CAM_BACK": 0.10000000200000159,
+    "CAM_FRONT_LEFT": 0.10000000200000159,
+    "CAM_BACK_LEFT": 0.10000000200000159,
+    "CAM_FRONT_RIGHT": 0.10000000200000159,
+    "CAM_BACK_RIGHT": 0.10000000200000159
+  }
+}

@@ -1,0 +1,2260 @@
+{
+  "acceptance_gates": {
+    "aggregate_comparator_acceptance": {
+      "check_count": 28,
+      "requirement": "every authoritative comparator check must PASS in every valid pair",
+      "status": "FAIL"
+    },
+    "all_geometry_assessments": {
+      "requirement": "every arm must have an assessed geometry PASS",
+      "status": "FAIL"
+    },
+    "all_infrastructure_gates": {
+      "requirement": "every baseline and candidate infrastructure gate must PASS",
+      "status": "FAIL"
+    },
+    "all_pairs_valid_for_statistics": {
+      "input_pair_count": 4,
+      "requirement": "no invalid or geometry-failed pair may be overridden by aggregation",
+      "status": "FAIL",
+      "valid_pair_count": 3
+    },
+    "all_route_completions": {
+      "requirement": "every baseline and candidate route must PASS",
+      "status": "FAIL"
+    },
+    "all_route_contracts": {
+      "requirement": "every arm must bind to the expected route SHA-256",
+      "status": "PASS"
+    },
+    "candidate_geometry_failure_rate_nonregression": {
+      "baseline_percent": 0.0,
+      "candidate_percent": 25.0,
+      "requirement": "candidate assessed geometry-failure rate must not exceed baseline",
+      "status": "FAIL"
+    },
+    "each_pair_comparator_acceptance": {
+      "accept_count": 1,
+      "requirement": "every fully valid pair must receive authoritative ACCEPT",
+      "status": "FAIL",
+      "valid_pair_count": 3
+    },
+    "minimum_valid_pair_count": {
+      "actual": 3,
+      "required": 6,
+      "status": "FAIL"
+    }
+  },
+  "acceptance_policy": {
+    "aggregate_comparator_policy": "Every authoritative comparator check must PASS in every valid pair; median or majority results cannot override a failed pair.",
+    "each_pair_comparator_policy": "Every fully valid pair must receive ACCEPT from compare_control_ab.compare.",
+    "geometry_failure_policy": "Candidate assessed geometry-failure rate must not exceed baseline, and every arm must still pass route and geometry gates.",
+    "invalid_pair_policy": "Arms without a selected owned PASS are classified INVALID_* or GEOMETRY_FAIL/ROUTE_FAIL and never enter paired performance statistics.",
+    "minimum_evidence_policy": "At least the predeclared minimum number of fully valid ordered pairs is required."
+  },
+  "aggregate_comparator_checks": {
+    "baseline_camera": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_goal": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_health": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_health_integrity": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_isolated_control": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_profile": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_quality": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "baseline_route_rtf": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_camera": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_correction_delta": {
+      "pass_count": 2,
+      "pass_rate_percent": 66.66666666666667,
+      "status": "FAIL",
+      "valid_pair_count": 3
+    },
+    "candidate_cte": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_goal": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_health": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_health_integrity": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_isolated_control": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_lateral_acceleration": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_profile": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_quality": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_robust_acceleration": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_route_rtf": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_scenario_compatibility": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "candidate_speed_ceiling": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "same_route": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "scenario_route_identity": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "turn_completion_time": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "turn_raw_gated_improvement": {
+      "pass_count": 2,
+      "pass_rate_percent": 66.66666666666667,
+      "status": "FAIL",
+      "valid_pair_count": 3
+    },
+    "turn_speed_retention": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    },
+    "turn_tracking_nonworsening": {
+      "pass_count": 3,
+      "pass_rate_percent": 100.0,
+      "status": "PASS",
+      "valid_pair_count": 3
+    }
+  },
+  "arm_gate_summary": {
+    "baseline": {
+      "geometry": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 0,
+          "NOT_ASSESSED": 0,
+          "PASS": 4
+        },
+        "failure_rate_percent_of_assessed": 0.0,
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 4
+      },
+      "infrastructure": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 1,
+          "PASS": 3
+        },
+        "pass_rate_percent_of_all": 75.0,
+        "pass_rate_percent_of_assessed": 75.0,
+        "total_count": 4
+      },
+      "route": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 0,
+          "NOT_ASSESSED": 0,
+          "PASS": 4
+        },
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 4
+      }
+    },
+    "candidate": {
+      "geometry": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 1,
+          "NOT_ASSESSED": 0,
+          "PASS": 3
+        },
+        "failure_rate_percent_of_assessed": 25.0,
+        "pass_rate_percent_of_all": 75.0,
+        "pass_rate_percent_of_assessed": 75.0,
+        "total_count": 4
+      },
+      "infrastructure": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 0,
+          "PASS": 4
+        },
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 4
+      },
+      "route": {
+        "assessed_count": 4,
+        "counts": {
+          "FAIL": 1,
+          "NOT_ASSESSED": 0,
+          "PASS": 3
+        },
+        "pass_rate_percent_of_all": 75.0,
+        "pass_rate_percent_of_assessed": 75.0,
+        "total_count": 4
+      }
+    }
+  },
+  "campaign_contract": {
+    "baseline_directory_name": "A_baseline",
+    "candidate_directory_name": "B_turn_preview_10m",
+    "candidate_id": "turn_preview_10m",
+    "expected_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+    "minimum_valid_pair_count": 6,
+    "ordered_pair_count": 4,
+    "scenario": "c_track_turn"
+  },
+  "counts": {
+    "classifications": {
+      "INVALID_BASELINE_INFRA": 1,
+      "VALID_ACCEPT": 1,
+      "VALID_HOLD": 2
+    },
+    "excluded_pairs_from_performance_statistics": 1,
+    "input_pairs": 4,
+    "valid_pairs": 3
+  },
+  "decision": "HOLD",
+  "generated_at": "2026-09-06T14:17:35.017799+00:00",
+  "paired_delta_statistics": {
+    "camera_bundle_coverage_percent": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.0,
+      "median": 0.0,
+      "minimum": -0.18281535648993952
+    },
+    "camera_bundle_receipt_p95_sec": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": -1.6232500000001177e-05,
+      "median": -0.0003523062499999983,
+      "minimum": -0.0011002314000000003
+    },
+    "gate_positive_cap_time_percent": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 8.440176416935074,
+      "median": 5.487157196936801,
+      "minimum": 4.545454545252758
+    },
+    "maximum_cte_m": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.043269336223602295,
+      "median": 0.021300077438354492,
+      "minimum": 0.0024210214614868164
+    },
+    "maximum_lateral_acceleration_mps2": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": -0.0052311752166247505,
+      "median": -0.10931065893776448,
+      "minimum": -0.20964231006514233
+    },
+    "maximum_speed_mps": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.4073366031886181,
+      "median": 0.3542455551895918,
+      "minimum": 0.32289627317903236
+    },
+    "maximum_trajectory_correction_m": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.45685482025146484,
+      "median": -0.07001781463623047,
+      "minimum": -1.465205192565918
+    },
+    "path_cte_p95_m": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.012462907788333477,
+      "median": 0.009912752443298811,
+      "minimum": -0.000986781392081637
+    },
+    "raw_gated_target_rmse_mps": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": -0.11324979253819412,
+      "median": -0.1531842080046173,
+      "minimum": -0.18130484086777443
+    },
+    "robust_acceleration_p95_mps2": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.120642557168118,
+      "median": 0.06591839850071268,
+      "minimum": 0.03778963692316417
+    },
+    "route_rtf": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.0015822440771470214,
+      "median": 0.0002023288700639947,
+      "minimum": -0.0009552458382836582
+    },
+    "sim_elapsed_sec": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": -2.400000034999998,
+      "median": -3.050000045999994,
+      "minimum": -6.250000092999997
+    },
+    "sustained_speed_sec": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": 0.0,
+      "median": 0.0,
+      "minimum": 0.0
+    },
+    "target_tracking_rmse_mps": {
+      "count": 3,
+      "definition": "candidate_minus_baseline",
+      "maximum": -0.48758700470340455,
+      "median": -0.6903209615206363,
+      "minimum": -1.0337508733201406
+    }
+  },
+  "pairs": [
+    {
+      "baseline": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "baseline",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "a090f902fe6a587cc6376d70a690a9e201d30c61ce6152652b7828df889d6266",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "baseline_metrics": {
+        "camera_bundle_coverage_percent": 100.0,
+        "camera_bundle_receipt_p95_sec": 0.013853217000000001,
+        "gate_positive_cap_time_percent": 5.9492563436077415,
+        "maximum_cte_m": 0.5274512767791748,
+        "maximum_lateral_acceleration_mps2": 0.7903803291296226,
+        "maximum_speed_mps": 4.701916332593435,
+        "maximum_trajectory_correction_m": 13.289597511291504,
+        "path_cte_p95_m": 0.5053958253067314,
+        "raw_gated_target_rmse_mps": 1.3809665179924095,
+        "robust_acceleration_p95_mps2": 0.874755506810135,
+        "route_rtf": 0.9996565160531555,
+        "sim_elapsed_sec": 35.450000528000004,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 1.895886952448474
+      },
+      "candidate": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "candidate",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "057518073aee72921d4f038a164550bce5c1bce00cbf3bf5337e44d570464c14",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "candidate_metrics": {
+        "camera_bundle_coverage_percent": 99.81718464351006,
+        "camera_bundle_receipt_p95_sec": 0.0138369845,
+        "gate_positive_cap_time_percent": 11.436413540544542,
+        "maximum_cte_m": 0.5298722982406616,
+        "maximum_lateral_acceleration_mps2": 0.5807380190644803,
+        "maximum_speed_mps": 5.109252935782053,
+        "maximum_trajectory_correction_m": 13.746452331542969,
+        "path_cte_p95_m": 0.5044090439146498,
+        "raw_gated_target_rmse_mps": 1.2277823099877923,
+        "robust_acceleration_p95_mps2": 0.995398063978253,
+        "route_rtf": 0.9998588449232195,
+        "sim_elapsed_sec": 33.050000493000006,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 1.4082999477450695
+      },
+      "classification": "VALID_HOLD",
+      "comparison": {
+        "baseline": {
+          "control_ab_candidate": "baseline",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "false",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "3.0",
+          "health_rtf": 0.9937500147499998,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 100.0,
+            "camera_bundle_receipt_p95_sec": 0.013853217000000001,
+            "gate_positive_cap_time_percent": 5.9492563436077415,
+            "maximum_cte_m": 0.5274512767791748,
+            "maximum_lateral_acceleration_mps2": 0.7903803291296226,
+            "maximum_speed_mps": 4.701916332593435,
+            "maximum_trajectory_correction_m": 13.289597511291504,
+            "path_cte_p95_m": 0.5053958253067314,
+            "raw_gated_target_rmse_mps": 1.3809665179924095,
+            "robust_acceleration_p95_mps2": 0.874755506810135,
+            "route_rtf": 0.9996565160531555,
+            "sim_elapsed_sec": 35.450000528000004,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 1.895886952448474
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T13:51:06.892028+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "009b6715122cfc90f3a6b0f6d16d79eb3d5105c07cc075c361ff190acc8c8431",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "a05f7e6f0bbfbc0c33569a6f709819f45ecdc70722ba724c977c1c38c38c6965"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "a05f7e6f0bbfbc0c33569a6f709819f45ecdc70722ba724c977c1c38c38c6965",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/A_baseline/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "a090f902fe6a587cc6376d70a690a9e201d30c61ce6152652b7828df889d6266",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "a090f902fe6a587cc6376d70a690a9e201d30c61ce6152652b7828df889d6266",
+          "success": true
+        },
+        "candidate": {
+          "control_ab_candidate": "turn_preview_10m",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "true",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "10.0",
+          "health_rtf": 0.9875000147500002,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 99.81718464351006,
+            "camera_bundle_receipt_p95_sec": 0.0138369845,
+            "gate_positive_cap_time_percent": 11.436413540544542,
+            "maximum_cte_m": 0.5298722982406616,
+            "maximum_lateral_acceleration_mps2": 0.5807380190644803,
+            "maximum_speed_mps": 5.109252935782053,
+            "maximum_trajectory_correction_m": 13.746452331542969,
+            "path_cte_p95_m": 0.5044090439146498,
+            "raw_gated_target_rmse_mps": 1.2277823099877923,
+            "robust_acceleration_p95_mps2": 0.995398063978253,
+            "route_rtf": 0.9998588449232195,
+            "sim_elapsed_sec": 33.050000493000006,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 1.4082999477450695
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T13:47:26.817679+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "ac99245167452341d8e519745c1eccd05280a5ad80b5c79371973644690f2cc5",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "e832c0e75aa4ffb74b9d853ee26e93eecba44923adf7f60b8f71c7baa656d7ca"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "e832c0e75aa4ffb74b9d853ee26e93eecba44923adf7f60b8f71c7baa656d7ca",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu",
+              "--control-ab-turn-preview-10m"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01/B_turn_preview_10m/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "057518073aee72921d4f038a164550bce5c1bce00cbf3bf5337e44d570464c14",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "057518073aee72921d4f038a164550bce5c1bce00cbf3bf5337e44d570464c14",
+          "success": true
+        },
+        "candidate_id": "turn_preview_10m",
+        "checks": {
+          "baseline_camera": {
+            "actual": {
+              "coverage_percent": 100.0,
+              "receipt_p95_sec": 0.013853217000000001
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "baseline_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "baseline_health": {
+            "actual": {
+              "rtf": 0.9937500147499998,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "baseline_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "a090f902fe6a587cc6376d70a690a9e201d30c61ce6152652b7828df889d6266",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "a090f902fe6a587cc6376d70a690a9e201d30c61ce6152652b7828df889d6266",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "baseline_isolated_control": {
+            "actual": {
+              "candidate_id": "baseline",
+              "curvature_speed_preview_m": "3.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "false",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('baseline', 'false', 'false', 'false', 'true', '3.0')",
+            "status": "PASS"
+          },
+          "baseline_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "baseline_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "baseline_route_rtf": {
+            "actual": 0.9996565160531555,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_camera": {
+            "actual": {
+              "coverage_percent": 99.81718464351006,
+              "receipt_p95_sec": 0.0138369845
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "candidate_correction_delta": {
+            "actual": 0.45685482025146484,
+            "requirement": "trajectory correction increase <= 0.25 m",
+            "status": "FAIL"
+          },
+          "candidate_cte": {
+            "actual": 0.5298722982406616,
+            "requirement": "maximum CTE <= 0.65 m",
+            "status": "PASS"
+          },
+          "candidate_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "candidate_health": {
+            "actual": {
+              "rtf": 0.9875000147500002,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "057518073aee72921d4f038a164550bce5c1bce00cbf3bf5337e44d570464c14",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "057518073aee72921d4f038a164550bce5c1bce00cbf3bf5337e44d570464c14",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "candidate_isolated_control": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "curvature_speed_preview_m": "10.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "true",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('turn_preview_10m', 'false', 'false', 'true', 'true', '10.0')",
+            "status": "PASS"
+          },
+          "candidate_lateral_acceleration": {
+            "actual": 0.5807380190644803,
+            "requirement": "maximum lateral acceleration <= 1.5 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "candidate_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "candidate_robust_acceleration": {
+            "actual": 0.995398063978253,
+            "requirement": "robust longitudinal acceleration p95 <= 1.10 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_route_rtf": {
+            "actual": 0.9998588449232195,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_scenario_compatibility": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "scenario": "c_track_turn"
+            },
+            "requirement": "PID candidate supports every declared scenario; preview candidates require a turn scenario",
+            "status": "PASS"
+          },
+          "candidate_speed_ceiling": {
+            "actual": 5.109252935782053,
+            "requirement": "maximum speed <= 9.0 m/s",
+            "status": "PASS"
+          },
+          "same_route": {
+            "actual": {
+              "baseline": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "candidate": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "source_route SHA-256 must be identical",
+            "status": "PASS"
+          },
+          "scenario_route_identity": {
+            "actual": {
+              "baseline": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "candidate": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "expected_route_scenarios": [
+                "left",
+                "right"
+              ],
+              "expected_town": "C_track_1_0_7"
+            },
+            "requirement": "both source routes must match the named A/B scenario",
+            "status": "PASS"
+          },
+          "turn_completion_time": {
+            "actual": 0.9322990127149823,
+            "requirement": "sim completion time <= 110% of baseline",
+            "status": "PASS"
+          },
+          "turn_raw_gated_improvement": {
+            "actual": 0.8890746401098051,
+            "requirement": "raw-to-gated target RMSE <= 90% of paired baseline",
+            "status": "PASS"
+          },
+          "turn_speed_retention": {
+            "actual": 1.0866320398695704,
+            "requirement": "maximum speed >= 95% of baseline",
+            "status": "PASS"
+          },
+          "turn_tracking_nonworsening": {
+            "actual": 0.7428185240297676,
+            "requirement": "target tracking RMSE <= 105% of baseline",
+            "status": "PASS"
+          }
+        },
+        "decision": "HOLD",
+        "generated_at": "2026-09-06T14:17:34.959126+00:00",
+        "real_vehicle_ready": false,
+        "scenario": "c_track_turn",
+        "schema_version": 1
+      },
+      "comparison_decision": "HOLD",
+      "index": 1,
+      "pair_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_01",
+      "valid_for_performance_statistics": true
+    },
+    {
+      "baseline": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "baseline",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "15b562f831c87dfef1fe80ef35dea45c22e0951626fb7820b32e43ab6e01b36e",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "baseline_metrics": {
+        "camera_bundle_coverage_percent": 100.0,
+        "camera_bundle_receipt_p95_sec": 0.0143751759,
+        "gate_positive_cap_time_percent": 4.795117700090233,
+        "maximum_cte_m": 0.5299076437950134,
+        "maximum_lateral_acceleration_mps2": 0.653097347721824,
+        "maximum_speed_mps": 4.632649200618654,
+        "maximum_trajectory_correction_m": 14.453516960144043,
+        "path_cte_p95_m": 0.5058006895313637,
+        "raw_gated_target_rmse_mps": 1.3842822210169767,
+        "robust_acceleration_p95_mps2": 0.9089301995855934,
+        "route_rtf": 0.9994748704371595,
+        "sim_elapsed_sec": 36.150000539,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 2.043297248532762
+      },
+      "candidate": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "candidate",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "c87f4a9cc1df5ecd37a4426e0cb9daf02db6bb41eaf82b2a42c76fbf646eb4f8",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "candidate_metrics": {
+        "camera_bundle_coverage_percent": 100.0,
+        "camera_bundle_receipt_p95_sec": 0.014022869650000002,
+        "gate_positive_cap_time_percent": 13.235294117025306,
+        "maximum_cte_m": 0.5512077212333679,
+        "maximum_lateral_acceleration_mps2": 0.6478661725051993,
+        "maximum_speed_mps": 4.955545473797686,
+        "maximum_trajectory_correction_m": 12.988311767578125,
+        "path_cte_p95_m": 0.5157134419746625,
+        "raw_gated_target_rmse_mps": 1.2029773801492023,
+        "robust_acceleration_p95_mps2": 0.9748485980863061,
+        "route_rtf": 0.9985196245988759,
+        "sim_elapsed_sec": 33.100000493,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 1.3529762870121256
+      },
+      "classification": "VALID_ACCEPT",
+      "comparison": {
+        "baseline": {
+          "control_ab_candidate": "baseline",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "false",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "3.0",
+          "health_rtf": 0.99375001475,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 100.0,
+            "camera_bundle_receipt_p95_sec": 0.0143751759,
+            "gate_positive_cap_time_percent": 4.795117700090233,
+            "maximum_cte_m": 0.5299076437950134,
+            "maximum_lateral_acceleration_mps2": 0.653097347721824,
+            "maximum_speed_mps": 4.632649200618654,
+            "maximum_trajectory_correction_m": 14.453516960144043,
+            "path_cte_p95_m": 0.5058006895313637,
+            "raw_gated_target_rmse_mps": 1.3842822210169767,
+            "robust_acceleration_p95_mps2": 0.9089301995855934,
+            "route_rtf": 0.9994748704371595,
+            "sim_elapsed_sec": 36.150000539,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 2.043297248532762
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T13:56:11.891287+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "c05ea8df24fa9e3e4fefb30f4a2fdd4b97b906389c9a46d6da96f147ce5443e8",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "2c623cd530fb7a36fb66268b5147786093b7e002a498d67cd26b442869cbc3bf"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "2c623cd530fb7a36fb66268b5147786093b7e002a498d67cd26b442869cbc3bf",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/A_baseline/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "15b562f831c87dfef1fe80ef35dea45c22e0951626fb7820b32e43ab6e01b36e",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "15b562f831c87dfef1fe80ef35dea45c22e0951626fb7820b32e43ab6e01b36e",
+          "success": true
+        },
+        "candidate": {
+          "control_ab_candidate": "turn_preview_10m",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "true",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "10.0",
+          "health_rtf": 0.9875000147499999,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 100.0,
+            "camera_bundle_receipt_p95_sec": 0.014022869650000002,
+            "gate_positive_cap_time_percent": 13.235294117025306,
+            "maximum_cte_m": 0.5512077212333679,
+            "maximum_lateral_acceleration_mps2": 0.6478661725051993,
+            "maximum_speed_mps": 4.955545473797686,
+            "maximum_trajectory_correction_m": 12.988311767578125,
+            "path_cte_p95_m": 0.5157134419746625,
+            "raw_gated_target_rmse_mps": 1.2029773801492023,
+            "robust_acceleration_p95_mps2": 0.9748485980863061,
+            "route_rtf": 0.9985196245988759,
+            "sim_elapsed_sec": 33.100000493,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 1.3529762870121256
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T13:59:49.779828+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "a26aa74491f042e63c0cb6b08f4450d4667e1bb41c615e3f1e1393850f47071f",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "7e9d13c3067d14a53ccc958c43407ad0a271588b187b3195f3c2a6301687308b"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "7e9d13c3067d14a53ccc958c43407ad0a271588b187b3195f3c2a6301687308b",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu",
+              "--control-ab-turn-preview-10m"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02/B_turn_preview_10m/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "c87f4a9cc1df5ecd37a4426e0cb9daf02db6bb41eaf82b2a42c76fbf646eb4f8",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "c87f4a9cc1df5ecd37a4426e0cb9daf02db6bb41eaf82b2a42c76fbf646eb4f8",
+          "success": true
+        },
+        "candidate_id": "turn_preview_10m",
+        "checks": {
+          "baseline_camera": {
+            "actual": {
+              "coverage_percent": 100.0,
+              "receipt_p95_sec": 0.0143751759
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "baseline_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "baseline_health": {
+            "actual": {
+              "rtf": 0.99375001475,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "baseline_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "15b562f831c87dfef1fe80ef35dea45c22e0951626fb7820b32e43ab6e01b36e",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "15b562f831c87dfef1fe80ef35dea45c22e0951626fb7820b32e43ab6e01b36e",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "baseline_isolated_control": {
+            "actual": {
+              "candidate_id": "baseline",
+              "curvature_speed_preview_m": "3.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "false",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('baseline', 'false', 'false', 'false', 'true', '3.0')",
+            "status": "PASS"
+          },
+          "baseline_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "baseline_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "baseline_route_rtf": {
+            "actual": 0.9994748704371595,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_camera": {
+            "actual": {
+              "coverage_percent": 100.0,
+              "receipt_p95_sec": 0.014022869650000002
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "candidate_correction_delta": {
+            "actual": -1.465205192565918,
+            "requirement": "trajectory correction increase <= 0.25 m",
+            "status": "PASS"
+          },
+          "candidate_cte": {
+            "actual": 0.5512077212333679,
+            "requirement": "maximum CTE <= 0.65 m",
+            "status": "PASS"
+          },
+          "candidate_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "candidate_health": {
+            "actual": {
+              "rtf": 0.9875000147499999,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "c87f4a9cc1df5ecd37a4426e0cb9daf02db6bb41eaf82b2a42c76fbf646eb4f8",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "c87f4a9cc1df5ecd37a4426e0cb9daf02db6bb41eaf82b2a42c76fbf646eb4f8",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "candidate_isolated_control": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "curvature_speed_preview_m": "10.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "true",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('turn_preview_10m', 'false', 'false', 'true', 'true', '10.0')",
+            "status": "PASS"
+          },
+          "candidate_lateral_acceleration": {
+            "actual": 0.6478661725051993,
+            "requirement": "maximum lateral acceleration <= 1.5 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "candidate_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "candidate_robust_acceleration": {
+            "actual": 0.9748485980863061,
+            "requirement": "robust longitudinal acceleration p95 <= 1.10 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_route_rtf": {
+            "actual": 0.9985196245988759,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_scenario_compatibility": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "scenario": "c_track_turn"
+            },
+            "requirement": "PID candidate supports every declared scenario; preview candidates require a turn scenario",
+            "status": "PASS"
+          },
+          "candidate_speed_ceiling": {
+            "actual": 4.955545473797686,
+            "requirement": "maximum speed <= 9.0 m/s",
+            "status": "PASS"
+          },
+          "same_route": {
+            "actual": {
+              "baseline": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "candidate": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "source_route SHA-256 must be identical",
+            "status": "PASS"
+          },
+          "scenario_route_identity": {
+            "actual": {
+              "baseline": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "candidate": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "expected_route_scenarios": [
+                "left",
+                "right"
+              ],
+              "expected_town": "C_track_1_0_7"
+            },
+            "requirement": "both source routes must match the named A/B scenario",
+            "status": "PASS"
+          },
+          "turn_completion_time": {
+            "actual": 0.9156293222538258,
+            "requirement": "sim completion time <= 110% of baseline",
+            "status": "PASS"
+          },
+          "turn_raw_gated_improvement": {
+            "actual": 0.8690261002307917,
+            "requirement": "raw-to-gated target RMSE <= 90% of paired baseline",
+            "status": "PASS"
+          },
+          "turn_speed_retention": {
+            "actual": 1.0697001346736792,
+            "requirement": "maximum speed >= 95% of baseline",
+            "status": "PASS"
+          },
+          "turn_tracking_nonworsening": {
+            "actual": 0.6621534326362267,
+            "requirement": "target tracking RMSE <= 105% of baseline",
+            "status": "PASS"
+          }
+        },
+        "decision": "ACCEPT",
+        "generated_at": "2026-09-06T14:17:34.987266+00:00",
+        "real_vehicle_ready": false,
+        "scenario": "c_track_turn",
+        "schema_version": 1
+      },
+      "comparison_decision": "ACCEPT",
+      "index": 2,
+      "pair_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_02",
+      "valid_for_performance_statistics": true
+    },
+    {
+      "baseline": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "baseline",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "ae4f8d0c955395be843b8dbc67f1fb26fed72e09282b920d86c11a8f06a6d29d",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "baseline_metrics": {
+        "camera_bundle_coverage_percent": 100.0,
+        "camera_bundle_receipt_p95_sec": 0.014769521,
+        "gate_positive_cap_time_percent": 8.441558439133908,
+        "maximum_cte_m": 0.5162530541419983,
+        "maximum_lateral_acceleration_mps2": 0.7156700034617074,
+        "maximum_speed_mps": 4.7413940433291595,
+        "maximum_trajectory_correction_m": 13.805713653564453,
+        "path_cte_p95_m": 0.5039690020918158,
+        "raw_gated_target_rmse_mps": 1.2903180046828944,
+        "robust_acceleration_p95_mps2": 0.9429439251641757,
+        "route_rtf": 0.9985125449672877,
+        "sim_elapsed_sec": 39.000000581,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 2.3693123857460714
+      },
+      "candidate": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "candidate",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "dab4aaa782bb729861b8d3b148cb0506947fe10de6c2c6613b0f441c892d9085",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "candidate_metrics": {
+        "camera_bundle_coverage_percent": 100.0,
+        "camera_bundle_receipt_p95_sec": 0.0136692896,
+        "gate_positive_cap_time_percent": 12.987012984386666,
+        "maximum_cte_m": 0.5595223903656006,
+        "maximum_lateral_acceleration_mps2": 0.6063593445239429,
+        "maximum_speed_mps": 5.095639598518751,
+        "maximum_trajectory_correction_m": 13.735695838928223,
+        "path_cte_p95_m": 0.5164319098801493,
+        "raw_gated_target_rmse_mps": 1.1770682121447003,
+        "robust_acceleration_p95_mps2": 0.9807335620873399,
+        "route_rtf": 1.0000947890444347,
+        "sim_elapsed_sec": 32.750000488000005,
+        "sustained_speed_sec": 0.0,
+        "target_tracking_rmse_mps": 1.3355615124259308
+      },
+      "classification": "VALID_HOLD",
+      "comparison": {
+        "baseline": {
+          "control_ab_candidate": "baseline",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "false",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "3.0",
+          "health_rtf": 0.99375001475,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 100.0,
+            "camera_bundle_receipt_p95_sec": 0.014769521,
+            "gate_positive_cap_time_percent": 8.441558439133908,
+            "maximum_cte_m": 0.5162530541419983,
+            "maximum_lateral_acceleration_mps2": 0.7156700034617074,
+            "maximum_speed_mps": 4.7413940433291595,
+            "maximum_trajectory_correction_m": 13.805713653564453,
+            "path_cte_p95_m": 0.5039690020918158,
+            "raw_gated_target_rmse_mps": 1.2903180046828944,
+            "robust_acceleration_p95_mps2": 0.9429439251641757,
+            "route_rtf": 0.9985125449672877,
+            "sim_elapsed_sec": 39.000000581,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 2.3693123857460714
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T14:07:56.887686+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "c54d7ea9a2164fda729cf292f6eeb9b348349ecf3865cafdd09b5cc5d8d7c4dd",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "7196dadac75dfc4e6d2424f0b930d52c0a1e58c24707886988c842be72fbe383"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "7196dadac75dfc4e6d2424f0b930d52c0a1e58c24707886988c842be72fbe383",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/A_baseline/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "ae4f8d0c955395be843b8dbc67f1fb26fed72e09282b920d86c11a8f06a6d29d",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "ae4f8d0c955395be843b8dbc67f1fb26fed72e09282b920d86c11a8f06a6d29d",
+          "success": true
+        },
+        "candidate": {
+          "control_ab_candidate": "turn_preview_10m",
+          "control_ab_isolated_single_knob": "true",
+          "control_ab_pid_i40": "false",
+          "control_ab_turn_preview_10m": "true",
+          "control_ab_turn_preview_5m": "false",
+          "curvature_speed_preview_m": "10.0",
+          "health_rtf": 0.9875000147499999,
+          "health_status": "PASS",
+          "metrics": {
+            "camera_bundle_coverage_percent": 100.0,
+            "camera_bundle_receipt_p95_sec": 0.0136692896,
+            "gate_positive_cap_time_percent": 12.987012984386666,
+            "maximum_cte_m": 0.5595223903656006,
+            "maximum_lateral_acceleration_mps2": 0.6063593445239429,
+            "maximum_speed_mps": 5.095639598518751,
+            "maximum_trajectory_correction_m": 13.735695838928223,
+            "path_cte_p95_m": 0.5164319098801493,
+            "raw_gated_target_rmse_mps": 1.1770682121447003,
+            "robust_acceleration_p95_mps2": 0.9807335620873399,
+            "route_rtf": 1.0000947890444347,
+            "sim_elapsed_sec": 32.750000488000005,
+            "sustained_speed_sec": 0.0,
+            "target_tracking_rmse_mps": 1.3355615124259308
+          },
+          "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m",
+          "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "owner_status": "PASS",
+          "owner_summary": {
+            "attempts": [
+              {
+                "attempt_id": "attempt_001",
+                "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001",
+                "process_exit_status": 0,
+                "runtime_health_status": "PASS"
+              }
+            ],
+            "carla_quality": "Epic",
+            "generated_at": "2026-09-06T14:04:02.912071+00:00",
+            "map": "C_track_1_0_7",
+            "portable_shadow": {
+              "attempt_bindings": [
+                {
+                  "aligned_route_sha256": "bdc1e7a613e7e71e706e6098452fa0cb0cad72c43b4af3f779b81c10ae05f558",
+                  "attempt_id": "attempt_001",
+                  "declared_map_id": "c_track_1_0_7",
+                  "execution_mode": "shadow_only",
+                  "installed_launch_binding": {
+                    "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "matches_validated_source": true,
+                    "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink_install": true
+                  },
+                  "launch_recheck": {
+                    "check_stage": "immediately_before_ros_launch",
+                    "installed_binding": {
+                      "file": "/home/a/autoware_e2e/install/autoware_e2e_vad_launch/share/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "matches_validated_source": true,
+                      "resolved_file": "/home/a/autoware_e2e/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml",
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink_install": true
+                    },
+                    "matches_initial_binding": true,
+                    "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/launch_recheck.json",
+                    "runtime_shadow_launch": {
+                      "direct_ros_launch": true,
+                      "exact_source_bytes": true,
+                      "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                      "mode_octal": "0444",
+                      "regular_file": true,
+                      "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                      "symlink": false
+                    },
+                    "sha256": "4b14836a4e36a9a865ec58627a7e4489684ec67daaebb3a09649adfac7a7a14f",
+                    "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "status": "PASS",
+                    "trial_binding_sha256": "cc0080c37b0bd8efd5b994c4a965bda5b8ca7a4fbd7a08610c7a0a3948104851"
+                  },
+                  "launch_snapshot_binding": {
+                    "direct_ros_launch": true,
+                    "exact_source_bytes": true,
+                    "file": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/runtime_shadow.launch.xml",
+                    "mode_octal": "0444",
+                    "regular_file": true,
+                    "sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "source_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                    "symlink": false
+                  },
+                  "map_bundle_sha256": "fe1f070ef81e9f8ee2db7780813e72c8dbd814b96a71bac51aeee1d5e074f276",
+                  "observed_map_id": "c_track_1_0_7",
+                  "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001/portable_shadow_provenance/trial_binding.json",
+                  "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+                  "sha256": "cc0080c37b0bd8efd5b994c4a965bda5b8ca7a4fbd7a08610c7a0a3948104851",
+                  "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+                  "source_launch_sha256": "117c21ab75f16763ef02f00f5ad843271f38a93fae17509baf208815981778c3",
+                  "status": "PASS",
+                  "vehicle_control_approved": false
+                }
+              ],
+              "execution_mode": "shadow_only",
+              "requested": true,
+              "vehicle_control_approved": false
+            },
+            "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
+            "route": "/home/a/autoware_e2e/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+            "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+            "schema_version": 1,
+            "selected_attempt": "attempt_001",
+            "status": "PASS",
+            "trial_options": [
+              "--recommended",
+              "--speed-30kph",
+              "--portable-shadow-10hz",
+              "--visualize",
+              "--capture-desktop",
+              "--portable-runtime-bundle",
+              "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+              "--portable-runtime-bundle-sha256",
+              "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+              "--portable-source-checkpoint-sha256",
+              "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+              "--portable-model-config-sha256",
+              "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+              "--portable-corpus-fingerprint-sha256",
+              "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+              "--portable-rig-file",
+              "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+              "--portable-rig-sha256",
+              "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+              "--portable-contract-file",
+              "portable_e2e/config/common_10hz_v1.contract.json",
+              "--portable-contract-sha256",
+              "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+              "--portable-device",
+              "cpu",
+              "--control-ab-turn-preview-10m"
+            ]
+          },
+          "path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03/B_turn_preview_10m/attempts/attempt_001",
+          "profile_id": "carla_vad_30kph_v2",
+          "quality_problems": [],
+          "reason": "goal reached",
+          "route_outcome": "PASS",
+          "route_scenario": "left",
+          "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+          "route_town": "C_track_1_0_7",
+          "runtime_health_evidence_sha256": "dab4aaa782bb729861b8d3b148cb0506947fe10de6c2c6613b0f441c892d9085",
+          "runtime_health_gate_enabled": "true",
+          "runtime_health_gate_status": "PASS",
+          "runtime_health_recorded_sha256": "dab4aaa782bb729861b8d3b148cb0506947fe10de6c2c6613b0f441c892d9085",
+          "success": true
+        },
+        "candidate_id": "turn_preview_10m",
+        "checks": {
+          "baseline_camera": {
+            "actual": {
+              "coverage_percent": 100.0,
+              "receipt_p95_sec": 0.014769521
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "baseline_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "baseline_health": {
+            "actual": {
+              "rtf": 0.99375001475,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "baseline_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "ae4f8d0c955395be843b8dbc67f1fb26fed72e09282b920d86c11a8f06a6d29d",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "ae4f8d0c955395be843b8dbc67f1fb26fed72e09282b920d86c11a8f06a6d29d",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "baseline_isolated_control": {
+            "actual": {
+              "candidate_id": "baseline",
+              "curvature_speed_preview_m": "3.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "false",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('baseline', 'false', 'false', 'false', 'true', '3.0')",
+            "status": "PASS"
+          },
+          "baseline_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "baseline_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "baseline_route_rtf": {
+            "actual": 0.9985125449672877,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_camera": {
+            "actual": {
+              "coverage_percent": 100.0,
+              "receipt_p95_sec": 0.0136692896
+            },
+            "requirement": "coverage >= 99% and six-camera receipt p95 <= 40 ms",
+            "status": "PASS"
+          },
+          "candidate_correction_delta": {
+            "actual": -0.07001781463623047,
+            "requirement": "trajectory correction increase <= 0.25 m",
+            "status": "PASS"
+          },
+          "candidate_cte": {
+            "actual": 0.5595223903656006,
+            "requirement": "maximum CTE <= 0.65 m",
+            "status": "PASS"
+          },
+          "candidate_goal": {
+            "actual": "goal reached",
+            "requirement": "goal/success required",
+            "status": "PASS"
+          },
+          "candidate_health": {
+            "actual": {
+              "rtf": 0.9875000147499999,
+              "status": "PASS"
+            },
+            "requirement": "pre-engagement health PASS and RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_health_integrity": {
+            "actual": {
+              "actual_health_sha256": "dab4aaa782bb729861b8d3b148cb0506947fe10de6c2c6613b0f441c892d9085",
+              "gate_enabled": "true",
+              "gate_status": "PASS",
+              "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "recorded_health_sha256": "dab4aaa782bb729861b8d3b148cb0506947fe10de6c2c6613b0f441c892d9085",
+              "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "health evidence digest and owned-route digest must match recorded provenance",
+            "status": "PASS"
+          },
+          "candidate_isolated_control": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "curvature_speed_preview_m": "10.0",
+              "isolated_single_knob": "true",
+              "pid_i40": "false",
+              "turn_preview_10m": "true",
+              "turn_preview_5m": "false"
+            },
+            "requirement": "isolated control tuple must equal ('turn_preview_10m', 'false', 'false', 'true', 'true', '10.0')",
+            "status": "PASS"
+          },
+          "candidate_lateral_acceleration": {
+            "actual": 0.6063593445239429,
+            "requirement": "maximum lateral acceleration <= 1.5 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_profile": {
+            "actual": "carla_vad_30kph_v2",
+            "requirement": "SPEED_PROFILE_ID must be carla_vad_30kph_v2",
+            "status": "PASS"
+          },
+          "candidate_quality": {
+            "actual": [],
+            "requirement": "analysis problems must be empty",
+            "status": "PASS"
+          },
+          "candidate_robust_acceleration": {
+            "actual": 0.9807335620873399,
+            "requirement": "robust longitudinal acceleration p95 <= 1.10 m/s^2",
+            "status": "PASS"
+          },
+          "candidate_route_rtf": {
+            "actual": 1.0000947890444347,
+            "requirement": "route RTF >= 0.9",
+            "status": "PASS"
+          },
+          "candidate_scenario_compatibility": {
+            "actual": {
+              "candidate_id": "turn_preview_10m",
+              "scenario": "c_track_turn"
+            },
+            "requirement": "PID candidate supports every declared scenario; preview candidates require a turn scenario",
+            "status": "PASS"
+          },
+          "candidate_speed_ceiling": {
+            "actual": 5.095639598518751,
+            "requirement": "maximum speed <= 9.0 m/s",
+            "status": "PASS"
+          },
+          "same_route": {
+            "actual": {
+              "baseline": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+              "candidate": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+            },
+            "requirement": "source_route SHA-256 must be identical",
+            "status": "PASS"
+          },
+          "scenario_route_identity": {
+            "actual": {
+              "baseline": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "candidate": {
+                "scenario": "left",
+                "town": "C_track_1_0_7"
+              },
+              "expected_route_scenarios": [
+                "left",
+                "right"
+              ],
+              "expected_town": "C_track_1_0_7"
+            },
+            "requirement": "both source routes must match the named A/B scenario",
+            "status": "PASS"
+          },
+          "turn_completion_time": {
+            "actual": 0.8397435897463841,
+            "requirement": "sim completion time <= 110% of baseline",
+            "status": "PASS"
+          },
+          "turn_raw_gated_improvement": {
+            "actual": 0.9122310995218376,
+            "requirement": "raw-to-gated target RMSE <= 90% of paired baseline",
+            "status": "FAIL"
+          },
+          "turn_speed_retention": {
+            "actual": 1.0747133758452312,
+            "requirement": "maximum speed >= 95% of baseline",
+            "status": "PASS"
+          },
+          "turn_tracking_nonworsening": {
+            "actual": 0.5636916096251177,
+            "requirement": "target tracking RMSE <= 105% of baseline",
+            "status": "PASS"
+          }
+        },
+        "decision": "HOLD",
+        "generated_at": "2026-09-06T14:17:35.015847+00:00",
+        "real_vehicle_ready": false,
+        "scenario": "c_track_turn",
+        "schema_version": 1
+      },
+      "comparison_decision": "HOLD",
+      "index": 3,
+      "pair_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_03",
+      "valid_for_performance_statistics": true
+    },
+    {
+      "baseline": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_04/A_baseline/attempts/attempt_001",
+        "disposition": "INVALID_INFRA",
+        "failures": [
+          "arm lacks one selected owned PASS attempt"
+        ],
+        "geometry_status": "PASS",
+        "infrastructure_status": "FAIL",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_04/A_baseline",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "FAIL",
+        "process_exit_status": 1,
+        "result_reason": "goal reached",
+        "role": "baseline",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "88edeb84b352e28b7783bbeae89d0d55116963d68631ff707719a1b7ebad2495",
+        "runtime_health_status": "PASS",
+        "selected_attempt": null,
+        "selected_owner_pass": false,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "candidate": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_04/B_turn_preview_10m/attempts/attempt_001",
+        "disposition": "GEOMETRY_FAIL",
+        "failures": [],
+        "geometry_status": "FAIL",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_04/B_turn_preview_10m",
+        "owner_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+        "owner_summary_status": "FAIL",
+        "process_exit_status": 1,
+        "result_reason": "VAD route manager reported fault:trajectory_correction:correction=17.651m>limit=15.000m:points=48:horizon=20.657m:command=0(LEFT)",
+        "role": "candidate",
+        "route_contract_status": "PASS",
+        "route_status": "FAIL",
+        "runtime_health_evidence_sha256": "5c1db62a5a8106d97ca42662b64eb2f97eac1e70d065005eb05052e6304e59cb",
+        "runtime_health_status": "PASS",
+        "selected_attempt": null,
+        "selected_owner_pass": false,
+        "source_route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64"
+      },
+      "classification": "INVALID_BASELINE_INFRA",
+      "comparison": null,
+      "comparison_decision": null,
+      "index": 4,
+      "pair_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack/pair_04",
+      "valid_for_performance_statistics": false
+    }
+  ],
+  "real_vehicle_ready": false,
+  "schema_id": "autoware-e2e.repeated-control-ab-summary.v1"
+}

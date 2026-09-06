@@ -1,0 +1,26 @@
+{
+  "schema_id": "autoware-e2e.predeclared-control-safety-screen.v1",
+  "created_at": "2026-09-06T23:25:00+09:00",
+  "code_commit": "579ae6c389316f414515a4e0e7bcfa3269f6a5ae",
+  "scenario": "c_track_turn",
+  "map": "C_track_1_0_7",
+  "route_file": "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+  "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+  "candidate": "turn_preview_5m",
+  "purpose": "Screen the already supported 5 m turn-preview candidate once under the exact six-camera Common10 barrier before deciding whether a new paired campaign is justified.",
+  "profile": {
+    "speed": "30_kph",
+    "quality": "Epic",
+    "portable_shadow_rate_hz": 10,
+    "portable_device": "cpu",
+    "curvature_speed_preview_m": 5.0,
+    "maximum_trajectory_correction_m": 15.0,
+    "maximum_health_retries": 0,
+    "visualize": true,
+    "capture_desktop": true
+  },
+  "admission": "PASS requires owned route PASS, runtime health PASS, valid Portable shadow evidence, no camera-bundle timeout or inference-deadline rejection, unchanged geometry limits, and complete vehicle-centered PNG/GIF evidence.",
+  "next_if_pass": "Run a predeclared counterbalanced 3 m versus 5 m A/B campaign; stop for futility on the first valid HOLD because promotion requires every valid pair to ACCEPT.",
+  "next_if_fail": "Close C-track tuning at the 3 m baseline without a favorable rerun.",
+  "real_vehicle_ready": false
+}

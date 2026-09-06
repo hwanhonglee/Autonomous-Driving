@@ -1,0 +1,200 @@
+{
+  "acceptance_gates": {
+    "aggregate_comparator_acceptance": {
+      "check_count": 0,
+      "requirement": "every authoritative comparator check must PASS in every valid pair",
+      "status": "FAIL"
+    },
+    "all_geometry_assessments": {
+      "requirement": "every arm must have an assessed geometry PASS",
+      "status": "FAIL"
+    },
+    "all_infrastructure_gates": {
+      "requirement": "every baseline and candidate infrastructure gate must PASS",
+      "status": "PASS"
+    },
+    "all_pairs_valid_for_statistics": {
+      "input_pair_count": 1,
+      "requirement": "no invalid or geometry-failed pair may be overridden by aggregation",
+      "status": "FAIL",
+      "valid_pair_count": 0
+    },
+    "all_route_completions": {
+      "requirement": "every baseline and candidate route must PASS",
+      "status": "FAIL"
+    },
+    "all_route_contracts": {
+      "requirement": "every arm must bind to the expected route SHA-256",
+      "status": "PASS"
+    },
+    "candidate_geometry_failure_rate_nonregression": {
+      "baseline_percent": null,
+      "candidate_percent": 0.0,
+      "requirement": "candidate assessed geometry-failure rate must not exceed baseline",
+      "status": "FAIL"
+    },
+    "each_pair_comparator_acceptance": {
+      "accept_count": 0,
+      "requirement": "every fully valid pair must receive authoritative ACCEPT",
+      "status": "FAIL",
+      "valid_pair_count": 0
+    },
+    "minimum_valid_pair_count": {
+      "actual": 0,
+      "required": 6,
+      "status": "FAIL"
+    }
+  },
+  "acceptance_policy": {
+    "aggregate_comparator_policy": "Every authoritative comparator check must PASS in every valid pair; median or majority results cannot override a failed pair.",
+    "each_pair_comparator_policy": "Every fully valid pair must receive ACCEPT from compare_control_ab.compare.",
+    "geometry_failure_policy": "Candidate assessed geometry-failure rate must not exceed baseline, and every arm must still pass route and geometry gates.",
+    "invalid_pair_policy": "Arms without a selected owned PASS are classified INVALID_* or GEOMETRY_FAIL/ROUTE_FAIL and never enter paired performance statistics.",
+    "minimum_evidence_policy": "At least the predeclared minimum number of fully valid ordered pairs is required."
+  },
+  "aggregate_comparator_checks": {},
+  "arm_gate_summary": {
+    "baseline": {
+      "geometry": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 0,
+          "NOT_ASSESSED": 1,
+          "PASS": 0
+        },
+        "failure_rate_percent_of_assessed": null,
+        "pass_rate_percent_of_all": 0.0,
+        "pass_rate_percent_of_assessed": 0.0,
+        "total_count": 1
+      },
+      "infrastructure": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 0,
+          "PASS": 1
+        },
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 1
+      },
+      "route": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 1,
+          "NOT_ASSESSED": 0,
+          "PASS": 0
+        },
+        "pass_rate_percent_of_all": 0.0,
+        "pass_rate_percent_of_assessed": 0.0,
+        "total_count": 1
+      }
+    },
+    "candidate": {
+      "geometry": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 0,
+          "NOT_ASSESSED": 0,
+          "PASS": 1
+        },
+        "failure_rate_percent_of_assessed": 0.0,
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 1
+      },
+      "infrastructure": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 0,
+          "PASS": 1
+        },
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 1
+      },
+      "route": {
+        "assessed_count": 1,
+        "counts": {
+          "FAIL": 0,
+          "NOT_ASSESSED": 0,
+          "PASS": 1
+        },
+        "pass_rate_percent_of_all": 100.0,
+        "pass_rate_percent_of_assessed": 100.0,
+        "total_count": 1
+      }
+    }
+  },
+  "campaign_contract": {
+    "baseline_directory_name": "A_baseline",
+    "candidate_directory_name": "B_longitudinal_recovery_2p0",
+    "candidate_id": "longitudinal_recovery_2p0",
+    "expected_route_sha256": "804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848",
+    "minimum_valid_pair_count": 6,
+    "ordered_pair_count": 1,
+    "scenario": "town07_straight"
+  },
+  "counts": {
+    "classifications": {
+      "ROUTE_FAIL_BASELINE": 1
+    },
+    "excluded_pairs_from_performance_statistics": 1,
+    "input_pairs": 1,
+    "valid_pairs": 0
+  },
+  "decision": "HOLD",
+  "generated_at": "2026-09-06T14:54:15.048959+00:00",
+  "paired_delta_statistics": {},
+  "pairs": [
+    {
+      "baseline": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery/pair_01/A_baseline/attempts/attempt_001",
+        "disposition": "ROUTE_FAIL",
+        "failures": [],
+        "geometry_status": "NOT_ASSESSED",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery/pair_01/A_baseline",
+        "owner_route_sha256": "804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848",
+        "owner_summary_status": "FAIL",
+        "process_exit_status": 1,
+        "result_reason": "speed exposure contract failed: speed >= 7.500 m/s was sustained for only 0.050 s; require 1.000 s",
+        "role": "baseline",
+        "route_contract_status": "PASS",
+        "route_status": "FAIL",
+        "runtime_health_evidence_sha256": "002ca67386d3671d6260e3d5cdfadd34e5bccffbc207044d780b14e71eba5e67",
+        "runtime_health_status": "PASS",
+        "selected_attempt": null,
+        "selected_owner_pass": false,
+        "source_route_sha256": "804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848"
+      },
+      "candidate": {
+        "attempt_path": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery/pair_01/B_longitudinal_recovery_2p0/attempts/attempt_001",
+        "disposition": "PASS",
+        "failures": [],
+        "geometry_status": "PASS",
+        "infrastructure_status": "PASS",
+        "owner_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery/pair_01/B_longitudinal_recovery_2p0",
+        "owner_route_sha256": "804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848",
+        "owner_summary_status": "PASS",
+        "process_exit_status": 0,
+        "result_reason": "goal reached",
+        "role": "candidate",
+        "route_contract_status": "PASS",
+        "route_status": "PASS",
+        "runtime_health_evidence_sha256": "0284aa73082f26101de785a59f7b2a4d3688242cda30216fc2a56f1d098aadd7",
+        "runtime_health_status": "PASS",
+        "selected_attempt": "attempt_001",
+        "selected_owner_pass": true,
+        "source_route_sha256": "804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848"
+      },
+      "classification": "ROUTE_FAIL_BASELINE",
+      "comparison": null,
+      "comparison_decision": null,
+      "index": 1,
+      "pair_root": "/home/a/autoware_e2e/artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery/pair_01",
+      "valid_for_performance_statistics": false
+    }
+  ],
+  "real_vehicle_ready": false,
+  "schema_id": "autoware-e2e.repeated-control-ab-summary.v1"
+}

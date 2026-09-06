@@ -15,7 +15,47 @@ Autoware와 섞이지 않도록 기본 ROS domain은 42이며, 새 CARLA는 다�
 역사 증거 또는 source provenance다. 새 PC의 실행 경로로 복사하지 말고, 명령 예시의
 workspace 위치와 외부 CARLA·맵 경로는 자신의 절대경로 또는 안내된 환경변수로 지정한다.
 
-## 최신 30 kph Autoware + Portable E2E shadow 상태 (2026-09-06)
+## 최신 30/60 kph 판정 (2026-09-07)
+
+요청 순서인 Town07 직진, C-track 회전, Town03 회전의 30 kph strict six-camera
+10 Hz 제어 A/B를 완료했다. 후보 설정은 모두 승격하지 않았고 기존 baseline을 유지한다.
+Town07 recovery 2.0은 `NO-GO`, C-track preview 5 m와 Town03 preview 10 m는
+`HOLD -> NO-GO`, C-track preview 10 m는 geometry safety failure다.
+
+Town06 strict 10 Hz 60 kph exploratory pilot도 1회 실행했다. 물리 경로
+`445.146 m`와 goal 도달은 PASS였지만 최고 속도는
+`10.123258 m/s = 36.4437 km/h`, 15 m/s 이상 노출은 `0 s`였다. camera source는
+약 10 Hz였지만 전체 구간 six-camera receipt p95가 `45.715 ms > 40 ms`여서 최종
+camera transport도 FAILED다. 따라서 simulation acceptance는 `FAILED`, 실차
+readiness는 `BLOCKED`다.
+
+첫 camera count 비대칭은 `CAM_FRONT_LEFT` recorder가 다른 topic보다 늦게 붙으며
+첫 stamp 하나만 놓친 시작 경계 artifact였다. 후속 strict 실행은 rosbag을 paused로
+시작하고 여섯 subscription을 모두 확인한 뒤 measurement를 resume한다. 이는 실제
+full-run p95 실패를 면제하지 않는다. 다음 단계는 background CPU/GUI 부하를 격리한
+strict transport 재검증, 16.667 m/s 이상 actuation map 보정, 399/399 geometry
+preflight, 단일 Town06 behavior qualification 순서다.
+
+기존 실측 발행본은 당시 계약인 `carla_vad_camera_source_10hz_strict_v1`로 보존한다.
+새 실행만 `strict_v2`를 발급하며 owned PTY resume 경계, measurement JSON/SHA-256,
+각 pre-engagement window 내부 record의 exact one-to-one 소비, source period
+`0.099995~0.100005 s`, route 중 recorder 생존과 stack shutdown 이후 오류 부재를
+추가로 요구한다. 전체 bag에서는 녹화 시작·종료 경계의 불완전 union stamp를 각
+가장자리에서 최대 하나만 명시적으로 제외하고, 그 사이의 모든 stamp가 여섯 카메라
+exact 1:1 bundle인지 별도 증명한다. Portable node/topic 부재는 세 검증 창 각각의 종료
+시점 ROS graph snapshot이며 8초 전체의 연속 관찰이라는 뜻은 아니다. launcher의
+Portable 실행 금지와 이 세 snapshot을 함께 검사한다.
+
+기존 v1 ID와 판정은 보존하고 validator의 legacy-read 호환성만 유지한다. 현재 producer는
+신규 v1을 발급하지 않으며 당시 source/runtime의 byte-identical replay를 지원하거나
+주장하지 않는다. 이 보강 뒤 CARLA live v2는 아직 재실행하지 않았으므로 60 km/h 판정은
+여전히 위 v1 `NO-GO`다.
+
+- [2026-09-07 상세 판정과 원인 분석](docs/validation-2026-09-07-control-ab.md)
+- [차량 중심 전체화면·GIF·경로·속도·지연 발행본](docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/)
+- [처음 실행하는 사람용 strict 60 kph 절차](docs/BEGINNER_QUICKSTART_KO.md#14-60-kmh는-입문-실행으로-사용하지-않는다)
+
+## 이전 30 kph Autoware + Portable E2E shadow 상태 (2026-09-06)
 
 최신 선택 campaign은 Town07 직진, C-track 좌회전, Town03 좌회전을 같은
 source-native 10 Hz six-camera profile로 각각 cold-start했다. 세 route 모두 goal,
@@ -50,8 +90,8 @@ C-track의 첫 동일-profile 반복은 최대 보정 `15.966 m`로 FAIL했고, 
 
 ## 역사 자료: 30 kph all-Town VAD 검증과 끊김 진단 (2026-09-01)
 
-> 이 절의 `현재`와 `다음`은 2026-09-01 v16 snapshot 시점을 뜻한다. 최신
-> 2026-09-06 10 Hz shadow 3장면 상태와 실행 진입점은 문서 맨 앞의 최신 절과
+> 이 절의 `현재`와 `다음`은 2026-09-01 v16 snapshot 시점을 뜻한다. 2026-09-06
+> pinned 10 Hz shadow 3장면 상태와 실행 진입점은 문서 맨 앞의 해당 절과
 > [Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)을 따른다.
 
 v16의 `speed_30kph`는 실제 차량용 속도 설정이 아니라 CARLA에서만 쓰는 명시적
@@ -193,8 +233,9 @@ source-native 10 Hz/FIFO profile로 세 장면 shadow 검증을 완료했다.
 
 > 이 절은 2026-08-29의 2.5 m/s 계열 custom-map 검증 snapshot이다. 당시 입력 자산의
 > `/home/hong/...` 경로는 provenance로만 보존하며 현재 실행 경로가 아니다. 현재
-> workspace의 최신 30 kph C-track 10 Hz shadow 판정은 문서 맨 앞의 2026-09-06 v3
-> 절을 따르고, 2026-09-01 v16은 all-Town 역사 matrix로만 구분한다.
+> workspace의 최신 30 kph C-track 판정은 문서 맨 앞의 2026-09-07 strict A/B 절을
+> 따르고, 2026-09-06 v3는 pinned Portable shadow 기준선, 2026-09-01 v16은 all-Town
+> 역사 matrix로만 구분한다.
 
 당시 검증은 사용자가 지정한
 `/home/hong/Downloads/Driving_Map_Set/Driving Map Set`의 **Virtual PCD**를 실제
@@ -2732,8 +2773,8 @@ Autoware까지 포함한 end-to-end benchmark도 아니다. 현재 PC와 직접 
 `--speed-30kph`를 추가해 nominal `8.333333 m/s` simulation overlay를 선택했다. 두
 구성의 속도 claim을 섞지 않는다.
 
-이 표의 `--recommended`는 2026-09-01 v16 역사 profile이다. 최신 2026-09-06
-Portable shadow campaign은 여기에 `--portable-shadow-10hz`와 모든 pinned model/rig/
+이 표의 `--recommended`는 2026-09-01 v16 역사 profile이다. 2026-09-06 pinned
+Portable shadow 기준선은 여기에 `--portable-shadow-10hz`와 모든 pinned model/rig/
 contract option을 추가한다. 그 overlay는 six-camera를 `640x360`, `sensor_tick=0.1`
 source-native 10 Hz, bridge cap 11 Hz, image BestEffort KEEP_LAST depth 1,
 CameraInfo reliable, localhost-only CycloneDDS로 고정한다. Autoware VAD가 계속 제어를

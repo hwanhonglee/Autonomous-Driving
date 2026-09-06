@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "contract": {
+    "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "sensor_count": 6,
+    "sensor_tick_sec": 0.2,
+    "source_frequency_hz": 5.0,
+    "ros_publish_frequency_hz": 5.0,
+    "maximum_stamp_gap_sec": 0.25,
+    "maximum_raw_image_stamp_span_sec": 0.001,
+    "maximum_raw_image_supersession_percent": 1.0,
+    "camera_image_publish_qos": "best_effort",
+    "camera_image_publish_history": "keep_last",
+    "camera_image_publish_depth": 1,
+    "camera_info_publish_qos": "reliable",
+    "camera_info_publish_depth": 1,
+    "vad_image_subscription_qos": "best_effort",
+    "vad_image_subscription_depth": 1,
+    "rviz_image_subscription_qos": "best_effort",
+    "rviz_image_subscription_depth": 1,
+    "rmw_implementation": "rmw_cyclonedds_cpp",
+    "ros_localhost_only": "0",
+    "sensor_mapping_file": "sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml",
+    "vad_model_override_file": "vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml",
+    "cyclonedds_config_file": "cyclonedds_camera_depth1_localhost_v2.xml",
+    "only_semantic_delta": "six_camera_5hz_bounded_latest_image_transport_and_localhost_dds",
+    "imu_gnss_unchanged": true,
+    "real_vehicle_ready": false
+  },
+  "mapping_sha256": "5c2877aeff20d3a58bcc7211a2f37116b6e17126e62839d8742f79fc185c38ef",
+  "baseline_mapping_sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865",
+  "semantic_delta": {
+    "camera_ids": [
+      "CAM_BACK",
+      "CAM_BACK_LEFT",
+      "CAM_BACK_RIGHT",
+      "CAM_FRONT",
+      "CAM_FRONT_LEFT",
+      "CAM_FRONT_RIGHT"
+    ],
+    "mapping_fields": {
+      "parameters.sensor_tick": {
+        "baseline": 0.0,
+        "candidate": 0.2
+      },
+      "ros_config.image_qos_profile": {
+        "baseline": "inherited_reliable",
+        "candidate": "best_effort_depth_1"
+      },
+      "ros_config.camera_info_qos_profile": {
+        "baseline": "inherited_reliable",
+        "candidate": "reliable"
+      }
+    },
+    "model_field": {
+      "sync_params.image_reliability": {
+        "baseline": "reliable",
+        "candidate": "best_effort"
+      },
+      "sync_params.image_queue_depth": {
+        "baseline": 32,
+        "candidate": 1
+      }
+    },
+    "dds_scope": {
+      "rmw_implementation": "rmw_cyclonedds_cpp",
+      "ros_localhost_only": "0",
+      "network_interface": "lo"
+    },
+    "imu_gnss_unchanged": true,
+    "other_fields_equal": true
+  },
+  "bundle_coverage_percent": 100.0,
+  "maximum_camera_stamp_gap_sec": 0.20000000300001375,
+  "camera_stamp_gap_sec": {
+    "CAM_BACK": 0.20000000300001375,
+    "CAM_BACK_LEFT": 0.20000000300001375,
+    "CAM_BACK_RIGHT": 0.20000000300001375,
+    "CAM_FRONT": 0.20000000300001375,
+    "CAM_FRONT_LEFT": 0.20000000300001375,
+    "CAM_FRONT_RIGHT": 0.20000000300001375
+  },
+  "candidate_front_acceptance_percent": 99.77324263038548,
+  "candidate_count": 440,
+  "front_count": 441,
+  "vad_inference": {
+    "published_count": 542,
+    "mailbox_taken": 542,
+    "mailbox_submitted": 538,
+    "capacity_pruned": 0,
+    "superseded": 1,
+    "superseded_classification": "bounded_best_effort",
+    "recorder_start_wall_sec": null,
+    "coalesced_drops": 0
+  },
+  "raw_six_image_queue_integrity": {
+    "status": "PASS",
+    "sampled_queue_record_count": 22,
+    "expected_image_mask": "0x3f",
+    "expected_camera_info_mask": "0x3f",
+    "maximum_image_stamp_span_sec": 0.0,
+    "maximum_allowed_image_stamp_span_sec": 0.001,
+    "superseded_frame_count": 1,
+    "supersession_denominator_frame_count": 539,
+    "supersession_percent": 0.18552875695732837,
+    "maximum_allowed_supersession_percent": 1.0,
+    "counter_contract": "monotonic_full_mask_zero_capacity_and_mailbox_loss"
+  },
+  "transport_provenance": {
+    "profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "sensor_mapping_sha256": "5c2877aeff20d3a58bcc7211a2f37116b6e17126e62839d8742f79fc185c38ef",
+    "vad_model_override_sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb",
+    "camera_image_publish_qos": "best_effort",
+    "camera_info_publish_qos": "reliable",
+    "vad_image_subscription_qos": "best_effort",
+    "rviz_image_subscription_qos": "best_effort",
+    "camera_image_publish_history": "keep_last",
+    "camera_image_publish_depth": 1,
+    "vad_image_subscription_depth": 1,
+    "rviz_image_subscription_depth": 1,
+    "rmw_implementation": "rmw_cyclonedds_cpp",
+    "ros_localhost_only": "0",
+    "cyclonedds_config_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289"
+  }
+}

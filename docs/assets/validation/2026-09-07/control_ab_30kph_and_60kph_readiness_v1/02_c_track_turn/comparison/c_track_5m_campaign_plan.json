@@ -1,0 +1,67 @@
+{
+  "schema_id": "autoware-e2e.predeclared-control-ab-campaign.v2",
+  "created_at": "2026-09-06T23:29:00+09:00",
+  "code_commit": "579ae6c389316f414515a4e0e7bcfa3269f6a5ae",
+  "branch": "autoware-e2e/v1.9.0-vad-carla",
+  "campaign_id": "portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v8_5m",
+  "purpose": "Evaluate baseline 3 m versus the safety-screened 5 m turn preview under the exact six-camera Common10 barrier.",
+  "scenario": "c_track_turn",
+  "map": "C_track_1_0_7",
+  "route_file": "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+  "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+  "profile": {
+    "speed": "30_kph",
+    "quality": "Epic",
+    "recommended": true,
+    "portable_shadow_rate_hz": 10,
+    "portable_device": "cpu",
+    "capture_desktop": true,
+    "visualize": true,
+    "maximum_health_retries": 0,
+    "maximum_trajectory_correction_m": 15.0,
+    "camera_delivery_contract": "common10_exact_due_frame_fail_closed_v1"
+  },
+  "candidate": {
+    "id": "turn_preview_5m",
+    "primary_metric": "turn_raw_gated_target_rmse",
+    "primary_direction": "candidate_lower",
+    "baseline_curvature_speed_preview_m": 3.0,
+    "candidate_curvature_speed_preview_m": 5.0,
+    "isolated_single_knob": true
+  },
+  "qualification_screen": {
+    "path": "../portable_e2e_physical_v1_30kph_ctrack_5m_safety_screen_v7/B_turn_preview_5m",
+    "status": "PASS",
+    "maximum_trajectory_correction_m": 12.994972229003906,
+    "portable_shadow_accepted_count": 438,
+    "portable_shadow_rejected_count": 0
+  },
+  "portable_e2e_pins": {
+    "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+    "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+    "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+    "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "rig_sha256": "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+    "contract_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642"
+  },
+  "ordered_runs": [
+    {"sequence": 1, "pair": "pair_01", "arm": "A_baseline"},
+    {"sequence": 2, "pair": "pair_01", "arm": "B_turn_preview_5m"},
+    {"sequence": 3, "pair": "pair_02", "arm": "B_turn_preview_5m"},
+    {"sequence": 4, "pair": "pair_02", "arm": "A_baseline"},
+    {"sequence": 5, "pair": "pair_03", "arm": "A_baseline"},
+    {"sequence": 6, "pair": "pair_03", "arm": "B_turn_preview_5m"},
+    {"sequence": 7, "pair": "pair_04", "arm": "B_turn_preview_5m"},
+    {"sequence": 8, "pair": "pair_04", "arm": "A_baseline"},
+    {"sequence": 9, "pair": "pair_05", "arm": "A_baseline"},
+    {"sequence": 10, "pair": "pair_05", "arm": "B_turn_preview_5m"},
+    {"sequence": 11, "pair": "pair_06", "arm": "B_turn_preview_5m"},
+    {"sequence": 12, "pair": "pair_06", "arm": "A_baseline"}
+  ],
+  "minimum_valid_pairs": 6,
+  "rerun_policy": "No favorable rerun. Infrastructure-invalid pairs may be replaced only by a separately predeclared reserve; route or geometry failures are never replaced.",
+  "stop_policy": "Complete both arms of the active pair. Stop NO-GO on any route or geometry failure. Stop for statistical futility after the first valid HOLD because final promotion requires every valid pair comparator to ACCEPT.",
+  "acceptance_policy": "Six fully valid pairs, every comparator ACCEPT, zero candidate safety failures, and six of six primary-metric directional wins.",
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

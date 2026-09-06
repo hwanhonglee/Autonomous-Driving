@@ -1,0 +1,48 @@
+{
+  "schema_id": "autoware-e2e.control-ab-campaign-closure.v1",
+  "completed_at": "2026-09-07T00:09:00+09:00",
+  "campaign_id": "portable_e2e_physical_v1_30kph_town03_control_ab_10hz_v1_10m",
+  "decision": "NO_GO",
+  "aggregate_decision": "HOLD",
+  "scope": "TOWN03_MAP_SPECIFIC_CHARACTERIZATION",
+  "stop_reason": "PREDECLARED_STATISTICAL_FUTILITY",
+  "candidate_promoted": false,
+  "selected_setting": {
+    "id": "baseline",
+    "curvature_speed_preview_m": 3.0
+  },
+  "valid_pair": {
+    "pair": "pair_01",
+    "baseline_owner_status": "PASS",
+    "candidate_owner_status": "PASS",
+    "comparator_status": "HOLD",
+    "failed_checks": [
+      "candidate_correction_delta",
+      "turn_raw_gated_improvement"
+    ],
+    "baseline_raw_gated_target_rmse_mps": 1.4766706365679887,
+    "candidate_raw_gated_target_rmse_mps": 1.54293763641118,
+    "candidate_to_baseline_raw_gated_ratio": 1.0448759514831325,
+    "baseline_maximum_trajectory_correction_m": 8.610319137573242,
+    "candidate_maximum_trajectory_correction_m": 8.936732292175293,
+    "trajectory_correction_delta_m": 0.3264131546020508,
+    "maximum_allowed_correction_delta_m": 0.25,
+    "baseline_target_tracking_rmse_mps": 1.9041231536353913,
+    "candidate_target_tracking_rmse_mps": 1.6628803549046325
+  },
+  "executed_primary_arms": 2,
+  "planned_primary_arms": 12,
+  "not_executed_reason": "The first valid pair was HOLD, so the all-pairs-ACCEPT promotion criterion became impossible.",
+  "not_executed_pairs": [
+    "pair_02",
+    "pair_03",
+    "pair_04",
+    "pair_05",
+    "pair_06"
+  ],
+  "global_promotion_allowed": false,
+  "global_blocker": "The same candidate already produced a 17.651 m trajectory-correction safety fault on C-track.",
+  "favorable_rerun_performed": false,
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

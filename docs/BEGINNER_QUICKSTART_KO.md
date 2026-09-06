@@ -106,16 +106,20 @@ GIT_LFS_SKIP_SMUDGE=1 git clone \
 cd Autonomous-Driving
 ```
 
-발행 PNG/GIF와 일부 MCAP은 Git LFS object다. 우선 최신 30 kph Portable shadow
-화면 자료만 선택해서 받는다(현재 약 37 MB).
+발행 PNG/GIF와 일부 MCAP은 Git LFS object다. 우선 최신 30 km/h 제어 A/B와
+60 km/h strict live 결과까지 포함한 통합 자료만 선택해서 받는다(현재 약 140 MB).
 
 ```bash
 git lfs install
 git lfs pull \
-  --include='docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**' \
+  --include='docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/**' \
   --exclude=''
 git lfs status
 ```
+
+2026-09-06 Portable shadow 기준선만 따로 비교하려면 include 경로를
+`docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**`로
+바꾼다.
 
 용량을 확인했고 모든 LFS object가 꼭 필요할 때만 include 없이 `git lfs pull`을
 사용한다. validation 화면 전체(현재 약 1.3 GB)가 필요하되 과거 대형 MCAP은 제외하려면
@@ -167,7 +171,7 @@ bash scripts/e2e/bootstrap_preflight.sh \
 |---|---:|---|
 | project launch/config/scripts/tests/patches | 예 | Git checkout |
 | 발행된 validation PNG/GIF | LFS | `git lfs pull` |
-| 2026-09-06 exact 3개 route와 CARLA rig | 예 | 최신 발행 asset 폴더 |
+| 2026-09-06 exact 3개 route와 CARLA rig | 예 | 2026-09-06 pinned 발행 asset 폴더 |
 | Autoware repository manifest | 예 | `autoware.repos` |
 | Autoware source `src/` | 아니오 | `vcs import` |
 | ROS/CMake/system dependency | 아니오 | 호스트 준비 + `rosdep` |
@@ -569,7 +573,7 @@ colcon test-result --verbose
 제한 때문에 실제 속도가 낮아지는 것이 정상일 수 있다.
 
 12.1~12.5는 Portable 모델 없이 기본 Autoware VAD 구조를 배우는 역사적 5 Hz
-Town01 입문 절차다. **2026-09-06 최신 10 Hz Portable shadow 3장면을 같은 설정으로
+Town01 입문 절차다. **2026-09-06 pinned 10 Hz Portable shadow 3장면을 같은 설정으로
 재현하려면 12.6의 owned wrapper를 사용한다.** 두 절차를 한 번에 실행하지 않는다.
 
 한 GPU에서 CARLA server를 두 개 동시에 실행하지 않는다. 기존 server와 Autoware가
@@ -721,7 +725,7 @@ ss -ltnp | grep ':2100' || true
 
 ### 12.6 2026-09-06 pinned-input 10 Hz shadow 3장면
 
-이 절은 최신 [검증 보고서](validation-2026-09-06.md)의 Town07 직진,
+이 절은 2026-09-06 pinned [검증 보고서](validation-2026-09-06.md)의 Town07 직진,
 C-track 좌회전, Town03 좌회전을 같은 순서와 pin으로 재실행한다. owned wrapper가
 각 episode마다 CARLA를 새 process group으로 시작하고 종료하므로 별도의 CARLA
 Terminal을 함께 띄우지 않는다. 세 명령은 한 번에 병렬로 실행하지 말고 위에서부터
@@ -736,8 +740,8 @@ Terminal을 함께 띄우지 않는다. 세 명령은 한 번에 병렬로 실�
 - SHA-256이 일치하는 physical-v1 private non-executable runtime `.npz`
 - X11 1920x1080 session과 visual preflight에 표시된 capture 도구
 
-route와 matching CARLA rig JSON은 최신 발행 asset에 포함했으므로 clone에서 바로
-사용한다. runtime bundle은 연구용 private artifact라 Git에 없으며, 다른 파일로
+route와 matching CARLA rig JSON은 해당 2026-09-06 발행 asset에 포함했으므로
+clone에서 바로 사용한다. runtime bundle은 연구용 private artifact라 Git에 없으며, 다른 파일로
 대체하거나 hash 검사를 끄지 않는다.
 
 아래 절차는 runtime, rig, route, contract, sensor mapping과 CARLA wrapper 입력을
@@ -908,11 +912,13 @@ scripts/e2e/run_autoware_vad_town_matrix.sh \
 
 ## 14. 60 km/h는 입문 실행으로 사용하지 않는다
 
-60 km/h profile은 현재 simulation-only straight exploratory pilot이다. 목표점에는
-도착했지만 60 km/h speed exposure gate를 통과하지 못했고 trajectory curvature,
-속도 cap과 actuation-map 범위 문제가 남아 있다. 따라서 다음을 지킨다.
-endpoint-tapered spatial-C1 offline 후보도 일부 곡률은 개선했지만 25/399 snapshot을
-reject해 `HOLD`이며 live option으로 연결되지 않았다.
+60 km/h profile은 simulation-only Town06 직진 exploratory pilot이다. 2026-09-07
+strict 10 Hz 1차 실행은 목표점에는 도착했지만 최고
+`10.123 m/s = 36.444 km/h`였고, 전체 구간 camera receipt p95도
+`45.715 ms > 40 ms`여서 최종 `NO-GO`다. trajectory curvature, 속도 cap과
+actuation-map 범위 문제도 남아 있다. endpoint-tapered spatial-C1 offline 후보는 일부
+곡률을 개선했지만 25/399 snapshot을 reject해 `HOLD`이며 live option으로 연결되지
+않았다.
 
 - 실차에 적용하지 않는다.
 - turn이나 모든 Town으로 확대하지 않는다.
@@ -920,7 +926,172 @@ reject해 `HOLD`이며 live option으로 연결되지 않았다.
 - production-equivalent geometry preflight, 60 km/h 범위 actuation calibration,
   controller/gate A/B와 반복 폐루프를 순서대로 통과하기 전에는 PASS로 표시하지 않는다.
 
-현재 판정과 측정값은 `docs/validation-2026-09-02-runtime-control-campaign.md`를 본다.
+### 14.1 strict 10 Hz 옵션이 검증하는 것
+
+`--camera-source-10hz-strict`는 camera-only 주행기가 아니다. Autoware VAD와 controller가
+Town06 full-stack 직진 주행을 수행하고, 그 실행 안에서 **six-camera 10 Hz
+transport/runtime 하위 계약만 독립 판정**한다. 공식 VAD model과 TensorRT engine은
+필요하지만 Portable E2E `.npz`, node와 weight는 로드하지 않는다. 기존
+`sensor_mapping_portable_e2e_10hz.yaml`은 six-camera 입력 ABI만 재사용한다.
+
+이 옵션의 transport PASS가 승인하지 않는 항목은 다음과 같다.
+
+- 60 km/h 도달 또는 speed exposure
+- 장애물 회피, ACC, 차선 변경과 회전 행동
+- Portable 모델의 60 km/h 성능
+- 모든 Town, 실제 센서 또는 실제 차량
+
+flag를 생략하면 historical 5 Hz profile이 선택된다. strict 옵션은 60 km/h Town06 직진
+simulation 전용이며 5 Hz, Portable shadow, custom sensor mapping, geometry A/B와 함께
+사용할 수 없다. 내부 launcher를 직접 실행하지 말고 아래 top-level wrapper를 사용한다.
+
+### 14.2 실행 전 확인
+
+이 작업은 SSH 학습 서버가 아니라 CARLA와 Autoware가 설치·빌드된 **로컬 주행 PC**에서
+실행한다. wrapper는 새 package를 설치하거나 학습·다운로드하지 않지만, repository의
+pinned Autoware source patch를 확인하고 필요하면 적용한다. 다음 조건이 모두 필요하다.
+
+- native Ubuntu 22.04, ROS 2 Humble, CARLA 0.9.15와 NVIDIA GPU
+- 이 repository의 full build 및 공식 VAD model/TensorRT engine
+- `CARLA_ROOT`와 `data/maps/Town06_full`
+- X11 `DISPLAY`, RViz와 1920×1080 owned-window capture 환경
+- `flock`, `vmstat`, `pidstat`, `nvidia-smi`, `ffmpeg`
+- 사용할 CARLA port와 GPU에 충돌하는 기존 실행이 없는 상태
+
+repository root에서 읽기 전용 사전진단과 핵심 상태를 확인한다.
+
+```bash
+bash scripts/e2e/bootstrap_preflight.sh
+
+printf 'CARLA_ROOT=%s\n' "${CARLA_ROOT:-NOT_SET}"
+printf 'DISPLAY=%s\n' "${DISPLAY:-NOT_SET}"
+test -d data/maps/Town06_full && echo 'Town06 full map: FOUND'
+test -d install && echo 'Autoware install: FOUND'
+
+ss -ltnp | grep -E ':2100([[:space:]]|$)' || true
+nvidia-smi
+```
+
+`bootstrap_preflight.sh`가 `BLOCK`을 출력하거나 2100 port에 다른 CARLA가 있으면 먼저
+해결한다. 이 wrapper가 route catalog와 실제 trial을 위해 CARLA를 두 번 순차
+cold-start하고 각각 정리하므로, 별도 terminal에서 CARLA를 미리 실행하지 않는다.
+
+### 14.3 한 번 실행하고 종료 코드를 보존하는 방법
+
+`OUTPUT_ROOT`는 첫 번째 positional argument이며 반드시 존재하지 않는 새 경로여야 한다.
+전체 실행이 길고 speed gate 실패도 예상되므로 `set -e` shell에서도 결과 폴더를 읽을 수
+있도록 종료 코드를 다음처럼 보존한다.
+
+```bash
+HH_60_OUTPUT="$PWD/artifacts/validation/manual/town06_strict10_$(date +%Y%m%d_%H%M%S)"
+HH_60_EXIT=0
+
+scripts/e2e/run_autoware_vad_60kph_pilot.sh \
+  "$HH_60_OUTPUT" \
+  --camera-source-10hz-strict \
+  --port 2100 || HH_60_EXIT=$?
+
+printf 'wrapper exit: %s\n' "$HH_60_EXIT"
+printf 'result root: %s\n' "$HH_60_OUTPUT"
+```
+
+wrapper는 자체 CARLA, full-stack, RViz 녹화와 cleanup을 소유한다. 실행 도중 terminal을
+닫거나 같은 workspace에서 두 번째 campaign을 시작하지 않는다.
+
+strict 옵션에서는 rosbag recorder를 paused 상태로 시작한다. 여섯 camera_info
+subscription과 Humble의 paused log를 모두 확인한 뒤, 같은 owned process group의
+PTY에 SPACE를 보내 하나의 measurement 시작점에서 resume한다. `Resuming recording.`
+응답까지 확인한 증거는 `trial/attempt_001/recorder_measurement_start.json`에 남긴다. 이 절차는 첫
+실행에서 확인된 recorder subscription 순서 차이로 인한 첫 frame 비대칭을 막기 위한
+것이다. 일반 5 Hz 및 30 km/h recorder 동작은 바꾸지 않는다.
+
+이 절차를 적용한 새 실행의 camera profile ID는
+`carla_vad_camera_source_10hz_strict_v2`다. v2 gate는 source period를
+`0.099995~0.100005 s`로 양쪽에서 제한한다. pre-engagement health는 wall-window
+경계 guard를 적용한 뒤 window 내부 모든 camera record가 정확히 한 bundle에 소비됐는지
+검사한다. full bag 분석은 rosbag 시작·종료에서 생길 수 있는 불완전 union stamp를 각
+가장자리에서 최대 하나만 명시적으로 제외하고, 남은 내부 stamp 전부가 여섯 카메라
+exact 1:1인지 검사한다. 내부 누락·중복·비증가 timestamp 또는 가장자리당 두 번째
+불완전 stamp는 실패다.
+
+Portable node와 output publisher 부재는 각 8초 winning window가 끝난 시점의 ROS graph
+snapshot 세 개다. window 전체를 연속 감시했다는 뜻은 아니므로 launcher의 Portable
+실행 금지와 함께 해석해야 한다. route 중 recorder 생존뿐 아니라 Autoware stack 종료
+때 드러난 camera worker 오류도 분석 전에 fail-closed 처리한다.
+
+기존 `strict_v1` 발행본은 ID를 바꾸지 않고 당시 legacy gate 의미로 offline 검증할 수
+있을 뿐이다. 현재 runner는 신규 v1을 발급하지 않으며 당시 code/runtime의
+byte-identical replay를 지원하거나 주장하지 않는다.
+
+### 14.4 결과를 잘못 읽지 않는 방법
+
+60 km/h speed exposure가 실패하면 wrapper exit가 `1`, `pilot_run.json.status`가
+`FAILED`이고 `pilot_failure.json`이 존재할 수 있다. 그래도 evidence integrity와 camera
+transport 하위 계약은 독립적으로 PASS할 수 있다. 다음 명령은 필요한 truth field만
+출력한다.
+
+```bash
+python3 - "$HH_60_OUTPUT" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+attempt = root / "trial/attempt_001"
+
+
+def read(path):
+    if not path.is_file():
+        print(f"MISSING: {path}")
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+camera = read(attempt / "camera_source_10hz_strict_validation.json")
+gate = read(attempt / "pilot_acceptance_gate.json")
+pilot = read(root / "pilot_run.json")
+print("camera evidence:", camera.get("status"))
+for key in (
+    "camera_transport_qualification_status",
+    "evidence_integrity_status",
+    "physical_goal_completion_status",
+    "speed_exposure_contract_status",
+    "simulation_pilot_acceptance_status",
+    "real_vehicle_readiness_status",
+):
+    print(f"{key}:", gate.get(key))
+print("pilot_run:", pilot.get("status"))
+PY
+```
+
+`camera_transport_qualification_status=PASS`와
+`speed_exposure_contract_status=FAILED`의 조합은 “10 Hz 전송 계약만 통과했고 60 km/h
+주행은 실패”라는 뜻이다. `real_vehicle_readiness_status`는 항상 `BLOCKED`여야 한다.
+camera evidence 하나만 보거나 wrapper exit만 보고 반대 결론을 내리지 않는다.
+
+2026-09-07 strict live v1의 실제 조합은 아래와 같았다.
+
+- pre-engagement health: `PASS`
+- standalone post-run source/cadence: `PASS`
+- final full-run camera transport: `FAILED`
+- physical goal: `PASS`
+- speed exposure: `FAILED`
+- simulation acceptance: `FAILED`
+- real-vehicle readiness: `BLOCKED`
+
+v2 계측 하네스 보강 뒤 CARLA live 재실행은 아직 수행하지 않았다. 따라서 아래 v1
+측정값과 `NO-GO` 판정을 v2 PASS로 해석하면 안 된다.
+
+standalone 검사는 약 10 Hz source, `864/865 = 99.884%` bundle coverage와 exact stamp를
+확인했다. 최종 gate는 추가로 전체 구간 receipt p95를 검사했고
+`45.715 ms > 40 ms`라 실패했다. 좌전방 topic의 한 frame 차이는 raw bag의 맨 첫
+stamp에서만 발생한 recorder 시작 경계 artifact였지만, 사후에 parity 기준을 낮추지
+않았다. 화면과 경로·속도·지연 자료는
+`docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/05_60kph_readiness/strict10_live_v1/`에
+있다. 대표 GIF는 5 fps이므로 camera source 10 Hz와 같은 수치로 해석하지 않는다.
+
+현재 30/60 km/h 통합 판정은 `docs/validation-2026-09-07-control-ab.md`, 과거 60 km/h
+상세 측정은 `docs/validation-2026-09-02-runtime-control-campaign.md`를 본다.
 
 ## 15. 자주 막히는 문제
 
@@ -943,7 +1114,7 @@ vcs import src < autoware.repos
 ```bash
 git lfs install
 git lfs pull \
-  --include='docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**' \
+  --include='docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/**' \
   --exclude=''
 ```
 
@@ -985,7 +1156,7 @@ build가 진행 중이고 GPU/driver 오류가 없다면 기다린다. 생성 �
 
 카메라 topic Hz만 보지 말고 CARLA real-time factor, wall-time bundle rate, complete
 six-camera coverage와 GPU/CPU load를 함께 본다. 2026-09-01 v16은 5 sim-Hz라 화면
-계단감이 컸던 역사 profile이다. 최신 2026-09-06 shadow profile은 six-camera
+계단감이 컸던 역사 profile이다. 2026-09-06 pinned shadow profile은 six-camera
 `sensor_tick=0.1`, bridge cap 11 Hz, localhost-only BestEffort KEEP_LAST depth 1을 쓴다.
 세 선택 실행의 모든 인접 source 간격은 `100.000001~100.000002 ms`, 위반 `0`이었다.
 발행 GIF는 별도로 5 fps이므로 GIF의 체감 부드러움을 camera 10 Hz 판정으로 사용하지

@@ -1,0 +1,43 @@
+{
+  "schema_id": "autoware-e2e.control-ab-campaign-closure.v1",
+  "completed_at": "2026-09-06T23:37:00+09:00",
+  "campaign_id": "portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v8_5m",
+  "decision": "NO_GO",
+  "aggregate_decision": "HOLD",
+  "stop_reason": "PREDECLARED_STATISTICAL_FUTILITY",
+  "selected_setting": {
+    "id": "baseline",
+    "curvature_speed_preview_m": 3.0
+  },
+  "candidate": {
+    "id": "turn_preview_5m",
+    "curvature_speed_preview_m": 5.0,
+    "safety_screen_status": "PASS",
+    "paired_route_status": "PASS",
+    "paired_comparator_status": "HOLD"
+  },
+  "valid_pair": {
+    "pair": "pair_01",
+    "baseline_raw_gated_target_rmse_mps": 1.358636755946412,
+    "candidate_raw_gated_target_rmse_mps": 1.330375599246841,
+    "candidate_to_baseline_ratio": 0.9791988869903017,
+    "required_maximum_ratio": 0.9,
+    "baseline_maximum_trajectory_correction_m": 14.633155822753906,
+    "candidate_maximum_trajectory_correction_m": 13.176977157592773,
+    "baseline_camera_bundle_coverage_percent": 100.0,
+    "candidate_camera_bundle_coverage_percent": 100.0
+  },
+  "executed_primary_arms": 2,
+  "planned_primary_arms": 12,
+  "not_executed_reason": "The first fully valid pair was HOLD, so the all-pairs-ACCEPT promotion criterion became impossible.",
+  "not_executed_pairs": [
+    "pair_02",
+    "pair_03",
+    "pair_04",
+    "pair_05",
+    "pair_06"
+  ],
+  "favorable_rerun_performed": false,
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

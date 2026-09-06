@@ -1,0 +1,46 @@
+{
+  "schema_id": "autoware-e2e.control-ab-campaign-closure.v1",
+  "completed_at": "2026-09-06T23:55:00+09:00",
+  "campaign_id": "portable_e2e_physical_v1_30kph_town07_control_ab_10hz_v1_recovery",
+  "decision": "NO_GO",
+  "aggregate_decision": "HOLD",
+  "stop_reason": "ROUTE_FAIL_BASELINE",
+  "candidate_promoted": false,
+  "baseline": {
+    "owner_status": "FAIL",
+    "route_goal_reached": true,
+    "maximum_speed_mps": 7.564131963951636,
+    "sustained_speed_at_or_above_7p5_mps_sec": 0.05000000100000079,
+    "required_sustained_speed_sec": 1.0,
+    "maximum_trajectory_correction_m": 1.8206956386566162,
+    "portable_shadow_status": "EVIDENCE_VALID"
+  },
+  "candidate": {
+    "id": "longitudinal_recovery_2p0",
+    "owner_status": "PASS",
+    "route_goal_reached": true,
+    "maximum_speed_mps": 7.698886090114794,
+    "sustained_speed_at_or_above_7p5_mps_sec": 2.7500000409999927,
+    "maximum_trajectory_correction_m": 1.7748557329177856,
+    "portable_shadow_status": "EVIDENCE_VALID",
+    "authoritative_comparison_available": false,
+    "counterfactual_strict_gate_failures": [
+      "speed exposure: maximum below 7.78 m/s and sustained duration below 3.5 s",
+      "target tracking: RMSE increased from 1.941589 to 2.009366 m/s instead of improving by at least five percent"
+    ]
+  },
+  "pair_classification": "ROUTE_FAIL_BASELINE",
+  "valid_performance_pairs": 0,
+  "executed_primary_arms": 2,
+  "planned_primary_arms": 12,
+  "not_executed_reason": "The predeclared policy makes a route-level failure final and prohibits a favorable rerun.",
+  "not_executed_pairs": [
+    "pair_02",
+    "pair_03",
+    "pair_04",
+    "pair_05",
+    "pair_06"
+  ],
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

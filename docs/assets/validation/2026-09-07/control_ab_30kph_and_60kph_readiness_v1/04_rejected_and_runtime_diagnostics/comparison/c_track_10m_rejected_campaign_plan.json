@@ -1,0 +1,84 @@
+{
+  "schema_id": "autoware-e2e.predeclared-control-ab-campaign.v2",
+  "created_at": "2026-09-06T13:42:52Z",
+  "code_commit": "579ae6c389316f414515a4e0e7bcfa3269f6a5ae",
+  "branch": "autoware-e2e/v1.9.0-vad-carla",
+  "campaign_id": "portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack",
+  "purpose": "Evaluate baseline 3 m versus candidate 10 m turn preview after the exact six-camera barrier and bounded RViz maximize acknowledgement fixes.",
+  "scenario": "c_track_turn",
+  "map": "C_track_1_0_7",
+  "route_file": "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/02_c_track_turn/route/source_route.json",
+  "route_sha256": "1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64",
+  "profile": {
+    "speed": "30_kph",
+    "quality": "Epic",
+    "recommended": true,
+    "portable_shadow_rate_hz": 10,
+    "portable_device": "cpu",
+    "portable_cpu_set": null,
+    "capture_desktop": true,
+    "visualize": true,
+    "maximum_health_retries": 0,
+    "maximum_trajectory_correction_m": 15.0,
+    "camera_delivery_contract": "common10_exact_due_frame_fail_closed_v1",
+    "camera_delivery_patch_sha256": "4458a317dd08b37b6c15bf683dba4b89c39261f2cb22b8ba353b1828bca77d14",
+    "rviz_capture_script_sha256": "a51c5e50b57a0ff4986bfc990c768c1d4fec4e822fc313da89d20c5a26e5cbc0",
+    "rviz_maximize_ack_timeout_sec": 10.0,
+    "rviz_maximize_retry_interval_sec": 0.25
+  },
+  "candidate": {
+    "id": "turn_preview_10m",
+    "primary_metric": "turn_raw_gated_target_rmse",
+    "primary_direction": "candidate_lower",
+    "baseline_curvature_speed_preview_m": 3.0,
+    "candidate_curvature_speed_preview_m": 10.0,
+    "isolated_single_knob": true
+  },
+  "portable_e2e_pins": {
+    "runtime_bundle": "artifacts/validation/2026-09-06/portable_e2e_physical_v1_remote_private/runtime_bundle_private/physical_v1_e10.runtime.npz",
+    "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+    "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+    "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+    "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "rig_file": "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/config/carla_common10_rig.json",
+    "rig_sha256": "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+    "contract_file": "portable_e2e/config/common_10hz_v1.contract.json",
+    "contract_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642"
+  },
+  "ordered_runs": [
+    {"sequence": 1, "pair": "pair_01", "arm": "B_turn_preview_10m"},
+    {"sequence": 2, "pair": "pair_01", "arm": "A_baseline"},
+    {"sequence": 3, "pair": "pair_02", "arm": "A_baseline"},
+    {"sequence": 4, "pair": "pair_02", "arm": "B_turn_preview_10m"},
+    {"sequence": 5, "pair": "pair_03", "arm": "B_turn_preview_10m"},
+    {"sequence": 6, "pair": "pair_03", "arm": "A_baseline"},
+    {"sequence": 7, "pair": "pair_04", "arm": "A_baseline"},
+    {"sequence": 8, "pair": "pair_04", "arm": "B_turn_preview_10m"},
+    {"sequence": 9, "pair": "pair_05", "arm": "B_turn_preview_10m"},
+    {"sequence": 10, "pair": "pair_05", "arm": "A_baseline"},
+    {"sequence": 11, "pair": "pair_06", "arm": "A_baseline"},
+    {"sequence": 12, "pair": "pair_06", "arm": "B_turn_preview_10m"}
+  ],
+  "reserve_runs": [
+    {"sequence": 13, "pair": "pair_07_reserve", "arm": "B_turn_preview_10m"},
+    {"sequence": 14, "pair": "pair_07_reserve", "arm": "A_baseline"},
+    {"sequence": 15, "pair": "pair_08_reserve", "arm": "A_baseline"},
+    {"sequence": 16, "pair": "pair_08_reserve", "arm": "B_turn_preview_10m"}
+  ],
+  "minimum_valid_pairs": 6,
+  "rerun_policy": "No replacement or favorable rerun. Preserve every arm. A reserve pair may replace only a pair classified INFRA_INVALID; route or geometry failures are never replaced.",
+  "stop_policy": "Complete both arms of a pair. A health-PASS safety, route, or geometry failure makes the campaign NO-GO after that pair; a camera or runtime-health failure is INFRA_INVALID and advances to the fixed reserve order. Stop at six fully valid pairs or after both reserves are exhausted.",
+  "acceptance_policy": "Six fully valid pairs, every authoritative pair comparator ACCEPT, candidate safety failures zero, and the primary metric favors the candidate in all six pairs.",
+  "statistics": {
+    "test": "exact two-sided sign test",
+    "required_directional_wins": "6/6",
+    "two_sided_p_value_if_6_of_6": 0.03125
+  },
+  "excluded_prior_campaign": {
+    "path": "artifacts/validation/2026-09-06/portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v5_camera_barrier",
+    "classification": "ABORTED_INFRA_QUALIFICATION",
+    "reason": "Pair 01 candidate stopped before runtime health because the owned RViz maximize acknowledgement raced the GNOME window manager.",
+    "reuse_in_v6_statistics": false
+  },
+  "real_vehicle_ready": false
+}

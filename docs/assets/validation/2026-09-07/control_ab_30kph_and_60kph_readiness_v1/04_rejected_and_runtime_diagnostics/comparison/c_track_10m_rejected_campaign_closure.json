@@ -1,0 +1,56 @@
+{
+  "schema_id": "autoware-e2e.control-ab-campaign-closure.v1",
+  "completed_at": "2026-09-06T23:22:17+09:00",
+  "campaign_id": "portable_e2e_physical_v1_30kph_ctrack_control_ab_10hz_v6_camera_barrier_rviz_ack",
+  "plan": "campaign_plan.json",
+  "aggregate_summary": "control_ab_repeat_summary.json",
+  "decision": "NO_GO",
+  "aggregate_decision": "HOLD",
+  "selected_setting": {
+    "id": "baseline",
+    "curvature_speed_preview_m": 3.0
+  },
+  "rejected_candidate": {
+    "id": "turn_preview_10m",
+    "curvature_speed_preview_m": 10.0,
+    "reason": "A runtime-health-PASS candidate arm exceeded the unchanged 15.0 m trajectory-correction safety limit."
+  },
+  "execution": {
+    "planned_primary_arms": 12,
+    "executed_primary_arms": 8,
+    "input_pairs": 4,
+    "valid_performance_pairs": 3,
+    "valid_accept_pairs": 1,
+    "valid_hold_pairs": 2,
+    "excluded_pairs": 1
+  },
+  "stop_trigger": {
+    "pair": "pair_04",
+    "arm": "B_turn_preview_10m",
+    "classification": "GEOMETRY_FAIL",
+    "runtime_health_status": "PASS",
+    "portable_shadow_evidence_status": "EVIDENCE_VALID",
+    "route_reason": "VAD route manager reported fault:trajectory_correction:correction=17.651m>limit=15.000m:points=48:horizon=20.657m:command=0(LEFT)"
+  },
+  "infrastructure_caveat": {
+    "pair": "pair_04",
+    "arm": "A_baseline",
+    "classification": "INVALID_INFRA",
+    "route_reason": "goal reached",
+    "reason": "The Portable shadow measurement window contained deadline rejections and camera-bundle timeouts, so this arm is excluded from performance statistics."
+  },
+  "not_executed": [
+    "pair_05/B_turn_preview_10m",
+    "pair_05/A_baseline",
+    "pair_06/A_baseline",
+    "pair_06/B_turn_preview_10m",
+    "pair_07_reserve/B_turn_preview_10m",
+    "pair_07_reserve/A_baseline",
+    "pair_08_reserve/A_baseline",
+    "pair_08_reserve/B_turn_preview_10m"
+  ],
+  "rerun_performed": false,
+  "rerun_reason": "The predeclared stop policy prohibits replacing a safety or geometry failure with a favorable rerun.",
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

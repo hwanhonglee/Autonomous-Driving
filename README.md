@@ -21,8 +21,9 @@ CARLA·모델·맵 데이터가 필요하다. 이 대용량/라이선스 의존 
 
 - 처음 설치하는 사람: [한국어 초보자 Quick Start](docs/BEGINNER_QUICKSTART_KO.md)
 - 모든 옵션과 설계 경계: [E2E 상세 가이드](E2E_SETUP.md)
-- 최신 Autoware + Portable E2E 10 Hz shadow 주행: [2026-09-06 검증 보고서](docs/validation-2026-09-06.md)
-- 최신 차량 중심 전체 화면·경로 분석: [2026-09-06 30 kph 발행 증거](docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/)
+- 최신 30 km/h 제어 A/B와 Town06 strict 10 Hz 60 km/h `NO-GO` 분석: [2026-09-07 검증 보고서](docs/validation-2026-09-07-control-ab.md)
+- Autoware + Portable E2E 10 Hz shadow 기준선: [2026-09-06 검증 보고서](docs/validation-2026-09-06.md)
+- 최신 차량 중심 전체 화면·경로·제어 A/B·60 km/h live 분석: [2026-09-07 통합 발행 증거](docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/)
 - 이전 학습·open-loop 단계: [2026-09-05 Common10 검증 보고서](docs/validation-2026-09-05-portable-e2e-common10-30kph.md)
 - Autoware runtime과 30/60 kph 역사적 결과: [runtime·control 검증 보고서](docs/validation-2026-09-02-runtime-control-campaign.md)
 

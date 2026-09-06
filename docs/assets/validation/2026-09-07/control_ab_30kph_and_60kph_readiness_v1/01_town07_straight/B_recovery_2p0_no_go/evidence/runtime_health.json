@@ -1,0 +1,715 @@
+{
+  "camera_image_graph": {
+    "attempt_count": 4,
+    "attempts": [
+      {
+        "elapsed_wall_seconds": 0.0012303040130063891,
+        "failures": [
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_FRONT/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_",
+              "/vad_carla_tiny"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "subscriptions",
+            "expected": [
+              "/autoware_vad_rviz",
+              "/vad_carla_tiny"
+            ],
+            "topic": "/sensing/camera/CAM_FRONT/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_BACK/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_FRONT_LEFT/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_BACK_LEFT/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_FRONT_RIGHT/image_raw"
+          },
+          {
+            "actual": [
+              "/_NODE_NAMESPACE_UNKNOWN_/_NODE_NAME_UNKNOWN_"
+            ],
+            "check": "endpoint_nodes",
+            "endpoint_kind": "publishers",
+            "expected": [
+              "/autoware_carla_interface"
+            ],
+            "topic": "/sensing/camera/CAM_BACK_RIGHT/image_raw"
+          }
+        ],
+        "index": 0,
+        "status": "FAIL"
+      },
+      {
+        "elapsed_wall_seconds": 0.10228732402902097,
+        "failures": [],
+        "index": 1,
+        "status": "PASS"
+      },
+      {
+        "elapsed_wall_seconds": 0.20303155796136707,
+        "failures": [],
+        "index": 2,
+        "status": "PASS"
+      },
+      {
+        "elapsed_wall_seconds": 0.3037792060058564,
+        "failures": [],
+        "index": 3,
+        "status": "PASS"
+      }
+    ],
+    "discovery_timeout_seconds": 5.0,
+    "elapsed_wall_seconds": 0.3037805010098964,
+    "final": {
+      "expected": {
+        "qos": {
+          "depth": 1,
+          "durability": "volatile",
+          "history": "keep_last",
+          "reliability": "best_effort"
+        },
+        "required_consecutive_passes": 3,
+        "topic_type": "sensor_msgs/msg/Image",
+        "topics": {
+          "/sensing/camera/CAM_BACK/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/vad_carla_tiny"
+            ]
+          },
+          "/sensing/camera/CAM_BACK_LEFT/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/vad_carla_tiny"
+            ]
+          },
+          "/sensing/camera/CAM_BACK_RIGHT/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/vad_carla_tiny"
+            ]
+          },
+          "/sensing/camera/CAM_FRONT/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/autoware_vad_rviz",
+              "/vad_carla_tiny"
+            ]
+          },
+          "/sensing/camera/CAM_FRONT_LEFT/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/vad_carla_tiny"
+            ]
+          },
+          "/sensing/camera/CAM_FRONT_RIGHT/image_raw": {
+            "publishers": [
+              "/autoware_carla_interface"
+            ],
+            "subscriptions": [
+              "/vad_carla_tiny"
+            ]
+          }
+        }
+      },
+      "failures": [],
+      "status": "PASS",
+      "topics": {
+        "/sensing/camera/CAM_BACK/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be9030300001b030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da94000020040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        },
+        "/sensing/camera/CAM_BACK_LEFT/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be9030300001d030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da94000022040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        },
+        "/sensing/camera/CAM_BACK_RIGHT/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be9030300001f030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da94000024040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        },
+        "/sensing/camera/CAM_FRONT/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be90303000015030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110e25326b69b1ab7ef6378000053040000000000000000",
+              "node": "/autoware_vad_rviz",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            },
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da9400001f040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        },
+        "/sensing/camera/CAM_FRONT_LEFT/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be90303000017030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da94000021040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        },
+        "/sensing/camera/CAM_FRONT_RIGHT/image_raw": {
+          "publishers": [
+            {
+              "endpoint_gid_hex": "01109ae685b24e609be90303000019030000000000000000",
+              "node": "/autoware_carla_interface",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ],
+          "subscriptions": [
+            {
+              "endpoint_gid_hex": "0110d484045f87e502a3da94000023040000000000000000",
+              "node": "/vad_carla_tiny",
+              "qos": {
+                "depth": 1,
+                "durability": "volatile",
+                "history": "keep_last",
+                "reliability": "best_effort"
+              },
+              "topic_type": "sensor_msgs/msg/Image"
+            }
+          ]
+        }
+      }
+    },
+    "maximum_consecutive_passes": 3,
+    "poll_seconds": 0.1,
+    "required_consecutive_passes": 3,
+    "status": "PASS"
+  },
+  "checked_at": "2026-09-06T14:46:18.166991+00:00",
+  "contract": {
+    "bundle_match_tolerance_seconds": 0.1,
+    "bundle_settle_seconds": 0.1,
+    "camera_transport": {
+      "bridge_publish_cap_hz": 11,
+      "camera_image_endpoint_depth": 1,
+      "camera_image_endpoint_durability": "volatile",
+      "camera_image_endpoint_history": "keep_last",
+      "camera_image_publisher_reliability": "best_effort",
+      "camera_info_publisher_reliability": "reliable",
+      "camera_source_sensor_tick_seconds": 0.1,
+      "cyclonedds_config_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+      "cyclonedds_loopback_interface_required": true,
+      "cyclonedds_uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+      "declared_effective_camera_rate_hz": 10.0,
+      "exact_camera_image_graph_required": true,
+      "minimum_camera_wall_rate_hz": 9.0,
+      "minimum_complete_bundle_count": 70,
+      "probe_topics": "camera_info_plus_read_only_image_graph",
+      "profile_id": "portable_e2e_exact_bundle_10hz_v2",
+      "rmw_implementation": "rmw_cyclonedds_cpp",
+      "ros_localhost_only_expected": "0",
+      "rviz_image_subscription_reliability": "best_effort",
+      "sensor_mapping_sha256": "c4598f8a7920ca8d1df072ed940a17176d9019ad53381ba3cc25bec666ef805c",
+      "vad_image_subscription_reliability": "best_effort",
+      "vad_model_override_sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb"
+    },
+    "clock_domains": {
+      "bundle_matching": "camera_info header stamp",
+      "bundle_receipt_span": "monotonic wall receipt span within bundle",
+      "camera_rate": "monotonic wall receipt count per window",
+      "cross_domain_subtraction_used": false,
+      "rtf_denominator": "monotonic wall window duration",
+      "rtf_numerator": "ROS /clock simulation time delta"
+    },
+    "evaluation_interval_seconds": 1.0,
+    "required_consecutive_passes": 3,
+    "thresholds": {
+      "maximum_bundle_receipt_p95_seconds": 0.04,
+      "minimum_bundle_coverage_percent": 99.0,
+      "minimum_camera_wall_rate_hz": 9.0,
+      "minimum_complete_bundle_count": 70,
+      "minimum_rtf": 0.9
+    },
+    "topics": {
+      "camera_image_graph": [
+        "/sensing/camera/CAM_FRONT/image_raw",
+        "/sensing/camera/CAM_BACK/image_raw",
+        "/sensing/camera/CAM_FRONT_LEFT/image_raw",
+        "/sensing/camera/CAM_BACK_LEFT/image_raw",
+        "/sensing/camera/CAM_FRONT_RIGHT/image_raw",
+        "/sensing/camera/CAM_BACK_RIGHT/image_raw"
+      ],
+      "camera_info": [
+        "/sensing/camera/CAM_FRONT/camera_info",
+        "/sensing/camera/CAM_BACK/camera_info",
+        "/sensing/camera/CAM_FRONT_LEFT/camera_info",
+        "/sensing/camera/CAM_BACK_LEFT/camera_info",
+        "/sensing/camera/CAM_FRONT_RIGHT/camera_info",
+        "/sensing/camera/CAM_BACK_RIGHT/camera_info"
+      ],
+      "clock": "/clock"
+    },
+    "window_seconds": 8.0
+  },
+  "error": null,
+  "finished_at": "2026-09-06T14:46:28.955911+00:00",
+  "probe_id": "pre_engagement_runtime_health_v1",
+  "runtime": {
+    "cyclonedds_uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+    "process_id": 71834,
+    "publisher_qos_modified": false,
+    "read_only_subscriber": true,
+    "rmw_implementation": "rmw_cyclonedds_cpp",
+    "ros_domain_id": "42",
+    "ros_localhost_only": "0",
+    "rosbag_started": false,
+    "rviz_recorder_after": {
+      "pgid": 71741,
+      "pid": 71741,
+      "process_state": "S"
+    },
+    "rviz_recorder_before": {
+      "pgid": 71741,
+      "pid": 71741,
+      "process_state": "S"
+    },
+    "rviz_recorder_required": true,
+    "transport_environment": {
+      "actual": {
+        "cyclonedds_uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+        "rmw_implementation": "rmw_cyclonedds_cpp",
+        "ros_localhost_only": "0"
+      },
+      "cyclonedds_config": {
+        "actual_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+        "expected_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+        "path": "/home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+        "regular_file": true,
+        "uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml"
+      },
+      "expected": {
+        "cyclonedds_uri": "file:///home/a/autoware_e2e/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+        "rmw_implementation": "rmw_cyclonedds_cpp",
+        "ros_localhost_only": "0"
+      },
+      "failures": [],
+      "profile_id": "portable_e2e_exact_bundle_10hz_v2",
+      "status": "PASS"
+    },
+    "vehicle_engaged": false
+  },
+  "schema_version": 1,
+  "sequence": {
+    "elapsed_wall_seconds": 10.101456511067227,
+    "evaluated_window_count": 3,
+    "maximum_consecutive_passes": 3,
+    "required_consecutive_passes": 3,
+    "status": "PASS",
+    "timed_out": false,
+    "trailing_consecutive_passes": 3,
+    "winning_window_indexes": [
+      0,
+      1,
+      2
+    ]
+  },
+  "source": {
+    "path": "/home/a/autoware_e2e/scripts/e2e/probe_runtime_health.py",
+    "sha256": "885441e86fc7462e309e21e479bb33c43e9af64bc5bab95bdeaa56e78144d0c3"
+  },
+  "status": "PASS",
+  "timeout_seconds": 45.0,
+  "windows": [
+    {
+      "bundles": {
+        "complete_bundle_count": 80,
+        "coverage_percent": 100.0,
+        "front_anchor_count": 80,
+        "match_tolerance_seconds": 0.1,
+        "matching_policy": "front_anchor_nearest_stamp_one_to_one",
+        "receipt_span_seconds": {
+          "count": 80,
+          "maximum": 0.005910145002417266,
+          "p95": 0.005799932451918722
+        },
+        "stamp_span_seconds": {
+          "count": 80,
+          "maximum": 0.0,
+          "p95": 0.0
+        }
+      },
+      "cameras": {
+        "/sensing/camera/CAM_BACK/camera_info": {
+          "first_receipt_offset_seconds": 0.005260271020233631,
+          "last_receipt_offset_seconds": 7.918807554058731,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.005514624062925577,
+          "last_receipt_offset_seconds": 7.919468912994489,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.005850315093994141,
+          "last_receipt_offset_seconds": 7.920326641993597,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT/camera_info": {
+          "first_receipt_offset_seconds": 0.0025965290842577815,
+          "last_receipt_offset_seconds": 7.914544327068143,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.004480662057176232,
+          "last_receipt_offset_seconds": 7.917467537103221,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.004804386990144849,
+          "last_receipt_offset_seconds": 7.918188269017264,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        }
+      },
+      "clock": {
+        "message_count": 160,
+        "monotonic_simulation_time": true,
+        "rtf": 0.9937500148750003,
+        "simulation_delta_seconds": 7.950000119000002
+      },
+      "failures": [],
+      "index": 0,
+      "minimum_observed_camera_wall_rate_hz": 10.0,
+      "status": "PASS",
+      "window": {
+        "duration_seconds": 8.0,
+        "end_elapsed_seconds": 8.0,
+        "start_elapsed_seconds": 0.0
+      }
+    },
+    {
+      "bundles": {
+        "complete_bundle_count": 80,
+        "coverage_percent": 100.0,
+        "front_anchor_count": 80,
+        "match_tolerance_seconds": 0.1,
+        "matching_policy": "front_anchor_nearest_stamp_one_to_one",
+        "receipt_span_seconds": {
+          "count": 80,
+          "maximum": 0.005910145002417266,
+          "p95": 0.005799932451918722
+        },
+        "stamp_span_seconds": {
+          "count": 80,
+          "maximum": 0.0,
+          "p95": 0.0
+        }
+      },
+      "cameras": {
+        "/sensing/camera/CAM_BACK/camera_info": {
+          "first_receipt_offset_seconds": 0.008120428072288632,
+          "last_receipt_offset_seconds": 7.919579344103113,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.008770431042648852,
+          "last_receipt_offset_seconds": 7.91996797604952,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.009687676094472408,
+          "last_receipt_offset_seconds": 7.9203464010497555,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT/camera_info": {
+          "first_receipt_offset_seconds": 0.003928028047084808,
+          "last_receipt_offset_seconds": 7.916290379012935,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.006826900993473828,
+          "last_receipt_offset_seconds": 7.918838448007591,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.007452462101355195,
+          "last_receipt_offset_seconds": 7.919139449018985,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        }
+      },
+      "clock": {
+        "message_count": 160,
+        "monotonic_simulation_time": true,
+        "rtf": 0.993750014875,
+        "simulation_delta_seconds": 7.950000119
+      },
+      "failures": [],
+      "index": 1,
+      "minimum_observed_camera_wall_rate_hz": 10.0,
+      "status": "PASS",
+      "window": {
+        "duration_seconds": 8.0,
+        "end_elapsed_seconds": 9.0,
+        "start_elapsed_seconds": 1.0
+      }
+    },
+    {
+      "bundles": {
+        "complete_bundle_count": 80,
+        "coverage_percent": 100.0,
+        "front_anchor_count": 80,
+        "match_tolerance_seconds": 0.1,
+        "matching_policy": "front_anchor_nearest_stamp_one_to_one",
+        "receipt_span_seconds": {
+          "count": 80,
+          "maximum": 0.005849538021720946,
+          "p95": 0.0057832598802633585
+        },
+        "stamp_span_seconds": {
+          "count": 80,
+          "maximum": 0.0,
+          "p95": 0.0
+        }
+      },
+      "cameras": {
+        "/sensing/camera/CAM_BACK/camera_info": {
+          "first_receipt_offset_seconds": 0.00812691100873053,
+          "last_receipt_offset_seconds": 7.922038119053468,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.008404271095059812,
+          "last_receipt_offset_seconds": 7.923070318065584,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_BACK_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.00872338900808245,
+          "last_receipt_offset_seconds": 7.923701286083087,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT/camera_info": {
+          "first_receipt_offset_seconds": 0.0055278210202232,
+          "last_receipt_offset_seconds": 7.917851748061366,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_LEFT/camera_info": {
+          "first_receipt_offset_seconds": 0.007499657105654478,
+          "last_receipt_offset_seconds": 7.9206323500256985,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        },
+        "/sensing/camera/CAM_FRONT_RIGHT/camera_info": {
+          "first_receipt_offset_seconds": 0.007900147000327706,
+          "last_receipt_offset_seconds": 7.921346932067536,
+          "message_count": 80,
+          "wall_rate_hz": 10.0
+        }
+      },
+      "clock": {
+        "message_count": 160,
+        "monotonic_simulation_time": true,
+        "rtf": 0.99375001475,
+        "simulation_delta_seconds": 7.950000118
+      },
+      "failures": [],
+      "index": 2,
+      "minimum_observed_camera_wall_rate_hz": 10.0,
+      "status": "PASS",
+      "window": {
+        "duration_seconds": 8.0,
+        "end_elapsed_seconds": 10.0,
+        "start_elapsed_seconds": 2.0
+      }
+    }
+  ]
+}

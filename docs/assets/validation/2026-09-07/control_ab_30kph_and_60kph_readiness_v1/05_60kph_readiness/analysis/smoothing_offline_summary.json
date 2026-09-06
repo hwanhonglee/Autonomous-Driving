@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "method": "endpoint_fixed_whittaker_on_uniform_arc_length_samples",
+  "objective": "min ||z-x||^2 + lambda ||D2 z||^2",
+  "configuration": {
+    "interval_m": 0.25,
+    "strengths": [
+      30.0,
+      100.0,
+      300.0,
+      1000.0,
+      3000.0,
+      10000.0,
+      30000.0,
+      100000.0
+    ],
+    "corridor_half_width_m": 0.25,
+    "wheel_base_m": 2.79,
+    "mpc_replay": false,
+    "ros_domain_id": null,
+    "mpc_input_delay_sec": 0.12,
+    "mpc_steer_tau_sec": 0.15
+  },
+  "aggregate_median": {
+    "baseline": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.0,
+        "baseline_deviation_p95_m": 0.0,
+        "curvature_p95_inv_m": 0.018509842117683428,
+        "curvature_peak_inv_m": 0.04899138450103349,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794904085534032,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.051580269220781905,
+        "required_steer_peak_rad": 0.13584414246025597,
+        "required_steer_total_variation_rad": 0.2550848136372263,
+        "route_cte_max_m": 0.19999999999999912,
+        "route_cte_p95_m": 0.19999999999999843
+      },
+      "mpc": {}
+    },
+    "resample_only": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.0,
+        "baseline_deviation_p95_m": 0.0,
+        "curvature_p95_inv_m": 0.018509842117683428,
+        "curvature_peak_inv_m": 0.04899138450103349,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794904085534032,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.051580269220781905,
+        "required_steer_peak_rad": 0.13584414246025597,
+        "required_steer_total_variation_rad": 0.2550848136372263,
+        "route_cte_max_m": 0.19999999999999912,
+        "route_cte_p95_m": 0.19999999999999843
+      },
+      "mpc": {}
+    },
+    "smooth_100": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.012066413735292743,
+        "baseline_deviation_p95_m": 0.00527537990192115,
+        "curvature_p95_inv_m": 0.01612526133953113,
+        "curvature_peak_inv_m": 0.021217697655653706,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794473968626143,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.04495906530355965,
+        "required_steer_peak_rad": 0.059128372453754116,
+        "required_steer_total_variation_rad": 0.11408144720972387,
+        "route_cte_max_m": 0.20274147990422145,
+        "route_cte_p95_m": 0.20190063646219875
+      },
+      "mpc": {}
+    },
+    "smooth_1000": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.02448873746497383,
+        "baseline_deviation_p95_m": 0.015834977860070747,
+        "curvature_p95_inv_m": 0.007753702495740287,
+        "curvature_peak_inv_m": 0.008569585353152213,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794132472243085,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.02162945626374792,
+        "required_steer_peak_rad": 0.02390458883294976,
+        "required_steer_total_variation_rad": 0.04709694550781419,
+        "route_cte_max_m": 0.20346103897717988,
+        "route_cte_p95_m": 0.20303862622683547
+      },
+      "mpc": {}
+    },
+    "smooth_10000": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.0364854208975714,
+        "baseline_deviation_p95_m": 0.028873011449032236,
+        "curvature_p95_inv_m": 0.002836209704683447,
+        "curvature_peak_inv_m": 0.0029418495602848527,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.793880074612105,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.007912859904083185,
+        "required_steer_peak_rad": 0.008207575969016253,
+        "required_steer_total_variation_rad": 0.016448273396311774,
+        "route_cte_max_m": 0.20374655098475353,
+        "route_cte_p95_m": 0.2035965971866026
+      },
+      "mpc": {}
+    },
+    "smooth_100000": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.04552728363732543,
+        "baseline_deviation_p95_m": 0.03939576714252825,
+        "curvature_p95_inv_m": 0.0009384449194844762,
+        "curvature_peak_inv_m": 0.0009493606220967204,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.793725096354002,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.0026182553423113636,
+        "required_steer_peak_rad": 0.0026487099414791607,
+        "required_steer_total_variation_rad": 0.00515824389072723,
+        "route_cte_max_m": 0.20398691471722968,
+        "route_cte_p95_m": 0.2039404308215609
+      },
+      "mpc": {}
+    },
+    "smooth_30": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.006768640537457919,
+        "baseline_deviation_p95_m": 0.0028369620878695126,
+        "curvature_p95_inv_m": 0.01999705322530294,
+        "curvature_peak_inv_m": 0.029769775970101692,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794647257201525,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.055733659856411835,
+        "required_steer_peak_rad": 0.08286746836538757,
+        "required_steer_total_variation_rad": 0.15804130778650136,
+        "route_cte_max_m": 0.20212681232480897,
+        "route_cte_p95_m": 0.20105293643389485
+      },
+      "mpc": {}
+    },
+    "smooth_300": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.017768387142227483,
+        "baseline_deviation_p95_m": 0.0104324720494068,
+        "curvature_p95_inv_m": 0.011728851659650121,
+        "curvature_peak_inv_m": 0.014205223743936232,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.794304777364736,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.03271177198115137,
+        "required_steer_peak_rad": 0.039611842944520255,
+        "required_steer_total_variation_rad": 0.07715463391289402,
+        "route_cte_max_m": 0.20315995651962473,
+        "route_cte_p95_m": 0.20260706027681125
+      },
+      "mpc": {}
+    },
+    "smooth_3000": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.03064176720748645,
+        "baseline_deviation_p95_m": 0.02194536486413704,
+        "curvature_p95_inv_m": 0.004875093942701632,
+        "curvature_peak_inv_m": 0.005207012647274617,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.79399853310689,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.0136006729915713,
+        "required_steer_peak_rad": 0.014526543400335098,
+        "required_steer_total_variation_rad": 0.028898477475326576,
+        "route_cte_max_m": 0.20363697876595208,
+        "route_cte_p95_m": 0.203428424202156
+      },
+      "mpc": {}
+    },
+    "smooth_30000": {
+      "geometry": {
+        "baseline_deviation_max_m": 0.04103449139866254,
+        "baseline_deviation_p95_m": 0.033280800691153405,
+        "curvature_p95_inv_m": 0.0016887711145130886,
+        "curvature_peak_inv_m": 0.001725410460658895,
+        "endpoint_shift_m": 0.0,
+        "length_m": 23.793795178483833,
+        "point_count": 97.0,
+        "required_steer_p95_rad": 0.004711636541675854,
+        "required_steer_peak_rad": 0.0048138580006826075,
+        "required_steer_total_variation_rad": 0.009726439695748997,
+        "route_cte_max_m": 0.20379628534109315,
+        "route_cte_p95_m": 0.20372372627308416
+      },
+      "mpc": {}
+    }
+  },
+  "runs": [
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "baseline",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794904085534032,
+        "route_cte_p95_m": 0.19999999999999843,
+        "route_cte_max_m": 0.19999999999999912,
+        "baseline_deviation_p95_m": 0.0,
+        "baseline_deviation_max_m": 0.0,
+        "required_steer_p95_rad": 0.051580269220781905,
+        "required_steer_peak_rad": 0.13584414246025597,
+        "required_steer_total_variation_rad": 0.2550848136372263,
+        "curvature_p95_inv_m": 0.018509842117683428,
+        "curvature_peak_inv_m": 0.04899138450103349,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "resample_only",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794904085534032,
+        "route_cte_p95_m": 0.19999999999999843,
+        "route_cte_max_m": 0.19999999999999912,
+        "baseline_deviation_p95_m": 0.0,
+        "baseline_deviation_max_m": 0.0,
+        "required_steer_p95_rad": 0.051580269220781905,
+        "required_steer_peak_rad": 0.13584414246025597,
+        "required_steer_total_variation_rad": 0.2550848136372263,
+        "curvature_p95_inv_m": 0.018509842117683428,
+        "curvature_peak_inv_m": 0.04899138450103349,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_30",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794647257201525,
+        "route_cte_p95_m": 0.20105293643389485,
+        "route_cte_max_m": 0.20212681232480897,
+        "baseline_deviation_p95_m": 0.0028369620878695126,
+        "baseline_deviation_max_m": 0.006768640537457919,
+        "required_steer_p95_rad": 0.055733659856411835,
+        "required_steer_peak_rad": 0.08286746836538757,
+        "required_steer_total_variation_rad": 0.15804130778650136,
+        "curvature_p95_inv_m": 0.01999705322530294,
+        "curvature_peak_inv_m": 0.029769775970101692,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_100",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794473968626143,
+        "route_cte_p95_m": 0.20190063646219875,
+        "route_cte_max_m": 0.20274147990422145,
+        "baseline_deviation_p95_m": 0.00527537990192115,
+        "baseline_deviation_max_m": 0.012066413735292743,
+        "required_steer_p95_rad": 0.04495906530355965,
+        "required_steer_peak_rad": 0.059128372453754116,
+        "required_steer_total_variation_rad": 0.11408144720972387,
+        "curvature_p95_inv_m": 0.01612526133953113,
+        "curvature_peak_inv_m": 0.021217697655653706,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_300",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794304777364736,
+        "route_cte_p95_m": 0.20260706027681125,
+        "route_cte_max_m": 0.20315995651962473,
+        "baseline_deviation_p95_m": 0.0104324720494068,
+        "baseline_deviation_max_m": 0.017768387142227483,
+        "required_steer_p95_rad": 0.03271177198115137,
+        "required_steer_peak_rad": 0.039611842944520255,
+        "required_steer_total_variation_rad": 0.07715463391289402,
+        "curvature_p95_inv_m": 0.011728851659650121,
+        "curvature_peak_inv_m": 0.014205223743936232,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_1000",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.794132472243085,
+        "route_cte_p95_m": 0.20303862622683547,
+        "route_cte_max_m": 0.20346103897717988,
+        "baseline_deviation_p95_m": 0.015834977860070747,
+        "baseline_deviation_max_m": 0.02448873746497383,
+        "required_steer_p95_rad": 0.02162945626374792,
+        "required_steer_peak_rad": 0.02390458883294976,
+        "required_steer_total_variation_rad": 0.04709694550781419,
+        "curvature_p95_inv_m": 0.007753702495740287,
+        "curvature_peak_inv_m": 0.008569585353152213,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_3000",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.79399853310689,
+        "route_cte_p95_m": 0.203428424202156,
+        "route_cte_max_m": 0.20363697876595208,
+        "baseline_deviation_p95_m": 0.02194536486413704,
+        "baseline_deviation_max_m": 0.03064176720748645,
+        "required_steer_p95_rad": 0.0136006729915713,
+        "required_steer_peak_rad": 0.014526543400335098,
+        "required_steer_total_variation_rad": 0.028898477475326576,
+        "curvature_p95_inv_m": 0.004875093942701632,
+        "curvature_peak_inv_m": 0.005207012647274617,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_10000",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.793880074612105,
+        "route_cte_p95_m": 0.2035965971866026,
+        "route_cte_max_m": 0.20374655098475353,
+        "baseline_deviation_p95_m": 0.028873011449032236,
+        "baseline_deviation_max_m": 0.0364854208975714,
+        "required_steer_p95_rad": 0.007912859904083185,
+        "required_steer_peak_rad": 0.008207575969016253,
+        "required_steer_total_variation_rad": 0.016448273396311774,
+        "curvature_p95_inv_m": 0.002836209704683447,
+        "curvature_peak_inv_m": 0.0029418495602848527,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_30000",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.793795178483833,
+        "route_cte_p95_m": 0.20372372627308416,
+        "route_cte_max_m": 0.20379628534109315,
+        "baseline_deviation_p95_m": 0.033280800691153405,
+        "baseline_deviation_max_m": 0.04103449139866254,
+        "required_steer_p95_rad": 0.004711636541675854,
+        "required_steer_peak_rad": 0.0048138580006826075,
+        "required_steer_total_variation_rad": 0.009726439695748997,
+        "curvature_p95_inv_m": 0.0016887711145130886,
+        "curvature_peak_inv_m": 0.001725410460658895,
+        "endpoint_shift_m": 0.0
+      }
+    },
+    {
+      "bag": "/home/a/autoware_e2e/artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/trial/attempt_001/bag",
+      "trajectory_index": 290,
+      "candidate": "smooth_100000",
+      "geometry": {
+        "point_count": 97,
+        "length_m": 23.793725096354002,
+        "route_cte_p95_m": 0.2039404308215609,
+        "route_cte_max_m": 0.20398691471722968,
+        "baseline_deviation_p95_m": 0.03939576714252825,
+        "baseline_deviation_max_m": 0.04552728363732543,
+        "required_steer_p95_rad": 0.0026182553423113636,
+        "required_steer_peak_rad": 0.0026487099414791607,
+        "required_steer_total_variation_rad": 0.00515824389072723,
+        "curvature_p95_inv_m": 0.0009384449194844762,
+        "curvature_peak_inv_m": 0.0009493606220967204,
+        "endpoint_shift_m": 0.0
+      }
+    }
+  ]
+}

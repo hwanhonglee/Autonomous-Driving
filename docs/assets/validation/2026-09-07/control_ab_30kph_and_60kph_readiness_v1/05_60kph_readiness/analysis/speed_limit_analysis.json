@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "analysis_id": "town06_60kph_v3_speed_limit_analysis_v1",
+  "generated_at": "2026-09-02T22:56:50+09:00",
+  "analysis_mode": "offline_read_only_no_live_rerun",
+  "trial": {
+    "town": "Town06",
+    "scenario": "straight",
+    "profile_id": "carla_vad_60kph_straight_pilot_v1",
+    "transport_profile_id": "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "attempt": "town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001",
+    "preservation_decision": "PRESERVE_AS_EXPLORATORY_FAIL_NO_RETRY",
+    "simulation_only": true,
+    "real_vehicle_ready": false
+  },
+  "verdict": {
+    "classification": "MULTI_FACTOR_SPEED_SHORTFALL",
+    "route_goal_reached": true,
+    "speed_exposure_status": "FAIL",
+    "reason": "speed >= 15.000 m/s was sustained for 0.000 s; 1.000 s was required",
+    "maximum_observed_speed_mps": 10.100423611848383,
+    "maximum_observed_speed_kph": 36.361525002654176,
+    "requested_target_speed_mps": 16.666666666666668,
+    "requested_target_speed_kph": 60.0,
+    "conclusion": "The explicit 60 km/h target reaches planning and the command gate. Repeated curvature-derived speed caps and negative trajectory feed-forward interrupt acceleration on a geometrically straight route; when acceleration is permitted, the 1.5 m/s^2 controller/gate envelope and 0.4 throttle clamp expose a large map-to-plant response mismatch. Raising max_throttle to 0.5 alone is a useful isolated simulation probe, but is not supported as sufficient to reach 15 m/s."
+  },
+  "limiter_assessment": {
+    "model_or_target_velocity": {
+      "limiting": false,
+      "classification": "TARGET_DELIVERED_WITH_SAFETY_SHAPING",
+      "evidence": {
+        "explicit_overlaid_planning_maximum_mps": 16.66666603088379,
+        "explicit_overlaid_planning_p95_mps": 16.66666603088379,
+        "gated_target_maximum_mps": 16.66666603088379,
+        "gated_target_p95_mps": 16.66666603088379,
+        "raw_selected_vad_point_speed_mps": 2.5,
+        "longitudinal_velocity_source": "explicit_simulation_nominal",
+        "vad_velocity_evaluated": false
+      },
+      "note": "The raw VAD velocity remains evidence only; the simulation-only explicit nominal overlay owns the cruise target."
+    },
+    "conditioned_trajectory_curvature": {
+      "limiting": true,
+      "classification": "PRIMARY_TRANSIENT_LIMITER",
+      "configured_maximum_lateral_acceleration_mps2": 1.0,
+      "configured_comfortable_deceleration_mps2": 2.0,
+      "examples": [
+        {
+          "planning_header_relative_time_sec": 16.0,
+          "remaining_distance_m": 418.4,
+          "conditioned_trajectory_peak_curvature_per_m": 0.0225,
+          "calculated_curvature_speed_cap_mps": 6.67,
+          "planning_horizon_minimum_speed_mps": 6.67,
+          "planning_first_point_acceleration_mps2": -2.0
+        },
+        {
+          "planning_header_relative_time_sec": 41.6,
+          "remaining_distance_m": 215.0,
+          "conditioned_trajectory_peak_curvature_per_m": 0.0333,
+          "calculated_curvature_speed_cap_mps": 5.48,
+          "planning_horizon_minimum_speed_mps": 5.48,
+          "planning_first_point_acceleration_mps2": -2.0
+        },
+        {
+          "planning_header_relative_time_sec": 58.2,
+          "remaining_distance_m": 93.8,
+          "conditioned_trajectory_peak_curvature_per_m": 0.0599,
+          "calculated_curvature_speed_cap_mps": 4.09,
+          "planning_horizon_minimum_speed_mps": 4.09,
+          "planning_first_point_acceleration_mps2": 0.0
+        }
+      ],
+      "cross_check": {
+        "route_preflight_status": "PASS",
+        "route_length_m": 445.8799516556895,
+        "route_maximum_chord_deviation_m": 0.000002051629450513544,
+        "route_cumulative_absolute_heading_change_deg": 0.00006103515628608805,
+        "route_maximum_absolute_curvature_per_m": 0.0000004798495090983971,
+        "conditioned_final_path_peak_curvature_p95_per_m": 0.019053851518001267,
+        "conditioned_final_path_peak_curvature_maximum_per_m": 0.06313095573464278
+      },
+      "controller_effect": {
+        "at_16_sec": "trajectory target about 7.51 m/s and -2.0 m/s^2 feed-forward reduced a saturated P+I request to about 0.16 m/s^2",
+        "at_42_sec": "trajectory target about 10.48 m/s and -2.0 m/s^2 feed-forward produced about -0.15 m/s^2 before downstream limiting while actual speed was about 8.17 m/s"
+      },
+      "note": "The route itself is effectively straight. The speed cap matches sqrt(maximum_lateral_acceleration / peak_curvature), so mid-route reductions are caused by conditioned trajectory geometry rather than terminal stopping distance."
+    },
+    "longitudinal_controller_and_command_gate": {
+      "limiting": true,
+      "classification": "SUSTAINED_ENVELOPE_SATURATION",
+      "configured_controller_max_out_mps2": 1.5,
+      "configured_controller_max_p_effort_mps2": 1.5,
+      "configured_controller_max_i_effort_mps2": 0.3,
+      "configured_gate_nominal_acceleration_limit_mps2": 1.5,
+      "gated_positive_acceleration_limit": {
+        "active_duration_sec": 37.65000056199999,
+        "time_fraction_percent": 42.687074831169866,
+        "longest_contiguous_duration_sec": 11.600000173000002
+      },
+      "raw_acceleration_above_gate_limit": {
+        "active_duration_sec": 37.30000055699999,
+        "time_fraction_percent": 42.242355607602505
+      },
+      "note": "The limit is intentional and safe, but it prevents the controller from asking the converter for materially more than 1.5 m/s^2 during the available acceleration windows."
+    },
+    "throttle_cap_and_actuation_calibration": {
+      "limiting": true,
+      "classification": "SECONDARY_CAP_AND_MAJOR_CALIBRATION_MISMATCH_SIGNAL",
+      "configured_max_throttle": 0.4,
+      "map_maximum_throttle_row": 0.5,
+      "near_saturation": {
+        "active_duration_sec": 6.200000091999996,
+        "time_fraction_percent": 7.025495750271644,
+        "longest_contiguous_duration_sec": 3.9000000579999963
+      },
+      "inverse_map_recalculation": {
+        "samples_requiring_more_than_0_4": 117,
+        "all_gated_control_samples": 1765,
+        "sample_fraction_percent": 6.628895184135978,
+        "first_relative_time_sec": 33.150000494000004,
+        "last_relative_time_sec": 39.60000059,
+        "maximum_unclipped_required_throttle": 0.41545318950317495
+      },
+      "observed_response_bins": [
+        {
+          "actual_speed_bin_mps": "6_to_8",
+          "sample_count": 301,
+          "median_applied_throttle": 0.375,
+          "median_map_expected_acceleration_mps2": 1.501,
+          "median_robust_measured_acceleration_mps2": 0.271
+        },
+        {
+          "actual_speed_bin_mps": "8_to_9",
+          "sample_count": 153,
+          "median_applied_throttle": 0.391,
+          "median_map_expected_acceleration_mps2": 1.501,
+          "median_robust_measured_acceleration_mps2": 0.232
+        },
+        {
+          "actual_speed_bin_mps": "9_to_10",
+          "sample_count": 145,
+          "median_applied_throttle": 0.4,
+          "median_map_expected_acceleration_mps2": 1.46,
+          "median_robust_measured_acceleration_mps2": 0.165
+        },
+        {
+          "actual_speed_bin_mps": "10_to_11",
+          "sample_count": 16,
+          "median_applied_throttle": 0.4,
+          "median_map_expected_acceleration_mps2": 1.419,
+          "median_robust_measured_acceleration_mps2": 0.132
+        }
+      ],
+      "command_application_cross_check": {
+        "accel_command_to_status_rmse": 0.018451573552146203,
+        "accel_command_to_status_p95_absolute": 0.03867985677396514,
+        "interpretation": "The interface generally applies the converter output; the shortfall is not explained by command transport loss."
+      },
+      "note": "At the existing 1.5 m/s^2 request, opening the 0.5 row raises the calculated command only from 0.4 to at most about 0.415. The binned comparison is an observational mismatch signal, not a substitute for a dedicated steady-state actuation calibration run."
+    },
+    "actuation_map_velocity_axis": {
+      "limiting_in_v3": false,
+      "classification": "NOT_REACHED_BUT_BLOCKS_60KPH_READINESS",
+      "axis_maximum_mps": 13.89,
+      "axis_maximum_kph": 50.004000000000005,
+      "maximum_runtime_lookup_speed_mps": 10.100423611848383,
+      "runtime_velocity_axis_clamping_observed": false,
+      "requested_target_excess_above_axis_mps": 2.7766666666666673,
+      "note": "The v3 run never reached the map boundary. If speed later exceeds 13.89 m/s, lookups clamp to the final velocity column, so the map must be extended and calibrated before claiming 60 km/h readiness."
+    },
+    "route_length": {
+      "limiting_under_intended_model": false,
+      "limiting_under_observed_response": "COUPLED_CONSTRAINT",
+      "route_length_m": 445.8799516556895,
+      "distance_traveled_m": 445.1966186752725,
+      "theoretical_acceleration_distance_0_to_15_m_at_1_5_mps2": 75.0,
+      "theoretical_braking_distance_15_to_0_m_at_2_0_mps2": 56.25,
+      "theoretical_total_m": 131.25,
+      "observed_progress_at_about_10_mps_m": 215.0,
+      "remaining_distance_at_about_10_mps_m": 230.8,
+      "illustrative_additional_distance_10_to_15_m_at_0_165_mps2": 378.79,
+      "note": "The 445.88 m route is ample for the configured acceleration/deceleration model. With the observed high-speed acceleration response and repeated curvature slowdowns it becomes too short, but extending the route would mask rather than fix the control/calibration causes."
+    }
+  },
+  "recommended_next_steps": [
+    {
+      "order": 1,
+      "candidate": "geometry_only_tight_corridor_ab",
+      "change": "Use the existing --tight-corridor profile (route corridor half-width 0.5 m to 0.2 m) with all speed, controller, gate, map, and throttle settings unchanged.",
+      "purpose": "Test whether suppressing VAD-conditioned lateral excursions removes the false curvature caps while retaining curvature safety logic.",
+      "acceptance_focus": [
+        "planning horizon no longer develops mid-route 4-9 m/s caps on the physical straight",
+        "conditioned trajectory p95 peak curvature materially decreases toward <= 0.00444 1/m for a 15 m/s cap at 1.0 m/s^2",
+        "actual lateral acceleration remains <= 1.2 m/s^2",
+        "route/CTE/goal contracts remain satisfied"
+      ],
+      "risk": "A tighter hard corridor can introduce clipping kinks or reduce VAD geometry fidelity; reject if peak curvature or correction increases."
+    },
+    {
+      "order": 2,
+      "candidate": "simulation_only_max_throttle_0_5_probe",
+      "change": "After geometry behavior is isolated, version a simulation-only raw converter config with max_throttle 0.4 to 0.5 and no other change.",
+      "purpose": "Measure the contribution of the existing 0.4 clamp using the already present 0.5 accel-map row.",
+      "expected_scope": "diagnostic A/B only; not expected to be sufficient for 15 m/s because the present 1.5 m/s^2 request resolves to at most 0.415 throttle in v3",
+      "risk": "Higher CARLA throttle can increase overshoot and lateral acceleration; keep the 18 m/s maximum-speed abort and simulation-only provenance."
+    },
+    {
+      "order": 3,
+      "candidate": "carla_longitudinal_map_remeasurement_and_versioned_recalibration",
+      "change": "Collect steady-state CARLA pedal/speed/acceleration sweeps, extend the velocity axis beyond 16.67 m/s with margin, then version the map and any controller/gate envelope change together as an explicitly exploratory profile.",
+      "purpose": "Correct the observed map-to-plant mismatch before another 60 km/h qualification attempt.",
+      "risk": "Do not transfer the resulting CARLA calibration or 60 km/h settings to a real vehicle; separate real-vehicle calibration and safety validation are required."
+    }
+  ],
+  "rejected_shortcuts": [
+    {
+      "change": "Disable the trajectory curvature speed cap",
+      "reason": "At 15 m/s, curvature 0.02 1/m implies about 4.5 m/s^2 lateral acceleration, far above the 1.2 m/s^2 trial limit."
+    },
+    {
+      "change": "Extend only the route",
+      "reason": "This hides conditioned-geometry and calibration defects and does not make the actuation map valid beyond its 13.89 m/s axis."
+    },
+    {
+      "change": "Declare max_throttle 0.5 sufficient",
+      "reason": "The offline inverse-map calculation shows only a 0.015 maximum command increment under the current 1.5 m/s^2 envelope."
+    }
+  ],
+  "calculation_method": {
+    "time_basis": "ROS message/header stamps; planning time is relative to the first /planning/trajectory header stamp",
+    "bag_access": "rosbag2 sequential read-only deserialization; no playback and no ROS graph mutation",
+    "curvature": "signed three-point Menger curvature kappa = 2*cross(AB,AC)/(|AB|*|BC|*|AC|); speed cap = sqrt(maximum_lateral_acceleration_mps2/abs(kappa)); this matches trajectory_planar_curvatures() and limit_trajectory_speed_for_curvature() in the preserved route-manager source",
+    "map_inverse": "For each gated-control sample, linearly interpolate every accel-map throttle row over absolute odometry speed, then linearly interpolate throttle over requested acceleration exactly as AccelMap::getThrottle does; compare the result with the 0.4 config clamp",
+    "response_bins": "Nearest header-stamp alignment of gated control, odometry, actuation command, and robust measured acceleration; retain positive requested acceleration, brake < 0.001, throttle >= 0.25; group by actual-speed bins. No response-delay correction is applied, so the result is used only as a mismatch signal.",
+    "route_distance_check": "constant-acceleration relation d=(v2^2-v1^2)/(2*a); the 0.165 m/s^2 extrapolation is explicitly illustrative and not a plant model"
+  },
+  "source_evidence": {
+    "root": "../30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001",
+    "files": {
+      "result.json": "dce92770adb44cb684a53103424fdb2f5601a8985e714310cfea0e9b55230db0",
+      "speed_profile.json": "dd47e7518955da38015904c4f286061818810f4a9e0c98bd361b97ca4c212b21",
+      "longitudinal_response.json": "13dff7eeca55dcecbebc2b0845a0ae9c494d7d9db143a5d8a00140afd2c91af6",
+      "diagnosis.json": "202a4e95df15dee1cc9cfef6c861c9519444794d0cbad1ae66974d05acc5dba1",
+      "actuation_map_runtime_coverage.json": "2ba6fae479359aae947e796167c0051d43cc0a0a030e434db87794680a425976",
+      "aligned_route.json": "9b8a8daed9e37db30e0254d3078c39b2ad7ebd57a3b7b1f9fa787cf32a5d9428",
+      "bag/bag_0.db3": "ac987446ee243520e5c8d7127e475afb4dc47c1b3ca3595738c4c986ca062f34",
+      "stack.log": "4acb23a61da124efdef66a567408c6957f293155c55f45b324f013b00f153202",
+      "controller.params.yaml": "8acbb29b68c30fb318cc1998c5b17a5028c1d6256c2795f32faf97145e15cfba",
+      "vad_route_manager.params.yaml": "51e85dd5a8b295fb8b167e8eee2898f7e6fc7676297008ff28ba47e5eab12577"
+    },
+    "additional_provenance": [
+      "actuation_config_provenance/accel_map.csv",
+      "actuation_config_provenance/raw_vehicle_cmd_converter.param.yaml",
+      "speed_profile_provenance/longitudinal_controller.param.yaml",
+      "speed_profile_provenance/vehicle_cmd_gate.param.yaml",
+      "trajectory_code_provenance/vad_route_logic.py",
+      "trajectory_code_provenance/vad_route_manager.py"
+    ]
+  }
+}

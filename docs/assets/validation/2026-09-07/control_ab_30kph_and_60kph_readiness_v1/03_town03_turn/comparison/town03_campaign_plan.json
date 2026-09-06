@@ -1,0 +1,52 @@
+{
+  "schema_id": "autoware-e2e.predeclared-control-ab-campaign.v2",
+  "created_at": "2026-09-06T23:57:00+09:00",
+  "code_commit": "967738070ef169901786323b65705afed30341f0",
+  "branch": "autoware-e2e/v1.9.0-vad-carla",
+  "campaign_id": "portable_e2e_physical_v1_30kph_town03_control_ab_10hz_v1_10m",
+  "purpose": "Characterize baseline 3 m versus candidate 10 m turn preview on Town03 under exact Common10 delivery; C-track safety evidence prevents global promotion regardless of this map result.",
+  "scenario": "town03_turn",
+  "map": "Town03",
+  "route_file": "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/03_town03_turn/route/source_route.json",
+  "route_sha256": "a090d80bafbbf21db1e9f3d62ea6fa2479a914a95dae0966a8afbce5c96643cc",
+  "profile": {
+    "speed": "30_kph",
+    "quality": "Epic",
+    "recommended": true,
+    "portable_shadow_rate_hz": 10,
+    "portable_device": "cpu",
+    "capture_desktop": true,
+    "visualize": true,
+    "maximum_health_retries": 0,
+    "maximum_trajectory_correction_m": 15.0,
+    "camera_delivery_contract": "common10_exact_due_frame_fail_closed_v1"
+  },
+  "candidate": {
+    "id": "turn_preview_10m",
+    "baseline_curvature_speed_preview_m": 3.0,
+    "candidate_curvature_speed_preview_m": 10.0,
+    "isolated_single_knob": true,
+    "global_promotion_allowed": false,
+    "global_blocker": "C-track candidate trajectory-correction safety fault at 17.651 m"
+  },
+  "ordered_runs": [
+    {"sequence": 1, "pair": "pair_01", "arm": "B_turn_preview_10m"},
+    {"sequence": 2, "pair": "pair_01", "arm": "A_baseline"},
+    {"sequence": 3, "pair": "pair_02", "arm": "A_baseline"},
+    {"sequence": 4, "pair": "pair_02", "arm": "B_turn_preview_10m"},
+    {"sequence": 5, "pair": "pair_03", "arm": "B_turn_preview_10m"},
+    {"sequence": 6, "pair": "pair_03", "arm": "A_baseline"},
+    {"sequence": 7, "pair": "pair_04", "arm": "A_baseline"},
+    {"sequence": 8, "pair": "pair_04", "arm": "B_turn_preview_10m"},
+    {"sequence": 9, "pair": "pair_05", "arm": "B_turn_preview_10m"},
+    {"sequence": 10, "pair": "pair_05", "arm": "A_baseline"},
+    {"sequence": 11, "pair": "pair_06", "arm": "A_baseline"},
+    {"sequence": 12, "pair": "pair_06", "arm": "B_turn_preview_10m"}
+  ],
+  "minimum_valid_pairs": 6,
+  "acceptance_policy": "Six fully valid pairs, six comparator ACCEPT decisions, six candidate-lower primary results, and zero route, geometry, camera, or safety failures. Passing remains map-specific characterization only.",
+  "stop_policy": "Complete both arms of the active pair. Stop immediately after a route, geometry, or safety failure. Stop for futility after either of the first two valid pairs is HOLD or lacks a candidate-lower primary result; otherwise continue to six pairs.",
+  "rerun_policy": "No favorable rerun. Only a pre-motion infrastructure-invalid arm may use a separately fixed-order reserve.",
+  "safety_thresholds_relaxed": false,
+  "real_vehicle_ready": false
+}

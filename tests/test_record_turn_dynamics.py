@@ -21,7 +21,12 @@ def test_record_turn_dynamics_shell_contract() -> None:
     assert 'flock -n 9' in source
     assert 'ros2 node list --no-daemon' in source
     assert 'grep -Fxq "/rosbag2_recorder"' in source
-    assert 'exec ros2 bag record --output "${output_bag}" --regex "${topic_regex}"' in source
+    assert 'record_arguments=(--output "${output_bag}" --regex "${topic_regex}")' in source
+    assert 'record_arguments+=(--start-paused)' in source
+    assert "exec python3 scripts/e2e/run_with_owned_pty.py" in source
+    assert 'ros2 bag record "${record_arguments[@]}"' in source
+    assert 'exec ros2 bag record "${record_arguments[@]}"' in source
+    assert '[[ "$2" != "--start-paused" ]]' in source
     assert "--no-discovery" not in source
     assert "--include-unpublished-topics" not in source
 

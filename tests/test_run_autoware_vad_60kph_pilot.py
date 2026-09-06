@@ -18,6 +18,7 @@ def test_60kph_pilot_help_and_shell_syntax() -> None:
     assert "Best-Effort depth-1" in result.stderr
     assert "localhost-only" in result.stderr
     assert "real-vehicle-ready" in result.stderr
+    assert "--camera-source-10hz-strict" in result.stderr
     assert "--geometry-ab-route-corridor-0p2" in result.stderr
 
 
@@ -34,7 +35,9 @@ def test_60kph_pilot_pins_owned_lifecycle_route_and_evidence_contract() -> None:
     assert 'physical.get("profile_id") != "speed_60kph_straight_pilot"' in source
     assert "route.resolve(strict=True)" in source
     assert 'physical_preflight.get("status") != "PASS"' in source
-    assert "--recommended --speed-60kph-pilot --camera-source-5hz" in source
+    assert "camera_source_arguments=(--camera-source-5hz)" in source
+    assert "camera_source_arguments=(--camera-source-10hz-strict)" in source
+    assert '"${camera_source_arguments[@]}"' in source
     assert "--visualize --capture-desktop" in source
     assert 'geometry_ab_arguments+=(--geometry-ab-route-corridor-0p2)' in source
     assert '"${geometry_ab_arguments[@]}"' in source
@@ -51,6 +54,7 @@ def test_60kph_pilot_pins_owned_lifecycle_route_and_evidence_contract() -> None:
     assert '"velocity_axis_clamping_observed"' in source
     assert "real_vehicle_ready\": False" in source
     assert "camera_source_5hz_validation.json" in source
+    assert "camera_source_10hz_strict_validation.json" in source
     assert "_camera_source_5hz_evidence" in source
     assert "CAMERA_SOURCE_5HZ_BEST_EFFORT_IMAGE_DEPTH1_CONTRACT" in source
     assert "analyze_pilot_runtime_load.py" in source
@@ -103,3 +107,43 @@ def test_60kph_pilot_pins_owned_lifecycle_route_and_evidence_contract() -> None:
     assert "pidstat -urd -h -p ALL 1" in source
     assert "pilot_failure.json" in source
     assert "pilot_complete=true" in source
+
+
+def test_60kph_pilot_rejects_strict_transport_with_geometry_candidate(
+    tmp_path: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            str(SCRIPT),
+            str(tmp_path / "new-output"),
+            "--camera-source-10hz-strict",
+            "--geometry-ab-route-corridor-0p2",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 2
+    assert "without a geometry A/B candidate" in result.stderr
+
+
+def test_60kph_pilot_strict_contract_is_forwarded_and_every_gate_is_fatal() -> None:
+    source = SCRIPT.read_text(encoding="utf-8")
+
+    assert 'if [[ "${camera_source_10hz_strict}" == "true" ]]; then' in source
+    assert 'camera_source_arguments=(--camera-source-10hz-strict)' in source
+    assert '"${camera_source_arguments[@]}"' in source
+    assert '"${camera_source_10hz_strict}" <<\'PY\'' in source
+    assert "maximum_camera_bundle_stamp_span_sec" in source
+    assert "portable_runtime_absence" in source
+    assert "camera_delivery_contract_provenance" in source
+    assert "CARLA_CAMERA_ENTRYPOINT_SHA256" in source
+    assert "strict_camera_runtime_parameters.json" in (
+        ROOT / "scripts/e2e/run_recorded_route_trial.sh"
+    ).read_text(encoding="utf-8")
+    assert "trial_status != 0 || cleanup_status != 0 || coverage_status != 0" in source
+    assert "camera_integrity_status != 0 ||" in source
+    assert "runtime_load_status != 0 || acceptance_gate_status != 0 ||" in source
+    assert "handoff_status != 0" in source
+    assert "exit 1" in source[source.rfind("if (( trial_status != 0") :]

@@ -49,9 +49,16 @@ CAMERA_TRANSPORT_PROFILE_V2 = (
 )
 # HH_260906 - Bind the Portable 10 Hz shadow profile to the exact loopback image graph gate.
 CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ = "portable_e2e_exact_bundle_10hz_v2"
+# HH_260906 - Qualify the same six-camera transport ABI without loading the Portable model.
+CAMERA_TRANSPORT_PROFILE_STRICT_10HZ = "carla_vad_camera_source_10hz_strict_v2"
 EXACT_CAMERA_GRAPH_PROFILES = {
     CAMERA_TRANSPORT_PROFILE_V2,
     CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+    CAMERA_TRANSPORT_PROFILE_STRICT_10HZ,
+}
+TEN_HZ_CAMERA_PROFILES = {
+    CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+    CAMERA_TRANSPORT_PROFILE_STRICT_10HZ,
 }
 CAMERA_GRAPH_DISCOVERY_TIMEOUT_SECONDS = 5.0
 CAMERA_GRAPH_POLL_SECONDS = 0.1
@@ -65,6 +72,8 @@ DEFAULT_TIMEOUT_SECONDS = 45.0
 EVALUATION_INTERVAL_SECONDS = 1.0
 BUNDLE_SETTLE_SECONDS = 0.1
 BUNDLE_MATCH_TOLERANCE_SECONDS = 0.1
+# HH_260906 - Keep strict 10 Hz source-stamp matching far below one 100 ms frame period.
+STRICT_10HZ_BUNDLE_MATCH_TOLERANCE_SECONDS = 0.000005
 REQUIRED_CONSECUTIVE_PASSES = 3
 
 MINIMUM_RTF = 0.9
@@ -75,6 +84,23 @@ PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ = 9.0
 PORTABLE_MINIMUM_COMPLETE_BUNDLES = 70
 MINIMUM_BUNDLE_COVERAGE_PERCENT = 99.0
 MAXIMUM_BUNDLE_RECEIPT_P95_SECONDS = 0.040
+# HH_260906 - Reject strict bundles unless all six source stamps agree within five microseconds.
+STRICT_10HZ_MAXIMUM_BUNDLE_STAMP_SPAN_SECONDS = 0.000005
+# HH_260906 - Bound both receipt and source cadence before a strict 60 kph engagement.
+STRICT_10HZ_MAXIMUM_CAMERA_WALL_RATE_HZ = 11.0
+STRICT_10HZ_MINIMUM_CAMERA_SOURCE_RATE_HZ = 9.5
+STRICT_10HZ_MAXIMUM_CAMERA_SOURCE_RATE_HZ = 10.5
+# HH_260906 - Mirror the five-microsecond upper tolerance around the 100 ms source period.
+STRICT_10HZ_MINIMUM_CAMERA_SOURCE_GAP_SECONDS = 0.099995
+STRICT_10HZ_MAXIMUM_CAMERA_SOURCE_GAP_SECONDS = 0.100005
+PORTABLE_SHADOW_NODE = "/portable_e2e_shadow"
+PORTABLE_OUTPUT_TOPICS = (
+    "/planning/portable_e2e/shadow_trajectory",
+    "/planning/portable_e2e/shadow_path",
+    "/planning/portable_e2e/status",
+    "/planning/portable_e2e/latency_ms",
+    "/planning/portable_e2e/selected_candidate",
+)
 
 
 class RuntimeHealthError(RuntimeError):
@@ -165,6 +191,113 @@ def default_contract(window_seconds: float = DEFAULT_WINDOW_SECONDS) -> dict[str
             "cross_domain_subtraction_used": False,
         },
     }
+
+
+def apply_camera_profile_contract(
+    contract: dict[str, Any], profile_id: str | None
+) -> dict[str, Any]:
+    """HH_260906 - Apply profile-specific cadence and synchronization gates."""
+    if profile_id in TEN_HZ_CAMERA_PROFILES:
+        contract["thresholds"]["minimum_camera_wall_rate_hz"] = (
+            PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ
+        )
+        contract["thresholds"]["minimum_complete_bundle_count"] = (
+            PORTABLE_MINIMUM_COMPLETE_BUNDLES
+        )
+    if profile_id == CAMERA_TRANSPORT_PROFILE_STRICT_10HZ:
+        # HH_260906 - A one-frame-shifted stream must never qualify as a strict bundle.
+        contract["strict_camera_source_integrity_required"] = True
+        contract["bundle_match_tolerance_seconds"] = (
+            STRICT_10HZ_BUNDLE_MATCH_TOLERANCE_SECONDS
+        )
+        contract["thresholds"]["maximum_bundle_stamp_span_seconds"] = (
+            STRICT_10HZ_MAXIMUM_BUNDLE_STAMP_SPAN_SECONDS
+        )
+        # HH_260906 - Reject duplicated, accelerated, or gapped delivery before engagement.
+        contract["thresholds"]["maximum_camera_wall_rate_hz"] = (
+            STRICT_10HZ_MAXIMUM_CAMERA_WALL_RATE_HZ
+        )
+        contract["thresholds"]["minimum_camera_source_rate_hz"] = (
+            STRICT_10HZ_MINIMUM_CAMERA_SOURCE_RATE_HZ
+        )
+        contract["thresholds"]["maximum_camera_source_rate_hz"] = (
+            STRICT_10HZ_MAXIMUM_CAMERA_SOURCE_RATE_HZ
+        )
+        contract["thresholds"]["minimum_camera_source_gap_seconds"] = (
+            STRICT_10HZ_MINIMUM_CAMERA_SOURCE_GAP_SECONDS
+        )
+        contract["thresholds"]["maximum_camera_source_gap_seconds"] = (
+            STRICT_10HZ_MAXIMUM_CAMERA_SOURCE_GAP_SECONDS
+        )
+    return contract
+
+
+def evaluate_portable_runtime_absence(
+    nodes: Sequence[str],
+    output_publishers: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> dict[str, Any]:
+    """HH_260906 - Prove Portable node and output-publisher absence."""
+    observed_nodes = sorted({str(node) for node in nodes})
+    portable_nodes = [node for node in observed_nodes if node == PORTABLE_SHADOW_NODE]
+    observed_publishers = {
+        topic: sorted(
+            (dict(endpoint) for endpoint in output_publishers.get(topic, ())),
+            key=lambda endpoint: (
+                str(endpoint.get("node")),
+                str(endpoint.get("endpoint_gid_hex")),
+            ),
+        )
+        for topic in PORTABLE_OUTPUT_TOPICS
+    }
+    published_topics = [
+        topic for topic, endpoints in observed_publishers.items() if endpoints
+    ]
+    failures: list[dict[str, Any]] = []
+    if portable_nodes:
+        failures.append(
+            {
+                "check": "portable_shadow_node_absent",
+                "actual": portable_nodes,
+                "expected": [],
+            }
+        )
+    if published_topics:
+        failures.append(
+            {
+                "check": "portable_output_publishers_absent",
+                "actual": published_topics,
+                "expected": [],
+            }
+        )
+    return {
+        "status": "PASS" if not failures else "FAIL",
+        "required_absent_node": PORTABLE_SHADOW_NODE,
+        "required_absent_output_topics": list(PORTABLE_OUTPUT_TOPICS),
+        "observed_portable_nodes": portable_nodes,
+        "observed_output_publishers": observed_publishers,
+        "failures": failures,
+    }
+
+
+def collect_portable_runtime_absence(node: Any) -> dict[str, Any]:
+    """HH_260906 - Capture a graph snapshot for the non-Portable claim."""
+    nodes = [
+        _fully_qualified_node_name(name, namespace)
+        for name, namespace in node.get_node_names_and_namespaces()
+    ]
+    publishers = {
+        topic: [
+            serialize_topic_endpoint(endpoint)
+            for endpoint in node.get_publishers_info_by_topic(topic)
+        ]
+        for topic in PORTABLE_OUTPUT_TOPICS
+    }
+    report = evaluate_portable_runtime_absence(nodes, publishers)
+    # HH_260906 - Label this evidence as a point sample, not continuous observation.
+    report["observation_scope"] = "window_end_graph_snapshot"
+    report["continuous_window_observation"] = False
+    report["observed_monotonic_seconds"] = time.monotonic()
+    return report
 
 
 def _policy_name(value: Any) -> str:
@@ -440,17 +573,23 @@ def camera_bundle_metrics(
     window_start: float,
     window_end: float,
     match_tolerance_seconds: float = BUNDLE_MATCH_TOLERANCE_SECONDS,
+    wall_edge_guard_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Match six camera_info streams once each and measure wall receipt skew."""
     tolerance_ns = int(round(match_tolerance_seconds * 1.0e9))
+    edge_guard_seconds = (
+        match_tolerance_seconds
+        if wall_edge_guard_seconds is None
+        else wall_edge_guard_seconds
+    )
     extended = {
         topic: sorted(
             (
                 record
                 for record in camera_samples.get(topic, ())
-                if window_start - match_tolerance_seconds
+                if window_start - edge_guard_seconds
                 <= float(record["wall_time_sec"])
-                <= window_end + match_tolerance_seconds
+                <= window_end + edge_guard_seconds
                 and int(record.get("stamp_ns", 0)) > 0
             ),
             key=lambda record: int(record["stamp_ns"]),
@@ -518,7 +657,271 @@ def camera_bundle_metrics(
             "maximum": max(stamp_spans) if stamp_spans else None,
         },
         "match_tolerance_seconds": match_tolerance_seconds,
+        "wall_edge_guard_seconds": edge_guard_seconds,
         "matching_policy": "front_anchor_nearest_stamp_one_to_one",
+    }
+
+
+def strict_camera_source_integrity(
+    camera_samples: Mapping[str, Sequence[Mapping[str, Any]]],
+    window_start: float,
+    window_end: float,
+    match_tolerance_seconds: float,
+    wall_edge_guard_seconds: float = BUNDLE_SETTLE_SECONDS,
+) -> dict[str, Any]:
+    """HH_260906 - Validate source stamps while preserving wall-window edges."""
+    tolerance_ns = int(round(match_tolerance_seconds * 1.0e9))
+    window_records = {
+        topic: _window_records(
+            camera_samples.get(topic, ()), window_start, window_end
+        )
+        for topic in CAMERA_INFO_TOPICS
+    }
+    front_window = window_records[CAMERA_INFO_TOPICS[0]]
+    positive_front_stamps = [
+        int(record.get("stamp_ns", 0))
+        for record in front_window
+        if int(record.get("stamp_ns", 0)) > 0
+    ]
+    lower_stamp = min(positive_front_stamps) if positive_front_stamps else None
+    upper_stamp = max(positive_front_stamps) if positive_front_stamps else None
+
+    # HH_260906 - Compare complete source-stamp ranges across serial wall-edge receipt.
+    # HH_260906 - Require every in-range record to be consumed without false edge drops.
+    source_records: dict[str, list[Mapping[str, Any]]] = {}
+    for topic in CAMERA_INFO_TOPICS:
+        if lower_stamp is None or upper_stamp is None:
+            source_records[topic] = []
+            continue
+        source_records[topic] = sorted(
+            (
+                record
+                for record in camera_samples.get(topic, ())
+                if int(record.get("stamp_ns", 0)) > 0
+                and lower_stamp - tolerance_ns
+                <= int(record["stamp_ns"])
+                <= upper_stamp + tolerance_ns
+            ),
+            key=lambda record: float(record["wall_time_sec"]),
+        )
+
+    # HH_260906 - Complete edge-straddling bundles from a bounded wall extension.
+    extended_records: dict[str, list[dict[str, Any]]] = {}
+    for topic in CAMERA_INFO_TOPICS:
+        extended_records[topic] = sorted(
+            (
+                {
+                    "sample_index": sample_index,
+                    "wall_time_sec": float(record["wall_time_sec"]),
+                    "stamp_ns": int(record.get("stamp_ns", 0)),
+                }
+                for sample_index, record in enumerate(
+                    camera_samples.get(topic, ())
+                )
+                if window_start - wall_edge_guard_seconds
+                <= float(record["wall_time_sec"])
+                <= window_end + wall_edge_guard_seconds
+            ),
+            key=lambda record: int(record["stamp_ns"]),
+        )
+    positive_extended_records = {
+        topic: [
+            record
+            for record in extended_records[topic]
+            if int(record["stamp_ns"]) > 0
+        ]
+        for topic in CAMERA_INFO_TOPICS
+    }
+    extended_stamps = {
+        topic: [int(record["stamp_ns"]) for record in records]
+        for topic, records in positive_extended_records.items()
+    }
+    extended_used_indexes = {
+        topic: set() for topic in CAMERA_INFO_TOPICS[1:]
+    }
+    used_sample_indexes = {topic: set() for topic in CAMERA_INFO_TOPICS}
+    for anchor in positive_extended_records[CAMERA_INFO_TOPICS[0]]:
+        anchor_stamp = int(anchor["stamp_ns"])
+        selected: list[tuple[str, int]] = []
+        for topic in CAMERA_INFO_TOPICS[1:]:
+            nearest = _nearest_unused_record(
+                positive_extended_records[topic],
+                extended_stamps[topic],
+                anchor_stamp,
+                extended_used_indexes[topic],
+                tolerance_ns,
+            )
+            if nearest is None:
+                break
+            index, _record = nearest
+            selected.append((topic, index))
+        if len(selected) != len(CAMERA_INFO_TOPICS) - 1:
+            continue
+        used_sample_indexes[CAMERA_INFO_TOPICS[0]].add(
+            int(anchor["sample_index"])
+        )
+        for topic, index in selected:
+            extended_used_indexes[topic].add(index)
+            used_sample_indexes[topic].add(
+                int(positive_extended_records[topic][index]["sample_index"])
+            )
+
+    # HH_260906 - Every receipt owned by the wall window must belong to one complete bundle.
+    window_unmatched_counts: dict[str, int] = {}
+    for topic in CAMERA_INFO_TOPICS:
+        window_sample_indexes = {
+            int(record["sample_index"])
+            for record in extended_records[topic]
+            if window_start <= float(record["wall_time_sec"]) <= window_end
+        }
+        window_unmatched_counts[topic] = len(
+            window_sample_indexes - used_sample_indexes[topic]
+        )
+
+    topics: dict[str, dict[str, Any]] = {}
+    for topic in CAMERA_INFO_TOPICS:
+        arrival_stamps = [
+            int(record.get("stamp_ns", 0)) for record in window_records[topic]
+        ]
+        positive_arrival_stamps = [stamp for stamp in arrival_stamps if stamp > 0]
+        ranged_stamps = [int(record["stamp_ns"]) for record in source_records[topic]]
+        duplicate_count = len(ranged_stamps) - len(set(ranged_stamps))
+        non_increasing_count = sum(
+            current <= previous
+            for previous, current in zip(
+                ranged_stamps, ranged_stamps[1:]
+            )
+        )
+        ranged_deltas = [
+            current - previous
+            for previous, current in zip(ranged_stamps, ranged_stamps[1:])
+        ]
+        strictly_increasing = (
+            bool(ranged_stamps)
+            and len(positive_arrival_stamps) == len(arrival_stamps)
+            and duplicate_count == 0
+            and non_increasing_count == 0
+        )
+        source_rate_hz = None
+        if (
+            len(ranged_stamps) >= 2
+            and all(delta > 0 for delta in ranged_deltas)
+            and ranged_stamps[-1] > ranged_stamps[0]
+        ):
+            source_rate_hz = (len(ranged_stamps) - 1) * 1.0e9 / (
+                ranged_stamps[-1] - ranged_stamps[0]
+            )
+        topics[topic] = {
+            "window_record_count": len(arrival_stamps),
+            "source_range_record_count": len(ranged_stamps),
+            "positive_window_stamp_count": len(positive_arrival_stamps),
+            "zero_or_negative_window_stamp_count": (
+                len(arrival_stamps) - len(positive_arrival_stamps)
+            ),
+            "duplicate_positive_source_range_stamp_count": duplicate_count,
+            "non_increasing_source_range_arrival_stamp_delta_count": (
+                non_increasing_count
+            ),
+            "strictly_increasing_unique_positive_arrival_stamps": (
+                strictly_increasing
+            ),
+            "source_rate_hz_from_span": source_rate_hz,
+            "minimum_source_gap_seconds": (
+                min(ranged_deltas) * 1.0e-9 if ranged_deltas else None
+            ),
+            "maximum_source_gap_seconds": (
+                max(ranged_deltas) * 1.0e-9 if ranged_deltas else None
+            ),
+            "window_matched_record_count": (
+                len(arrival_stamps) - window_unmatched_counts[topic]
+            ),
+            "window_unmatched_record_count": window_unmatched_counts[topic],
+        }
+
+    matching_records = {
+        topic: sorted(
+            source_records[topic], key=lambda record: int(record["stamp_ns"])
+        )
+        for topic in CAMERA_INFO_TOPICS
+    }
+    matching_stamps = {
+        topic: [int(record["stamp_ns"]) for record in records]
+        for topic, records in matching_records.items()
+    }
+    used = {topic: set() for topic in CAMERA_INFO_TOPICS[1:]}
+    matched_bundle_count = 0
+    bundle_stamp_spans: list[float] = []
+    for anchor in matching_records[CAMERA_INFO_TOPICS[0]]:
+        anchor_stamp = int(anchor["stamp_ns"])
+        bundle_stamps = [anchor_stamp]
+        selected: list[tuple[str, int]] = []
+        for topic in CAMERA_INFO_TOPICS[1:]:
+            nearest = _nearest_unused_record(
+                matching_records[topic],
+                matching_stamps[topic],
+                anchor_stamp,
+                used[topic],
+                tolerance_ns,
+            )
+            if nearest is None:
+                break
+            index, record = nearest
+            selected.append((topic, index))
+            bundle_stamps.append(int(record["stamp_ns"]))
+        if len(bundle_stamps) != len(CAMERA_INFO_TOPICS):
+            continue
+        for topic, index in selected:
+            used[topic].add(index)
+        matched_bundle_count += 1
+        bundle_stamp_spans.append(
+            (max(bundle_stamps) - min(bundle_stamps)) * 1.0e-9
+        )
+
+    record_counts = [len(source_records[topic]) for topic in CAMERA_INFO_TOPICS]
+    record_count_parity = bool(record_counts) and len(set(record_counts)) == 1
+    all_records_used_once = (
+        matched_bundle_count == len(source_records[CAMERA_INFO_TOPICS[0]])
+        and all(
+            len(used[topic]) == len(source_records[topic])
+            for topic in CAMERA_INFO_TOPICS[1:]
+        )
+    )
+    all_topic_stamps_valid = all(
+        item["strictly_increasing_unique_positive_arrival_stamps"]
+        for item in topics.values()
+    )
+    all_window_records_used_once = all(
+        count == 0 for count in window_unmatched_counts.values()
+    )
+    status = (
+        "PASS"
+        if (
+            all_topic_stamps_valid
+            and record_count_parity
+            and all_records_used_once
+            and all_window_records_used_once
+        )
+        else "FAIL"
+    )
+    return {
+        "status": status,
+        "matching_policy": (
+            "front_source_range_nearest_stamp_one_to_one_with_wall_edge_guard"
+        ),
+        "match_tolerance_seconds": match_tolerance_seconds,
+        "anchor_source_stamp_range_ns": {
+            "minimum": lower_stamp,
+            "maximum": upper_stamp,
+        },
+        "record_count_parity": record_count_parity,
+        "all_records_used_exactly_once": all_records_used_once,
+        "all_window_records_used_exactly_once": all_window_records_used_once,
+        "wall_edge_guard_seconds": wall_edge_guard_seconds,
+        "matched_bundle_count": matched_bundle_count,
+        "maximum_bundle_stamp_span_seconds": (
+            max(bundle_stamp_spans) if bundle_stamp_spans else None
+        ),
+        "topics": topics,
     }
 
 
@@ -564,12 +967,29 @@ def evaluate_window(
             ),
         }
 
+    strict_source_integrity_required = (
+        active_contract.get("strict_camera_source_integrity_required") is True
+    )
     bundles = camera_bundle_metrics(
         camera_samples,
         window_start,
         window_end,
         float(active_contract["bundle_match_tolerance_seconds"]),
+        (
+            float(active_contract["bundle_settle_seconds"])
+            if strict_source_integrity_required
+            else None
+        ),
     )
+    strict_source_integrity = None
+    if strict_source_integrity_required:
+        strict_source_integrity = strict_camera_source_integrity(
+            camera_samples,
+            window_start,
+            window_end,
+            float(active_contract["bundle_match_tolerance_seconds"]),
+            float(active_contract["bundle_settle_seconds"]),
+        )
     failures: list[dict[str, Any]] = []
     if len(clocks) < 2:
         failures.append({"check": "clock_samples", "actual": len(clocks), "minimum": 2})
@@ -593,6 +1013,104 @@ def evaluate_window(
                     "minimum": float(thresholds["minimum_camera_wall_rate_hz"]),
                 }
             )
+        maximum_wall_rate = thresholds.get("maximum_camera_wall_rate_hz")
+        if (
+            maximum_wall_rate is not None
+            and metrics["wall_rate_hz"] > float(maximum_wall_rate)
+        ):
+            failures.append(
+                {
+                    "check": "camera_wall_rate_hz",
+                    "topic": topic,
+                    "actual": metrics["wall_rate_hz"],
+                    "maximum": float(maximum_wall_rate),
+                }
+            )
+    if strict_source_integrity is not None:
+        # HH_260906 - Consume one unique positive source record per camera and bundle.
+        # HH_260906 - Preserve arrival ordering before a strict pre-engagement PASS.
+        if strict_source_integrity["status"] != "PASS":
+            failures.append(
+                {
+                    "check": "camera_source_stamp_integrity",
+                    "actual": strict_source_integrity["status"],
+                    "expected": "PASS",
+                }
+            )
+        for topic, metrics in strict_source_integrity["topics"].items():
+            source_rate_hz = metrics["source_rate_hz_from_span"]
+            minimum_source_rate = float(
+                thresholds["minimum_camera_source_rate_hz"]
+            )
+            maximum_source_rate = float(
+                thresholds["maximum_camera_source_rate_hz"]
+            )
+            if (
+                source_rate_hz is None
+                or not math.isfinite(float(source_rate_hz))
+                or not minimum_source_rate
+                <= float(source_rate_hz)
+                <= maximum_source_rate
+            ):
+                failures.append(
+                    {
+                        "check": "camera_source_rate_hz",
+                        "topic": topic,
+                        "actual": source_rate_hz,
+                        "minimum": minimum_source_rate,
+                        "maximum": maximum_source_rate,
+                    }
+                )
+            minimum_source_gap = metrics["minimum_source_gap_seconds"]
+            allowed_minimum_source_gap = float(
+                thresholds["minimum_camera_source_gap_seconds"]
+            )
+            if (
+                minimum_source_gap is None
+                or not math.isfinite(float(minimum_source_gap))
+                or (
+                    float(minimum_source_gap) < allowed_minimum_source_gap
+                    and not math.isclose(
+                        float(minimum_source_gap),
+                        allowed_minimum_source_gap,
+                        rel_tol=0.0,
+                        abs_tol=1.0e-12,
+                    )
+                )
+            ):
+                failures.append(
+                    {
+                        "check": "camera_source_gap_seconds",
+                        "topic": topic,
+                        "actual": minimum_source_gap,
+                        "minimum": allowed_minimum_source_gap,
+                    }
+                )
+            maximum_source_gap = metrics["maximum_source_gap_seconds"]
+            allowed_source_gap = float(
+                thresholds["maximum_camera_source_gap_seconds"]
+            )
+            if (
+                maximum_source_gap is None
+                or not math.isfinite(float(maximum_source_gap))
+                or (
+                    float(maximum_source_gap) > allowed_source_gap
+                    and not math.isclose(
+                        float(maximum_source_gap),
+                        allowed_source_gap,
+                        rel_tol=0.0,
+                        abs_tol=1.0e-12,
+                    )
+                )
+            ):
+                failures.append(
+                    {
+                        "check": "camera_source_gap_seconds",
+                        "topic": topic,
+                        "actual": maximum_source_gap,
+                        "maximum": allowed_source_gap,
+                    }
+                )
     if bundles["complete_bundle_count"] < int(
         thresholds["minimum_complete_bundle_count"]
     ):
@@ -626,6 +1144,21 @@ def evaluate_window(
                 ),
             }
         )
+    maximum_stamp_span = thresholds.get("maximum_bundle_stamp_span_seconds")
+    if maximum_stamp_span is not None:
+        observed_stamp_span = bundles["stamp_span_seconds"]["maximum"]
+        if (
+            observed_stamp_span is None
+            or not math.isfinite(float(observed_stamp_span))
+            or float(observed_stamp_span) > float(maximum_stamp_span)
+        ):
+            failures.append(
+                {
+                    "check": "bundle_stamp_span_seconds",
+                    "actual": observed_stamp_span,
+                    "maximum": float(maximum_stamp_span),
+                }
+            )
     return {
         "status": "PASS" if not failures else "FAIL",
         "window": {
@@ -643,7 +1176,11 @@ def evaluate_window(
         "minimum_observed_camera_wall_rate_hz": min(
             metrics["wall_rate_hz"] for metrics in camera_metrics.values()
         ),
+        "maximum_observed_camera_wall_rate_hz": max(
+            metrics["wall_rate_hz"] for metrics in camera_metrics.values()
+        ),
         "bundles": bundles,
+        "camera_source_stamp_integrity": strict_source_integrity,
         "failures": failures,
     }
 
@@ -712,6 +1249,10 @@ def collect_live_health(
     require_exact_image_graph = (
         isinstance(transport, Mapping)
         and transport.get("profile_id") in EXACT_CAMERA_GRAPH_PROFILES
+    )
+    require_portable_runtime_absence = (
+        isinstance(transport, Mapping)
+        and transport.get("profile_id") == CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
     )
     camera_image_graph: dict[str, Any] = {
         "status": "NOT_REQUIRED",
@@ -787,6 +1328,21 @@ def collect_live_health(
                 window["window"]["end_elapsed_seconds"] = (
                     window["window"].pop("end_monotonic_seconds") - started
                 )
+                if require_portable_runtime_absence:
+                    portable_absence = collect_portable_runtime_absence(node)
+                    portable_absence["observed_elapsed_seconds"] = (
+                        portable_absence.pop("observed_monotonic_seconds") - started
+                    )
+                    window["portable_runtime_absence"] = portable_absence
+                    if portable_absence["status"] != "PASS":
+                        window["failures"].append(
+                            {
+                                "check": "portable_runtime_absence",
+                                "actual": portable_absence["status"],
+                                "expected": "PASS",
+                            }
+                        )
+                        window["status"] = "FAIL"
                 windows.append(window)
                 sequence = evaluate_runtime_health(windows)
                 if sequence["status"] == "PASS":
@@ -971,6 +1527,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             CAMERA_TRANSPORT_PROFILE_V1,
             CAMERA_TRANSPORT_PROFILE_V2,
             CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+            CAMERA_TRANSPORT_PROFILE_STRICT_10HZ,
         }:
             parser.error("unsupported camera transport profile")
         for value in (
@@ -997,14 +1554,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     output = args.output.expanduser().resolve()
-    contract = default_contract(args.window_sec)
-    if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ:
-        contract["thresholds"]["minimum_camera_wall_rate_hz"] = (
-            PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ
-        )
-        contract["thresholds"]["minimum_complete_bundle_count"] = (
-            PORTABLE_MINIMUM_COMPLETE_BUNDLES
-        )
+    contract = apply_camera_profile_contract(
+        default_contract(args.window_sec), args.camera_transport_profile_id
+    )
     if args.camera_transport_profile_id is not None:
         camera_transport = {
             "profile_id": args.camera_transport_profile_id,
@@ -1036,7 +1588,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             contract["topics"]["camera_image_graph"] = list(
                 CAMERA_IMAGE_TOPICS
             )
-        if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ:
+        if args.camera_transport_profile_id in TEN_HZ_CAMERA_PROFILES:
             camera_transport.update(
                 {
                     "camera_source_sensor_tick_seconds": 0.1,
@@ -1048,6 +1600,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "minimum_complete_bundle_count": (
                         PORTABLE_MINIMUM_COMPLETE_BUNDLES
                     ),
+                }
+            )
+        if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_STRICT_10HZ:
+            camera_transport.update(
+                {
+                    "qualification_scope": (
+                        "strict_six_camera_10hz_transport_runtime_only"
+                    ),
+                    "simulation_only": True,
+                    "vehicle_behavior_validated": False,
+                    "portable_model_loaded": False,
+                    "portable_model_60kph_validated": False,
+                    "portable_model_60kph_claim_allowed": False,
+                    "portable_runtime_graph_absence_required": True,
+                    "portable_shadow_node": PORTABLE_SHADOW_NODE,
+                    "portable_output_topics": list(PORTABLE_OUTPUT_TOPICS),
+                    "real_vehicle_ready": False,
                 }
             )
         contract["camera_transport"] = camera_transport
@@ -1102,6 +1671,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         windows, sequence, camera_image_graph = collect_live_health(
             args.window_sec, args.timeout_sec, contract
         )
+        if (
+            args.camera_transport_profile_id
+            == CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+            and sequence.get("status") == "PASS"
+        ):
+            windows_by_index = {
+                window.get("index"): window
+                for window in windows
+                if isinstance(window, Mapping)
+            }
+            missing_absence = [
+                index
+                for index in sequence.get("winning_window_indexes", ())
+                if not isinstance(windows_by_index.get(index), Mapping)
+                or windows_by_index[index].get(
+                    "portable_runtime_absence", {}
+                ).get("status")
+                != "PASS"
+            ]
+            if missing_absence:
+                sequence = {
+                    **sequence,
+                    "status": "FAIL",
+                    "failure_reason": (
+                        "strict runtime health lacks observed Portable graph "
+                        f"absence in winning windows {missing_absence}"
+                    ),
+                }
         payload["windows"] = windows
         payload["sequence"] = sequence
         payload["camera_image_graph"] = camera_image_graph

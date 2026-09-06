@@ -391,7 +391,7 @@ def test_live_capture_worker_policy_has_complete_nonduplicated_provenance() -> N
 def test_capture_timestamps_are_python_isoformat_compatible() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
-    assert source.count("%Y-%m-%dT%H:%M:%S.%6NZ") == 4
+    assert source.count("%Y-%m-%dT%H:%M:%S.%6NZ") == 6
     assert 'candidate_still_captured_at="${desktop_recording_started_at}"' in source
     assert "%Y-%m-%dT%H:%M:%S.%NZ" not in source
 

@@ -156,6 +156,257 @@ def test_healthy_window_passes_all_clock_camera_and_bundle_checks() -> None:
     assert report["bundles"]["receipt_span_seconds"]["p95"] == pytest.approx(0.010)
 
 
+def test_strict_10hz_rejects_one_frame_shifted_camera_stamps() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    shifted_topic = health.CAMERA_INFO_TOPICS[-1]
+    for sample in camera[shifted_topic]:
+        sample["stamp_ns"] += 100_000_000
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert report["bundles"]["match_tolerance_seconds"] == pytest.approx(0.000005)
+    assert "bundle_coverage_percent" in _failure_checks(report)
+
+
+def test_strict_10hz_gates_maximum_source_stamp_span() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    shifted_topic = health.CAMERA_INFO_TOPICS[-1]
+    for sample in camera[shifted_topic]:
+        sample["stamp_ns"] += 4_000
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    passing = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+    contract["thresholds"]["maximum_bundle_stamp_span_seconds"] = 0.000003
+    failing = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert passing["status"] == "PASS"
+    assert passing["bundles"]["stamp_span_seconds"]["maximum"] == pytest.approx(
+        0.000004
+    )
+    assert failing["status"] == "FAIL"
+    assert "bundle_stamp_span_seconds" in _failure_checks(failing)
+
+
+# HH_260906 - Prevent duplicated camera delivery from qualifying before engagement.
+def test_strict_10hz_rejects_duplicate_non_front_source_stamp() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    topic = health.CAMERA_INFO_TOPICS[1]
+    duplicate = dict(camera[topic][20])
+    duplicate["wall_time_sec"] += 0.000001
+    camera[topic].insert(21, duplicate)
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert "camera_source_stamp_integrity" in _failure_checks(report)
+    integrity = report["camera_source_stamp_integrity"]
+    assert integrity["status"] == "FAIL"
+    assert integrity["record_count_parity"] is False
+    assert integrity["all_records_used_exactly_once"] is False
+    assert integrity["topics"][topic][
+        "duplicate_positive_source_range_stamp_count"
+    ] == 1
+
+
+# HH_260906 - Reject a stale mid-window receipt even when its stamp is outside the front range.
+def test_strict_10hz_rejects_unmatched_non_front_record_outside_front_range() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    topic = health.CAMERA_INFO_TOPICS[1]
+    camera[topic].append(
+        {
+            "wall_time_sec": 104.0,
+            "stamp_ns": 500_000_000,
+        }
+    )
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert "camera_source_stamp_integrity" in _failure_checks(report)
+    integrity = report["camera_source_stamp_integrity"]
+    assert integrity["all_window_records_used_exactly_once"] is False
+    assert integrity["topics"][topic]["window_unmatched_record_count"] == 1
+
+
+# HH_260906 - Use the wall extension to complete a legitimate trailing-edge bundle.
+def test_strict_10hz_accepts_complete_bundle_straddling_trailing_wall_edge() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    for records in camera.values():
+        for record in records:
+            record["wall_time_sec"] += 0.045
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "PASS"
+    integrity = report["camera_source_stamp_integrity"]
+    assert integrity["all_window_records_used_exactly_once"] is True
+    assert all(
+        item["window_unmatched_record_count"] == 0
+        for item in integrity["topics"].values()
+    )
+
+
+# HH_260906 - Preserve callback arrival order instead of sorting away a stale frame.
+def test_strict_10hz_rejects_out_of_order_source_stamp() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    topic = health.CAMERA_INFO_TOPICS[-1]
+    camera[topic][20]["stamp_ns"], camera[topic][21]["stamp_ns"] = (
+        camera[topic][21]["stamp_ns"],
+        camera[topic][20]["stamp_ns"],
+    )
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert "camera_source_stamp_integrity" in _failure_checks(report)
+    integrity = report["camera_source_stamp_integrity"]
+    assert integrity["status"] == "FAIL"
+    assert integrity["topics"][topic][
+        "non_increasing_source_range_arrival_stamp_delta_count"
+    ] == 1
+    assert integrity["topics"][topic][
+        "strictly_increasing_unique_positive_arrival_stamps"
+    ] is False
+
+
+# HH_260906 - Enforce upper bounds so a doubled transport cannot satisfy minima alone.
+def test_strict_10hz_rejects_excess_wall_and_source_cadence() -> None:
+    clock, camera = _healthy_samples(camera_hz=20.0)
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert report["maximum_observed_camera_wall_rate_hz"] == pytest.approx(20.0)
+    assert "camera_wall_rate_hz" in _failure_checks(report)
+    assert "camera_source_rate_hz" in _failure_checks(report)
+
+
+# HH_260906 - Reject a short source interval hidden by an acceptable aggregate rate.
+def test_strict_10hz_rejects_compressed_source_interval() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    for records in camera.values():
+        for record in records[40:]:
+            record["stamp_ns"] -= 50_000_000
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "FAIL"
+    assert "camera_source_gap_seconds" in _failure_checks(report)
+    for item in report["camera_source_stamp_integrity"]["topics"].values():
+        assert item["source_rate_hz_from_span"] == pytest.approx(
+            10.0636942675
+        )
+        assert item["minimum_source_gap_seconds"] == pytest.approx(0.05)
+
+
+# HH_260906 - Accept both inclusive five-microsecond source-period boundaries.
+@pytest.mark.parametrize("source_delta_ns", (99_995_000, 100_005_000))
+def test_strict_10hz_accepts_source_period_tolerance_boundaries(
+    source_delta_ns: int,
+) -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    for records in camera.values():
+        for index, record in enumerate(records):
+            record["stamp_ns"] = 1_000_000_000 + index * source_delta_ns
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "PASS"
+    for item in report["camera_source_stamp_integrity"]["topics"].values():
+        assert item["minimum_source_gap_seconds"] == pytest.approx(
+            source_delta_ns * 1.0e-9
+        )
+        assert item["maximum_source_gap_seconds"] == pytest.approx(
+            source_delta_ns * 1.0e-9
+        )
+
+
+# HH_260906 - A serial bundle crossing a wall-window edge is not a source drop.
+def test_strict_10hz_source_range_guard_accepts_complete_edge_bundle() -> None:
+    clock, camera = _healthy_samples(camera_hz=10.0)
+    for records in camera.values():
+        for record in records:
+            record["wall_time_sec"] -= 0.055
+    contract = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ
+    )
+
+    report = health.evaluate_window(clock, camera, 100.0, 108.0, contract)
+
+    assert report["status"] == "PASS"
+    integrity = report["camera_source_stamp_integrity"]
+    assert integrity["status"] == "PASS"
+    assert integrity["record_count_parity"] is True
+    assert integrity["all_records_used_exactly_once"] is True
+
+
+# HH_260906 - Keep legacy 5 Hz and Portable Common10 acceptance semantics unchanged.
+def test_strict_stamp_and_upper_cadence_gates_are_not_applied_to_legacy_profiles() -> None:
+    baseline = health.default_contract()
+    portable = health.apply_camera_profile_contract(
+        health.default_contract(), health.CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ
+    )
+
+    for contract in (baseline, portable):
+        assert contract.get("strict_camera_source_integrity_required") is None
+        assert "maximum_camera_wall_rate_hz" not in contract["thresholds"]
+        assert "minimum_camera_source_rate_hz" not in contract["thresholds"]
+        assert "maximum_camera_source_rate_hz" not in contract["thresholds"]
+        assert "minimum_camera_source_gap_seconds" not in contract["thresholds"]
+        assert "maximum_camera_source_gap_seconds" not in contract["thresholds"]
+
+
+def test_portable_runtime_absence_rejects_node_or_output_publisher() -> None:
+    empty = health.evaluate_portable_runtime_absence([], {})
+    node_present = health.evaluate_portable_runtime_absence(
+        [health.PORTABLE_SHADOW_NODE], {}
+    )
+    publisher_present = health.evaluate_portable_runtime_absence(
+        [],
+        {
+            health.PORTABLE_OUTPUT_TOPICS[0]: [
+                _image_endpoint("/renamed_portable_runtime")
+            ]
+        },
+    )
+
+    assert empty["status"] == "PASS"
+    assert node_present["status"] == "FAIL"
+    assert publisher_present["status"] == "FAIL"
+    assert node_present["failures"][0]["check"] == "portable_shadow_node_absent"
+    assert (
+        publisher_present["failures"][0]["check"]
+        == "portable_output_publishers_absent"
+    )
+
+
 def test_low_rtf_fails_even_when_all_camera_checks_pass() -> None:
     clock, camera = _healthy_samples(rtf=0.75)
 
@@ -358,6 +609,7 @@ def test_runtime_health_rejects_partial_camera_transport_provenance() -> None:
     (
         health.CAMERA_TRANSPORT_PROFILE_V2,
         health.CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+        health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ,
     ),
 )
 def test_exact_transport_requires_cyclonedds_provenance(profile_id: str) -> None:
@@ -412,7 +664,14 @@ def test_portable_10hz_transport_binds_exact_graph_and_rate_contract(
         health,
         "collect_live_health",
         lambda *_: (
-            [{"status": "PASS"}] * 3,
+            [
+                {
+                    "index": index,
+                    "status": "PASS",
+                    "portable_runtime_absence": {"status": "PASS"},
+                }
+                for index in range(3)
+            ],
             {
                 "status": "PASS",
                 "required_consecutive_passes": 3,
@@ -454,6 +713,90 @@ def test_portable_10hz_transport_binds_exact_graph_and_rate_contract(
     assert transport["exact_camera_image_graph_required"] is True
     assert payload["camera_image_graph"]["status"] == "PASS"
     assert payload["runtime"]["transport_environment"]["status"] == "PASS"
+
+
+def test_strict_10hz_transport_records_non_portable_qualification_boundary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = tmp_path / "cyclonedds.xml"
+    config.write_text("<CycloneDDS/>", encoding="utf-8")
+    config_sha = health.sha256_file(config)
+    uri = config.resolve().as_uri()
+    output = tmp_path / "runtime_health.json"
+    monkeypatch.setenv("ROS_LOCALHOST_ONLY", "0")
+    monkeypatch.setenv("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    monkeypatch.setenv("CYCLONEDDS_URI", uri)
+    monkeypatch.setattr(
+        health,
+        "collect_live_health",
+        lambda *_: (
+            [
+                {
+                    "index": index,
+                    "status": "PASS",
+                    "portable_runtime_absence": {"status": "PASS"},
+                }
+                for index in range(3)
+            ],
+            {
+                "status": "PASS",
+                "required_consecutive_passes": 3,
+                "maximum_consecutive_passes": 3,
+                "trailing_consecutive_passes": 3,
+                "winning_window_indexes": [0, 1, 2],
+                "evaluated_window_count": 3,
+                "timed_out": False,
+                "elapsed_wall_seconds": 10.1,
+            },
+            health.evaluate_camera_image_graph(_exact_image_graph()),
+        ),
+    )
+
+    assert health.main(
+        [
+            "--output",
+            str(output),
+            "--camera-transport-profile-id",
+            health.CAMERA_TRANSPORT_PROFILE_STRICT_10HZ,
+            "--sensor-mapping-sha256",
+            "a" * 64,
+            "--vad-model-override-sha256",
+            "b" * 64,
+            "--cyclonedds-uri",
+            uri,
+            "--cyclonedds-config-sha256",
+            config_sha,
+        ]
+    ) == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["contract"]["thresholds"]["minimum_camera_wall_rate_hz"] == 9.0
+    assert payload["contract"]["thresholds"]["minimum_complete_bundle_count"] == 70
+    assert payload["contract"]["strict_camera_source_integrity_required"] is True
+    assert payload["contract"]["thresholds"]["maximum_camera_wall_rate_hz"] == 11.0
+    assert payload["contract"]["thresholds"]["minimum_camera_source_rate_hz"] == 9.5
+    assert payload["contract"]["thresholds"]["maximum_camera_source_rate_hz"] == 10.5
+    assert payload["contract"]["thresholds"][
+        "minimum_camera_source_gap_seconds"
+    ] == pytest.approx(0.099995)
+    assert payload["contract"]["thresholds"][
+        "maximum_camera_source_gap_seconds"
+    ] == pytest.approx(0.100005)
+    transport = payload["contract"]["camera_transport"]
+    assert transport["qualification_scope"] == (
+        "strict_six_camera_10hz_transport_runtime_only"
+    )
+    assert transport["portable_model_loaded"] is False
+    assert transport["portable_model_60kph_validated"] is False
+    assert transport["portable_model_60kph_claim_allowed"] is False
+    assert transport["vehicle_behavior_validated"] is False
+    assert transport["real_vehicle_ready"] is False
+    assert transport["portable_runtime_graph_absence_required"] is True
+    assert payload["contract"]["bundle_match_tolerance_seconds"] == pytest.approx(
+        0.000005
+    )
+    assert payload["contract"]["thresholds"][
+        "maximum_bundle_stamp_span_seconds"
+    ] == pytest.approx(0.000005)
 
 
 def test_transport_v2_environment_rejects_duplicate_localhost_override_and_hash_drift(

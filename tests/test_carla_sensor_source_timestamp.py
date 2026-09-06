@@ -326,6 +326,7 @@ def test_camera_delivery_contract_uses_sensor_tick_frame_stride(bridge) -> None:
             "expected_camera_count": 6,
         }
     ]
+    assert bridge._strict_camera_expected_count == 6
 
 
 def test_camera_delivery_contract_is_opt_in_for_generic_carla(bridge) -> None:
@@ -594,6 +595,58 @@ def test_invalid_camera_bundle_is_rejected_before_registry_update(bridge, bundle
     ]
 
 
+@pytest.mark.parametrize(
+    "bundle",
+    [
+        ((object(), "front", -0.05), (object(), "back", -0.05)),
+        ((object(), "front", 1.0), (object(), "back", 1.001)),
+    ],
+)
+def test_invalid_camera_bundle_is_terminal_in_strict_barrier_mode(
+    bridge, bundle
+) -> None:
+    module = sys.modules[bridge.__class__.__module__]
+    updates = []
+    submissions = []
+    warnings = []
+    bridge.param_values = {"camera_frame_barrier_enabled": True}
+    bridge.sensor_registry = SimpleNamespace(
+        update_sensor_timestamp=lambda camera, stamp: updates.append((camera, stamp))
+    )
+    bridge._submit_to_publish_worker = lambda *args: submissions.append(args)
+    bridge.logger = SimpleNamespace(warning=lambda message: warnings.append(message))
+
+    with pytest.raises(module.SensorPublishFailure, match="Rejected camera bundle 1"):
+        bridge._queue_camera_bundle(bundle, expected_count=2)
+
+    assert updates == []
+    assert submissions == []
+    assert len(warnings) == 1
+
+
+def test_run_step_rejects_a_strict_due_frame_with_missing_camera(bridge) -> None:
+    module = sys.modules[bridge.__class__.__module__]
+    config = SimpleNamespace(
+        parameters={"sensor_tick": 0.1},
+        frequency_hz=10.0,
+        carla_type="sensor.camera.rgb",
+        last_publish_time=None,
+    )
+    updates, submissions = configure_run_step(bridge, "sensor.camera.rgb", config)
+    bridge.param_values = {
+        "camera_frame_barrier_enabled": True,
+        "fixed_delta_seconds": 0.05,
+    }
+    bridge._strict_camera_expected_count = 2
+    measurement = SimpleNamespace(timestamp=102.25)
+
+    with pytest.raises(module.SensorPublishFailure, match="received=1 expected=2"):
+        bridge.run_step({"sensor": (123, measurement)}, timestamp=9.5)
+
+    assert updates == []
+    assert submissions == []
+
+
 def test_camera_bundle_worker_drops_a_whole_stale_bundle_when_slow(bridge) -> None:
     module = sys.modules[bridge.__class__.__module__]
     started = threading.Event()
@@ -770,6 +823,131 @@ def test_fail_closed_worker_stop_joins_active_failed_worker(bridge) -> None:
     worker.stop(timeout=0.125)
 
     assert join_timeouts == [0.125]
+
+
+def configure_shutdown(bridge, monkeypatch, worker, strict=True):
+    module = sys.modules[bridge.__class__.__module__]
+    bridge.param_values = {"camera_frame_barrier_enabled": strict}
+    bridge._publish_workers = {"camera_bundle": worker}
+    bridge.ros_publisher_manager = None
+    bridge.spin_thread = None
+    bridge.ros2_node = None
+    bridge.logger = SimpleNamespace(debug=lambda *_: None, warning=lambda *_: None)
+    monkeypatch.setattr(module.rclpy, "ok", lambda: False)
+
+
+def test_shutdown_propagates_final_strict_worker_failure(bridge, monkeypatch) -> None:
+    module = sys.modules[bridge.__class__.__module__]
+    events = []
+
+    def raise_failure():
+        events.append("raise_if_failed")
+        raise module.SensorPublishFailure("last camera callback failed")
+
+    worker = SimpleNamespace(
+        stop=lambda: events.append("stop"),
+        is_alive=lambda: False,
+        raise_if_failed=raise_failure,
+    )
+    configure_shutdown(bridge, monkeypatch, worker)
+
+    with pytest.raises(module.SensorPublishFailure, match="last camera callback failed"):
+        bridge.shutdown()
+
+    assert events == ["stop", "raise_if_failed"]
+    assert bridge._publish_workers == {}
+
+
+def test_shutdown_rejects_a_live_strict_worker_after_drain_timeout(
+    bridge, monkeypatch
+) -> None:
+    module = sys.modules[bridge.__class__.__module__]
+    events = []
+    worker = SimpleNamespace(
+        stop=lambda: events.append("stop"),
+        is_alive=lambda: True,
+        raise_if_failed=lambda: events.append("raise_if_failed"),
+    )
+    configure_shutdown(bridge, monkeypatch, worker)
+
+    with pytest.raises(module.SensorPublishFailure, match="did not stop within timeout"):
+        bridge.shutdown()
+
+    assert events == ["stop", "raise_if_failed"]
+    assert bridge._publish_workers == {}
+
+
+def test_shutdown_preserves_non_strict_worker_compatibility(bridge, monkeypatch) -> None:
+    events = []
+    worker = SimpleNamespace(stop=lambda: events.append("stop"))
+    configure_shutdown(bridge, monkeypatch, worker, strict=False)
+
+    bridge.shutdown()
+
+    assert events == ["stop"]
+    assert bridge._publish_workers == {}
+
+
+def test_cleanup_propagates_ros_shutdown_failure_after_remaining_cleanup(
+    bridge, monkeypatch
+) -> None:
+    from autoware_carla_interface import carla_autoware
+
+    events = []
+    shutdown_error = RuntimeError("terminal strict camera failure")
+    owner = carla_autoware.InitializeInterface.__new__(
+        carla_autoware.InitializeInterface
+    )
+    owner.param_ = {"camera_frame_barrier_enabled": True}
+    owner.sensor_wrapper = SimpleNamespace(cleanup=lambda: events.append("sensors"))
+
+    def fail_shutdown():
+        events.append("interface")
+        raise shutdown_error
+
+    owner.interface = SimpleNamespace(shutdown=fail_shutdown)
+    owner.ego_actor = SimpleNamespace(destroy=lambda: events.append("ego"))
+    monkeypatch.setattr(
+        carla_autoware.CarlaDataProvider,
+        "cleanup",
+        staticmethod(lambda: events.append("provider")),
+    )
+
+    with pytest.raises(RuntimeError, match="ROS interface shutdown failed") as exc_info:
+        owner._cleanup()
+
+    assert exc_info.value.__cause__ is shutdown_error
+    assert events == ["sensors", "interface", "ego", "provider"]
+    assert owner.interface is not None
+
+
+def test_cleanup_preserves_non_strict_shutdown_compatibility(
+    bridge, monkeypatch
+) -> None:
+    from autoware_carla_interface import carla_autoware
+
+    events = []
+    owner = carla_autoware.InitializeInterface.__new__(
+        carla_autoware.InitializeInterface
+    )
+    owner.param_ = {"camera_frame_barrier_enabled": False}
+    owner.sensor_wrapper = None
+
+    def fail_shutdown():
+        raise RuntimeError("legacy cleanup failure")
+
+    owner.interface = SimpleNamespace(shutdown=fail_shutdown)
+    owner.ego_actor = None
+    monkeypatch.setattr(
+        carla_autoware.CarlaDataProvider,
+        "cleanup",
+        staticmethod(lambda: events.append("provider")),
+    )
+
+    owner._cleanup()
+
+    assert events == ["provider"]
+    assert owner.interface is not None
 
 
 def make_sensor_interface(bridge):
@@ -1022,6 +1200,10 @@ def test_camera_delivery_contract_patch_is_persisted_after_runtime_patches() -> 
         "first_observed_frame = min(self._pending_camera_frames)",
         "RGB camera registration count violates the delivery contract",
         "Join an active failed publisher before ROS entities are destroyed",
+        "A malformed due-frame bundle invalidates strict continuity",
+        "Make a last-frame camera failure terminal at process shutdown",
+        "Preserve cleanup while making strict delivery failure terminal",
+        "def is_alive(self)",
     ):
         assert marker in patch
     reverse_check = (

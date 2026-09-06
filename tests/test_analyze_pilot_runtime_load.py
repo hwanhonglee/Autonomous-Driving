@@ -183,6 +183,8 @@ def _representative_report(
         20: ("CarlaUE4-Linux-", (110.0, 138.0)),
         30: ("ffmpeg", (3.6, 4.5)),
         40: ("ros2", (30.0, 35.0)),
+        50: ("unattended-upgr", (91.0, 0.0)),
+        51: ("anydesk", (2.0, 3.0)),
     }
     pid_rows = []
     for phase_index, epochs in enumerate((initial_epochs, recovered_epochs)):
@@ -297,6 +299,14 @@ def test_camera_bundles_require_exact_same_stamp_and_keep_transition_guard() -> 
     camera = runtime.build_camera_runtime(records, vad)
 
     assert camera["matched_bundle_count"] == 8
+    assert camera["source_stamp_integrity"]["status"] == "PASS"
+    assert camera["source_stamp_integrity"]["all_records_used_exactly_once"] is True
+    edge_bounded = camera["edge_bounded_source_stamp_integrity"]
+    assert edge_bounded["status"] == "PASS"
+    assert edge_bounded["boundary_trim"]["trimmed_union_stamp_count"] == 0
+    assert edge_bounded["retained_interior"][
+        "all_source_stamps_exact_six_camera_one_to_one"
+    ] is True
     assert camera["source_rate_hz_from_median_period"] == pytest.approx(5.0)
     assert camera["phases"]["initial_slow_clean"]["bundle_count"] == 4
     assert camera["phases"]["initial_slow_clean"]["receipt_span_ms"]["mean"] == pytest.approx(
@@ -328,6 +338,155 @@ def test_persistent_camera_stall_uses_descriptive_windows_without_collapse_claim
         1.0
     )
     assert "mean_receipt_span_reduction_factor" not in camera["comparison"]
+
+
+def test_camera_stamp_integrity_rejects_duplicate_non_front_record() -> None:
+    source = [2.7 + index * 0.1 for index in range(8)]
+    records = _camera_records(source, [5.0] * len(source))
+    topic = runtime.CAMERA_INFO_TOPICS[-1]
+    records[topic].insert(4, dict(records[topic][3]))
+    bundles = runtime.build_same_stamp_camera_bundles(records)
+
+    report = runtime.camera_source_stamp_integrity(records, len(bundles))
+
+    assert report["status"] == "FAIL"
+    assert report["record_count_parity"] is False
+    assert report["all_records_used_exactly_once"] is False
+    assert report["topics"][topic]["duplicate_positive_stamp_count"] == 1
+    assert report["topics"][topic][
+        "non_increasing_positive_stamp_delta_count"
+    ] == 1
+
+
+def test_edge_bounded_camera_integrity_allows_one_partial_stamp_per_edge() -> None:
+    stack = _representative_stack()
+    vad = runtime.build_vad_runtime(stack)
+    source = [2.7, 2.9, 3.1, 3.3, 3.5, 3.7, 3.9, 4.1]
+    records = _camera_records(source, [5.0] * len(source))
+    del records[runtime.CAMERA_INFO_TOPICS[0]][0]
+    del records[runtime.CAMERA_INFO_TOPICS[-1]][-1]
+
+    camera = runtime.build_camera_runtime(records, vad)
+    legacy = camera["source_stamp_integrity"]
+    report = camera["edge_bounded_source_stamp_integrity"]
+
+    assert legacy["status"] == "FAIL"
+    assert report["status"] == "PASS"
+    assert report["qualification_id"] == (
+        "camera_source_stamp_edge_bounded_whole_bag_v1"
+    )
+    assert report["boundary_trim"]["leading_incomplete_union_stamp_count"] == 1
+    assert report["boundary_trim"]["trailing_incomplete_union_stamp_count"] == 1
+    assert report["boundary_trim"]["trimmed_union_stamp_count"] == 2
+    assert report["boundary_trim"]["trimmed_source_stamps_ns"] == [
+        round(source[0] * 1.0e9),
+        round(source[-1] * 1.0e9),
+    ]
+    assert report["boundary_trim"]["leading"]["missing_topics"] == [
+        runtime.CAMERA_INFO_TOPICS[0]
+    ]
+    assert report["boundary_trim"]["trailing"]["missing_topics"] == [
+        runtime.CAMERA_INFO_TOPICS[-1]
+    ]
+    retained = report["retained_interior"]
+    assert retained["source_stamp_count"] == len(source) - 2
+    assert retained["complete_bundle_count"] == len(source) - 2
+    assert retained["positive_record_count"] == (len(source) - 2) * 6
+    assert retained["expected_record_count"] == (len(source) - 2) * 6
+    assert retained["incomplete_union_stamp_count"] == 0
+    assert retained["non_exact_union_stamp_count"] == 0
+    assert retained["all_source_stamps_exact_six_camera_one_to_one"] is True
+
+
+def test_edge_bounded_camera_integrity_rejects_interior_partial_stamp() -> None:
+    source = [2.7 + index * 0.1 for index in range(6)]
+    records = _camera_records(source, [5.0] * len(source))
+    missing_topic = runtime.CAMERA_INFO_TOPICS[2]
+    del records[missing_topic][3]
+
+    report = runtime.edge_bounded_camera_source_stamp_integrity(records)
+
+    assert report["status"] == "FAIL"
+    assert report["boundary_trim"]["trimmed_union_stamp_count"] == 0
+    assert report["retained_interior"]["incomplete_union_stamp_count"] == 1
+    assert report["retained_interior"][
+        "all_source_stamps_exact_six_camera_one_to_one"
+    ] is False
+    assert {
+        failure["check"] for failure in report["failures"]
+    } >= {
+        "incomplete_union_stamps_are_bag_edges_only",
+        "retained_stamps_are_exact_six_camera_one_to_one",
+    }
+
+
+def test_edge_bounded_camera_integrity_rejects_second_partial_leading_stamp() -> None:
+    source = [2.7 + index * 0.1 for index in range(6)]
+    records = _camera_records(source, [5.0] * len(source))
+    del records[runtime.CAMERA_INFO_TOPICS[0]][0]
+    del records[runtime.CAMERA_INFO_TOPICS[1]][1]
+
+    report = runtime.edge_bounded_camera_source_stamp_integrity(records)
+
+    assert report["status"] == "FAIL"
+    assert report["boundary_trim"]["leading_incomplete_union_stamp_count"] == 1
+    assert report["boundary_trim"]["trailing_incomplete_union_stamp_count"] == 0
+    assert report["retained_interior"]["incomplete_union_stamp_count"] == 1
+
+
+def test_edge_bounded_camera_integrity_rejects_duplicate_nonpositive_and_order() -> None:
+    source = [2.7 + index * 0.1 for index in range(6)]
+    records = _camera_records(source, [5.0] * len(source))
+    duplicate_topic = runtime.CAMERA_INFO_TOPICS[1]
+    records[duplicate_topic].insert(3, dict(records[duplicate_topic][2]))
+    invalid_topic = runtime.CAMERA_INFO_TOPICS[2]
+    records[invalid_topic].append(
+        {"bag_ns": 1_788_326_999_000_000_000, "stamp_ns": 0, "topic": invalid_topic}
+    )
+    unordered_topic = runtime.CAMERA_INFO_TOPICS[3]
+    records[unordered_topic][2], records[unordered_topic][3] = (
+        records[unordered_topic][3],
+        records[unordered_topic][2],
+    )
+
+    report = runtime.edge_bounded_camera_source_stamp_integrity(records)
+
+    assert report["status"] == "FAIL"
+    assert report["duplicate_positive_record_count"] == 1
+    assert report["nonpositive_record_count"] == 1
+    assert report["non_increasing_positive_stamp_delta_count"] >= 2
+    assert report["topics"][duplicate_topic]["duplicate_positive_stamp_count"] == 1
+    assert report["topics"][invalid_topic]["zero_or_negative_stamp_count"] == 1
+    assert report["topics"][unordered_topic][
+        "non_increasing_positive_stamp_delta_count"
+    ] == 1
+    assert {failure["check"] for failure in report["failures"]} >= {
+        "positive_source_stamps",
+        "unique_source_stamps_per_topic",
+        "strictly_increasing_source_stamps_per_topic",
+        "retained_stamps_are_exact_six_camera_one_to_one",
+    }
+
+
+def test_edge_bounded_camera_integrity_requires_a_retained_complete_bundle() -> None:
+    source = [2.7, 2.8]
+    records = _camera_records(source, [5.0, 5.0])
+    del records[runtime.CAMERA_INFO_TOPICS[0]][0]
+    del records[runtime.CAMERA_INFO_TOPICS[-1]][-1]
+
+    report = runtime.edge_bounded_camera_source_stamp_integrity(records)
+
+    assert report["status"] == "FAIL"
+    assert report["boundary_trim"]["trimmed_union_stamp_count"] == 2
+    assert report["retained_interior"]["source_stamp_count"] == 0
+    assert report["retained_interior"]["complete_bundle_count"] == 0
+    assert report["failures"] == [
+        {
+            "check": "retained_complete_bundle_count",
+            "actual": 0,
+            "minimum": 1,
+        }
+    ]
 
 
 def test_telemetry_parsers_preserve_units_and_local_timezone() -> None:
@@ -447,15 +606,39 @@ def test_build_report_records_load_increase_and_causal_boundary() -> None:
     assert confounding["status"] == "warm_up_and_scene_boundary_are_confounded"
     carla = report["host_load"]["process_groups"]["carla_server"]
     rviz = report["host_load"]["process_groups"]["rviz"]
+    unattended = report["host_load"]["process_groups"]["unattended_upgrades"]
+    remote_desktop = report["host_load"]["process_groups"]["remote_desktop"]
     assert carla["phases"]["initial_slow"]["cpu_percent_of_one_logical_core"][
         "mean"
     ] == pytest.approx(110.0)
     assert rviz["phases"]["recovered"]["cpu_percent_of_one_logical_core"][
         "mean"
     ] == pytest.approx(19.0)
+    assert unattended["phases"]["initial_slow"][
+        "cpu_percent_of_one_logical_core"
+    ]["mean"] == pytest.approx(91.0)
+    assert remote_desktop["phases"]["recovered"][
+        "cpu_percent_of_one_logical_core"
+    ]["mean"] == pytest.approx(3.0)
     assert report["host_load"]["gpu_device_total"][
         "per_process_attribution_available"
     ] is False
+
+
+def test_source_cadence_finding_supports_exact_ten_hz_with_edge_supersession() -> None:
+    stack = _representative_stack()
+    stack["queue_counter_maxima"]["superseded"] = 6
+    source = [2.6 + index * 0.1 for index in range(20)]
+    report = _representative_report(
+        stack_override=stack,
+        source_override=source,
+        spans_override=[6.0] * len(source),
+    )
+
+    finding = report["findings"]["camera_hz_is_not_the_rtf_cause"]
+    assert finding["supported"] is True
+    assert finding["source_rate_hz"] == pytest.approx(10.0)
+    assert "10.000 simulation-Hz" in finding["explanation"]
 
 
 def test_build_report_marks_persistent_stall_and_midpoint_as_noncausal() -> None:

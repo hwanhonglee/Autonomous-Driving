@@ -5,12 +5,20 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${root}"
 source scripts/e2e/env.sh
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 OUTPUT_BAG" >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+  echo "Usage: $0 OUTPUT_BAG [--start-paused]" >&2
   exit 2
 fi
 
 output_bag="$(realpath -m -- "$1")"
+start_paused=false
+if [[ $# -eq 2 ]]; then
+  if [[ "$2" != "--start-paused" ]]; then
+    echo "Unknown recorder option: $2" >&2
+    exit 2
+  fi
+  start_paused=true
+fi
 if [[ -e "${output_bag}" || -L "${output_bag}" ]]; then
   echo "Output bag already exists: ${output_bag}" >&2
   exit 2
@@ -99,5 +107,12 @@ topic_regex+=')$'
 echo "Recording turn dynamics to ${output_bag}"
 echo "Press Ctrl-C to stop and finalize the bag."
 
-# Keep rosbag2 in the foreground so its SIGINT handler flushes storage and metadata.
-exec ros2 bag record --output "${output_bag}" --regex "${topic_regex}"
+# HH_260906 - Keep rosbag2 in the foreground so SIGINT finalizes storage and metadata.
+record_arguments=(--output "${output_bag}" --regex "${topic_regex}")
+if [[ "${start_paused}" == "true" ]]; then
+  record_arguments+=(--start-paused)
+  # HH_260906 - Give Humble rosbag2 an owned PTY for its SPACE resume control.
+  exec python3 scripts/e2e/run_with_owned_pty.py \
+    ros2 bag record "${record_arguments[@]}"
+fi
+exec ros2 bag record "${record_arguments[@]}"

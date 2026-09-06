@@ -44,10 +44,57 @@ diff --git a/simulator/autoware_carla_interface/launch/autoware_carla_interface.
        <param name="sensor_kit_name" value="$(var sensor_kit_name)"/>
        <param name="sensor_mapping_file" value="$(var sensor_mapping_file)"/>
      </node>
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py
+@@ -245,9 +245,15 @@ class InitializeInterface(object):
+ 
+         """
+         self._cleanup_sensors()
+-        self._cleanup_ros_interface()
++        ros_interface_failure = self._cleanup_ros_interface()
+         self._cleanup_ego_actor()
+         self._cleanup_carla_provider()
++        strict_barrier = getattr(self, "param_", {}).get(
++            "camera_frame_barrier_enabled", False
++        )
++        if ros_interface_failure is not None and strict_barrier:
++            # HH_260906 - Preserve cleanup while making strict delivery failure terminal.
++            raise RuntimeError("ROS interface shutdown failed") from ros_interface_failure
+ 
+     def _cleanup_sensors(self):
+         """Clean up sensor wrapper, continuing on error."""
+@@ -259,14 +265,16 @@ class InitializeInterface(object):
+             print(f"Warning: Sensor cleanup failed: {e}")
+ 
+     def _cleanup_ros_interface(self):
+-        """Clean up ROS interface, continuing on error."""
++        """HH_260906 - Clean up ROS and return a terminal shutdown error."""
+         if not self.interface:
+-            return
++            return None
+         try:
+             self.interface.shutdown()
+             self.interface = None
+         except Exception as e:
+             print(f"Warning: ROS interface shutdown failed: {e}")
++            return e
++        return None
+ 
+     def _cleanup_ego_actor(self):
+         """Destroy ego vehicle, continuing on error."""
 diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
 --- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
 +++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
-@@ -76,6 +76,11 @@
+@@ -52,6 +52,7 @@ from .modules.carla_utils import create_cloud
+ from .modules.carla_utils import ros_pose_to_carla_transform
+ from .modules.carla_wrapper import SensorInterface
+ from .modules.runtime_timing import RuntimeTimingMonitor
++from .modules.sensor_publish_worker import SensorPublishFailure
+ from .vehicle_status_conversion import carla_yaw_rate_to_ros
+ from .vehicle_status_conversion import fl_wheel_to_virtual_tire_angle
+ from .vehicle_status_conversion import rear_axle_lateral_velocity
+@@ -76,6 +77,11 @@
              "vehicle_type": (rclpy.Parameter.Type.STRING, None),
              "use_traffic_manager": (rclpy.Parameter.Type.BOOL, None),
              "max_real_delta_seconds": (rclpy.Parameter.Type.DOUBLE, None),
@@ -59,7 +106,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
              "wheel_base": (rclpy.Parameter.Type.DOUBLE, None),
              "wheel_tread": (rclpy.Parameter.Type.DOUBLE, None),
              "enable_stopped_hand_brake": (rclpy.Parameter.Type.BOOL, False),
-@@ -112,6 +117,9 @@
+@@ -112,6 +118,9 @@
          hand_brake_service_brake = self.param_values[
              "stopped_hand_brake_service_brake_threshold"
          ]
@@ -69,7 +116,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
          if not math.isfinite(hand_brake_velocity) or hand_brake_velocity < 0.0:
              raise ValueError("stopped hand-brake velocity threshold is invalid")
          if (
-@@ -119,6 +127,12 @@
+@@ -119,6 +128,12 @@
              or not 0.0 <= hand_brake_service_brake <= 1.0
          ):
              raise ValueError("stopped hand-brake service-brake threshold is invalid")
@@ -82,7 +129,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
  
      def _initialize_clock_publisher(self):
          """Initialize and publish initial clock message."""
-@@ -216,9 +230,55 @@
+@@ -216,9 +231,57 @@
          self._register_sensor_configs(self.sensor_configs)
          self._create_sensor_publishers_from_registry()
          self.sensors = {"sensors": self._build_sensor_specs(self.sensor_configs)}
@@ -93,6 +140,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
  
 +    def _configure_camera_delivery_contract(self, configs):
 +        """Configure a bounded source-frame barrier for physical cameras."""
++        self._strict_camera_expected_count = None
 +        if not self.param_values["camera_frame_barrier_enabled"]:
 +            return
 +        if not self.param_values["sync_mode"]:
@@ -128,6 +176,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
 +            return
 +        if len(frame_strides) != 1:
 +            raise ValueError("all physical cameras must use the same source frame stride")
++        self._strict_camera_expected_count = len(rgb_configs)
 +        self.sensor_interface.configure_camera_contract(
 +            frame_stride=frame_strides.pop(),
 +            wait_timeout_sec=self.param_values["camera_frame_wait_timeout_sec"],
@@ -138,7 +187,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
      def _resolve_sensor_kit_name(self) -> str:
          """Resolve the effective sensor kit name based on parameters and mapping."""
          param_value = (self.param_values.get("sensor_kit_name", "") or "").strip()
-@@ -355,7 +415,7 @@
+@@ -355,7 +418,7 @@
          self.cv_bridge = CvBridge()
  
      def __call__(self):
@@ -147,7 +196,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
          timestamp = GameTime.get_time()
          control = self.run_step(input_data, timestamp)
          return control
-@@ -474,12 +534,30 @@
+@@ -474,12 +537,30 @@
          """Run a publish call on the sensor's worker thread (created lazily)."""
          worker = self._publish_workers.get(key)
          if worker is None:
@@ -179,8 +228,33 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
      def _publish_camera_bundle(self, camera_measurements):
          """Convert and publish one complete physical camera frame serially."""
          timing = self._get_runtime_timing()
-@@ -520,11 +598,11 @@
-                 )
+@@ -509,22 +590,28 @@
+         )
+         if not valid:
+             self._rejected_camera_bundles = getattr(self, "_rejected_camera_bundles", 0) + 1
++            span_ms = (
++                (max(stamps) - min(stamps)) * 1.0e3 if stamps else float("nan")
++            )
++            message = (
++                f"Rejected camera bundle {self._rejected_camera_bundles}: "
++                f"received={len(camera_measurements)} expected={expected_count} "
++                f"stamp_span_ms={span_ms:.3f}"
++            )
+             if self._rejected_camera_bundles % 100 == 1:
+-                span_ms = (
+-                    (max(stamps) - min(stamps)) * 1.0e3 if stamps else float("nan")
+-                )
+-                self.logger.warning(
+-                    f"Rejected camera bundle {self._rejected_camera_bundles}: "
+-                    f"received={len(camera_measurements)} expected={expected_count} "
+-                    f"stamp_span_ms={span_ms:.3f}"
+-                )
++                self.logger.warning(message)
++            if getattr(self, "param_values", {}).get(
++                "camera_frame_barrier_enabled", False
++            ):
++                # HH_260906 - A malformed due-frame bundle invalidates strict continuity.
++                raise SensorPublishFailure(message)
              return False
  
 -        for _, camera_id, timestamp in camera_measurements:
@@ -193,7 +267,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
          return True
  
      def lidar(self, carla_lidar_measurement, id_, timestamp=None):
-@@ -1069,6 +1147,8 @@
+@@ -1069,6 +1156,8 @@
  
  
          """
@@ -202,6 +276,71 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/car
          # Update timestamp under lock to prevent race with control_callback
          with self._state_lock:
              self.timestamp = timestamp
+@@ -1124,10 +1213,17 @@
+                 self.logger.debug(f"No publisher for sensor '{key}' (type={sensor_type})")
+ 
+-        # A zero sensor_tick captures every physics frame; the bridge cadence gate
+-        # intentionally leaves intermediate frames empty. Only validate frames selected
+-        # for publication so cadence drops are not reported as malformed bundles.
+-        if camera_measurements:
+-            self._queue_camera_bundle(camera_measurements, camera_input_count)
++        # HH_260906 - Skip empty cadence frames but validate every observed strict due frame.
++        strict_barrier = getattr(self, "param_values", {}).get(
++            "camera_frame_barrier_enabled", False
++        )
++        if camera_measurements or (strict_barrier and camera_input_count):
++            # HH_260906 - Check each strict due frame against the configured physical rig.
++            expected_count = (
++                self._strict_camera_expected_count
++                if strict_barrier
++                else camera_input_count
++            )
++            self._queue_camera_bundle(camera_measurements, expected_count)
+ 
+         # Push turn indicator / hazard lights to CARLA before reading status back.
+         self.apply_light_state()
+@@ -1148,8 +1244,31 @@
+ 
+         """
+         # Stop publish workers before destroying the publishers they use
+-        for worker in self._publish_workers.values():
+-            worker.stop()
++        publish_worker_failures = []
++        strict_barrier = getattr(self, "param_values", {}).get(
++            "camera_frame_barrier_enabled", False
++        )
++        for worker_name, worker in self._publish_workers.items():
++            strict_camera_worker = strict_barrier and worker_name == "camera_bundle"
++            try:
++                worker.stop()
++            except Exception as e:
++                if strict_camera_worker:
++                    publish_worker_failures.append(
++                        f"Publish worker '{worker_name}' stop failed: {e}"
++                    )
++            if not strict_camera_worker:
++                continue
++            # HH_260906 - Verify the drained strict worker before ROS entities disappear.
++            worker_is_alive = worker.is_alive()
++            try:
++                worker.raise_if_failed()
++            except SensorPublishFailure as e:
++                publish_worker_failures.append(str(e))
++            if worker_is_alive:
++                publish_worker_failures.append(
++                    f"Publish worker '{worker_name}' did not stop within timeout"
++                )
+         self._publish_workers.clear()
+ 
+         # Destroy publishers first
+@@ -1172,3 +1291,7 @@
+         # HH_260906 - Destroy the node only after its executor has released it.
+         if self.ros2_node:
+             self.ros2_node.destroy_node()
++
++        if publish_worker_failures:
++            # HH_260906 - Make a last-frame camera failure terminal at process shutdown.
++            raise SensorPublishFailure("; ".join(publish_worker_failures))
 diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
 --- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
 +++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
@@ -553,7 +692,7 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/mod
              fn, args, enqueued_ns = item
              queue_wait_stage = (
                  "camera_bundle_queue_wait"
-@@ -86,17 +134,61 @@
+@@ -86,17 +134,65 @@
              self._timing.warn_if_slow(
                  queue_wait_stage, enqueued_ns, worker=self._name
              )
@@ -598,6 +737,10 @@ diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/mod
 +    def _has_failed(self):
 +        with self._failure_lock:
 +            return self._failure is not None
++
++    def is_alive(self):
++        """HH_260906 - Return whether the publisher thread is still running."""
++        return self._thread.is_alive()
  
      def stop(self, timeout=2.0):
          """Stop the worker after letting queued work drain."""

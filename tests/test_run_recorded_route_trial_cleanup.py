@@ -55,6 +55,56 @@ def test_trial_uses_isolated_owned_groups_and_explicit_signal_exit() -> None:
     assert "ros2 node kill" not in source
 
 
+def test_trial_fails_closed_on_errors_reported_during_stack_shutdown(
+    tmp_path: Path,
+) -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+    recorder_stop = source.index(
+        'if ! e2e_stop_owned_process_group \\\n  "${recorder_pgid}" "${recorder_pid}" 30 10 3'
+    )
+    cleanup_call = source.index("\ncleanup\ntrap - EXIT INT TERM", recorder_stop)
+    post_shutdown_check = source.index(
+        'critical_stack_child_failure "${output_dir}/stack.log"', cleanup_call
+    )
+    analysis = source.index("\nanalysis_arguments=(", post_shutdown_check)
+
+    assert recorder_stop < cleanup_call < post_shutdown_check < analysis
+    assert "stack_group_cleanup_status=0" in source
+    assert 'stack_group_cleanup_status="${stack_stop_status}"' in source
+    assert "STACK_OWNED_GROUP_CLEANUP_STATUS=%s" in source
+    assert "STACK_POST_SHUTDOWN_CRITICAL_PROCESS_CHECK=%s" in source
+    assert "Critical Autoware process exited during owned stack shutdown" in source
+    assert "Owned stack process group did not stop cleanly before post-processing" in source
+
+    function_start = source.index("critical_stack_child_failure() {")
+    function_end = source.index("\n}\n", function_start) + len("\n}\n")
+    function_source = source[function_start:function_end]
+    stack_log = tmp_path / "stack.log"
+    stack_log.write_text(
+        "[ERROR] [autoware_carla_interface-1]: process has died "
+        "[pid 123, exit code 1, cmd 'autoware_carla_interface'].\n",
+        encoding="utf-8",
+    )
+    completed = subprocess.run(
+        [
+            "bash",
+            "-c",
+            (
+                "set -euo pipefail; camera_source_10hz_strict=true; "
+                f"{function_source}critical_stack_child_failure \"$1\""
+            ),
+            "bash",
+            str(stack_log),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "autoware_carla_interface-1" in completed.stdout
+
+
 def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
@@ -102,8 +152,10 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "desktop_capture.json" in source
     assert "critical_stack_child_failure" in source
     assert "exit code .*mission_planner_container" in source
+    assert "exit code .*autoware_carla_interface" in source
+    assert 'if [[ "${camera_source_10hz_strict}" == "true" ]]' in source
     assert "critical_process_failure.log" in source
-    assert "Critical Autoware mission-planner process exited" in source
+    assert "Critical Autoware process exited" in source
     assert "setsid scripts/e2e/route_test.sh" in source
     assert 'while kill -0 "${route_test_pid}"' in source
     assert "probe_carla_server.py" in source
@@ -133,6 +185,7 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "CARLA_CAMERA_BARRIER_SCOPE=%s" in source
     assert "CARLA_CAMERA_DELIVERY_PATCH_SHA256=%s" in source
     assert "CARLA_CAMERA_BRIDGE_SHA256=%s" in source
+    assert "CARLA_CAMERA_ENTRYPOINT_SHA256=%s" in source
     assert "CARLA_CAMERA_PUBLISH_WORKER_SHA256=%s" in source
     assert "CARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s" in source
     assert "Installed CARLA camera ${camera_contract_label} does not match the source" in source

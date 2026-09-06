@@ -9,8 +9,7 @@ Usage: scripts/e2e/run_autoware_vad_60kph_pilot.sh OUTPUT_ROOT [options]
 
 Run one exploratory 60 km/h straight-only Autoware VAD trial on a fresh Town06
 CARLA generation.  The helper creates a deterministic 430-460 m route, records
-the pinned localhost-only 5 Hz Best-Effort depth-1 camera/RViz evidence and
-host telemetry, and
+the selected pinned localhost-only Best-Effort depth-1 camera/RViz evidence and host telemetry, and
 owns every CARLA process it starts.  It never labels the result as
 real-vehicle-ready calibration evidence.
 
@@ -18,6 +17,8 @@ Options:
   --port PORT                 CARLA RPC port (default: 2100)
   --startup-timeout-sec SEC   CARLA cold-start timeout (default: 180)
   --ready-timeout-sec SEC     Autoware readiness timeout (default: 600)
+  --camera-source-10hz-strict Qualify the six-camera exact-frame 10 Hz
+                              transport/runtime path without loading Portable
   --geometry-ab-route-corridor-0p2
                               Change only the route corridor from 0.50 m to
                               0.20 m for the geometry A/B candidate
@@ -40,6 +41,7 @@ port=2100
 startup_timeout_sec=180
 ready_timeout_sec=600
 geometry_ab_route_corridor_0p2=false
+camera_source_10hz_strict=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --port)
@@ -63,6 +65,10 @@ while [[ $# -gt 0 ]]; do
       ready_timeout_sec="$2"
       shift 2
       ;;
+    --camera-source-10hz-strict)
+      camera_source_10hz_strict=true
+      shift
+      ;;
     --geometry-ab-route-corridor-0p2)
       geometry_ab_route_corridor_0p2=true
       shift
@@ -77,6 +83,12 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+  echo "--camera-source-10hz-strict must be qualified without a geometry A/B candidate." >&2
+  exit 2
+fi
 
 if [[ ! "${port}" =~ ^[0-9]+$ ]] || (( port < 1 || port > 65535 )); then
   echo "port must be an integer in [1, 65535]" >&2
@@ -410,6 +422,10 @@ geometry_ab_arguments=()
 if [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
   geometry_ab_arguments+=(--geometry-ab-route-corridor-0p2)
 fi
+camera_source_arguments=(--camera-source-5hz)
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  camera_source_arguments=(--camera-source-10hz-strict)
+fi
 CARLA_HOST=127.0.0.1 CARLA_PORT="${port}" \
   AUTOWARE_E2E_CARLA_GENERATION_ID="${trial_generation}" \
   AUTOWARE_E2E_CARLA_EXPECTED_MAP=Town06 \
@@ -418,7 +434,7 @@ CARLA_HOST=127.0.0.1 CARLA_PORT="${port}" \
   AUTOWARE_E2E_CARLA_SERVER_LOG="${trial_log}" \
   AUTOWARE_E2E_FULL_MAP_PATH="${root}/data/maps/Town06_full" \
   scripts/e2e/run_recorded_route_trial.sh \
-    --recommended --speed-60kph-pilot --camera-source-5hz \
+    --recommended --speed-60kph-pilot "${camera_source_arguments[@]}" \
     "${geometry_ab_arguments[@]}" \
     --visualize --capture-desktop --ready-timeout "${ready_timeout_sec}" \
     "${attempt_root}" "${route_path}" carla_timeout:=60
@@ -467,9 +483,12 @@ fi
 
 camera_integrity_status=0
 phase="camera_integrity_validation"
-python3 - "${attempt_root}" <<'PY' || camera_integrity_status=$?
+python3 - "${attempt_root}" "${camera_source_10hz_strict}" <<'PY' || camera_integrity_status=$?
+import hashlib
 import importlib.util
+import math
 from pathlib import Path
+import subprocess
 import sys
 
 root = Path.cwd()
@@ -480,10 +499,502 @@ if spec is None or spec.loader is None:
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 trial = Path(sys.argv[1]).resolve()
+strict_10hz = sys.argv[2] == "true"
 runtime = module._runtime_env(trial / "runtime.env")
 latency = module.read_object(
     trial / "latency/e2e_latency.json", "60 kph pilot latency"
 )
+if strict_10hz:
+    expected_runtime = {
+        "CAMERA_SOURCE_5HZ": "false",
+        "CAMERA_SOURCE_10HZ_STRICT": "true",
+        "CAMERA_SOURCE_SENSOR_TICK_SEC": "0.1",
+        "CAMERA_ROS_PUBLISH_HZ": "10.0",
+        "CAMERA_TRANSPORT_PROFILE_ID": "carla_vad_camera_source_10hz_strict_v2",
+        "CARLA_CAMERA_BUNDLE_DISPATCH_POLICY": "exact_due_frame_barrier_fail_closed_v1",
+        "CARLA_CAMERA_FRAME_BARRIER_ENABLED": "true",
+        "CARLA_CAMERA_FRAME_STRIDE": "2",
+        "CARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC": "0.25",
+        "CARLA_CAMERA_PUBLISH_DEADLINE_SEC": "0.25",
+        "CARLA_CAMERA_PENDING_FRAME_LIMIT": "8",
+        "CARLA_CAMERA_EXPECTED_RGB_COUNT": "6",
+        "CARLA_CAMERA_BARRIER_SCOPE": "strict_six_camera_10hz_transport_only",
+        "CARLA_CAMERA_DELIVERY_CONTRACT_ID": "strict10_exact_due_frame_fail_closed_v1",
+        "CARLA_FIXED_DELTA_SECONDS_PINNED": "0.05",
+        "CARLA_SYNC_MODE_PINNED": "true",
+        "CARLA_CAMERA_RUNTIME_PARAMETERS_STATUS": "PASS",
+        "CARLA_CAMERA_DELIVERY_PATCH_REVERSE_CHECK": "PASS",
+        "CAMERA_TRANSPORT_QUALIFICATION_SCOPE": "strict_six_camera_10hz_transport_runtime_only",
+        "CAMERA_TRANSPORT_SIMULATION_ONLY": "true",
+        "CAMERA_TRANSPORT_VEHICLE_BEHAVIOR_VALIDATED": "false",
+        "CAMERA_TRANSPORT_REAL_VEHICLE_READY": "false",
+        "CAMERA_TRANSPORT_SENSOR_MAPPING_ROLE": "six_camera_source_abi_only",
+        "CAMERA_TRANSPORT_SENSOR_MAPPING_REUSE": "portable_common10_mapping_without_portable_runtime",
+        "PORTABLE_SHADOW_ENABLED": "false",
+        "PORTABLE_SHADOW_LAUNCH_REQUESTED": "false",
+        "PORTABLE_RUNTIME_BUNDLE_PROVIDED": "false",
+        "PORTABLE_MODEL_LOADED": "false",
+        "PORTABLE_MODEL_60KPH_VALIDATED": "false",
+        "PORTABLE_MODEL_60KPH_CLAIM_ALLOWED": "false",
+        # HH_260906 - Bind strict v2 qualification to the owned recorder window.
+        "STRICT_RECORDER_START_PAUSED": "true",
+        "STRICT_RECORDER_CAMERA_INFO_SUBSCRIPTIONS_ACKNOWLEDGED": "6",
+        "STRICT_RECORDER_RESUME_CONTROL": "humble_rosbag2_owned_pty_space_key_v1",
+        "STRICT_RECORDER_MEASUREMENT_RESUME_STATUS": "pass",
+        "STRICT_RECORDER_MEASUREMENT_EVIDENCE_FILE": "recorder_measurement_start.json",
+        "RECORDER_ROUTE_EVALUATION_LIVENESS_STATUS": "pass",
+        "RECORDER_ROUTE_COMPLETION_LIVENESS_STATUS": "pass",
+        "RECORDER_OWNED_GROUP_CLEANUP_STATUS": "pass",
+        "RECORDER_CONTROL_FIFO_REMOVED": "true",
+        "STACK_OWNED_GROUP_CLEANUP_STATUS": "pass",
+        "STACK_POST_SHUTDOWN_CRITICAL_PROCESS_CHECK": "pass",
+        "REAL_VEHICLE_READY": "false",
+        "SIMULATION_ONLY_EXPLORATORY": "true",
+    }
+    for key, expected in expected_runtime.items():
+        if runtime.get(key) != expected:
+            raise SystemExit(f"strict 10 Hz runtime contract mismatch: {key}")
+    health_path = trial / "runtime_health.json"
+    health = module.read_object(health_path, "strict 10 Hz runtime health")
+    thresholds = health.get("contract", {}).get("thresholds", {})
+    expected_thresholds = {
+        "maximum_bundle_receipt_p95_seconds": 0.04,
+        "maximum_bundle_stamp_span_seconds": 0.000005,
+        "minimum_camera_source_gap_seconds": 0.099995,
+        "maximum_camera_source_gap_seconds": 0.100005,
+        "maximum_camera_source_rate_hz": 10.5,
+        "maximum_camera_wall_rate_hz": 11.0,
+        "minimum_bundle_coverage_percent": 99.0,
+        "minimum_camera_source_rate_hz": 9.5,
+        "minimum_camera_wall_rate_hz": 9.0,
+        "minimum_complete_bundle_count": 70,
+        "minimum_rtf": 0.9,
+    }
+    transport = health.get("contract", {}).get("camera_transport")
+    sequence = health.get("sequence")
+    winning_indexes = (
+        sequence.get("winning_window_indexes")
+        if isinstance(sequence, dict)
+        else None
+    )
+    # HH_260906 - Replay exactly three distinct consecutive health windows.
+    strict_winning_indexes_valid = (
+        isinstance(winning_indexes, list)
+        and len(winning_indexes) == 3
+        and all(
+            isinstance(index, int) and not isinstance(index, bool)
+            for index in winning_indexes
+        )
+        and winning_indexes
+        == list(range(winning_indexes[0], winning_indexes[0] + 3))
+    )
+    if (
+        health.get("schema_version") != 1
+        or health.get("probe_id") != "pre_engagement_runtime_health_v1"
+        or health.get("status") != "PASS"
+        or thresholds != expected_thresholds
+        or health.get("contract", {}).get(
+            "strict_camera_source_integrity_required"
+        ) is not True
+        or not math.isclose(
+            float(health.get("contract", {}).get("bundle_match_tolerance_seconds", math.nan)),
+            0.000005,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        )
+        or not isinstance(transport, dict)
+        or transport.get("profile_id") != "carla_vad_camera_source_10hz_strict_v2"
+        or transport.get("qualification_scope")
+        != "strict_six_camera_10hz_transport_runtime_only"
+        or transport.get("simulation_only") is not True
+        or transport.get("vehicle_behavior_validated") is not False
+        or transport.get("portable_model_loaded") is not False
+        or transport.get("portable_model_60kph_validated") is not False
+        or transport.get("portable_model_60kph_claim_allowed") is not False
+        or transport.get("portable_runtime_graph_absence_required") is not True
+        or transport.get("portable_shadow_node") != "/portable_e2e_shadow"
+        or transport.get("real_vehicle_ready") is not False
+        or not isinstance(sequence, dict)
+        or sequence.get("status") != "PASS"
+        or sequence.get("timed_out") is not False
+        or sequence.get("maximum_consecutive_passes", 0) < 3
+        or len(sequence.get("winning_window_indexes", [])) != 3
+        or not strict_winning_indexes_valid
+        or health.get("camera_image_graph", {}).get("status") != "PASS"
+        or health.get("runtime", {}).get("transport_environment", {}).get("status")
+        != "PASS"
+    ):
+        raise SystemExit("strict 10 Hz runtime-health contract did not pass")
+    windows = health.get("windows")
+    if not isinstance(windows, list):
+        raise SystemExit("strict 10 Hz runtime-health windows are missing")
+    windows_by_index = {
+        item.get("index"): item for item in windows if isinstance(item, dict)
+    }
+    portable_absence_observations = []
+    for index in winning_indexes:
+        window = windows_by_index.get(index)
+        absence = (
+            window.get("portable_runtime_absence")
+            if isinstance(window, dict)
+            else None
+        )
+        stamp_span = (
+            window.get("bundles", {}).get("stamp_span_seconds", {}).get("maximum")
+            if isinstance(window, dict)
+            else None
+        )
+        source_integrity = (
+            window.get("camera_source_stamp_integrity")
+            if isinstance(window, dict)
+            else None
+        )
+        window_duration = (
+            window.get("window", {}).get("duration_seconds")
+            if isinstance(window, dict)
+            else None
+        )
+        complete_bundle_count = (
+            window.get("bundles", {}).get("complete_bundle_count")
+            if isinstance(window, dict)
+            else None
+        )
+        if (
+            not isinstance(window, dict)
+            or sum(
+                isinstance(item, dict) and item.get("index") == index
+                for item in windows
+            )
+            != 1
+            or window.get("status") != "PASS"
+            or not isinstance(window_duration, (int, float))
+            or isinstance(window_duration, bool)
+            or not math.isclose(
+                float(window_duration),
+                8.0,
+                rel_tol=0.0,
+                abs_tol=1.0e-9,
+            )
+            or not isinstance(complete_bundle_count, int)
+            or isinstance(complete_bundle_count, bool)
+            or complete_bundle_count < 70
+            or not isinstance(absence, dict)
+            or absence.get("status") != "PASS"
+            or absence.get("observation_scope") != "window_end_graph_snapshot"
+            or absence.get("continuous_window_observation") is not False
+            or absence.get("required_absent_node") != "/portable_e2e_shadow"
+            or absence.get("observed_portable_nodes") != []
+            or any(absence.get("observed_output_publishers", {}).values())
+            or not isinstance(stamp_span, (int, float))
+            or not math.isfinite(float(stamp_span))
+            or float(stamp_span) > 0.000005
+            or not isinstance(source_integrity, dict)
+            or source_integrity.get("status") != "PASS"
+            or source_integrity.get("record_count_parity") is not True
+            or source_integrity.get("all_records_used_exactly_once") is not True
+            # HH_260906 - Reject any unmatched receipt owned by the probe window.
+            or source_integrity.get("all_window_records_used_exactly_once")
+            is not True
+            or not isinstance(source_integrity.get("topics"), dict)
+            or any(
+                not isinstance(item, dict)
+                or item.get("window_unmatched_record_count") != 0
+                or item.get("window_matched_record_count")
+                != item.get("window_record_count")
+                or not isinstance(
+                    item.get("minimum_source_gap_seconds"), (int, float)
+                )
+                or float(item["minimum_source_gap_seconds"]) < 0.099995 - 1.0e-12
+                for item in (
+                    source_integrity.get("topics", {}).values()
+                    if isinstance(source_integrity.get("topics"), dict)
+                    else ()
+                )
+            )
+            or not isinstance(
+                window.get("maximum_observed_camera_wall_rate_hz"), (int, float)
+            )
+            or float(window["maximum_observed_camera_wall_rate_hz"]) > 11.0
+        ):
+            raise SystemExit(
+                f"strict 10 Hz winning window {index} lacks exact stamp/Portable absence proof"
+            )
+        portable_absence_observations.append(
+            {
+                "window_index": index,
+                "status": absence["status"],
+                "observed_elapsed_seconds": absence.get("observed_elapsed_seconds"),
+            }
+        )
+    bundle = latency.get("camera_bundle")
+    event_rates = latency.get("event_rates")
+    if not isinstance(bundle, dict) or not isinstance(event_rates, dict):
+        raise SystemExit("strict 10 Hz trial lacks recorded camera cadence evidence")
+    coverage = float(bundle.get("bundle_coverage_percent", -1.0))
+    stamp_span = bundle.get("stamp_span_sec")
+    maximum_stamp_span_sec = (
+        float(stamp_span.get("max", math.nan))
+        if isinstance(stamp_span, dict)
+        else math.nan
+    )
+    if (
+        bundle.get("available") is not True
+        or bundle.get("camera_count") != 6
+        or not math.isfinite(coverage)
+        or coverage < 99.0
+        or not isinstance(stamp_span, dict)
+        or stamp_span.get("available") is not True
+        or int(stamp_span.get("count", 0)) < 1
+        or not math.isfinite(maximum_stamp_span_sec)
+        or maximum_stamp_span_sec > 0.000005
+    ):
+        raise SystemExit(
+            "strict 10 Hz six-camera bundle coverage or source-stamp identity failed"
+        )
+    # HH_260906 - Bound compressed and delayed source intervals symmetrically.
+    camera_rates = {}
+    camera_minimum_gaps = {}
+    camera_gaps = {}
+    for camera in (
+        "CAM_FRONT",
+        "CAM_BACK",
+        "CAM_FRONT_LEFT",
+        "CAM_BACK_LEFT",
+        "CAM_FRONT_RIGHT",
+        "CAM_BACK_RIGHT",
+    ):
+        topic = f"/sensing/camera/{camera}/camera_info"
+        rate = event_rates.get(topic)
+        period = rate.get("stamp_period_sec") if isinstance(rate, dict) else None
+        if not isinstance(period, dict) or period.get("available") is not True:
+            raise SystemExit(f"strict 10 Hz cadence is unavailable for {topic}")
+        stamp_rate_hz = float(rate.get("stamp_rate_hz", math.nan))
+        minimum_gap_sec = float(period.get("min", math.nan))
+        maximum_gap_sec = float(period.get("max", math.nan))
+        if (
+            not math.isfinite(stamp_rate_hz)
+            or not 9.5 <= stamp_rate_hz <= 10.5
+            or not math.isfinite(minimum_gap_sec)
+            or minimum_gap_sec < 0.099995 - 1.0e-12
+            or not math.isfinite(maximum_gap_sec)
+            or maximum_gap_sec > 0.100005 + 1.0e-12
+        ):
+            raise SystemExit(f"strict 10 Hz cadence failed for {topic}")
+        camera_rates[camera] = stamp_rate_hz
+        camera_minimum_gaps[camera] = minimum_gap_sec
+        camera_gaps[camera] = maximum_gap_sec
+
+    def bound_file(path_key, sha_key, label):
+        declared_path = runtime.get(path_key)
+        expected_sha = runtime.get(sha_key)
+        path = Path(declared_path).expanduser() if declared_path else None
+        if (
+            path is None
+            or not path.is_file()
+            or not isinstance(expected_sha, str)
+            or len(expected_sha) != 64
+        ):
+            raise SystemExit(f"strict camera delivery provenance is missing {label}")
+        actual_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual_sha != expected_sha:
+            raise SystemExit(f"strict camera delivery provenance drifted for {label}")
+        return {
+            "declared_path": declared_path,
+            "path": str(path.resolve()),
+            "sha256": actual_sha,
+        }
+
+
+    delivery_provenance = {
+        "bundle_dispatch_source": bound_file(
+            "CARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE",
+            "CARLA_CAMERA_BUNDLE_DISPATCH_SHA256",
+            "bundle dispatch source",
+        ),
+        "bundle_dispatch_runtime": bound_file(
+            "CARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE",
+            "CARLA_CAMERA_BUNDLE_DISPATCH_SHA256",
+            "bundle dispatch runtime",
+        ),
+        "bridge_source": bound_file(
+            "CARLA_CAMERA_BRIDGE_SOURCE_FILE",
+            "CARLA_CAMERA_BRIDGE_SHA256",
+            "bridge source",
+        ),
+        "bridge_runtime": bound_file(
+            "CARLA_CAMERA_BRIDGE_RUNTIME_FILE",
+            "CARLA_CAMERA_BRIDGE_SHA256",
+            "bridge runtime",
+        ),
+        "entrypoint_source": bound_file(
+            "CARLA_CAMERA_ENTRYPOINT_SOURCE_FILE",
+            "CARLA_CAMERA_ENTRYPOINT_SHA256",
+            "entrypoint source",
+        ),
+        "entrypoint_runtime": bound_file(
+            "CARLA_CAMERA_ENTRYPOINT_RUNTIME_FILE",
+            "CARLA_CAMERA_ENTRYPOINT_SHA256",
+            "entrypoint runtime",
+        ),
+        "publish_worker_source": bound_file(
+            "CARLA_CAMERA_PUBLISH_WORKER_SOURCE_FILE",
+            "CARLA_CAMERA_PUBLISH_WORKER_SHA256",
+            "publish worker source",
+        ),
+        "publish_worker_runtime": bound_file(
+            "CARLA_CAMERA_PUBLISH_WORKER_RUNTIME_FILE",
+            "CARLA_CAMERA_PUBLISH_WORKER_SHA256",
+            "publish worker runtime",
+        ),
+        "interface_launch_source": bound_file(
+            "CARLA_CAMERA_INTERFACE_LAUNCH_SOURCE_FILE",
+            "CARLA_CAMERA_INTERFACE_LAUNCH_SHA256",
+            "interface launch source",
+        ),
+        "interface_launch_runtime": bound_file(
+            "CARLA_CAMERA_INTERFACE_LAUNCH_RUNTIME_FILE",
+            "CARLA_CAMERA_INTERFACE_LAUNCH_SHA256",
+            "interface launch runtime",
+        ),
+        "delivery_patch": bound_file(
+            "CARLA_CAMERA_DELIVERY_PATCH_FILE",
+            "CARLA_CAMERA_DELIVERY_PATCH_SHA256",
+            "delivery patch",
+        ),
+    }
+    patch_worktree = Path(
+        runtime.get("CARLA_CAMERA_DELIVERY_PATCH_WORKTREE", "")
+    ).expanduser()
+    patch_path = Path(runtime["CARLA_CAMERA_DELIVERY_PATCH_FILE"]).expanduser()
+    if not patch_worktree.is_dir():
+        raise SystemExit("strict camera delivery patch worktree is missing")
+    reverse_check = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(patch_worktree),
+            "apply",
+            "--reverse",
+            "--check",
+            str(patch_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if reverse_check.returncode != 0:
+        raise SystemExit("strict camera delivery patch is not applied to its bound worktree")
+    delivery_provenance["patch_application"] = {
+        "status": "PASS",
+        "worktree": str(patch_worktree.resolve()),
+        "verification": "git_apply_reverse_check",
+    }
+
+    runtime_parameters_path = Path(
+        runtime.get("CARLA_CAMERA_RUNTIME_PARAMETERS_FILE", "")
+    ).expanduser()
+    runtime_parameters_sha = runtime.get("CARLA_CAMERA_RUNTIME_PARAMETERS_SHA256")
+    if (
+        not runtime_parameters_path.is_file()
+        or hashlib.sha256(runtime_parameters_path.read_bytes()).hexdigest()
+        != runtime_parameters_sha
+    ):
+        raise SystemExit("strict live camera runtime-parameter evidence is missing or drifted")
+    runtime_parameters = module.read_object(
+        runtime_parameters_path, "strict live camera runtime parameters"
+    )
+    expected_parameters = {
+        "fixed_delta_seconds": 0.05,
+        "sync_mode": True,
+        "camera_frame_barrier_enabled": True,
+        "camera_frame_wait_timeout_sec": 0.25,
+        "camera_publish_deadline_sec": 0.25,
+        "camera_pending_frame_limit": 8,
+    }
+    if (
+        runtime_parameters.get("schema_version") != 1
+        or runtime_parameters.get("status") != "PASS"
+        or runtime_parameters.get("node") != "/autoware_carla_interface"
+        or runtime_parameters.get("parameters") != expected_parameters
+        or runtime_parameters.get("derived_camera_frame_stride") != 2
+        or runtime_parameters.get("derivation")
+        != "sensor_tick_0.1_sec_divided_by_fixed_delta_0.05_sec"
+        or runtime_parameters.get("read_only") is not True
+    ):
+        raise SystemExit("strict live camera runtime-parameter contract mismatch")
+    barrier = {
+        "dispatch_policy": runtime["CARLA_CAMERA_BUNDLE_DISPATCH_POLICY"],
+        "delivery_contract_id": runtime["CARLA_CAMERA_DELIVERY_CONTRACT_ID"],
+        "scope": runtime["CARLA_CAMERA_BARRIER_SCOPE"],
+        "frame_stride": 2,
+        "expected_rgb_count": 6,
+        "wait_timeout_sec": 0.25,
+        "publish_deadline_sec": 0.25,
+        "pending_frame_limit": 8,
+    }
+    qualification_boundary = {
+        "scope": "strict_six_camera_10hz_transport_runtime_only",
+        "simulation_only": True,
+        "vehicle_behavior_validated": False,
+        "portable_model_loaded": False,
+        "portable_model_60kph_validated": False,
+        "portable_model_60kph_claim_allowed": False,
+        "real_vehicle_ready": False,
+    }
+    evidence = {
+        "schema_version": 1,
+        "status": "PASS",
+        "qualification_id": "carla_six_camera_10hz_strict_transport_runtime_v2",
+        "contract": {
+            "profile_id": "carla_vad_camera_source_10hz_strict_v2",
+            "sensor_count": 6,
+            "source_frequency_hz": 10.0,
+            "minimum_camera_rate_hz": 9.5,
+            "maximum_camera_rate_hz": 10.5,
+            "minimum_bundle_coverage_percent": 99.0,
+            "minimum_camera_stamp_gap_sec": 0.099995,
+            "maximum_camera_stamp_gap_sec": 0.100005,
+            "maximum_camera_bundle_stamp_span_sec": 0.000005,
+            "camera_image_publish_qos": "best_effort",
+            "camera_image_publish_depth": 1,
+            "camera_info_publish_qos": "reliable",
+        },
+        "qualification_boundary": qualification_boundary,
+        "transport_provenance": transport,
+        "camera_delivery_contract_provenance": delivery_provenance,
+        "barrier_contract": barrier,
+        "runtime_parameters": {
+            "path": str(runtime_parameters_path.resolve()),
+            "sha256": runtime_parameters_sha,
+            "evidence": runtime_parameters,
+        },
+        "runtime_health": {
+            "path": str(health_path.resolve()),
+            "sha256": hashlib.sha256(health_path.read_bytes()).hexdigest(),
+            "status": health.get("status"),
+            "winning_window_indexes": sequence.get("winning_window_indexes"),
+        },
+        "portable_runtime_absence": {
+            "status": "PASS",
+            "observation_scope": "winning_window_end_graph_snapshots",
+            "continuous_window_observation": False,
+            "observed_window_indexes": winning_indexes,
+            "observations": portable_absence_observations,
+            "portable_shadow_node_observed": False,
+            "portable_output_publisher_observed": False,
+        },
+        "bundle_coverage_percent": coverage,
+        "maximum_camera_bundle_stamp_span_sec": maximum_stamp_span_sec,
+        "minimum_camera_stamp_rate_hz": min(camera_rates.values()),
+        "maximum_camera_stamp_rate_hz": max(camera_rates.values()),
+        "minimum_camera_stamp_gap_sec": min(camera_minimum_gaps.values()),
+        "maximum_camera_stamp_gap_sec": max(camera_gaps.values()),
+        "camera_stamp_rate_hz": camera_rates,
+        "camera_stamp_minimum_gap_sec": camera_minimum_gaps,
+        "camera_stamp_gap_sec": camera_gaps,
+    }
+    module.atomic_json(trial / "camera_source_10hz_strict_validation.json", evidence)
+    raise SystemExit(0)
 evidence = module._camera_source_5hz_evidence(
     trial,
     runtime,
@@ -522,7 +1033,7 @@ phase="pilot_handoff_validation"
 python3 - "${output_root}" "${route_path}" "${trial_status}" \
   "${cleanup_status}" "${coverage_status}" "${telemetry_cleanup_status}" \
   "${camera_integrity_status}" "${runtime_load_status}" \
-  "${acceptance_gate_status}" <<'PY' || handoff_status=$?
+  "${acceptance_gate_status}" "${camera_source_10hz_strict}" <<'PY' || handoff_status=$?
 import hashlib
 import json
 from datetime import datetime, timezone
@@ -542,6 +1053,7 @@ import sys
     camera_status,
     runtime_load_status,
     acceptance_gate_status,
+    strict_10hz,
 ) = sys.argv[1:]
 root = Path(root_name)
 route = Path(route_name)
@@ -569,7 +1081,12 @@ speed = read_object("speed_profile.json")
 desktop = read_object("desktop_capture.json")
 coverage = read_object("actuation_map_coverage.json")
 runtime_coverage = read_object("actuation_map_runtime_coverage.json")
-camera = read_object("camera_source_5hz_validation.json")
+camera_evidence_name = (
+    "camera_source_10hz_strict_validation.json"
+    if strict_10hz == "true"
+    else "camera_source_5hz_validation.json"
+)
+camera = read_object(camera_evidence_name)
 longitudinal = read_object("longitudinal_response.json")
 runtime_load = read_object("runtime_load_analysis.json")
 preflight = read_object("carla_preflight_health.json")
@@ -848,7 +1365,23 @@ if (
 ):
     problems.append("post-run actuation-map lookup evidence is invalid")
 if camera.get("status") != "PASS":
-    problems.append("six-camera 5 Hz integrity evidence did not pass")
+    problems.append("selected six-camera transport evidence did not pass")
+if strict_10hz == "true":
+    qualification_boundary = camera.get("qualification_boundary")
+    if (
+        camera.get("qualification_id")
+        != "carla_six_camera_10hz_strict_transport_runtime_v2"
+        or not isinstance(qualification_boundary, dict)
+        or qualification_boundary.get("scope")
+        != "strict_six_camera_10hz_transport_runtime_only"
+        or qualification_boundary.get("simulation_only") is not True
+        or qualification_boundary.get("vehicle_behavior_validated") is not False
+        or qualification_boundary.get("portable_model_loaded") is not False
+        or qualification_boundary.get("portable_model_60kph_validated") is not False
+        or qualification_boundary.get("portable_model_60kph_claim_allowed") is not False
+        or qualification_boundary.get("real_vehicle_ready") is not False
+    ):
+        problems.append("strict 10 Hz qualification boundary is incomplete or changed")
 if longitudinal.get("status") != "complete":
     problems.append("longitudinal-response evidence is incomplete")
 runtime_findings = runtime_load.get("findings")
@@ -957,6 +1490,12 @@ payload = {
     "exit_statuses": statuses,
     "carla_lifecycle": lifecycle_summary,
     "geometry_variant": geometry_variant,
+    "camera_transport_qualification": {
+        "evidence_file": camera_evidence_name,
+        "status": camera.get("status"),
+        "qualification_id": camera.get("qualification_id"),
+        "boundary": camera.get("qualification_boundary"),
+    },
     "acceptance_gate": {
         "path": str(attempt / "pilot_acceptance_gate.json"),
         "sha256": (
@@ -1003,6 +1542,21 @@ payload = {
             "velocity_axis_clamping_observed"
         ) if isinstance(runtime_lookup, dict) else None,
         "camera_bundle_coverage_percent": camera.get("bundle_coverage_percent"),
+        "camera_transport_profile_id": camera.get("contract", {}).get(
+            "profile_id"
+        ) if isinstance(camera.get("contract"), dict) else None,
+        "camera_transport_qualification_scope": (
+            camera.get("qualification_boundary", {}).get("scope")
+            if isinstance(camera.get("qualification_boundary"), dict)
+            else None
+        ),
+        "portable_model_60kph_validated": (
+            camera.get("qualification_boundary", {}).get(
+                "portable_model_60kph_validated"
+            )
+            if isinstance(camera.get("qualification_boundary"), dict)
+            else None
+        ),
         "maximum_camera_stamp_gap_sec": camera.get(
             "maximum_camera_stamp_gap_sec"
         ),

@@ -474,7 +474,7 @@ def test_preflight_detects_unmaterialized_latest_visual_lfs_pointers(tmp_path: P
     root = _fresh_clone_fixture(tmp_path)
     png = (
         root
-        / "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3"
+        / "docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1"
         / "example/screen.png"
     )
     gif = png.with_name("drive.gif")
@@ -499,7 +499,7 @@ def test_preflight_detects_unmaterialized_latest_visual_lfs_pointers(tmp_path: P
 
     assert completed.returncode == 0
     assert "대표 PNG/GIF가 pointer임" in completed.stdout
-    assert "2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3" in completed.stdout
+    assert "2026-09-07/control_ab_30kph_and_60kph_readiness_v1" in completed.stdout
 
 
 def test_missing_option_value_is_usage_error() -> None:
@@ -657,7 +657,7 @@ def test_preflight_is_not_a_hidden_installer() -> None:
     assert "mutation: NONE" in source
     assert "source scripts/e2e/env.sh" not in source
     assert "setup-dev-env.sh를 바로 실행하지 마세요" in source
-    assert "2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**" in source
+    assert "2026-09-07/control_ab_30kph_and_60kph_readiness_v1/**" in source
     assert "rm -rf" not in source
     assert "pkill" not in source
     assert "timeout 10s nvidia-smi" in source

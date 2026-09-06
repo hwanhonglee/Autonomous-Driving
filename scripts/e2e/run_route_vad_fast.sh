@@ -7,7 +7,7 @@ source scripts/e2e/env.sh
 
 usage() {
   cat >&2 <<EOF
-Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz|--portable-shadow-10hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m|--control-ab-turn-preview-10m|--control-ab-longitudinal-recovery-2p0] [--geometry-ab-route-corridor-0p2] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
+Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz|--camera-source-10hz-strict|--portable-shadow-10hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m|--control-ab-turn-preview-10m|--control-ab-longitudinal-recovery-2p0] [--geometry-ab-route-corridor-0p2] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
 
   default       Minimal Autoware control shell and the lowest runtime load
   --full        Full Autoware shell; RViz stays off unless a visual option is set
@@ -22,6 +22,10 @@ Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--sp
                 With --recommended, render all six CARLA cameras at 5 sim-Hz
                 with localhost-only, depth-1 best-effort raw images, reliable
                 camera_info, and continuous IMU
+  --camera-source-10hz-strict
+                Strict source/barrier setup for an enclosing recorded 60 kph
+                simulation qualification; this launcher alone does not emit a
+                verdict, and no Portable model is loaded by this profile
   --portable-shadow-10hz
                 With --speed-30kph, select the six-camera Portable E2E 10 Hz
                 shadow input profile while Autoware VAD retains control;
@@ -57,6 +61,7 @@ recommended=false
 speed_30kph=false
 speed_60kph_pilot=false
 camera_source_5hz=false
+camera_source_10hz_strict=false
 portable_shadow_10hz=false
 portable_shadow_10hz_count=0
 trajectory_stability=false
@@ -105,6 +110,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --camera-source-5hz)
       camera_source_5hz=true
+      recommended=true
+      full=true
+      shift
+      ;;
+    --camera-source-10hz-strict)
+      camera_source_10hz_strict=true
       recommended=true
       full=true
       shift
@@ -201,12 +212,31 @@ if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
+if [[ "${camera_source_10hz_strict}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--camera-source-10hz-strict and --sensor-mapping are mutually exclusive." >&2
+  exit 2
+fi
 if [[ "${portable_shadow_10hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--portable-shadow-10hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
 if [[ "${portable_shadow_10hz}" == "true" && "${camera_source_5hz}" == "true" ]]; then
   echo "--portable-shadow-10hz and --camera-source-5hz are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      ( "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ) ]]; then
+  echo "--camera-source-10hz-strict is mutually exclusive with other camera source profiles." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${speed_60kph_pilot}" != "true" ]]; then
+  echo "--camera-source-10hz-strict requires --speed-60kph-pilot." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+  echo "--camera-source-10hz-strict must be qualified without a geometry A/B candidate." >&2
   exit 2
 fi
 if [[ "${portable_shadow_10hz}" == "true" && "${speed_30kph}" != "true" ]]; then
@@ -338,6 +368,14 @@ PY
 fi
 
 for argument in "$@"; do
+  if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    case "${argument}" in
+      fixed_delta_seconds:=*|sync_mode:=*)
+        echo "Strict 10 Hz controls ${argument%%:=*}; remove the caller override." >&2
+        exit 2
+        ;;
+    esac
+  fi
   case "${argument}" in
     use_fast_vad:=*|vad_use_fp16_heads:=*|vad_model_override_file:=*|use_light_weight_sensor_mapping:=*|sensor_mapping_file:=*|rviz:=*|launch_fast_camera_view:=*)
       echo "Fast profile argument is controlled by this wrapper: ${argument%%:=*}" >&2
@@ -380,11 +418,16 @@ if [[ "${recommended}" == "true" ]]; then
   fast_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu.yaml"
   if [[ "${camera_source_5hz}" == "true" ]]; then
     fast_mapping="${package_share}/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    fast_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     fast_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
   fi
   model_override="${package_share}/config/vad_carla_tiny_recommended.param.yaml"
   if [[ "${camera_source_5hz}" == "true" ]]; then
+    model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
     model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
     cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
@@ -400,6 +443,8 @@ if [[ "${recommended}" == "true" ]]; then
       "${cyclonedds_config}"
       "${cyclonedds_config}.metadata.json"
     )
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    required_profile_files+=("${cyclonedds_config}")
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     required_profile_files+=("${cyclonedds_config}")
   fi
@@ -433,7 +478,9 @@ if [[ "${recommended}" == "true" ]]; then
   done
 fi
 
-if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+if [[ "${camera_source_5hz}" == "true" || \
+      "${camera_source_10hz_strict}" == "true" || \
+      "${portable_shadow_10hz}" == "true" ]]; then
   # HH_260906 - Isolate bounded raw-camera traffic on the pinned loopback transport.
   # This versioned simulation profile is intentionally isolated from LAN DDS
   # participants. env.sh clears inherited Cyclone settings before this exact
@@ -463,6 +510,18 @@ profile_arguments=(
   "use_light_weight_sensor_mapping:=True"
   "sensor_mapping_file:=${fast_mapping}"
 )
+
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - Make the direct strict profile enforce the same immutable camera barrier as recorded trials.
+  profile_arguments+=(
+    "sync_mode:=true"
+    "fixed_delta_seconds:=0.05"
+    "camera_frame_barrier_enabled:=true"
+    "camera_frame_wait_timeout_sec:=0.25"
+    "camera_publish_deadline_sec:=0.25"
+    "camera_pending_frame_limit:=8"
+  )
+fi
 
 if [[ "${recommended}" == "true" ]]; then
   profile_arguments+=(
@@ -546,7 +605,7 @@ if [[ "${trajectory_stability}" == "true" ]]; then
   echo "NOTICE: this outlier filter is HOLD after repeated closed-loop screening; it is not the recommended profile." >&2
 fi
 
-echo "VAD fast profile: 6x 640x360 raw cameras; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; Portable shadow source 10 sim-Hz=${portable_shadow_10hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; control AB turn-preview-10m=${control_ab_turn_preview_10m}; control AB longitudinal-recovery-2p0=${control_ab_longitudinal_recovery_2p0}; geometry AB route-corridor-0p2=${geometry_ab_route_corridor_0p2}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
+echo "VAD fast profile: 6x 640x360 raw cameras; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; strict camera source 10 sim-Hz=${camera_source_10hz_strict}; Portable shadow source 10 sim-Hz=${portable_shadow_10hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; control AB turn-preview-10m=${control_ab_turn_preview_10m}; control AB longitudinal-recovery-2p0=${control_ab_longitudinal_recovery_2p0}; geometry AB route-corridor-0p2=${geometry_ab_route_corridor_0p2}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
 if [[ "${full}" == "true" ]]; then
   rviz_enabled=false
   if [[ "${visualize}" == "true" || "${rviz_only}" == "true" ]]; then

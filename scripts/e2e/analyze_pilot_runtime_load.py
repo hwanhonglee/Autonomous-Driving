@@ -27,7 +27,7 @@ import os
 import re
 import statistics
 import tempfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -753,6 +753,287 @@ def build_same_stamp_camera_bundles(
     return bundles
 
 
+def camera_source_stamp_integrity(
+    records: Mapping[str, Sequence[Mapping[str, Any]]],
+    matched_bundle_count: int,
+) -> dict[str, Any]:
+    """HH_260906 - Describe stamp uniqueness and one-to-one bundle consumption."""
+    topics: dict[str, Any] = {}
+    for topic in CAMERA_INFO_TOPICS:
+        topic_records = list(records.get(topic, ()))
+        stamps = [int(record["stamp_ns"]) for record in topic_records]
+        positive = [stamp for stamp in stamps if stamp > 0]
+        non_increasing = sum(
+            current <= previous
+            for previous, current in zip(positive, positive[1:])
+        )
+        unique_count = len(set(positive))
+        topics[topic] = {
+            "record_count": len(topic_records),
+            "positive_stamp_count": len(positive),
+            "unique_positive_stamp_count": unique_count,
+            "zero_or_negative_stamp_count": len(stamps) - len(positive),
+            "duplicate_positive_stamp_count": len(positive) - unique_count,
+            "non_increasing_positive_stamp_delta_count": non_increasing,
+            "strictly_increasing_unique_positive_stamps": (
+                bool(positive)
+                and len(positive) == len(topic_records)
+                and unique_count == len(positive)
+                and non_increasing == 0
+            ),
+            "unused_record_count": len(topic_records) - matched_bundle_count,
+        }
+    record_counts = [item["record_count"] for item in topics.values()]
+    count_parity = len(set(record_counts)) == 1
+    all_records_used_once = all(
+        item["unused_record_count"] == 0 for item in topics.values()
+    )
+    all_strict = all(
+        item["strictly_increasing_unique_positive_stamps"]
+        for item in topics.values()
+    )
+    # HH_260906 - Strict qualification consumes every unique camera record exactly once.
+    return {
+        "status": (
+            "PASS"
+            if count_parity and all_records_used_once and all_strict
+            else "FAIL"
+        ),
+        "record_count_parity": count_parity,
+        "all_records_used_exactly_once": all_records_used_once,
+        "matched_bundle_count": matched_bundle_count,
+        "topics": topics,
+    }
+
+
+def edge_bounded_camera_source_stamp_integrity(
+    records: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> dict[str, Any]:
+    """HH_260906 - Prove exact interior bundles after bounded bag-edge trimming."""
+    expected_topics = list(CAMERA_INFO_TOPICS)
+    topic_stamp_counts: dict[str, Counter[int]] = {}
+    topic_reports: dict[str, dict[str, Any]] = {}
+    union_positive_stamps: set[int] = set()
+    raw_record_count = 0
+    positive_record_count = 0
+    nonpositive_record_count = 0
+    duplicate_positive_record_count = 0
+    non_increasing_positive_delta_count = 0
+
+    for topic in CAMERA_INFO_TOPICS:
+        topic_records = list(records.get(topic, ()))
+        stamps = [int(record.get("stamp_ns", 0)) for record in topic_records]
+        positive_stamps = [stamp for stamp in stamps if stamp > 0]
+        counts = Counter(positive_stamps)
+        duplicate_count = sum(count - 1 for count in counts.values() if count > 1)
+        non_increasing_count = sum(
+            current <= previous
+            for previous, current in zip(positive_stamps, positive_stamps[1:])
+        )
+        invalid_count = len(stamps) - len(positive_stamps)
+        topic_stamp_counts[topic] = counts
+        union_positive_stamps.update(counts)
+        raw_record_count += len(stamps)
+        positive_record_count += len(positive_stamps)
+        nonpositive_record_count += invalid_count
+        duplicate_positive_record_count += duplicate_count
+        non_increasing_positive_delta_count += non_increasing_count
+        topic_reports[topic] = {
+            "record_count": len(stamps),
+            "positive_stamp_count": len(positive_stamps),
+            "unique_positive_stamp_count": len(counts),
+            "zero_or_negative_stamp_count": invalid_count,
+            "duplicate_positive_stamp_count": duplicate_count,
+            "non_increasing_positive_stamp_delta_count": non_increasing_count,
+            "strictly_increasing_unique_positive_stamps": (
+                bool(positive_stamps)
+                and invalid_count == 0
+                and duplicate_count == 0
+                and non_increasing_count == 0
+            ),
+        }
+
+    def describe_union_stamp(stamp_ns: int) -> dict[str, Any]:
+        counts = {
+            topic: topic_stamp_counts[topic].get(stamp_ns, 0)
+            for topic in CAMERA_INFO_TOPICS
+        }
+        present_topics = [topic for topic, count in counts.items() if count > 0]
+        missing_topics = [topic for topic, count in counts.items() if count == 0]
+        duplicate_topics = [topic for topic, count in counts.items() if count > 1]
+        return {
+            "source_stamp_ns": stamp_ns,
+            "record_count": sum(counts.values()),
+            "per_topic_record_counts": counts,
+            "present_topics": present_topics,
+            "missing_topics": missing_topics,
+            "duplicate_topics": duplicate_topics,
+            "incomplete": bool(missing_topics),
+            "exact_six_camera_one_to_one": all(count == 1 for count in counts.values()),
+        }
+
+    union_stamp_reports = [
+        describe_union_stamp(stamp_ns) for stamp_ns in sorted(union_positive_stamps)
+    ]
+    leading_trim = (
+        union_stamp_reports[0]
+        if union_stamp_reports and union_stamp_reports[0]["incomplete"]
+        else None
+    )
+    trailing_trim = (
+        union_stamp_reports[-1]
+        if union_stamp_reports and union_stamp_reports[-1]["incomplete"]
+        else None
+    )
+    trimmed_stamps = {
+        int(item["source_stamp_ns"])
+        for item in (leading_trim, trailing_trim)
+        if item is not None
+    }
+    retained_stamp_reports = [
+        item
+        for item in union_stamp_reports
+        if int(item["source_stamp_ns"]) not in trimmed_stamps
+    ]
+    retained_incomplete = [
+        item for item in retained_stamp_reports if item["incomplete"]
+    ]
+    retained_non_exact = [
+        item
+        for item in retained_stamp_reports
+        if not item["exact_six_camera_one_to_one"]
+    ]
+    retained_complete_bundle_count = sum(
+        bool(item["exact_six_camera_one_to_one"])
+        for item in retained_stamp_reports
+    )
+    trimmed_positive_record_count = sum(
+        int(item["record_count"])
+        for item in union_stamp_reports
+        if int(item["source_stamp_ns"]) in trimmed_stamps
+    )
+
+    for topic in CAMERA_INFO_TOPICS:
+        trimmed_topic_count = sum(
+            topic_stamp_counts[topic].get(stamp_ns, 0)
+            for stamp_ns in trimmed_stamps
+        )
+        topic_reports[topic]["trimmed_boundary_record_count"] = trimmed_topic_count
+        topic_reports[topic]["retained_interior_record_count"] = (
+            topic_reports[topic]["positive_stamp_count"] - trimmed_topic_count
+        )
+
+    failures: list[dict[str, Any]] = []
+    if nonpositive_record_count:
+        failures.append(
+            {
+                "check": "positive_source_stamps",
+                "actual_nonpositive_record_count": nonpositive_record_count,
+                "expected": 0,
+            }
+        )
+    if duplicate_positive_record_count:
+        failures.append(
+            {
+                "check": "unique_source_stamps_per_topic",
+                "actual_duplicate_record_count": duplicate_positive_record_count,
+                "expected": 0,
+            }
+        )
+    if non_increasing_positive_delta_count:
+        failures.append(
+            {
+                "check": "strictly_increasing_source_stamps_per_topic",
+                "actual_non_increasing_delta_count": (
+                    non_increasing_positive_delta_count
+                ),
+                "expected": 0,
+            }
+        )
+    if retained_incomplete:
+        failures.append(
+            {
+                "check": "incomplete_union_stamps_are_bag_edges_only",
+                "actual_source_stamps_ns": [
+                    int(item["source_stamp_ns"]) for item in retained_incomplete
+                ],
+                "expected": [],
+            }
+        )
+    if retained_non_exact:
+        failures.append(
+            {
+                "check": "retained_stamps_are_exact_six_camera_one_to_one",
+                "actual_source_stamps_ns": [
+                    int(item["source_stamp_ns"]) for item in retained_non_exact
+                ],
+                "expected": [],
+            }
+        )
+    if not retained_stamp_reports:
+        failures.append(
+            {
+                "check": "retained_complete_bundle_count",
+                "actual": 0,
+                "minimum": 1,
+            }
+        )
+
+    # HH_260906 - Expose every discarded edge stamp so v2 validation can bind the trim.
+    boundary_trim = {
+        "policy": "at_most_one_incomplete_union_stamp_per_bag_edge_v1",
+        "maximum_incomplete_union_stamp_count_per_edge": 1,
+        "leading_incomplete_union_stamp_count": int(leading_trim is not None),
+        "trailing_incomplete_union_stamp_count": int(trailing_trim is not None),
+        "trimmed_union_stamp_count": len(trimmed_stamps),
+        "trimmed_positive_record_count": trimmed_positive_record_count,
+        "trimmed_source_stamps_ns": sorted(trimmed_stamps),
+        "leading": leading_trim,
+        "trailing": trailing_trim,
+    }
+    retained_source_stamps = [
+        int(item["source_stamp_ns"]) for item in retained_stamp_reports
+    ]
+    retained_interior = {
+        "source_stamp_count": len(retained_stamp_reports),
+        "source_stamp_range_ns": {
+            "minimum": retained_source_stamps[0] if retained_source_stamps else None,
+            "maximum": retained_source_stamps[-1] if retained_source_stamps else None,
+        },
+        "positive_record_count": (
+            positive_record_count - trimmed_positive_record_count
+        ),
+        "expected_record_count": len(retained_stamp_reports)
+        * len(CAMERA_INFO_TOPICS),
+        "complete_bundle_count": retained_complete_bundle_count,
+        "incomplete_union_stamp_count": len(retained_incomplete),
+        "non_exact_union_stamp_count": len(retained_non_exact),
+        "all_source_stamps_exact_six_camera_one_to_one": bool(
+            retained_stamp_reports
+        )
+        and not retained_non_exact,
+    }
+    return {
+        "schema_version": 1,
+        "qualification_id": "camera_source_stamp_edge_bounded_whole_bag_v1",
+        "status": "PASS" if not failures else "FAIL",
+        "camera_count": len(CAMERA_INFO_TOPICS),
+        "expected_topics": expected_topics,
+        "raw_record_count": raw_record_count,
+        "positive_record_count": positive_record_count,
+        "nonpositive_record_count": nonpositive_record_count,
+        "duplicate_positive_record_count": duplicate_positive_record_count,
+        "non_increasing_positive_stamp_delta_count": (
+            non_increasing_positive_delta_count
+        ),
+        "union_positive_source_stamp_count": len(union_stamp_reports),
+        "boundary_trim": boundary_trim,
+        "retained_interior": retained_interior,
+        "topics": topic_reports,
+        "failures": failures,
+    }
+
+
 def _camera_bundle_summary(bundles: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     offsets: dict[str, dict[str, Any]] = {}
     for camera in CAMERAS:
@@ -777,6 +1058,10 @@ def build_camera_runtime(
     bundles = build_same_stamp_camera_bundles(records)
     if not bundles:
         raise RuntimeLoadError("no exact same-stamp six-camera bundles")
+    # HH_260906 - Bind every source record to the exact-bundle consumption proof.
+    stamp_integrity = camera_source_stamp_integrity(records, len(bundles))
+    # HH_260906 - Preserve v1 evidence while adding bounded whole-bag edge proof for v2.
+    edge_bounded_stamp_integrity = edge_bounded_camera_source_stamp_integrity(records)
     boundary = vad_runtime["analysis_window_boundary"]
     first_edge = float(boundary["first_last_source_sim_sec"])
     second_start = float(boundary["second_first_source_sim_sec"])
@@ -872,6 +1157,8 @@ def build_camera_runtime(
         "camera_count": len(CAMERA_INFO_TOPICS),
         "front_record_count": len(records.get(CAMERA_INFO_TOPICS[0], [])),
         "matched_bundle_count": len(bundles),
+        "source_stamp_integrity": stamp_integrity,
+        "edge_bounded_source_stamp_integrity": edge_bounded_stamp_integrity,
         "bundle_coverage_percent": 100.0
         * len(bundles)
         / len(records.get(CAMERA_INFO_TOPICS[0], [])),
@@ -1023,6 +1310,19 @@ def classify_process_groups(
             pid
             for pid, command in commands.items()
             if command in {"Xorg", "Xwayland", "gnome-shell"}
+        },
+        # HH_260906 - Isolate host maintenance load seen during the live pilot.
+        "unattended_upgrades": {
+            pid
+            for pid, command in commands.items()
+            if command.startswith("unattended-upgr")
+            or command.startswith("apt.systemd.daily")
+        },
+        # HH_260906 - Isolate interactive desktop streaming from RViz rendering.
+        "remote_desktop": {
+            pid
+            for pid, command in commands.items()
+            if "anydesk" in command.lower()
         },
     }
     groups["rosbag_recorder"] = _choose_recorder_pid(pidstat_rows, launch_owned)
@@ -1360,15 +1660,24 @@ def build_runtime_load_analysis(
     full_gpu = host_runtime["gpu_device_total"]["phases"]["full_trial"]
     drops = vad_runtime["integrity"]
 
-    camera_source_stable = (
-        camera_runtime["source_period_sec"]["max"] < 0.201
-        and camera_runtime["source_period_sec"]["min"] > 0.199
+    # HH_260906 - Judge cadence against its measured source period for 5/10 Hz runs.
+    source_period = camera_runtime["source_period_sec"]
+    median_source_period_sec = source_period["median"]
+    camera_source_stable = bool(
+        source_period["count"] > 0
+        and median_source_period_sec > 0.0
+        and source_period["min"] >= 0.99 * median_source_period_sec
+        and source_period["max"] <= 1.01 * median_source_period_sec
     )
+    # HH_260906 - Count a run as drop-free only when every mailbox take was published.
+    final_counters = drops.get("final_counters", {})
     no_vad_drops = bool(
-        drops.get("final_counters")
-        and drops["final_counters"].get("coalesced_drops") == 0
+        final_counters
+        and drops.get("all_published") is True
+        and final_counters.get("coalesced_drops") == 0
+        and final_counters.get("published_count")
+        == final_counters.get("mailbox_taken")
         and (drops.get("queue_counter_maxima", {}).get("capacity_pruned") in (0, None))
-        and (drops.get("queue_counter_maxima", {}).get("superseded") in (0, None))
     )
     source_period_ms = 1000.0 * camera_runtime["source_period_sec"]["median"]
     inference_below_source_period = full_vad["inference_ms"]["p99"] < source_period_ms
@@ -1436,9 +1745,10 @@ def build_runtime_load_analysis(
 
     if camera_source_stable and no_vad_drops:
         camera_hz_explanation = (
-            "The source stays at five simulation-Hz without observed VAD drops. A five-fps "
-            "display can look mildly stepped at RTF~=1; wall-visible cadence is source "
-            "cadence multiplied by RTF."
+            f"The source stays at {camera_runtime['source_rate_hz_from_median_period']:.3f} "
+            "simulation-Hz without observed VAD mailbox drops. A lower-fps evidence "
+            "capture can still look stepped; wall-visible cadence is source cadence "
+            "multiplied by RTF."
         )
     else:
         camera_hz_explanation = (
@@ -1447,8 +1757,9 @@ def build_runtime_load_analysis(
         )
     if persistent_low and camera_source_stable and no_vad_drops:
         camera_hz_explanation += (
-            " Here the persistent RTF~=0.248 makes the five sim-Hz source appear at about "
-            "1.24 wall-Hz, but source cadence itself remains complete and stable."
+            f" Here the persistent RTF makes the source appear at about "
+            f"{camera_runtime['source_rate_hz_from_median_period'] * full_vad['aggregate_rtf']:.2f} "
+            "wall-Hz, but source cadence itself remains complete and stable."
         )
 
     camera_pattern_finding = {
@@ -1706,10 +2017,18 @@ def _plot_conclusion_lines(report: Mapping[str, Any]) -> list[str]:
     lines = []
 
     camera_hz = findings.get("camera_hz_is_not_the_rtf_cause", {})
+    # HH_260906 - Render the measured source rate instead of a hard-coded 5 Hz label.
+    source_rate_hz = camera_hz.get("source_rate_hz")
+    source_rate_label = (
+        f"{float(source_rate_hz):.3f} sim-Hz"
+        if isinstance(source_rate_hz, (int, float))
+        and math.isfinite(float(source_rate_hz))
+        else "camera source cadence"
+    )
     if camera_hz.get("supported") is True:
-        lines.append("- 5 sim-Hz source is stable; no VAD drops.")
+        lines.append(f"- {source_rate_label} source is stable; no VAD mailbox drops.")
     else:
-        lines.append("- Stable, drop-free 5 sim-Hz evidence is not established.")
+        lines.append(f"- Stable, drop-free {source_rate_label} evidence is not established.")
 
     if support.get("camera_pattern_supported") is True:
         if runtime_pattern == "transient_recovery":
@@ -1777,7 +2096,16 @@ def render_runtime_load_png(report: Mapping[str, Any], output: Path) -> None:
         linewidth=1.0,
     )
     axes[1, 0].axvline(boundary_sim, color=boundary_color, linestyle=boundary_style)
-    axes[1, 0].axhline(200.0, color="black", linewidth=0.8, alpha=0.4, label="5-Hz period")
+    # HH_260906 - Draw the active source-period reference for either camera profile.
+    source_period_ms = 1000.0 * camera["source_period_sec"]["median"]
+    source_rate_hz = camera["source_rate_hz_from_median_period"]
+    axes[1, 0].axhline(
+        source_period_ms,
+        color="black",
+        linewidth=0.8,
+        alpha=0.4,
+        label=f"{source_rate_hz:.1f}-Hz source period",
+    )
     axes[1, 0].set(
         title="VAD inference latency", xlabel="simulation time [s]", ylabel="latency [ms]"
     )
@@ -1806,6 +2134,7 @@ def render_runtime_load_png(report: Mapping[str, Any], output: Path) -> None:
     axes[1, 1].legend()
     axes[1, 1].grid(axis="y", alpha=0.25)
 
+    # HH_260906 - Show maintenance and remote-desktop load beside stack processes.
     process_names = (
         "carla_server",
         "carla_bridge",
@@ -1814,6 +2143,8 @@ def render_runtime_load_png(report: Mapping[str, Any], output: Path) -> None:
         "route_manager",
         "rosbag_recorder",
         "desktop_capture",
+        "unattended_upgrades",
+        "remote_desktop",
     )
     available_names = [
         name
@@ -1873,12 +2204,19 @@ def render_runtime_load_png(report: Mapping[str, Any], output: Path) -> None:
     else:
         full_rtf = vad["phases"]["full_run"]["aggregate_rtf"]
         full_span = camera["phases"]["full_run"]["receipt_span_ms"]["mean"]
+        full_span_p95 = camera["phases"]["full_run"]["receipt_span_ms"]["p95"]
+        # HH_260906 - Keep the plot verdict aligned with the measured runtime pattern.
+        runtime_heading = (
+            "Persistent low RTF; no recovery detected"
+            if vad["runtime_pattern"] == "persistent_low_rtf_no_recovery"
+            else "Steady near-real-time; no abrupt recovery detected"
+        )
         summary_text = (
-            "Persistent low RTF; no recovery detected\n"
+            f"{runtime_heading}\n"
             f"Full RTF: {full_rtf:.3f}\n"
             f"Early -> late RTF: {first_rtf:.3f} -> {second_rtf:.3f}\n"
-            f"Full 6-camera span: {full_span:.2f} ms\n"
-            f"Early -> late span: {first_span:.2f} -> {second_span:.2f} ms\n"
+            f"Full 6-camera span mean/p95: {full_span:.2f}/{full_span_p95:.2f} ms\n"
+            f"Early -> late span mean: {first_span:.2f} -> {second_span:.2f} ms\n"
             f"VAD inference: {first_inference:.2f} -> {second_inference:.2f} ms\n\n"
             f"Conclusion\n{conclusion_text}\n\n"
             "Causal boundary\n"

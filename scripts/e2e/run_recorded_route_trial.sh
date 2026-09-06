@@ -39,6 +39,9 @@ Options:
   --speed-60kph-pilot    Add the straight-only CARLA 16.667 m/s exploratory pilot
   --camera-source-5hz    Render six CARLA cameras at 5 sim-Hz with the pinned
                          localhost-only Best-Effort KEEP_LAST depth-1 profile
+  --camera-source-10hz-strict
+                         60 kph simulation-only six-camera 10 Hz transport and
+                         runtime qualification; never loads the Portable model
   --portable-shadow-10hz Run Portable E2E at the exact six-camera 10 Hz ABI in
                          isolated shadow-only mode; requires --speed-30kph
   --portable-runtime-bundle FILE
@@ -107,6 +110,7 @@ recommended=false
 speed_30kph=false
 speed_60kph_pilot=false
 camera_source_5hz=false
+camera_source_10hz_strict=false
 camera_source_sensor_tick_sec=0.0
 portable_shadow_10hz=false
 # HH_260906 - Enable the synchronous camera barrier only for the pinned Common10 profile.
@@ -189,6 +193,13 @@ while [[ $# -gt 0 ]]; do
     --camera-source-5hz)
       camera_source_5hz=true
       camera_source_sensor_tick_sec=0.2
+      recommended=true
+      shift
+      ;;
+    --camera-source-10hz-strict)
+      camera_source_10hz_strict=true
+      camera_frame_barrier_enabled=true
+      camera_source_sensor_tick_sec=0.1
       recommended=true
       shift
       ;;
@@ -396,12 +407,36 @@ if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
+if [[ "${camera_source_10hz_strict}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--camera-source-10hz-strict and --sensor-mapping are mutually exclusive." >&2
+  exit 2
+fi
 if [[ "${portable_shadow_10hz}" == "true" && "${camera_source_5hz}" == "true" ]]; then
   echo "--portable-shadow-10hz and --camera-source-5hz are mutually exclusive." >&2
   exit 2
 fi
 if [[ "${portable_shadow_10hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--portable-shadow-10hz and --sensor-mapping are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      ( "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ) ]]; then
+  echo "--camera-source-10hz-strict is mutually exclusive with other camera source profiles." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${speed_60kph_pilot}" != "true" ]]; then
+  echo "--camera-source-10hz-strict requires --speed-60kph-pilot." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+  echo "--camera-source-10hz-strict must be qualified without a geometry A/B candidate." >&2
+  exit 2
+fi
+if [[ "${camera_source_10hz_strict}" == "true" && \
+      "${visualize}" != "true" ]]; then
+  echo "--camera-source-10hz-strict requires --visualize for the exact RViz image-reader graph." >&2
   exit 2
 fi
 if [[ "${portable_shadow_10hz}" == "true" && "${speed_30kph}" != "true" ]]; then
@@ -529,6 +564,9 @@ if [[ ( "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ) &&
       "${camera_source_5hz}" == "true" ]]; then
   runtime_health_gate=true
   runtime_health_gate_mode="automatic_speed_camera_source_5hz"
+elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  runtime_health_gate=true
+  runtime_health_gate_mode="automatic_speed_camera_source_10hz_strict"
 elif [[ "${portable_shadow_10hz}" == "true" ]]; then
   runtime_health_gate=true
   runtime_health_gate_mode="automatic_speed_portable_shadow_10hz"
@@ -593,6 +631,14 @@ if [[ "${recommended}" == "true" ]]; then
 fi
 
 for argument in "${launch_arguments[@]}"; do
+  if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    case "${argument}" in
+      fixed_delta_seconds:=*|sync_mode:=*)
+        echo "Strict 10 Hz controls ${argument%%:=*}; remove the caller override." >&2
+        exit 2
+        ;;
+    esac
+  fi
   if [[ "${portable_shadow_10hz}" == "true" ]]; then
     case "${argument}" in
       -r|--remap|--ros-args|__node:=*|__ns:=*|*portable_e2e_shadow*|*/planning/portable_e2e/*|*/planning/trajectory*|*/control/command/*|*/vehicle/command/*)
@@ -716,6 +762,10 @@ if [[ "${recommended}" == "true" ]]; then
     sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
     model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
     cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    sensor_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
+    model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     sensor_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
     model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
@@ -730,6 +780,8 @@ if [[ "${recommended}" == "true" ]]; then
       "${cyclonedds_config}"
       "${cyclonedds_config}.metadata.json"
     )
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    required_profile_files+=("${cyclonedds_config}")
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     required_profile_files+=(
       "${cyclonedds_config}"
@@ -869,6 +921,71 @@ if (
     raise SystemExit("CycloneDDS localhost transport metadata mismatch")
 PY
 fi
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - Issue v2 only when the owned-recorder measurement contract applies.
+  camera_transport_profile_id="carla_vad_camera_source_10hz_strict_v2"
+  camera_transport_sensor_mapping_sha256="$(
+    sha256sum -- "${sensor_mapping}" | awk '{print $1}'
+  )"
+  camera_transport_vad_override_sha256="$(
+    sha256sum -- "${model_override}" | awk '{print $1}'
+  )"
+  camera_transport_cyclonedds_sha256="$(
+    sha256sum -- "${cyclonedds_config}" | awk '{print $1}'
+  )"
+  python3 - "${sensor_mapping}" "${model_override}" "${cyclonedds_config}" \
+    "${root}/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml" \
+    "${root}/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml" \
+    "${root}/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml" <<'PY'
+import hashlib
+from pathlib import Path
+import sys
+
+import yaml
+
+mapping_path, model_path, cyclone_path, mapping_source, model_source, cyclone_source = map(
+    Path, sys.argv[1:7]
+)
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+for runtime_path, source_path in (
+    (mapping_path, mapping_source),
+    (model_path, model_source),
+    (cyclone_path, cyclone_source),
+):
+    if digest(runtime_path) != digest(source_path):
+        raise SystemExit(f"installed strict camera transport input differs from source: {runtime_path}")
+
+mapping = yaml.safe_load(mapping_path.read_text(encoding="utf-8"))
+cameras = [
+    value
+    for value in mapping["sensor_mappings"].values()
+    if value.get("carla_type") == "sensor.camera.rgb"
+]
+if len(cameras) != 6:
+    raise SystemExit("strict camera transport profile must contain exactly six cameras")
+for camera in cameras:
+    ros = camera["ros_config"]
+    if (
+        ros.get("image_qos_profile") != "best_effort_depth_1"
+        or ros.get("camera_info_qos_profile") != "reliable"
+        or ros.get("frequency_hz") != 11
+        or camera["parameters"].get("sensor_tick") != 0.1
+    ):
+        raise SystemExit("strict camera transport mapping violates the 10 Hz split-QoS contract")
+for sensor_name in ("tamagawa/imu_link", "gnss_link"):
+    if mapping["sensor_mappings"][sensor_name]["ros_config"].get("qos_profile") != "reliable":
+        raise SystemExit(f"{sensor_name} must retain reliable QoS")
+model = yaml.safe_load(model_path.read_text(encoding="utf-8"))
+sync = model["/**"]["ros__parameters"]["sync_params"]
+if sync.get("image_reliability") != "best_effort" or sync.get("image_queue_depth") != 1:
+    raise SystemExit("strict camera transport requires a Best-Effort depth-1 VAD reader")
+PY
+fi
 if [[ "${portable_shadow_10hz}" == "true" ]]; then
   camera_transport_profile_id="portable_e2e_exact_bundle_10hz_v2"
   camera_transport_sensor_mapping_sha256="$(
@@ -881,7 +998,9 @@ if [[ "${portable_shadow_10hz}" == "true" ]]; then
     sha256sum -- "${cyclonedds_config}" | awk '{print $1}'
   )"
 fi
-if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+if [[ "${camera_source_5hz}" == "true" || \
+      "${camera_source_10hz_strict}" == "true" || \
+      "${portable_shadow_10hz}" == "true" ]]; then
   # HH_260906 - Let the pinned CycloneDDS file own the single loopback selection.
   export ROS_LOCALHOST_ONLY=0
   export AUTOWARE_E2E_PINNED_CYCLONEDDS_URI="file://${cyclonedds_config}"
@@ -895,9 +1014,11 @@ raw_vehicle_cmd_converter_config="$(
 # HH_260906 - Bind each route artifact to every source file enforcing camera continuity.
 carla_camera_bundle_dispatch_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
 carla_camera_bridge_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py"
+carla_camera_entrypoint_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py"
 carla_camera_publish_worker_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py"
 carla_camera_interface_launch_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml"
 carla_camera_delivery_patch="${root}/patches/autoware_carla_interface_camera_delivery_contract.patch"
+carla_camera_delivery_patch_worktree="${root}/src/universe/autoware_universe"
 # HH_260906 - Resolve installed modules after the workspace environment has been sanitized.
 resolve_installed_python_module() {
   python3 - "$1" <<'PY'
@@ -917,6 +1038,9 @@ carla_camera_bundle_dispatch_runtime="$(
 carla_camera_bridge_runtime="$(
   resolve_installed_python_module autoware_carla_interface.carla_ros
 )"
+carla_camera_entrypoint_runtime="$(
+  resolve_installed_python_module autoware_carla_interface.carla_autoware
+)"
 carla_camera_publish_worker_runtime="$(
   resolve_installed_python_module autoware_carla_interface.modules.sensor_publish_worker
 )"
@@ -929,6 +1053,9 @@ carla_camera_bundle_dispatch_sha256="$(
 carla_camera_bridge_sha256="$(
   sha256sum -- "${carla_camera_bridge_source}" | awk '{print $1}'
 )"
+carla_camera_entrypoint_sha256="$(
+  sha256sum -- "${carla_camera_entrypoint_source}" | awk '{print $1}'
+)"
 carla_camera_publish_worker_sha256="$(
   sha256sum -- "${carla_camera_publish_worker_source}" | awk '{print $1}'
 )"
@@ -938,10 +1065,18 @@ carla_camera_interface_launch_sha256="$(
 carla_camera_delivery_patch_sha256="$(
   sha256sum -- "${carla_camera_delivery_patch}" | awk '{print $1}'
 )"
+carla_camera_delivery_patch_reverse_check="NOT_REQUIRED"
+if [[ "${camera_frame_barrier_enabled}" == "true" ]]; then
+  # HH_260906 - Prove the pinned delivery patch is applied to the exact source worktree.
+  git -C "${carla_camera_delivery_patch_worktree}" apply --reverse --check \
+    "${carla_camera_delivery_patch}"
+  carla_camera_delivery_patch_reverse_check="PASS"
+fi
 # HH_260906 - Refuse trials when any installed camera-contract module differs from source.
 camera_contract_sources=(
   "bundle dispatcher|${carla_camera_bundle_dispatch_source}|${carla_camera_bundle_dispatch_runtime}|${carla_camera_bundle_dispatch_sha256}"
   "bridge|${carla_camera_bridge_source}|${carla_camera_bridge_runtime}|${carla_camera_bridge_sha256}"
+  "entrypoint|${carla_camera_entrypoint_source}|${carla_camera_entrypoint_runtime}|${carla_camera_entrypoint_sha256}"
   "publish worker|${carla_camera_publish_worker_source}|${carla_camera_publish_worker_runtime}|${carla_camera_publish_worker_sha256}"
   "interface launch|${carla_camera_interface_launch_source}|${carla_camera_interface_launch_runtime}|${carla_camera_interface_launch_sha256}"
 )
@@ -965,8 +1100,13 @@ camera_frame_stride="not_applicable"
 camera_expected_rgb_count="not_applicable"
 if [[ "${camera_frame_barrier_enabled}" == "true" ]]; then
   carla_camera_bundle_dispatch_policy="exact_due_frame_barrier_fail_closed_v1"
-  carla_camera_delivery_contract_id="common10_exact_due_frame_fail_closed_v1"
-  carla_camera_barrier_scope="portable_e2e_common10_only"
+  if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    carla_camera_delivery_contract_id="strict10_exact_due_frame_fail_closed_v1"
+    carla_camera_barrier_scope="strict_six_camera_10hz_transport_only"
+  else
+    carla_camera_delivery_contract_id="common10_exact_due_frame_fail_closed_v1"
+    carla_camera_barrier_scope="portable_e2e_common10_only"
+  fi
   camera_frame_stride=2
   camera_expected_rgb_count=6
 fi
@@ -978,6 +1118,13 @@ if [[ "${camera_frame_barrier_enabled}" == "true" ]]; then
     "camera_frame_wait_timeout_sec:=${camera_frame_wait_timeout_sec}"
     "camera_publish_deadline_sec:=${camera_publish_deadline_sec}"
     "camera_pending_frame_limit:=${camera_pending_frame_limit}"
+  )
+fi
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - Pin the CARLA clock so a 100 ms sensor tick always derives stride two.
+  camera_contract_launch_arguments+=(
+    "sync_mode:=true"
+    "fixed_delta_seconds:=0.05"
   )
 fi
 runtime_health_probe="${root}/scripts/e2e/probe_runtime_health.py"
@@ -1460,7 +1607,7 @@ printf 'CARLA_LIFECYCLE=cold_start_owned_process_group_per_trial\nCARLA_GENERATI
   "${output_dir}/runtime.env"
 printf 'SOURCE_ROUTE_FILE=%s\nEFFECTIVE_ROUTE_FILE=%s\nFULL_MAP_PATH=%s\n' \
   "${source_route_file}" "${route_file}" "${full_map_path}" >> "${output_dir}/runtime.env"
-printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s\nCARLA_CAMERA_FRAME_BARRIER_ENABLED=%s\nCARLA_CAMERA_FRAME_STRIDE=%s\nCARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SCOPE=callback_execution_only\nCARLA_CAMERA_PENDING_FRAME_LIMIT=%s\nCARLA_CAMERA_EXPECTED_RGB_COUNT=%s\nCARLA_CAMERA_BARRIER_SCOPE=%s\nCARLA_CAMERA_DELIVERY_CONTRACT_ID=%s\nCARLA_CAMERA_DELIVERY_PATCH_FILE=%s\nCARLA_CAMERA_DELIVERY_PATCH_SHA256=%s\nCARLA_CAMERA_BRIDGE_SOURCE_FILE=%s\nCARLA_CAMERA_BRIDGE_RUNTIME_FILE=%s\nCARLA_CAMERA_BRIDGE_SHA256=%s\nCARLA_CAMERA_PUBLISH_WORKER_SOURCE_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_RUNTIME_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_SHA256=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SOURCE_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_RUNTIME_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s\n' \
+printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s\nCARLA_CAMERA_FRAME_BARRIER_ENABLED=%s\nCARLA_CAMERA_FRAME_STRIDE=%s\nCARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SCOPE=callback_execution_only\nCARLA_CAMERA_PENDING_FRAME_LIMIT=%s\nCARLA_CAMERA_EXPECTED_RGB_COUNT=%s\nCARLA_CAMERA_BARRIER_SCOPE=%s\nCARLA_CAMERA_DELIVERY_CONTRACT_ID=%s\nCARLA_CAMERA_DELIVERY_PATCH_FILE=%s\nCARLA_CAMERA_DELIVERY_PATCH_SHA256=%s\nCARLA_CAMERA_DELIVERY_PATCH_WORKTREE=%s\nCARLA_CAMERA_DELIVERY_PATCH_REVERSE_CHECK=%s\nCARLA_CAMERA_BRIDGE_SOURCE_FILE=%s\nCARLA_CAMERA_BRIDGE_RUNTIME_FILE=%s\nCARLA_CAMERA_BRIDGE_SHA256=%s\nCARLA_CAMERA_ENTRYPOINT_SOURCE_FILE=%s\nCARLA_CAMERA_ENTRYPOINT_RUNTIME_FILE=%s\nCARLA_CAMERA_ENTRYPOINT_SHA256=%s\nCARLA_CAMERA_PUBLISH_WORKER_SOURCE_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_RUNTIME_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_SHA256=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SOURCE_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_RUNTIME_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s\n' \
   "${carla_camera_bundle_dispatch_policy}" \
   "${carla_camera_bundle_dispatch_source}" \
   "${carla_camera_bundle_dispatch_runtime}" \
@@ -1471,8 +1618,12 @@ printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SOU
   "${carla_camera_barrier_scope}" \
   "${carla_camera_delivery_contract_id}" \
   "${carla_camera_delivery_patch}" "${carla_camera_delivery_patch_sha256}" \
+  "${carla_camera_delivery_patch_worktree}" \
+  "${carla_camera_delivery_patch_reverse_check}" \
   "${carla_camera_bridge_source}" "${carla_camera_bridge_runtime}" \
-  "${carla_camera_bridge_sha256}" "${carla_camera_publish_worker_source}" \
+  "${carla_camera_bridge_sha256}" \
+  "${carla_camera_entrypoint_source}" "${carla_camera_entrypoint_runtime}" \
+  "${carla_camera_entrypoint_sha256}" "${carla_camera_publish_worker_source}" \
   "${carla_camera_publish_worker_runtime}" \
   "${carla_camera_publish_worker_sha256}" \
   "${carla_camera_interface_launch_source}" \
@@ -1516,15 +1667,23 @@ printf 'RECOMMENDED=%s\nVISUALIZE=%s\nCAPTURE_DESKTOP=%s\nTIGHT_CORRIDOR_CANDIDA
   "${recommended}" "${visualize}" "${capture_desktop}" "${tight_corridor}" "${trajectory_stability}" "${smart_mpc}" "${fp16_heads}" >> \
   "${output_dir}/runtime.env"
 camera_ros_publish_hz=5.0
-if [[ "${portable_shadow_10hz}" == "true" ]]; then
+if [[ "${camera_source_10hz_strict}" == "true" || \
+      "${portable_shadow_10hz}" == "true" ]]; then
   camera_ros_publish_hz=10.0
 fi
-printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=%s\n' \
-  "${camera_source_5hz}" "${camera_source_sensor_tick_sec}" \
+printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_10HZ_STRICT=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=%s\n' \
+  "${camera_source_5hz}" "${camera_source_10hz_strict}" \
+  "${camera_source_sensor_tick_sec}" \
   "${camera_ros_publish_hz}" >> \
   "${output_dir}/runtime.env"
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  printf 'CAMERA_TRANSPORT_QUALIFICATION_SCOPE=strict_six_camera_10hz_transport_runtime_only\nCAMERA_TRANSPORT_SIMULATION_ONLY=true\nCAMERA_TRANSPORT_VEHICLE_BEHAVIOR_VALIDATED=false\nCAMERA_TRANSPORT_REAL_VEHICLE_READY=false\nCAMERA_TRANSPORT_SENSOR_MAPPING_ROLE=six_camera_source_abi_only\nCAMERA_TRANSPORT_SENSOR_MAPPING_REUSE=portable_common10_mapping_without_portable_runtime\nPORTABLE_SHADOW_LAUNCH_REQUESTED=false\nPORTABLE_RUNTIME_BUNDLE_PROVIDED=false\nPORTABLE_MODEL_LOADED=false\nPORTABLE_MODEL_60KPH_VALIDATED=false\nPORTABLE_MODEL_60KPH_CLAIM_ALLOWED=false\n' >> \
+    "${output_dir}/runtime.env"
+fi
 bounded_camera_transport=false
-if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+if [[ "${camera_source_5hz}" == "true" || \
+      "${camera_source_10hz_strict}" == "true" || \
+      "${portable_shadow_10hz}" == "true" ]]; then
   bounded_camera_transport=true
 fi
 printf 'CAMERA_TRANSPORT_PROFILE_ID=%s\nCAMERA_IMAGE_PUBLISH_QOS=%s\nCAMERA_IMAGE_PUBLISH_HISTORY=%s\nCAMERA_IMAGE_PUBLISH_DEPTH=%s\nCAMERA_INFO_PUBLISH_QOS=%s\nCAMERA_INFO_PUBLISH_DEPTH=%s\nVAD_IMAGE_SUBSCRIPTION_QOS=%s\nVAD_IMAGE_SUBSCRIPTION_DEPTH=%s\nRVIZ_IMAGE_SUBSCRIPTION_QOS=best_effort\nRVIZ_IMAGE_SUBSCRIPTION_DEPTH=%s\nRMW_IMPLEMENTATION=%s\nROS_LOCALHOST_ONLY=%s\nCYCLONEDDS_URI=%s\nCAMERA_TRANSPORT_SENSOR_MAPPING_SHA256=%s\nCAMERA_TRANSPORT_VAD_OVERRIDE_SHA256=%s\nCAMERA_TRANSPORT_CYCLONEDDS_SHA256=%s\n' \
@@ -1633,7 +1792,9 @@ validation_state="experimental"
 if [[ "${speed_30kph}" == "true" ]]; then
   validation_state="carla_30kph_v2_screening"
 elif [[ "${speed_60kph_pilot}" == "true" ]]; then
-  if [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
+  if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    validation_state="carla_60kph_strict10_transport_runtime_qualification_only"
+  elif [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
     validation_state="carla_60kph_geometry_ab_route_corridor_0p2_exploratory"
   else
     validation_state="carla_60kph_straight_pilot_v1_exploratory"
@@ -1696,7 +1857,8 @@ if [[ "${camera_source_5hz}" == "true" ]]; then
     "${camera_transport_cyclonedds_sha256}" "cyclonedds.xml" \
     "${cyclonedds_metadata_sha256}" "cyclonedds.xml.metadata.json" > \
     "${output_dir}/camera_transport_provenance/SHA256SUMS"
-elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+elif [[ "${camera_source_10hz_strict}" == "true" || \
+        "${portable_shadow_10hz}" == "true" ]]; then
   mkdir -p "${output_dir}/camera_transport_provenance"
   cp -- "${cyclonedds_config}" \
     "${output_dir}/camera_transport_provenance/cyclonedds.xml"
@@ -1797,10 +1959,13 @@ done
 
 stack_pid=""
 stack_pgid=""
+stack_group_cleanup_status=0
 portable_shadow_pid=""
 portable_shadow_pgid=""
 recorder_pid=""
 recorder_pgid=""
+recorder_control_fd=""
+recorder_control_fifo=""
 route_test_pid=""
 route_test_pgid=""
 desktop_pid=""
@@ -1873,6 +2038,52 @@ portable_shadow_alive() {
     ps -o pgid= -p "${portable_shadow_pid}" 2>/dev/null | tr -d '[:space:]'
   )"
   [[ "${actual_pgid}" == "${portable_shadow_pgid}" ]]
+}
+
+recorder_alive() {
+  local process_state=""
+  local actual_pgid=""
+  if [[ ! "${recorder_pid}" =~ ^[1-9][0-9]*$ ||
+        ! "${recorder_pgid}" =~ ^[1-9][0-9]*$ ||
+        ! -f "/proc/${recorder_pid}/stat" ]]; then
+    return 1
+  fi
+  if ! kill -0 "${recorder_pid}" 2>/dev/null; then
+    return 1
+  fi
+  process_state="$(
+    ps -o stat= -p "${recorder_pid}" 2>/dev/null | tr -d '[:space:]'
+  )"
+  if [[ -z "${process_state}" || "${process_state}" == Z* ]]; then
+    return 1
+  fi
+  actual_pgid="$(
+    ps -o pgid= -p "${recorder_pid}" 2>/dev/null | tr -d '[:space:]'
+  )"
+  [[ "${actual_pgid}" == "${recorder_pgid}" ]]
+}
+
+require_recorder() {
+  local stage="$1"
+  if recorder_alive; then
+    return 0
+  fi
+  printf 'pid=%s pgid=%s stage=%s\n' \
+    "${recorder_pid}" "${recorder_pgid}" "${stage}" > \
+    "${output_dir}/recorder_failure.log"
+  echo "Owned turn recorder exited or left its process group during ${stage}." >&2
+  return 1
+}
+
+close_recorder_control() {
+  if [[ -n "${recorder_control_fd}" ]]; then
+    exec {recorder_control_fd}>&- || true
+    recorder_control_fd=""
+  fi
+  if [[ -n "${recorder_control_fifo}" && -p "${recorder_control_fifo}" ]]; then
+    unlink -- "${recorder_control_fifo}" || true
+  fi
+  recorder_control_fifo=""
 }
 
 require_portable_shadow() {
@@ -2197,7 +2408,11 @@ cleanup() {
   e2e_stop_owned_process_group "${recorder_pgid}" "${recorder_pid}" 15 5 2 || true
   recorder_pid=""
   recorder_pgid=""
-  e2e_stop_owned_process_group "${stack_pgid}" "${stack_pid}" 30 5 2 || true
+  close_recorder_control
+  local stack_stop_status=0
+  e2e_stop_owned_process_group \
+    "${stack_pgid}" "${stack_pid}" 30 5 2 || stack_stop_status=$?
+  stack_group_cleanup_status="${stack_stop_status}"
   stack_pid=""
   stack_pgid=""
 }
@@ -2230,6 +2445,8 @@ if [[ "${recommended}" == "true" ]]; then
   fi
   if [[ "${camera_source_5hz}" == "true" ]]; then
     stack_command+=(--camera-source-5hz)
+  elif [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    stack_command+=(--camera-source-10hz-strict)
   elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     stack_command+=(--portable-shadow-10hz)
   fi
@@ -2273,9 +2490,14 @@ capture_launch_arguments=()
 if [[ "${capture_desktop}" == "true" ]]; then
   capture_launch_arguments+=("rviz_config:=${capture_rviz_runtime_config}")
 fi
+camera_contract_forward_arguments=("${camera_contract_launch_arguments[@]}")
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - The strict fast profile owns its fixed barrier arguments so recorded trials do not duplicate them.
+  camera_contract_forward_arguments=()
+fi
 setsid "${stack_command[@]}" "${route_file}" \
   "${launch_arguments[@]}" "${capture_launch_arguments[@]}" \
-  "${camera_contract_launch_arguments[@]}" > \
+  "${camera_contract_forward_arguments[@]}" > \
   "${output_dir}/stack.log" 2>&1 &
 stack_pid=$!
 stack_pgid="${stack_pid}"
@@ -2283,12 +2505,15 @@ stack_pgid="${stack_pid}"
 critical_stack_child_failure() {
   local stack_log="$1"
   local failure_line=""
+  local failure_pattern='process has died .*exit code .*mission_planner_container'
 
   [[ -f "${stack_log}" ]] || return 1
+  if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+    # HH_260906 - Treat strict camera bridge death as terminal before stale data can pass.
+    failure_pattern+='|\[autoware_carla_interface-[0-9]+\].*process has died .*exit code|process has died .*exit code .*autoware_carla_interface'
+  fi
   failure_line="$(
-    grep -m 1 -E \
-      'process has died .*exit code .*mission_planner_container' \
-      "${stack_log}" || true
+    grep -m 1 -E "${failure_pattern}" "${stack_log}" || true
   )"
   [[ -n "${failure_line}" ]] || return 1
   printf '%s\n' "${failure_line}"
@@ -3420,7 +3645,7 @@ while (( SECONDS < deadline )); do
   )"; then
     printf '%s\n' "${critical_failure}" > \
       "${output_dir}/critical_process_failure.log"
-    echo "Critical Autoware mission-planner process exited before route readiness: ${critical_failure}" >&2
+    echo "Critical Autoware process exited before route readiness: ${critical_failure}" >&2
     exit 1
   fi
   status="$(
@@ -3450,6 +3675,103 @@ done
 if [[ "${route_ready}" != "true" ]]; then
   echo "Timed out waiting for a ready VAD route after ${ready_timeout}s" >&2
   exit 1
+fi
+
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - Observe the live bridge clock and barrier parameters before qualification.
+  strict_fixed_delta="$(timeout 5 ros2 param get /autoware_carla_interface fixed_delta_seconds --hide-type 2>&1)"
+  strict_sync_mode="$(timeout 5 ros2 param get /autoware_carla_interface sync_mode --hide-type 2>&1)"
+  strict_barrier_enabled="$(timeout 5 ros2 param get /autoware_carla_interface camera_frame_barrier_enabled --hide-type 2>&1)"
+  strict_wait_timeout="$(timeout 5 ros2 param get /autoware_carla_interface camera_frame_wait_timeout_sec --hide-type 2>&1)"
+  strict_publish_deadline="$(timeout 5 ros2 param get /autoware_carla_interface camera_publish_deadline_sec --hide-type 2>&1)"
+  strict_pending_limit="$(timeout 5 ros2 param get /autoware_carla_interface camera_pending_frame_limit --hide-type 2>&1)"
+  strict_runtime_parameters="${output_dir}/strict_camera_runtime_parameters.json"
+  python3 - "${strict_runtime_parameters}" "${strict_fixed_delta}" \
+    "${strict_sync_mode}" "${strict_barrier_enabled}" \
+    "${strict_wait_timeout}" "${strict_publish_deadline}" \
+    "${strict_pending_limit}" <<'PY'
+import json
+import math
+import os
+from pathlib import Path
+import re
+import sys
+import tempfile
+
+path = Path(sys.argv[1])
+
+
+def number(text):
+    matches = re.findall(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?", text)
+    if not matches:
+        raise SystemExit(f"cannot parse live numeric ROS parameter: {text!r}")
+    value = float(matches[-1])
+    if not math.isfinite(value):
+        raise SystemExit("live numeric ROS parameter is non-finite")
+    return value
+
+
+def boolean(text):
+    token = text.strip().rsplit(maxsplit=1)[-1].lower() if text.strip() else ""
+    if token not in {"true", "false"}:
+        raise SystemExit(f"cannot parse live Boolean ROS parameter: {text!r}")
+    return token == "true"
+
+
+payload = {
+    "schema_version": 1,
+    "status": "PASS",
+    "node": "/autoware_carla_interface",
+    "parameters": {
+        "fixed_delta_seconds": number(sys.argv[2]),
+        "sync_mode": boolean(sys.argv[3]),
+        "camera_frame_barrier_enabled": boolean(sys.argv[4]),
+        "camera_frame_wait_timeout_sec": number(sys.argv[5]),
+        "camera_publish_deadline_sec": number(sys.argv[6]),
+        "camera_pending_frame_limit": int(number(sys.argv[7])),
+    },
+    "derived_camera_frame_stride": 2,
+    "derivation": "sensor_tick_0.1_sec_divided_by_fixed_delta_0.05_sec",
+    "read_only": True,
+}
+expected = {
+    "fixed_delta_seconds": 0.05,
+    "sync_mode": True,
+    "camera_frame_barrier_enabled": True,
+    "camera_frame_wait_timeout_sec": 0.25,
+    "camera_publish_deadline_sec": 0.25,
+    "camera_pending_frame_limit": 8,
+}
+for name, expected_value in expected.items():
+    actual = payload["parameters"][name]
+    if isinstance(expected_value, float):
+        valid = math.isclose(actual, expected_value, rel_tol=0.0, abs_tol=1.0e-12)
+    else:
+        valid = actual == expected_value
+    if not valid:
+        raise SystemExit(
+            f"live strict camera parameter mismatch: {name}={actual!r}"
+        )
+descriptor, temporary_name = tempfile.mkstemp(
+    prefix=f".{path.name}.", suffix=".staged", dir=path.parent
+)
+temporary = Path(temporary_name)
+try:
+    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+finally:
+    temporary.unlink(missing_ok=True)
+PY
+  strict_runtime_parameters_sha256="$(
+    sha256sum -- "${strict_runtime_parameters}" | awk '{print $1}'
+  )"
+  printf 'CARLA_FIXED_DELTA_SECONDS_PINNED=0.05\nCARLA_SYNC_MODE_PINNED=true\nCARLA_CAMERA_RUNTIME_PARAMETERS_FILE=%s\nCARLA_CAMERA_RUNTIME_PARAMETERS_SHA256=%s\nCARLA_CAMERA_RUNTIME_PARAMETERS_STATUS=PASS\n' \
+    "${strict_runtime_parameters}" "${strict_runtime_parameters_sha256}" >> \
+    "${output_dir}/runtime.env"
 fi
 
 candidate_observed_at=""
@@ -3499,6 +3821,7 @@ if [[ "${runtime_health_gate}" == "true" ]]; then
     --timeout-sec "${runtime_health_timeout}"
   )
   if [[ "${camera_source_5hz}" == "true" || \
+        "${camera_source_10hz_strict}" == "true" || \
         "${portable_shadow_10hz}" == "true" ]]; then
     runtime_health_arguments+=(
       --camera-transport-profile-id "${camera_transport_profile_id}"
@@ -3559,6 +3882,22 @@ expected_status = "PASS" if exit_status == 0 else "FAIL"
 contract = payload.get("contract")
 runtime = payload.get("runtime")
 sequence = payload.get("sequence")
+winning_indexes = (
+    sequence.get("winning_window_indexes")
+    if isinstance(sequence, dict)
+    else None
+)
+# HH_260906 - Replay three distinct consecutive indexes for strict v2 evidence.
+strict_winning_indexes_valid = (
+    isinstance(winning_indexes, list)
+    and len(winning_indexes) == 3
+    and all(
+        isinstance(index, int) and not isinstance(index, bool)
+        for index in winning_indexes
+    )
+    and winning_indexes
+    == list(range(winning_indexes[0], winning_indexes[0] + 3))
+)
 expected_thresholds = {
     "maximum_bundle_receipt_p95_seconds": 0.04,
     "minimum_bundle_coverage_percent": 99.0,
@@ -3566,9 +3905,23 @@ expected_thresholds = {
     "minimum_complete_bundle_count": 20,
     "minimum_rtf": 0.9,
 }
-if expected_transport_profile == "portable_e2e_exact_bundle_10hz_v2":
+if expected_transport_profile in {
+    "carla_vad_camera_source_10hz_strict_v2",
+    "portable_e2e_exact_bundle_10hz_v2",
+}:
     expected_thresholds["minimum_camera_wall_rate_hz"] = 9.0
     expected_thresholds["minimum_complete_bundle_count"] = 70
+if expected_transport_profile == "carla_vad_camera_source_10hz_strict_v2":
+    expected_thresholds.update(
+        {
+            "maximum_bundle_stamp_span_seconds": 0.000005,
+            "maximum_camera_wall_rate_hz": 11.0,
+            "minimum_camera_source_rate_hz": 9.5,
+            "maximum_camera_source_rate_hz": 10.5,
+            "minimum_camera_source_gap_seconds": 0.099995,
+            "maximum_camera_source_gap_seconds": 0.100005,
+        }
+    )
 if (
     payload.get("schema_version") != 1
     or payload.get("probe_id") != "pre_engagement_runtime_health_v1"
@@ -3587,10 +3940,26 @@ if (
     not math.isclose(float(payload.get("timeout_seconds")), expected_timeout)
     or not math.isclose(float(contract.get("window_seconds")), 8.0)
     or contract.get("required_consecutive_passes") != 3
+    or (
+        expected_transport_profile == "carla_vad_camera_source_10hz_strict_v2"
+        and (
+            contract.get("strict_camera_source_integrity_required") is not True
+            or not math.isclose(
+                float(contract.get("bundle_match_tolerance_seconds", math.nan)),
+                0.000005,
+                rel_tol=0.0,
+                abs_tol=1.0e-12,
+            )
+        )
+    )
     or contract.get("topics", {}).get("clock") != "/clock"
     or len(contract.get("topics", {}).get("camera_info", [])) != 6
     or contract.get("thresholds") != expected_thresholds
     or payload.get("source", {}).get("sha256") != expected_probe_sha256
+    or (
+        expected_transport_profile == "carla_vad_camera_source_10hz_strict_v2"
+        and not strict_winning_indexes_valid
+    )
 ):
     raise SystemExit("runtime health JSON fixed thresholds/provenance mismatch")
 transport = contract.get("camera_transport")
@@ -3609,6 +3978,7 @@ if expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_
         raise SystemExit("runtime health camera transport provenance mismatch")
 elif expected_transport_profile in {
     "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "carla_vad_camera_source_10hz_strict_v2",
     "portable_e2e_exact_bundle_10hz_v2",
 }:
     expected_transport = {
@@ -3630,7 +4000,10 @@ elif expected_transport_profile in {
         "cyclonedds_uri": expected_cyclonedds_uri,
         "cyclonedds_config_sha256": expected_cyclonedds_sha256,
     }
-    if expected_transport_profile == "portable_e2e_exact_bundle_10hz_v2":
+    if expected_transport_profile in {
+        "carla_vad_camera_source_10hz_strict_v2",
+        "portable_e2e_exact_bundle_10hz_v2",
+    }:
         expected_transport.update(
             {
                 "camera_source_sensor_tick_seconds": 0.1,
@@ -3638,6 +4011,29 @@ elif expected_transport_profile in {
                 "declared_effective_camera_rate_hz": 10.0,
                 "minimum_camera_wall_rate_hz": 9.0,
                 "minimum_complete_bundle_count": 70,
+            }
+        )
+    if expected_transport_profile == "carla_vad_camera_source_10hz_strict_v2":
+        expected_transport.update(
+            {
+                "qualification_scope": (
+                    "strict_six_camera_10hz_transport_runtime_only"
+                ),
+                "simulation_only": True,
+                "vehicle_behavior_validated": False,
+                "portable_model_loaded": False,
+                "portable_model_60kph_validated": False,
+                "portable_model_60kph_claim_allowed": False,
+                "portable_runtime_graph_absence_required": True,
+                "portable_shadow_node": "/portable_e2e_shadow",
+                "portable_output_topics": [
+                    "/planning/portable_e2e/shadow_trajectory",
+                    "/planning/portable_e2e/shadow_path",
+                    "/planning/portable_e2e/status",
+                    "/planning/portable_e2e/latency_ms",
+                    "/planning/portable_e2e/selected_candidate",
+                ],
+                "real_vehicle_ready": False,
             }
         )
     graph = payload.get("camera_image_graph")
@@ -3697,6 +4093,102 @@ if expected_status == "PASS" and (
     or len(sequence.get("winning_window_indexes", [])) != 3
 ):
     raise SystemExit("runtime health JSON PASS lacks three consecutive windows")
+if (
+    expected_status == "PASS"
+    and expected_transport_profile == "carla_vad_camera_source_10hz_strict_v2"
+):
+    windows = payload.get("windows")
+    by_index = {
+        item.get("index"): item
+        for item in windows
+        if isinstance(item, dict)
+    } if isinstance(windows, list) else {}
+    for index in sequence.get("winning_window_indexes", []):
+        window = by_index.get(index)
+        absence = (
+            window.get("portable_runtime_absence")
+            if isinstance(window, dict)
+            else None
+        )
+        stamp_span = (
+            window.get("bundles", {}).get("stamp_span_seconds", {}).get("maximum")
+            if isinstance(window, dict)
+            else None
+        )
+        source_integrity = (
+            window.get("camera_source_stamp_integrity")
+            if isinstance(window, dict)
+            else None
+        )
+        window_duration = (
+            window.get("window", {}).get("duration_seconds")
+            if isinstance(window, dict)
+            else None
+        )
+        complete_bundle_count = (
+            window.get("bundles", {}).get("complete_bundle_count")
+            if isinstance(window, dict)
+            else None
+        )
+        if (
+            not isinstance(window, dict)
+            or sum(
+                isinstance(item, dict) and item.get("index") == index
+                for item in windows
+            )
+            != 1
+            or not isinstance(window_duration, (int, float))
+            or isinstance(window_duration, bool)
+            or not math.isclose(
+                float(window_duration),
+                8.0,
+                rel_tol=0.0,
+                abs_tol=1.0e-9,
+            )
+            or not isinstance(complete_bundle_count, int)
+            or isinstance(complete_bundle_count, bool)
+            or complete_bundle_count < 70
+            or not isinstance(absence, dict)
+            or absence.get("status") != "PASS"
+            or absence.get("observation_scope") != "window_end_graph_snapshot"
+            or absence.get("continuous_window_observation") is not False
+            or absence.get("observed_portable_nodes") != []
+            or any(absence.get("observed_output_publishers", {}).values())
+            or not isinstance(stamp_span, (int, float))
+            or not math.isfinite(float(stamp_span))
+            or float(stamp_span) > 0.000005
+            or not isinstance(source_integrity, dict)
+            or source_integrity.get("status") != "PASS"
+            or source_integrity.get("record_count_parity") is not True
+            or source_integrity.get("all_records_used_exactly_once") is not True
+            # HH_260906 - Reject unmatched or compressed receipts before engagement.
+            or source_integrity.get("all_window_records_used_exactly_once")
+            is not True
+            or not isinstance(source_integrity.get("topics"), dict)
+            or any(
+                not isinstance(item, dict)
+                or item.get("window_unmatched_record_count") != 0
+                or item.get("window_matched_record_count")
+                != item.get("window_record_count")
+                or not isinstance(
+                    item.get("minimum_source_gap_seconds"), (int, float)
+                )
+                or float(item["minimum_source_gap_seconds"])
+                < 0.099995 - 1.0e-12
+                for item in (
+                    source_integrity.get("topics", {}).values()
+                    if isinstance(source_integrity.get("topics"), dict)
+                    else ()
+                )
+            )
+            or not isinstance(
+                window.get("maximum_observed_camera_wall_rate_hz"), (int, float)
+            )
+            or float(window["maximum_observed_camera_wall_rate_hz"]) > 11.0
+        ):
+            raise SystemExit(
+                f"strict runtime health window {index} lacks exact-stamp/non-Portable proof"
+            )
 print(f"RUNTIME_HEALTH_GATE_STATUS={expected_status}")
 print(f"RUNTIME_HEALTH_GATE_EXIT_CODE={exit_status}")
 print(f"RUNTIME_HEALTH_EVIDENCE_SHA256={evidence_sha256}")
@@ -3707,6 +4199,7 @@ print(f"RUNTIME_HEALTH_RVIZ_RECORDER_REQUIRED={str(rviz_required).lower()}")
 print(f"RUNTIME_HEALTH_RVIZ_RECORDER_ACTIVE_DURING_PROBE={str(rviz_active).lower()}")
 if expected_transport_profile in {
     "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "carla_vad_camera_source_10hz_strict_v2",
     "portable_e2e_exact_bundle_10hz_v2",
 }:
     print(f"RUNTIME_HEALTH_CAMERA_IMAGE_GRAPH_STATUS={graph.get('status')}")
@@ -3766,14 +4259,111 @@ fi
 printf 'VAD_ROUTE_READY_RECHECK_PHASE=after_runtime_health_before_rosbag_and_engagement\nVAD_ROUTE_READY_RECHECK_FRESH_CANDIDATE=true\nVAD_ROUTE_READY_RECHECK_STATUS=pass\n' >> \
   "${output_dir}/runtime.env"
 
-setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag" \
-  > "${output_dir}/recorder.log" 2>&1 &
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  recorder_control_fifo="${output_dir}/recorder_control.fifo"
+  mkfifo -- "${recorder_control_fifo}"
+  exec {recorder_control_fd}<>"${recorder_control_fifo}"
+  setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag" --start-paused \
+    <&"${recorder_control_fd}" > "${output_dir}/recorder.log" 2>&1 &
+else
+  setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag" \
+    > "${output_dir}/recorder.log" 2>&1 &
+fi
 recorder_pid=$!
 recorder_pgid="${recorder_pid}"
 sleep 1
-if ! kill -0 "${recorder_pid}" 2>/dev/null; then
+if ! recorder_alive; then
   echo "Turn recorder failed to start" >&2
   exit 1
+fi
+
+if [[ "${camera_source_10hz_strict}" == "true" ]]; then
+  # HH_260906 - Resume one shared measurement window only after all six subscriptions exist.
+  strict_recorder_topics=(
+    /sensing/camera/CAM_FRONT/camera_info
+    /sensing/camera/CAM_BACK/camera_info
+    /sensing/camera/CAM_FRONT_LEFT/camera_info
+    /sensing/camera/CAM_BACK_LEFT/camera_info
+    /sensing/camera/CAM_FRONT_RIGHT/camera_info
+    /sensing/camera/CAM_BACK_RIGHT/camera_info
+  )
+  strict_recorder_ready=false
+  strict_recorder_deadline=$((SECONDS + 10))
+  while (( SECONDS < strict_recorder_deadline )); do
+    if ! kill -0 "${recorder_pid}" 2>/dev/null; then
+      break
+    fi
+    recorder_node_count="$(
+      ros2 node list --no-daemon 2>/dev/null |
+        awk '$0 == "/rosbag2_recorder" {count += 1} END {print count + 0}'
+    )"
+    strict_recorder_subscription_count=0
+    for topic in "${strict_recorder_topics[@]}"; do
+      if grep -Fq "Subscribed to topic '${topic}'" "${output_dir}/recorder.log"; then
+        strict_recorder_subscription_count=$((strict_recorder_subscription_count + 1))
+      fi
+    done
+    if [[ "${recorder_node_count}" == "1" &&
+          "${strict_recorder_subscription_count}" == "6" ]] &&
+       grep -Fq "Waiting for recording: Press SPACE to start." \
+        "${output_dir}/recorder.log"; then
+      strict_recorder_ready=true
+      break
+    fi
+    sleep 0.25
+  done
+  if [[ "${strict_recorder_ready}" != "true" ]]; then
+    echo "Strict recorder did not acknowledge all six camera subscriptions while paused" >&2
+    exit 1
+  fi
+  strict_recorder_resume_requested_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
+  printf ' ' >&"${recorder_control_fd}"
+  strict_recorder_resume_deadline=$((SECONDS + 5))
+  while (( SECONDS < strict_recorder_resume_deadline )); do
+    require_recorder measurement_resume || exit 1
+    if grep -Fq "Resuming recording." "${output_dir}/recorder.log"; then
+      break
+    fi
+    sleep 0.1
+  done
+  if ! grep -Fq "Resuming recording." "${output_dir}/recorder.log"; then
+    echo "Strict recorder did not acknowledge its Humble PTY resume control" >&2
+    exit 1
+  fi
+  strict_recorder_resumed_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
+  python3 - "${output_dir}/recorder_measurement_start.json" \
+    "${strict_recorder_resume_requested_at}" "${strict_recorder_resumed_at}" \
+    "${strict_recorder_subscription_count}" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+output, resume_requested_at, resumed_at, subscription_count = sys.argv[1:]
+payload = {
+    "schema_version": 1,
+    "status": "PASS",
+    "policy": "paused_until_all_six_camera_info_subscriptions_acknowledged_v1",
+    "recorder_started_paused": True,
+    "camera_info_subscription_count": int(subscription_count),
+    "pause_state_proof": "Waiting for recording: Press SPACE to start.",
+    "resume_control": "humble_rosbag2_owned_pty_space_key_v1",
+    "resume_acknowledgement": "Resuming recording.",
+    "resume_requested_at": resume_requested_at,
+    "resumed_at": resumed_at,
+    "measurement_boundary": "owned_pty_resume_acknowledged_before_route_evaluation",
+}
+Path(output).write_text(
+    json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+)
+PY
+  strict_recorder_measurement_sha256="$(
+    sha256sum -- "${output_dir}/recorder_measurement_start.json" | awk '{print $1}'
+  )"
+  printf 'STRICT_RECORDER_START_PAUSED=true\nSTRICT_RECORDER_CAMERA_INFO_SUBSCRIPTIONS_ACKNOWLEDGED=%s\nSTRICT_RECORDER_RESUME_CONTROL=humble_rosbag2_owned_pty_space_key_v1\nSTRICT_RECORDER_MEASUREMENT_RESUME_STATUS=pass\nSTRICT_RECORDER_MEASUREMENT_RESUME_REQUESTED_AT=%s\nSTRICT_RECORDER_MEASUREMENT_RESUMED_AT=%s\nSTRICT_RECORDER_MEASUREMENT_EVIDENCE_FILE=recorder_measurement_start.json\nSTRICT_RECORDER_MEASUREMENT_EVIDENCE_SHA256=%s\n' \
+    "${strict_recorder_subscription_count}" \
+    "${strict_recorder_resume_requested_at}" "${strict_recorder_resumed_at}" \
+    "${strict_recorder_measurement_sha256}" >> \
+    "${output_dir}/runtime.env"
 fi
 
 portable_shadow_window_started_seconds=""
@@ -3846,7 +4436,7 @@ while kill -0 "${route_test_pid}" 2>/dev/null; do
   )"; then
     printf '%s\n' "${critical_failure}" > \
       "${output_dir}/critical_process_failure.log"
-    echo "Critical Autoware mission-planner process exited during route evaluation: ${critical_failure}" >&2
+    echo "Critical Autoware process exited during route evaluation: ${critical_failure}" >&2
     e2e_stop_owned_process_group \
       "${route_test_pgid}" "${route_test_pid}" 15 5 2 || true
     route_test_pid=""
@@ -3855,6 +4445,13 @@ while kill -0 "${route_test_pid}" 2>/dev/null; do
   fi
   if ! kill -0 "${stack_pid}" 2>/dev/null; then
     echo "Autoware stack exited during route evaluation" >&2
+    e2e_stop_owned_process_group \
+      "${route_test_pgid}" "${route_test_pid}" 15 5 2 || true
+    route_test_pid=""
+    route_test_pgid=""
+    exit 1
+  fi
+  if ! require_recorder route_evaluation; then
     e2e_stop_owned_process_group \
       "${route_test_pgid}" "${route_test_pid}" 15 5 2 || true
     route_test_pid=""
@@ -3884,6 +4481,9 @@ evaluation_status=$?
 route_test_pid=""
 route_test_pgid=""
 route_evaluation_finished_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
+printf 'ROUTE_EVALUATION_STARTED_AT=%s\nROUTE_EVALUATION_FINISHED_AT=%s\nRECORDER_ROUTE_EVALUATION_LIVENESS_STATUS=pass\n' \
+  "${route_evaluation_started_at}" "${route_evaluation_finished_at}" >> \
+  "${output_dir}/runtime.env"
 set -e
 
 verify_owned_rviz_capture_window representative
@@ -3891,6 +4491,9 @@ require_desktop_recorder representative
 
 require_carla_owner route_completion || exit 1
 require_portable_shadow route_completion || exit 1
+require_recorder route_completion || exit 1
+printf 'RECORDER_ROUTE_COMPLETION_LIVENESS_STATUS=pass\n' >> \
+  "${output_dir}/runtime.env"
 if ! python3 scripts/e2e/probe_carla_server.py \
   "${carla_probe_args[@]}" --stage trial_completion \
   --output "${output_dir}/carla_completion_health.json"; then
@@ -3906,7 +4509,7 @@ if critical_failure="$(
 )"; then
   printf '%s\n' "${critical_failure}" > \
     "${output_dir}/critical_process_failure.log"
-  echo "Critical Autoware mission-planner process exited at route completion: ${critical_failure}" >&2
+  echo "Critical Autoware process exited at route completion: ${critical_failure}" >&2
   exit 1
 fi
 
@@ -3924,7 +4527,7 @@ if critical_failure="$(
 )"; then
   printf '%s\n' "${critical_failure}" > \
     "${output_dir}/critical_process_failure.log"
-  echo "Critical Autoware mission-planner process exited before evidence finalization: ${critical_failure}" >&2
+  echo "Critical Autoware process exited before evidence finalization: ${critical_failure}" >&2
   exit 1
 fi
 
@@ -3935,8 +4538,36 @@ if ! e2e_stop_owned_process_group \
 fi
 recorder_pid=""
 recorder_pgid=""
+close_recorder_control
+printf 'RECORDER_OWNED_GROUP_CLEANUP_STATUS=pass\nRECORDER_CONTROL_FIFO_REMOVED=true\n' >> \
+  "${output_dir}/runtime.env"
 cleanup
 trap - EXIT INT TERM
+
+# HH_260906 - Fail closed on camera delivery errors reported only during stack shutdown.
+stack_post_shutdown_check_status="pass"
+critical_failure=""
+if critical_failure="$(
+  critical_stack_child_failure "${output_dir}/stack.log"
+)"; then
+  stack_post_shutdown_check_status="fail"
+  printf '%s\n' "${critical_failure}" > \
+    "${output_dir}/critical_process_failure.log"
+  echo "Critical Autoware process exited during owned stack shutdown: ${critical_failure}" >&2
+fi
+if (( stack_group_cleanup_status != 0 )); then
+  stack_post_shutdown_check_status="fail"
+  printf 'Owned stack process-group cleanup returned status %s.\n' \
+    "${stack_group_cleanup_status}" > \
+    "${output_dir}/stack_group_cleanup_failure.log"
+  echo "Owned stack process group did not stop cleanly before post-processing." >&2
+fi
+printf 'STACK_OWNED_GROUP_CLEANUP_STATUS=%s\nSTACK_POST_SHUTDOWN_CRITICAL_PROCESS_CHECK=%s\n' \
+  "$([[ "${stack_group_cleanup_status}" == "0" ]] && printf pass || printf fail)" \
+  "${stack_post_shutdown_check_status}" >> "${output_dir}/runtime.env"
+if [[ "${stack_post_shutdown_check_status}" != "pass" ]]; then
+  exit 1
+fi
 
 analysis_arguments=(
   --bag "${output_dir}/bag"

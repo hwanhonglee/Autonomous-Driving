@@ -41,6 +41,11 @@
   <arg name="sync_mode" default="True"/>
   <arg name="fixed_delta_seconds" default="0.05"/>
   <arg name="max_real_delta_seconds" default="0.05"/>
+  <!-- HH_260906 - Keep the camera barrier opt-in while exposing its bounded Common10 limits. -->
+  <arg name="camera_frame_barrier_enabled" default="false"/>
+  <arg name="camera_frame_wait_timeout_sec" default="0.25"/>
+  <arg name="camera_publish_deadline_sec" default="0.25"/>
+  <arg name="camera_pending_frame_limit" default="8"/>
   <arg name="use_traffic_manager" default="False"/>
   <arg name="use_light_weight_sensor_mapping" default="False"/>
   <arg
@@ -240,6 +245,23 @@
       <arg name="sync_mode" value="$(var sync_mode)"/>
       <arg name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
       <arg name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
+      <arg
+        name="camera_frame_barrier_enabled"
+        value="$(var camera_frame_barrier_enabled)"
+      />
+      <!-- HH_260906 - Forward the exact fail-closed limits to the lightweight launch layer. -->
+      <arg
+        name="camera_frame_wait_timeout_sec"
+        value="$(var camera_frame_wait_timeout_sec)"
+      />
+      <arg
+        name="camera_publish_deadline_sec"
+        value="$(var camera_publish_deadline_sec)"
+      />
+      <arg
+        name="camera_pending_frame_limit"
+        value="$(var camera_pending_frame_limit)"
+      />
       <arg name="use_traffic_manager" value="$(var use_traffic_manager)"/>
       <arg
         name="use_light_weight_sensor_mapping"

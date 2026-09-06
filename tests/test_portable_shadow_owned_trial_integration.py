@@ -1241,6 +1241,52 @@ def test_owned_summary_binds_the_exact_runtime_launch_snapshot() -> None:
     assert "selected Portable shadow attempt lacks an exact runtime launch snapshot" in source
 
 
+def test_portable_common10_enables_and_records_exact_camera_delivery_contract() -> None:
+    # HH_260906 - Prevent Common10 evidence from silently reverting to frame-skipping delivery.
+    source = RECORDED_TRIAL.read_text(encoding="utf-8")
+
+    option_body = source[
+        source.index("--portable-shadow-10hz)") : source.index(
+            "--portable-runtime-bundle)", source.index("--portable-shadow-10hz)")
+        )
+    ]
+    assert "camera_frame_barrier_enabled=true" in option_body
+    for argument in (
+        '"camera_frame_barrier_enabled:=true"',
+        '"camera_frame_wait_timeout_sec:=${camera_frame_wait_timeout_sec}"',
+        '"camera_publish_deadline_sec:=${camera_publish_deadline_sec}"',
+        '"camera_pending_frame_limit:=${camera_pending_frame_limit}"',
+    ):
+        assert argument in source
+    for field in (
+        "CARLA_CAMERA_FRAME_BARRIER_ENABLED=%s",
+        "CARLA_CAMERA_FRAME_STRIDE=%s",
+        "CARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC=%s",
+        "CARLA_CAMERA_PUBLISH_DEADLINE_SEC=%s",
+        "CARLA_CAMERA_PUBLISH_DEADLINE_SCOPE=callback_execution_only",
+        "CARLA_CAMERA_PENDING_FRAME_LIMIT=%s",
+        "CARLA_CAMERA_EXPECTED_RGB_COUNT=%s",
+        "CARLA_CAMERA_BARRIER_SCOPE=%s",
+        "CARLA_CAMERA_DELIVERY_CONTRACT_ID=%s",
+        "CARLA_CAMERA_DELIVERY_PATCH_SHA256=%s",
+        "CARLA_CAMERA_BRIDGE_SHA256=%s",
+        "CARLA_CAMERA_PUBLISH_WORKER_SHA256=%s",
+        "CARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s",
+    ):
+        assert field in source
+    assert (
+        'carla_camera_delivery_contract_id="common10_exact_due_frame_fail_closed_v1"'
+        in source
+    )
+    assert 'carla_camera_barrier_scope="portable_e2e_common10_only"' in source
+    assert 'camera_expected_rgb_count=6' in source
+    launch_args_write = source.index("${output_dir}/launch_args.txt")
+    launch_args_materialized = source.index(
+        '"${camera_contract_launch_arguments[@]}"', launch_args_write - 300
+    )
+    assert launch_args_materialized < launch_args_write
+
+
 def test_fast_runner_selects_portable_mapping_without_changing_legacy_profile() -> None:
     source = FAST_RUNNER.read_text(encoding="utf-8")
 

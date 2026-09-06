@@ -120,9 +120,22 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "exited at route completion" in source
     assert "exited before evidence finalization" in source
     assert "VSCODE_SNAP_GUI_ENV_SANITIZED=%s" in source
-    assert "CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=oldest_complete_source_order_v1" in source
+    # HH_260906 - Require immutable provenance for the full fail-closed camera path.
+    assert "CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=%s" in source
+    assert 'carla_camera_bundle_dispatch_policy="exact_due_frame_barrier_fail_closed_v1"' in source
     assert "CARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s" in source
-    assert "Installed CARLA camera-bundle dispatcher does not match the source" in source
+    assert "CARLA_CAMERA_FRAME_BARRIER_ENABLED=%s" in source
+    assert "CARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC=%s" in source
+    assert "CARLA_CAMERA_PUBLISH_DEADLINE_SEC=%s" in source
+    assert "CARLA_CAMERA_PUBLISH_DEADLINE_SCOPE=callback_execution_only" in source
+    assert "CARLA_CAMERA_PENDING_FRAME_LIMIT=%s" in source
+    assert "CARLA_CAMERA_EXPECTED_RGB_COUNT=%s" in source
+    assert "CARLA_CAMERA_BARRIER_SCOPE=%s" in source
+    assert "CARLA_CAMERA_DELIVERY_PATCH_SHA256=%s" in source
+    assert "CARLA_CAMERA_BRIDGE_SHA256=%s" in source
+    assert "CARLA_CAMERA_PUBLISH_WORKER_SHA256=%s" in source
+    assert "CARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s" in source
+    assert "Installed CARLA camera ${camera_contract_label} does not match the source" in source
     assert "unset GIO_LAUNCHED_DESKTOP_FILE" in source
     assert "unset GTK_EXE_PREFIX GTK_IM_MODULE_FILE GTK_PATH XDG_DATA_HOME" in source
     assert 'export XDG_DATA_DIRS="${XDG_DATA_DIRS_VSCODE_SNAP_ORIG}"' in source

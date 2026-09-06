@@ -50,6 +50,8 @@ scripts/e2e/apply_carla_runtime_timing_patch.sh
 scripts/e2e/apply_carla_camera_qos_split_patch.sh
 # HH_260906 - Reapply the executor-first CARLA shutdown contract in the ignored checkout.
 scripts/e2e/apply_carla_clean_shutdown_patch.sh
+# HH_260906 - Reapply the bounded Common10 camera delivery contract in the ignored checkout.
+scripts/e2e/apply_carla_camera_delivery_contract_patch.sh
 scripts/e2e/apply_autoware_launch_control_override.sh
 scripts/e2e/apply_autoware_launch_vehicle_cmd_gate_override.sh
 scripts/e2e/setup_cuda_12_8.sh

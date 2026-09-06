@@ -22,7 +22,8 @@ fi
 if grep -q 'def _queue_camera_bundle' "${carla_ros}" && \
   grep -q 'def _measurement_timestamp' "${carla_ros}" && \
   grep -q 'MAX_PENDING_CAMERA_FRAMES = 8' "${carla_wrapper}" && \
-  grep -q 'oldest_complete = min(complete_frames)' "${carla_wrapper}" && \
+  grep -Eq 'oldest_complete = min\(complete_frames\)|return min\(complete_frames\)' \
+    "${carla_wrapper}" && \
   grep -q 'bp.set_attribute("enable_postprocess_effects", enabled)' "${carla_wrapper}"; then
   echo "CARLA fast sensor patch is already applied."
   exit 0

@@ -1,0 +1,621 @@
+diff --git a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+--- a/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
++++ b/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml
+@@ -21,6 +21,27 @@
+     <arg name="fixed_delta_seconds" default="0.05" description="Time step for CARLA, FPS=1/value"/>
+     <arg name="use_traffic_manager" default="False"/>
+     <arg name="max_real_delta_seconds" default="0.05"/>
++    <!-- HH_260906 - Keep strict RGB delivery opt-in and bounded for Common10 trials. -->
++    <arg
++      name="camera_frame_barrier_enabled"
++      default="False"
++      description="Require complete source-ordered physical RGB camera frames"
++    />
++    <arg
++      name="camera_frame_wait_timeout_sec"
++      default="0.25"
++      description="Bounded wall-time wait for each due physical camera frame"
++    />
++    <arg
++      name="camera_publish_deadline_sec"
++      default="0.25"
++      description="Maximum wall time for one complete physical camera publish bundle"
++    />
++    <arg
++      name="camera_pending_frame_limit"
++      default="8"
++      description="Maximum physical camera source frames retained before failing closed"
++    />
+ 
+     <let name="carla_map" value="$(eval &quot;__import__('os').path.basename('$(var map_path)'.strip().rstrip('/')) or 'Town01'&quot;)"/>
+ 
+@@ -52,6 +73,14 @@
+       <param name="vehicle_type" value="$(var vehicle_type)"/>
+       <param name="use_traffic_manager" value="$(var use_traffic_manager)"/>
+       <param name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
++      <!-- HH_260906 - Pass the complete fail-closed camera contract into the bridge node. -->
++      <param name="camera_frame_barrier_enabled" value="$(var camera_frame_barrier_enabled)"/>
++      <param
++        name="camera_frame_wait_timeout_sec"
++        value="$(var camera_frame_wait_timeout_sec)"
++      />
++      <param name="camera_publish_deadline_sec" value="$(var camera_publish_deadline_sec)"/>
++      <param name="camera_pending_frame_limit" value="$(var camera_pending_frame_limit)"/>
+       <param name="sensor_kit_name" value="$(var sensor_kit_name)"/>
+       <param name="sensor_mapping_file" value="$(var sensor_mapping_file)"/>
+     </node>
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py
+@@ -76,6 +76,11 @@
+             "vehicle_type": (rclpy.Parameter.Type.STRING, None),
+             "use_traffic_manager": (rclpy.Parameter.Type.BOOL, None),
+             "max_real_delta_seconds": (rclpy.Parameter.Type.DOUBLE, None),
++            # HH_260906 - Keep the strict camera path disabled unless a pinned profile opts in.
++            "camera_frame_barrier_enabled": (rclpy.Parameter.Type.BOOL, False),
++            "camera_frame_wait_timeout_sec": (rclpy.Parameter.Type.DOUBLE, 0.25),
++            "camera_publish_deadline_sec": (rclpy.Parameter.Type.DOUBLE, 0.25),
++            "camera_pending_frame_limit": (rclpy.Parameter.Type.INTEGER, 8),
+             "wheel_base": (rclpy.Parameter.Type.DOUBLE, None),
+             "wheel_tread": (rclpy.Parameter.Type.DOUBLE, None),
+             "enable_stopped_hand_brake": (rclpy.Parameter.Type.BOOL, False),
+@@ -112,6 +117,9 @@
+         hand_brake_service_brake = self.param_values[
+             "stopped_hand_brake_service_brake_threshold"
+         ]
++        camera_wait_timeout = self.param_values["camera_frame_wait_timeout_sec"]
++        camera_publish_deadline = self.param_values["camera_publish_deadline_sec"]
++        camera_pending_limit = self.param_values["camera_pending_frame_limit"]
+         if not math.isfinite(hand_brake_velocity) or hand_brake_velocity < 0.0:
+             raise ValueError("stopped hand-brake velocity threshold is invalid")
+         if (
+@@ -119,6 +127,12 @@
+             or not 0.0 <= hand_brake_service_brake <= 1.0
+         ):
+             raise ValueError("stopped hand-brake service-brake threshold is invalid")
++        if not math.isfinite(camera_wait_timeout) or camera_wait_timeout <= 0.0:
++            raise ValueError("camera frame wait timeout must be positive and finite")
++        if not math.isfinite(camera_publish_deadline) or camera_publish_deadline <= 0.0:
++            raise ValueError("camera publish deadline must be positive and finite")
++        if camera_pending_limit < 1:
++            raise ValueError("camera pending frame limit must be positive")
+ 
+     def _initialize_clock_publisher(self):
+         """Initialize and publish initial clock message."""
+@@ -216,9 +230,55 @@
+         self._register_sensor_configs(self.sensor_configs)
+         self._create_sensor_publishers_from_registry()
+         self.sensors = {"sensors": self._build_sensor_specs(self.sensor_configs)}
++        # HH_260906 - Derive the exact camera stride from the loaded physical sensor mapping.
++        self._configure_camera_delivery_contract(self.sensor_configs)
+ 
+         self.logger.info(f"Configured {len(self.sensor_configs)} sensors from mapping")
+ 
++    def _configure_camera_delivery_contract(self, configs):
++        """Configure a bounded source-frame barrier for physical cameras."""
++        if not self.param_values["camera_frame_barrier_enabled"]:
++            return
++        if not self.param_values["sync_mode"]:
++            raise ValueError("camera frame barrier requires synchronous CARLA mode")
++        fixed_delta = float(self.param_values["fixed_delta_seconds"])
++        if not math.isfinite(fixed_delta) or fixed_delta <= 0.0:
++            raise ValueError("fixed_delta_seconds must be positive and finite")
++
++        rgb_configs = [
++            config for config in configs if config.carla_type == "sensor.camera.rgb"
++        ]
++        # HH_260906 - Bind Common10 continuity to its complete six-camera physical rig.
++        if len(rgb_configs) != 6:
++            raise ValueError("camera frame barrier requires exactly six physical RGB cameras")
++
++        frame_strides = set()
++        for config in rgb_configs:
++            sensor_tick = float(config.parameters.get("sensor_tick", 0.0))
++            if not math.isfinite(sensor_tick) or sensor_tick < 0.0:
++                raise ValueError("camera sensor_tick must be non-negative and finite")
++            source_period = sensor_tick if sensor_tick > 0.0 else fixed_delta
++            stride_float = source_period / fixed_delta
++            frame_stride = round(stride_float)
++            if frame_stride < 1 or not math.isclose(
++                stride_float, frame_stride, rel_tol=0.0, abs_tol=1.0e-6
++            ):
++                raise ValueError(
++                    "camera sensor_tick must be an integer multiple of fixed_delta_seconds"
++                )
++            frame_strides.add(frame_stride)
++
++        if not frame_strides:
++            return
++        if len(frame_strides) != 1:
++            raise ValueError("all physical cameras must use the same source frame stride")
++        self.sensor_interface.configure_camera_contract(
++            frame_stride=frame_strides.pop(),
++            wait_timeout_sec=self.param_values["camera_frame_wait_timeout_sec"],
++            pending_frame_limit=self.param_values["camera_pending_frame_limit"],
++            expected_camera_count=len(rgb_configs),
++        )
++
+     def _resolve_sensor_kit_name(self) -> str:
+         """Resolve the effective sensor kit name based on parameters and mapping."""
+         param_value = (self.param_values.get("sensor_kit_name", "") or "").strip()
+@@ -355,7 +415,7 @@
+         self.cv_bridge = CvBridge()
+ 
+     def __call__(self):
+-        input_data = self.sensor_interface.get_data()
++        input_data = self.sensor_interface.get_data(current_frame=GameTime.get_frame())
+         timestamp = GameTime.get_time()
+         control = self.run_step(input_data, timestamp)
+         return control
+@@ -474,12 +534,30 @@
+         """Run a publish call on the sensor's worker thread (created lazily)."""
+         worker = self._publish_workers.get(key)
+         if worker is None:
++            # HH_260906 - Fail closed only for synchronized camera bundles in strict mode.
++            strict_camera = key == "camera_bundle" and self.param_values.get(
++                "camera_frame_barrier_enabled", False
++            )
++            overflow_policy = "fail_closed" if strict_camera else "latest_wins"
++            max_task_duration_sec = (
++                self.param_values["camera_publish_deadline_sec"]
++                if strict_camera
++                else None
++            )
+             worker = SensorPublishWorker(
+-                key, self.logger, timing_monitor=self._get_runtime_timing()
++                key,
++                self.logger,
++                timing_monitor=self._get_runtime_timing(),
++                overflow_policy=overflow_policy,
++                max_task_duration_sec=max_task_duration_sec,
+             )
+             self._publish_workers[key] = worker
+         worker.submit(fn, args)
+ 
++    def _raise_publish_worker_failures(self):
++        for worker in getattr(self, "_publish_workers", {}).values():
++            worker.raise_if_failed()
++
+     def _publish_camera_bundle(self, camera_measurements):
+         """Convert and publish one complete physical camera frame serially."""
+         timing = self._get_runtime_timing()
+@@ -520,11 +598,11 @@
+                 )
+             return False
+ 
+-        for _, camera_id, timestamp in camera_measurements:
+-            self.sensor_registry.update_sensor_timestamp(camera_id, timestamp)
+         self._submit_to_publish_worker(
+             "camera_bundle", self._publish_camera_bundle, tuple(camera_measurements)
+         )
++        for _, camera_id, timestamp in camera_measurements:
++            self.sensor_registry.update_sensor_timestamp(camera_id, timestamp)
+         return True
+ 
+     def lidar(self, carla_lidar_measurement, id_, timestamp=None):
+@@ -1069,6 +1147,8 @@
+ 
+ 
+         """
++        self._raise_publish_worker_failures()
++
+         # Update timestamp under lock to prevent race with control_callback
+         with self._state_lock:
+             self.timestamp = timestamp
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py
+@@ -17,7 +17,11 @@
+ from __future__ import print_function
+ 
+ import logging
++from queue import Empty
++from queue import Full
+ from queue import Queue
++import threading
++import time
+ 
+ import carla
+ import numpy as np
+@@ -82,7 +86,9 @@
+ class SensorInterface(object):
+     """Interface for collecting sensor data from CARLA."""
+ 
++    # HH_260906 - Bound callback retention so overload becomes an explicit terminal fault.
+     MAX_PENDING_CAMERA_FRAMES = 8
++    MAX_PENDING_SENSOR_MESSAGES = 256
+ 
+     def __init__(self):
+         """Initialize sensor interface."""
+@@ -91,67 +97,184 @@
+         self._camera_tags = set()
+         self._pending_camera_frames = {}
+         self._last_returned_camera_frame = -1
++        self._camera_frame_stride = None
++        self._camera_wait_timeout_sec = None
++        self._camera_pending_frame_limit = self.MAX_PENDING_CAMERA_FRAMES
++        self._camera_expected_count = None
++        self._buffer_failure = None
++        self._buffer_failure_lock = threading.Lock()
+         self.tag = ""  # Current sensor tag
+ 
++    def configure_camera_contract(
++        self,
++        frame_stride,
++        wait_timeout_sec,
++        pending_frame_limit=MAX_PENDING_CAMERA_FRAMES,
++        expected_camera_count=None,
++    ):
++        """Require source-ordered camera frames at a fixed CARLA frame stride."""
++        if not isinstance(frame_stride, int) or frame_stride < 1:
++            raise ValueError("Camera frame stride must be a positive integer")
++        if wait_timeout_sec <= 0.0:
++            raise ValueError("Camera frame wait timeout must be positive")
++        if not isinstance(pending_frame_limit, int) or pending_frame_limit < 1:
++            raise ValueError("Camera pending frame limit must be a positive integer")
++        if expected_camera_count is None:
++            expected_camera_count = len(self._camera_tags)
++        if not isinstance(expected_camera_count, int) or expected_camera_count < 1:
++            raise ValueError("Expected camera count must be a positive integer")
++        if not self._new_data_buffers.empty():
++            raise ValueError("Camera contract must be configured before sensor callbacks start")
++        self._new_data_buffers = Queue(maxsize=self.MAX_PENDING_SENSOR_MESSAGES)
++        self._camera_frame_stride = frame_stride
++        self._camera_wait_timeout_sec = float(wait_timeout_sec)
++        self._camera_pending_frame_limit = pending_frame_limit
++        self._camera_expected_count = expected_camera_count
++
+     def register_sensor(self, tag, sensor):
+         self.tag = tag
+         if tag in self._sensors_objects:
+             raise ValueError(f"Duplicated sensor tag [{tag}]")
+ 
+         self._sensors_objects[tag] = sensor
+-        if getattr(sensor, "type_id", "").startswith("sensor.camera"):
++        if getattr(sensor, "type_id", "") == "sensor.camera.rgb":
+             self._camera_tags.add(tag)
+ 
+     def update_sensor(self, tag, data, timestamp):
+         if tag not in self._sensors_objects:
+             raise ValueError(f"Sensor with tag [{tag}] has not been created")
+ 
+-        self._new_data_buffers.put((tag, timestamp, data))
+-
+-    def get_data(self):
+-        """Get all available sensor data without blocking for all sensors."""
+-        from queue import Empty
+-
+-        data_dict = {}
++        try:
++            self._new_data_buffers.put_nowait((tag, timestamp, data))
++        except Full:
++            with self._buffer_failure_lock:
++                if self._buffer_failure is None:
++                    self._buffer_failure = (
++                        "CARLA sensor callback buffer exceeded its bounded capacity"
++                    )
++
++    def _raise_if_buffer_failed(self):
++        with self._buffer_failure_lock:
++            failure = self._buffer_failure
++        if failure is not None:
++            raise SensorReceivedNoData(failure)
++
++    def _store_sensor_data(self, item, data_dict):
++        tag, frame, data = item
++        if tag in self._camera_tags:
++            if frame <= self._last_returned_camera_frame:
++                return
++            self._pending_camera_frames.setdefault(frame, {})[tag] = (frame, data)
++            return
++        data_dict[tag] = (frame, data)
+ 
+-        # Non-blocking: get all available data from queue
++    def _drain_available_data(self, data_dict):
+         while True:
+             try:
+-                tag, frame, data = self._new_data_buffers.get(block=False)
+-                if tag in self._camera_tags:
+-                    if frame <= self._last_returned_camera_frame:
+-                        continue
+-                    self._pending_camera_frames.setdefault(frame, {})[tag] = (frame, data)
+-                else:
+-                    data_dict[tag] = (frame, data)
++                self._store_sensor_data(self._new_data_buffers.get_nowait(), data_dict)
+             except Empty:
+-                # Queue is empty, break and return whatever data we have
+-                break
++                return
+ 
+-        complete_frames = [
++    def _complete_camera_frames(self):
++        return [
+             frame
+             for frame, camera_data in self._pending_camera_frames.items()
+             if self._camera_tags.issubset(camera_data)
+         ]
+-        if complete_frames:
+-            # HH_260906 - Drain the oldest complete camera frame before newer ready frames.
+-            # HH_260906 - Preserve every source sample across transient callback bursts.
+-            oldest_complete = min(complete_frames)
+-            data_dict.update(self._pending_camera_frames[oldest_complete])
+-            self._last_returned_camera_frame = oldest_complete
+-            self._pending_camera_frames = {
+-                frame: camera_data
+-                for frame, camera_data in self._pending_camera_frames.items()
+-                if frame > oldest_complete
+-            }
+-        elif len(self._pending_camera_frames) > self.MAX_PENDING_CAMERA_FRAMES:
+-            newest_frames = sorted(self._pending_camera_frames)[-self.MAX_PENDING_CAMERA_FRAMES :]
+-            self._pending_camera_frames = {
+-                frame: self._pending_camera_frames[frame] for frame in newest_frames
+-            }
+ 
+-        # Non-camera data remains immediate; cameras are returned only as one physical frame.
+-        return data_dict
++    def _select_camera_frame(self, complete_frames):
++        if not complete_frames:
++            return None
++        if self._camera_frame_stride is None:
++            return min(complete_frames)
++        if self._last_returned_camera_frame < 0:
++            first_observed_frame = min(self._pending_camera_frames)
++            return first_observed_frame if first_observed_frame in complete_frames else None
++        expected_frame = self._last_returned_camera_frame + self._camera_frame_stride
++        return expected_frame if expected_frame in complete_frames else None
++
++    def _camera_frame_is_due(self, current_frame):
++        if self._camera_frame_stride is None or current_frame is None:
++            return False
++        if self._last_returned_camera_frame < 0:
++            return bool(self._pending_camera_frames)
++        return current_frame >= self._last_returned_camera_frame + self._camera_frame_stride
++
++    def _missing_camera_frame_message(self, current_frame):
++        if self._last_returned_camera_frame < 0:
++            expected = "initial"
++        else:
++            expected = str(self._last_returned_camera_frame + self._camera_frame_stride)
++        pending = sorted(self._pending_camera_frames)
++        return (
++            "Timed out waiting for complete CARLA camera frame: "
++            f"expected={expected} current={current_frame} pending={pending}"
++        )
++
++    def get_data(self, current_frame=None):
++        """Return one complete source-ordered camera frame and current non-camera data."""
++        # HH_260906 - Hold each due physics tick until its exact RGB bundle is complete.
++        data_dict = {}
++        deadline = None
++
++        while True:
++            if (
++                self._camera_expected_count is not None
++                and len(self._camera_tags) != self._camera_expected_count
++            ):
++                raise SensorReceivedNoData(
++                    "CARLA RGB camera registration count violates the delivery contract: "
++                    f"expected={self._camera_expected_count} actual={len(self._camera_tags)}"
++                )
++            self._raise_if_buffer_failed()
++            self._drain_available_data(data_dict)
++            self._raise_if_buffer_failed()
++
++            if len(self._pending_camera_frames) > self._camera_pending_frame_limit:
++                if self._camera_frame_stride is None:
++                    newest_frames = sorted(self._pending_camera_frames)[
++                        -self._camera_pending_frame_limit :
++                    ]
++                    self._pending_camera_frames = {
++                        frame: self._pending_camera_frames[frame]
++                        for frame in newest_frames
++                    }
++                    continue
++                raise SensorReceivedNoData(
++                    "CARLA pending camera frames exceeded the bounded limit: "
++                    f"pending={len(self._pending_camera_frames)} "
++                    f"limit={self._camera_pending_frame_limit}"
++                )
++
++            complete_frames = self._complete_camera_frames()
++            selected_frame = self._select_camera_frame(complete_frames)
++            if selected_frame is not None:
++                data_dict.update(self._pending_camera_frames[selected_frame])
++                self._last_returned_camera_frame = selected_frame
++                self._pending_camera_frames = {
++                    frame: camera_data
++                    for frame, camera_data in self._pending_camera_frames.items()
++                    if frame > selected_frame
++                }
++                return data_dict
++
++            if not self._camera_frame_is_due(current_frame):
++                return data_dict
++
++            if deadline is None:
++                deadline = time.monotonic() + self._camera_wait_timeout_sec
++            remaining = deadline - time.monotonic()
++            if remaining <= 0.0:
++                raise SensorReceivedNoData(
++                    self._missing_camera_frame_message(current_frame)
++                )
++            try:
++                item = self._new_data_buffers.get(timeout=remaining)
++            except Empty:
++                raise SensorReceivedNoData(
++                    self._missing_camera_frame_message(current_frame)
++                ) from None
++            self._store_sensor_data(item, data_dict)
+ 
+ 
+ # Sensor Wrapper
+diff --git a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
+--- a/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
++++ b/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py
+@@ -16,12 +16,17 @@
+ 
+ import queue
+ import threading
++import time
+ 
+ from .runtime_timing import RuntimeTimingMonitor
+ 
+ _SENTINEL = object()
+ 
+ 
++class SensorPublishFailure(RuntimeError):
++    """Report a terminal asynchronous sensor publication failure."""
++
++
+ class SensorPublishWorker:
+     """Convert and publish one sensor's data off the simulation tick thread.
+ 
+@@ -32,26 +37,67 @@
+     call blocks on DDS flow control) stalls that loop and slows simulation
+     time itself, which destabilizes every downstream consumer.
+ 
+-    Each worker owns one daemon thread and a bounded latest-wins queue:
+-    when the publish side cannot keep up, stale frames are dropped instead
+-    of blocking the tick loop. Sensor frames are perishable, so dropping
+-    the oldest frame is the correct degradation.
++    Each worker owns one daemon thread and a bounded queue. Perishable
++    sensors may use latest-wins overload handling, while synchronized camera
++    bundles use fail-closed handling so a missing source frame cannot be
++    hidden by publishing a newer one.
+     """
+ 
+-    def __init__(self, name, logger, queue_size=1, timing_monitor=None):
++    def __init__(
++        self,
++        name,
++        logger,
++        queue_size=1,
++        timing_monitor=None,
++        overflow_policy="latest_wins",
++        max_task_duration_sec=None,
++    ):
++        if overflow_policy not in ("latest_wins", "fail_closed"):
++            raise ValueError(f"Unsupported sensor publish overflow policy: {overflow_policy}")
++        if queue_size < 1:
++            raise ValueError("Sensor publish queue_size must be positive")
++        if max_task_duration_sec is not None and max_task_duration_sec <= 0.0:
++            raise ValueError("Sensor publish task deadline must be positive")
+         self._name = name
+         self._logger = logger
+         self._queue = queue.Queue(maxsize=queue_size)
+         self._dropped = 0
+         self._timing = timing_monitor or RuntimeTimingMonitor(logger)
++        self._overflow_policy = overflow_policy
++        self._max_task_duration_ns = (
++            None
++            if max_task_duration_sec is None
++            else int(max_task_duration_sec * 1_000_000_000)
++        )
++        self._failure = None
++        self._failure_lock = threading.Lock()
+         self._thread = threading.Thread(
+             target=self._run, name=f"sensor_publish_{name}", daemon=True
+         )
+         self._thread.start()
+ 
+     def submit(self, fn, args):
+-        """Enqueue a publish call without blocking; drop the stale frame when full."""
++        """Enqueue without blocking and apply the configured overflow policy."""
++        self.raise_if_failed()
+         item = (fn, args, self._timing.start())
++        # HH_260906 - Never replace an expected Common10 camera frame with a newer frame.
++        if self._overflow_policy == "fail_closed":
++            try:
++                self._queue.put_nowait(item)
++            except queue.Full as exc:
++                message = (
++                    f"Publish worker '{self._name}' exceeded its bounded queue; "
++                    "refusing to skip a source frame"
++                )
++                self._record_failure(message)
++                self._timing.warn_event(
++                    "sensor_publish_overrun",
++                    worker=self._name,
++                    queue_size=self._queue.maxsize,
++                )
++                raise SensorPublishFailure(message) from exc
++            return
++
+         dropped_this_submit = 0
+         while True:
+             try:
+@@ -77,6 +123,8 @@
+             item = self._queue.get()
+             if item is _SENTINEL:
+                 return
++            if self._overflow_policy == "fail_closed" and self._has_failed():
++                return
+             fn, args, enqueued_ns = item
+             queue_wait_stage = (
+                 "camera_bundle_queue_wait"
+@@ -86,17 +134,61 @@
+             self._timing.warn_if_slow(
+                 queue_wait_stage, enqueued_ns, worker=self._name
+             )
++            task_started_ns = time.monotonic_ns()
+             try:
+                 fn(*args)
+             except Exception as e:  # noqa: B902 - keep the worker alive on publish errors
+                 self._logger.error(f"Publish worker '{self._name}' failed: {e}")
++                if self._overflow_policy == "fail_closed":
++                    self._record_failure(
++                        f"Publish worker '{self._name}' callback failed: {e}"
++                    )
++                    return
++            finally:
++                task_duration_ns = time.monotonic_ns() - task_started_ns
++                if (
++                    self._overflow_policy == "fail_closed"
++                    and self._max_task_duration_ns is not None
++                    and task_duration_ns > self._max_task_duration_ns
++                ):
++                    duration_ms = task_duration_ns / 1_000_000.0
++                    deadline_ms = self._max_task_duration_ns / 1_000_000.0
++                    self._record_failure(
++                        f"Publish worker '{self._name}' missed its task deadline: "
++                        f"duration_ms={duration_ms:.3f} deadline_ms={deadline_ms:.3f}"
++                    )
++            if self._overflow_policy == "fail_closed" and self._has_failed():
++                return
++
++    def _record_failure(self, message):
++        with self._failure_lock:
++            if self._failure is None:
++                self._failure = message
++
++    def raise_if_failed(self):
++        """Raise a stable terminal error observed by the asynchronous worker."""
++        with self._failure_lock:
++            failure = self._failure
++        if failure is not None:
++            raise SensorPublishFailure(failure)
++
++    def _has_failed(self):
++        with self._failure_lock:
++            return self._failure is not None
+ 
+     def stop(self, timeout=2.0):
+         """Stop the worker after letting queued work drain."""
++        if not self._thread.is_alive():
++            return
+         try:
+-            self._queue.put(_SENTINEL, timeout=timeout)
++            self._queue.put_nowait(_SENTINEL)
+         except queue.Full:
+-            # Worker is wedged inside a publish call; it is a daemon thread,
+-            # so it will not block process exit.
+-            return
++            if self._overflow_policy == "fail_closed" and self._has_failed():
++                # HH_260906 - Join an active failed publisher before ROS entities are destroyed.
++                self._thread.join(timeout=timeout)
++                return
++            try:
++                self._queue.put(_SENTINEL, timeout=timeout)
++            except queue.Full:
++                return
+         self._thread.join(timeout=timeout)

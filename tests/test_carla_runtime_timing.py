@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import threading
 from types import SimpleNamespace
 
 import pytest
@@ -159,6 +160,51 @@ def test_sensor_loop_times_sensor_wait_and_world_tick_without_reordering(
     ]
     assert [call[0] for call in monitor.calls] == ["sensor_wait", "world_tick"]
     assert all(call[2] == {"sim_time_sec": 1.25} for call in monitor.calls)
+
+
+def test_sensor_loop_does_not_advance_world_before_delayed_bundle(
+    runtime_modules, monkeypatch
+) -> None:
+    carla_autoware, _ = runtime_modules
+    from autoware_carla_interface.modules.carla_wrapper import SensorInterface
+
+    interface = SensorInterface()
+    camera_tags = [f"camera_{index}" for index in range(6)]
+    for tag in camera_tags:
+        interface.register_sensor(tag, SimpleNamespace(type_id="sensor.camera.rgb"))
+    interface.configure_camera_contract(frame_stride=2, wait_timeout_sec=0.25)
+    interface.update_sensor(camera_tags[0], "partial", 100)
+
+    world_ticked = threading.Event()
+    control = object()
+    loop = carla_autoware.SensorLoop()
+
+    def receive_control():
+        interface.get_data(current_frame=100)
+        return control
+
+    loop.sensor = receive_control
+    loop.ego_actor = SimpleNamespace(apply_control=lambda _: None)
+    loop.running = True
+    monkeypatch.setattr(carla_autoware.GameTime, "on_carla_tick", lambda _: None)
+    monkeypatch.setattr(carla_autoware.CarlaDataProvider, "on_carla_tick", lambda: None)
+    monkeypatch.setattr(
+        carla_autoware.CarlaDataProvider,
+        "get_world",
+        lambda: SimpleNamespace(tick=world_ticked.set),
+    )
+
+    tick_thread = threading.Thread(
+        target=loop._tick_sensor, args=(SimpleNamespace(elapsed_seconds=1.0),)
+    )
+    tick_thread.start()
+    assert not world_ticked.wait(timeout=0.02)
+    for tag in camera_tags[1:]:
+        interface.update_sensor(tag, f"{tag}-100", 100)
+
+    assert world_ticked.wait(timeout=1.0)
+    tick_thread.join(timeout=1.0)
+    assert not tick_thread.is_alive()
 
 
 def test_runtime_patch_is_bound_to_both_build_entrypoints() -> None:

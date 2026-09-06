@@ -109,6 +109,11 @@ speed_60kph_pilot=false
 camera_source_5hz=false
 camera_source_sensor_tick_sec=0.0
 portable_shadow_10hz=false
+# HH_260906 - Enable the synchronous camera barrier only for the pinned Common10 profile.
+camera_frame_barrier_enabled=false
+camera_frame_wait_timeout_sec=0.25
+camera_publish_deadline_sec=0.25
+camera_pending_frame_limit=8
 portable_runtime_bundle=""
 portable_runtime_bundle_sha256=""
 portable_source_checkpoint_sha256=""
@@ -190,6 +195,7 @@ while [[ $# -gt 0 ]]; do
     --portable-shadow-10hz)
       claim_portable_option "$1"
       portable_shadow_10hz=true
+      camera_frame_barrier_enabled=true
       camera_source_sensor_tick_sec=0.1
       recommended=true
       shift
@@ -596,7 +602,7 @@ for argument in "${launch_arguments[@]}"; do
     esac
   fi
   case "${argument}" in
-    vad_model_override_file:=*|sensor_mapping_file:=*)
+    vad_model_override_file:=*|sensor_mapping_file:=*|camera_frame_barrier_enabled:=*|camera_frame_wait_timeout_sec:=*|camera_publish_deadline_sec:=*|camera_pending_frame_limit:=*)
       echo "Use the protected wrapper option instead of the ${argument%%:=*} launch argument." >&2
       exit 2
       ;;
@@ -886,31 +892,93 @@ fi
 raw_vehicle_cmd_converter_config="$(
   ros2 pkg prefix autoware_carla_interface
 )/share/autoware_carla_interface/config/raw_vehicle_cmd_converter.param.yaml"
-# HH_260906 - Bind each route artifact to the ordered camera-bundle dispatcher source.
+# HH_260906 - Bind each route artifact to every source file enforcing camera continuity.
 carla_camera_bundle_dispatch_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
-carla_camera_bundle_dispatch_runtime="$(
-  python3 - <<'PY'
+carla_camera_bridge_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py"
+carla_camera_publish_worker_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py"
+carla_camera_interface_launch_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml"
+carla_camera_delivery_patch="${root}/patches/autoware_carla_interface_camera_delivery_contract.patch"
+# HH_260906 - Resolve installed modules after the workspace environment has been sanitized.
+resolve_installed_python_module() {
+  python3 - "$1" <<'PY'
 from importlib.util import find_spec
 from pathlib import Path
+import sys
 
-spec = find_spec("autoware_carla_interface.modules.carla_wrapper")
+spec = find_spec(sys.argv[1])
 if spec is None or spec.origin is None:
-    raise SystemExit("cannot resolve the installed CARLA camera-bundle dispatcher")
+    raise SystemExit(f"cannot resolve installed Python module: {sys.argv[1]}")
 print(Path(spec.origin).resolve())
 PY
+}
+carla_camera_bundle_dispatch_runtime="$(
+  resolve_installed_python_module autoware_carla_interface.modules.carla_wrapper
 )"
-if [[ ! -f "${carla_camera_bundle_dispatch_source}" ||
-      ! -f "${carla_camera_bundle_dispatch_runtime}" ]]; then
-  echo "CARLA camera-bundle dispatcher source or runtime file is missing" >&2
-  exit 1
-fi
+carla_camera_bridge_runtime="$(
+  resolve_installed_python_module autoware_carla_interface.carla_ros
+)"
+carla_camera_publish_worker_runtime="$(
+  resolve_installed_python_module autoware_carla_interface.modules.sensor_publish_worker
+)"
+carla_camera_interface_launch_runtime="$(
+  ros2 pkg prefix autoware_carla_interface
+)/share/autoware_carla_interface/launch/autoware_carla_interface.launch.xml"
 carla_camera_bundle_dispatch_sha256="$(
   sha256sum -- "${carla_camera_bundle_dispatch_source}" | awk '{print $1}'
 )"
-if [[ "$(sha256sum -- "${carla_camera_bundle_dispatch_runtime}" | awk '{print $1}')" != \
-      "${carla_camera_bundle_dispatch_sha256}" ]]; then
-  echo "Installed CARLA camera-bundle dispatcher does not match the source" >&2
-  exit 1
+carla_camera_bridge_sha256="$(
+  sha256sum -- "${carla_camera_bridge_source}" | awk '{print $1}'
+)"
+carla_camera_publish_worker_sha256="$(
+  sha256sum -- "${carla_camera_publish_worker_source}" | awk '{print $1}'
+)"
+carla_camera_interface_launch_sha256="$(
+  sha256sum -- "${carla_camera_interface_launch_source}" | awk '{print $1}'
+)"
+carla_camera_delivery_patch_sha256="$(
+  sha256sum -- "${carla_camera_delivery_patch}" | awk '{print $1}'
+)"
+# HH_260906 - Refuse trials when any installed camera-contract module differs from source.
+camera_contract_sources=(
+  "bundle dispatcher|${carla_camera_bundle_dispatch_source}|${carla_camera_bundle_dispatch_runtime}|${carla_camera_bundle_dispatch_sha256}"
+  "bridge|${carla_camera_bridge_source}|${carla_camera_bridge_runtime}|${carla_camera_bridge_sha256}"
+  "publish worker|${carla_camera_publish_worker_source}|${carla_camera_publish_worker_runtime}|${carla_camera_publish_worker_sha256}"
+  "interface launch|${carla_camera_interface_launch_source}|${carla_camera_interface_launch_runtime}|${carla_camera_interface_launch_sha256}"
+)
+for camera_contract_entry in "${camera_contract_sources[@]}"; do
+  IFS='|' read -r camera_contract_label camera_contract_source \
+    camera_contract_runtime camera_contract_sha256 <<< "${camera_contract_entry}"
+  if [[ ! -f "${camera_contract_source}" || ! -f "${camera_contract_runtime}" ]]; then
+    echo "CARLA camera ${camera_contract_label} source or runtime file is missing" >&2
+    exit 1
+  fi
+  if [[ "$(sha256sum -- "${camera_contract_runtime}" | awk '{print $1}')" != \
+        "${camera_contract_sha256}" ]]; then
+    echo "Installed CARLA camera ${camera_contract_label} does not match the source" >&2
+    exit 1
+  fi
+done
+carla_camera_bundle_dispatch_policy="oldest_complete_source_order_v1"
+carla_camera_delivery_contract_id="disabled"
+carla_camera_barrier_scope="disabled"
+camera_frame_stride="not_applicable"
+camera_expected_rgb_count="not_applicable"
+if [[ "${camera_frame_barrier_enabled}" == "true" ]]; then
+  carla_camera_bundle_dispatch_policy="exact_due_frame_barrier_fail_closed_v1"
+  carla_camera_delivery_contract_id="common10_exact_due_frame_fail_closed_v1"
+  carla_camera_barrier_scope="portable_e2e_common10_only"
+  camera_frame_stride=2
+  camera_expected_rgb_count=6
+fi
+# HH_260906 - Materialize every protected camera limit before evidence files are written.
+camera_contract_launch_arguments=()
+if [[ "${camera_frame_barrier_enabled}" == "true" ]]; then
+  camera_contract_launch_arguments+=(
+    "camera_frame_barrier_enabled:=true"
+    "camera_frame_wait_timeout_sec:=${camera_frame_wait_timeout_sec}"
+    "camera_publish_deadline_sec:=${camera_publish_deadline_sec}"
+    "camera_pending_frame_limit:=${camera_pending_frame_limit}"
+  )
 fi
 runtime_health_probe="${root}/scripts/e2e/probe_runtime_health.py"
 for argument in "${launch_arguments[@]}"; do
@@ -1057,6 +1125,8 @@ capture_encoder_preset="ultrafast"
 capture_encoder_crf=20
 capture_encoder_threads=2
 capture_ffmpeg_thread_policy="bounded_ffmpeg_workers_v1"
+# HH_260906 - Redraw evidence only when the 10 Hz camera and inference inputs can change.
+capture_rviz_redraw_rate_fps=10
 capture_rviz_config=""
 capture_rviz_config_sha256=""
 if [[ "${capture_desktop}" == "true" ]]; then
@@ -1100,6 +1170,9 @@ import yaml
 config_path = Path(sys.argv[1])
 with config_path.open(encoding="utf-8") as stream:
     config = yaml.safe_load(stream)
+redraw_rate = config["Visualization Manager"]["Global Options"].get("Frame Rate")
+if redraw_rate != 10:
+    raise SystemExit(f"RViz capture redraw rate must be 10 Hz, got {redraw_rate!r}")
 view = config["Visualization Manager"]["Views"]["Current"]
 expected = {
     "Class": "rviz_default_plugins/TopDownOrtho",
@@ -1377,7 +1450,8 @@ if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
   python3 scripts/e2e/analyze_actuation_map_coverage.py \
     "${actuation_coverage_arguments[@]}"
 fi
-printf '%s\n' "${launch_arguments[@]}" > "${output_dir}/launch_args.txt"
+printf '%s\n' "${launch_arguments[@]}" \
+  "${camera_contract_launch_arguments[@]}" > "${output_dir}/launch_args.txt"
 printf 'ROS_DOMAIN_ID=%s\nCARLA_HOST=%s\nCARLA_PORT=%s\n' \
   "${ROS_DOMAIN_ID}" "${carla_host}" "${carla_port}" > "${output_dir}/runtime.env"
 printf 'CARLA_LIFECYCLE=cold_start_owned_process_group_per_trial\nCARLA_GENERATION_ID=%s\nCARLA_EXPECTED_MAP=%s\nCARLA_OWNER_PID=%s\nCARLA_OWNER_PGID=%s\nCARLA_SERVER_LOG=%s\nCARLA_MATRIX_OWNED=%s\n' \
@@ -1386,10 +1460,24 @@ printf 'CARLA_LIFECYCLE=cold_start_owned_process_group_per_trial\nCARLA_GENERATI
   "${output_dir}/runtime.env"
 printf 'SOURCE_ROUTE_FILE=%s\nEFFECTIVE_ROUTE_FILE=%s\nFULL_MAP_PATH=%s\n' \
   "${source_route_file}" "${route_file}" "${full_map_path}" >> "${output_dir}/runtime.env"
-printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=oldest_complete_source_order_v1\nCARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s\n' \
+printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s\nCARLA_CAMERA_FRAME_BARRIER_ENABLED=%s\nCARLA_CAMERA_FRAME_STRIDE=%s\nCARLA_CAMERA_FRAME_WAIT_TIMEOUT_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SEC=%s\nCARLA_CAMERA_PUBLISH_DEADLINE_SCOPE=callback_execution_only\nCARLA_CAMERA_PENDING_FRAME_LIMIT=%s\nCARLA_CAMERA_EXPECTED_RGB_COUNT=%s\nCARLA_CAMERA_BARRIER_SCOPE=%s\nCARLA_CAMERA_DELIVERY_CONTRACT_ID=%s\nCARLA_CAMERA_DELIVERY_PATCH_FILE=%s\nCARLA_CAMERA_DELIVERY_PATCH_SHA256=%s\nCARLA_CAMERA_BRIDGE_SOURCE_FILE=%s\nCARLA_CAMERA_BRIDGE_RUNTIME_FILE=%s\nCARLA_CAMERA_BRIDGE_SHA256=%s\nCARLA_CAMERA_PUBLISH_WORKER_SOURCE_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_RUNTIME_FILE=%s\nCARLA_CAMERA_PUBLISH_WORKER_SHA256=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SOURCE_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_RUNTIME_FILE=%s\nCARLA_CAMERA_INTERFACE_LAUNCH_SHA256=%s\n' \
+  "${carla_camera_bundle_dispatch_policy}" \
   "${carla_camera_bundle_dispatch_source}" \
   "${carla_camera_bundle_dispatch_runtime}" \
-  "${carla_camera_bundle_dispatch_sha256}" >> "${output_dir}/runtime.env"
+  "${carla_camera_bundle_dispatch_sha256}" \
+  "${camera_frame_barrier_enabled}" "${camera_frame_stride}" \
+  "${camera_frame_wait_timeout_sec}" "${camera_publish_deadline_sec}" \
+  "${camera_pending_frame_limit}" "${camera_expected_rgb_count}" \
+  "${carla_camera_barrier_scope}" \
+  "${carla_camera_delivery_contract_id}" \
+  "${carla_camera_delivery_patch}" "${carla_camera_delivery_patch_sha256}" \
+  "${carla_camera_bridge_source}" "${carla_camera_bridge_runtime}" \
+  "${carla_camera_bridge_sha256}" "${carla_camera_publish_worker_source}" \
+  "${carla_camera_publish_worker_runtime}" \
+  "${carla_camera_publish_worker_sha256}" \
+  "${carla_camera_interface_launch_source}" \
+  "${carla_camera_interface_launch_runtime}" \
+  "${carla_camera_interface_launch_sha256}" >> "${output_dir}/runtime.env"
 if [[ "${portable_shadow_10hz}" == "true" ]]; then
   printf 'PORTABLE_SHADOW_ENABLED=true\nPORTABLE_SHADOW_MODE=shadow_only\nPORTABLE_SHADOW_CONTROLLING_PLANNER=autoware_vad\nPORTABLE_SHADOW_VEHICLE_CONTROL_APPROVED=false\nPORTABLE_SHADOW_CANONICAL_PUBLICATION_ALLOWED=false\nPORTABLE_SHADOW_REMAPS_ALLOWED=false\nPORTABLE_SHADOW_DEVICE=%s\nPORTABLE_SHADOW_DECLARED_MAP_ID=%s\nPORTABLE_SHADOW_OBSERVED_MAP_ID=%s\nPORTABLE_SHADOW_OBSERVED_MAP_SOURCE=carla_python_api_world_get_map\nPORTABLE_SHADOW_CARLA_MAP_PROBE_FILE=%s\nPORTABLE_SHADOW_CARLA_MAP_PROBE_SHA256=%s\nPORTABLE_SHADOW_EFFECTIVE_CAMERA_HZ=10\nPORTABLE_SHADOW_MAPPING_REQUESTED_CAP_HZ=11\nPORTABLE_SHADOW_ROUTE_FILE=%s\nPORTABLE_SHADOW_ROUTE_SHA256=%s\nPORTABLE_SHADOW_ROUTE_MATERIALIZED_THIS_TRIAL=true\nPORTABLE_SHADOW_BINDING_FILE=%s\nPORTABLE_SHADOW_BINDING_SHA256=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_FILE=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_SHA256=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_DIRECT=true\nPORTABLE_SHADOW_RUNTIME_BUNDLE_FILE=%s\nPORTABLE_SHADOW_RUNTIME_BUNDLE_SHA256=%s\nPORTABLE_SHADOW_SOURCE_CHECKPOINT_SHA256=%s\nPORTABLE_SHADOW_MODEL_CONFIG_SHA256=%s\nPORTABLE_SHADOW_CORPUS_FINGERPRINT_SHA256=%s\nPORTABLE_SHADOW_RIG_FILE=%s\nPORTABLE_SHADOW_RIG_SHA256=%s\nPORTABLE_SHADOW_CONTRACT_FILE=%s\nPORTABLE_SHADOW_CONTRACT_SHA256=%s\n' \
     "${portable_shadow_device}" "${portable_shadow_declared_map_id}" \
@@ -1469,12 +1557,12 @@ printf 'RUNTIME_HEALTH_GATE_ENABLED=%s\nRUNTIME_HEALTH_GATE_MODE=%s\nRUNTIME_HEA
   "${runtime_health_probe}" "${runtime_health_probe_sha256}" >> \
   "${output_dir}/runtime.env"
 if [[ "${capture_desktop}" == "true" ]]; then
-  printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\nRVIZ_CAPTURE_FFMPEG_INPUT_FORMAT=x11grab\nRVIZ_CAPTURE_FFMPEG_FRAMERATE_FPS=%s\nRVIZ_CAPTURE_FFMPEG_FILTER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER=%s\nRVIZ_CAPTURE_FFMPEG_PRESET=%s\nRVIZ_CAPTURE_FFMPEG_CRF=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_PIXEL_FORMAT=yuv420p\nRVIZ_CAPTURE_FFMPEG_THREAD_POLICY=%s\n' \
+  printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\nRVIZ_CAPTURE_FFMPEG_INPUT_FORMAT=x11grab\nRVIZ_CAPTURE_FFMPEG_FRAMERATE_FPS=%s\nRVIZ_CAPTURE_FFMPEG_FILTER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER=%s\nRVIZ_CAPTURE_FFMPEG_PRESET=%s\nRVIZ_CAPTURE_FFMPEG_CRF=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_PIXEL_FORMAT=yuv420p\nRVIZ_CAPTURE_FFMPEG_THREAD_POLICY=%s\nRVIZ_REDRAW_RATE_FPS=%s\n' \
     "${capture_output_width_px}" "${capture_output_height_px}" \
     "${capture_framerate_fps}" "${capture_filter_threads}" \
     "${capture_encoder}" "${capture_encoder_preset}" \
     "${capture_encoder_crf}" "${capture_encoder_threads}" \
-    "${capture_ffmpeg_thread_policy}" >> \
+    "${capture_ffmpeg_thread_policy}" "${capture_rviz_redraw_rate_fps}" >> \
     "${output_dir}/runtime.env"
 fi
 printf 'VSCODE_SNAP_GUI_ENV_SANITIZED=%s\n' \
@@ -2174,7 +2262,8 @@ if [[ "${capture_desktop}" == "true" ]]; then
   capture_launch_arguments+=("rviz_config:=${capture_rviz_runtime_config}")
 fi
 setsid "${stack_command[@]}" "${route_file}" \
-  "${launch_arguments[@]}" "${capture_launch_arguments[@]}" > \
+  "${launch_arguments[@]}" "${capture_launch_arguments[@]}" \
+  "${camera_contract_launch_arguments[@]}" > \
   "${output_dir}/stack.log" 2>&1 &
 stack_pid=$!
 stack_pgid="${stack_pid}"
@@ -4124,6 +4213,13 @@ if actual_config_sha256 != expected_config_sha256:
     raise SystemExit("captured RViz config changed after preflight validation")
 config = yaml.safe_load(config_bytes)
 view = config["Visualization Manager"]["Views"]["Current"]
+rviz_redraw_rate_fps = config["Visualization Manager"]["Global Options"].get(
+    "Frame Rate"
+)
+if rviz_redraw_rate_fps != 10:
+    raise SystemExit(
+        f"RViz capture redraw rate must be 10 Hz, got {rviz_redraw_rate_fps!r}"
+    )
 view_contract = {
     "controller": view.get("Class"),
     "target_frame": view.get("Target Frame"),
@@ -4324,6 +4420,7 @@ payload = {
     "rviz_view_contract": {
         **view_contract,
         "vehicle_centered": True,
+        "redraw_rate_fps": rviz_redraw_rate_fps,
         "config_file": "rviz_capture_provenance/autoware_vad_carla.rviz",
         "config_sha256": actual_config_sha256,
         "visible_path_topics": sorted(visible_path_topics),

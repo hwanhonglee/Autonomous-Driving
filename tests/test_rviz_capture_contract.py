@@ -58,6 +58,21 @@ def test_rviz_current_view_tracks_ego_from_the_viewport_center(
         assert saved_follow[key] == current[key]
 
 
+@pytest.mark.parametrize("config_path", (FULL_RVIZ, LIGHTWEIGHT_RVIZ))
+def test_rviz_redraw_rate_matches_the_camera_and_inference_contract(
+    config_path: Path,
+) -> None:
+    # HH_260906 - Prevent evidence rendering from redrawing faster than its 10 Hz inputs.
+    config = _load_config(config_path)
+
+    assert config["Visualization Manager"]["Global Options"]["Frame Rate"] == 10
+
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+    assert "capture_rviz_redraw_rate_fps=10" in source
+    assert "RVIZ_REDRAW_RATE_FPS=%s" in source
+    assert '"redraw_rate_fps": rviz_redraw_rate_fps' in source
+
+
 def test_full_capture_view_keeps_reference_final_vad_and_shadow_paths_visible() -> None:
     config = _load_config(FULL_RVIZ)
     required_topics = {

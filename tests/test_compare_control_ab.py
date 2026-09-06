@@ -99,6 +99,7 @@ def _owned_fixture(
                 f"CONTROL_AB_PID_I40={'true' if candidate else 'false'}",
                 "CONTROL_AB_TURN_PREVIEW_5M=false",
                 "CONTROL_AB_ISOLATED_SINGLE_KNOB=true",
+                "CURVATURE_SPEED_PREVIEW_M=3.0",
                 "RUNTIME_HEALTH_GATE_ENABLED=true",
                 "RUNTIME_HEALTH_GATE_STATUS=PASS",
                 f"RUNTIME_HEALTH_EVIDENCE_SHA256={health_sha256}",
@@ -145,7 +146,9 @@ def _trial(*, candidate: bool = False):
         "control_ab_candidate": "pid_i40" if candidate else "baseline",
         "control_ab_pid_i40": "true" if candidate else "false",
         "control_ab_turn_preview_5m": "false",
+        "control_ab_turn_preview_10m": "false",
         "control_ab_isolated_single_knob": "true",
+        "curvature_speed_preview_m": "3.0",
         "runtime_health_gate_enabled": "true",
         "runtime_health_gate_status": "PASS",
         "runtime_health_evidence_sha256": "b" * 64,
@@ -185,6 +188,7 @@ def test_health_confound_forces_hold() -> None:
         trial["control_ab_candidate"] = "turn_preview_5m"
         trial["control_ab_pid_i40"] = "false"
         trial["control_ab_turn_preview_5m"] = "true"
+        trial["curvature_speed_preview_m"] = "5.0"
     baseline = _trial()
     baseline["route_town"] = "Town03"
     baseline["route_scenario"] = "left"
@@ -204,6 +208,7 @@ def test_route_identity_mismatch_forces_hold() -> None:
     candidate["control_ab_candidate"] = "turn_preview_5m"
     candidate["control_ab_pid_i40"] = "false"
     candidate["control_ab_turn_preview_5m"] = "true"
+    candidate["curvature_speed_preview_m"] = "5.0"
     candidate["route_sha256"] = "b" * 64
     baseline = _trial()
     baseline["route_town"] = "C_track_1_0_7"
@@ -233,6 +238,83 @@ def test_named_scenario_route_mismatch_forces_hold() -> None:
     assert payload["checks"]["scenario_route_identity"]["status"] == "FAIL"
 
 
+def test_c_track_turn_preview_10m_is_accepted_when_all_gates_pass() -> None:
+    baseline = _trial()
+    candidate = _trial(candidate=True)
+    for trial in (baseline, candidate):
+        trial["route_town"] = "C_track_1_0_7"
+        trial["route_scenario"] = "left"
+    candidate["control_ab_candidate"] = "turn_preview_10m"
+    candidate["control_ab_pid_i40"] = "false"
+    candidate["control_ab_turn_preview_10m"] = "true"
+    candidate["curvature_speed_preview_m"] = "10.0"
+
+    payload = module.compare(
+        baseline, candidate, "c_track_turn", "turn_preview_10m"
+    )
+
+    assert payload["decision"] == "ACCEPT"
+    assert all(row["status"] == "PASS" for row in payload["checks"].values())
+
+
+def test_legacy_c_track_turn_preview_5m_is_accepted_when_all_gates_pass() -> None:
+    baseline = _trial()
+    candidate = _trial(candidate=True)
+    for trial in (baseline, candidate):
+        trial["route_town"] = "C_track_1_0_7"
+        trial["route_scenario"] = "left"
+    candidate["control_ab_candidate"] = "turn_preview_5m"
+    candidate["control_ab_pid_i40"] = "false"
+    candidate["control_ab_turn_preview_5m"] = "true"
+    candidate["curvature_speed_preview_m"] = "5.0"
+
+    payload = module.compare(
+        baseline, candidate, "c_track_turn", "turn_preview_5m"
+    )
+
+    assert payload["decision"] == "ACCEPT"
+    assert all(row["status"] == "PASS" for row in payload["checks"].values())
+
+
+def test_turn_preview_10m_rejects_cross_selected_candidate_flag() -> None:
+    baseline = _trial()
+    candidate = _trial(candidate=True)
+    for trial in (baseline, candidate):
+        trial["route_town"] = "C_track_1_0_7"
+        trial["route_scenario"] = "left"
+    candidate["control_ab_candidate"] = "turn_preview_10m"
+    candidate["control_ab_pid_i40"] = "false"
+    candidate["control_ab_turn_preview_5m"] = "true"
+    candidate["control_ab_turn_preview_10m"] = "true"
+    candidate["curvature_speed_preview_m"] = "10.0"
+
+    payload = module.compare(
+        baseline, candidate, "c_track_turn", "turn_preview_10m"
+    )
+
+    assert payload["decision"] == "HOLD"
+    assert payload["checks"]["candidate_isolated_control"]["status"] == "FAIL"
+
+
+def test_turn_preview_10m_rejects_wrong_applied_preview_value() -> None:
+    baseline = _trial()
+    candidate = _trial(candidate=True)
+    for trial in (baseline, candidate):
+        trial["route_town"] = "C_track_1_0_7"
+        trial["route_scenario"] = "left"
+    candidate["control_ab_candidate"] = "turn_preview_10m"
+    candidate["control_ab_pid_i40"] = "false"
+    candidate["control_ab_turn_preview_10m"] = "true"
+    candidate["curvature_speed_preview_m"] = "5.0"
+
+    payload = module.compare(
+        baseline, candidate, "c_track_turn", "turn_preview_10m"
+    )
+
+    assert payload["decision"] == "HOLD"
+    assert payload["checks"]["candidate_isolated_control"]["status"] == "FAIL"
+
+
 def test_candidate_route_failure_with_one_healthy_attempt_is_loadable(
     tmp_path: Path,
 ) -> None:
@@ -243,6 +325,16 @@ def test_candidate_route_failure_with_one_healthy_attempt_is_loadable(
     assert trial["owner_status"] == "FAIL"
     assert trial["route_outcome"] == "ROUTE_FAIL"
     assert trial["success"] is False
+
+
+def test_legacy_trial_without_turn_preview_10m_flag_defaults_false(
+    tmp_path: Path,
+) -> None:
+    root = _owned_fixture(tmp_path, candidate=True, route_success=True)
+
+    trial = module.load_trial(root, "candidate")
+
+    assert trial["control_ab_turn_preview_10m"] == "false"
 
 
 def test_failed_baseline_is_rejected(tmp_path: Path) -> None:

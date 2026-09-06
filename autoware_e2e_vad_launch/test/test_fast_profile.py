@@ -623,6 +623,7 @@ def test_route_postprocessing_is_opt_in_and_launch_parameters_are_wired(launch_p
         "maximum_lateral_acceleration_mps2": "0.0",
         "curvature_speed_preview_m": "3.0",
         "max_route_deviation_m": "3.5",
+        "maximum_trajectory_correction_m": "15.0",
         "max_candidate_age_sec": "2.0",
         "candidate_timeout_sec": "6.0",
     }
@@ -965,6 +966,7 @@ def test_route_manager_watchdog_allows_two_verified_vad_intervals():
 
     assert params["candidate_timeout_sec"] == pytest.approx(6.0)
     assert params["candidate_timeout_sec"] > 2.0 / 0.4
+    assert params["maximum_trajectory_correction_m"] == pytest.approx(15.0)
 
 
 def test_light_weight_bridge_condition_disables_jpeg_relays_and_combiner():
@@ -1377,6 +1379,7 @@ def test_fast_wrapper_builds_guarded_speed_30_profile(tmp_path):
     assert "max_candidate_age_sec:=0.5" in arguments
     assert "candidate_timeout_sec:=1.5" in arguments
     assert "max_route_deviation_m:=1.0" in arguments
+    assert "maximum_trajectory_correction_m:=15.0" in arguments
     assert "maximum_speed_mps:=8.333333333333334" in arguments
     assert (
         f"vehicle_cmd_gate_param_path:={package_config / SPEED_30_GATE_PARAMS.name}"
@@ -1443,6 +1446,55 @@ def test_fast_wrapper_builds_isolated_speed_30_turn_preview_candidate(tmp_path):
     )
 
 
+def test_fast_wrapper_builds_isolated_speed_30_turn_preview_10m_candidate(tmp_path):
+    route = make_scenario_route(tmp_path, "left")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--control-ab-turn-preview-10m",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert "curvature_speed_preview_m:=10.0" in arguments
+    assert "curvature_speed_preview_m:=5.0" not in arguments
+    assert (
+        f"longitudinal_controller_param_path:={package_config / SPEED_30_PID_PARAMS.name}"
+        in arguments
+    )
+
+
+@pytest.mark.parametrize(
+    "candidate",
+    ["--control-ab-turn-preview-5m", "--control-ab-turn-preview-10m"],
+)
+def test_fast_wrapper_rejects_turn_preview_candidate_on_straight(
+    tmp_path, candidate
+):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [str(FAST_WRAPPER), "--speed-30kph", candidate, str(route)],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "require a left or right route" in completed.stderr
+
+
 def test_fast_wrapper_builds_isolated_speed_30_longitudinal_recovery_candidate(
     tmp_path,
 ):
@@ -1501,11 +1553,27 @@ def test_fast_wrapper_rejects_longitudinal_recovery_candidate_on_turn(tmp_path):
     [
         ["--control-ab-pid-i40"],
         ["--control-ab-turn-preview-5m"],
+        ["--control-ab-turn-preview-10m"],
         ["--control-ab-longitudinal-recovery-2p0"],
         [
             "--speed-30kph",
             "--control-ab-pid-i40",
             "--control-ab-turn-preview-5m",
+        ],
+        [
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-turn-preview-10m",
+        ],
+        [
+            "--speed-30kph",
+            "--control-ab-turn-preview-5m",
+            "--control-ab-turn-preview-10m",
+        ],
+        [
+            "--speed-30kph",
+            "--control-ab-turn-preview-10m",
+            "--control-ab-longitudinal-recovery-2p0",
         ],
         [
             "--speed-30kph",
@@ -1845,14 +1913,23 @@ def test_fast_wrapper_rejects_recommended_deployment_conflicts(tmp_path, conflic
     assert "--recommended controls" in completed.stderr
 
 
-def test_fast_wrapper_rejects_recommended_launch_override(tmp_path):
+@pytest.mark.parametrize(
+    "protected_argument",
+    (
+        "turn_inward_corridor_half_width_m:=0.5",
+        "maximum_trajectory_correction_m:=15.1",
+    ),
+)
+def test_fast_wrapper_rejects_recommended_launch_override(
+    tmp_path, protected_argument
+):
     route = make_route(tmp_path)
     completed = subprocess.run(
         [
             str(FAST_WRAPPER),
             "--recommended",
             str(route),
-            "turn_inward_corridor_half_width_m:=0.5",
+            protected_argument,
         ],
         cwd=ROOT,
         env=wrapper_environment(tmp_path),

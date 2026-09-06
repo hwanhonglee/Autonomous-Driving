@@ -62,6 +62,7 @@ def test_owned_route_runner_help_is_read_only() -> None:
     assert completed.returncode == 0
     assert "fresh owned CARLA generations" in completed.stderr
     assert "--max-health-retries" in completed.stderr
+    assert "--control-ab-turn-preview-10m" in completed.stderr
 
 
 def test_owned_route_runner_rejects_invalid_owner_options_before_output() -> None:

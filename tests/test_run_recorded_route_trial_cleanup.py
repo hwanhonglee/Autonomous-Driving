@@ -182,16 +182,23 @@ def test_trial_records_isolated_speed_30_control_ab_candidates() -> None:
 
     assert "--control-ab-pid-i40" in source
     assert "--control-ab-turn-preview-5m" in source
+    assert "--control-ab-turn-preview-10m" in source
     assert "--control-ab-longitudinal-recovery-2p0" in source
     assert "pid_carla_vad_30kph_i40_ab.param.yaml" in source
     assert 'curvature_speed_preview_m="5.0"' in source
+    assert 'curvature_speed_preview_m="10.0"' in source
+    assert 'maximum_trajectory_correction_m="15.0"' in source
+    assert "MAXIMUM_TRAJECTORY_CORRECTION_M=%s" in source
     assert 'maximum_longitudinal_acceleration_mps2="2.0"' in source
     assert "CONTROL_AB_CANDIDATE_ID=%s" in source
+    assert "CONTROL_AB_TURN_PREVIEW_10M=%s" in source
+    assert "CONTROL_AB_TURN_PREVIEW_10M_CANDIDATE_M=10.0" in source
     assert "CONTROL_AB_LONGITUDINAL_RECOVERY_2P0=%s" in source
     assert "CONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true" in source
     assert "CONTROL_AB_ISOLATED_SINGLE_KNOB=true" in source
     assert 'stack_command+=(--control-ab-pid-i40)' in source
     assert 'stack_command+=(--control-ab-turn-preview-5m)' in source
+    assert 'stack_command+=(--control-ab-turn-preview-10m)' in source
     assert (
         'stack_command+=(--control-ab-longitudinal-recovery-2p0)' in source
     )
@@ -202,11 +209,27 @@ def test_trial_records_isolated_speed_30_control_ab_candidates() -> None:
     (
         ("--control-ab-pid-i40",),
         ("--control-ab-turn-preview-5m",),
+        ("--control-ab-turn-preview-10m",),
         ("--control-ab-longitudinal-recovery-2p0",),
         (
             "--speed-30kph",
             "--control-ab-pid-i40",
             "--control-ab-turn-preview-5m",
+        ),
+        (
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-turn-preview-10m",
+        ),
+        (
+            "--speed-30kph",
+            "--control-ab-turn-preview-5m",
+            "--control-ab-turn-preview-10m",
+        ),
+        (
+            "--speed-30kph",
+            "--control-ab-turn-preview-10m",
+            "--control-ab-longitudinal-recovery-2p0",
         ),
         (
             "--speed-30kph",

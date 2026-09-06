@@ -24,6 +24,7 @@ Trial options are run_recorded_route_trial.sh flags, for example:
   --portable-device cpu --portable-cpu-set 8,10,12,14
   --control-ab-pid-i40
   --control-ab-turn-preview-5m
+  --control-ab-turn-preview-10m
   --control-ab-longitudinal-recovery-2p0
 
 The helper always enables the pre-engagement runtime-health gate and passes

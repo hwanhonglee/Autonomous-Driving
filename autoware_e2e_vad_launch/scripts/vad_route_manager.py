@@ -271,6 +271,9 @@ class VadRouteManager(Node):
         self.max_trajectory_segment_m = self._positive_parameter(
             "max_trajectory_segment_m"
         )
+        self.maximum_trajectory_correction_m = self._positive_parameter(
+            "maximum_trajectory_correction_m", 15.0
+        )
         self.max_candidate_age_sec = self._positive_parameter("max_candidate_age_sec")
         self.candidate_timeout_sec = self._positive_parameter("candidate_timeout_sec")
         self.standard_route_alignment_timeout_sec = self._positive_parameter(
@@ -294,6 +297,8 @@ class VadRouteManager(Node):
         self.remaining_m = self.route.length_m
         self.cross_track_error_m = math.inf
         self.trajectory_correction_m = 0.0
+        self.trajectory_correction_point_count = 0
+        self.trajectory_correction_horizon_m = 0.0
         self.command = 3
         self.status = "waiting_for_odometry"
         self.fault = None
@@ -371,11 +376,27 @@ class VadRouteManager(Node):
             f"{self.route.metadata.get('weather', 'unknown')}"
         )
 
-    def _positive_parameter(self, name):
-        value = float(self.declare_parameter(name, 0.0).value)
+    def _positive_parameter(self, name, default=0.0):
+        value = float(self.declare_parameter(name, default).value)
         if not math.isfinite(value) or value <= 0.0:
             raise RuntimeError(f"{name} must be positive and finite")
         return value
+
+    def _enforce_trajectory_correction_limit(self, candidate, output):
+        if self.trajectory_correction_m <= self.maximum_trajectory_correction_m:
+            return output
+        command_name = COMMAND_NAMES[self.command]
+        self._set_fault(
+            "trajectory_correction:"
+            f"correction={self.trajectory_correction_m:.3f}m>"
+            f"limit={self.maximum_trajectory_correction_m:.3f}m:"
+            f"points={self.trajectory_correction_point_count}:"
+            f"horizon={self.trajectory_correction_horizon_m:.3f}m:"
+            f"command={self.command}({command_name})"
+        )
+        stopped = self._stopped_trajectory(candidate)
+        self._validate_output_trajectory(stopped)
+        return stopped
 
     @staticmethod
     def _resolve_turn_outward_corridor_width(common_m, override_m, name):
@@ -490,6 +511,7 @@ class VadRouteManager(Node):
                 output = self._stopped_trajectory(selected)
             else:
                 output = self._shape_velocity(selected)
+                output = self._enforce_trajectory_correction_limit(selected, output)
             self._validate_output_trajectory(output)
         except ValueError as error:
             self._set_fault(f"trajectory_shaping:{error}")
@@ -642,6 +664,9 @@ class VadRouteManager(Node):
             self.trajectory_resample_interval_m,
             extra_distances=(*raw_distances[1:-1], stop_distance),
         )
+        conditioned_distances = trajectory_arc_lengths(output.points)
+        self.trajectory_correction_point_count = len(output.points)
+        self.trajectory_correction_horizon_m = conditioned_distances[-1]
         lateral_offset_min_m, lateral_offset_max_m = self._lateral_corridor_bounds(
             self.command,
             self.route_corridor_half_width_m,

@@ -66,6 +66,8 @@ Options:
   --control-ab-pid-i40   30 kph A/B: PID max_i_effort 0.30 -> 0.40 only
   --control-ab-turn-preview-5m
                          30 kph turn A/B: curvature preview 3 m -> 5 m only
+  --control-ab-turn-preview-10m
+                         30 kph turn A/B: curvature preview 3 m -> 10 m only
   --control-ab-longitudinal-recovery-2p0
                          30 kph straight A/B: post-curve planning-speed recovery
                          1.5 -> 2.0 m/s^2 only; actuator limits remain 1.5
@@ -148,12 +150,16 @@ maneuver_exit_lookahead_m=""
 curvature_speed_preview_m=""
 route_curvature_lookahead_m=""
 max_route_deviation_m=""
+# HH_260906 - Pin and record the fail-closed trajectory-correction ceiling for recommended trials.
+maximum_trajectory_correction_m=""
 speed_profile_id="baseline"
 speed_exposure_mode="not_requested"
 model_override=""
 sensor_mapping=""
 control_ab_pid_i40=false
 control_ab_turn_preview_5m=false
+# HH_260906 - Preserve the 5 m history while recording the isolated 10 m candidate.
+control_ab_turn_preview_10m=false
 control_ab_longitudinal_recovery_2p0=false
 control_ab_candidate_id="baseline"
 geometry_ab_candidate_id="baseline_corridor_0p5"
@@ -273,6 +279,11 @@ while [[ $# -gt 0 ]]; do
     --control-ab-turn-preview-5m)
       control_ab_turn_preview_5m=true
       control_ab_candidate_id="turn_preview_5m"
+      shift
+      ;;
+    --control-ab-turn-preview-10m)
+      control_ab_turn_preview_10m=true
+      control_ab_candidate_id="turn_preview_10m"
       shift
       ;;
     --control-ab-longitudinal-recovery-2p0)
@@ -458,6 +469,7 @@ fi
 control_ab_selection_count=0
 [[ "${control_ab_pid_i40}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
 [[ "${control_ab_turn_preview_5m}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+[[ "${control_ab_turn_preview_10m}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
 [[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
 if (( control_ab_selection_count > 1 )); then
   echo "Select exactly one isolated 30 kph control A/B candidate per trial." >&2
@@ -465,6 +477,7 @@ if (( control_ab_selection_count > 1 )); then
 fi
 if [[ ( "${control_ab_pid_i40}" == "true" || \
         "${control_ab_turn_preview_5m}" == "true" || \
+        "${control_ab_turn_preview_10m}" == "true" || \
         "${control_ab_longitudinal_recovery_2p0}" == "true" ) && \
       "${speed_30kph}" != "true" ]]; then
   echo "Control A/B candidates require --speed-30kph." >&2
@@ -531,6 +544,7 @@ if [[ "${recommended}" == "true" ]]; then
   mpc_input_delay="${mpc_input_delay:-0.12}"
   mpc_steer_tau="${mpc_steer_tau:-0.15}"
   maneuver_lookahead_m="3.0"
+  maximum_trajectory_correction_m="15.0"
   speed_profile_id="recommended_9kph_v1"
   if [[ "${speed_30kph}" == "true" ]]; then
     maneuver_lookahead_m="4.0"
@@ -538,6 +552,8 @@ if [[ "${recommended}" == "true" ]]; then
     curvature_speed_preview_m="3.0"
     if [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
       curvature_speed_preview_m="5.0"
+    elif [[ "${control_ab_turn_preview_10m}" == "true" ]]; then
+      curvature_speed_preview_m="10.0"
     fi
     route_curvature_lookahead_m="20.0"
     max_route_deviation_m="1.0"
@@ -596,7 +612,7 @@ for argument in "${launch_arguments[@]}"; do
   if [[ "${recommended}" == "true" ]]; then
     # Keep this list aligned with run_route_vad_fast.sh's recommended profile.
     case "${argument}" in
-      use_vad_imu_acceleration:=*|use_fast_vad:=*|vad_use_fp16_heads:=*|use_light_weight_sensor_mapping:=*|rviz:=*|launch_fast_camera_view:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|route_corridor_half_width_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
+      use_vad_imu_acceleration:=*|use_fast_vad:=*|vad_use_fp16_heads:=*|use_light_weight_sensor_mapping:=*|rviz:=*|launch_fast_camera_view:=*|use_lateral_controller_param_override:=*|lateral_controller_param_path:=*|use_longitudinal_controller_param_override:=*|longitudinal_controller_param_path:=*|vehicle_cmd_gate_param_path:=*|controller_stop_offset_m:=*|comfortable_deceleration_mps2:=*|maximum_longitudinal_acceleration_mps2:=*|longitudinal_velocity_source:=*|nominal_cruise_speed_mps:=*|maneuver_lookahead_m:=*|maneuver_exit_lookahead_m:=*|route_corridor_half_width_m:=*|turn_inward_corridor_half_width_m:=*|turn_outward_corridor_half_width_m:=*|left_turn_outward_corridor_half_width_m:=*|right_turn_outward_corridor_half_width_m:=*|route_corridor_entry_distance_m:=*|trajectory_lateral_filter_gain:=*|left_turn_trajectory_lateral_filter_gain:=*|right_turn_trajectory_lateral_filter_gain:=*|trajectory_lateral_filter_activation_threshold_m:=*|trajectory_geometry_smoothing_strength:=*|maximum_lateral_acceleration_mps2:=*|curvature_speed_preview_m:=*|route_curvature_lookahead_m:=*|max_route_deviation_m:=*|maximum_trajectory_correction_m:=*|max_candidate_age_sec:=*|candidate_timeout_sec:=*|maximum_speed_mps:=*|raw_vehicle_cmd_converter_config:=*)
         echo "Recommended profile argument is controlled by this wrapper: ${argument%%:=*}" >&2
         exit 2
         ;;
@@ -660,9 +676,10 @@ if [[ "${speed_30kph}" == "true" ]]; then
       exit 2
       ;;
   esac
-  if [[ "${control_ab_turn_preview_5m}" == "true" && \
+  if [[ ( "${control_ab_turn_preview_5m}" == "true" || \
+          "${control_ab_turn_preview_10m}" == "true" ) && \
         "${route_scenario}" != "left" && "${route_scenario}" != "right" ]]; then
-    echo "--control-ab-turn-preview-5m requires a left or right route." >&2
+    echo "Turn-preview control A/B candidates require a left or right route." >&2
     exit 2
   fi
   if [[ "${control_ab_longitudinal_recovery_2p0}" == "true" && \
@@ -1033,6 +1050,13 @@ desktop_display=""
 capture_output_width_px=1920
 capture_output_height_px=1080
 capture_output_dimensions="${capture_output_width_px}x${capture_output_height_px}"
+capture_framerate_fps=5
+capture_filter_threads=1
+capture_encoder="libx264"
+capture_encoder_preset="ultrafast"
+capture_encoder_crf=20
+capture_encoder_threads=2
+capture_ffmpeg_thread_policy="bounded_ffmpeg_workers_v1"
 capture_rviz_config=""
 capture_rviz_config_sha256=""
 if [[ "${capture_desktop}" == "true" ]]; then
@@ -1429,9 +1453,10 @@ printf 'CAMERA_TRANSPORT_PROFILE_ID=%s\nCAMERA_IMAGE_PUBLISH_QOS=%s\nCAMERA_IMAG
   "${camera_transport_sensor_mapping_sha256}" \
   "${camera_transport_vad_override_sha256}" \
   "${camera_transport_cyclonedds_sha256}" >> "${output_dir}/runtime.env"
-printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_LONGITUDINAL_RECOVERY_2P0=%s\nCONTROL_AB_LONGITUDINAL_RECOVERY_BASELINE_MPS2=1.5\nCONTROL_AB_LONGITUDINAL_RECOVERY_CANDIDATE_MPS2=2.0\nCONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
+printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_TURN_PREVIEW_10M=%s\nCONTROL_AB_TURN_PREVIEW_BASELINE_M=3.0\nCONTROL_AB_TURN_PREVIEW_5M_CANDIDATE_M=5.0\nCONTROL_AB_TURN_PREVIEW_10M_CANDIDATE_M=10.0\nCONTROL_AB_LONGITUDINAL_RECOVERY_2P0=%s\nCONTROL_AB_LONGITUDINAL_RECOVERY_BASELINE_MPS2=1.5\nCONTROL_AB_LONGITUDINAL_RECOVERY_CANDIDATE_MPS2=2.0\nCONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
   "${control_ab_candidate_id}" "${control_ab_pid_i40}" \
   "${control_ab_turn_preview_5m}" \
+  "${control_ab_turn_preview_10m}" \
   "${control_ab_longitudinal_recovery_2p0}" >> "${output_dir}/runtime.env"
 printf 'GEOMETRY_AB_CANDIDATE_ID=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_0P2=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_BASELINE_M=0.50\nGEOMETRY_AB_ROUTE_CORRIDOR_CANDIDATE_M=0.20\nGEOMETRY_AB_BEHAVIORAL_SINGLE_KNOB=true\nGEOMETRY_AB_PARAMETER_CHANGE_COUNT=2\nGEOMETRY_AB_COUPLED_PARAMETER_REASON=turn_width_must_not_exceed_route_width\nGEOMETRY_AB_ROUTE_SCOPE=straight_only\nROUTE_CORRIDOR_HALF_WIDTH_M=%s\nTURN_OUTWARD_CORRIDOR_HALF_WIDTH_M=%s\n' \
   "${geometry_ab_candidate_id}" "${geometry_ab_route_corridor_0p2}" \
@@ -1444,8 +1469,12 @@ printf 'RUNTIME_HEALTH_GATE_ENABLED=%s\nRUNTIME_HEALTH_GATE_MODE=%s\nRUNTIME_HEA
   "${runtime_health_probe}" "${runtime_health_probe_sha256}" >> \
   "${output_dir}/runtime.env"
 if [[ "${capture_desktop}" == "true" ]]; then
-  printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\n' \
-    "${capture_output_width_px}" "${capture_output_height_px}" >> \
+  printf 'RVIZ_CAPTURE_CAMERA_SOURCE=rviz_embedded_vad_front_camera\nRVIZ_CAPTURE_EXTERNAL_CAMERA_VIEW=false\nRVIZ_CAPTURE_SOURCE=ffmpeg_x11grab_owned_window_v1\nRVIZ_CAPTURE_ROOT=false\nRVIZ_CAPTURE_SHELL_SURFACES_EXCLUDED=true\nRVIZ_CAPTURE_SCALE_APPLIED=false\nRVIZ_CAPTURE_OCCLUSION_GUARD=owned_rviz_window_only_v1\nRVIZ_CAPTURE_OUTPUT_WIDTH_PX=%s\nRVIZ_CAPTURE_OUTPUT_HEIGHT_PX=%s\nRVIZ_CAPTURE_FFMPEG_INPUT_FORMAT=x11grab\nRVIZ_CAPTURE_FFMPEG_FRAMERATE_FPS=%s\nRVIZ_CAPTURE_FFMPEG_FILTER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER=%s\nRVIZ_CAPTURE_FFMPEG_PRESET=%s\nRVIZ_CAPTURE_FFMPEG_CRF=%s\nRVIZ_CAPTURE_FFMPEG_ENCODER_THREADS=%s\nRVIZ_CAPTURE_FFMPEG_PIXEL_FORMAT=yuv420p\nRVIZ_CAPTURE_FFMPEG_THREAD_POLICY=%s\n' \
+    "${capture_output_width_px}" "${capture_output_height_px}" \
+    "${capture_framerate_fps}" "${capture_filter_threads}" \
+    "${capture_encoder}" "${capture_encoder_preset}" \
+    "${capture_encoder_crf}" "${capture_encoder_threads}" \
+    "${capture_ffmpeg_thread_policy}" >> \
     "${output_dir}/runtime.env"
 fi
 printf 'VSCODE_SNAP_GUI_ENV_SANITIZED=%s\n' \
@@ -1465,14 +1494,15 @@ if [[ "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ]]; then
     printf 'TARGET_SPEED_MPS=%s\nTARGET_SPEED_KPH=60.0\n' \
       "${target_speed_mps}" >> "${output_dir}/runtime.env"
   fi
-  printf 'MINIMUM_SUSTAINED_SPEED_MPS=%s\nMINIMUM_SUSTAINED_SPEED_SEC=%s\nMAXIMUM_OBSERVED_SPEED_MPS=%s\nMAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2=%s\nMAXIMUM_LONGITUDINAL_ACCELERATION_MPS2=%s\nMAXIMUM_LATERAL_ACCELERATION_MPS2=%s\nMAXIMUM_SPEED_SAMPLE_GAP_SEC=0.25\nCONTROLLER_STOP_OFFSET_M=0.60\nMANEUVER_EXIT_LOOKAHEAD_M=%s\nCURVATURE_SPEED_PREVIEW_M=%s\nROUTE_CURVATURE_LOOKAHEAD_M=%s\nMAX_ROUTE_DEVIATION_M=%s\nMAX_CANDIDATE_AGE_SEC=0.5\nCANDIDATE_TIMEOUT_SEC=1.5\nLONGITUDINAL_SPEED_SOURCE=explicit_simulation_profile\nLONGITUDINAL_ACCELERATION_ROLE=trajectory_internal_curve_exit_cap\nLONGITUDINAL_PID_MAX_OUT_MPS2=1.5\nLONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5\nCOMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2=1.5\nVAD_CRUISE_VELOCITY_EVALUATED=false\nVAD_HARD_STOP_SENTINEL_PRESERVED=true\nVAD_VELOCITY_EVALUATED=false\nVAD_GEOMETRY_EVALUATED=true\nVAD_GEOMETRY_SOURCE=true\nSPEED_LIMIT_SOURCE=explicit_simulation_profile\nREAL_VEHICLE_READY=false\n' \
+  printf 'MINIMUM_SUSTAINED_SPEED_MPS=%s\nMINIMUM_SUSTAINED_SPEED_SEC=%s\nMAXIMUM_OBSERVED_SPEED_MPS=%s\nMAXIMUM_LATERAL_ACCELERATION_LIMIT_MPS2=%s\nMAXIMUM_LONGITUDINAL_ACCELERATION_MPS2=%s\nMAXIMUM_LATERAL_ACCELERATION_MPS2=%s\nMAXIMUM_SPEED_SAMPLE_GAP_SEC=0.25\nCONTROLLER_STOP_OFFSET_M=0.60\nMANEUVER_EXIT_LOOKAHEAD_M=%s\nCURVATURE_SPEED_PREVIEW_M=%s\nROUTE_CURVATURE_LOOKAHEAD_M=%s\nMAX_ROUTE_DEVIATION_M=%s\nMAXIMUM_TRAJECTORY_CORRECTION_M=%s\nMAX_CANDIDATE_AGE_SEC=0.5\nCANDIDATE_TIMEOUT_SEC=1.5\nLONGITUDINAL_SPEED_SOURCE=explicit_simulation_profile\nLONGITUDINAL_ACCELERATION_ROLE=trajectory_internal_curve_exit_cap\nLONGITUDINAL_PID_MAX_OUT_MPS2=1.5\nLONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5\nCOMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2=1.5\nVAD_CRUISE_VELOCITY_EVALUATED=false\nVAD_HARD_STOP_SENTINEL_PRESERVED=true\nVAD_VELOCITY_EVALUATED=false\nVAD_GEOMETRY_EVALUATED=true\nVAD_GEOMETRY_SOURCE=true\nSPEED_LIMIT_SOURCE=explicit_simulation_profile\nREAL_VEHICLE_READY=false\n' \
     "${minimum_sustained_speed_mps}" \
     "${minimum_sustained_speed_sec}" "${maximum_observed_speed_mps}" \
     "${maximum_lateral_acceleration_limit_mps2}" \
     "${maximum_longitudinal_acceleration_mps2}" \
     "${maximum_lateral_acceleration_mps2}" "${maneuver_exit_lookahead_m}" \
     "${curvature_speed_preview_m}" "${route_curvature_lookahead_m}" \
-    "${max_route_deviation_m}" >> "${output_dir}/runtime.env"
+    "${max_route_deviation_m}" "${maximum_trajectory_correction_m}" >> \
+    "${output_dir}/runtime.env"
 fi
 if [[ "${speed_60kph_pilot}" == "true" ]]; then
   printf 'SIMULATION_ONLY_EXPLORATORY=true\nROUTE_SCOPE=straight_only\n' >> \
@@ -2110,6 +2140,8 @@ if [[ "${recommended}" == "true" ]]; then
     stack_command+=(--control-ab-pid-i40)
   elif [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
     stack_command+=(--control-ab-turn-preview-5m)
+  elif [[ "${control_ab_turn_preview_10m}" == "true" ]]; then
+    stack_command+=(--control-ab-turn-preview-10m)
   elif [[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]]; then
     stack_command+=(--control-ab-longitudinal-recovery-2p0)
   fi
@@ -3270,6 +3302,9 @@ PY
     "${output_dir}/runtime.env"
 }
 
+# HH_260906 - Settle the RViz geometry before the first valid candidate arms its watchdog.
+prepare_owned_rviz_capture_window
+
 deadline=$((SECONDS + ready_timeout))
 route_ready=false
 while (( SECONDS < deadline )); do
@@ -3316,8 +3351,6 @@ if [[ "${route_ready}" != "true" ]]; then
   exit 1
 fi
 
-prepare_owned_rviz_capture_window
-
 candidate_observed_at=""
 candidate_still_captured_at=""
 desktop_recording_started_at=""
@@ -3335,22 +3368,18 @@ if [[ "${capture_desktop}" == "true" ]]; then
   # paint the delivered candidate before preserving the stationary context.
   sleep 2
   verify_owned_rviz_capture_window candidate_pre
-  if ! ffmpeg -y -loglevel error -f x11grab -draw_mouse 0 \
+  desktop_recording_started_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
+  candidate_still_captured_at="${desktop_recording_started_at}"
+  # HH_260906 - Bound live capture workers so evidence recording cannot starve CARLA and VAD.
+  setsid ffmpeg -y -nostdin -loglevel error \
+    -filter_threads "${capture_filter_threads}" \
+    -f x11grab -draw_mouse 0 \
+    -framerate "${capture_framerate_fps}" \
     -window_id "${capture_rviz_window_id_decimal}" \
     -video_size "${capture_rviz_input_dimensions}" -i "${desktop_display}" \
     -vf "${capture_pad_filter}" \
-    -frames:v 1 "${output_dir}/autoware_rviz_candidate.png"; then
-    echo "Failed to capture the initial Autoware/RViz candidate PNG" >&2
-    exit 1
-  fi
-  verify_owned_rviz_capture_window candidate_post
-  candidate_still_captured_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
-  desktop_recording_started_at="$(date --utc +%Y-%m-%dT%H:%M:%S.%6NZ)"
-  setsid ffmpeg -y -nostdin -loglevel error -f x11grab -draw_mouse 0 \
-    -framerate 5 -window_id "${capture_rviz_window_id_decimal}" \
-    -video_size "${capture_rviz_input_dimensions}" -i "${desktop_display}" \
-    -vf "${capture_pad_filter}" \
-    -c:v libx264 -preset ultrafast -crf 20 \
+    -c:v "${capture_encoder}" -preset "${capture_encoder_preset}" \
+    -crf "${capture_encoder_crf}" -threads "${capture_encoder_threads}" \
     -pix_fmt yuv420p \
     "${output_dir}/autoware_rviz_capture.mkv" &
   desktop_pid=$!
@@ -3358,6 +3387,7 @@ if [[ "${capture_desktop}" == "true" ]]; then
   sleep 1
   require_desktop_recorder recording_started
   verify_owned_rviz_capture_window recording_started
+  verify_owned_rviz_capture_window candidate_post
 fi
 
 if [[ "${runtime_health_gate}" == "true" ]]; then
@@ -3608,6 +3638,32 @@ PY
     exit 1
   fi
 fi
+
+# HH_260906 - Require a fresh native candidate and healthy route state immediately before evidence and engagement.
+require_carla_owner pre_engagement_route_recheck || exit 1
+if ! kill -0 "${stack_pid}" 2>/dev/null; then
+  echo "Autoware stack exited before the pre-engagement route recheck" >&2
+  exit 1
+fi
+if ! timeout 5 ros2 topic echo /planning/vad/candidate_trajectories \
+  autoware_internal_planning_msgs/msg/CandidateTrajectories \
+  --once --no-daemon --qos-reliability reliable >/dev/null 2>&1; then
+  echo "No fresh native VAD candidate at the pre-engagement route recheck" >&2
+  exit 1
+fi
+pre_engagement_route_status="$(
+  timeout 3 ros2 topic echo /planning/vad_route/status std_msgs/msg/String \
+    --once --no-daemon --qos-reliability reliable 2>/dev/null || true
+)"
+if ! grep -Eq '^data: ready$' <<< "${pre_engagement_route_status}" && \
+   ! grep -Eq '^data: stopping$' <<< "${pre_engagement_route_status}"; then
+  echo "VAD route manager is not healthy at the pre-engagement route recheck: $(
+    grep -E '^data:' <<< "${pre_engagement_route_status}" || echo 'status unavailable'
+  )" >&2
+  exit 1
+fi
+printf 'VAD_ROUTE_READY_RECHECK_PHASE=after_runtime_health_before_rosbag_and_engagement\nVAD_ROUTE_READY_RECHECK_FRESH_CANDIDATE=true\nVAD_ROUTE_READY_RECHECK_STATUS=pass\n' >> \
+  "${output_dir}/runtime.env"
 
 setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag" \
   > "${output_dir}/recorder.log" 2>&1 &
@@ -3904,6 +3960,12 @@ PY
   )"; then
     echo "Failed to select a representative in-route Autoware/RViz frame" >&2
     analysis_status=1
+  # HH_260906 - Derive the candidate still from frame zero after all owned runtime processes stop.
+  elif ! ffmpeg -y -loglevel error \
+    -i "${output_dir}/autoware_rviz_capture.mkv" \
+    -frames:v 1 -an "${output_dir}/autoware_rviz_candidate.png"; then
+    echo "Failed to extract the initial Autoware/RViz candidate PNG" >&2
+    analysis_status=1
   elif ! ffmpeg -y -loglevel error \
     -i "${output_dir}/autoware_rviz_capture.mkv" \
     -ss "${representative_offset_sec}" -frames:v 1 -an \
@@ -3926,7 +3988,10 @@ PY
     "${capture_pad_right_px}" "${capture_pad_bottom_px}" \
     "${capture_rviz_window_id}" "${capture_rviz_window_id_decimal}" \
     "${capture_rviz_window_pid}" "${capture_rviz_window_pgid}" \
-    "${portable_shadow_10hz}" <<'PY'
+    "${portable_shadow_10hz}" "${capture_framerate_fps}" \
+    "${capture_filter_threads}" "${capture_encoder}" \
+    "${capture_encoder_preset}" "${capture_encoder_crf}" \
+    "${capture_encoder_threads}" "${capture_ffmpeg_thread_policy}" <<'PY'
 import hashlib
 import json
 import math
@@ -3961,6 +4026,32 @@ window_id_decimal = int(sys.argv[19])
 window_pid = int(sys.argv[20])
 window_pgid = int(sys.argv[21])
 portable_shadow_enabled = sys.argv[22] == "true"
+live_recording_policy = {
+    "input_format": "x11grab",
+    "framerate_fps": int(sys.argv[23]),
+    "filter_threads": int(sys.argv[24]),
+    "video_encoder": sys.argv[25],
+    "preset": sys.argv[26],
+    "crf": int(sys.argv[27]),
+    "encoder_threads": int(sys.argv[28]),
+    "pixel_format": "yuv420p",
+    "thread_policy": sys.argv[29],
+}
+expected_live_recording_policy = {
+    "input_format": "x11grab",
+    "framerate_fps": 5,
+    "filter_threads": 1,
+    "video_encoder": "libx264",
+    "preset": "ultrafast",
+    "crf": 20,
+    "encoder_threads": 2,
+    "pixel_format": "yuv420p",
+    "thread_policy": "bounded_ffmpeg_workers_v1",
+}
+if live_recording_policy != expected_live_recording_policy:
+    raise SystemExit(
+        f"owned RViz live-recording policy changed: {live_recording_policy!r}"
+    )
 
 if source_dimensions != [1920, 1080]:
     raise SystemExit(f"owned-window output canvas must be 1920x1080: {source_dimensions}")
@@ -4207,8 +4298,15 @@ payload = {
     "gif_dimensions": gif_dimensions,
     "png_file": "autoware_rviz_fullscreen.png",
     "candidate_png_file": "autoware_rviz_candidate.png",
+    "candidate_still": {
+        "source": "autoware_rviz_capture.mkv",
+        "offset_sec": 0.0,
+        "selection": "first_recorded_frame",
+        "extracted_after_owned_runtime_cleanup": True,
+    },
     "gif_file": "autoware_rviz_drive.gif",
     "recording_file": "autoware_rviz_capture.mkv",
+    "live_recording_policy": live_recording_policy,
     "desktop_overlay_check": {
         "method": "owned_window_excludes_shell_surfaces_v1",
         "root_capture": False,

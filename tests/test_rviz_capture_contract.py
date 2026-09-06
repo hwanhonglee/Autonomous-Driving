@@ -147,13 +147,17 @@ def test_desktop_still_is_selected_from_the_route_recording() -> None:
     subprocess.run(["bash", "-n", str(TRIAL_SCRIPT)], check=True)
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
-    candidate_index = source.index("autoware_rviz_candidate.png")
     recording_index = source.index("autoware_rviz_capture.mkv")
+    candidate_index = source.index(
+        '"${output_dir}/autoware_rviz_candidate.png"', recording_index
+    )
     representative_index = source.index(
         '"${output_dir}/autoware_rviz_fullscreen.png"', recording_index
     )
-    assert candidate_index < recording_index < representative_index
+    assert recording_index < candidate_index < representative_index
     assert "ffprobe -v error -show_entries format=duration" in source
+    assert '"selection": "first_recorded_frame"' in source
+    assert '"extracted_after_owned_runtime_cleanup": True' in source
     assert '"${representative_offset_sec}" -frames:v 1' in source
     assert '"selection": "route_evaluation_midpoint"' in source
     assert '"candidate_png_file": "autoware_rviz_candidate.png"' in source
@@ -186,12 +190,13 @@ def test_owned_window_capture_is_revalidated_while_the_recorder_is_alive() -> No
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
     call_index = source.index("\nprepare_owned_rviz_capture_window\n")
+    route_ready_index = source.index("deadline=$((SECONDS + ready_timeout))")
     candidate_wait_index = source.index(
         "if ! timeout 30 ros2 topic echo /planning/vad/candidate_trajectories",
         call_index,
     )
     candidate_png_index = source.index("autoware_rviz_candidate.png", call_index)
-    assert call_index < candidate_wait_index < candidate_png_index
+    assert call_index < route_ready_index < candidate_wait_index < candidate_png_index
     assert "verify_owned_rviz_capture_window candidate_pre" in source
     assert "verify_owned_rviz_capture_window candidate_post" in source
     assert "require_desktop_recorder recording_started" in source
@@ -217,10 +222,10 @@ def test_owned_window_capture_pads_to_1920x1080_without_scaling() -> None:
     assert "capture_pad_top_px=$(((capture_output_height_px" in source
     assert "capture_pad_bottom_px=$((capture_output_height_px" in source
     assert "color=black,setsar=1" in source
-    assert source.count('-window_id "${capture_rviz_window_id_decimal}"') == 2
-    assert source.count('-video_size "${capture_rviz_input_dimensions}"') == 2
-    assert source.count('-i "${desktop_display}"') == 2
-    assert source.count('-vf "${capture_pad_filter}"') == 2
+    assert source.count('-window_id "${capture_rviz_window_id_decimal}"') == 1
+    assert source.count('-video_size "${capture_rviz_input_dimensions}"') == 1
+    assert source.count('-i "${desktop_display}"') == 1
+    assert source.count('-vf "${capture_pad_filter}"') == 1
     assert '"${DISPLAY}" "${capture_output_dimensions}"' in source
     assert '"method": "ffmpeg_x11grab_owned_window_v1"' in source
     assert '"root_capture": False' in source
@@ -230,10 +235,133 @@ def test_owned_window_capture_pads_to_1920x1080_without_scaling() -> None:
     assert '"scaling": "none"' in source
 
 
+def test_live_owned_window_capture_uses_one_bounded_ffmpeg_worker_policy() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    expected_assignments = (
+        "capture_framerate_fps=5",
+        "capture_filter_threads=1",
+        'capture_encoder="libx264"',
+        'capture_encoder_preset="ultrafast"',
+        "capture_encoder_crf=20",
+        "capture_encoder_threads=2",
+        'capture_ffmpeg_thread_policy="bounded_ffmpeg_workers_v1"',
+    )
+    for assignment in expected_assignments:
+        assert source.count(assignment) == 1
+
+    command_start = source.index("setsid ffmpeg -y -nostdin -loglevel error")
+    command_end = source.index(
+        '"${output_dir}/autoware_rviz_capture.mkv" &', command_start
+    ) + len('"${output_dir}/autoware_rviz_capture.mkv" &')
+    command = " ".join(
+        source[command_start:command_end].replace("\\\n", " ").split()
+    )
+    assert command == (
+        'setsid ffmpeg -y -nostdin -loglevel error '
+        '-filter_threads "${capture_filter_threads}" '
+        '-f x11grab -draw_mouse 0 '
+        '-framerate "${capture_framerate_fps}" '
+        '-window_id "${capture_rviz_window_id_decimal}" '
+        '-video_size "${capture_rviz_input_dimensions}" '
+        '-i "${desktop_display}" -vf "${capture_pad_filter}" '
+        '-c:v "${capture_encoder}" -preset "${capture_encoder_preset}" '
+        '-crf "${capture_encoder_crf}" -threads "${capture_encoder_threads}" '
+        '-pix_fmt yuv420p "${output_dir}/autoware_rviz_capture.mkv" &'
+    )
+    assert source.count('-filter_threads "${capture_filter_threads}"') == 1
+    assert source.count('-threads "${capture_encoder_threads}"') == 1
+
+
+def test_candidate_still_is_not_a_second_live_x11_capture() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    command_start = source.index(
+        "elif ! ffmpeg -y -loglevel error",
+        source.index("Failed to select a representative in-route"),
+    )
+    command_end = source.index(
+        '"${output_dir}/autoware_rviz_candidate.png"; then', command_start
+    ) + len('"${output_dir}/autoware_rviz_candidate.png"; then')
+    command = " ".join(
+        source[command_start:command_end].replace("\\\n", " ").split()
+    )
+    assert command == (
+        "elif ! ffmpeg -y -loglevel error "
+        '-i "${output_dir}/autoware_rviz_capture.mkv" '
+        "-frames:v 1 -an "
+        '"${output_dir}/autoware_rviz_candidate.png"; then'
+    )
+    assert source.count("-f x11grab") == 1
+
+
+def test_native_route_is_rechecked_after_runtime_health_before_recording() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    health_complete = source.index("require_carla_owner runtime_health_complete")
+    recheck = source.index("require_carla_owner pre_engagement_route_recheck")
+    recorder = source.index(
+        'setsid scripts/e2e/record_turn_dynamics.sh "${output_dir}/bag"'
+    )
+    assert health_complete < recheck < recorder
+    assert "No fresh native VAD candidate at the pre-engagement route recheck" in source
+    assert "'^data: ready$'" in source
+    assert "'^data: stopping$'" in source
+    assert (
+        "VAD_ROUTE_READY_RECHECK_PHASE="
+        "after_runtime_health_before_rosbag_and_engagement"
+    ) in source
+
+
+def test_live_capture_worker_policy_has_complete_nonduplicated_provenance() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+
+    runtime_fields = (
+        "RVIZ_CAPTURE_FFMPEG_INPUT_FORMAT=x11grab",
+        "RVIZ_CAPTURE_FFMPEG_FRAMERATE_FPS=%s",
+        "RVIZ_CAPTURE_FFMPEG_FILTER_THREADS=%s",
+        "RVIZ_CAPTURE_FFMPEG_ENCODER=%s",
+        "RVIZ_CAPTURE_FFMPEG_PRESET=%s",
+        "RVIZ_CAPTURE_FFMPEG_CRF=%s",
+        "RVIZ_CAPTURE_FFMPEG_ENCODER_THREADS=%s",
+        "RVIZ_CAPTURE_FFMPEG_PIXEL_FORMAT=yuv420p",
+        "RVIZ_CAPTURE_FFMPEG_THREAD_POLICY=%s",
+    )
+    for field in runtime_fields:
+        assert source.count(field) == 1
+
+    policy_start = source.index("live_recording_policy = {")
+    policy_end = source.index("expected_live_recording_policy = {", policy_start)
+    json_policy = source[policy_start:policy_end]
+    json_policy_fields = (
+        '"input_format": "x11grab"',
+        '"framerate_fps": int(sys.argv[23])',
+        '"filter_threads": int(sys.argv[24])',
+        '"video_encoder": sys.argv[25]',
+        '"preset": sys.argv[26]',
+        '"crf": int(sys.argv[27])',
+        '"encoder_threads": int(sys.argv[28])',
+        '"pixel_format": "yuv420p"',
+        '"thread_policy": sys.argv[29]',
+    )
+    for field in json_policy_fields:
+        assert json_policy.count(field) == 1
+    assert source.count('"live_recording_policy": live_recording_policy') == 1
+
+    assert source.count('"framerate_fps": 5') == 1
+    assert source.count('"filter_threads": 1') == 1
+    assert source.count('"video_encoder": "libx264"') == 1
+    assert source.count('"preset": "ultrafast"') == 1
+    assert source.count('"crf": 20') == 1
+    assert source.count('"encoder_threads": 2') == 1
+    assert source.count('"thread_policy": "bounded_ffmpeg_workers_v1"') == 1
+
+
 def test_capture_timestamps_are_python_isoformat_compatible() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 
-    assert source.count("%Y-%m-%dT%H:%M:%S.%6NZ") == 5
+    assert source.count("%Y-%m-%dT%H:%M:%S.%6NZ") == 4
+    assert 'candidate_still_captured_at="${desktop_recording_started_at}"' in source
     assert "%Y-%m-%dT%H:%M:%S.%NZ" not in source
 
 

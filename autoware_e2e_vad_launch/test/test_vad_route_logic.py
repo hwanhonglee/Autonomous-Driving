@@ -1602,6 +1602,7 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
             "longitudinal_velocity_source": "vad_prediction",
             "nominal_cruise_speed_mps": "0.0",
             "route_curvature_lookahead_m": "0.0",
+            "maximum_trajectory_correction_m": "15.0",
         }
         for launch_name in ("carla_vad.launch.xml", "carla_vad_full.launch.xml"):
             with self.subTest(launch_name=launch_name):
@@ -1618,6 +1619,84 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
                 for name, default in expected_defaults.items():
                     self.assertEqual(arguments.get(name), default)
                     self.assertEqual(parameters.get(name), f"$(var {name})")
+
+
+class TrajectoryCorrectionSafetyGateTest(unittest.TestCase):
+    def test_exact_limit_preserves_moving_trajectory(self):
+        moving = object()
+        manager = SimpleNamespace(
+            trajectory_correction_m=15.0,
+            maximum_trajectory_correction_m=15.0,
+        )
+
+        result = VadRouteManager._enforce_trajectory_correction_limit(
+            manager, object(), moving
+        )
+
+        self.assertIs(result, moving)
+
+    def test_limit_violation_latches_fault_and_validates_stopped_trajectory(self):
+        candidate = object()
+        moving = object()
+        stopped = object()
+        events = []
+        manager = SimpleNamespace(
+            trajectory_correction_m=15.30050277709961,
+            maximum_trajectory_correction_m=15.0,
+            trajectory_correction_point_count=47,
+            trajectory_correction_horizon_m=20.409112728665,
+            command=0,
+            _set_fault=lambda reason: events.append(("fault", reason)),
+            _stopped_trajectory=lambda value: (
+                events.append(("stop", value)) or stopped
+            ),
+            _validate_output_trajectory=lambda value: events.append(
+                ("validate", value)
+            ),
+        )
+
+        result = VadRouteManager._enforce_trajectory_correction_limit(
+            manager, candidate, moving
+        )
+
+        self.assertIs(result, stopped)
+        self.assertEqual(
+            events,
+            [
+                (
+                    "fault",
+                    "trajectory_correction:correction=15.301m>limit=15.000m:"
+                    "points=47:horizon=20.409m:command=0(LEFT)",
+                ),
+                ("stop", candidate),
+                ("validate", stopped),
+            ],
+        )
+
+    def test_positive_parameter_accepts_explicit_default_and_rejects_bad_values(self):
+        calls = []
+        manager = SimpleNamespace(
+            declare_parameter=lambda name, default: (
+                calls.append((name, default))
+                or SimpleNamespace(value=default)
+            )
+        )
+
+        value = VadRouteManager._positive_parameter(
+            manager, "maximum_trajectory_correction_m", 15.0
+        )
+
+        self.assertEqual(value, 15.0)
+        self.assertEqual(calls, [("maximum_trajectory_correction_m", 15.0)])
+        for invalid in (0.0, -1.0, math.nan, math.inf):
+            manager.declare_parameter = lambda _name, _default, value=invalid: (
+                SimpleNamespace(value=value)
+            )
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(RuntimeError, "positive and finite"):
+                    VadRouteManager._positive_parameter(
+                        manager, "maximum_trajectory_correction_m", 15.0
+                    )
 
 
 class VadRouteManagerShutdownTest(unittest.TestCase):

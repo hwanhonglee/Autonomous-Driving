@@ -193,6 +193,11 @@
   <arg name="curvature_speed_preview_m" default="3.0"/>
   <arg name="route_curvature_lookahead_m" default="0.0"/>
   <arg name="max_route_deviation_m" default="3.5"/>
+  <arg
+    name="maximum_trajectory_correction_m"
+    default="15.0"
+    description="Fail-closed maximum raw-to-route correction before moving output is blocked"
+  />
   <arg name="max_candidate_age_sec" default="2.0"/>
   <arg name="candidate_timeout_sec" default="6.0"/>
 
@@ -694,6 +699,10 @@
         value="$(var route_curvature_lookahead_m)"
       />
       <param name="max_route_deviation_m" value="$(var max_route_deviation_m)"/>
+      <param
+        name="maximum_trajectory_correction_m"
+        value="$(var maximum_trajectory_correction_m)"
+      />
       <param name="max_candidate_age_sec" value="$(var max_candidate_age_sec)"/>
       <param name="candidate_timeout_sec" value="$(var candidate_timeout_sec)"/>
     </node>

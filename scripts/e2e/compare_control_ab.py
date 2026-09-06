@@ -18,7 +18,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 
 SCENARIOS = ("town07_straight", "c_track_turn", "town03_turn")
-CANDIDATES = ("pid_i40", "turn_preview_5m")
+CANDIDATES = ("pid_i40", "turn_preview_5m", "turn_preview_10m")
+# HH_260906 - Apply identical acceptance gates to both isolated turn-preview candidates.
+TURN_PREVIEW_CANDIDATES = ("turn_preview_5m", "turn_preview_10m")
 
 
 class ComparisonError(RuntimeError):
@@ -202,6 +204,10 @@ def load_trial(path: Path, role: str) -> dict[str, Any]:
         "control_ab_turn_preview_5m": environment.get(
             "CONTROL_AB_TURN_PREVIEW_5M"
         ),
+        "control_ab_turn_preview_10m": environment.get(
+            "CONTROL_AB_TURN_PREVIEW_10M", "false"
+        ),
+        "curvature_speed_preview_m": environment.get("CURVATURE_SPEED_PREVIEW_M"),
         "control_ab_isolated_single_knob": environment.get(
             "CONTROL_AB_ISOLATED_SINGLE_KNOB"
         ),
@@ -347,12 +353,36 @@ def compare(
         },
         "both source routes must match the named A/B scenario",
     )
-    expected_baseline_control = ("baseline", "false", "false", "true")
+    expected_baseline_control = (
+        "baseline",
+        "false",
+        "false",
+        "false",
+        "true",
+        "3.0",
+    )
+    expected_preview_m = {
+        "pid_i40": "3.0",
+        "turn_preview_5m": "5.0",
+        "turn_preview_10m": "10.0",
+    }[candidate_id]
     expected_candidate_control = (
         candidate_id,
         "true" if candidate_id == "pid_i40" else "false",
         "true" if candidate_id == "turn_preview_5m" else "false",
+        "true" if candidate_id == "turn_preview_10m" else "false",
         "true",
+        expected_preview_m,
+    )
+    check(
+        "candidate_scenario_compatibility",
+        candidate_id == "pid_i40"
+        or (
+            candidate_id in TURN_PREVIEW_CANDIDATES
+            and scenario in {"c_track_turn", "town03_turn"}
+        ),
+        {"candidate_id": candidate_id, "scenario": scenario},
+        "PID candidate supports every declared scenario; preview candidates require a turn scenario",
     )
     for label, trial, expected_control in (
         ("baseline", baseline, expected_baseline_control),
@@ -362,7 +392,9 @@ def compare(
             trial["control_ab_candidate"],
             trial["control_ab_pid_i40"],
             trial["control_ab_turn_preview_5m"],
+            trial["control_ab_turn_preview_10m"],
             trial["control_ab_isolated_single_knob"],
+            trial["curvature_speed_preview_m"],
         )
         check(
             f"{label}_profile",
@@ -377,7 +409,9 @@ def compare(
                 "candidate_id": actual_control[0],
                 "pid_i40": actual_control[1],
                 "turn_preview_5m": actual_control[2],
-                "isolated_single_knob": actual_control[3],
+                "turn_preview_10m": actual_control[3],
+                "isolated_single_knob": actual_control[4],
+                "curvature_speed_preview_m": actual_control[5],
             },
             f"isolated control tuple must equal {expected_control}",
         )
@@ -433,7 +467,7 @@ def compare(
               "target tracking RMSE <= 95% of paired baseline")
         check("gate_cap_growth", b["gate_positive_cap_time_percent"] <= min(46.5, a["gate_positive_cap_time_percent"] + 5.0),
               b["gate_positive_cap_time_percent"], "gate positive-cap time <= 46.5% and baseline + 5 points")
-    elif candidate_id == "turn_preview_5m":
+    elif candidate_id in TURN_PREVIEW_CANDIDATES:
         check("turn_raw_gated_improvement", b["raw_gated_target_rmse_mps"] <= 0.90 * a["raw_gated_target_rmse_mps"],
               b["raw_gated_target_rmse_mps"] / a["raw_gated_target_rmse_mps"],
               "raw-to-gated target RMSE <= 90% of paired baseline")

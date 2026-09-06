@@ -98,8 +98,21 @@ def _owned_fixture(
                 f"CONTROL_AB_CANDIDATE_ID={candidate_id}",
                 f"CONTROL_AB_PID_I40={'true' if candidate else 'false'}",
                 "CONTROL_AB_TURN_PREVIEW_5M=false",
+                "CONTROL_AB_LONGITUDINAL_RECOVERY_2P0=false",
+                "CONTROL_AB_LONGITUDINAL_RECOVERY_BASELINE_MPS2=1.5",
+                "CONTROL_AB_LONGITUDINAL_RECOVERY_CANDIDATE_MPS2=2.0",
+                "CONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true",
                 "CONTROL_AB_ISOLATED_SINGLE_KNOB=true",
                 "CURVATURE_SPEED_PREVIEW_M=3.0",
+                "MAXIMUM_LONGITUDINAL_ACCELERATION_MPS2=1.5",
+                "LONGITUDINAL_ACCELERATION_ROLE=trajectory_internal_curve_exit_cap",
+                "LONGITUDINAL_PID_MAX_OUT_MPS2=1.5",
+                "LONGITUDINAL_PID_MAX_P_EFFORT_MPS2=1.5",
+                "COMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2=1.5",
+                f"LONGITUDINAL_CONTROLLER_PARAM_SHA256={'c' * 64}",
+                f"LONGITUDINAL_CONTROLLER_METADATA_SHA256={'d' * 64}",
+                f"VEHICLE_CMD_GATE_PARAM_SHA256={'e' * 64}",
+                f"VEHICLE_CMD_GATE_METADATA_SHA256={'f' * 64}",
                 "RUNTIME_HEALTH_GATE_ENABLED=true",
                 "RUNTIME_HEALTH_GATE_STATUS=PASS",
                 f"RUNTIME_HEALTH_EVIDENCE_SHA256={health_sha256}",
@@ -147,6 +160,19 @@ def _trial(*, candidate: bool = False):
         "control_ab_pid_i40": "true" if candidate else "false",
         "control_ab_turn_preview_5m": "false",
         "control_ab_turn_preview_10m": "false",
+        "control_ab_longitudinal_recovery_2p0": "false",
+        "control_ab_longitudinal_recovery_baseline_mps2": "1.5",
+        "control_ab_longitudinal_recovery_candidate_mps2": "2.0",
+        "control_ab_actuator_acceleration_limits_unchanged": "true",
+        "maximum_longitudinal_acceleration_mps2": "1.5",
+        "longitudinal_acceleration_role": "trajectory_internal_curve_exit_cap",
+        "longitudinal_pid_max_out_mps2": "1.5",
+        "longitudinal_pid_max_p_effort_mps2": "1.5",
+        "command_gate_nominal_longitudinal_acceleration_mps2": "1.5",
+        "longitudinal_controller_param_sha256": "c" * 64,
+        "longitudinal_controller_metadata_sha256": "d" * 64,
+        "vehicle_cmd_gate_param_sha256": "e" * 64,
+        "vehicle_cmd_gate_metadata_sha256": "f" * 64,
         "control_ab_isolated_single_knob": "true",
         "curvature_speed_preview_m": "3.0",
         "runtime_health_gate_enabled": "true",
@@ -173,11 +199,100 @@ def _trial(*, candidate: bool = False):
     }
 
 
+def _longitudinal_recovery_candidate() -> dict:
+    candidate = _trial(candidate=True)
+    candidate["control_ab_candidate"] = "longitudinal_recovery_2p0"
+    candidate["control_ab_pid_i40"] = "false"
+    candidate["control_ab_longitudinal_recovery_2p0"] = "true"
+    candidate["maximum_longitudinal_acceleration_mps2"] = "2.0"
+    return candidate
+
+
 def test_town07_pid_candidate_is_accepted_when_all_gates_pass() -> None:
     payload = module.compare(_trial(), _trial(candidate=True), "town07_straight", "pid_i40")
 
     assert payload["decision"] == "ACCEPT"
     assert all(row["status"] == "PASS" for row in payload["checks"].values())
+
+
+def test_town07_longitudinal_recovery_is_accepted_when_all_gates_pass() -> None:
+    payload = module.compare(
+        _trial(),
+        _longitudinal_recovery_candidate(),
+        "town07_straight",
+        "longitudinal_recovery_2p0",
+    )
+
+    assert payload["decision"] == "ACCEPT"
+    assert payload["checks"]["longitudinal_recovery_provenance"]["status"] == "PASS"
+
+
+@pytest.mark.parametrize(
+    ("arm", "field", "value"),
+    (
+        ("baseline", "maximum_longitudinal_acceleration_mps2", "2.0"),
+        ("candidate", "maximum_longitudinal_acceleration_mps2", "1.5"),
+        ("candidate", "longitudinal_pid_max_out_mps2", "2.0"),
+        (
+            "candidate",
+            "command_gate_nominal_longitudinal_acceleration_mps2",
+            "2.0",
+        ),
+        ("candidate", "longitudinal_controller_param_sha256", "0" * 64),
+        ("candidate", "vehicle_cmd_gate_metadata_sha256", None),
+    ),
+)
+def test_longitudinal_recovery_rejects_provenance_confound(
+    arm: str, field: str, value: str | None
+) -> None:
+    baseline = _trial()
+    candidate = _longitudinal_recovery_candidate()
+    target = baseline if arm == "baseline" else candidate
+    target[field] = value
+
+    payload = module.compare(
+        baseline,
+        candidate,
+        "town07_straight",
+        "longitudinal_recovery_2p0",
+    )
+
+    assert payload["decision"] == "HOLD"
+    assert payload["checks"]["longitudinal_recovery_provenance"]["status"] == "FAIL"
+
+
+def test_longitudinal_recovery_is_rejected_outside_town07_straight() -> None:
+    baseline = _trial()
+    candidate = _longitudinal_recovery_candidate()
+    for trial in (baseline, candidate):
+        trial["route_town"] = "Town03"
+        trial["route_scenario"] = "left"
+
+    payload = module.compare(
+        baseline,
+        candidate,
+        "town03_turn",
+        "longitudinal_recovery_2p0",
+    )
+
+    assert payload["decision"] == "HOLD"
+    assert payload["checks"]["candidate_scenario_compatibility"]["status"] == "FAIL"
+
+
+def test_longitudinal_recovery_reuses_straight_speed_exposure_gate() -> None:
+    candidate = _longitudinal_recovery_candidate()
+    candidate["metrics"]["maximum_speed_mps"] = 7.77
+    candidate["metrics"]["sustained_speed_sec"] = 3.49
+
+    payload = module.compare(
+        _trial(),
+        candidate,
+        "town07_straight",
+        "longitudinal_recovery_2p0",
+    )
+
+    assert payload["decision"] == "HOLD"
+    assert payload["checks"]["straight_speed_exposure"]["status"] == "FAIL"
 
 
 def test_health_confound_forces_hold() -> None:
@@ -335,6 +450,21 @@ def test_legacy_trial_without_turn_preview_10m_flag_defaults_false(
     trial = module.load_trial(root, "candidate")
 
     assert trial["control_ab_turn_preview_10m"] == "false"
+
+
+def test_load_trial_exposes_longitudinal_recovery_provenance(
+    tmp_path: Path,
+) -> None:
+    root = _owned_fixture(tmp_path, candidate=False, route_success=True)
+
+    trial = module.load_trial(root, "baseline")
+
+    assert trial["control_ab_longitudinal_recovery_2p0"] == "false"
+    assert trial["control_ab_longitudinal_recovery_baseline_mps2"] == "1.5"
+    assert trial["control_ab_longitudinal_recovery_candidate_mps2"] == "2.0"
+    assert trial["maximum_longitudinal_acceleration_mps2"] == "1.5"
+    assert trial["longitudinal_pid_max_out_mps2"] == "1.5"
+    assert trial["command_gate_nominal_longitudinal_acceleration_mps2"] == "1.5"
 
 
 def test_failed_baseline_is_rejected(tmp_path: Path) -> None:

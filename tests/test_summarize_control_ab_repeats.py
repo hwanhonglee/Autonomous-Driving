@@ -97,12 +97,16 @@ def _metrics(offset: float) -> dict[str, float]:
     }
 
 
-def _make_valid_pairs(tmp_path: Path, count: int = 3) -> list[Path]:
+def _make_valid_pairs(
+    tmp_path: Path,
+    count: int = 3,
+    candidate_directory_name: str = "B_turn_preview_10m",
+) -> list[Path]:
     pairs = []
     for index in range(count):
         pair = tmp_path / f"pair_{index + 1:02d}"
         _write_arm(pair / "A_baseline", success=True, selected=True)
-        _write_arm(pair / "B_turn_preview_10m", success=True, selected=True)
+        _write_arm(pair / candidate_directory_name, success=True, selected=True)
         pairs.append(pair)
     return pairs
 
@@ -169,6 +173,31 @@ def test_three_fully_valid_accept_pairs_produce_only_paired_statistics(
     assert "every valid pair" in payload["acceptance_policy"][
         "aggregate_comparator_policy"
     ]
+
+
+def test_longitudinal_recovery_candidate_uses_dynamic_candidate_registry(
+    tmp_path: Path,
+) -> None:
+    directory_name = "B_longitudinal_recovery_2p0"
+    pairs = _make_valid_pairs(
+        tmp_path, candidate_directory_name=directory_name
+    )
+    route_sha256 = _route_sha256()
+
+    payload = MODULE.summarize(
+        pairs,
+        "town07_straight",
+        "longitudinal_recovery_2p0",
+        directory_name,
+        route_sha256,
+        loader=_fake_loader(route_sha256),
+        comparator=_fake_comparator(),
+    )
+
+    assert payload["decision"] == "ACCEPT"
+    assert payload["campaign_contract"]["candidate_id"] == (
+        "longitudinal_recovery_2p0"
+    )
 
 
 def test_preengagement_zero_result_is_invalid_and_never_loaded(

@@ -18,9 +18,16 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 
 SCENARIOS = ("town07_straight", "c_track_turn", "town03_turn")
-CANDIDATES = ("pid_i40", "turn_preview_5m", "turn_preview_10m")
+CANDIDATES = (
+    "pid_i40",
+    "turn_preview_5m",
+    "turn_preview_10m",
+    "longitudinal_recovery_2p0",
+)
 # HH_260906 - Apply identical acceptance gates to both isolated turn-preview candidates.
 TURN_PREVIEW_CANDIDATES = ("turn_preview_5m", "turn_preview_10m")
+# HH_260906 - Reuse established straight-line PID gates for isolated recovery-cap trials.
+TOWN07_STRAIGHT_CANDIDATES = ("pid_i40", "longitudinal_recovery_2p0")
 
 
 class ComparisonError(RuntimeError):
@@ -107,6 +114,14 @@ def resolve_trial(path: Path, role: str) -> tuple[Path, dict[str, Any]]:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _is_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def parse_env(path: Path) -> dict[str, str]:
@@ -206,6 +221,45 @@ def load_trial(path: Path, role: str) -> dict[str, Any]:
         ),
         "control_ab_turn_preview_10m": environment.get(
             "CONTROL_AB_TURN_PREVIEW_10M", "false"
+        ),
+        "control_ab_longitudinal_recovery_2p0": environment.get(
+            "CONTROL_AB_LONGITUDINAL_RECOVERY_2P0", "false"
+        ),
+        "control_ab_longitudinal_recovery_baseline_mps2": environment.get(
+            "CONTROL_AB_LONGITUDINAL_RECOVERY_BASELINE_MPS2"
+        ),
+        "control_ab_longitudinal_recovery_candidate_mps2": environment.get(
+            "CONTROL_AB_LONGITUDINAL_RECOVERY_CANDIDATE_MPS2"
+        ),
+        "control_ab_actuator_acceleration_limits_unchanged": environment.get(
+            "CONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED"
+        ),
+        "maximum_longitudinal_acceleration_mps2": environment.get(
+            "MAXIMUM_LONGITUDINAL_ACCELERATION_MPS2"
+        ),
+        "longitudinal_acceleration_role": environment.get(
+            "LONGITUDINAL_ACCELERATION_ROLE"
+        ),
+        "longitudinal_pid_max_out_mps2": environment.get(
+            "LONGITUDINAL_PID_MAX_OUT_MPS2"
+        ),
+        "longitudinal_pid_max_p_effort_mps2": environment.get(
+            "LONGITUDINAL_PID_MAX_P_EFFORT_MPS2"
+        ),
+        "command_gate_nominal_longitudinal_acceleration_mps2": environment.get(
+            "COMMAND_GATE_NOMINAL_LONGITUDINAL_ACCELERATION_MPS2"
+        ),
+        "longitudinal_controller_param_sha256": environment.get(
+            "LONGITUDINAL_CONTROLLER_PARAM_SHA256"
+        ),
+        "longitudinal_controller_metadata_sha256": environment.get(
+            "LONGITUDINAL_CONTROLLER_METADATA_SHA256"
+        ),
+        "vehicle_cmd_gate_param_sha256": environment.get(
+            "VEHICLE_CMD_GATE_PARAM_SHA256"
+        ),
+        "vehicle_cmd_gate_metadata_sha256": environment.get(
+            "VEHICLE_CMD_GATE_METADATA_SHA256"
         ),
         "curvature_speed_preview_m": environment.get("CURVATURE_SPEED_PREVIEW_M"),
         "control_ab_isolated_single_knob": environment.get(
@@ -358,6 +412,7 @@ def compare(
         "false",
         "false",
         "false",
+        "false",
         "true",
         "3.0",
     )
@@ -365,12 +420,14 @@ def compare(
         "pid_i40": "3.0",
         "turn_preview_5m": "5.0",
         "turn_preview_10m": "10.0",
+        "longitudinal_recovery_2p0": "3.0",
     }[candidate_id]
     expected_candidate_control = (
         candidate_id,
         "true" if candidate_id == "pid_i40" else "false",
         "true" if candidate_id == "turn_preview_5m" else "false",
         "true" if candidate_id == "turn_preview_10m" else "false",
+        "true" if candidate_id == "longitudinal_recovery_2p0" else "false",
         "true",
         expected_preview_m,
     )
@@ -378,11 +435,15 @@ def compare(
         "candidate_scenario_compatibility",
         candidate_id == "pid_i40"
         or (
+            candidate_id == "longitudinal_recovery_2p0"
+            and scenario == "town07_straight"
+        )
+        or (
             candidate_id in TURN_PREVIEW_CANDIDATES
             and scenario in {"c_track_turn", "town03_turn"}
         ),
         {"candidate_id": candidate_id, "scenario": scenario},
-        "PID candidate supports every declared scenario; preview candidates require a turn scenario",
+        "PID supports every scenario; recovery requires Town07 straight; preview requires a turn scenario",
     )
     for label, trial, expected_control in (
         ("baseline", baseline, expected_baseline_control),
@@ -393,6 +454,7 @@ def compare(
             trial["control_ab_pid_i40"],
             trial["control_ab_turn_preview_5m"],
             trial["control_ab_turn_preview_10m"],
+            trial["control_ab_longitudinal_recovery_2p0"],
             trial["control_ab_isolated_single_knob"],
             trial["curvature_speed_preview_m"],
         )
@@ -410,8 +472,9 @@ def compare(
                 "pid_i40": actual_control[1],
                 "turn_preview_5m": actual_control[2],
                 "turn_preview_10m": actual_control[3],
-                "isolated_single_knob": actual_control[4],
-                "curvature_speed_preview_m": actual_control[5],
+                "longitudinal_recovery_2p0": actual_control[4],
+                "isolated_single_knob": actual_control[5],
+                "curvature_speed_preview_m": actual_control[6],
             },
             f"isolated control tuple must equal {expected_control}",
         )
@@ -435,6 +498,52 @@ def compare(
             },
             "health evidence digest and owned-route digest must match recorded provenance",
         )
+    # HH_260906 - Reject recovery trials unless downstream actuator controls are identical.
+    if candidate_id == "longitudinal_recovery_2p0":
+        common_recovery_provenance = {
+            "control_ab_longitudinal_recovery_baseline_mps2": "1.5",
+            "control_ab_longitudinal_recovery_candidate_mps2": "2.0",
+            "control_ab_actuator_acceleration_limits_unchanged": "true",
+            "longitudinal_acceleration_role": "trajectory_internal_curve_exit_cap",
+            "longitudinal_pid_max_out_mps2": "1.5",
+            "longitudinal_pid_max_p_effort_mps2": "1.5",
+            "command_gate_nominal_longitudinal_acceleration_mps2": "1.5",
+        }
+        hash_fields = (
+            "longitudinal_controller_param_sha256",
+            "longitudinal_controller_metadata_sha256",
+            "vehicle_cmd_gate_param_sha256",
+            "vehicle_cmd_gate_metadata_sha256",
+        )
+        provenance_fields = (
+            *common_recovery_provenance,
+            "maximum_longitudinal_acceleration_mps2",
+            *hash_fields,
+        )
+        actual_provenance = {
+            label: {field: trial.get(field) for field in provenance_fields}
+            for label, trial in (("baseline", baseline), ("candidate", candidate))
+        }
+        common_matches = all(
+            trial.get(field) == expected
+            for trial in (baseline, candidate)
+            for field, expected in common_recovery_provenance.items()
+        )
+        applied_caps_match = (
+            baseline.get("maximum_longitudinal_acceleration_mps2") == "1.5"
+            and candidate.get("maximum_longitudinal_acceleration_mps2") == "2.0"
+        )
+        downstream_hashes_match = all(
+            _is_sha256(baseline.get(field))
+            and candidate.get(field) == baseline.get(field)
+            for field in hash_fields
+        )
+        check(
+            "longitudinal_recovery_provenance",
+            common_matches and applied_caps_match and downstream_hashes_match,
+            actual_provenance,
+            "only the trajectory recovery cap may change from 1.5 to 2.0 m/s^2; actuator limits and downstream parameter digests must remain identical",
+        )
     for label, trial in (("baseline", baseline), ("candidate", candidate)):
         m = trial["metrics"]
         check(f"{label}_goal", trial["success"], trial["reason"], "goal/success required")
@@ -457,7 +566,10 @@ def compare(
           b["maximum_trajectory_correction_m"] - a["maximum_trajectory_correction_m"],
           "trajectory correction increase <= 0.25 m")
 
-    if scenario == "town07_straight" and candidate_id == "pid_i40":
+    if (
+        scenario == "town07_straight"
+        and candidate_id in TOWN07_STRAIGHT_CANDIDATES
+    ):
         exposure = b["maximum_speed_mps"] >= 7.78 or b["sustained_speed_sec"] >= 3.5
         check("straight_speed_exposure", exposure,
               {"maximum_speed_mps": b["maximum_speed_mps"], "sustained_speed_sec": b["sustained_speed_sec"]},

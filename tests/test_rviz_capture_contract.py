@@ -201,6 +201,22 @@ def test_desktop_capture_selects_one_owned_rviz_window_without_desktop_side_effe
     assert '${desktop_display}+0,0' not in source
 
 
+def test_owned_rviz_maximize_request_retries_until_the_window_manager_acknowledges() -> None:
+    source = TRIAL_SCRIPT.read_text(encoding="utf-8")
+    function = source[
+        source.index("prepare_owned_rviz_capture_window() {") :
+        source.index("desktop_recorder_alive() {")
+    ]
+
+    assert "maximize_deadline=$((SECONDS + 10))" in function
+    assert "while (( SECONDS < maximize_deadline ))" in function
+    assert "maximize_attempts=$((maximize_attempts + 1))" in function
+    assert function.count("-set _NET_WM_STATE") == 1
+    assert function.count("_NET_WM_STATE 2>/dev/null") == 1
+    assert "sleep 0.25" in function
+    assert "after ${maximize_attempts} bounded attempts" in function
+
+
 def test_owned_window_capture_is_revalidated_while_the_recorder_is_alive() -> None:
     source = TRIAL_SCRIPT.read_text(encoding="utf-8")
 

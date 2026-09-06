@@ -2031,6 +2031,8 @@ prepare_owned_rviz_capture_window() {
   fi
 
   local window_deadline=$((SECONDS + 30))
+  local maximize_deadline=""
+  local maximize_attempts=0
   local geometry_deadline=""
   local geometry=""
   local previous_geometry=""
@@ -2059,19 +2061,29 @@ prepare_owned_rviz_capture_window() {
   # The owned XID excludes GNOME shell surfaces by construction. Request only
   # maximization so the application content fills the 1920x1080 evidence
   # canvas; never raise it above the user's windows or move the user's pointer.
-  if ! DISPLAY="${DISPLAY}" xprop -id "${capture_rviz_window_id}" \
-    -f _NET_WM_STATE 32a -set _NET_WM_STATE \
-    '_NET_WM_STATE_MAXIMIZED_HORZ, _NET_WM_STATE_MAXIMIZED_VERT'; then
-    echo "Failed to request a maximized owned RViz capture window" >&2
-    return 1
-  fi
-  window_state="$(
-    DISPLAY="${DISPLAY}" xprop -id "${capture_rviz_window_id}" \
-      _NET_WM_STATE 2>/dev/null || true
-  )"
+  # HH_260906 - Retry the maximize request while the window manager finishes adopting the new RViz window.
+  maximize_deadline=$((SECONDS + 10))
+  while (( SECONDS < maximize_deadline )); do
+    maximize_attempts=$((maximize_attempts + 1))
+    if DISPLAY="${DISPLAY}" xprop -id "${capture_rviz_window_id}" \
+      -f _NET_WM_STATE 32a -set _NET_WM_STATE \
+      '_NET_WM_STATE_MAXIMIZED_HORZ, _NET_WM_STATE_MAXIMIZED_VERT'; then
+      sleep 0.25
+      window_state="$(
+        DISPLAY="${DISPLAY}" xprop -id "${capture_rviz_window_id}" \
+          _NET_WM_STATE 2>/dev/null || true
+      )"
+      if grep -q '_NET_WM_STATE_MAXIMIZED_HORZ' <<< "${window_state}" &&
+         grep -q '_NET_WM_STATE_MAXIMIZED_VERT' <<< "${window_state}"; then
+        break
+      fi
+    else
+      sleep 0.25
+    fi
+  done
   if ! grep -q '_NET_WM_STATE_MAXIMIZED_HORZ' <<< "${window_state}" ||
      ! grep -q '_NET_WM_STATE_MAXIMIZED_VERT' <<< "${window_state}"; then
-    echo "The centered RViz window did not accept the maximize request" >&2
+    echo "The centered RViz window did not accept the maximize request after ${maximize_attempts} bounded attempts" >&2
     return 1
   fi
 

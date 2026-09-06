@@ -339,6 +339,48 @@ def test_audit_reports_current_speed_transition_with_stable_failure_code():
     assert "speed_rate" in audit["selected_failure_codes"]
 
 
+@pytest.mark.parametrize(
+    "current_speed_mps",
+    (-1.0e-8, -1.0e-4, -0.02440626360476017, -0.03, -0.1),
+)
+def test_audit_accepts_bounded_negative_current_speed_jitter(current_speed_mps):
+    # HH_260906 - Keep offline audit acceptance aligned with live stationary-noise normalization.
+    xy, speed, logits = _valid_predictions()
+    xy[3] = [(0.0, 0.0)] * 64
+    speed[3] = [0.0] * 64
+
+    audit = audit_prediction(
+        xy,
+        speed,
+        logits,
+        current_speed_mps=current_speed_mps,
+    )
+
+    assert audit["selected_geometry_pass"] is True
+    assert audit["selected_failure_codes"] == []
+
+
+@pytest.mark.parametrize(
+    "current_speed_mps",
+    (-0.1000001, -1.0, RuntimeGateConfig().maximum_speed_mps + 1.0e-9),
+)
+def test_audit_rejects_current_speed_outside_bounded_gate(current_speed_mps):
+    # HH_260906 - Keep audit rejection strict below the jitter floor and above the speed ceiling.
+    xy, speed, logits = _valid_predictions()
+    xy[3] = [(0.0, 0.0)] * 64
+    speed[3] = [0.0] * 64
+
+    audit = audit_prediction(
+        xy,
+        speed,
+        logits,
+        current_speed_mps=current_speed_mps,
+    )
+
+    assert audit["selected_geometry_pass"] is False
+    assert audit["selected_failure_codes"] == ["speed"]
+
+
 def test_audit_accepts_short_dynamically_consistent_braking_stop():
     # HH_260906 - Mirror the live exemption for a legal monotonic stop under 5 cm.
     xy, speed, logits = _valid_predictions()

@@ -492,7 +492,33 @@ def test_accepts_first_speed_rate_near_current_ego_speed():
     assert selected.speed_mps[0] == pytest.approx(math.hypot(0.1, 0.004) / 0.1)
 
 
-def test_rejects_negative_current_ego_speed_without_clamping():
+@pytest.mark.parametrize(
+    "current_speed_mps",
+    (-1.0e-8, -1.0e-4, -0.02440626360476017, -0.03, -0.1),
+)
+def test_accepts_bounded_negative_current_ego_speed_jitter(current_speed_mps):
+    # HH_260906 - Normalize only stationary-scale negative odometry jitter before the speed-rate gate.
+    xy, speed, logits = _valid_predictions()
+    xy[2] = [(0.0, 0.0)] * 64
+    speed[2] = [0.0] * 64
+
+    selected = validate_and_select_trajectory(
+        xy,
+        speed,
+        logits,
+        current_speed_mps=current_speed_mps,
+    )
+
+    assert selected.planar_extent_m == 0.0
+    assert selected.speed_mps == (0.0,) * 64
+
+
+@pytest.mark.parametrize(
+    "current_speed_mps",
+    (-0.1000001, -1.0, RuntimeGateConfig().maximum_speed_mps + 1.0e-9),
+)
+def test_rejects_current_ego_speed_outside_bounded_gate(current_speed_mps):
+    # HH_260906 - Reject meaningful reverse motion and preserve the strict configured upper speed bound.
     xy, speed, logits = _valid_predictions()
 
     with pytest.raises(ContractError, match="current speed"):
@@ -500,7 +526,7 @@ def test_rejects_negative_current_ego_speed_without_clamping():
             xy,
             speed,
             logits,
-            current_speed_mps=-0.01,
+            current_speed_mps=current_speed_mps,
         )
 
 
@@ -675,6 +701,34 @@ def test_exact_camera_bundle_rejects_duplicate_frame():
         synchronizer.push("CAM_FRONT", 100, object())
 
 
+def test_exact_camera_bundle_counts_older_complete_anchor_superseded_by_latest():
+    # HH_260906 - Expose complete anchors lost when a delayed timer selects the newest bundle.
+    synchronizer = ExactCameraBundle()
+    for stamp_ns in (100, 200):
+        for camera in CAMERA_ORDER:
+            synchronizer.push(camera, stamp_ns, f"{camera}-{stamp_ns}")
+
+    stamp_ns, _payloads = synchronizer.pop_latest()
+
+    assert stamp_ns == 200
+    assert synchronizer.counters()["expired_pending_count"] == 1
+    assert synchronizer.pending_bundle_count == 0
+
+
+def test_exact_camera_bundle_counts_older_partial_anchor_superseded_by_latest():
+    # HH_260906 - Expose partial anchors discarded when a newer complete bundle is emitted.
+    synchronizer = ExactCameraBundle()
+    synchronizer.push(CAMERA_ORDER[0], 100, "partial")
+    for camera in CAMERA_ORDER:
+        synchronizer.push(camera, 200, f"{camera}-200")
+
+    stamp_ns, _payloads = synchronizer.pop_latest()
+
+    assert stamp_ns == 200
+    assert synchronizer.counters()["expired_pending_count"] == 1
+    assert synchronizer.pending_bundle_count == 0
+
+
 def test_exact_camera_bundle_bounds_descending_timestamp_memory():
     synchronizer = ExactCameraBundle(maximum_pending_bundles=32)
 
@@ -728,6 +782,15 @@ def test_runtime_gate_configuration_fails_closed():
     with pytest.raises(ContractError, match="stationary_claim_speed_epsilon_mps"):
         RuntimeGateConfig(
             stationary_claim_speed_epsilon_mps=0.2,
+            stationary_speed_tolerance_mps=0.1,
+        ).validate()
+    with pytest.raises(
+        ContractError,
+        match="current_speed_reverse_jitter_tolerance_mps",
+    ):
+        # HH_260906 - Keep the reverse-jitter allowance inside the established stop envelope.
+        RuntimeGateConfig(
+            current_speed_reverse_jitter_tolerance_mps=0.11,
             stationary_speed_tolerance_mps=0.1,
         ).validate()
     with pytest.raises(ContractError, match="disagreement_ratio"):

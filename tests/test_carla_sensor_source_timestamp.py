@@ -501,7 +501,7 @@ def test_sensor_interface_holds_partial_camera_frame(bridge) -> None:
     assert {frame for frame, _ in data.values()} == {100}
 
 
-def test_sensor_interface_returns_latest_complete_frame_and_discards_stale_partial(bridge) -> None:
+def test_sensor_interface_returns_complete_frame_and_discards_stale_partial(bridge) -> None:
     interface, camera_tags = make_sensor_interface(bridge)
     for tag in camera_tags[:3]:
         interface.update_sensor(tag, f"{tag}-100", 100)
@@ -514,6 +514,34 @@ def test_sensor_interface_returns_latest_complete_frame_and_discards_stale_parti
     for tag in camera_tags[3:]:
         interface.update_sensor(tag, f"{tag}-100", 100)
     assert interface.get_data() == {}
+
+
+def test_sensor_interface_drains_complete_camera_frames_in_source_order(bridge) -> None:
+    # HH_260906 - Prevent a callback burst from silently coalescing two valid camera frames.
+    interface, camera_tags = make_sensor_interface(bridge)
+    for frame in (100, 101):
+        for tag in camera_tags:
+            interface.update_sensor(tag, f"{tag}-{frame}", frame)
+
+    first = interface.get_data()
+    second = interface.get_data()
+
+    assert {frame for frame, _ in first.values()} == {100}
+    assert {frame for frame, _ in second.values()} == {101}
+    assert interface.get_data() == {}
+
+
+def test_fast_sensor_patch_and_apply_guard_require_source_order_dispatch() -> None:
+    patch = (
+        ROOT / "patches/autoware_carla_interface_camera_fast_options.patch"
+    ).read_text(encoding="utf-8")
+    apply_helper = (ROOT / "scripts/e2e/apply_carla_fast_sensor_patch.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "+            oldest_complete = min(complete_frames)" in patch
+    assert "latest_complete = max(complete_frames)" not in patch
+    assert "oldest_complete = min(complete_frames)" in apply_helper
 
 
 def test_sensor_interface_keeps_non_camera_data_immediate(bridge) -> None:

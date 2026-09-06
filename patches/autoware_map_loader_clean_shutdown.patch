@@ -1,0 +1,141 @@
+diff --git a/map/autoware_map_loader/CMakeLists.txt b/map/autoware_map_loader/CMakeLists.txt
+index cd32100..ccac1b5 100644
+--- a/map/autoware_map_loader/CMakeLists.txt
++++ b/map/autoware_map_loader/CMakeLists.txt
+@@ -38,6 +38,11 @@ rclcpp_components_register_node(lanelet2_map_loader_node
+ )
+ 
+ if(BUILD_TESTING)
++  find_package(ament_cmake_pytest REQUIRED)
++  ament_add_pytest_test(test_map_hash_generator
++    test/test_map_hash_generator.py
++  )
++
+   add_launch_test(
+     test/lanelet2_map_loader_launch.test.py
+     TIMEOUT "30"
+diff --git a/map/autoware_map_loader/package.xml b/map/autoware_map_loader/package.xml
+index 374044a..99e84c8 100644
+--- a/map/autoware_map_loader/package.xml
++++ b/map/autoware_map_loader/package.xml
+@@ -31,6 +31,7 @@
+   <depend>yaml-cpp</depend>
+ 
+   <test_depend>ament_cmake_gmock</test_depend>
++  <test_depend>ament_cmake_pytest</test_depend>
+   <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_lint_auto</test_depend>
+   <test_depend>autoware_lint_common</test_depend>
+diff --git a/map/autoware_map_loader/script/map_hash_generator b/map/autoware_map_loader/script/map_hash_generator
+index 5fb5755..ba3e914 100755
+--- a/map/autoware_map_loader/script/map_hash_generator
++++ b/map/autoware_map_loader/script/map_hash_generator
+@@ -18,6 +18,7 @@ import hashlib
+ import pathlib
+ 
+ import rclpy
++from rclpy.executors import ExternalShutdownException
+ from rclpy.node import Node
+ from rclpy.qos import QoSDurabilityPolicy
+ from rclpy.qos import QoSProfile
+@@ -100,12 +101,16 @@ class MapHashGenerator(Node):
+ def main(args=None):
+     rclpy.init(args=args)
+     node = MapHashGenerator()
+-    rclpy.spin(node)
+-    rclpy.shutdown()
++    # HH_260906 - Treat launch-context shutdown as an expected executor exit.
++    try:
++        rclpy.spin(node)
++    except (KeyboardInterrupt, ExternalShutdownException):
++        pass
++    finally:
++        node.destroy_node()
++        if rclpy.ok():
++            rclpy.shutdown()
+ 
+ 
+ if __name__ == "__main__":
+-    try:
+-        main()
+-    except KeyboardInterrupt:
+-        pass
++    main()
+diff --git a/map/autoware_map_loader/test/test_map_hash_generator.py b/map/autoware_map_loader/test/test_map_hash_generator.py
+new file mode 100644
+index 0000000..fece5d6
+--- /dev/null
++++ b/map/autoware_map_loader/test/test_map_hash_generator.py
+@@ -0,0 +1,72 @@
++#!/usr/bin/env python3
++
++# Copyright 2026 Tier IV, Inc.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++from importlib.machinery import SourceFileLoader
++from importlib.util import module_from_spec
++from importlib.util import spec_from_loader
++from pathlib import Path
++from unittest.mock import Mock
++
++import pytest
++from rclpy.executors import ExternalShutdownException
++
++
++def load_map_hash_generator():
++    script = Path(__file__).parents[1] / "script" / "map_hash_generator"
++    loader = SourceFileLoader("map_hash_generator_under_test", str(script))
++    spec = spec_from_loader(loader.name, loader)
++    module = module_from_spec(spec)
++    loader.exec_module(module)
++    return module
++
++
++@pytest.mark.parametrize("spin_exception", [KeyboardInterrupt(), ExternalShutdownException()])
++def test_main_handles_expected_executor_shutdown(monkeypatch, spin_exception):
++    module = load_map_hash_generator()
++    node = Mock()
++    init = Mock()
++    spin = Mock(side_effect=spin_exception)
++    shutdown = Mock()
++
++    monkeypatch.setattr(module.rclpy, "init", init)
++    monkeypatch.setattr(module, "MapHashGenerator", Mock(return_value=node))
++    monkeypatch.setattr(module.rclpy, "spin", spin)
++    monkeypatch.setattr(module.rclpy, "ok", Mock(return_value=False))
++    monkeypatch.setattr(module.rclpy, "shutdown", shutdown)
++
++    module.main(args=["--ros-args"])
++
++    init.assert_called_once_with(args=["--ros-args"])
++    spin.assert_called_once_with(node)
++    node.destroy_node.assert_called_once_with()
++    shutdown.assert_not_called()
++
++
++def test_main_shuts_down_live_context_after_spin_returns(monkeypatch):
++    module = load_map_hash_generator()
++    node = Mock()
++    shutdown = Mock()
++
++    monkeypatch.setattr(module.rclpy, "init", Mock())
++    monkeypatch.setattr(module, "MapHashGenerator", Mock(return_value=node))
++    monkeypatch.setattr(module.rclpy, "spin", Mock())
++    monkeypatch.setattr(module.rclpy, "ok", Mock(return_value=True))
++    monkeypatch.setattr(module.rclpy, "shutdown", shutdown)
++
++    module.main()
++
++    node.destroy_node.assert_called_once_with()
++    shutdown.assert_called_once_with()

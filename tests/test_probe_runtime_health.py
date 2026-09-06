@@ -353,14 +353,21 @@ def test_runtime_health_rejects_partial_camera_transport_provenance() -> None:
         )
 
 
-def test_transport_v2_requires_cyclonedds_provenance() -> None:
+@pytest.mark.parametrize(
+    "profile_id",
+    (
+        health.CAMERA_TRANSPORT_PROFILE_V2,
+        health.CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+    ),
+)
+def test_exact_transport_requires_cyclonedds_provenance(profile_id: str) -> None:
     with pytest.raises(SystemExit):
         health.parse_args(
             [
                 "--output",
                 "unused.json",
                 "--camera-transport-profile-id",
-                health.CAMERA_TRANSPORT_PROFILE_V2,
+                profile_id,
                 "--sensor-mapping-sha256",
                 "a" * 64,
                 "--vad-model-override-sha256",
@@ -387,6 +394,66 @@ def test_transport_v2_environment_binds_loopback_config_hash(
     assert report["status"] == "PASS"
     assert report["failures"] == []
     assert report["cyclonedds_config"]["actual_sha256"] == config_sha
+
+
+def test_portable_10hz_transport_binds_exact_graph_and_rate_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = tmp_path / "cyclonedds.xml"
+    config.write_text("<CycloneDDS/>", encoding="utf-8")
+    config_sha = health.sha256_file(config)
+    uri = config.resolve().as_uri()
+    output = tmp_path / "runtime_health.json"
+    graph = health.evaluate_camera_image_graph(_exact_image_graph())
+    monkeypatch.setenv("ROS_LOCALHOST_ONLY", "0")
+    monkeypatch.setenv("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
+    monkeypatch.setenv("CYCLONEDDS_URI", uri)
+    monkeypatch.setattr(
+        health,
+        "collect_live_health",
+        lambda *_: (
+            [{"status": "PASS"}] * 3,
+            {
+                "status": "PASS",
+                "required_consecutive_passes": 3,
+                "maximum_consecutive_passes": 3,
+                "trailing_consecutive_passes": 3,
+                "winning_window_indexes": [0, 1, 2],
+                "evaluated_window_count": 3,
+                "timed_out": False,
+                "elapsed_wall_seconds": 10.1,
+            },
+            graph,
+        ),
+    )
+
+    assert health.main(
+        [
+            "--output",
+            str(output),
+            "--camera-transport-profile-id",
+            health.CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+            "--sensor-mapping-sha256",
+            "a" * 64,
+            "--vad-model-override-sha256",
+            "b" * 64,
+            "--cyclonedds-uri",
+            uri,
+            "--cyclonedds-config-sha256",
+            config_sha,
+        ]
+    ) == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["contract"]["thresholds"]["minimum_camera_wall_rate_hz"] == 9.0
+    assert payload["contract"]["thresholds"]["minimum_complete_bundle_count"] == 70
+    transport = payload["contract"]["camera_transport"]
+    assert transport["profile_id"] == health.CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ
+    assert transport["camera_source_sensor_tick_seconds"] == 0.1
+    assert transport["bridge_publish_cap_hz"] == 11
+    assert transport["declared_effective_camera_rate_hz"] == 10.0
+    assert transport["exact_camera_image_graph_required"] is True
+    assert payload["camera_image_graph"]["status"] == "PASS"
+    assert payload["runtime"]["transport_environment"]["status"] == "PASS"
 
 
 def test_transport_v2_environment_rejects_duplicate_localhost_override_and_hash_drift(

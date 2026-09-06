@@ -16,10 +16,30 @@
   />
   <arg name="rig_file" description="Pinned Common10 camera rig JSON file"/>
   <arg name="rig_sha256" description="Lowercase SHA-256 of rig_file"/>
+  <!-- HH_260906 - Bind runtime status to the independently probed normalized CARLA map identity. -->
+  <arg name="declared_map_id" description="Normalized lowercase CARLA map identity"/>
   <arg name="route_file" description="Project route JSON used by the running CARLA scene"/>
   <arg name="route_sha256" description="Lowercase SHA-256 of route_file"/>
   <arg name="device" default="cpu" description="cpu or UUID-pinned logical cuda:0"/>
   <arg name="use_sim_time" default="true"/>
+  <!-- HH_260906 - Allow a bounded wall-time settle window for same-tick causal state messages. -->
+  <arg
+    name="input_settle_timeout_s"
+    default="0.05"
+    description="Maximum wall time to await causal state after an exact camera bundle"
+  />
+  <!-- HH_260906 - Pin strict live camera translation parity at the launch boundary. -->
+  <arg
+    name="maximum_tf_translation_error_m"
+    default="0.005"
+    description="Maximum translation error between live TF and the pinned rig"
+  />
+  <!-- HH_260906 - Pin strict live camera rotation parity at the launch boundary. -->
+  <arg
+    name="maximum_tf_rotation_error_rad"
+    default="0.005"
+    description="Maximum rotation error between live TF and the pinned rig"
+  />
   <arg
     name="research_acknowledged"
     default="false"
@@ -45,9 +65,19 @@
     <param name="model_config_sha256" value="$(var model_config_sha256)"/>
     <param name="rig_file" value="$(var rig_file)"/>
     <param name="rig_sha256" value="$(var rig_sha256)"/>
+    <param name="declared_map_id" value="$(var declared_map_id)"/>
     <param name="route_file" value="$(var route_file)"/>
     <param name="route_sha256" value="$(var route_sha256)"/>
     <param name="device" value="$(var device)"/>
+    <param name="input_settle_timeout_s" value="$(var input_settle_timeout_s)"/>
+    <param
+      name="maximum_tf_translation_error_m"
+      value="$(var maximum_tf_translation_error_m)"
+    />
+    <param
+      name="maximum_tf_rotation_error_rad"
+      value="$(var maximum_tf_rotation_error_rad)"
+    />
     <param name="research_acknowledged" value="$(var research_acknowledged)"/>
   </node>
 </launch>

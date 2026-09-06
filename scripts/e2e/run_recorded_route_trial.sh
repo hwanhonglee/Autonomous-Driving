@@ -39,9 +39,36 @@ Options:
   --speed-60kph-pilot    Add the straight-only CARLA 16.667 m/s exploratory pilot
   --camera-source-5hz    Render six CARLA cameras at 5 sim-Hz with the pinned
                          localhost-only Best-Effort KEEP_LAST depth-1 profile
+  --portable-shadow-10hz Run Portable E2E at the exact six-camera 10 Hz ABI in
+                         isolated shadow-only mode; requires --speed-30kph
+  --portable-runtime-bundle FILE
+                         Pinned non-executable Portable E2E runtime .npz bundle
+  --portable-runtime-bundle-sha256 SHA256
+                         Lowercase SHA-256 of the exact runtime bundle
+  --portable-source-checkpoint-sha256 SHA256
+                         Lowercase source checkpoint SHA-256 embedded in bundle
+  --portable-model-config-sha256 SHA256
+                         Lowercase canonical model configuration SHA-256
+  --portable-corpus-fingerprint-sha256 SHA256
+                         Lowercase training corpus fingerprint SHA-256
+  --portable-rig-file JSON
+                         Pinned regular Common10 camera rig file
+  --portable-rig-sha256 SHA256
+                         Lowercase SHA-256 of the camera rig file
+  --portable-contract-file JSON
+                         Pinned regular Common10 contract file
+  --portable-contract-sha256 SHA256
+                         Lowercase SHA-256 of the Common10 contract file
+  --portable-device DEVICE
+                         cpu (default) or UUID-pinned logical cuda:0
+  --portable-cpu-set LIST
+                         Comma-separated online CPU IDs used only by CPU shadow inference
   --control-ab-pid-i40   30 kph A/B: PID max_i_effort 0.30 -> 0.40 only
   --control-ab-turn-preview-5m
                          30 kph turn A/B: curvature preview 3 m -> 5 m only
+  --control-ab-longitudinal-recovery-2p0
+                         30 kph straight A/B: post-curve planning-speed recovery
+                         1.5 -> 2.0 m/s^2 only; actuator limits remain 1.5
   --geometry-ab-route-corridor-0p2
                          60 kph geometry A/B: route corridor 0.50 m -> 0.20 m only
   --visualize            Start RViz (and the front-camera view outside capture mode)
@@ -79,6 +106,30 @@ speed_30kph=false
 speed_60kph_pilot=false
 camera_source_5hz=false
 camera_source_sensor_tick_sec=0.0
+portable_shadow_10hz=false
+portable_runtime_bundle=""
+portable_runtime_bundle_sha256=""
+portable_source_checkpoint_sha256=""
+portable_model_config_sha256=""
+portable_corpus_fingerprint_sha256=""
+portable_rig_file=""
+portable_rig_sha256=""
+portable_contract_file=""
+portable_contract_sha256=""
+portable_shadow_device="cpu"
+portable_cpu_set=""
+portable_input_option_provided=false
+declare -A portable_option_seen=()
+
+claim_portable_option() {
+  local option="$1"
+  if [[ -n "${portable_option_seen[${option}]:-}" ]]; then
+    echo "Portable E2E option may be specified only once: ${option}" >&2
+    exit 2
+  fi
+  portable_option_seen["${option}"]=true
+}
+
 visualize=false
 capture_desktop=false
 trajectory_stability=false
@@ -103,6 +154,7 @@ model_override=""
 sensor_mapping=""
 control_ab_pid_i40=false
 control_ab_turn_preview_5m=false
+control_ab_longitudinal_recovery_2p0=false
 control_ab_candidate_id="baseline"
 geometry_ab_candidate_id="baseline_corridor_0p5"
 route_corridor_half_width_m="0.50"
@@ -129,6 +181,90 @@ while [[ $# -gt 0 ]]; do
       recommended=true
       shift
       ;;
+    --portable-shadow-10hz)
+      claim_portable_option "$1"
+      portable_shadow_10hz=true
+      camera_source_sensor_tick_sec=0.1
+      recommended=true
+      shift
+      ;;
+    --portable-runtime-bundle)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_runtime_bundle="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-runtime-bundle-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_runtime_bundle_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-source-checkpoint-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_source_checkpoint_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-model-config-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_model_config_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-corpus-fingerprint-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_corpus_fingerprint_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-rig-file)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_rig_file="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-rig-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_rig_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-contract-file)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_contract_file="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-contract-sha256)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_contract_sha256="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-device)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_shadow_device="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
+    --portable-cpu-set)
+      claim_portable_option "$1"
+      [[ $# -ge 2 ]] || { echo "$1 requires a value" >&2; exit 2; }
+      portable_cpu_set="$2"
+      portable_input_option_provided=true
+      shift 2
+      ;;
     --control-ab-pid-i40)
       control_ab_pid_i40=true
       control_ab_candidate_id="pid_i40"
@@ -137,6 +273,11 @@ while [[ $# -gt 0 ]]; do
     --control-ab-turn-preview-5m)
       control_ab_turn_preview_5m=true
       control_ab_candidate_id="turn_preview_5m"
+      shift
+      ;;
+    --control-ab-longitudinal-recovery-2p0)
+      control_ab_longitudinal_recovery_2p0=true
+      control_ab_candidate_id="longitudinal_recovery_2p0"
       shift
       ;;
     --geometry-ab-route-corridor-0p2)
@@ -238,17 +379,93 @@ if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
+if [[ "${portable_shadow_10hz}" == "true" && "${camera_source_5hz}" == "true" ]]; then
+  echo "--portable-shadow-10hz and --camera-source-5hz are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--portable-shadow-10hz and --sensor-mapping are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" == "true" && "${speed_30kph}" != "true" ]]; then
+  echo "--portable-shadow-10hz requires --speed-30kph." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" != "true" && "${portable_input_option_provided}" == "true" ]]; then
+  echo "Portable E2E pinned inputs require --portable-shadow-10hz." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  portable_required_values=(
+    "${portable_runtime_bundle}"
+    "${portable_runtime_bundle_sha256}"
+    "${portable_source_checkpoint_sha256}"
+    "${portable_model_config_sha256}"
+    "${portable_corpus_fingerprint_sha256}"
+    "${portable_rig_file}"
+    "${portable_rig_sha256}"
+    "${portable_contract_file}"
+    "${portable_contract_sha256}"
+  )
+  for value in "${portable_required_values[@]}"; do
+    if [[ -z "${value}" ]]; then
+      echo "--portable-shadow-10hz requires every pinned bundle/source/config/corpus/rig/contract input." >&2
+      exit 2
+    fi
+  done
+  case "${portable_shadow_device}" in
+    cpu|cuda:0) ;;
+    *) echo "--portable-device must be cpu or logical cuda:0." >&2; exit 2 ;;
+  esac
+  if [[ "${portable_shadow_device}" == "cuda:0" &&
+        ! "${CUDA_VISIBLE_DEVICES:-}" =~ ^GPU-[^,[:space:]]+$ ]]; then
+    echo "Portable E2E cuda:0 requires exactly one UUID-pinned CUDA_VISIBLE_DEVICES entry." >&2
+    exit 2
+  fi
+  if [[ -n "${portable_cpu_set}" ]]; then
+    if [[ "${portable_shadow_device}" != "cpu" ]]; then
+      echo "--portable-cpu-set is valid only with --portable-device cpu." >&2
+      exit 2
+    fi
+    if [[ ! "${portable_cpu_set}" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+      echo "--portable-cpu-set must be a comma-separated list of CPU IDs." >&2
+      exit 2
+    fi
+    # HH_260906 - Reject duplicate or unavailable CPU IDs before creating trial evidence.
+    if ! python3 - "${portable_cpu_set}" <<'PY'
+import os
+import sys
+
+values = [int(value) for value in sys.argv[1].split(",")]
+if len(values) != len(set(values)):
+    raise SystemExit("--portable-cpu-set must not contain duplicate CPU IDs")
+if len(values) < 4:
+    raise SystemExit("--portable-cpu-set must contain at least four CPU IDs")
+available = set(os.sched_getaffinity(0))
+missing = sorted(set(values) - available)
+if missing:
+    raise SystemExit(f"--portable-cpu-set contains unavailable CPU IDs: {missing}")
+PY
+    then
+      exit 2
+    fi
+  fi
+fi
 if [[ "${speed_30kph}" == "true" && "${speed_60kph_pilot}" == "true" ]]; then
   echo "--speed-30kph and --speed-60kph-pilot are mutually exclusive." >&2
   exit 2
 fi
-if [[ "${control_ab_pid_i40}" == "true" && \
-      "${control_ab_turn_preview_5m}" == "true" ]]; then
+control_ab_selection_count=0
+[[ "${control_ab_pid_i40}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+[[ "${control_ab_turn_preview_5m}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+[[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+if (( control_ab_selection_count > 1 )); then
   echo "Select exactly one isolated 30 kph control A/B candidate per trial." >&2
   exit 2
 fi
 if [[ ( "${control_ab_pid_i40}" == "true" || \
-        "${control_ab_turn_preview_5m}" == "true" ) && \
+        "${control_ab_turn_preview_5m}" == "true" || \
+        "${control_ab_longitudinal_recovery_2p0}" == "true" ) && \
       "${speed_30kph}" != "true" ]]; then
   echo "Control A/B candidates require --speed-30kph." >&2
   exit 2
@@ -293,6 +510,9 @@ if [[ ( "${speed_30kph}" == "true" || "${speed_60kph_pilot}" == "true" ) &&
       "${camera_source_5hz}" == "true" ]]; then
   runtime_health_gate=true
   runtime_health_gate_mode="automatic_speed_camera_source_5hz"
+elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+  runtime_health_gate=true
+  runtime_health_gate_mode="automatic_speed_portable_shadow_10hz"
 elif [[ "${runtime_health_gate_explicit}" == "true" ]]; then
   runtime_health_gate_mode="explicit"
 fi
@@ -324,6 +544,10 @@ if [[ "${recommended}" == "true" ]]; then
     speed_profile_id="carla_vad_30kph_v2"
     comfortable_deceleration_mps2="2.0"
     maximum_longitudinal_acceleration_mps2="1.5"
+    if [[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]]; then
+      # HH_260906 - Preserve actuator limits while increasing only planning-speed recovery after curvature caps.
+      maximum_longitudinal_acceleration_mps2="2.0"
+    fi
     maximum_lateral_acceleration_mps2="1.2"
     target_speed_mps="8.333333333333334"
     maximum_observed_speed_mps="9.0"
@@ -347,6 +571,14 @@ if [[ "${recommended}" == "true" ]]; then
 fi
 
 for argument in "${launch_arguments[@]}"; do
+  if [[ "${portable_shadow_10hz}" == "true" ]]; then
+    case "${argument}" in
+      -r|--remap|--ros-args|__node:=*|__ns:=*|*portable_e2e_shadow*|*/planning/portable_e2e/*|*/planning/trajectory*|*/control/command/*|*/vehicle/command/*)
+        echo "Portable E2E shadow trials reject node identity, topic, and control remaps: ${argument}" >&2
+        exit 2
+        ;;
+    esac
+  fi
   case "${argument}" in
     vad_model_override_file:=*|sensor_mapping_file:=*)
       echo "Use the protected wrapper option instead of the ${argument%%:=*} launch argument." >&2
@@ -396,6 +628,10 @@ if [[ ! -f "${route_file}" ]]; then
   echo "Route file not found: ${route_file}" >&2
   exit 2
 fi
+if [[ "${portable_shadow_10hz}" == "true" && -L "${route_file}" ]]; then
+  echo "Portable E2E source route must not be a symlink." >&2
+  exit 2
+fi
 route_file="$(realpath -- "${route_file}")"
 route_scenario="$(
   python3 - "${route_file}" <<'PY'
@@ -429,6 +665,11 @@ if [[ "${speed_30kph}" == "true" ]]; then
     echo "--control-ab-turn-preview-5m requires a left or right route." >&2
     exit 2
   fi
+  if [[ "${control_ab_longitudinal_recovery_2p0}" == "true" && \
+        "${route_scenario}" != "straight" ]]; then
+    echo "--control-ab-longitudinal-recovery-2p0 requires a straight route." >&2
+    exit 2
+  fi
 fi
 if [[ "${speed_60kph_pilot}" == "true" ]]; then
   if [[ "${route_scenario}" != "straight" ]]; then
@@ -452,6 +693,10 @@ if [[ "${recommended}" == "true" ]]; then
     sensor_mapping="${package_share}/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
     model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
     cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+    sensor_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
+    model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
   fi
   recommended_mpc="${package_share}/config/mpc_carla_recommended.param.yaml"
   required_profile_files=("${model_override}" "${sensor_mapping}" "${recommended_mpc}")
@@ -461,6 +706,11 @@ if [[ "${recommended}" == "true" ]]; then
       "${model_override}.metadata.json"
       "${cyclonedds_config}"
       "${cyclonedds_config}.metadata.json"
+    )
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+    required_profile_files+=(
+      "${cyclonedds_config}"
+      "${package_share}/launch/portable_e2e_shadow.launch.xml"
     )
   fi
   if [[ "${speed_30kph}" == "true" ]]; then
@@ -507,6 +757,14 @@ if [[ -n "${sensor_mapping}" ]]; then
     exit 2
   fi
   sensor_mapping="$(realpath -- "${sensor_mapping}")"
+fi
+
+if [[ -n "${cyclonedds_config}" ]]; then
+  if [[ ! -f "${cyclonedds_config}" ]]; then
+    echo "CycloneDDS config file not found: ${cyclonedds_config}" >&2
+    exit 2
+  fi
+  cyclonedds_config="$(realpath -- "${cyclonedds_config}")"
 fi
 
 camera_transport_profile_id="legacy_shared_camera_qos"
@@ -587,8 +845,21 @@ if (
 ):
     raise SystemExit("CycloneDDS localhost transport metadata mismatch")
 PY
-  # CycloneDDS owns the exact loopback selection. ROS_LOCALHOST_ONLY=1 would
-  # select lo a second time and makes Cyclone 0.10 reject node creation.
+fi
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  camera_transport_profile_id="portable_e2e_exact_bundle_10hz_v2"
+  camera_transport_sensor_mapping_sha256="$(
+    sha256sum -- "${sensor_mapping}" | awk '{print $1}'
+  )"
+  camera_transport_vad_override_sha256="$(
+    sha256sum -- "${model_override}" | awk '{print $1}'
+  )"
+  camera_transport_cyclonedds_sha256="$(
+    sha256sum -- "${cyclonedds_config}" | awk '{print $1}'
+  )"
+fi
+if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+  # HH_260906 - Let the pinned CycloneDDS file own the single loopback selection.
   export ROS_LOCALHOST_ONLY=0
   export AUTOWARE_E2E_PINNED_CYCLONEDDS_URI="file://${cyclonedds_config}"
   export AUTOWARE_E2E_PINNED_CYCLONEDDS_SHA256="${camera_transport_cyclonedds_sha256}"
@@ -598,6 +869,32 @@ fi
 raw_vehicle_cmd_converter_config="$(
   ros2 pkg prefix autoware_carla_interface
 )/share/autoware_carla_interface/config/raw_vehicle_cmd_converter.param.yaml"
+# HH_260906 - Bind each route artifact to the ordered camera-bundle dispatcher source.
+carla_camera_bundle_dispatch_source="${root}/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
+carla_camera_bundle_dispatch_runtime="$(
+  python3 - <<'PY'
+from importlib.util import find_spec
+from pathlib import Path
+
+spec = find_spec("autoware_carla_interface.modules.carla_wrapper")
+if spec is None or spec.origin is None:
+    raise SystemExit("cannot resolve the installed CARLA camera-bundle dispatcher")
+print(Path(spec.origin).resolve())
+PY
+)"
+if [[ ! -f "${carla_camera_bundle_dispatch_source}" ||
+      ! -f "${carla_camera_bundle_dispatch_runtime}" ]]; then
+  echo "CARLA camera-bundle dispatcher source or runtime file is missing" >&2
+  exit 1
+fi
+carla_camera_bundle_dispatch_sha256="$(
+  sha256sum -- "${carla_camera_bundle_dispatch_source}" | awk '{print $1}'
+)"
+if [[ "$(sha256sum -- "${carla_camera_bundle_dispatch_runtime}" | awk '{print $1}')" != \
+      "${carla_camera_bundle_dispatch_sha256}" ]]; then
+  echo "Installed CARLA camera-bundle dispatcher does not match the source" >&2
+  exit 1
+fi
 runtime_health_probe="${root}/scripts/e2e/probe_runtime_health.py"
 for argument in "${launch_arguments[@]}"; do
   case "${argument}" in
@@ -673,6 +970,64 @@ then
   echo "runtime health timeout must be finite and at least 10.1 seconds" >&2
   exit 2
 fi
+portable_shadow_launch=""
+portable_shadow_installed_launch=""
+portable_shadow_validator=""
+portable_shadow_analyzer=""
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  # HH_260906 - Validate the regular source while separately binding ROS symlink-install resolution.
+  portable_shadow_launch="${root}/autoware_e2e_vad_launch/launch/portable_e2e_shadow.launch.xml"
+  portable_shadow_installed_launch="${package_share}/launch/portable_e2e_shadow.launch.xml"
+  portable_shadow_validator="${root}/scripts/e2e/validate_portable_shadow_trial.py"
+  portable_shadow_analyzer="${root}/scripts/e2e/analyze_portable_e2e_shadow.py"
+  portable_file_values=(
+    "${portable_runtime_bundle}"
+    "${portable_rig_file}"
+    "${portable_contract_file}"
+    "${portable_shadow_launch}"
+    "${portable_shadow_validator}"
+    "${portable_shadow_analyzer}"
+  )
+  for file in "${portable_file_values[@]}"; do
+    if [[ -L "${file}" || ! -f "${file}" ]]; then
+      echo "Portable E2E inputs must be regular non-symlink files: ${file}" >&2
+      exit 2
+    fi
+  done
+  if [[ ! -e "${portable_shadow_installed_launch}" ]]; then
+    echo "Installed Portable E2E shadow launch is missing: ${portable_shadow_installed_launch}" >&2
+    exit 2
+  fi
+  portable_runtime_bundle="$(realpath -- "${portable_runtime_bundle}")"
+  portable_rig_file="$(realpath -- "${portable_rig_file}")"
+  portable_contract_file="$(realpath -- "${portable_contract_file}")"
+  portable_hash_values=(
+    "${portable_runtime_bundle_sha256}"
+    "${portable_source_checkpoint_sha256}"
+    "${portable_model_config_sha256}"
+    "${portable_corpus_fingerprint_sha256}"
+    "${portable_rig_sha256}"
+    "${portable_contract_sha256}"
+  )
+  for digest in "${portable_hash_values[@]}"; do
+    if [[ ! "${digest}" =~ ^[0-9a-f]{64}$ ]]; then
+      echo "Portable E2E provenance values must be lowercase SHA-256 strings." >&2
+      exit 2
+    fi
+  done
+  if [[ "$(sha256sum -- "${portable_rig_file}" | awk '{print $1}')" != "${portable_rig_sha256}" ||
+        "$(sha256sum -- "${portable_contract_file}" | awk '{print $1}')" != "${portable_contract_sha256}" ]]; then
+    echo "Portable E2E rig or Common10 contract SHA-256 mismatch." >&2
+    exit 2
+  fi
+  CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 \
+    python3 -m portable_e2e.runtime_weight_bundle verify \
+      --bundle "${portable_runtime_bundle}" \
+      --bundle-sha256 "${portable_runtime_bundle_sha256}" \
+      --source-checkpoint-sha256 "${portable_source_checkpoint_sha256}" \
+      --model-config-sha256 "${portable_model_config_sha256}" \
+      --corpus-fingerprint-sha256 "${portable_corpus_fingerprint_sha256}"
+fi
 desktop_dimensions=""
 desktop_display=""
 capture_output_width_px=1920
@@ -711,7 +1066,7 @@ if [[ "${capture_desktop}" == "true" ]]; then
   capture_rviz_config_sha256="$(
     sha256sum -- "${capture_rviz_config}" | awk '{print $1}'
   )"
-  python3 - "${capture_rviz_config}" <<'PY'
+  python3 - "${capture_rviz_config}" "${portable_shadow_10hz}" <<'PY'
 import math
 from pathlib import Path
 import sys
@@ -751,6 +1106,13 @@ required_topics = {
     "/planning/vad_route/selected_raw_trajectory",
     "/planning/vad/candidate_trajectories",
 }
+if sys.argv[2] == "true":
+    required_topics.update(
+        {
+            "/planning/portable_e2e/shadow_path",
+            "/planning/portable_e2e/shadow_trajectory",
+        }
+    )
 visible_topics = set()
 
 def visit(value):
@@ -881,7 +1243,7 @@ if ! python3 scripts/e2e/probe_carla_server.py \
   exit 1
 fi
 
-conflicts="$(ros2 node list --no-daemon 2>/dev/null | grep -E '/(vad_route_manager|autoware_carla_interface|vad_carla_tiny)$' || true)"
+conflicts="$(ros2 node list --no-daemon 2>/dev/null | grep -E '/(vad_route_manager|autoware_carla_interface|vad_carla_tiny|portable_e2e_shadow)$' || true)"
 if [[ -n "${conflicts}" ]]; then
   echo "An existing project stack is visible in ROS domain ${ROS_DOMAIN_ID}:" >&2
   echo "${conflicts}" >&2
@@ -901,6 +1263,7 @@ fi
 # CARLA spawn string remains raw inside the aligned route by contract.
 full_map_path="${AUTOWARE_E2E_FULL_MAP_PATH:-${root}/data/maps/${route_town}_full}"
 map_bundle="${full_map_path}/map_bundle.json"
+route_aligned_this_trial=false
 if [[ -f "${map_bundle}" ]]; then
   cp -- "${source_route_file}" "${output_dir}/source_route.json"
   cp -- "${map_bundle}" "${output_dir}/map_bundle.json"
@@ -909,6 +1272,69 @@ if [[ -f "${map_bundle}" ]]; then
     --output "${output_dir}/aligned_route.json" --json > \
     "${output_dir}/route_alignment.json"
   route_file="${output_dir}/aligned_route.json"
+  route_aligned_this_trial=true
+fi
+
+portable_shadow_route_sha256=""
+portable_shadow_binding_sha256=""
+portable_shadow_runtime_launch=""
+portable_shadow_runtime_launch_sha256=""
+portable_shadow_declared_map_id=""
+portable_shadow_carla_probe_sha256=""
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  if [[ "${route_aligned_this_trial}" != "true" ]]; then
+    echo "Portable E2E shadow requires a newly materialized full-map aligned route." >&2
+    exit 2
+  fi
+  mkdir -p "${output_dir}/portable_shadow_provenance"
+  portable_shadow_runtime_launch="${output_dir}/portable_shadow_provenance/runtime_shadow.launch.xml"
+  python3 "${portable_shadow_validator}" \
+    --output-dir "${output_dir}" \
+    --source-route "${source_route_file}" \
+    --aligned-route "${route_file}" \
+    --route-alignment "${output_dir}/route_alignment.json" \
+    --map-bundle "${output_dir}/map_bundle.json" \
+    --carla-probe "${output_dir}/carla_preflight_health.json" \
+    --expected-map "${carla_expected_map}" \
+    --sensor-mapping "${sensor_mapping}" \
+    --vad-model-override "${model_override}" \
+    --cyclonedds-config "${cyclonedds_config}" \
+    --shadow-launch "${portable_shadow_launch}" \
+    --installed-shadow-launch "${portable_shadow_installed_launch}" \
+    --shadow-launch-snapshot "${portable_shadow_runtime_launch}" \
+    --runtime-bundle "${portable_runtime_bundle}" \
+    --runtime-bundle-sha256 "${portable_runtime_bundle_sha256}" \
+    --source-checkpoint-sha256 "${portable_source_checkpoint_sha256}" \
+    --model-config-sha256 "${portable_model_config_sha256}" \
+    --corpus-fingerprint-sha256 "${portable_corpus_fingerprint_sha256}" \
+    --contract-file "${portable_contract_file}" \
+    --contract-sha256 "${portable_contract_sha256}" \
+    --rig-file "${portable_rig_file}" \
+    --rig-sha256 "${portable_rig_sha256}" \
+    --device "${portable_shadow_device}" \
+    --output "${output_dir}/portable_shadow_provenance/trial_binding.json" > \
+    "${output_dir}/portable_shadow_provenance/validation.log"
+  portable_shadow_route_sha256="$(sha256sum -- "${route_file}" | awk '{print $1}')"
+  portable_shadow_binding_sha256="$(
+    sha256sum -- "${output_dir}/portable_shadow_provenance/trial_binding.json" |
+      awk '{print $1}'
+  )"
+  portable_shadow_runtime_launch_sha256="$(
+    sha256sum -- "${portable_shadow_runtime_launch}" | awk '{print $1}'
+  )"
+  portable_shadow_declared_map_id="$(
+    python3 - "${output_dir}/portable_shadow_provenance/trial_binding.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(payload["route_binding"]["declared_map_id"])
+PY
+  )"
+  portable_shadow_carla_probe_sha256="$(
+    sha256sum -- "${output_dir}/carla_preflight_health.json" | awk '{print $1}'
+  )"
 fi
 
 python3 scripts/e2e/capture_raw_vehicle_cmd_converter_provenance.py \
@@ -936,31 +1362,77 @@ printf 'CARLA_LIFECYCLE=cold_start_owned_process_group_per_trial\nCARLA_GENERATI
   "${output_dir}/runtime.env"
 printf 'SOURCE_ROUTE_FILE=%s\nEFFECTIVE_ROUTE_FILE=%s\nFULL_MAP_PATH=%s\n' \
   "${source_route_file}" "${route_file}" "${full_map_path}" >> "${output_dir}/runtime.env"
+printf 'CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=oldest_complete_source_order_v1\nCARLA_CAMERA_BUNDLE_DISPATCH_SOURCE_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_RUNTIME_FILE=%s\nCARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s\n' \
+  "${carla_camera_bundle_dispatch_source}" \
+  "${carla_camera_bundle_dispatch_runtime}" \
+  "${carla_camera_bundle_dispatch_sha256}" >> "${output_dir}/runtime.env"
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  printf 'PORTABLE_SHADOW_ENABLED=true\nPORTABLE_SHADOW_MODE=shadow_only\nPORTABLE_SHADOW_CONTROLLING_PLANNER=autoware_vad\nPORTABLE_SHADOW_VEHICLE_CONTROL_APPROVED=false\nPORTABLE_SHADOW_CANONICAL_PUBLICATION_ALLOWED=false\nPORTABLE_SHADOW_REMAPS_ALLOWED=false\nPORTABLE_SHADOW_DEVICE=%s\nPORTABLE_SHADOW_DECLARED_MAP_ID=%s\nPORTABLE_SHADOW_OBSERVED_MAP_ID=%s\nPORTABLE_SHADOW_OBSERVED_MAP_SOURCE=carla_python_api_world_get_map\nPORTABLE_SHADOW_CARLA_MAP_PROBE_FILE=%s\nPORTABLE_SHADOW_CARLA_MAP_PROBE_SHA256=%s\nPORTABLE_SHADOW_EFFECTIVE_CAMERA_HZ=10\nPORTABLE_SHADOW_MAPPING_REQUESTED_CAP_HZ=11\nPORTABLE_SHADOW_ROUTE_FILE=%s\nPORTABLE_SHADOW_ROUTE_SHA256=%s\nPORTABLE_SHADOW_ROUTE_MATERIALIZED_THIS_TRIAL=true\nPORTABLE_SHADOW_BINDING_FILE=%s\nPORTABLE_SHADOW_BINDING_SHA256=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_FILE=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_SHA256=%s\nPORTABLE_SHADOW_RUNTIME_LAUNCH_DIRECT=true\nPORTABLE_SHADOW_RUNTIME_BUNDLE_FILE=%s\nPORTABLE_SHADOW_RUNTIME_BUNDLE_SHA256=%s\nPORTABLE_SHADOW_SOURCE_CHECKPOINT_SHA256=%s\nPORTABLE_SHADOW_MODEL_CONFIG_SHA256=%s\nPORTABLE_SHADOW_CORPUS_FINGERPRINT_SHA256=%s\nPORTABLE_SHADOW_RIG_FILE=%s\nPORTABLE_SHADOW_RIG_SHA256=%s\nPORTABLE_SHADOW_CONTRACT_FILE=%s\nPORTABLE_SHADOW_CONTRACT_SHA256=%s\n' \
+    "${portable_shadow_device}" "${portable_shadow_declared_map_id}" \
+    "${portable_shadow_declared_map_id}" \
+    "${output_dir}/carla_preflight_health.json" \
+    "${portable_shadow_carla_probe_sha256}" "${route_file}" \
+    "${portable_shadow_route_sha256}" \
+    "${output_dir}/portable_shadow_provenance/trial_binding.json" \
+    "${portable_shadow_binding_sha256}" "${portable_shadow_runtime_launch}" \
+    "${portable_shadow_runtime_launch_sha256}" "${portable_runtime_bundle}" \
+    "${portable_runtime_bundle_sha256}" \
+    "${portable_source_checkpoint_sha256}" \
+    "${portable_model_config_sha256}" \
+    "${portable_corpus_fingerprint_sha256}" "${portable_rig_file}" \
+    "${portable_rig_sha256}" "${portable_contract_file}" \
+    "${portable_contract_sha256}" >> "${output_dir}/runtime.env"
+  if [[ "${portable_shadow_device}" == "cpu" ]]; then
+    portable_cpu_set_label="${portable_cpu_set:-inherited}"
+    portable_cpu_affinity_label="inherited"
+    if [[ -n "${portable_cpu_set}" ]]; then
+      portable_cpu_affinity_label="taskset_cpu_list"
+    fi
+    printf 'PORTABLE_SHADOW_CPU_SET=%s\nPORTABLE_SHADOW_CPU_AFFINITY=%s\nPORTABLE_SHADOW_OMP_NUM_THREADS=4\nPORTABLE_SHADOW_MKL_NUM_THREADS=4\nPORTABLE_SHADOW_OPENBLAS_NUM_THREADS=1\nPORTABLE_SHADOW_NUMEXPR_NUM_THREADS=1\n' \
+      "${portable_cpu_set_label}" "${portable_cpu_affinity_label}" >> \
+      "${output_dir}/runtime.env"
+  else
+    printf 'PORTABLE_SHADOW_CPU_SET=not_applicable\nPORTABLE_SHADOW_CPU_AFFINITY=not_applicable\nPORTABLE_SHADOW_OMP_NUM_THREADS=not_applicable\nPORTABLE_SHADOW_MKL_NUM_THREADS=not_applicable\nPORTABLE_SHADOW_OPENBLAS_NUM_THREADS=not_applicable\nPORTABLE_SHADOW_NUMEXPR_NUM_THREADS=not_applicable\n' >> \
+      "${output_dir}/runtime.env"
+  fi
+else
+  printf 'PORTABLE_SHADOW_ENABLED=false\n' >> "${output_dir}/runtime.env"
+fi
 printf 'VAD_ROUTE_MANAGER_OPENBLAS_NUM_THREADS=1\nVAD_ROUTE_MANAGER_OMP_NUM_THREADS=1\nVAD_ROUTE_MANAGER_MKL_NUM_THREADS=1\nVAD_ROUTE_MANAGER_NUMEXPR_NUM_THREADS=1\n' >> \
   "${output_dir}/runtime.env"
 printf 'RECOMMENDED=%s\nVISUALIZE=%s\nCAPTURE_DESKTOP=%s\nTIGHT_CORRIDOR_CANDIDATE=%s\nTRAJECTORY_STABILITY_CANDIDATE=%s\nSMART_MPC=%s\nFP16_HEADS=%s\n' \
   "${recommended}" "${visualize}" "${capture_desktop}" "${tight_corridor}" "${trajectory_stability}" "${smart_mpc}" "${fp16_heads}" >> \
   "${output_dir}/runtime.env"
-printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=5.0\n' \
-  "${camera_source_5hz}" "${camera_source_sensor_tick_sec}" >> \
+camera_ros_publish_hz=5.0
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  camera_ros_publish_hz=10.0
+fi
+printf 'CAMERA_SOURCE_5HZ=%s\nCAMERA_SOURCE_SENSOR_TICK_SEC=%s\nCAMERA_ROS_PUBLISH_HZ=%s\n' \
+  "${camera_source_5hz}" "${camera_source_sensor_tick_sec}" \
+  "${camera_ros_publish_hz}" >> \
   "${output_dir}/runtime.env"
+bounded_camera_transport=false
+if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+  bounded_camera_transport=true
+fi
 printf 'CAMERA_TRANSPORT_PROFILE_ID=%s\nCAMERA_IMAGE_PUBLISH_QOS=%s\nCAMERA_IMAGE_PUBLISH_HISTORY=%s\nCAMERA_IMAGE_PUBLISH_DEPTH=%s\nCAMERA_INFO_PUBLISH_QOS=%s\nCAMERA_INFO_PUBLISH_DEPTH=%s\nVAD_IMAGE_SUBSCRIPTION_QOS=%s\nVAD_IMAGE_SUBSCRIPTION_DEPTH=%s\nRVIZ_IMAGE_SUBSCRIPTION_QOS=best_effort\nRVIZ_IMAGE_SUBSCRIPTION_DEPTH=%s\nRMW_IMPLEMENTATION=%s\nROS_LOCALHOST_ONLY=%s\nCYCLONEDDS_URI=%s\nCAMERA_TRANSPORT_SENSOR_MAPPING_SHA256=%s\nCAMERA_TRANSPORT_VAD_OVERRIDE_SHA256=%s\nCAMERA_TRANSPORT_CYCLONEDDS_SHA256=%s\n' \
   "${camera_transport_profile_id}" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf best_effort || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf keep_last || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf reliable || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf best_effort || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
-  "$([[ "${camera_source_5hz}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf best_effort || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf keep_last || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf reliable || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf best_effort || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf 1 || printf inherited)" \
+  "$([[ "${bounded_camera_transport}" == "true" ]] && printf 1 || printf inherited)" \
   "${RMW_IMPLEMENTATION:-}" "${ROS_LOCALHOST_ONLY:-}" "${CYCLONEDDS_URI:-}" \
   "${camera_transport_sensor_mapping_sha256}" \
   "${camera_transport_vad_override_sha256}" \
   "${camera_transport_cyclonedds_sha256}" >> "${output_dir}/runtime.env"
-printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
+printf 'CONTROL_AB_CANDIDATE_ID=%s\nCONTROL_AB_PID_I40=%s\nCONTROL_AB_TURN_PREVIEW_5M=%s\nCONTROL_AB_LONGITUDINAL_RECOVERY_2P0=%s\nCONTROL_AB_LONGITUDINAL_RECOVERY_BASELINE_MPS2=1.5\nCONTROL_AB_LONGITUDINAL_RECOVERY_CANDIDATE_MPS2=2.0\nCONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true\nCONTROL_AB_ISOLATED_SINGLE_KNOB=true\n' \
   "${control_ab_candidate_id}" "${control_ab_pid_i40}" \
-  "${control_ab_turn_preview_5m}" >> "${output_dir}/runtime.env"
+  "${control_ab_turn_preview_5m}" \
+  "${control_ab_longitudinal_recovery_2p0}" >> "${output_dir}/runtime.env"
 printf 'GEOMETRY_AB_CANDIDATE_ID=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_0P2=%s\nGEOMETRY_AB_ROUTE_CORRIDOR_BASELINE_M=0.50\nGEOMETRY_AB_ROUTE_CORRIDOR_CANDIDATE_M=0.20\nGEOMETRY_AB_BEHAVIORAL_SINGLE_KNOB=true\nGEOMETRY_AB_PARAMETER_CHANGE_COUNT=2\nGEOMETRY_AB_COUPLED_PARAMETER_REASON=turn_width_must_not_exceed_route_width\nGEOMETRY_AB_ROUTE_SCOPE=straight_only\nROUTE_CORRIDOR_HALF_WIDTH_M=%s\nTURN_OUTWARD_CORRIDOR_HALF_WIDTH_M=%s\n' \
   "${geometry_ab_candidate_id}" "${geometry_ab_route_corridor_0p2}" \
   "${route_corridor_half_width_m}" "${turn_outward_corridor_half_width_m}" >> \
@@ -1106,6 +1578,13 @@ if [[ "${camera_source_5hz}" == "true" ]]; then
     "${camera_transport_cyclonedds_sha256}" "cyclonedds.xml" \
     "${cyclonedds_metadata_sha256}" "cyclonedds.xml.metadata.json" > \
     "${output_dir}/camera_transport_provenance/SHA256SUMS"
+elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+  mkdir -p "${output_dir}/camera_transport_provenance"
+  cp -- "${cyclonedds_config}" \
+    "${output_dir}/camera_transport_provenance/cyclonedds.xml"
+  printf '%s  %s\n' \
+    "${camera_transport_cyclonedds_sha256}" "cyclonedds.xml" > \
+    "${output_dir}/camera_transport_provenance/SHA256SUMS"
 fi
 if [[ -n "${recommended_mpc}" ]]; then
   recommended_mpc_sha256="$(sha256sum -- "${recommended_mpc}" | awk '{print $1}')"
@@ -1200,6 +1679,8 @@ done
 
 stack_pid=""
 stack_pgid=""
+portable_shadow_pid=""
+portable_shadow_pgid=""
 recorder_pid=""
 recorder_pgid=""
 route_test_pid=""
@@ -1247,6 +1728,69 @@ require_carla_owner() {
     "${stage}" > "${output_dir}/carla_owner_failure.log"
   echo "Owned CARLA generation exited or became a zombie at ${stage}" >&2
   return 1
+}
+
+portable_shadow_alive() {
+  local process_state=""
+  local actual_pgid=""
+  if [[ "${portable_shadow_10hz}" != "true" ]]; then
+    return 0
+  fi
+  if [[ ! "${portable_shadow_pid}" =~ ^[1-9][0-9]*$ ||
+        ! "${portable_shadow_pgid}" =~ ^[1-9][0-9]*$ ||
+        ! -f "/proc/${portable_shadow_pid}/stat" ||
+        ! -d "/proc/${portable_shadow_pid}" ]]; then
+    return 1
+  fi
+  if ! kill -0 "${portable_shadow_pid}" 2>/dev/null; then
+    return 1
+  fi
+  process_state="$(
+    ps -o stat= -p "${portable_shadow_pid}" 2>/dev/null | tr -d '[:space:]'
+  )"
+  if [[ -z "${process_state}" || "${process_state}" == Z* ]]; then
+    return 1
+  fi
+  actual_pgid="$(
+    ps -o pgid= -p "${portable_shadow_pid}" 2>/dev/null | tr -d '[:space:]'
+  )"
+  [[ "${actual_pgid}" == "${portable_shadow_pgid}" ]]
+}
+
+require_portable_shadow() {
+  local stage="$1"
+  local node_count=0
+  if [[ "${portable_shadow_10hz}" != "true" ]]; then
+    return 0
+  fi
+  if ! portable_shadow_alive; then
+    printf 'pid=%s pgid=%s stage=%s\n' \
+      "${portable_shadow_pid}" "${portable_shadow_pgid}" "${stage}" > \
+      "${output_dir}/portable_shadow_failure.log"
+    echo "Owned Portable E2E shadow process exited during ${stage}." >&2
+    return 1
+  fi
+  if [[ "$(sha256sum -- "${route_file}" | awk '{print $1}')" != \
+        "${portable_shadow_route_sha256}" ]]; then
+    printf 'stage=%s expected_route_sha256=%s\n' \
+      "${stage}" "${portable_shadow_route_sha256}" > \
+      "${output_dir}/portable_shadow_route_mutation.log"
+    echo "Portable E2E aligned route changed during ${stage}." >&2
+    return 1
+  fi
+  node_count="$(
+    ros2 node list --no-daemon 2>/dev/null |
+      awk '$0 == "/portable_e2e_shadow" {count += 1} END {print count + 0}'
+  )"
+  if [[ "${node_count}" != "1" ]]; then
+    printf 'stage=%s portable_shadow_node_count=%s\n' \
+      "${stage}" "${node_count}" > \
+      "${output_dir}/portable_shadow_duplicate_node.log"
+    echo "Portable E2E shadow node identity is absent or duplicated during ${stage}." >&2
+    return 1
+  fi
+  printf 'PORTABLE_SHADOW_VERIFY_%s=pass\n' "${stage^^}" >> \
+    "${output_dir}/runtime.env"
 }
 
 matching_owned_rviz_capture_windows() {
@@ -1515,6 +2059,11 @@ cleanup() {
   e2e_stop_owned_process_group "${route_test_pgid}" "${route_test_pid}" 15 5 2 || true
   route_test_pid=""
   route_test_pgid=""
+  # HH_260906 - Stop the shadow publisher before its owned recorder on every cleanup path.
+  e2e_stop_owned_process_group \
+    "${portable_shadow_pgid}" "${portable_shadow_pid}" 30 5 2 || true
+  portable_shadow_pid=""
+  portable_shadow_pgid=""
   e2e_stop_owned_process_group "${recorder_pgid}" "${recorder_pid}" 15 5 2 || true
   recorder_pid=""
   recorder_pgid=""
@@ -1551,6 +2100,8 @@ if [[ "${recommended}" == "true" ]]; then
   fi
   if [[ "${camera_source_5hz}" == "true" ]]; then
     stack_command+=(--camera-source-5hz)
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+    stack_command+=(--portable-shadow-10hz)
   fi
   if [[ "${geometry_ab_route_corridor_0p2}" == "true" ]]; then
     stack_command+=(--geometry-ab-route-corridor-0p2)
@@ -1559,6 +2110,8 @@ if [[ "${recommended}" == "true" ]]; then
     stack_command+=(--control-ab-pid-i40)
   elif [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
     stack_command+=(--control-ab-turn-preview-5m)
+  elif [[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]]; then
+    stack_command+=(--control-ab-longitudinal-recovery-2p0)
   fi
   if [[ "${visualize}" == "true" ]]; then
     if [[ "${capture_desktop}" == "true" ]]; then
@@ -1606,6 +2159,1115 @@ critical_stack_child_failure() {
   )"
   [[ -n "${failure_line}" ]] || return 1
   printf '%s\n' "${failure_line}"
+}
+
+call_portable_shadow_status_service() {
+  local service_name="$1"
+  local target="$2"
+  local operation="$3"
+  if ! timeout --signal=INT --kill-after=2 5 \
+    python3 - "${service_name}" "${target}" "${operation}" <<'PY'
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import tempfile
+
+import rclpy
+from std_srvs.srv import Trigger
+import yaml
+
+service_name = sys.argv[1]
+target = Path(sys.argv[2])
+operation = sys.argv[3]
+if re.fullmatch(r"/(?:[a-z0-9_]+/)+[a-z0-9_]+", service_name) is None:
+    raise SystemExit("Portable E2E service name is unsafe")
+if target.exists() or target.is_symlink():
+    raise SystemExit(f"Portable E2E {operation} status target already exists")
+rclpy.init()
+node = rclpy.create_node(f"portable_e2e_shadow_{operation}_client_{os.getpid()}")
+try:
+    client = node.create_client(Trigger, service_name)
+    if not client.wait_for_service(timeout_sec=1.0):
+        raise SystemExit(f"Portable E2E {operation} service is unavailable")
+    future = client.call_async(Trigger.Request())
+    rclpy.spin_until_future_complete(node, future, timeout_sec=2.0)
+    if not future.done() or future.result() is None:
+        raise SystemExit(f"Portable E2E {operation} service did not respond")
+    response = future.result()
+    if response.success is not True:
+        raise SystemExit(f"Portable E2E {operation} failed: {response.message}")
+    status = json.loads(response.message)
+    if not isinstance(status, dict):
+        raise SystemExit(f"Portable E2E {operation} returned a non-object status")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            yaml.safe_dump(
+                {"data": json.dumps(status, sort_keys=True, allow_nan=False)},
+                stream,
+                sort_keys=False,
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
+finally:
+    node.destroy_node()
+    rclpy.shutdown()
+PY
+  then
+    echo "Could not complete Portable E2E ${operation}." >&2
+    return 1
+  fi
+}
+
+# HH_260906 - Seal one owned shadow window within a strict liveness-checked deadline.
+seal_portable_shadow_measurement() {
+  local target="$1"
+  local receipt="$2"
+  if ! timeout --signal=INT --kill-after=1 5 \
+    python3 - "${target}" "${receipt}" "${route_file}" \
+      "${portable_shadow_route_sha256}" "${portable_shadow_pid}" \
+      "${portable_shadow_pgid}" "${recorder_pid}" "${recorder_pgid}" \
+      "${matrix_owned_carla}" "${carla_owner_pid}" "${carla_owner_pgid}" <<'PY'
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import time
+
+import rclpy
+from std_srvs.srv import Trigger
+import yaml
+
+(
+    target_text,
+    receipt_text,
+    route_text,
+    route_sha256,
+    shadow_pid_text,
+    shadow_pgid_text,
+    recorder_pid_text,
+    recorder_pgid_text,
+    matrix_owned_carla_text,
+    carla_pid_text,
+    carla_pgid_text,
+) = sys.argv[1:]
+target = Path(target_text)
+receipt = Path(receipt_text)
+route = Path(route_text)
+service_name = "/portable_e2e_shadow/seal_measurement"
+pending_message = "cannot seal while a camera bundle remains pending"
+retry_interval_s = 0.025
+deadline_s = 3.0
+started = time.monotonic()
+deadline = started + deadline_s
+# HH_260906 - Reserve one second for service response and durable artifact staging.
+graph_discovery_deadline = min(deadline - 1.0, started + 1.5)
+# HH_260906 - Bound service discovery separately so response and fsync retain time.
+service_discovery_deadline = deadline - 0.5
+attempt_count = 0
+pending_retry_count = 0
+liveness_check_count = 0
+graph_discovery_complete = False
+
+if target.exists() or target.is_symlink():
+    raise SystemExit("Portable E2E final status target already exists")
+if receipt.exists() or receipt.is_symlink():
+    raise SystemExit("Portable E2E seal receipt target already exists")
+
+def parse_identity(pid_text, pgid_text, label):
+    if not pid_text.isascii() or not pid_text.isdigit() or int(pid_text) <= 0:
+        raise SystemExit(f"Portable E2E seal has invalid {label} PID")
+    if not pgid_text.isascii() or not pgid_text.isdigit() or int(pgid_text) <= 0:
+        raise SystemExit(f"Portable E2E seal has invalid {label} PGID")
+    return int(pid_text), int(pgid_text)
+
+shadow_identity = parse_identity(shadow_pid_text, shadow_pgid_text, "shadow")
+recorder_identity = parse_identity(recorder_pid_text, recorder_pgid_text, "recorder")
+carla_identity = None
+if matrix_owned_carla_text == "true":
+    carla_identity = parse_identity(carla_pid_text, carla_pgid_text, "CARLA")
+elif matrix_owned_carla_text != "false":
+    raise SystemExit("Portable E2E seal has invalid CARLA ownership declaration")
+
+def require_process(identity, label):
+    pid, expected_pgid = identity
+    stat_path = Path(f"/proc/{pid}/stat")
+    try:
+        os.kill(pid, 0)
+        stat_text = stat_path.read_text(encoding="utf-8")
+        closing_parenthesis = stat_text.rfind(")")
+        if closing_parenthesis < 0:
+            raise ValueError("missing process-name delimiter")
+        process_state = stat_text[closing_parenthesis + 2 :].split(maxsplit=1)[0]
+        actual_pgid = os.getpgid(pid)
+    except (OSError, ValueError) as error:
+        raise SystemExit(f"Portable E2E seal lost owned {label} process: {error}")
+    if process_state == "Z" or actual_pgid != expected_pgid:
+        raise SystemExit(
+            f"Portable E2E seal lost owned {label} identity: "
+            f"state={process_state!r} pgid={actual_pgid} expected={expected_pgid}"
+        )
+
+def full_node_name(name, namespace):
+    normalized_namespace = namespace.rstrip("/")
+    if normalized_namespace:
+        return f"{normalized_namespace}/{name}"
+    return f"/{name}"
+
+def require_owned_inputs():
+    if time.monotonic() >= deadline:
+        raise SystemExit("Portable E2E seal exceeded its three-second deadline")
+    require_process(shadow_identity, "shadow")
+    require_process(recorder_identity, "recorder")
+    if carla_identity is not None:
+        require_process(carla_identity, "CARLA")
+    if route.is_symlink() or not route.is_file():
+        raise SystemExit("Portable E2E aligned route disappeared during seal")
+    if hashlib.sha256(route.read_bytes()).hexdigest() != route_sha256:
+        raise SystemExit("Portable E2E aligned route changed during seal")
+
+def observe_graph(node, timeout_s):
+    rclpy.spin_once(node, timeout_sec=timeout_s)
+    graph_names = [
+        full_node_name(name, namespace)
+        for name, namespace in node.get_node_names_and_namespaces()
+    ]
+    return (
+        graph_names.count("/portable_e2e_shadow"),
+        graph_names.count("/rosbag2_recorder"),
+    )
+
+def reject_duplicate_graph(shadow_count, recorder_count):
+    if shadow_count > 1:
+        raise SystemExit("Portable E2E shadow node is duplicated during seal")
+    if recorder_count > 1:
+        raise SystemExit("Owned rosbag recorder is duplicated during seal")
+
+def require_liveness(node):
+    global graph_discovery_complete, liveness_check_count
+    require_owned_inputs()
+    shadow_count = 0
+    recorder_count = 0
+    if graph_discovery_complete:
+        shadow_count, recorder_count = observe_graph(node, 0.0)
+        reject_duplicate_graph(shadow_count, recorder_count)
+        if shadow_count != 1 or recorder_count != 1:
+            raise SystemExit(
+                "Portable E2E seal lost an owned graph node after discovery: "
+                f"shadow_count={shadow_count} recorder_count={recorder_count}"
+            )
+    else:
+        # HH_260906 - Retry only absent graph entries while rechecking owned identities each cycle.
+        while True:
+            require_owned_inputs()
+            remaining = graph_discovery_deadline - time.monotonic()
+            if remaining <= 0.0:
+                raise SystemExit(
+                    "Portable E2E seal graph discovery exceeded its reserved deadline: "
+                    f"shadow_count={shadow_count} recorder_count={recorder_count}"
+                )
+            shadow_count, recorder_count = observe_graph(
+                node, min(0.05, remaining)
+            )
+            reject_duplicate_graph(shadow_count, recorder_count)
+            if shadow_count == 1 and recorder_count == 1:
+                graph_discovery_complete = True
+                break
+    if time.monotonic() >= deadline:
+        raise SystemExit(
+            "Portable E2E seal exceeded its deadline during liveness validation"
+        )
+    liveness_check_count += 1
+
+def stage_bytes(path, payload):
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    return temporary
+
+rclpy.init()
+node = rclpy.create_node(f"portable_e2e_shadow_seal_client_{os.getpid()}")
+try:
+    require_liveness(node)
+    client = node.create_client(Trigger, service_name)
+    # HH_260906 - Retry delayed DDS service discovery without relaxing owned liveness.
+    while True:
+        require_liveness(node)
+        remaining = service_discovery_deadline - time.monotonic()
+        if remaining <= 0.0:
+            raise SystemExit(
+                "Portable E2E seal service discovery exceeded its reserved deadline"
+            )
+        if client.wait_for_service(timeout_sec=min(0.05, remaining)):
+            break
+    while True:
+        require_liveness(node)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0.0:
+            raise SystemExit("Portable E2E seal exceeded its three-second deadline")
+        attempt_count += 1
+        future = client.call_async(Trigger.Request())
+        rclpy.spin_until_future_complete(
+            node, future, timeout_sec=min(0.25, remaining)
+        )
+        if not future.done() or future.result() is None:
+            raise SystemExit("Portable E2E seal service did not respond within deadline")
+        response = future.result()
+        if response.success is True:
+            if time.monotonic() > deadline:
+                raise SystemExit("Portable E2E seal succeeded after its deadline")
+            try:
+                status = json.loads(response.message)
+            except (json.JSONDecodeError, TypeError) as error:
+                raise SystemExit(f"Portable E2E seal returned invalid JSON: {error}")
+            if not isinstance(status, dict):
+                raise SystemExit("Portable E2E seal returned a non-object status")
+            require_liveness(node)
+            if time.monotonic() >= deadline:
+                raise SystemExit("Portable E2E seal succeeded after its deadline")
+            break
+        if response.message != pending_message:
+            raise SystemExit(f"Portable E2E seal failed: {response.message}")
+        pending_retry_count += 1
+        require_liveness(node)
+        remaining = deadline - time.monotonic()
+        if remaining <= retry_interval_s:
+            raise SystemExit(
+                "Portable E2E camera bundle remained pending through the seal deadline"
+            )
+        time.sleep(retry_interval_s)
+
+    final_yaml = yaml.safe_dump(
+        {"data": json.dumps(status, sort_keys=True, allow_nan=False)},
+        sort_keys=False,
+    ).encode("utf-8")
+    receipt_payload = {
+        "schema_id": "autoware-e2e.portable-shadow-seal-receipt.v1",
+        "status": "PASS",
+        "service": service_name,
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "deadline_seconds": deadline_s,
+        "retry_interval_seconds": retry_interval_s,
+        "attempt_count": attempt_count,
+        "pending_retry_count": pending_retry_count,
+        "liveness_check_count": liveness_check_count,
+        "route_sha256": route_sha256,
+        "response_message_sha256": hashlib.sha256(
+            response.message.encode("utf-8")
+        ).hexdigest(),
+        "elapsed_seconds": time.monotonic() - started,
+    }
+    receipt_json = (
+        json.dumps(receipt_payload, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    ).encode("utf-8")
+    if time.monotonic() >= deadline:
+        raise SystemExit("Portable E2E seal artifact staging missed its deadline")
+    final_temporary = None
+    receipt_temporary = None
+    final_linked = False
+    receipt_linked = False
+    try:
+        final_temporary = stage_bytes(target, final_yaml)
+        receipt_temporary = stage_bytes(receipt, receipt_json)
+        if time.monotonic() >= deadline:
+            raise SystemExit("Portable E2E seal artifact staging exceeded its deadline")
+        os.link(final_temporary, target)
+        final_linked = True
+        if time.monotonic() >= deadline:
+            raise SystemExit("Portable E2E final status link exceeded its deadline")
+        os.link(receipt_temporary, receipt)
+        receipt_linked = True
+        if time.monotonic() >= deadline:
+            raise SystemExit("Portable E2E seal receipt link exceeded its deadline")
+    except BaseException:
+        if receipt_linked:
+            receipt.unlink(missing_ok=True)
+        if final_linked:
+            target.unlink(missing_ok=True)
+        raise
+    finally:
+        if final_temporary is not None:
+            final_temporary.unlink(missing_ok=True)
+        if receipt_temporary is not None:
+            receipt_temporary.unlink(missing_ok=True)
+finally:
+    node.destroy_node()
+    rclpy.shutdown()
+PY
+  then
+    echo "Could not seal the Portable E2E measurement inside its bounded deadline." >&2
+    return 1
+  fi
+}
+
+prove_portable_shadow_recorder_subscriptions() {
+  local graph_output="${output_dir}/portable_shadow_provenance/recorder_subscriptions.json"
+  if ! timeout --signal=INT --kill-after=2 25 \
+    python3 - "${graph_output}" <<'PY'
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import time
+
+import rclpy
+
+topics = (
+    "/planning/portable_e2e/status",
+    "/planning/portable_e2e/latency_ms",
+    "/planning/portable_e2e/selected_candidate",
+    "/planning/portable_e2e/shadow_path",
+    "/planning/portable_e2e/shadow_trajectory",
+)
+target = Path(sys.argv[1])
+if target.exists() or target.is_symlink():
+    raise SystemExit("Portable E2E recorder-subscription output already exists")
+
+def full_name(endpoint):
+    namespace = endpoint.node_namespace.rstrip("/")
+    return f"{namespace}/{endpoint.node_name}" if namespace else f"/{endpoint.node_name}"
+
+rclpy.init()
+node = rclpy.create_node(f"portable_e2e_recorder_graph_probe_{os.getpid()}")
+try:
+    deadline = time.monotonic() + 20.0
+    observations = None
+    while time.monotonic() < deadline:
+        rclpy.spin_once(node, timeout_sec=0.1)
+        candidate = []
+        ready = True
+        for topic in topics:
+            subscriptions = node.get_subscriptions_info_by_topic(topic)
+            publishers = node.get_publishers_info_by_topic(topic)
+            recorder_count = sum(
+                full_name(endpoint) == "/rosbag2_recorder"
+                for endpoint in subscriptions
+            )
+            shadow_count = sum(
+                full_name(endpoint) == "/portable_e2e_shadow"
+                for endpoint in publishers
+            )
+            candidate.append(
+                {
+                    "topic": topic,
+                    "owned_recorder_subscription_count": recorder_count,
+                    "portable_shadow_publisher_count": shadow_count,
+                    "subscription_nodes": sorted(
+                        full_name(endpoint) for endpoint in subscriptions
+                    ),
+                    "publisher_nodes": sorted(
+                        full_name(endpoint) for endpoint in publishers
+                    ),
+                }
+            )
+            if recorder_count != 1 or shadow_count != 1:
+                ready = False
+        if ready:
+            observations = candidate
+            break
+        time.sleep(0.1)
+    if observations is None:
+        raise SystemExit(
+            "owned recorder subscriptions were not discovered on all Portable topics"
+        )
+    payload = {
+        "schema_id": "autoware-e2e.portable-shadow-recorder-subscriptions.v1",
+        "status": "PASS",
+        "validated_at": datetime.now(timezone.utc).isoformat(),
+        "recorder_node": "/rosbag2_recorder",
+        "shadow_node": "/portable_e2e_shadow",
+        "topics": observations,
+        "measurement_armed": False,
+    }
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, indent=2, sort_keys=True, allow_nan=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
+finally:
+    node.destroy_node()
+    rclpy.shutdown()
+PY
+  then
+    echo "Owned recorder did not subscribe before Portable E2E measurement arm." >&2
+    return 1
+  fi
+}
+
+capture_portable_shadow_healthy_heartbeat() {
+  local target="$1"
+  local boundary_name="$2"
+  local deadline=$((SECONDS + 35))
+  if [[ -e "${target}" || -L "${target}" ]]; then
+    echo "Refusing to overwrite Portable E2E ${boundary_name} boundary." >&2
+    return 1
+  fi
+  while (( SECONDS < deadline )); do
+    require_carla_owner "portable_shadow_${boundary_name}_heartbeat" || return 1
+    if ! portable_shadow_alive || ! kill -0 "${recorder_pid}" 2>/dev/null; then
+      echo "Portable E2E shadow or owned recorder exited before ${boundary_name} heartbeat." >&2
+      return 1
+    fi
+    # HH_260906 - Ask the status owner to publish and return one atomic healthy boundary.
+    if call_portable_shadow_status_service \
+      /portable_e2e_shadow/capture_startup_boundary \
+      "${target}" "${boundary_name}_boundary" 2>/dev/null; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  echo "Portable E2E ${boundary_name} healthy semantic heartbeat was not observed." >&2
+  return 1
+}
+
+start_portable_shadow() {
+  if [[ "${portable_shadow_10hz}" != "true" ]]; then
+    return 0
+  fi
+  if [[ -n "${portable_shadow_pid}" || -n "${portable_shadow_pgid}" ]]; then
+    echo "Refusing to overlap owned Portable E2E shadow generations." >&2
+    return 1
+  fi
+  if [[ "$(sha256sum -- "${route_file}" | awk '{print $1}')" != \
+        "${portable_shadow_route_sha256}" ]]; then
+    echo "Portable E2E aligned route changed before shadow launch." >&2
+    return 1
+  fi
+  local launch_recheck_file="${output_dir}/portable_shadow_provenance/launch_recheck.json"
+  local launch_recheck_log="${output_dir}/portable_shadow_provenance/launch_recheck.log"
+  # HH_260906 - Recheck the pinned source, install, and runtime snapshot before direct launch.
+  if ! python3 "${portable_shadow_validator}" recheck-launch \
+    --binding "${output_dir}/portable_shadow_provenance/trial_binding.json" \
+    --binding-sha256 "${portable_shadow_binding_sha256}" \
+    --shadow-launch "${portable_shadow_launch}" \
+    --installed-shadow-launch "${portable_shadow_installed_launch}" \
+    --shadow-launch-snapshot "${portable_shadow_runtime_launch}" \
+    --output "${launch_recheck_file}" > "${launch_recheck_log}" 2>&1; then
+    echo "Portable E2E launch binding changed before ROS launch." >&2
+    return 1
+  fi
+  local launch_recheck_sha256=""
+  launch_recheck_sha256="$(sha256sum -- "${launch_recheck_file}" | awk '{print $1}')"
+  printf 'PORTABLE_SHADOW_LAUNCH_RECHECK_FILE=%s\nPORTABLE_SHADOW_LAUNCH_RECHECK_SHA256=%s\nPORTABLE_SHADOW_LAUNCH_RECHECK_STATUS=PASS\nPORTABLE_SHADOW_LAUNCH_RECHECK_STAGE=immediately_before_ros_launch\n' \
+    "${launch_recheck_file}" "${launch_recheck_sha256}" >> \
+    "${output_dir}/runtime.env"
+  portable_shadow_command=(
+    ros2 launch "${portable_shadow_runtime_launch}"
+    "contract_file:=${portable_contract_file}"
+    "contract_sha256:=${portable_contract_sha256}"
+    "runtime_bundle_file:=${portable_runtime_bundle}"
+    "runtime_bundle_sha256:=${portable_runtime_bundle_sha256}"
+    "source_checkpoint_sha256:=${portable_source_checkpoint_sha256}"
+    "corpus_fingerprint_sha256:=${portable_corpus_fingerprint_sha256}"
+    "model_config_sha256:=${portable_model_config_sha256}"
+    "rig_file:=${portable_rig_file}"
+    "rig_sha256:=${portable_rig_sha256}"
+    "declared_map_id:=${portable_shadow_declared_map_id}"
+    "route_file:=${route_file}"
+    "route_sha256:=${portable_shadow_route_sha256}"
+    "device:=${portable_shadow_device}"
+    "input_settle_timeout_s:=0.05"
+    "maximum_tf_translation_error_m:=0.005"
+    "maximum_tf_rotation_error_rad:=0.005"
+    "use_sim_time:=true"
+    "research_acknowledged:=true"
+  )
+  if [[ "${portable_shadow_device}" == "cpu" ]]; then
+    portable_shadow_cpu_command=(setsid)
+    if [[ -n "${portable_cpu_set}" ]]; then
+      portable_shadow_cpu_command+=(
+        taskset --cpu-list "${portable_cpu_set}"
+      )
+    fi
+    # HH_260906 - Pin bounded CPU libraries before Python imports the inference stack.
+    portable_shadow_cpu_command+=(
+      env
+      CUDA_VISIBLE_DEVICES=''
+      OMP_NUM_THREADS=4
+      MKL_NUM_THREADS=4
+      OPENBLAS_NUM_THREADS=1
+      NUMEXPR_NUM_THREADS=1
+    )
+    "${portable_shadow_cpu_command[@]}" "${portable_shadow_command[@]}" > \
+      "${output_dir}/portable_shadow.log" 2>&1 &
+  else
+    setsid "${portable_shadow_command[@]}" > \
+      "${output_dir}/portable_shadow.log" 2>&1 &
+  fi
+  portable_shadow_pid=$!
+  portable_shadow_pgid="${portable_shadow_pid}"
+
+  local deadline=$((SECONDS + 45))
+  local node_count=0
+  while (( SECONDS < deadline )); do
+    if ! portable_shadow_alive; then
+      echo "Portable E2E shadow exited before exposing its disarmed identity." >&2
+      return 1
+    fi
+    node_count="$(
+      ros2 node list --no-daemon 2>/dev/null |
+        awk '$0 == "/portable_e2e_shadow" {count += 1} END {print count + 0}'
+    )"
+    if [[ "${node_count}" == "1" ]]; then
+      break
+    fi
+    sleep 0.25
+  done
+  if [[ "${node_count}" != "1" ]]; then
+    echo "Portable E2E shadow did not produce one owned disarmed identity." >&2
+    return 1
+  fi
+  if ! ros2 node info --no-daemon /portable_e2e_shadow > \
+    "${output_dir}/portable_shadow_provenance/node_info.txt" 2> \
+    "${output_dir}/portable_shadow_provenance/node_info.err"; then
+    echo "Could not inspect the owned Portable E2E shadow ROS graph." >&2
+    return 1
+  fi
+  prove_portable_shadow_recorder_subscriptions || return 1
+  local status_file="${output_dir}/portable_shadow_provenance/armed_status.yaml"
+  call_portable_shadow_status_service \
+    /portable_e2e_shadow/arm_measurement "${status_file}" arm_measurement || \
+    return 1
+  python3 - "${status_file}" \
+    "${output_dir}/portable_shadow_provenance/node_info.txt" \
+    "${output_dir}/portable_shadow_provenance/trial_binding.json" \
+    "${portable_shadow_binding_sha256}" "${portable_shadow_route_sha256}" \
+    "${portable_shadow_declared_map_id}" "${portable_runtime_bundle_sha256}" \
+    "${portable_source_checkpoint_sha256}" \
+    "${portable_model_config_sha256}" \
+    "${portable_corpus_fingerprint_sha256}" "${portable_rig_sha256}" \
+    "${portable_contract_sha256}" "${portable_shadow_device}" \
+    "${portable_cpu_set}" \
+    "${portable_shadow_runtime_launch}" \
+    "${portable_shadow_runtime_launch_sha256}" \
+    "${launch_recheck_file}" "${launch_recheck_sha256}" \
+    "${portable_shadow_pid}" "${portable_shadow_pgid}" \
+    "${output_dir}/portable_shadow_provenance/startup_validation.json" <<'PY'
+from dataclasses import asdict
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import tempfile
+
+import yaml
+
+from portable_e2e.runtime_contract import RUNTIME_GATE_ID, RuntimeGateConfig
+
+(
+    status_path,
+    node_info_path,
+    binding_path,
+    binding_sha256,
+    route_sha256,
+    declared_map_id,
+    runtime_bundle_sha256,
+    source_checkpoint_sha256,
+    model_config_sha256,
+    corpus_fingerprint_sha256,
+    rig_sha256,
+    contract_sha256,
+    device,
+    portable_cpu_set,
+    runtime_shadow_launch_path,
+    runtime_shadow_launch_sha256,
+    launch_recheck_path,
+    launch_recheck_sha256,
+    process_pid,
+    process_pgid,
+    output_path,
+) = sys.argv[1:]
+documents = list(yaml.safe_load_all(Path(status_path).read_text(encoding="utf-8")))
+status_data = next(
+    (
+        document.get("data")
+        for document in documents
+        if isinstance(document, dict) and isinstance(document.get("data"), str)
+    ),
+    None,
+)
+if status_data is None:
+    raise SystemExit("Portable E2E startup status has no String data")
+status = json.loads(status_data)
+binding_bytes = Path(binding_path).read_bytes()
+if hashlib.sha256(binding_bytes).hexdigest() != binding_sha256:
+    raise SystemExit("Portable E2E trial binding changed before startup")
+binding = json.loads(binding_bytes)
+launch_recheck_bytes = Path(launch_recheck_path).read_bytes()
+if hashlib.sha256(launch_recheck_bytes).hexdigest() != launch_recheck_sha256:
+    raise SystemExit("Portable E2E launch recheck changed before startup validation")
+launch_recheck = json.loads(launch_recheck_bytes)
+runtime_shadow_launch = launch_recheck.get("runtime_shadow_launch")
+binding_shadow_launch = binding.get("shadow_launch")
+snapshot_binding = (
+    binding_shadow_launch.get("snapshot_binding")
+    if isinstance(binding_shadow_launch, dict)
+    else None
+)
+snapshot_path = Path(runtime_shadow_launch_path)
+if (
+    snapshot_path.is_symlink()
+    or not snapshot_path.is_file()
+    or (snapshot_path.stat().st_mode & 0o777) != 0o444
+    or hashlib.sha256(snapshot_path.read_bytes()).hexdigest()
+    != runtime_shadow_launch_sha256
+    or not isinstance(runtime_shadow_launch, dict)
+    or runtime_shadow_launch != snapshot_binding
+    or runtime_shadow_launch.get("file") != str(snapshot_path.resolve())
+    or runtime_shadow_launch.get("sha256") != runtime_shadow_launch_sha256
+    or runtime_shadow_launch.get("mode_octal") != "0444"
+    or runtime_shadow_launch.get("direct_ros_launch") is not True
+):
+    raise SystemExit("Portable E2E runtime shadow launch changed before startup validation")
+if (
+    launch_recheck.get("status") != "PASS"
+    or launch_recheck.get("check_stage") != "immediately_before_ros_launch"
+    or launch_recheck.get("trial_binding_sha256") != binding_sha256
+    or launch_recheck.get("matches_initial_binding") is not True
+):
+    raise SystemExit("Portable E2E launch recheck provenance mismatch")
+expected_topics = {
+    "/planning/portable_e2e/latency_ms",
+    "/planning/portable_e2e/selected_candidate",
+    "/planning/portable_e2e/shadow_path",
+    "/planning/portable_e2e/shadow_trajectory",
+    "/planning/portable_e2e/status",
+}
+if (
+    status.get("schema_id") != "autoware-e2e.portable-shadow-status.v3"
+    or status.get("state") != "SHADOW_WAITING"
+    or status.get("stage") != "measurement"
+    or status.get("failure_code") != "waiting_for_inputs"
+    or status.get("measurement_armed") is not True
+    or status.get("measurement_sealed") is not False
+    or status.get("vehicle_control_approved") is not False
+    or set(status.get("output_topics", [])) != expected_topics
+):
+    raise SystemExit("Portable E2E armed status violates shadow-only zero-baseline policy")
+for name in (
+    "anchor_attempt_count",
+    "accepted_count",
+    "anchor_rejected_count",
+    "input_event_rejected_count",
+    "input_settle_deferred_count",
+    "input_settle_timeout_count",
+):
+    if status.get(name) != 0:
+        raise SystemExit(f"Portable E2E armed status counter is not zero: {name}")
+if not isinstance(status.get("rejection_counts_by_stage"), dict) or any(
+    value != 0 for value in status["rejection_counts_by_stage"].values()
+):
+    raise SystemExit("Portable E2E armed status has nonzero rejection counters")
+if not isinstance(status.get("camera_bundle_counters"), dict) or any(
+    value != 0 for value in status["camera_bundle_counters"].values()
+):
+    raise SystemExit("Portable E2E armed status has nonzero camera-bundle counters")
+provenance = status.get("provenance")
+# HH_260906 - Pin the complete v8 geometry gate at the startup evidence boundary.
+expected_runtime_gate = asdict(RuntimeGateConfig())
+RuntimeGateConfig().validate()
+expected_provenance = {
+    "route_sha256": route_sha256,
+    "declared_map_id": declared_map_id,
+    "runtime_bundle_sha256": runtime_bundle_sha256,
+    "source_checkpoint_sha256": source_checkpoint_sha256,
+    "model_config_sha256": model_config_sha256,
+    "corpus_fingerprint_sha256": corpus_fingerprint_sha256,
+    "rig_sha256": rig_sha256,
+    "contract_sha256": contract_sha256,
+    "runtime_device": device,
+    "published_trajectory_frame": "map",
+    "model_output_frame": "base_link_at_anchor",
+    "runtime_gate_id": RUNTIME_GATE_ID,
+    "runtime_gate": expected_runtime_gate,
+}
+if not isinstance(provenance, dict) or any(
+    provenance.get(name) != value for name, value in expected_provenance.items()
+):
+    raise SystemExit("Portable E2E startup status provenance mismatch")
+runtime_policy = provenance.get("runtime_policy")
+if (
+    not isinstance(runtime_policy, dict)
+    or runtime_policy.get("input_settle_timeout_s") != 0.05
+    or runtime_policy.get("maximum_tf_translation_error_m") != 0.005
+    or runtime_policy.get("maximum_tf_rotation_error_rad") != 0.005
+):
+    raise SystemExit("Portable E2E startup status runtime policy mismatch")
+runtime_execution_policy = provenance.get("runtime_execution_policy")
+if not isinstance(runtime_execution_policy, dict):
+    raise SystemExit("Portable E2E startup status lacks runtime execution policy")
+process_affinity = sorted(os.sched_getaffinity(int(process_pid)))
+if runtime_execution_policy.get("cpu_affinity") != process_affinity:
+    raise SystemExit("Portable E2E status and launch-process CPU affinity disagree")
+if device == "cpu":
+    expected_affinity = (
+        process_affinity
+        if not portable_cpu_set
+        else sorted(int(value) for value in portable_cpu_set.split(","))
+    )
+    if (
+        runtime_execution_policy.get("policy_id")
+        != "portable_e2e.cpu_execution.v1"
+        or runtime_execution_policy.get("torch_intraop_threads") != 4
+        or runtime_execution_policy.get("torch_interop_threads") != 1
+        or process_affinity != expected_affinity
+    ):
+        raise SystemExit("Portable E2E CPU execution policy mismatch")
+elif runtime_execution_policy.get("policy_id") != "portable_e2e.cuda_execution.v1":
+    raise SystemExit("Portable E2E CUDA execution policy mismatch")
+if not all(
+    isinstance(provenance.get(name), str) and provenance[name]
+    for name in ("runtime_id", "model_id")
+):
+    raise SystemExit("Portable E2E startup status lacks runtime/model identity")
+route_binding = binding.get("route_binding")
+if (
+    binding.get("status") != "PASS"
+    or binding.get("execution_mode") != "shadow_only"
+    or binding.get("vehicle_control_approved") is not False
+    or not isinstance(route_binding, dict)
+    or route_binding.get("declared_map_id") != declared_map_id
+    or route_binding.get("observed_map_id") != declared_map_id
+    or route_binding.get("aligned_route_sha256") != route_sha256
+):
+    raise SystemExit("Portable E2E observed map/route binding mismatch")
+
+publishers = []
+service_servers = []
+section = None
+for line in Path(node_info_path).read_text(encoding="utf-8").splitlines():
+    stripped = line.strip()
+    if stripped in {
+        "Subscribers:",
+        "Publishers:",
+        "Service Servers:",
+        "Service Clients:",
+        "Action Servers:",
+        "Action Clients:",
+    }:
+        section = stripped
+        continue
+    match = re.match(r"^\s+(/[^:]+):", line)
+    if section == "Publishers:" and match:
+        publishers.append(match.group(1))
+    elif section == "Service Servers:" and match:
+        service_servers.append(match.group(1))
+allowed_publishers = expected_topics | {"/parameter_events", "/rosout"}
+if set(publishers) != allowed_publishers or len(publishers) != len(allowed_publishers):
+    raise SystemExit(f"Portable E2E publisher graph is not exact: {publishers!r}")
+if any(
+    topic == "/planning/trajectory"
+    or topic.startswith("/control/")
+    or topic.startswith("/vehicle/command/")
+    for topic in publishers
+):
+    raise SystemExit("Portable E2E node publishes a canonical control topic")
+required_measurement_services = {
+    "/portable_e2e_shadow/arm_measurement",
+    "/portable_e2e_shadow/capture_startup_boundary",
+    "/portable_e2e_shadow/seal_measurement",
+}
+if any(service_servers.count(name) != 1 for name in required_measurement_services):
+    raise SystemExit("Portable E2E measurement service is absent or duplicated")
+
+payload = {
+    "schema_version": 1,
+    "status": "PASS",
+    "validated_at": datetime.now(timezone.utc).isoformat(),
+    "node": "/portable_e2e_shadow",
+    "process": {"pid": int(process_pid), "pgid": int(process_pgid)},
+    # HH_260906 - Preserve the independently observed launch affinity with startup evidence.
+    "runtime_execution_policy": runtime_execution_policy,
+    "runtime_gate_id": RUNTIME_GATE_ID,
+    "runtime_gate": expected_runtime_gate,
+    "declared_map_id": declared_map_id,
+    "observed_map_id": route_binding["observed_map_id"],
+    "route_sha256": route_sha256,
+    "binding_sha256": binding_sha256,
+    "launch_recheck_sha256": launch_recheck_sha256,
+    "runtime_shadow_launch_file": str(snapshot_path.resolve()),
+    "runtime_shadow_launch_sha256": runtime_shadow_launch_sha256,
+    "publishers": sorted(publishers),
+    "measurement_arm_service": "/portable_e2e_shadow/arm_measurement",
+    "measurement_startup_boundary_service": (
+        "/portable_e2e_shadow/capture_startup_boundary"
+    ),
+    "measurement_seal_service": "/portable_e2e_shadow/seal_measurement",
+    "canonical_or_control_publishers": [],
+    "vehicle_control_approved": False,
+    "armed_status": status,
+}
+analyzer_provenance = {
+    "runtime_id": provenance["runtime_id"],
+    "model_id": provenance["model_id"],
+    "runtime_bundle_sha256": runtime_bundle_sha256,
+    "source_checkpoint_sha256": source_checkpoint_sha256,
+    "model_config_sha256": model_config_sha256,
+    "corpus_fingerprint_sha256": corpus_fingerprint_sha256,
+    "aligned_route_sha256": route_sha256,
+    "observed_map_id": route_binding["observed_map_id"],
+    "map_bundle_sha256": route_binding["map_bundle_sha256"],
+    "runtime_gate_id": RUNTIME_GATE_ID,
+    "runtime_gate": expected_runtime_gate,
+}
+
+def write_json(target, value):
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", dir=target.parent
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(value, stream, indent=2, sort_keys=True, allow_nan=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_name, target)
+    finally:
+        Path(temporary_name).unlink(missing_ok=True)
+
+target = Path(output_path)
+write_json(target, payload)
+write_json(target.parent / "analyzer_provenance.json", analyzer_provenance)
+PY
+  local startup_validation_sha256=""
+  local analyzer_provenance_sha256=""
+  local armed_status_sha256=""
+  local recorder_subscriptions_sha256=""
+  startup_validation_sha256="$(
+    sha256sum -- \
+      "${output_dir}/portable_shadow_provenance/startup_validation.json" |
+      awk '{print $1}'
+  )"
+  analyzer_provenance_sha256="$(
+    sha256sum -- \
+      "${output_dir}/portable_shadow_provenance/analyzer_provenance.json" |
+      awk '{print $1}'
+  )"
+  armed_status_sha256="$(
+    sha256sum -- "${output_dir}/portable_shadow_provenance/armed_status.yaml" |
+      awk '{print $1}'
+  )"
+  recorder_subscriptions_sha256="$(
+    sha256sum -- \
+      "${output_dir}/portable_shadow_provenance/recorder_subscriptions.json" |
+      awk '{print $1}'
+  )"
+  printf 'PORTABLE_SHADOW_PID=%s\nPORTABLE_SHADOW_PGID=%s\nPORTABLE_SHADOW_STARTED_AFTER_VAD_ROUTE_READY=true\nPORTABLE_SHADOW_STARTED_AFTER_ALIGNED_ROUTE_HASH=true\nPORTABLE_SHADOW_RECORDER_SUBSCRIPTIONS_VERIFIED_BEFORE_ARM=true\nPORTABLE_SHADOW_RECORDER_SUBSCRIPTIONS_FILE=%s\nPORTABLE_SHADOW_RECORDER_SUBSCRIPTIONS_SHA256=%s\nPORTABLE_SHADOW_ARMED_STATUS_FILE=%s\nPORTABLE_SHADOW_ARMED_STATUS_SHA256=%s\nPORTABLE_SHADOW_STARTUP_VALIDATION_FILE=%s\nPORTABLE_SHADOW_STARTUP_VALIDATION_SHA256=%s\nPORTABLE_SHADOW_ANALYZER_PROVENANCE_FILE=%s\nPORTABLE_SHADOW_ANALYZER_PROVENANCE_SHA256=%s\n' \
+    "${portable_shadow_pid}" "${portable_shadow_pgid}" \
+    "${output_dir}/portable_shadow_provenance/recorder_subscriptions.json" \
+    "${recorder_subscriptions_sha256}" \
+    "${output_dir}/portable_shadow_provenance/armed_status.yaml" \
+    "${armed_status_sha256}" \
+    "${output_dir}/portable_shadow_provenance/startup_validation.json" \
+    "${startup_validation_sha256}" \
+    "${output_dir}/portable_shadow_provenance/analyzer_provenance.json" \
+    "${analyzer_provenance_sha256}" >> "${output_dir}/runtime.env"
+  require_portable_shadow armed || return 1
+  capture_portable_shadow_healthy_heartbeat \
+    "${output_dir}/portable_shadow_provenance/startup_status.yaml" startup || \
+    return 1
+}
+
+capture_portable_shadow_window_final() {
+  if [[ "${portable_shadow_10hz}" != "true" ]]; then
+    return 0
+  fi
+  while (( SECONDS - portable_shadow_window_started_seconds < 11 )); do
+    require_carla_owner portable_shadow_window_settle || return 1
+    if ! portable_shadow_alive || ! kill -0 "${recorder_pid}" 2>/dev/null; then
+      echo "Portable E2E shadow or owned recorder exited before final window boundary." >&2
+      return 1
+    fi
+    sleep 0.25
+  done
+  require_portable_shadow window_final || return 1
+  local final_status="${output_dir}/portable_shadow_provenance/final_status.yaml"
+  local seal_receipt="${output_dir}/portable_shadow_provenance/seal_receipt.json"
+  seal_portable_shadow_measurement "${final_status}" "${seal_receipt}" || return 1
+  python3 - \
+    "${output_dir}/portable_shadow_provenance/armed_status.yaml" \
+    "${output_dir}/portable_shadow_provenance/startup_status.yaml" \
+    "${final_status}" \
+    "${output_dir}/portable_shadow_provenance/window_boundaries.json" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+import yaml
+
+def decode(path):
+    documents = yaml.safe_load_all(Path(path).read_text(encoding="utf-8"))
+    raw = next(
+        (
+            document.get("data")
+            for document in documents
+            if isinstance(document, dict) and isinstance(document.get("data"), str)
+        ),
+        None,
+    )
+    if raw is None:
+        raise SystemExit(f"Portable E2E boundary has no String data: {path}")
+    return json.loads(raw)
+
+armed = decode(sys.argv[1])
+startup = decode(sys.argv[2])
+final = decode(sys.argv[3])
+if (
+    armed.get("schema_id") != "autoware-e2e.portable-shadow-status.v3"
+    or armed.get("state") != "SHADOW_WAITING"
+    or armed.get("stage") != "measurement"
+    or armed.get("failure_code") != "waiting_for_inputs"
+    or armed.get("measurement_armed") is not True
+    or armed.get("measurement_sealed") is not False
+    or armed.get("vehicle_control_approved") is not False
+):
+    raise SystemExit("Portable E2E armed boundary violates the zero-baseline contract")
+for name in (
+    "anchor_attempt_count",
+    "accepted_count",
+    "anchor_rejected_count",
+    "input_event_rejected_count",
+    "input_settle_deferred_count",
+    "input_settle_timeout_count",
+):
+    if armed.get(name) != 0:
+        raise SystemExit(f"Portable E2E armed boundary counter is not zero: {name}")
+if not isinstance(armed.get("rejection_counts_by_stage"), dict) or any(
+    value != 0 for value in armed["rejection_counts_by_stage"].values()
+):
+    raise SystemExit("Portable E2E armed rejection counters are not zero")
+if not isinstance(armed.get("camera_bundle_counters"), dict) or any(
+    value != 0 for value in armed["camera_bundle_counters"].values()
+):
+    raise SystemExit("Portable E2E armed camera-bundle counters are not zero")
+for label, status in (("startup", startup), ("final", final)):
+    if (
+        status.get("schema_id") != "autoware-e2e.portable-shadow-status.v3"
+        or status.get("state") != "SHADOW_OK"
+        or status.get("stage") != "inference"
+        or status.get("failure_code") != "none"
+        or status.get("healthy_now") is not True
+        or status.get("inference_inputs_healthy_now") is not True
+        or status.get("calibration_extrinsics_verified") is not True
+        or status.get("tf_extrinsic_parity") != "VERIFIED"
+        or status.get("measurement_armed") is not True
+        or status.get("vehicle_control_approved") is not False
+    ):
+        raise SystemExit(
+            f"Portable E2E {label} boundary is not a settled healthy heartbeat"
+        )
+if startup.get("measurement_sealed") is not False:
+    raise SystemExit("Portable E2E startup boundary was not explicitly unsealed")
+if final.get("measurement_sealed") is not True:
+    raise SystemExit("Portable E2E final boundary is not measurement-sealed")
+final_bundle_counters = final.get("camera_bundle_counters")
+if (
+    not isinstance(final_bundle_counters, dict)
+    or final_bundle_counters.get("pending_bundle_count") != 0
+):
+    raise SystemExit("Portable E2E sealed boundary retains a pending camera bundle")
+if not (armed.get("provenance") == startup.get("provenance") == final.get("provenance")):
+    raise SystemExit("Portable E2E provenance changed inside the analysis window")
+for name in (
+    "anchor_attempt_count",
+    "accepted_count",
+    "anchor_rejected_count",
+    "input_event_rejected_count",
+):
+    before = startup.get(name)
+    after = final.get(name)
+    if (
+        isinstance(before, bool)
+        or not isinstance(before, int)
+        or isinstance(after, bool)
+        or not isinstance(after, int)
+        or before < 0
+        or after < before
+    ):
+        raise SystemExit(f"Portable E2E boundary counter is not monotonic: {name}")
+window_wall_ns = final.get("status_wall_timestamp_ns", 0) - startup.get(
+    "status_wall_timestamp_ns", 0
+)
+if window_wall_ns < 10_000_000_000:
+    raise SystemExit("Portable E2E final boundary is less than ten seconds after startup")
+payload = {
+    "schema_id": "autoware-e2e.portable-shadow-window-boundaries.v2",
+    "armed_status": armed,
+    "startup_status": startup,
+    "final_status": final,
+}
+target = Path(sys.argv[4])
+if target.exists() or target.is_symlink():
+    raise SystemExit("Portable E2E window boundary output already exists")
+descriptor, temporary_name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
+temporary = Path(temporary_name)
+try:
+    with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, indent=2, sort_keys=True, allow_nan=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.link(temporary, target)
+finally:
+    temporary.unlink(missing_ok=True)
+PY
+  sleep 0.5
+  require_portable_shadow measurement_sealed || return 1
+  if ! e2e_stop_owned_process_group \
+    "${portable_shadow_pgid}" "${portable_shadow_pid}" 30 5 2; then
+    echo "Owned Portable E2E shadow did not stop after sealing measurement." >&2
+    return 1
+  fi
+  portable_shadow_pid=""
+  portable_shadow_pgid=""
+  sleep 1
+  local boundary_sha256=""
+  local seal_receipt_sha256=""
+  boundary_sha256="$(
+    sha256sum -- \
+      "${output_dir}/portable_shadow_provenance/window_boundaries.json" |
+      awk '{print $1}'
+  )"
+  seal_receipt_sha256="$(sha256sum -- "${seal_receipt}" | awk '{print $1}')"
+  printf 'PORTABLE_SHADOW_WINDOW_BOUNDARIES_FILE=%s\nPORTABLE_SHADOW_WINDOW_BOUNDARIES_SHA256=%s\nPORTABLE_SHADOW_SEAL_RECEIPT_FILE=%s\nPORTABLE_SHADOW_SEAL_RECEIPT_SHA256=%s\nPORTABLE_SHADOW_SEAL_DEADLINE_SECONDS=3.0\nPORTABLE_SHADOW_SEAL_RETRY_INTERVAL_SECONDS=0.025\nPORTABLE_SHADOW_WINDOW_MINIMUM_WALL_SECONDS=10\nPORTABLE_SHADOW_WINDOW_FINAL_CAPTURED_BEFORE_RECORDER_STOP=true\nPORTABLE_SHADOW_MEASUREMENT_SEALED=true\nPORTABLE_SHADOW_STOPPED_BEFORE_RECORDER=true\n' \
+    "${output_dir}/portable_shadow_provenance/window_boundaries.json" \
+    "${boundary_sha256}" "${seal_receipt}" "${seal_receipt_sha256}" >> \
+    "${output_dir}/runtime.env"
 }
 
 deadline=$((SECONDS + ready_timeout))
@@ -1705,7 +3367,8 @@ if [[ "${runtime_health_gate}" == "true" ]]; then
     --window-sec "${runtime_health_window_sec}"
     --timeout-sec "${runtime_health_timeout}"
   )
-  if [[ "${camera_source_5hz}" == "true" ]]; then
+  if [[ "${camera_source_5hz}" == "true" || \
+        "${portable_shadow_10hz}" == "true" ]]; then
     runtime_health_arguments+=(
       --camera-transport-profile-id "${camera_transport_profile_id}"
       --sensor-mapping-sha256 "${camera_transport_sensor_mapping_sha256}"
@@ -1765,6 +3428,16 @@ expected_status = "PASS" if exit_status == 0 else "FAIL"
 contract = payload.get("contract")
 runtime = payload.get("runtime")
 sequence = payload.get("sequence")
+expected_thresholds = {
+    "maximum_bundle_receipt_p95_seconds": 0.04,
+    "minimum_bundle_coverage_percent": 99.0,
+    "minimum_camera_wall_rate_hz": 4.0,
+    "minimum_complete_bundle_count": 20,
+    "minimum_rtf": 0.9,
+}
+if expected_transport_profile == "portable_e2e_exact_bundle_10hz_v2":
+    expected_thresholds["minimum_camera_wall_rate_hz"] = 9.0
+    expected_thresholds["minimum_complete_bundle_count"] = 70
 if (
     payload.get("schema_version") != 1
     or payload.get("probe_id") != "pre_engagement_runtime_health_v1"
@@ -1785,14 +3458,7 @@ if (
     or contract.get("required_consecutive_passes") != 3
     or contract.get("topics", {}).get("clock") != "/clock"
     or len(contract.get("topics", {}).get("camera_info", [])) != 6
-    or contract.get("thresholds")
-    != {
-        "maximum_bundle_receipt_p95_seconds": 0.04,
-        "minimum_bundle_coverage_percent": 99.0,
-        "minimum_camera_wall_rate_hz": 4.0,
-        "minimum_complete_bundle_count": 20,
-        "minimum_rtf": 0.9,
-    }
+    or contract.get("thresholds") != expected_thresholds
     or payload.get("source", {}).get("sha256") != expected_probe_sha256
 ):
     raise SystemExit("runtime health JSON fixed thresholds/provenance mismatch")
@@ -1810,7 +3476,10 @@ if expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_
     }
     if transport != expected_transport:
         raise SystemExit("runtime health camera transport provenance mismatch")
-elif expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_v2":
+elif expected_transport_profile in {
+    "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "portable_e2e_exact_bundle_10hz_v2",
+}:
     expected_transport = {
         "profile_id": expected_transport_profile,
         "camera_image_publisher_reliability": "best_effort",
@@ -1830,6 +3499,16 @@ elif expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_imag
         "cyclonedds_uri": expected_cyclonedds_uri,
         "cyclonedds_config_sha256": expected_cyclonedds_sha256,
     }
+    if expected_transport_profile == "portable_e2e_exact_bundle_10hz_v2":
+        expected_transport.update(
+            {
+                "camera_source_sensor_tick_seconds": 0.1,
+                "bridge_publish_cap_hz": 11,
+                "declared_effective_camera_rate_hz": 10.0,
+                "minimum_camera_wall_rate_hz": 9.0,
+                "minimum_complete_bundle_count": 70,
+            }
+        )
     graph = payload.get("camera_image_graph")
     transport_environment = runtime.get("transport_environment")
     if (
@@ -1847,7 +3526,7 @@ elif expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_imag
         or not isinstance(transport_environment, dict)
         or transport_environment.get("status") != "PASS"
     ):
-        raise SystemExit("runtime health transport-v2 provenance mismatch")
+        raise SystemExit("runtime health exact-transport provenance mismatch")
     if expected_status == "PASS" and graph.get("status") != "PASS":
         raise SystemExit("runtime health PASS lacks exact camera endpoint graph")
 elif transport is not None:
@@ -1895,7 +3574,10 @@ print(f"RUNTIME_HEALTH_MAXIMUM_CONSECUTIVE_PASSES={maximum_consecutive}")
 print(f"RUNTIME_HEALTH_WINNING_WINDOW_INDEXES={winning}")
 print(f"RUNTIME_HEALTH_RVIZ_RECORDER_REQUIRED={str(rviz_required).lower()}")
 print(f"RUNTIME_HEALTH_RVIZ_RECORDER_ACTIVE_DURING_PROBE={str(rviz_active).lower()}")
-if expected_transport_profile == "carla_vad_camera_source_5hz_best_effort_image_v2":
+if expected_transport_profile in {
+    "carla_vad_camera_source_5hz_best_effort_image_v2",
+    "portable_e2e_exact_bundle_10hz_v2",
+}:
     print(f"RUNTIME_HEALTH_CAMERA_IMAGE_GRAPH_STATUS={graph.get('status')}")
     print(
         "RUNTIME_HEALTH_TRANSPORT_ENVIRONMENT_STATUS="
@@ -1935,6 +3617,34 @@ sleep 1
 if ! kill -0 "${recorder_pid}" 2>/dev/null; then
   echo "Turn recorder failed to start" >&2
   exit 1
+fi
+
+portable_shadow_window_started_seconds=""
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  portable_recorder_ready=false
+  portable_recorder_deadline=$((SECONDS + 10))
+  while (( SECONDS < portable_recorder_deadline )); do
+    if ! kill -0 "${recorder_pid}" 2>/dev/null; then
+      break
+    fi
+    recorder_node_count="$(
+      ros2 node list --no-daemon 2>/dev/null |
+        awk '$0 == "/rosbag2_recorder" {count += 1} END {print count + 0}'
+    )"
+    if [[ "${recorder_node_count}" == "1" ]]; then
+      portable_recorder_ready=true
+      break
+    fi
+    sleep 0.25
+  done
+  if [[ "${portable_recorder_ready}" != "true" ]]; then
+    echo "Owned rosbag recorder was not uniquely ready before Portable E2E launch." >&2
+    exit 1
+  fi
+  start_portable_shadow
+  portable_shadow_window_started_seconds="${SECONDS}"
+  printf 'PORTABLE_SHADOW_WINDOW_RECORDER_STARTED_FIRST=true\nPORTABLE_SHADOW_WINDOW_STARTED_SECONDS=%s\n' \
+    "${portable_shadow_window_started_seconds}" >> "${output_dir}/runtime.env"
 fi
 
 set +e
@@ -1994,6 +3704,14 @@ while kill -0 "${route_test_pid}" 2>/dev/null; do
     route_test_pgid=""
     exit 1
   fi
+  if [[ "${portable_shadow_10hz}" == "true" ]] && ! portable_shadow_alive; then
+    echo "Portable E2E shadow exited during route evaluation" >&2
+    e2e_stop_owned_process_group \
+      "${route_test_pgid}" "${route_test_pid}" 15 5 2 || true
+    route_test_pid=""
+    route_test_pgid=""
+    exit 1
+  fi
   if [[ "${capture_desktop}" == "true" ]] && ! desktop_recorder_alive; then
     echo "Owned RViz recorder exited during route evaluation" >&2
     e2e_stop_owned_process_group \
@@ -2015,12 +3733,15 @@ verify_owned_rviz_capture_window representative
 require_desktop_recorder representative
 
 require_carla_owner route_completion || exit 1
+require_portable_shadow route_completion || exit 1
 if ! python3 scripts/e2e/probe_carla_server.py \
   "${carla_probe_args[@]}" --stage trial_completion \
   --output "${output_dir}/carla_completion_health.json"; then
   echo "CARLA failed the post-route read-only RPC/map/snapshot check" >&2
   exit 1
 fi
+
+capture_portable_shadow_window_final
 
 critical_failure=""
 if critical_failure="$(
@@ -2050,6 +3771,13 @@ if critical_failure="$(
   exit 1
 fi
 
+if ! e2e_stop_owned_process_group \
+  "${recorder_pgid}" "${recorder_pid}" 30 10 3; then
+  echo "Owned turn recorder did not stop cleanly before post-processing." >&2
+  exit 1
+fi
+recorder_pid=""
+recorder_pgid=""
 cleanup
 trap - EXIT INT TERM
 
@@ -2070,6 +3798,73 @@ if [[ -n "${maneuver_lookahead_m}" ]]; then
 fi
 
 analysis_status=0
+if [[ "${portable_shadow_10hz}" == "true" ]]; then
+  if ! python3 "${portable_shadow_analyzer}" \
+    --bag "${output_dir}/bag" \
+    --trial-provenance-json \
+      "${output_dir}/portable_shadow_provenance/analyzer_provenance.json" \
+    --window-boundaries-json \
+      "${output_dir}/portable_shadow_provenance/window_boundaries.json" \
+    --require-ten-hz-pass \
+    --output \
+      "${output_dir}/portable_shadow_provenance/shadow_evidence_analysis.json" > \
+    "${output_dir}/portable_shadow_provenance/shadow_evidence_analysis.log" 2>&1; then
+    echo "Portable E2E shadow evidence analysis failed." >&2
+    analysis_status=1
+  else
+    portable_shadow_analysis_sha256="$(
+      sha256sum -- \
+        "${output_dir}/portable_shadow_provenance/shadow_evidence_analysis.json" |
+        awk '{print $1}'
+    )"
+    portable_shadow_manifest="${output_dir}/portable_shadow_provenance/SHA256SUMS"
+    portable_shadow_manifest_staged="${portable_shadow_manifest}.staged.$$"
+    portable_shadow_manifest_files=(
+      analyzer_provenance.json
+      armed_status.yaml
+      final_status.yaml
+      launch_recheck.json
+      launch_recheck.log
+      node_info.err
+      node_info.txt
+      runtime_shadow.launch.xml
+      recorder_subscriptions.json
+      seal_receipt.json
+      shadow_evidence_analysis.json
+      shadow_evidence_analysis.log
+      startup_status.yaml
+      startup_validation.json
+      trial_binding.json
+      validation.log
+      window_boundaries.json
+    )
+    : > "${portable_shadow_manifest_staged}"
+    for name in "${portable_shadow_manifest_files[@]}"; do
+      file="${output_dir}/portable_shadow_provenance/${name}"
+      if [[ -L "${file}" || ! -f "${file}" ]]; then
+        rm -f -- "${portable_shadow_manifest_staged}"
+        echo "Portable E2E provenance manifest input is missing: ${name}" >&2
+        analysis_status=1
+        break
+      fi
+      printf '%s  %s\n' "$(sha256sum -- "${file}" | awk '{print $1}')" \
+        "${name}" >> "${portable_shadow_manifest_staged}"
+    done
+    if [[ "${analysis_status}" == "0" ]]; then
+      mv -- "${portable_shadow_manifest_staged}" "${portable_shadow_manifest}"
+    fi
+    portable_shadow_manifest_sha256=""
+    if [[ -f "${portable_shadow_manifest}" ]]; then
+      portable_shadow_manifest_sha256="$(
+        sha256sum -- "${portable_shadow_manifest}" | awk '{print $1}'
+      )"
+    fi
+    printf 'PORTABLE_SHADOW_EVIDENCE_ANALYSIS_FILE=%s\nPORTABLE_SHADOW_EVIDENCE_ANALYSIS_SHA256=%s\nPORTABLE_SHADOW_PROVENANCE_MANIFEST_FILE=%s\nPORTABLE_SHADOW_PROVENANCE_MANIFEST_SHA256=%s\n' \
+      "${output_dir}/portable_shadow_provenance/shadow_evidence_analysis.json" \
+      "${portable_shadow_analysis_sha256}" "${portable_shadow_manifest}" \
+      "${portable_shadow_manifest_sha256}" >> "${output_dir}/runtime.env"
+  fi
+fi
 if [[ "${capture_desktop}" == "true" ]]; then
   capture_duration_sec="$(
     ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 \
@@ -2130,7 +3925,8 @@ PY
     "${capture_pad_left_px}" "${capture_pad_top_px}" \
     "${capture_pad_right_px}" "${capture_pad_bottom_px}" \
     "${capture_rviz_window_id}" "${capture_rviz_window_id_decimal}" \
-    "${capture_rviz_window_pid}" "${capture_rviz_window_pgid}" <<'PY'
+    "${capture_rviz_window_pid}" "${capture_rviz_window_pgid}" \
+    "${portable_shadow_10hz}" <<'PY'
 import hashlib
 import json
 import math
@@ -2164,6 +3960,7 @@ window_id_hex = sys.argv[18]
 window_id_decimal = int(sys.argv[19])
 window_pid = int(sys.argv[20])
 window_pgid = int(sys.argv[21])
+portable_shadow_enabled = sys.argv[22] == "true"
 
 if source_dimensions != [1920, 1080]:
     raise SystemExit(f"owned-window output canvas must be 1920x1080: {source_dimensions}")
@@ -2262,6 +4059,13 @@ required_path_topics = {
     "/planning/vad_route/selected_raw_trajectory",
     "/planning/vad/candidate_trajectories",
 }
+if portable_shadow_enabled:
+    required_path_topics.update(
+        {
+            "/planning/portable_e2e/shadow_path",
+            "/planning/portable_e2e/shadow_trajectory",
+        }
+    )
 visible_path_topics = set()
 
 def visit(value):
@@ -2532,7 +4336,12 @@ animation_arguments=(
   --route-file "${route_file}"
   --output-gif "${output_dir}/turn_path_control.gif"
 )
-if ! python3 scripts/e2e/render_turn_animation.py "${animation_arguments[@]}" --crop turn; then
+# HH_260906 - Render straight routes directly without an expected turn-crop failure.
+if [[ "${route_scenario}" == "straight" ]]; then
+  python3 scripts/e2e/render_turn_animation.py \
+    "${animation_arguments[@]}" --crop motion || analysis_status=$?
+elif ! python3 scripts/e2e/render_turn_animation.py \
+  "${animation_arguments[@]}" --crop turn; then
   echo "No turn interval was rendered; retrying the animation over the motion interval." >&2
   python3 scripts/e2e/render_turn_animation.py \
     "${animation_arguments[@]}" --crop motion || analysis_status=$?

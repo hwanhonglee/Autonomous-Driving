@@ -183,7 +183,7 @@ if git_dir="$(git -C "${root}" rev-parse --git-dir 2>/dev/null)"; then
   lfs_sample_count=0
   lfs_pointer_samples=()
   for lfs_extension in png gif; do
-    lfs_sample="$(git -C "${root}" ls-files "docs/assets/validation/2026-09-02-runtime-control-campaign-v1/**/*.${lfs_extension}" | head -n 1)"
+    lfs_sample="$(git -C "${root}" ls-files "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**/*.${lfs_extension}" | head -n 1)"
     if [[ -n "${lfs_sample}" && -f "${root}/${lfs_sample}" ]]; then
       lfs_sample_count=$((lfs_sample_count + 1))
       if LC_ALL=C grep -aqm1 '^version https://git-lfs.github.com/spec/v1$' \
@@ -701,7 +701,7 @@ cat <<'EOF'
 
   1. 발행된 PNG/GIF까지 보려면 Git LFS를 설치한 뒤:
      git lfs install
-     git lfs pull --include='docs/assets/validation/2026-09-02-runtime-control-campaign-v1/**' --exclude=''
+     git lfs pull --include='docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**' --exclude=''
 
   2. 지원 OS가 아니거나 ROS/tool이 누락됐다면 먼저
      docs/BEGINNER_QUICKSTART_KO.md의 "호스트 준비"를 따르세요.

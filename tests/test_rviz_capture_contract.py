@@ -58,7 +58,7 @@ def test_rviz_current_view_tracks_ego_from_the_viewport_center(
         assert saved_follow[key] == current[key]
 
 
-def test_full_capture_view_keeps_reference_final_and_vad_paths_visible() -> None:
+def test_full_capture_view_keeps_reference_final_vad_and_shadow_paths_visible() -> None:
     config = _load_config(FULL_RVIZ)
     required_topics = {
         "/planning/vad_route/reference_path",
@@ -66,6 +66,8 @@ def test_full_capture_view_keeps_reference_final_and_vad_paths_visible() -> None
         "/planning/trajectory",
         "/planning/vad_route/selected_raw_trajectory",
         "/planning/vad/candidate_trajectories",
+        "/planning/portable_e2e/shadow_path",
+        "/planning/portable_e2e/shadow_trajectory",
     }
     visible_topics: set[str] = set()
 
@@ -87,6 +89,30 @@ def test_full_capture_view_keeps_reference_final_and_vad_paths_visible() -> None
 
     visit(config["Visualization Manager"]["Displays"])
     assert visible_topics == required_topics
+
+
+def test_portable_shadow_overlay_is_distinct_and_vehicle_centered() -> None:
+    # HH_260906 - Keep the learned shadow path visible around the centered ego vehicle.
+    config = _load_config(FULL_RVIZ)
+    displays = config["Visualization Manager"]["Displays"]
+    shadow_path = _named_display(displays, "Portable E2E Shadow Path")
+    shadow_trajectory = _named_display(
+        displays, "Portable E2E Shadow Trajectory"
+    )
+
+    assert shadow_path["Enabled"] is True
+    assert shadow_path["Value"] is True
+    assert shadow_path["Topic"]["Value"] == "/planning/portable_e2e/shadow_path"
+    assert shadow_path["Line Style"] == "Billboards"
+    assert float(shadow_path["Line Width"]) >= 0.45
+    assert float(shadow_path["Offset"]["Z"]) < 0.0
+    assert shadow_trajectory["Enabled"] is True
+    assert shadow_trajectory["Value"] is True
+    assert shadow_trajectory["Topic"]["Value"] == (
+        "/planning/portable_e2e/shadow_trajectory"
+    )
+    assert float(shadow_trajectory["View Path"]["Width"]) >= 0.28
+    assert shadow_trajectory["View Path"]["Min Velocity Color"] == "255; 40; 210"
 
 
 def test_full_capture_view_embeds_the_front_camera_panel() -> None:

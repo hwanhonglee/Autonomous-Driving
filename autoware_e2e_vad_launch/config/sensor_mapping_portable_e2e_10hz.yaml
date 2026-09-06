@@ -1,5 +1,5 @@
-# HH_260906 - Match the portable Common10 camera ABI with a nonblocking 10 Hz CARLA profile.
-# HH_260906 - Configure 11 Hz so the bridge's strict float gate emits every second 20 Hz tick.
+# HH_260906 - Match the portable Common10 camera ABI with a source-native 10 Hz CARLA profile.
+# HH_260906 - Keep an 11 Hz bridge cap so every 10 Hz source frame passes without over-rendering.
 default_sensor_kit_name: carla_sensor_kit_description
 
 sensor_mappings:
@@ -18,7 +18,7 @@ sensor_mappings:
       image_size_x: 640
       image_size_y: 360
       fov: 70.0
-      sensor_tick: 0.0
+      sensor_tick: 0.1
       enable_postprocess_effects: false
 
   CAM_FRONT_LEFT/camera_link:
@@ -62,7 +62,7 @@ sensor_mappings:
       image_size_x: 640
       image_size_y: 360
       fov: 110.0
-      sensor_tick: 0.0
+      sensor_tick: 0.1
       enable_postprocess_effects: false
 
   CAM_BACK_LEFT/camera_link:

@@ -13,7 +13,7 @@ from .dataset import FEATURE_NAMES
 
 
 RUNTIME_CONTRACT_ID = "portable_e2e.runtime_contract.v1"
-RUNTIME_GATE_ID = "portable_e2e.runtime_geometry_gate.v6"
+RUNTIME_GATE_ID = "portable_e2e.runtime_geometry_gate.v8"
 CAMERA_ORDER = (
     "CAM_FRONT",
     "CAM_BACK",
@@ -75,6 +75,8 @@ class RuntimeGateConfig:
     minimum_planar_extent_m: float = 0.05
     stationary_speed_tolerance_mps: float = 0.1
     stationary_claim_speed_epsilon_mps: float = 1.0e-4
+    # HH_260906 - Keep signed goal-stop jitter inside the established stationary envelope.
+    current_speed_reverse_jitter_tolerance_mps: float = 0.1
     maximum_stationary_radius_m: float = 0.05
     maximum_stationary_extent_m: float = 0.15
     minimum_low_speed_progress_ratio: float = 0.5
@@ -109,6 +111,9 @@ class RuntimeGateConfig:
             "minimum_planar_extent_m": self.minimum_planar_extent_m,
             "stationary_speed_tolerance_mps": self.stationary_speed_tolerance_mps,
             "stationary_claim_speed_epsilon_mps": self.stationary_claim_speed_epsilon_mps,
+            "current_speed_reverse_jitter_tolerance_mps": (
+                self.current_speed_reverse_jitter_tolerance_mps
+            ),
             "maximum_stationary_radius_m": self.maximum_stationary_radius_m,
             "maximum_stationary_extent_m": self.maximum_stationary_extent_m,
             "minimum_low_speed_progress_ratio": (
@@ -139,6 +144,14 @@ class RuntimeGateConfig:
         if self.stationary_claim_speed_epsilon_mps > self.stationary_speed_tolerance_mps:
             raise ContractError(
                 "runtime.stationary_claim_speed_epsilon_mps must not exceed "
+                "stationary_speed_tolerance_mps"
+            )
+        if (
+            self.current_speed_reverse_jitter_tolerance_mps
+            > self.stationary_speed_tolerance_mps
+        ):
+            raise ContractError(
+                "runtime.current_speed_reverse_jitter_tolerance_mps must not exceed "
                 "stationary_speed_tolerance_mps"
             )
         if self.maximum_integrated_distance_disagreement_ratio > 1.0:
@@ -412,8 +425,14 @@ def validate_and_select_trajectory(
         previous_speed_mps = _finite_number(
             current_speed_mps, "runtime current_speed_mps"
         )
-        if not 0.0 <= previous_speed_mps <= cfg.maximum_speed_mps:
+        if not (
+            -cfg.current_speed_reverse_jitter_tolerance_mps
+            <= previous_speed_mps
+            <= cfg.maximum_speed_mps
+        ):
             raise ContractError("runtime current speed exceeds the speed gate")
+        # HH_260906 - Normalize bounded goal-stop jitter but reject reverse motion.
+        previous_speed_mps = max(0.0, previous_speed_mps)
     previous_geometric_speed_mps = previous_speed_mps
 
     previous = (0.0, 0.0)
@@ -763,6 +782,11 @@ class ExactCameraBundle:
         bundle = self._by_stamp[stamp_ns]
         payloads = tuple(bundle[camera] for camera in self.camera_order)
         self._last_emitted_stamp_ns = stamp_ns
+        # HH_260906 - Count older anchors superseded by the newest output.
+        superseded_count = sum(
+            existing_stamp < stamp_ns for existing_stamp in self._by_stamp
+        )
+        self._expired_pending_count += superseded_count
         self._by_stamp = {
             stamp: value for stamp, value in self._by_stamp.items() if stamp > stamp_ns
         }

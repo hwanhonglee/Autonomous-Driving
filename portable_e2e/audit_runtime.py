@@ -44,7 +44,8 @@ from .train import (
 )
 
 
-AUDIT_ID = "portable_e2e.runtime_geometry_audit.v6"
+# HH_260906 - Version the offline audit with the v8 stationary stop-jitter contract.
+AUDIT_ID = "portable_e2e.runtime_geometry_audit.v8"
 FAILURE_CODES = (
     "nonfinite_or_shape",
     "spatial",
@@ -235,8 +236,14 @@ def _physical_failure_codes(
             return ("nonfinite_or_shape",)
         if not math.isfinite(previous_speed_mps):
             return ("nonfinite_or_shape",)
-        if not 0.0 <= previous_speed_mps <= config.maximum_speed_mps:
+        if not (
+            -config.current_speed_reverse_jitter_tolerance_mps
+            <= previous_speed_mps
+            <= config.maximum_speed_mps
+        ):
             return ("speed",)
+        # HH_260906 - Mirror the live gate's bounded stationary-noise normalization exactly.
+        previous_speed_mps = max(0.0, previous_speed_mps)
     previous_geometric_speed_mps = previous_speed_mps
     for index, (point, raw_speed) in enumerate(zip(xy, speed)):
         try:

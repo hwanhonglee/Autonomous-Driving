@@ -474,7 +474,7 @@ def test_preflight_detects_unmaterialized_latest_visual_lfs_pointers(tmp_path: P
     root = _fresh_clone_fixture(tmp_path)
     png = (
         root
-        / "docs/assets/validation/2026-09-02-runtime-control-campaign-v1"
+        / "docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3"
         / "example/screen.png"
     )
     gif = png.with_name("drive.gif")
@@ -499,7 +499,7 @@ def test_preflight_detects_unmaterialized_latest_visual_lfs_pointers(tmp_path: P
 
     assert completed.returncode == 0
     assert "대표 PNG/GIF가 pointer임" in completed.stdout
-    assert "2026-09-02-runtime-control-campaign-v1" in completed.stdout
+    assert "2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3" in completed.stdout
 
 
 def test_missing_option_value_is_usage_error() -> None:
@@ -657,7 +657,7 @@ def test_preflight_is_not_a_hidden_installer() -> None:
     assert "mutation: NONE" in source
     assert "source scripts/e2e/env.sh" not in source
     assert "setup-dev-env.sh를 바로 실행하지 마세요" in source
-    assert "2026-09-02-runtime-control-campaign-v1/**" in source
+    assert "2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**" in source
     assert "rm -rf" not in source
     assert "pkill" not in source
     assert "timeout 10s nvidia-smi" in source
@@ -675,7 +675,7 @@ def test_beginner_guide_states_portability_and_asset_boundaries() -> None:
     assert "어떤 PC에서든 clone 한 번으로 즉시 자율주행" in guide
     assert "native Ubuntu 22.04 x86_64" in guide
     assert "GIT_LFS_SKIP_SMUDGE=1" in guide
-    assert "2026-09-02-runtime-control-campaign-v1/**" in guide
+    assert "2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**" in guide
     assert "vcs import src < autoware.repos" in guide
     assert "source.revision" in guide
     assert "10718787ba6e28f038a0cb29ff99cc627b5abfd2" in guide
@@ -692,6 +692,10 @@ def test_beginner_guide_states_portability_and_asset_boundaries() -> None:
     assert "pcl-tools" in guide
     assert "ffmpeg x11-utils" in guide
     assert "AUTOWARE_E2E_TOWN_LANELET_ROOT" in guide
+    assert "C_TRACK_XODR" in guide
+    assert "c_track_simulation_xodr_current" in guide
+    assert "3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27" in guide
+    assert "3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75" in guide
     assert "scripts/e2e/build_full.sh" in guide
     assert "python3 -m pytest -q tests" in guide
     assert "python3 -m pytest -q autoware_e2e_vad_launch/test" in guide
@@ -702,6 +706,15 @@ def test_beginner_guide_states_portability_and_asset_boundaries() -> None:
     assert "--preferred-distance 210" in guide
     assert guide.count("--max-traces 20000") >= 2
     assert "--speed-30kph" in guide
+    assert "set -euo pipefail" in guide
+    assert "for HH_MAP in" in guide
+    assert "c4598f8a7920ca8d1df072ed940a17176d9019ad53381ba3cc25bec666ef805c" in guide
+    assert "460cd66799130b34b8faecf4058aa605e90c61b0d157c8e54d0a82f7d0ca2257" in guide
+    assert 'owner["selected_attempt"]' in guide
+    assert 'result.get("reason") != "goal reached"' in guide
+    assert 'ten_hz.get("status") != "ESTABLISHED_FOR_SHADOW_ONLY"' in guide
+    assert 'source_period.get("observed_violation_count") != 0' in guide
+    assert 'vehicle_control.get("approved") is not False' in guide
     assert guide.count("--ready-timeout 600") >= 2
     assert "1280×720 이상, 1920×1080 이하" in guide
     assert "real_vehicle_ready=false" in guide

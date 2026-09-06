@@ -8,6 +8,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest import mock
 import xml.etree.ElementTree as ET
 
 from nav_msgs.msg import Odometry
@@ -35,6 +36,7 @@ from vad_route_logic import (  # noqa: E402
     trajectory_sample_distances,
     zero_velocity_distance_for_goal,
 )
+import vad_route_manager as vad_route_manager_module  # noqa: E402
 from vad_route_manager import VadRouteManager  # noqa: E402
 
 
@@ -1616,6 +1618,63 @@ class TrajectoryGeometrySmoothingTest(unittest.TestCase):
                 for name, default in expected_defaults.items():
                     self.assertEqual(arguments.get(name), default)
                     self.assertEqual(parameters.get(name), f"$(var {name})")
+
+
+class VadRouteManagerShutdownTest(unittest.TestCase):
+    def test_main_accepts_invalid_context_rclerror_during_launch_shutdown(self):
+        # HH_260906 - Reproduce a candidate callback publishing after launch invalidates context.
+        events = []
+
+        class RCLError(RuntimeError):
+            pass
+
+        class Node:
+            def destroy_node(self):
+                events.append("destroy_node")
+
+        with (
+            mock.patch.object(
+                vad_route_manager_module.rclpy,
+                "init",
+                side_effect=lambda: events.append("init"),
+            ),
+            mock.patch.object(vad_route_manager_module, "VadRouteManager", Node),
+            mock.patch.object(
+                vad_route_manager_module.rclpy,
+                "spin",
+                side_effect=RCLError(
+                    "Failed to publish: publisher's context is invalid"
+                ),
+            ),
+            mock.patch.object(vad_route_manager_module.rclpy, "ok", return_value=False),
+        ):
+            vad_route_manager_module.main()
+
+        self.assertEqual(events, ["init", "destroy_node"])
+
+    def test_main_does_not_hide_rclerror_while_context_is_valid(self):
+        # HH_260906 - Preserve real route-manager failures outside the shutdown boundary.
+        class RCLError(RuntimeError):
+            pass
+
+        node = mock.Mock()
+        with (
+            mock.patch.object(vad_route_manager_module.rclpy, "init"),
+            mock.patch.object(
+                vad_route_manager_module, "VadRouteManager", return_value=node
+            ),
+            mock.patch.object(
+                vad_route_manager_module.rclpy,
+                "spin",
+                side_effect=RCLError("publisher's context is invalid"),
+            ),
+            mock.patch.object(vad_route_manager_module.rclpy, "ok", return_value=True),
+            mock.patch.object(vad_route_manager_module.rclpy, "shutdown"),
+        ):
+            with self.assertRaises(RCLError):
+                vad_route_manager_module.main()
+
+        node.destroy_node.assert_called_once_with()
 
 
 if __name__ == "__main__":

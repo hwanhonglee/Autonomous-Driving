@@ -106,13 +106,13 @@ GIT_LFS_SKIP_SMUDGE=1 git clone \
 cd Autonomous-Driving
 ```
 
-발행 PNG/GIF와 일부 MCAP은 Git LFS object다. 우선 최신 runtime-control campaign의
-화면 자료만 선택해서 받는다(현재 약 129 MB).
+발행 PNG/GIF와 일부 MCAP은 Git LFS object다. 우선 최신 30 kph Portable shadow
+화면 자료만 선택해서 받는다(현재 약 37 MB).
 
 ```bash
 git lfs install
 git lfs pull \
-  --include='docs/assets/validation/2026-09-02-runtime-control-campaign-v1/**' \
+  --include='docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**' \
   --exclude=''
 git lfs status
 ```
@@ -167,11 +167,13 @@ bash scripts/e2e/bootstrap_preflight.sh \
 |---|---:|---|
 | project launch/config/scripts/tests/patches | 예 | Git checkout |
 | 발행된 validation PNG/GIF | LFS | `git lfs pull` |
+| 2026-09-06 exact 3개 route와 CARLA rig | 예 | 최신 발행 asset 폴더 |
 | Autoware repository manifest | 예 | `autoware.repos` |
 | Autoware source `src/` | 아니오 | `vcs import` |
 | ROS/CMake/system dependency | 아니오 | 호스트 준비 + `rosdep` |
 | CARLA 0.9.15 server와 Python egg | 아니오 | 별도 package/runtime 확보 |
 | 공식 VAD v0.1 ONNX | 아니오 | project download script |
+| physical-v1 private `.runtime.npz` | 아니오 | 승인된 비실행 bundle을 별도 전달받아 SHA-256 확인 |
 | GPU별 TensorRT `.engine` cache | 아니오 | 첫 실행 시 생성 |
 | CUDA/TensorRT/spconv/acados local prefix | 아니오 | build wrapper가 준비 |
 | Lanelet2/PCD full-map source와 bundle | 아니오 | 별도 source 확보 후 setup |
@@ -407,29 +409,35 @@ level/OpenDRIVE hash가 고정돼 있다. 그러나 manifest가 원본 파일을
 export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
 
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 \
+  --map town03 \
+  --map town07
 ```
 
-첫 명령에는 `--prepare`가 없으므로 파일을 만들지 않는 inventory다. JSON의 Town01
-`status`가 `READY_TO_PREPARE` 또는 이미 구성된 `FULL_MAP_READY`인지 확인한다.
+첫 명령에는 `--prepare`가 없으므로 파일을 만들지 않는 inventory다. JSON에서 세 Town의
+`status`가 각각 `READY_TO_PREPARE` 또는 이미 구성된 `FULL_MAP_READY`인지 확인한다.
 `FAIL`, `BLOCKED_*`, hash/size/alignment 오류가 있으면 진행하지 않는다. source contract가
-모두 맞을 때만 다음 명령으로 Town01을 준비한다.
+모두 맞을 때만 다음 명령으로 세 Town을 준비한다.
 
 ```bash
-python3 scripts/e2e/prepare_packaged_town_full_maps.py \
-  --map town01 \
+python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 \
+  --map town03 \
+  --map town07 \
   --prepare
 ```
 
 이 canonical 도구는 CARLA PCD를 ROS handedness로 변환하고 결과 hash를 검사한 뒤,
-`data/maps/Town01_full`에 OSM/PCD symlink, projector와 provenance를 담은
-`map_bundle.json`까지 만든다. 원본 또는 `data/generated/packaged_town_full_maps`를
-이동하면 symlink가 깨지므로 보존한다. 완료 뒤 반드시 다음 엄격 검사를 통과시킨다.
+`data/maps/Town01_full`, `data/maps/Town03_full`, `data/maps/Town07_full` 각각에
+OSM/PCD symlink, projector와 provenance를 담은 `map_bundle.json`까지 만든다. 원본 또는
+`data/generated/packaged_town_full_maps`를 이동하면 symlink가 깨지므로 보존한다.
+완료 뒤 반드시 세 bundle의 엄격 검사를 통과시킨다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh \
-  --map data/maps/Town01_full \
-  --strict
+for map_dir in Town01_full Town03_full Town07_full; do
+  bash scripts/e2e/bootstrap_preflight.sh \
+    --map "data/maps/$map_dir" \
+    --strict || exit 1
+done
 ```
 
 나머지 packaged Town도 inventory에서 map id만 바꿔 같은 순서로 준비한다. 아무 `--map`도
@@ -437,10 +445,57 @@ bash scripts/e2e/bootstrap_preflight.sh \
 각 source 결과와 필요한 디스크 용량을 먼저 확인한다.
 
 두 환경변수를 지정하지 않으면 manifest의 과거 workstation 절대경로만 탐색하므로
-새 PC에 원본 파일이 있어도 찾지 못할 수 있다. C-track/월악산은
+새 PC에 원본 파일이 있어도 찾지 못할 수 있다. 최신 C-track 실행 bundle은
+`c_track_simulation_xodr_current` 계약으로 만든
+`data/maps/C_track_1_0_7_xodr_full`이다. C-track/월악산은
 `scripts/e2e/custom_map_bundles.yaml`과 `setup_custom_full_map.py`의 별도 계약을 따른다.
+새 PC에 동일 hash의 cooked C-track level, OpenDRIVE와 Virtual PCD/Lanelet source가
+별도로 전달되지 않았다면 C-track은 `BLOCKED`가 정상이다.
 맵 소유자가 다운로드 위치와 권한을 배포하지 않은 환경에서는 preflight의 map BLOCK이
 정상이며, 임의 PCD/OSM으로 통과시켜서는 안 된다.
+
+### 9.3 C-track exact bundle 준비
+
+C-track은 stock CARLA map이 아니므로 clone만으로 만들 수 없다. 프로젝트 소유자에게
+hash-pinned `C_track_1_0_7` cooked level/OpenDRIVE와 약 592 MB Virtual PCD를 먼저
+전달받는다. 아래 두 절대경로만 실제 전달 위치로 바꾸며, hash가 다르면 다른 version을
+억지로 사용하지 않는다.
+
+```bash
+export C_TRACK_XODR="$CARLA_ROOT/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr"
+export C_TRACK_PCD=/absolute/path/to/c_track_virtual_pointcloud_map.pcd
+
+test "$(sha256sum "$C_TRACK_XODR" | awk '{print $1}')" = \
+  3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27
+test "$(sha256sum "$C_TRACK_PCD" | awk '{print $1}')" = \
+  3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75
+
+scripts/e2e/build_xodr_lanelet_map.sh --install --force \
+  --translation-z-m -15 \
+  --json-report data/generated/xodr_lanelet/c_track_finalize.json \
+  "$C_TRACK_XODR" \
+  data/generated/xodr_lanelet/c_track_commonroad.osm \
+  data/generated/xodr_lanelet/c_track_autoware.osm
+
+python3 scripts/e2e/setup_custom_full_map.py \
+  inspect c_track_simulation_xodr_current \
+  --source "pointcloud_map=$C_TRACK_PCD" \
+  --skip-reference-assets
+python3 scripts/e2e/setup_custom_full_map.py \
+  setup c_track_simulation_xodr_current \
+  --source "pointcloud_map=$C_TRACK_PCD" \
+  --skip-reference-assets
+
+bash scripts/e2e/bootstrap_preflight.sh \
+  --carla-root "$CARLA_ROOT" \
+  --map data/maps/C_track_1_0_7_xodr_full \
+  --strict
+```
+
+`--install`은 system Python을 바꾸지 않고 저장소 내부 `.venv-map`에 고정 dependency를
+준비한다. `--skip-reference-assets`는 RoadRunner 편집본 같은 비필수 비교자료만
+건너뛰며, 선택 bundle의 Lanelet2·PCD·CARLA/OpenDRIVE hash 검사는 유지한다. 마지막
+preflight가 PASS하기 전에는 12.6의 C-track trial을 시작하지 않는다.
 
 ## 10. Build
 
@@ -512,6 +567,10 @@ colcon test-result --verbose
 다음은 **CARLA simulation screening**이다. 실차 실행 절차가 아니며
 `real_vehicle_ready=false`다. 30 km/h는 nominal target이고 회전에서는 곡률 안전
 제한 때문에 실제 속도가 낮아지는 것이 정상일 수 있다.
+
+12.1~12.5는 Portable 모델 없이 기본 Autoware VAD 구조를 배우는 역사적 5 Hz
+Town01 입문 절차다. **2026-09-06 최신 10 Hz Portable shadow 3장면을 같은 설정으로
+재현하려면 12.6의 owned wrapper를 사용한다.** 두 절차를 한 번에 실행하지 않는다.
 
 한 GPU에서 CARLA server를 두 개 동시에 실행하지 않는다. 기존 server와 Autoware가
 없음을 먼저 확인한다.
@@ -660,6 +719,176 @@ ss -ltnp | grep ':2100' || true
 
 다른 사용자의 process를 이름만 보고 `pkill`하거나 강제로 종료하지 않는다.
 
+### 12.6 2026-09-06 pinned-input 10 Hz shadow 3장면
+
+이 절은 최신 [검증 보고서](validation-2026-09-06.md)의 Town07 직진,
+C-track 좌회전, Town03 좌회전을 같은 순서와 pin으로 재실행한다. owned wrapper가
+각 episode마다 CARLA를 새 process group으로 시작하고 종료하므로 별도의 CARLA
+Terminal을 함께 띄우지 않는다. 세 명령은 한 번에 병렬로 실행하지 말고 위에서부터
+순서대로 실행한다.
+
+먼저 아래 외부 prerequisite가 모두 있어야 한다.
+
+- CARLA 0.9.15 base package의 Town03, AdditionalMaps의 Town07, hash-pinned custom
+  `C_track_1_0_7` cooked level/OpenDRIVE
+- `data/maps/Town07_full`, `data/maps/C_track_1_0_7_xodr_full`, `data/maps/Town03_full`
+  admitted full-map bundle
+- SHA-256이 일치하는 physical-v1 private non-executable runtime `.npz`
+- X11 1920x1080 session과 visual preflight에 표시된 capture 도구
+
+route와 matching CARLA rig JSON은 최신 발행 asset에 포함했으므로 clone에서 바로
+사용한다. runtime bundle은 연구용 private artifact라 Git에 없으며, 다른 파일로
+대체하거나 hash 검사를 끄지 않는다.
+
+아래 절차는 runtime, rig, route, contract, sensor mapping과 CARLA wrapper 입력을
+고정한다. branch 이름은 시간이 지나며 움직일 수 있으므로 코드까지 byte-identical하게
+비교하려면 각 실행의 `git rev-parse HEAD`가 같아야 한다. 서로 다른 commit에서 같은
+option을 썼다는 이유만으로 exact code reproduction이라고 표시하지 않는다.
+
+새 terminal에서 저장소로 이동한 뒤 다음 블록을 그대로 실행한다. `CARLA_ROOT`와
+`HH_RUNTIME_BUNDLE` 대입값만 자신의 실제 절대경로로 바꾼다.
+`HH_SHADOW_ARGS=(...)`는 같은 option 묶음을 세 명령에 전달하는 Bash array다.
+
+```bash
+# HH_260906 - Stop before every trial when any pinned prerequisite check fails.
+set -euo pipefail
+
+export REPO_ROOT="$(git rev-parse --show-toplevel)"
+export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
+HH_RUNTIME_BUNDLE=/absolute/path/to/physical_v1_e10.runtime.npz
+HH_ASSET_ROOT="$REPO_ROOT/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3"
+HH_RIG_FILE="$HH_ASSET_ROOT/config/carla_common10_rig.json"
+HH_CONTRACT_FILE="$REPO_ROOT/portable_e2e/config/common_10hz_v1.contract.json"
+HH_SENSOR_MAPPING="$REPO_ROOT/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml"
+HH_CARLA_WRAPPER="$REPO_ROOT/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
+HH_RUN_STAMP="$(date +%F-%H%M%S)"
+HH_CAMPAIGN_ROOT="$REPO_ROOT/artifacts/validation/$HH_RUN_STAMP/physical_v1_shadow_repro"
+
+cd "$REPO_ROOT"
+source scripts/e2e/env.sh
+printf 'code revision: %s\n' "$(git rev-parse HEAD)"
+
+scripts/e2e/doctor.sh
+for HH_MAP in \
+  data/maps/Town07_full \
+  data/maps/C_track_1_0_7_xodr_full \
+  data/maps/Town03_full; do
+  bash scripts/e2e/bootstrap_preflight.sh \
+    --carla-root "$CARLA_ROOT" \
+    --map "$HH_MAP" \
+    --strict
+done
+
+test -x "$CARLA_ROOT/CarlaUE4.sh"
+test -f "$HH_RUNTIME_BUNDLE" && test ! -L "$HH_RUNTIME_BUNDLE"
+test "$(sha256sum "$HH_RUNTIME_BUNDLE" | awk '{print $1}')" = \
+  bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e
+test "$(sha256sum "$HH_RIG_FILE" | awk '{print $1}')" = \
+  9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da
+test "$(sha256sum "$HH_CONTRACT_FILE" | awk '{print $1}')" = \
+  6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642
+test "$(sha256sum "$HH_SENSOR_MAPPING" | awk '{print $1}')" = \
+  c4598f8a7920ca8d1df072ed940a17176d9019ad53381ba3cc25bec666ef805c
+test "$(sha256sum "$HH_CARLA_WRAPPER" | awk '{print $1}')" = \
+  460cd66799130b34b8faecf4058aa605e90c61b0d157c8e54d0a82f7d0ca2257
+test "$(sha256sum "$HH_ASSET_ROOT/01_town07_straight/route/source_route.json" | awk '{print $1}')" = \
+  804dc69cec5ebbc2edba70946694f312c77328b5cb5d7260b096af0775f34848
+test "$(sha256sum "$HH_ASSET_ROOT/02_c_track_turn/route/source_route.json" | awk '{print $1}')" = \
+  1bb68ae7dc18dc4503d1962ea55a169befb82ec5fa871d89da23b8ae1a647b64
+test "$(sha256sum "$HH_ASSET_ROOT/03_town03_turn/route/source_route.json" | awk '{print $1}')" = \
+  a090d80bafbbf21db1e9f3d62ea6fa2479a914a95dae0966a8afbce5c96643cc
+(cd "$HH_ASSET_ROOT" && sha256sum -c SHA256SUMS)
+
+HH_SHADOW_ARGS=(
+  --recommended
+  --speed-30kph
+  --portable-shadow-10hz
+  --visualize
+  --capture-desktop
+  --portable-runtime-bundle "$HH_RUNTIME_BUNDLE"
+  --portable-runtime-bundle-sha256 bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e
+  --portable-source-checkpoint-sha256 df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09
+  --portable-model-config-sha256 cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d
+  --portable-corpus-fingerprint-sha256 17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073
+  --portable-rig-file "$HH_RIG_FILE"
+  --portable-rig-sha256 9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da
+  --portable-contract-file "$HH_CONTRACT_FILE"
+  --portable-contract-sha256 6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642
+  --portable-device cpu
+)
+
+scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+  "$HH_CAMPAIGN_ROOT/10_town07_straight" \
+  "$HH_ASSET_ROOT/01_town07_straight/route/source_route.json" \
+  "${HH_SHADOW_ARGS[@]}" \
+  --control-ab-longitudinal-recovery-2p0
+
+scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+  "$HH_CAMPAIGN_ROOT/20_c_track_turn" \
+  "$HH_ASSET_ROOT/02_c_track_turn/route/source_route.json" \
+  "${HH_SHADOW_ARGS[@]}"
+
+scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+  "$HH_CAMPAIGN_ROOT/30_town03_turn" \
+  "$HH_ASSET_ROOT/03_town03_turn/route/source_route.json" \
+  "${HH_SHADOW_ARGS[@]}"
+```
+
+`C_track_1_0_7`은 Low renderer에서 skeletal-mesh crash가 재현됐으므로 wrapper가
+`--quality Low`를 시작 전에 거부한다. 세 실행 모두 `Epic`을 유지한다. Town07의
+`--control-ab-longitudinal-recovery-2p0`도 선택 v3 설정 일부이므로 빼면 같은 실험이
+아니다.
+
+각 output은 시작 전에 존재하지 않아야 한다. wrapper가 health-only retry를 수행하면
+선택본은 `attempt_002`나 `attempt_003`일 수 있으므로 `attempt_001`을 고정해 열지 않는다.
+세 실행이 끝난 뒤 다음 검증 block이 summary의 실제 `selected_attempt`를 따라가며 route,
+shadow 17개 조건, source period, 제어 격리와 PNG/GIF 존재를 함께 확인한다.
+
+```bash
+python3 - "$HH_CAMPAIGN_ROOT" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+for scenario in ("10_town07_straight", "20_c_track_turn", "30_town03_turn"):
+    root = Path(sys.argv[1]) / scenario
+    owner = json.loads((root / "owned_trial_summary.json").read_text())
+    if owner.get("status") != "PASS" or not owner.get("selected_attempt"):
+        raise SystemExit(f"{scenario}: owned trial did not PASS")
+    attempt = root / "attempts" / owner["selected_attempt"]
+    result = json.loads((attempt / "result.json").read_text())
+    shadow = json.loads(
+        (attempt / "portable_shadow_provenance/shadow_evidence_analysis.json").read_text()
+    )
+    ten_hz = shadow.get("claims", {}).get("ten_hz", {})
+    requirements = ten_hz.get("requirements", {})
+    source_period = requirements.get("continuous_source_anchor_period", {})
+    vehicle_control = shadow.get("claims", {}).get("vehicle_control", {})
+    if result.get("success") is not True or result.get("reason") != "goal reached":
+        raise SystemExit(f"{scenario}: route result did not reach the goal")
+    if shadow.get("analysis_status") != "EVIDENCE_VALID":
+        raise SystemExit(f"{scenario}: shadow evidence is invalid")
+    if ten_hz.get("pass") is not True or ten_hz.get("status") != "ESTABLISHED_FOR_SHADOW_ONLY":
+        raise SystemExit(f"{scenario}: 10 Hz shadow claim failed")
+    if len(requirements) != 17 or any(
+        value.get("met") is not True for value in requirements.values()
+    ):
+        raise SystemExit(f"{scenario}: not all 17 requirements passed")
+    if source_period.get("observed_violation_count") != 0:
+        raise SystemExit(f"{scenario}: source-period violation detected")
+    if vehicle_control.get("approved") is not False:
+        raise SystemExit(f"{scenario}: shadow-only control boundary changed")
+    for name in ("autoware_rviz_fullscreen.png", "autoware_rviz_drive.gif"):
+        if not (attempt / name).is_file():
+            raise SystemExit(f"{scenario}: missing {name}")
+    print(f"{scenario}: PASS ({owner['selected_attempt']})")
+PY
+```
+
+route 성공은 선택 attempt의 `result.json`에서 `success=true`, `reason="goal reached"`로
+판정한다. `owned_trial_summary.json` 자체에는 `goal_reached` field가 없다. route만
+성공하고 shadow evidence가 실패하면 전체 재현 성공으로 표시하지 않는다.
+
 ## 13. 모든 준비된 Town을 돌릴 때
 
 한 route를 이해하고 결과를 확인한 뒤에만 matrix runner를 사용한다. 이 runner는
@@ -714,7 +943,7 @@ vcs import src < autoware.repos
 ```bash
 git lfs install
 git lfs pull \
-  --include='docs/assets/validation/2026-09-02-runtime-control-campaign-v1/**' \
+  --include='docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/**' \
   --exclude=''
 ```
 
@@ -755,10 +984,12 @@ build가 진행 중이고 GPU/driver 오류가 없다면 기다린다. 생성 �
 ### 화면이 끊겨 보임
 
 카메라 topic Hz만 보지 말고 CARLA real-time factor, wall-time bundle rate, complete
-six-camera coverage와 GPU/CPU load를 함께 본다. 현재 권장 30 km/h campaign은
-5 sim-Hz source와 localhost-only BestEffort depth-1 camera 경로를 사용한다.
-5 Hz는 60 km/h에서 frame당 약 3.33 m이므로 runtime이 정상이어도 영상은 계단식으로
-느껴질 수 있다.
+six-camera coverage와 GPU/CPU load를 함께 본다. 2026-09-01 v16은 5 sim-Hz라 화면
+계단감이 컸던 역사 profile이다. 최신 2026-09-06 shadow profile은 six-camera
+`sensor_tick=0.1`, bridge cap 11 Hz, localhost-only BestEffort KEEP_LAST depth 1을 쓴다.
+세 선택 실행의 모든 인접 source 간격은 `100.000001~100.000002 ms`, 위반 `0`이었다.
+발행 GIF는 별도로 5 fps이므로 GIF의 체감 부드러움을 camera 10 Hz 판정으로 사용하지
+않는다.
 
 ### build가 메모리 부족으로 종료됨
 

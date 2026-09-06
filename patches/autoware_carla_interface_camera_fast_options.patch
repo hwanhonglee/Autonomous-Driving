@@ -227,7 +227,7 @@ index c6936f1..44dd484 100644
 
      def update_sensor(self, tag, data, timestamp):
          if tag not in self._sensors_objects:
-@@ -110,13 +117,38 @@ class SensorInterface(object):
+@@ -110,13 +117,40 @@ class SensorInterface(object):
          # Non-blocking: get all available data from queue
          while True:
              try:
@@ -251,13 +251,15 @@ index c6936f1..44dd484 100644
 +            if self._camera_tags.issubset(camera_data)
 +        ]
 +        if complete_frames:
-+            latest_complete = max(complete_frames)
-+            data_dict.update(self._pending_camera_frames[latest_complete])
-+            self._last_returned_camera_frame = latest_complete
++            # HH_260906 - Drain the oldest complete camera frame before newer ready frames.
++            # HH_260906 - Preserve every source sample across transient callback bursts.
++            oldest_complete = min(complete_frames)
++            data_dict.update(self._pending_camera_frames[oldest_complete])
++            self._last_returned_camera_frame = oldest_complete
 +            self._pending_camera_frames = {
 +                frame: camera_data
 +                for frame, camera_data in self._pending_camera_frames.items()
-+                if frame > latest_complete
++                if frame > oldest_complete
 +            }
 +        elif len(self._pending_camera_frames) > self.MAX_PENDING_CAMERA_FRAMES:
 +            newest_frames = sorted(self._pending_camera_frames)[-self.MAX_PENDING_CAMERA_FRAMES :]

@@ -20,8 +20,11 @@ Owner options:
 
 Trial options are run_recorded_route_trial.sh flags, for example:
   --speed-30kph --camera-source-5hz --visualize --capture-desktop
+  --speed-30kph --portable-shadow-10hz plus every pinned Portable input
+  --portable-device cpu --portable-cpu-set 8,10,12,14
   --control-ab-pid-i40
   --control-ab-turn-preview-5m
+  --control-ab-longitudinal-recovery-2p0
 
 The helper always enables the pre-engagement runtime-health gate and passes
 carla_timeout:=60.  OUTPUT_ROOT must not already exist.
@@ -134,6 +137,11 @@ if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_]+", name):
 print(name)
 PY
 )"
+# HH_260906 - Reject the packaged C-track Low profile before its known UE4 LOD crash.
+if [[ "${map_name}" == "C_track_1_0_7" && "${quality}" == "Low" ]]; then
+  echo "C_track_1_0_7 requires Epic quality because Low crashes in skeletal-mesh rendering" >&2
+  exit 2
+fi
 map_id="$(tr '[:upper:]' '[:lower:]' <<< "${map_name}")"
 full_map_manifest="${root}/scripts/e2e/autoware_vad_town_matrix.yaml"
 if ! full_map_path="$(
@@ -392,7 +400,8 @@ done
 rows_file="$(mktemp)"
 printf '%b\n' "${attempt_rows[@]}" >"${rows_file}"
 python3 - "${output_root}" "${route_file}" "${map_name}" "${quality}" \
-  "${selected_attempt}" "${final_status}" "${rows_file}" "${trial_options[*]}" <<'PY'
+  "${selected_attempt}" "${final_status}" "${rows_file}" \
+  "${#trial_options[@]}" "${trial_options[@]}" <<'PY'
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -401,7 +410,9 @@ from pathlib import Path
 import sys
 import tempfile
 
-root, route, map_name, quality, selected, final_status, rows_path, options = sys.argv[1:]
+root, route, map_name, quality, selected, final_status, rows_path, count, *option_values = sys.argv[1:]
+if len(option_values) != int(count):
+    raise SystemExit("owned trial option-vector length changed")
 attempts = []
 for line in Path(rows_path).read_text(encoding="utf-8").splitlines():
     if not line:
@@ -415,6 +426,100 @@ for line in Path(rows_path).read_text(encoding="utf-8").splitlines():
             "process_exit_status": int(process_status),
         }
     )
+portable_requested = "--portable-shadow-10hz" in option_values
+portable_bindings = []
+for attempt in attempts:
+    binding_path = (
+        Path(attempt["path"])
+        / "portable_shadow_provenance"
+        / "trial_binding.json"
+    )
+    if not binding_path.is_file() or binding_path.is_symlink():
+        continue
+    binding_bytes = binding_path.read_bytes()
+    binding_sha256 = hashlib.sha256(binding_bytes).hexdigest()
+    binding = json.loads(binding_bytes)
+    route_binding = binding.get("route_binding", {})
+    model = binding.get("model_provenance", {})
+    shadow_launch = binding.get("shadow_launch", {})
+    if not isinstance(shadow_launch, dict):
+        shadow_launch = {}
+    launch_recheck_path = binding_path.parent / "launch_recheck.json"
+    launch_recheck_summary = None
+    if launch_recheck_path.is_file() and not launch_recheck_path.is_symlink():
+        launch_recheck_bytes = launch_recheck_path.read_bytes()
+        launch_recheck = json.loads(launch_recheck_bytes)
+        launch_recheck_source = launch_recheck.get("source_launch", {})
+        if not isinstance(launch_recheck_source, dict):
+            launch_recheck_source = {}
+        launch_recheck_summary = {
+            "path": str(launch_recheck_path.resolve()),
+            "sha256": hashlib.sha256(launch_recheck_bytes).hexdigest(),
+            "status": launch_recheck.get("status"),
+            "check_stage": launch_recheck.get("check_stage"),
+            "trial_binding_sha256": launch_recheck.get("trial_binding_sha256"),
+            "matches_initial_binding": launch_recheck.get("matches_initial_binding"),
+            "source_launch_sha256": launch_recheck_source.get("sha256"),
+            "installed_binding": launch_recheck.get("installed_binding"),
+            "runtime_shadow_launch": launch_recheck.get("runtime_shadow_launch"),
+        }
+    portable_bindings.append(
+        {
+            "attempt_id": attempt["attempt_id"],
+            "path": str(binding_path.resolve()),
+            "sha256": binding_sha256,
+            "status": binding.get("status"),
+            "execution_mode": binding.get("execution_mode"),
+            "vehicle_control_approved": binding.get("vehicle_control_approved"),
+            "declared_map_id": route_binding.get("declared_map_id"),
+            "observed_map_id": route_binding.get("observed_map_id"),
+            "aligned_route_sha256": route_binding.get("aligned_route_sha256"),
+            "map_bundle_sha256": route_binding.get("map_bundle_sha256"),
+            "runtime_bundle_sha256": model.get("runtime_bundle_sha256"),
+            "source_checkpoint_sha256": model.get("source_checkpoint_sha256"),
+            "source_launch_sha256": shadow_launch.get("sha256"),
+            "installed_launch_binding": shadow_launch.get("installed_binding"),
+            "launch_snapshot_binding": shadow_launch.get("snapshot_binding"),
+            "launch_recheck": launch_recheck_summary,
+        }
+    )
+if portable_requested and int(final_status) == 0:
+    selected_bindings = [
+        item for item in portable_bindings if item["attempt_id"] == selected
+    ]
+    if (
+        len(selected_bindings) != 1
+        or selected_bindings[0]["status"] != "PASS"
+        or selected_bindings[0]["execution_mode"] != "shadow_only"
+        or selected_bindings[0]["vehicle_control_approved"] is not False
+        or selected_bindings[0]["declared_map_id"]
+        != selected_bindings[0]["observed_map_id"]
+    ):
+        raise SystemExit("selected Portable shadow attempt lacks an exact safe binding")
+    selected_binding = selected_bindings[0]
+    selected_recheck = selected_binding.get("launch_recheck")
+    if (
+        not isinstance(selected_recheck, dict)
+        or selected_recheck.get("status") != "PASS"
+        or selected_recheck.get("check_stage") != "immediately_before_ros_launch"
+        or selected_recheck.get("trial_binding_sha256")
+        != selected_binding.get("sha256")
+        or selected_recheck.get("matches_initial_binding") is not True
+        or selected_recheck.get("source_launch_sha256")
+        != selected_binding.get("source_launch_sha256")
+        or selected_recheck.get("installed_binding")
+        != selected_binding.get("installed_launch_binding")
+    ):
+        raise SystemExit("selected Portable shadow attempt lacks an exact launch recheck")
+    selected_snapshot = selected_binding.get("launch_snapshot_binding")
+    if (
+        not isinstance(selected_snapshot, dict)
+        or selected_recheck.get("runtime_shadow_launch") != selected_snapshot
+        or selected_snapshot.get("direct_ros_launch") is not True
+    ):
+        raise SystemExit(
+            "selected Portable shadow attempt lacks an exact runtime launch snapshot"
+        )
 payload = {
     "schema_version": 1,
     "status": "PASS" if int(final_status) == 0 else "FAIL",
@@ -423,10 +528,16 @@ payload = {
     "carla_quality": quality,
     "route": str(Path(route).resolve()),
     "route_sha256": hashlib.sha256(Path(route).read_bytes()).hexdigest(),
-    "trial_options": options.split() if options else [],
+    "trial_options": option_values,
     "retry_policy": "fresh CARLA generation only after runtime-health FAIL",
     "attempts": attempts,
     "selected_attempt": selected or None,
+    "portable_shadow": {
+        "requested": portable_requested,
+        "execution_mode": "shadow_only" if portable_requested else None,
+        "vehicle_control_approved": False if portable_requested else None,
+        "attempt_bindings": portable_bindings,
+    },
 }
 target = Path(root) / "owned_trial_summary.json"
 fd, staged_name = tempfile.mkstemp(prefix=".owned_trial_summary.", dir=target.parent)

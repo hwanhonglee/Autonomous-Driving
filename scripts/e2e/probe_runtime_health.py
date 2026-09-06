@@ -47,6 +47,12 @@ CAMERA_TRANSPORT_PROFILE_V1 = (
 CAMERA_TRANSPORT_PROFILE_V2 = (
     "carla_vad_camera_source_5hz_best_effort_image_v2"
 )
+# HH_260906 - Bind the Portable 10 Hz shadow profile to the exact loopback image graph gate.
+CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ = "portable_e2e_exact_bundle_10hz_v2"
+EXACT_CAMERA_GRAPH_PROFILES = {
+    CAMERA_TRANSPORT_PROFILE_V2,
+    CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
+}
 CAMERA_GRAPH_DISCOVERY_TIMEOUT_SECONDS = 5.0
 CAMERA_GRAPH_POLL_SECONDS = 0.1
 CAMERA_GRAPH_REQUIRED_CONSECUTIVE_PASSES = 3
@@ -64,6 +70,9 @@ REQUIRED_CONSECUTIVE_PASSES = 3
 MINIMUM_RTF = 0.9
 MINIMUM_CAMERA_WALL_RATE_HZ = 4.0
 MINIMUM_COMPLETE_BUNDLES = 20
+# HH_260906 - Require near-10 Hz camera delivery throughout each Portable eight-second gate.
+PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ = 9.0
+PORTABLE_MINIMUM_COMPLETE_BUNDLES = 70
 MINIMUM_BUNDLE_COVERAGE_PERCENT = 99.0
 MAXIMUM_BUNDLE_RECEIPT_P95_SECONDS = 0.040
 
@@ -91,7 +100,7 @@ def owned_process_record(pid: int, pgid: int) -> dict[str, Any]:
     except OSError as error:
         raise RuntimeHealthError(f"owned RViz recorder {pid} is unavailable: {error}") from error
     close = stat.rfind(")")
-    fields = stat[close + 2 :].split() if close >= 0 else []
+    fields = stat[close + 2:].split() if close >= 0 else []
     state = fields[0] if fields else None
     if state is None or state.startswith("Z"):
         raise RuntimeHealthError(
@@ -197,7 +206,7 @@ def serialize_topic_endpoint(endpoint: Any) -> dict[str, Any]:
 
 
 def expected_camera_image_graph() -> dict[str, Any]:
-    """Return the exact six-camera image graph required by transport v2."""
+    """Return the exact six-camera image graph required by bounded profiles."""
     topics: dict[str, Any] = {}
     for topic in CAMERA_IMAGE_TOPICS:
         subscribers = [EXPECTED_VAD_IMAGE_SUBSCRIBER]
@@ -702,11 +711,11 @@ def collect_live_health(
     transport = contract.get("camera_transport", {})
     require_exact_image_graph = (
         isinstance(transport, Mapping)
-        and transport.get("profile_id") == CAMERA_TRANSPORT_PROFILE_V2
+        and transport.get("profile_id") in EXACT_CAMERA_GRAPH_PROFILES
     )
     camera_image_graph: dict[str, Any] = {
         "status": "NOT_REQUIRED",
-        "reason": "exact image endpoint graph is a transport-v2 contract",
+        "reason": "exact image endpoint graph is a bounded-profile contract",
     }
 
     def clock_callback(message: Any) -> None:
@@ -821,7 +830,7 @@ def validate_transport_environment(
     cyclonedds_uri: str | None,
     cyclonedds_config_sha256: str | None,
 ) -> dict[str, Any]:
-    """Bind transport v2 to the hash-pinned loopback CycloneDDS environment."""
+    """Bind exact transports to the hash-pinned loopback CycloneDDS environment."""
     actual = {
         "ros_localhost_only": os.environ.get("ROS_LOCALHOST_ONLY"),
         "rmw_implementation": os.environ.get("RMW_IMPLEMENTATION"),
@@ -835,7 +844,7 @@ def validate_transport_environment(
         "cyclonedds_config": None,
         "failures": [],
     }
-    if profile_id != CAMERA_TRANSPORT_PROFILE_V2:
+    if profile_id not in EXACT_CAMERA_GRAPH_PROFILES:
         return evidence
 
     expected = {
@@ -876,7 +885,7 @@ def validate_transport_environment(
             }
         )
     else:
-        config_path = Path(cyclonedds_uri[len("file://") :])
+        config_path = Path(cyclonedds_uri[len("file://"):])
         config_record["path"] = str(config_path)
         config_record["regular_file"] = config_path.is_file()
         normalized_path = Path(os.path.abspath(config_path))
@@ -961,6 +970,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         if args.camera_transport_profile_id not in {
             CAMERA_TRANSPORT_PROFILE_V1,
             CAMERA_TRANSPORT_PROFILE_V2,
+            CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ,
         }:
             parser.error("unsupported camera transport profile")
         for value in (
@@ -970,17 +980,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             if re.fullmatch(r"[0-9a-f]{64}", value) is None:
                 parser.error("camera transport provenance hashes must be SHA-256")
     cyclonedds_values = (args.cyclonedds_uri, args.cyclonedds_config_sha256)
-    if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_V2:
+    if args.camera_transport_profile_id in EXACT_CAMERA_GRAPH_PROFILES:
         if not all(value is not None for value in cyclonedds_values):
             parser.error(
-                "camera transport v2 requires CycloneDDS URI and config SHA-256"
+                "exact camera transport requires CycloneDDS URI and config SHA-256"
             )
         if not args.cyclonedds_uri.startswith("file:///"):
             parser.error("--cyclonedds-uri must be an absolute file:/// URI")
         if re.fullmatch(r"[0-9a-f]{64}", args.cyclonedds_config_sha256) is None:
             parser.error("--cyclonedds-config-sha256 must be SHA-256")
     elif any(value is not None for value in cyclonedds_values):
-        parser.error("CycloneDDS provenance arguments require camera transport v2")
+        parser.error("CycloneDDS provenance arguments require exact camera transport")
     return args
 
 
@@ -988,6 +998,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     output = args.output.expanduser().resolve()
     contract = default_contract(args.window_sec)
+    if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ:
+        contract["thresholds"]["minimum_camera_wall_rate_hz"] = (
+            PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ
+        )
+        contract["thresholds"]["minimum_complete_bundle_count"] = (
+            PORTABLE_MINIMUM_COMPLETE_BUNDLES
+        )
     if args.camera_transport_profile_id is not None:
         camera_transport = {
             "profile_id": args.camera_transport_profile_id,
@@ -999,7 +1016,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "vad_model_override_sha256": args.vad_model_override_sha256,
             "probe_topics": "camera_info_only",
         }
-        if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_V2:
+        if args.camera_transport_profile_id in EXACT_CAMERA_GRAPH_PROFILES:
             camera_transport.update(
                 {
                     "camera_image_endpoint_history": "keep_last",
@@ -1018,6 +1035,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             contract["topics"]["camera_image_graph"] = list(
                 CAMERA_IMAGE_TOPICS
+            )
+        if args.camera_transport_profile_id == CAMERA_TRANSPORT_PROFILE_PORTABLE_10HZ:
+            camera_transport.update(
+                {
+                    "camera_source_sensor_tick_seconds": 0.1,
+                    "bridge_publish_cap_hz": 11,
+                    "declared_effective_camera_rate_hz": 10.0,
+                    "minimum_camera_wall_rate_hz": (
+                        PORTABLE_MINIMUM_CAMERA_WALL_RATE_HZ
+                    ),
+                    "minimum_complete_bundle_count": (
+                        PORTABLE_MINIMUM_COMPLETE_BUNDLES
+                    ),
+                }
             )
         contract["camera_transport"] = camera_transport
     transport_environment = validate_transport_environment(

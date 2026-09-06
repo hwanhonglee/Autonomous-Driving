@@ -41,6 +41,44 @@ from .runtime_weight_bundle import load_runtime_weight_bundle
 
 
 RUNTIME_ID = "portable_e2e.pytorch_shadow_runtime.v1"
+CPU_EXECUTION_POLICY_ID = "portable_e2e.cpu_execution.v1"
+CPU_INTRAOP_THREADS = 4
+CPU_INTEROP_THREADS = 1
+
+
+def configure_runtime_execution(device_name: str) -> dict[str, Any]:
+    """Pin CPU inference parallelism and report the inherited process affinity."""
+    if device_name not in ("cpu", "cuda:0"):
+        raise ContractError("runtime device must be cpu or logical cuda:0")
+    if not hasattr(os, "sched_getaffinity"):
+        raise ContractError("runtime requires Linux CPU-affinity introspection")
+    if device_name == "cpu":
+        # HH_260906 - Bound PyTorch CPU fan-out so 10 Hz inference leaves cores for ROS callbacks.
+        try:
+            torch.set_num_threads(CPU_INTRAOP_THREADS)
+            torch.set_num_interop_threads(CPU_INTEROP_THREADS)
+        except RuntimeError as error:
+            raise ContractError(
+                "runtime CPU threading must be configured before parallel work starts"
+            ) from error
+        if (
+            torch.get_num_threads() != CPU_INTRAOP_THREADS
+            or torch.get_num_interop_threads() != CPU_INTEROP_THREADS
+        ):
+            raise ContractError("runtime CPU threading policy did not take effect")
+    affinity = sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+    if not affinity:
+        raise ContractError("runtime CPU affinity must not be empty")
+    return {
+        "policy_id": (
+            CPU_EXECUTION_POLICY_ID
+            if device_name == "cpu"
+            else "portable_e2e.cuda_execution.v1"
+        ),
+        "torch_intraop_threads": int(torch.get_num_threads()),
+        "torch_interop_threads": int(torch.get_num_interop_threads()),
+        "cpu_affinity": affinity,
+    }
 
 
 @dataclass(frozen=True)
@@ -88,6 +126,8 @@ class CameraCalibrationMetadata:
     intrinsic_k: tuple[float, ...]
     distortion_d: tuple[float, ...]
     rectified: bool
+    # HH_260906 - Retain the exact rig extrinsic for live TF parity checks at the ROS boundary.
+    base_from_camera: tuple[float, ...]
 
 
 @dataclass(frozen=True)
@@ -411,6 +451,7 @@ def load_rig_calibration(
                 intrinsic_k=intrinsics,
                 distortion_d=distortion,
                 rectified=bool(rig["rectified"]),
+                base_from_camera=transform,
             )
         )
         rows.append(

@@ -36,6 +36,13 @@ def _camera_metadata(name="CAM_FRONT", model_index=0):
         intrinsic_k=intrinsic,
         distortion_d=(),
         rectified=True,
+        # HH_260906 - Use an identity fixture extrinsic for isolated intrinsic tests.
+        base_from_camera=(
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        ),
     )
 
 
@@ -478,3 +485,41 @@ def test_shadow_runtime_requires_explicit_research_mode(monkeypatch, tmp_path):
             expected_model_config_sha256=runtime_module._canonical_sha256(config.to_dict()),
             device_name="cpu",
         )
+
+
+# HH_260906 - Verify the live CPU execution policy is exact and audit-visible.
+def test_configure_runtime_execution_pins_threads_and_reports_affinity(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        torch,
+        "set_num_threads",
+        lambda value: calls.append(("intra", value)),
+    )
+    monkeypatch.setattr(
+        torch,
+        "set_num_interop_threads",
+        lambda value: calls.append(("interop", value)),
+    )
+    monkeypatch.setattr(torch, "get_num_threads", lambda: 4)
+    monkeypatch.setattr(torch, "get_num_interop_threads", lambda: 1)
+    monkeypatch.setattr(
+        runtime_module.os,
+        "sched_getaffinity",
+        lambda _pid: {14, 8, 12, 10},
+    )
+
+    policy = runtime_module.configure_runtime_execution("cpu")
+
+    assert calls == [("intra", 4), ("interop", 1)]
+    assert policy == {
+        "policy_id": "portable_e2e.cpu_execution.v1",
+        "torch_intraop_threads": 4,
+        "torch_interop_threads": 1,
+        "cpu_affinity": [8, 10, 12, 14],
+    }
+
+
+# HH_260906 - Keep unsupported execution devices fail-closed before inference.
+def test_configure_runtime_execution_rejects_unknown_device():
+    with pytest.raises(ContractError, match="device"):
+        runtime_module.configure_runtime_execution("gpu")

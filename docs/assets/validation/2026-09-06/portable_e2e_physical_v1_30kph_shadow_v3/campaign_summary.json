@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "campaign_id": "portable_e2e_physical_v1_30kph_shadow_v3",
+  "executed_date": "2026-09-06",
+  "git_branch": "autoware-e2e/v1.9.0-vad-carla",
+  "target_speed_profile_kph": 30.0,
+  "control_architecture": "autoware_vad_route_manager_hybrid",
+  "portable_e2e_mode": "shadow_only",
+  "portable_e2e_vehicle_control_approved": false,
+  "selected_scenario_count": 3,
+  "selected_pass_count": 3,
+  "common_gates": {
+    "goal_reached": true,
+    "maximum_absolute_cte_m": 1.0,
+    "maximum_trajectory_correction_m": 15.0,
+    "maximum_lateral_acceleration_mps2": 1.8,
+    "portable_shadow_analysis_status": "EVIDENCE_VALID",
+    "portable_shadow_claim": "ESTABLISHED_FOR_SHADOW_ONLY",
+    "portable_shadow_requirements_met": "17/17",
+    "continuous_source_period_ns": 100000000,
+    "continuous_source_period_tolerance_ns": 5000,
+    "source_period_violation_count": 0,
+    "inference_over_100ms_count": 0
+  },
+  "capture_contract": {
+    "owned_rviz_window_only": true,
+    "shell_surfaces_excluded": true,
+    "root_desktop_capture": false,
+    "output_dimensions": [
+      1920,
+      1080
+    ],
+    "gif_fps": 5.0,
+    "rviz_target_frame": "base_link",
+    "rviz_view_controller": "TopDownOrtho",
+    "vehicle_centered_in_map_viewport": true,
+    "embedded_front_camera": true,
+    "visible_path_topic_count": 7
+  },
+  "provenance": {
+    "portable_runtime_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+    "training_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09",
+    "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+    "training_corpus_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+    "sensor_rig_sha256": "9c41a11824585a73c639a9d10b5be032dd578ea0e97f140418a692d41a2390da",
+    "runtime_contract_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+    "sensor_mapping_sha256": "c4598f8a7920ca8d1df072ed940a17176d9019ad53381ba3cc25bec666ef805c",
+    "carla_wrapper_sha256": "460cd66799130b34b8faecf4058aa605e90c61b0d157c8e54d0a82f7d0ca2257"
+  },
+  "scenarios": [
+    {
+      "id": "town07_straight",
+      "directory": "01_town07_straight",
+      "status": "PASS",
+      "goal_reached": true,
+      "maximum_speed_kph": 27.645331,
+      "sustained_at_or_above_27kph_s": 2.950000044,
+      "maximum_absolute_cte_m": 0.522266448,
+      "maximum_trajectory_correction_m": 1.800358891,
+      "maximum_lateral_acceleration_mps2": 0.461526262,
+      "portable_shadow_accepted_count": 547,
+      "portable_shadow_source_duration_s": 54.600000814,
+      "portable_shadow_source_rate_hz": 9.999999851,
+      "portable_shadow_inference_p99_ms": 40.407683,
+      "portable_shadow_inference_maximum_ms": 49.777977
+    },
+    {
+      "id": "c_track_turn",
+      "directory": "02_c_track_turn",
+      "status": "PASS",
+      "goal_reached": true,
+      "maximum_speed_kph": 16.72921,
+      "maximum_absolute_cte_m": 0.516795158,
+      "maximum_trajectory_correction_m": 12.6223526,
+      "maximum_lateral_acceleration_mps2": 0.706683347,
+      "portable_shadow_accepted_count": 508,
+      "portable_shadow_source_duration_s": 50.700000755,
+      "portable_shadow_source_rate_hz": 9.999999851,
+      "portable_shadow_inference_p99_ms": 38.481843,
+      "portable_shadow_inference_maximum_ms": 47.436462
+    },
+    {
+      "id": "town03_turn",
+      "directory": "03_town03_turn",
+      "status": "PASS",
+      "goal_reached": true,
+      "maximum_speed_kph": 18.51122,
+      "maximum_absolute_cte_m": 0.493531018,
+      "maximum_trajectory_correction_m": 8.965454102,
+      "maximum_lateral_acceleration_mps2": 0.624367111,
+      "portable_shadow_accepted_count": 497,
+      "portable_shadow_source_duration_s": 49.600000739,
+      "portable_shadow_source_rate_hz": 9.999999851,
+      "portable_shadow_inference_p99_ms": 36.862182,
+      "portable_shadow_inference_maximum_ms": 46.283436
+    }
+  ],
+  "interpretation_limits": [
+    "Portable E2E ran in shadow mode and did not command the vehicle.",
+    "The vehicle was controlled by the Autoware VAD route-manager hybrid and Autoware controllers.",
+    "The turn routes use the 30 kph target profile but intentionally have no minimum sustained-speed gate because curvature and lateral-acceleration limits take priority.",
+    "The 5 fps GIF cadence is publication cadence and is not the measured 10 Hz camera-source cadence.",
+    "A first C-track repeat exceeded the 15 m correction limit at 15.966 m; the selected clean repeat passed at 12.622 m, so one selected PASS is not a statistical robustness claim."
+  ],
+  "post_campaign_shutdown_fix": {
+    "selected_evidence_is_immutable": true,
+    "selected_stack_spin_timeout_warning_count_per_scenario": 1,
+    "root_cause": "The interface joined its spin thread before stopping the ROS context.",
+    "fixed_order": "rclpy.shutdown -> spin_thread.join -> destroy_node",
+    "town07_live_sigint_smoke_status": "PASS",
+    "town07_live_sigint_spin_timeout_count": 0,
+    "town07_live_sigint_traceback_count": 0,
+    "town07_live_sigint_process_death_count": 0
+  }
+}

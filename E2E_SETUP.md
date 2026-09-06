@@ -15,9 +15,46 @@ Autoware와 섞이지 않도록 기본 ROS domain은 42이며, 새 CARLA는 다�
 역사 증거 또는 source provenance다. 새 PC의 실행 경로로 복사하지 말고, 명령 예시의
 workspace 위치와 외부 CARLA·맵 경로는 자신의 절대경로 또는 안내된 환경변수로 지정한다.
 
-## 30 kph all-Town VAD 검증 상태와 끊김 진단 (2026-09-01)
+## 최신 30 kph Autoware + Portable E2E shadow 상태 (2026-09-06)
 
-현재 `speed_30kph`는 실제 차량용 속도 설정이 아니라 CARLA에서만 쓰는 명시적
+최신 선택 campaign은 Town07 직진, C-track 좌회전, Town03 좌회전을 같은
+source-native 10 Hz six-camera profile로 각각 cold-start했다. 세 route 모두 goal,
+CTE `<=1.0 m`, 경로 보정 `<=15 m`, 횡가속 `<=1.8 m/s²` gate를 통과했고,
+동시에 실행한 Portable physical-v1도 세 장면 모두 `EVIDENCE_VALID`, 10 Hz
+`ESTABLISHED_FOR_SHADOW_ONLY`, 요구 조건 `17/17`을 통과했다.
+
+Portable node는 `/planning/portable_e2e/` 아래 격리 출력만 발행하며
+`vehicle_control_approved=false`다. 실제 차량은 기존 Autoware
+`vad_route_manager_hybrid`와 Autoware controller가 제어했다. 따라서 이 결과를
+Portable learned closed-loop 또는 실차 승인으로 해석하지 않는다.
+
+| 장면 | route | 최고속도 | 최대 CTE | 최대 보정 | shadow accepted | inference p99 |
+|---|---:|---:|---:|---:|---:|---:|
+| Town07 직진 | PASS | 27.65 kph | 0.522 m | 1.800 m | 547 | 40.408 ms |
+| C-track 좌회전 | PASS | 16.73 kph | 0.517 m | 12.622 m | 508 | 38.482 ms |
+| Town03 좌회전 | PASS | 18.51 kph | 0.494 m | 8.965 m | 497 | 36.862 ms |
+
+모든 인접 camera source anchor는 `100,000,001~100,000,002 ns`, 허용 오차
+`±5,000 ns`, 위반 0이었다. latest-frame jump를 막기 위해 bridge는 완성된
+six-camera frame 중 가장 오래된 frame부터 FIFO로 처리한다. 발행 GIF는 5 fps이므로
+GIF의 체감 cadence를 sensor 10 Hz 근거로 사용하지 않는다.
+
+C-track의 첫 동일-profile 반복은 최대 보정 `15.966 m`로 FAIL했고, 설정이나 gate를
+완화하지 않은 선택 반복이 `12.622 m`로 PASS했다. 단일 선택 PASS를 통계적 강건성으로
+확대하지 않으며 다음 단계는 반복 실행과 geometry/control A/B다.
+
+- [2026-09-06 상세 보고서](docs/validation-2026-09-06.md)
+- [차량 중심 전체 화면·GIF·경로 분석](docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/)
+- [초보자용 pinned-input 3장면 실행](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)
+- [Portable runtime 입력·안전 경계](docs/portable-e2e-shadow-runtime.md)
+
+## 역사 자료: 30 kph all-Town VAD 검증과 끊김 진단 (2026-09-01)
+
+> 이 절의 `현재`와 `다음`은 2026-09-01 v16 snapshot 시점을 뜻한다. 최신
+> 2026-09-06 10 Hz shadow 3장면 상태와 실행 진입점은 문서 맨 앞의 최신 절과
+> [Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)을 따른다.
+
+v16의 `speed_30kph`는 실제 차량용 속도 설정이 아니라 CARLA에서만 쓰는 명시적
 simulation screening profile이다. 목표 nominal speed는 `8.333333 m/s`이지만
 `real_vehicle_ready=false`이며, VAD의 geometry는 평가해도 VAD가 낸 cruise velocity는
 평가하지 않는다. 종방향 속도는 `explicit_simulation_nominal` overlay가 제공한다.
@@ -29,7 +66,7 @@ VAD local candidate에 JSON route command, corridor/goal 처리와 Autoware MPC/
 개입하므로 `speed_30kph` profile PASS를 VAD 단독 속도 계획, 모든 trial의
 실측 30 kph 도달, 또는 실차 30 kph 준비 완료로 해석하지 않는다.
 
-### 현재 matrix 판정 경계
+### 2026-09-01 v16 matrix 판정 경계
 
 2026-09-01의 최종 v16은 19개 canonical map을 inventory하고, 그중 full-map과 CARLA
 runtime이 승인된 9개 map에 straight/turn 두 trial씩 실행했다. 결과는 runnable map
@@ -148,14 +185,16 @@ RTF와 wall-time bundle rate도 함께 비교한다.
 camera ROS publish Hz만 먼저 올리는 것은 첫 비교 변수로 삼지 않는다. source가 모든
 physics frame을 이미 렌더하는 상태에서 DDS와 VAD 호출 부하를 늘려 RTF를 더
 낮출 가능성이 있기 때문이다. 이 인과도 아직 A/B로 확정된 것은 아니다.
-위 5 Hz source A/B가 기능·안전 gate를 통과한 뒤에만 10 Hz profile을 별도 campaign으로
-검토한다.
+2026-09-01 당시 계획은 위 5 Hz source A/B가 기능·안전 gate를 통과한 뒤에만 10 Hz
+profile을 별도 campaign으로 검토하는 것이었다. 후속 2026-09-06 v3에서는 별도
+source-native 10 Hz/FIFO profile로 세 장면 shadow 검증을 완료했다.
 
 ## 역사 자료: C-track Driving Map Set Virtual 검증 (2026-08-29)
 
 > 이 절은 2026-08-29의 2.5 m/s 계열 custom-map 검증 snapshot이다. 당시 입력 자산의
 > `/home/hong/...` 경로는 provenance로만 보존하며 현재 실행 경로가 아니다. 현재
-> workspace와 30 kph C-track 판정은 문서 맨 앞의 2026-09-01 v16 절을 따른다.
+> workspace의 최신 30 kph C-track 10 Hz shadow 판정은 문서 맨 앞의 2026-09-06 v3
+> 절을 따르고, 2026-09-01 v16은 all-Town 역사 matrix로만 구분한다.
 
 당시 검증은 사용자가 지정한
 `/home/hong/Downloads/Driving_Map_Set/Driving Map Set`의 **Virtual PCD**를 실제
@@ -384,8 +423,9 @@ goal tolerance나 MPC 횡제어 문제가 아니었다. Launch 인자 배선을 
 
 ## 역사 자료: expert 데이터 수집 범위와 VAD 학습 경계 (2026-08-28)
 
-> 이 절의 smoke 표와 local asset 경로는 2026-08-28 수집 snapshot이다. 현재 v16
-> Full VAD 폐루프의 runnable/blocked 범위나 30 kph 결과로 재해석하지 않는다.
+> 이 절의 smoke 표와 local asset 경로는 2026-08-28 수집 snapshot이다. 2026-09-01 v16
+> all-Town 또는 2026-09-06 v3 3장면 Full VAD 폐루프의 runnable/blocked 범위나
+> 30 kph 결과로 재해석하지 않는다.
 
 당시 구현된 것은 `CARLA BasicAgent expert 주행 -> 6-camera/차량 상태 수집 ->
 0.5초 간격 3초 future trajectory label export -> PNG/GIF 검수` 파이프라인이다.
@@ -446,18 +486,18 @@ snap하거나 goal 뒤까지 overshoot한 구간은 시작점과 목표점에 �
 전에 끝나면 실패다. 이 gate를 통해 Town05_Opt의 잘못 snap된 catalog, 월악산의 goal
 overshoot와 Town03의 너무 엄격한 초기 `2.0 m` 판정을 격리한 뒤 위 결과만 채택했다.
 
-- Town01: [`overview.png`](artifacts/training/2026-08-27/town01_right_pilot/overview.png), [`drive.gif`](artifacts/training/2026-08-27/town01_right_pilot/drive.gif)
-- Town02_Opt: [`overview.png`](artifacts/training/2026-08-27/town02_opt_right_pilot/overview.png), [`drive.gif`](artifacts/training/2026-08-27/town02_opt_right_pilot/drive.gif)
-- Town03 packaged: [`collection_plan.json`](data/training/suites/town03_packaged_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town03_packaged_lane_follow_smoke/town03/town03_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town03_packaged_lane_follow_smoke/town03/town03_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- Town04: [`collection_plan.json`](data/training/suites/town04_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town04_lane_follow_smoke/town04/town04_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town04_lane_follow_smoke/town04/town04_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- Town05_Opt: [`collection_plan.json`](data/training/suites/town05_opt_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town05_opt_lane_follow_smoke/town05_opt/town05_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town05_opt_lane_follow_smoke/town05_opt/town05_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- Town06: [`collection_plan.json`](data/training/suites/town06_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town06_lane_follow_smoke/town06/town06_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town06_lane_follow_smoke/town06/town06_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- Town07: [`collection_plan.json`](data/training/suites/town07_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town07_lane_follow_smoke/town07/town07_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town07_lane_follow_smoke/town07/town07_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- Town10HD_Opt: [`overview.png`](artifacts/training/2026-08-27/town10hd_opt_lane_follow_pilot/overview.png), [`drive.gif`](artifacts/training/2026-08-27/town10hd_opt_lane_follow_pilot/drive.gif)
-- Town10HD_Opt formal suite: [`collection_plan.json`](data/training/suites/town10hd_opt_lane_follow_smoke/collection_plan.json), [`overview.png`](data/training/suites/town10hd_opt_lane_follow_smoke/town10hd_opt/town10hd_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/town10hd_opt_lane_follow_smoke/town10hd_opt/town10hd_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- C-track packaged Epic: [`collection_plan.json`](data/training/suites/c_track_packaged_epic_smoke/collection_plan.json), [`overview.png`](data/training/suites/c_track_packaged_epic_smoke/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png), [`drive.gif`](data/training/suites/c_track_packaged_epic_smoke/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif)
-- 월악산 packaged Epic: [`collection_plan.json`](data/training/suites/woraksan_packaged_straight_smoke/collection_plan.json), [`overview.png`](data/training/suites/woraksan_packaged_straight_smoke/woraksan_1_0_3/woraksan_1_0_3_straight_s0000_p00/ClearNoon/seed_0103/preview/overview.png), [`drive.gif`](data/training/suites/woraksan_packaged_straight_smoke/woraksan_1_0_3/woraksan_1_0_3_straight_s0000_p00/ClearNoon/seed_0103/preview/drive.gif)
-- 격리 근거: [Town05 renderer crash](data/rejected/suites/town05_standard_renderer_crash/town05/town05_lane_follow_s0000_p00/ClearNoon/seed_0000/logs/collector.log), [C-track Low renderer crash](data/rejected/suites/c_track_packaged_renderer_crash_seed0/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/logs/collector.log), [Town05_Opt bad endpoint catalog](data/rejected/suites/town05_opt_bad_endpoint_catalog/route_catalog.json), [월악산 overshoot](data/rejected/suites/woraksan_packaged_agent_overshoot/collection_plan.json), [Town03 2 m goal reject](data/rejected/suites/town03_goal_tolerance_2m_reject/collection_plan.json)
+- Town01: `artifacts/training/2026-08-27/town01_right_pilot/overview.png`, `artifacts/training/2026-08-27/town01_right_pilot/drive.gif`
+- Town02_Opt: `artifacts/training/2026-08-27/town02_opt_right_pilot/overview.png`, `artifacts/training/2026-08-27/town02_opt_right_pilot/drive.gif`
+- Town03 packaged: `data/training/suites/town03_packaged_lane_follow_smoke/collection_plan.json`, `data/training/suites/town03_packaged_lane_follow_smoke/town03/town03_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town03_packaged_lane_follow_smoke/town03/town03_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- Town04: `data/training/suites/town04_lane_follow_smoke/collection_plan.json`, `data/training/suites/town04_lane_follow_smoke/town04/town04_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town04_lane_follow_smoke/town04/town04_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- Town05_Opt: `data/training/suites/town05_opt_lane_follow_smoke/collection_plan.json`, `data/training/suites/town05_opt_lane_follow_smoke/town05_opt/town05_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town05_opt_lane_follow_smoke/town05_opt/town05_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- Town06: `data/training/suites/town06_lane_follow_smoke/collection_plan.json`, `data/training/suites/town06_lane_follow_smoke/town06/town06_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town06_lane_follow_smoke/town06/town06_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- Town07: `data/training/suites/town07_lane_follow_smoke/collection_plan.json`, `data/training/suites/town07_lane_follow_smoke/town07/town07_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town07_lane_follow_smoke/town07/town07_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- Town10HD_Opt: `artifacts/training/2026-08-27/town10hd_opt_lane_follow_pilot/overview.png`, `artifacts/training/2026-08-27/town10hd_opt_lane_follow_pilot/drive.gif`
+- Town10HD_Opt formal suite: `data/training/suites/town10hd_opt_lane_follow_smoke/collection_plan.json`, `data/training/suites/town10hd_opt_lane_follow_smoke/town10hd_opt/town10hd_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/town10hd_opt_lane_follow_smoke/town10hd_opt/town10hd_opt_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- C-track packaged Epic: `data/training/suites/c_track_packaged_epic_smoke/collection_plan.json`, `data/training/suites/c_track_packaged_epic_smoke/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/overview.png`, `data/training/suites/c_track_packaged_epic_smoke/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/preview/drive.gif`
+- 월악산 packaged Epic: `data/training/suites/woraksan_packaged_straight_smoke/collection_plan.json`, `data/training/suites/woraksan_packaged_straight_smoke/woraksan_1_0_3/woraksan_1_0_3_straight_s0000_p00/ClearNoon/seed_0103/preview/overview.png`, `data/training/suites/woraksan_packaged_straight_smoke/woraksan_1_0_3/woraksan_1_0_3_straight_s0000_p00/ClearNoon/seed_0103/preview/drive.gif`
+- 격리 근거: Town05 renderer crash `data/rejected/suites/town05_standard_renderer_crash/town05/town05_lane_follow_s0000_p00/ClearNoon/seed_0000/logs/collector.log`, C-track Low renderer crash `data/rejected/suites/c_track_packaged_renderer_crash_seed0/c_track_1_0_7/c_track_1_0_7_lane_follow_s0000_p00/ClearNoon/seed_0000/logs/collector.log`, Town05_Opt bad endpoint catalog `data/rejected/suites/town05_opt_bad_endpoint_catalog/route_catalog.json`, 월악산 overshoot `data/rejected/suites/woraksan_packaged_agent_overshoot/collection_plan.json`, Town03 2 m goal reject `data/rejected/suites/town03_goal_tolerance_2m_reject/collection_plan.json`
 
 ### 맵 범위와 실행 순서
 
@@ -684,11 +724,12 @@ scripts/e2e/generate_vad_rotate_center_variant.py
 scripts/e2e/generate_vad_rotate_center_variant.py --validate-only
 ```
 
-비교 이미지는 다음 세 파일에서 바로 확인한다.
+비교 이미지의 당시 생성 경로는 다음 세 파일로 보존한다. 이 파일은 Git clone에
+포함되지 않으므로 발행 자산처럼 클릭 가능한 링크로 표시하지 않는다.
 
-- [`temporal_ab.png`](artifacts/summary/2026-08-27/vad_path_contract/temporal_ab.png)
-- [`bev_shift_ab.png`](artifacts/summary/2026-08-27/vad_path_contract/bev_shift_ab.png)
-- [`rotate_center_ab.png`](artifacts/summary/2026-08-27/vad_path_contract/rotate_center_ab.png)
+- `artifacts/summary/2026-08-27/vad_path_contract/temporal_ab.png`
+- `artifacts/summary/2026-08-27/vad_path_contract/bev_shift_ab.png`
+- `artifacts/summary/2026-08-27/vad_path_contract/rotate_center_ab.png`
 
 각 run의 `route_result.png`, `path_vs_control.png`, `turn_path_control.gif`는
 `artifacts/runs/2026-08-27/vad_path_contract/` 아래에 있다. 출발하지 못한 dry-steer
@@ -738,9 +779,10 @@ fine-tune, ONNX parity 단계는 아직 없다.
 > 이 절은 2026-08-27 환경의 재현용 snapshot이다. 절 안의 `/home/hong/autoware_e2e`
 > 경로와 `--recommended` 단독 `maximum_speed_mps=2.5` 구성은 당시 값으로 보존한다.
 > 현재 workspace는 `/home/a/autoware_e2e`이며, 2026-09-01 v16 30 kph screening은
-> `--recommended --speed-30kph`를 함께 사용한 별도 profile이다. 현재 결과와 실행
-> 경계는 문서 맨 앞의 2026-09-01 절을 사용하고, 아래 명령을 현재 진입점으로
-> 그대로 복사하지 않는다.
+> `--recommended --speed-30kph`를 함께 사용한 별도 역사 profile이다. 최신 결과와
+> 실행 경계는 문서 맨 앞의 2026-09-06 v3 절과
+> [Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)을
+> 사용하고, 아래 명령을 현재 진입점으로 그대로 복사하지 않는다.
 
 당시 운용 기준은 `run_route_vad_fast.sh --recommended`였다. 이 option은 minimal
 launcher가 아니라 **Full Autoware shell, 표준 control/API/RViz와 TensorRT VAD를
@@ -1049,8 +1091,9 @@ screen 29는 model/control 실패가 아니라 GPU/render/sensor 입력이 깨�
 분류한다. 현재 native `580.178.04` 환경에는 이 과거 root를 적용하지 않는다.
 
 다음 실행 경로 표도 **2026-08-27 당시 snapshot**이다. 표의 Town01/C-track/
-Woraksan 검증 범위와 `그 밖의 route는 미검증` 문구는 현재 v16 상태가
-아니다. 서로 다른 시점·구성의 검증 결과를 같은 결과로 해석하면 안 된다.
+Woraksan 검증 범위와 `그 밖의 route는 미검증` 문구는 2026-09-01 v16
+all-Town 상태나 2026-09-06 v3 3장면 상태가 아니다. 서로 다른 시점·구성의
+검증 결과를 같은 결과로 해석하면 안 된다.
 
 | 실행 경로 | 진입점 | 실제 구성 | 2026-08-27 당시 상태 |
 |---|---|---|---|
@@ -1082,8 +1125,9 @@ Sensing, Localization, Perception, Planning, Control, System 패널과 module이
 
 ## 실험용 최소 부하 fast 실행
 
-이 절의 기본 fast/minimal 명령은 GPU 부하 측정과 A/B 실험용이다. **현재 주행 권장은
-문서 맨 앞의 `--recommended` Full profile**이며, 아래 2026-08-24 결과와 option은
+이 절의 기본 fast/minimal 명령은 GPU 부하 측정과 A/B 실험용이다. 최신 주행 진입점은
+[Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)의
+**2026-09-06 v3 owned 10 Hz shadow profile**이며, 아래 2026-08-24 결과와 option은
 그 이전 baseline 기록이다.
 
 Route JSON과 CARLA 시작 방법은 아래 Full quick-start와 같다. 기존 2000번 CARLA를
@@ -1370,7 +1414,7 @@ lookahead `3.0`, turn inward corridor `0.20`, smoothing `10.0`의 2회 반복 �
 
 이 절의 `0.09/0.15` 채택 판단은 당시 camera freshness와 corridor 조건에서 얻은 중간
 결론이다. 이후 frozen replay, exact-first/reliable VAD 입력과 좌/우/직진 폐루프 반복을
-합친 현재 결론은 문서 맨 앞의 `0.12/0.15` 권장 profile이며, 이 절의 opt-in 판단은
+합친 후속 `--recommended` canonical은 `0.12/0.15`이며, 이 절의 opt-in 판단은
 **`SUPERSEDED`**됐다.
 
 bridge 수정 뒤 같은 `Town01/ClearNoon` 우회전과 fast VAD 입력을 사용했다. 기본과 표준
@@ -1450,7 +1494,7 @@ Autoware sample/vehicle 설정이다. 공식 문서도 MPC 기본 파라미터�
 40 km/h 이하 조건에 맞춰졌으며 실제 steering delay와 time constant를 다시 확인하라고
 명시한다. 이 프로젝트는 실제 Autoware MPC/OSQP와 고정 trajectory bicycle plant replay로
 후보를 좁힌 뒤 CARLA 반복으로 검증했다. 일반 full/minimal launch를 직접 실행하면 source
-값이 남을 수 있지만, 문서 맨 앞의 `--recommended`는 설치된
+값이 남을 수 있지만, `run_route_vad_fast.sh --recommended`는 설치된
 `mpc_carla_recommended.param.yaml`을 강제로 주입하므로 `0.12/0.15`로 실행된다.
 
 - [공식 MPC lateral controller 문서](https://autowarefoundation.github.io/autoware_universe/main/control/autoware_mpc_lateral_controller/)
@@ -1489,7 +1533,8 @@ profile이라는 변수가 추가된다. 다음 Smart 단계는 CARLA control/st
 ## 역사 자료: 기존 Full baseline 재현 (2026-08-23)
 
 아래 세 terminal 절은 2026-08-23의 non-fast Full baseline을 재현하는 역사 자료다.
-현재 일반 주행과 UI 확인은 문서 맨 앞의 `--recommended --visualize` 절을 사용한다.
+최신 3장면 주행과 UI 확인은
+[Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)을 사용한다.
 
 이 baseline에서 실제 폐루프 검증이 끝난 조합은 `Town01`, `ClearNoon`,
 spawn 143→145다.
@@ -1631,8 +1676,10 @@ scripts/e2e/run_route_vad_full.sh \
 
 ### C-track / 역사 자료인 월악산 custom map
 
-> C-track은 2026-09-01 v16 runnable 범위에 포함된다. 반면 아래 월악산 setup과 고정
-> route 명령은 2026-08-28 재현 자료이며 현재 v16 실행 진입점이 아니다. 월악산은
+> C-track은 2026-09-01 v16 all-Town runnable 범위와 2026-09-06 v3 3장면에
+> 모두 포함된다. 최신 실행 진입점은
+> [Quick Start 12.6](docs/BEGINNER_QUICKSTART_KO.md#126-2026-09-06-pinned-input-10-hz-shadow-3장면)이다.
+> 반면 아래 월악산 setup과 고정 route 명령은 2026-08-28 재현 자료이며, 월악산은
 > packaged runtime asset과 승인된 full-map bundle을 다시 확보한 뒤 새 catalog와
 > straight/turn 폐루프를 통과해야 `BLOCKED`를 해제한다.
 
@@ -1966,8 +2013,8 @@ segment 존재 여부는 확인하지만, 중간 lanelet ID 순서, 전체 polyl
 
 ## Minimal baseline 경로의 동작 범위
 
-이 절은 `run_route_vad.sh`의 baseline 기본값을 설명한다. 문서 맨 앞의
-`--recommended` Full profile 값과 혼합하지 않는다.
+이 절은 `run_route_vad.sh`의 baseline 기본값을 설명한다.
+`run_route_vad_fast.sh --recommended` Full profile 값과 혼합하지 않는다.
 
 - 입력: 1600x900 surround RGB 6개, odometry, acceleration
 - 모델 입력 변환: 각 카메라를 640x384로 resize
@@ -2233,7 +2280,16 @@ AUTOWARE_E2E_FULL_BUILD_RESUME=1 scripts/e2e/build_full.sh
 - `patches/autoware_carla_interface_camera_fast_options.patch`: mapping의 `sensor_tick`과
   postprocess option을 전달한다. CARLA 0.9.15 GPU callback이 같은 capture frame에
   서로 다른 늦은 header timestamp를 붙이는 경우 frame ID와 fixed step으로 capture
-  stamp를 복원하고, 완전한 6-camera bundle을 직렬 발행한다.
+  stamp를 복원하고, 완전한 6-camera bundle을 직렬 발행한다. callback backlog에서는
+  가장 최신 frame으로 건너뛰지 않고 가장 오래된 완성 frame부터 FIFO로 꺼내 source
+  10 Hz 연속성을 유지한다.
+- `patches/autoware_carla_interface_clean_shutdown.patch`: ROS context를 먼저 종료해
+  executor wait set을 깨운 뒤 spin thread를 join하고 node를 destroy한다. 이전의
+  `Spin thread did not terminate within timeout` 종료 경고를 실제 CARLA SIGINT smoke에서
+  제거했다.
+- `patches/autoware_map_loader_clean_shutdown.patch`: map hash generator가 정상 SIGINT와
+  `ExternalShutdownException`을 예상 종료로 처리하고 node/context를 조건부 정리한다.
+  build wrapper가 무시된 nested source에 이를 재적용하고 package 회귀 테스트도 빌드한다.
 - `patches/autoware_carla_interface_vehicle_status_contract.patch`: Ackermann virtual tire
   angle, ROS yaw-rate/velocity sign와 단위를 Autoware message contract에 맞춘다.
 
@@ -2676,6 +2732,13 @@ Autoware까지 포함한 end-to-end benchmark도 아니다. 현재 PC와 직접 
 `--speed-30kph`를 추가해 nominal `8.333333 m/s` simulation overlay를 선택했다. 두
 구성의 속도 claim을 섞지 않는다.
 
+이 표의 `--recommended`는 2026-09-01 v16 역사 profile이다. 최신 2026-09-06
+Portable shadow campaign은 여기에 `--portable-shadow-10hz`와 모든 pinned model/rig/
+contract option을 추가한다. 그 overlay는 six-camera를 `640x360`, `sensor_tick=0.1`
+source-native 10 Hz, bridge cap 11 Hz, image BestEffort KEEP_LAST depth 1,
+CameraInfo reliable, localhost-only CycloneDDS로 고정한다. Autoware VAD가 계속 제어를
+소유하고 Portable runtime은 shadow-only다. 두 profile의 5 Hz/10 Hz 수치를 섞지 않는다.
+
 | 항목 | baseline | default fast A/B | `--recommended` |
 |---|---|---|---|
 | CARLA camera source | 6 x 1600x900, renderer 최대 20 Hz | 6 x 640x360, `sensor_tick=0.2`로 source 5 Hz | 6 x 640x360, **`sensor_tick=0.0`**, 20 Hz physics frame마다 6대 렌더 |
@@ -2712,7 +2775,7 @@ Default fast와 `--recommended` 모두 network 한 번의 FLOPs와 ONNX shape는
 
 아래 순서는 RTX 3060 병렬 CARLA 표본에 대한 당시 조치다. 2026-09-01 all-Town
 campaign은 map renderer 안정성과 동일 조건 비교를 위해 `Epic`을 쓰므로, 아래 `Low`
-권고를 현재 matrix에 그대로 적용하지 않는다.
+권고를 2026-09-01 v16 matrix에 그대로 적용하지 않는다.
 
 | 순서 | 변경 | 이유 |
 |---:|---|---|
@@ -3346,6 +3409,20 @@ exit code `-11`을 출력할 수 있다. 독립 republisher에서도 재현된 t
 문제로, runtime node가 이미 정지했고 evaluator 결과와 disengage가 정상이라면
 완료된 주행 결과 자체를 무효화하지 않는다. 다음 episode 전에 bridge/VAD
 process가 실제로 모두 종료됐는지는 반드시 확인해야 한다.
+
+2026-09-06 v3의 immutable 선택 log에는 CARLA interface의
+`Spin thread did not terminate within timeout`이 scenario마다 1회 남아 있지만 바로
+뒤 resource cleanup과 clean exit가 확인됐고 traceback은 0이다. 원인은 context 종료
+전 join을 기다리던 teardown 순서였으며 이후 tracked clean-shutdown patch로 수정했다.
+실제 Town07 CARLA/interface SIGINT smoke에서 spin timeout, traceback,
+`ExternalShutdownException`, process death가 모두 0인 것을 확인했다. map hash generator의
+정상 executor shutdown traceback과 route manager의 context-invalid publish race도 각각
+fail-closed patch/guard로 수정돼 최종 선택 log의 Python traceback은 0이다.
+
+v3 stack의 VehicleCmdFilter `ERROR` 문자열은 clamp 진단(Town07 30, C-track 26,
+Town03 28)이며 process death 수가 아니다. C-track/Town03 geometry smoothing rejection과
+함께 후속 A/B 입력으로 보존하며, log level을 숨기거나 route PASS만으로 없었다고 쓰지
+않는다.
 
 유용한 topic 점검 명령:
 

@@ -266,7 +266,7 @@ def test_portable_e2e_sensor_mapping_matches_common10_runtime_abi():
         assert parameters["image_size_x"] == 640
         assert parameters["image_size_y"] == 360
         assert parameters["fov"] == (110.0 if camera == "CAM_BACK" else 70.0)
-        assert parameters["sensor_tick"] == pytest.approx(0.0)
+        assert parameters["sensor_tick"] == pytest.approx(0.1)
         assert parameters["enable_postprocess_effects"] is False
         assert ros["frequency_hz"] == 11
         assert ros["qos_profile"] == "reliable"
@@ -275,11 +275,11 @@ def test_portable_e2e_sensor_mapping_matches_common10_runtime_abi():
         assert ros["topic_image"] == f"/sensing/camera/{camera}/image_raw"
         assert ros["topic_info"] == f"/sensing/camera/{camera}/camera_info"
 
-    # HH_260906 - Reproduce the bridge's strict floating-point cadence check at a 20 Hz tick.
+    # HH_260906 - Prove the bridge cap passes every source-native 10 Hz camera frame.
     published_timestamps = []
     last_publish_time = None
-    for tick in range(40):
-        timestamp = tick * 0.05
+    for tick in range(20):
+        timestamp = tick * 0.1
         if (
             last_publish_time is None
             or timestamp - last_publish_time >= 1.0 / 11.0
@@ -1443,15 +1443,79 @@ def test_fast_wrapper_builds_isolated_speed_30_turn_preview_candidate(tmp_path):
     )
 
 
+def test_fast_wrapper_builds_isolated_speed_30_longitudinal_recovery_candidate(
+    tmp_path,
+):
+    route = make_scenario_route(tmp_path, "straight")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--control-ab-longitudinal-recovery-2p0",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    arguments = completed.stdout.splitlines()
+    package_config = tmp_path / "install/share/autoware_e2e_vad_launch/config"
+    assert "maximum_longitudinal_acceleration_mps2:=2.0" in arguments
+    assert "curvature_speed_preview_m:=3.0" in arguments
+    assert (
+        f"vehicle_cmd_gate_param_path:={package_config / SPEED_30_GATE_PARAMS.name}"
+        in arguments
+    )
+    assert (
+        f"longitudinal_controller_param_path:={package_config / SPEED_30_PID_PARAMS.name}"
+        in arguments
+    )
+
+
+def test_fast_wrapper_rejects_longitudinal_recovery_candidate_on_turn(tmp_path):
+    route = make_scenario_route(tmp_path, "left")
+    completed = subprocess.run(
+        [
+            str(FAST_WRAPPER),
+            "--speed-30kph",
+            "--control-ab-longitudinal-recovery-2p0",
+            str(route),
+        ],
+        cwd=ROOT,
+        env=wrapper_environment(tmp_path),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert "requires a straight route" in completed.stderr
+
+
 @pytest.mark.parametrize(
     "arguments",
     [
         ["--control-ab-pid-i40"],
         ["--control-ab-turn-preview-5m"],
+        ["--control-ab-longitudinal-recovery-2p0"],
         [
             "--speed-30kph",
             "--control-ab-pid-i40",
             "--control-ab-turn-preview-5m",
+        ],
+        [
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-longitudinal-recovery-2p0",
+        ],
+        [
+            "--speed-30kph",
+            "--control-ab-turn-preview-5m",
+            "--control-ab-longitudinal-recovery-2p0",
         ],
     ],
 )

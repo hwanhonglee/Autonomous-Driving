@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import subprocess
 
@@ -74,3 +75,24 @@ def test_owned_route_runner_rejects_invalid_owner_options_before_output() -> Non
 
     assert completed.returncode == 2
     assert "quality must be Low or Epic" in completed.stderr
+
+
+def test_owned_route_runner_rejects_known_unsafe_c_track_low_profile(
+    tmp_path: Path,
+) -> None:
+    # HH_260906 - Stop before CARLA starts when C-track requests the crashing Low renderer.
+    route = tmp_path / "route.json"
+    route.write_text(json.dumps({"town": "C_track_1_0_7"}), encoding="utf-8")
+    output = tmp_path / "must-not-exist"
+
+    completed = subprocess.run(
+        [str(RUNNER), "--quality", "Low", str(output), str(route)],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 2
+    assert "requires Epic quality" in completed.stderr
+    assert not output.exists()

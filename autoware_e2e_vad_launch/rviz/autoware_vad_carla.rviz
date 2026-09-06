@@ -609,6 +609,35 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /planning/vad_route/actual_path
               Value: true
+            # HH_260906 - Draw a wide cyan shadow outline behind the learned trajectory.
+            - Alpha: 1
+              Buffer Length: 1
+              Class: rviz_default_plugins/Path
+              Color: 20; 220; 255
+              Enabled: true
+              Head Diameter: 0.30000001192092896
+              Head Length: 0.20000000298023224
+              Length: 0.30000001192092896
+              Line Style: Billboards
+              Line Width: 0.47999998927116394
+              Name: Portable E2E Shadow Path
+              Offset:
+                X: 0
+                Y: 0
+                Z: -0.019999999552965164
+              Pose Color: 255; 40; 210
+              Pose Style: None
+              Radius: 0.029999999329447746
+              Shaft Diameter: 0.10000000149011612
+              Shaft Length: 0.10000000149011612
+              Topic:
+                Depth: 1
+                Durability Policy: Volatile
+                Filter size: 10
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /planning/portable_e2e/shadow_path
+              Value: true
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
               Name: Start Goal And Command
@@ -735,6 +764,57 @@ Visualization Manager:
               View Velocity:
                 Alpha: 0.699999988079071
                 Color: 220; 70; 190
+                Constant Color: true
+                Scale: 0.20000000298023224
+                Value: false
+            # HH_260906 - Draw accepted Portable E2E output in a distinct magenta overlay.
+            - Class: rviz_plugins/Trajectory
+              Color Border Vel Max: 15
+              Enabled: true
+              Name: Portable E2E Shadow Trajectory
+              Topic:
+                Depth: 1
+                Durability Policy: Volatile
+                Filter size: 10
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /planning/portable_e2e/shadow_trajectory
+              Value: true
+              View Footprint:
+                Alpha: 0.5
+                Color: 255; 40; 210
+                Offset from BaseLink: 0
+                Rear Overhang: 1.100000023841858
+                Value: false
+                Vehicle Length: 4.889999866485596
+                Vehicle Width: 1.8960000276565552
+              View Path:
+                Alpha: 1
+                Constant Width: true
+                Fade Out Distance: 0
+                Max Velocity Color: 255; 40; 210
+                Mid Velocity Color: 255; 40; 210
+                Min Velocity Color: 255; 40; 210
+                Value: true
+                Width: 0.2800000011920929
+              View Point:
+                Alpha: 1
+                Color: 255; 255; 255
+                Offset: 0.10000000149011612
+                Radius: 0.10000000149011612
+                Value: true
+              View Text Slope:
+                Scale: 0.30000001192092896
+                Value: false
+              View Text Time:
+                Scale: 0.30000001192092896
+                Value: false
+              View Text Velocity:
+                Scale: 0.30000001192092896
+                Value: false
+              View Velocity:
+                Alpha: 1
+                Color: 255; 40; 210
                 Constant Color: true
                 Scale: 0.20000000298023224
                 Value: false

@@ -34,6 +34,8 @@ scripts/e2e/apply_vad_bev_shift_modes_patch.sh
 scripts/e2e/apply_vad_temporal_head_mode_patch.sh
 scripts/e2e/apply_vad_object_safety_patches.sh
 scripts/e2e/apply_mission_planner_lane_only_patch.sh
+# HH_260906 - Reapply the clean map hash shutdown contract in the ignored Core checkout.
+scripts/e2e/apply_map_loader_clean_shutdown_patch.sh
 scripts/e2e/apply_tensorrt_system_headers_patch.sh
 scripts/e2e/apply_tensorrt_unused_cublas_patch.sh
 scripts/e2e/apply_tensorrt_local_sdk_headers_patch.sh
@@ -46,6 +48,8 @@ scripts/e2e/apply_carla_base_link_route_contract_patch.sh
 scripts/e2e/apply_carla_imu_source_timestamp_patch.sh
 scripts/e2e/apply_carla_runtime_timing_patch.sh
 scripts/e2e/apply_carla_camera_qos_split_patch.sh
+# HH_260906 - Reapply the executor-first CARLA shutdown contract in the ignored checkout.
+scripts/e2e/apply_carla_clean_shutdown_patch.sh
 scripts/e2e/apply_autoware_launch_control_override.sh
 scripts/e2e/apply_autoware_launch_vehicle_cmd_gate_override.sh
 scripts/e2e/setup_cuda_12_8.sh
@@ -69,6 +73,7 @@ runtime_packages=(
   autoware_carla_interface
   autoware_external_cmd_selector
   autoware_lanelet2_extension
+  autoware_map_loader
   autoware_mission_planner_universe
   autoware_perception_rviz_plugin
   autoware_planning_rviz_plugin

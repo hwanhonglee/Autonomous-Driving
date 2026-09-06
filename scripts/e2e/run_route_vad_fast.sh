@@ -7,7 +7,7 @@ source scripts/e2e/env.sh
 
 usage() {
   cat >&2 <<EOF
-Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m] [--geometry-ab-route-corridor-0p2] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
+Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--speed-60kph-pilot] [--camera-source-5hz|--portable-shadow-10hz] [--control-ab-pid-i40|--control-ab-turn-preview-5m|--control-ab-longitudinal-recovery-2p0] [--geometry-ab-route-corridor-0p2] [--tight-corridor] [--trajectory-stability] [--fp16-heads] [--model-override YAML] [--sensor-mapping YAML] ROUTE_JSON [ros2 launch arguments...]
 
   default       Minimal Autoware control shell and the lowest runtime load
   --full        Full Autoware shell; RViz stays off unless a visual option is set
@@ -22,10 +22,17 @@ Usage: $0 [--full] [--visualize|--rviz-only] [--recommended] [--speed-30kph|--sp
                 With --recommended, render all six CARLA cameras at 5 sim-Hz
                 with localhost-only, depth-1 best-effort raw images, reliable
                 camera_info, and continuous IMU
+  --portable-shadow-10hz
+                With --speed-30kph, select the six-camera Portable E2E 10 Hz
+                shadow input profile while Autoware VAD retains control;
+                this low-level runner does not launch the Portable node
   --control-ab-pid-i40
                 30 kph A/B only: change PID max_i_effort from 0.30 to 0.40
   --control-ab-turn-preview-5m
                 30 kph A/B only: change curvature speed preview from 3 m to 5 m
+  --control-ab-longitudinal-recovery-2p0
+                30 kph straight A/B only: change post-curve planning-speed
+                recovery from 1.5 to 2.0 m/s^2; actuator limits stay at 1.5
   --geometry-ab-route-corridor-0p2
                 60 kph A/B only: change route corridor from +/-0.50 m to
                 +/-0.20 m; keep speed, controller, gate, map, and throttle fixed
@@ -48,6 +55,8 @@ recommended=false
 speed_30kph=false
 speed_60kph_pilot=false
 camera_source_5hz=false
+portable_shadow_10hz=false
+portable_shadow_10hz_count=0
 trajectory_stability=false
 tight_corridor=false
 fp16_heads=false
@@ -55,6 +64,7 @@ model_override=""
 sensor_mapping=""
 control_ab_pid_i40=false
 control_ab_turn_preview_5m=false
+control_ab_longitudinal_recovery_2p0=false
 geometry_ab_route_corridor_0p2=false
 route_corridor_half_width_m="0.50"
 turn_outward_corridor_half_width_m="0.50"
@@ -95,12 +105,23 @@ while [[ $# -gt 0 ]]; do
       full=true
       shift
       ;;
+    --portable-shadow-10hz)
+      portable_shadow_10hz=true
+      portable_shadow_10hz_count=$((portable_shadow_10hz_count + 1))
+      recommended=true
+      full=true
+      shift
+      ;;
     --control-ab-pid-i40)
       control_ab_pid_i40=true
       shift
       ;;
     --control-ab-turn-preview-5m)
       control_ab_turn_preview_5m=true
+      shift
+      ;;
+    --control-ab-longitudinal-recovery-2p0)
+      control_ab_longitudinal_recovery_2p0=true
       shift
       ;;
     --geometry-ab-route-corridor-0p2)
@@ -156,6 +177,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if (( portable_shadow_10hz_count > 1 )); then
+  echo "--portable-shadow-10hz may be specified only once." >&2
+  exit 2
+fi
+
 if [[ "${recommended}" == "true" ]]; then
   if [[ "${fp16_heads}" == "true" || -n "${model_override}" || -n "${sensor_mapping}" ]]; then
     echo "--recommended controls precision, VAD synchronization, and camera transport." >&2
@@ -167,19 +193,35 @@ if [[ "${camera_source_5hz}" == "true" && -n "${sensor_mapping}" ]]; then
   echo "--camera-source-5hz and --sensor-mapping are mutually exclusive." >&2
   exit 2
 fi
+if [[ "${portable_shadow_10hz}" == "true" && -n "${sensor_mapping}" ]]; then
+  echo "--portable-shadow-10hz and --sensor-mapping are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" == "true" && "${camera_source_5hz}" == "true" ]]; then
+  echo "--portable-shadow-10hz and --camera-source-5hz are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${portable_shadow_10hz}" == "true" && "${speed_30kph}" != "true" ]]; then
+  echo "--portable-shadow-10hz requires --speed-30kph." >&2
+  exit 2
+fi
 
 if [[ "${speed_30kph}" == "true" && "${speed_60kph_pilot}" == "true" ]]; then
   echo "--speed-30kph and --speed-60kph-pilot are mutually exclusive." >&2
   exit 2
 fi
 
-if [[ "${control_ab_pid_i40}" == "true" && \
-      "${control_ab_turn_preview_5m}" == "true" ]]; then
+control_ab_selection_count=0
+[[ "${control_ab_pid_i40}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+[[ "${control_ab_turn_preview_5m}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+[[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]] && control_ab_selection_count=$((control_ab_selection_count + 1))
+if (( control_ab_selection_count > 1 )); then
   echo "Select exactly one isolated 30 kph control A/B candidate per trial." >&2
   exit 2
 fi
 if [[ ( "${control_ab_pid_i40}" == "true" || \
-        "${control_ab_turn_preview_5m}" == "true" ) && \
+        "${control_ab_turn_preview_5m}" == "true" || \
+        "${control_ab_longitudinal_recovery_2p0}" == "true" ) && \
       "${speed_30kph}" != "true" ]]; then
   echo "Control A/B candidates require --speed-30kph." >&2
   exit 2
@@ -249,7 +291,8 @@ if [[ -z "${route_file}" ]]; then
 fi
 shift
 
-if [[ "${speed_60kph_pilot}" == "true" ]]; then
+if [[ "${speed_60kph_pilot}" == "true" || \
+      "${control_ab_longitudinal_recovery_2p0}" == "true" ]]; then
   if [[ ! -f "${route_file}" ]]; then
     echo "Route file not found: ${route_file}" >&2
     exit 2
@@ -265,7 +308,11 @@ print(value if isinstance(value, str) and value else "unknown")
 PY
   )"
   if [[ "${route_scenario}" != "straight" ]]; then
-    echo "--speed-60kph-pilot requires a straight route; got ${route_scenario}" >&2
+    if [[ "${speed_60kph_pilot}" == "true" ]]; then
+      echo "--speed-60kph-pilot requires a straight route; got ${route_scenario}" >&2
+      exit 2
+    fi
+    echo "--control-ab-longitudinal-recovery-2p0 requires a straight route; got ${route_scenario}" >&2
     exit 2
   fi
 fi
@@ -313,9 +360,14 @@ if [[ "${recommended}" == "true" ]]; then
   fast_mapping="${package_share}/config/sensor_mapping_vad_fast_reliable_imu.yaml"
   if [[ "${camera_source_5hz}" == "true" ]]; then
     fast_mapping="${package_share}/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml"
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+    fast_mapping="${package_share}/config/sensor_mapping_portable_e2e_10hz.yaml"
   fi
   model_override="${package_share}/config/vad_carla_tiny_recommended.param.yaml"
   if [[ "${camera_source_5hz}" == "true" ]]; then
+    model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
+    cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
     model_override="${package_share}/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml"
     cyclonedds_config="${package_share}/config/cyclonedds_camera_depth1_localhost_v2.xml"
   fi
@@ -328,6 +380,8 @@ if [[ "${recommended}" == "true" ]]; then
       "${cyclonedds_config}"
       "${cyclonedds_config}.metadata.json"
     )
+  elif [[ "${portable_shadow_10hz}" == "true" ]]; then
+    required_profile_files+=("${cyclonedds_config}")
   fi
   if [[ "${speed_30kph}" == "true" ]]; then
     speed_gate="${package_share}/config/vehicle_cmd_gate_carla_30kph.param.yaml"
@@ -359,7 +413,8 @@ if [[ "${recommended}" == "true" ]]; then
   done
 fi
 
-if [[ "${camera_source_5hz}" == "true" ]]; then
+if [[ "${camera_source_5hz}" == "true" || "${portable_shadow_10hz}" == "true" ]]; then
+  # HH_260906 - Isolate bounded raw-camera traffic on the pinned loopback transport.
   # This versioned simulation profile is intentionally isolated from LAN DDS
   # participants. env.sh clears inherited Cyclone settings before this exact
   # installed config is selected.
@@ -402,13 +457,18 @@ if [[ "${recommended}" == "true" ]]; then
   )
   if [[ "${speed_30kph}" == "true" ]]; then
     curvature_speed_preview_m=3.0
+    maximum_longitudinal_acceleration_mps2=1.5
     if [[ "${control_ab_turn_preview_5m}" == "true" ]]; then
       curvature_speed_preview_m=5.0
+    fi
+    if [[ "${control_ab_longitudinal_recovery_2p0}" == "true" ]]; then
+      # HH_260906 - Raise only the post-curvature planning-speed recovery cap for the straight A/B trial.
+      maximum_longitudinal_acceleration_mps2=2.0
     fi
     profile_arguments+=(
       "controller_stop_offset_m:=0.60"
       "comfortable_deceleration_mps2:=2.0"
-      "maximum_longitudinal_acceleration_mps2:=1.5"
+      "maximum_longitudinal_acceleration_mps2:=${maximum_longitudinal_acceleration_mps2}"
       "longitudinal_velocity_source:=explicit_simulation_nominal"
       "nominal_cruise_speed_mps:=8.333333333333334"
       "maneuver_lookahead_m:=4.0"
@@ -463,7 +523,7 @@ if [[ "${trajectory_stability}" == "true" ]]; then
   echo "NOTICE: this outlier filter is HOLD after repeated closed-loop screening; it is not the recommended profile." >&2
 fi
 
-echo "VAD fast profile: 6x 640x360 raw cameras at 5 Hz; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; geometry AB route-corridor-0p2=${geometry_ab_route_corridor_0p2}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
+echo "VAD fast profile: 6x 640x360 raw cameras; recommended=${recommended}; speed30=${speed_30kph}; speed60pilot=${speed_60kph_pilot}; camera source 5 sim-Hz=${camera_source_5hz}; Portable shadow source 10 sim-Hz=${portable_shadow_10hz}; control AB pid-i40=${control_ab_pid_i40}; control AB turn-preview-5m=${control_ab_turn_preview_5m}; control AB longitudinal-recovery-2p0=${control_ab_longitudinal_recovery_2p0}; geometry AB route-corridor-0p2=${geometry_ab_route_corridor_0p2}; tight corridor=${tight_corridor}; trajectory stability=${trajectory_stability}; mixed FP16 heads=${fp16_heads}; sensor mapping=${fast_mapping}; CycloneDDS=${cyclonedds_config:-inherited}" >&2
 if [[ "${full}" == "true" ]]; then
   rviz_enabled=false
   if [[ "${visualize}" == "true" || "${rviz_only}" == "true" ]]; then

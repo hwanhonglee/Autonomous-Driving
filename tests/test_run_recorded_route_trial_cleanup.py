@@ -82,6 +82,16 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "--steering-report-mode virtual" in source
     assert "turn_path_control.gif" in source
     assert "--crop motion" in source
+    straight_branch = source.index('if [[ "${route_scenario}" == "straight" ]]')
+    turn_branch = source.index(
+        'elif ! python3 scripts/e2e/render_turn_animation.py', straight_branch
+    )
+    fallback = source.index(
+        'echo "No turn interval was rendered;', turn_branch
+    )
+    assert "--crop motion" in source[straight_branch:turn_branch]
+    assert "--crop turn" in source[turn_branch:fallback]
+    assert "--crop motion" in source[fallback:]
     assert "^data: ready$" in source
     assert "^data: fault:" in source
     assert "^data: stopping$" in source
@@ -110,6 +120,9 @@ def test_trial_preserves_recommended_profile_and_renders_animation() -> None:
     assert "exited at route completion" in source
     assert "exited before evidence finalization" in source
     assert "VSCODE_SNAP_GUI_ENV_SANITIZED=%s" in source
+    assert "CARLA_CAMERA_BUNDLE_DISPATCH_POLICY=oldest_complete_source_order_v1" in source
+    assert "CARLA_CAMERA_BUNDLE_DISPATCH_SHA256=%s" in source
+    assert "Installed CARLA camera-bundle dispatcher does not match the source" in source
     assert "unset GIO_LAUNCHED_DESKTOP_FILE" in source
     assert "unset GTK_EXE_PREFIX GTK_IM_MODULE_FILE GTK_PATH XDG_DATA_HOME" in source
     assert 'export XDG_DATA_DIRS="${XDG_DATA_DIRS_VSCODE_SNAP_ORIG}"' in source
@@ -169,12 +182,19 @@ def test_trial_records_isolated_speed_30_control_ab_candidates() -> None:
 
     assert "--control-ab-pid-i40" in source
     assert "--control-ab-turn-preview-5m" in source
+    assert "--control-ab-longitudinal-recovery-2p0" in source
     assert "pid_carla_vad_30kph_i40_ab.param.yaml" in source
     assert 'curvature_speed_preview_m="5.0"' in source
+    assert 'maximum_longitudinal_acceleration_mps2="2.0"' in source
     assert "CONTROL_AB_CANDIDATE_ID=%s" in source
+    assert "CONTROL_AB_LONGITUDINAL_RECOVERY_2P0=%s" in source
+    assert "CONTROL_AB_ACTUATOR_ACCELERATION_LIMITS_UNCHANGED=true" in source
     assert "CONTROL_AB_ISOLATED_SINGLE_KNOB=true" in source
     assert 'stack_command+=(--control-ab-pid-i40)' in source
     assert 'stack_command+=(--control-ab-turn-preview-5m)' in source
+    assert (
+        'stack_command+=(--control-ab-longitudinal-recovery-2p0)' in source
+    )
 
 
 @pytest.mark.parametrize(
@@ -182,10 +202,21 @@ def test_trial_records_isolated_speed_30_control_ab_candidates() -> None:
     (
         ("--control-ab-pid-i40",),
         ("--control-ab-turn-preview-5m",),
+        ("--control-ab-longitudinal-recovery-2p0",),
         (
             "--speed-30kph",
             "--control-ab-pid-i40",
             "--control-ab-turn-preview-5m",
+        ),
+        (
+            "--speed-30kph",
+            "--control-ab-pid-i40",
+            "--control-ab-longitudinal-recovery-2p0",
+        ),
+        (
+            "--speed-30kph",
+            "--control-ab-turn-preview-5m",
+            "--control-ab-longitudinal-recovery-2p0",
         ),
     ),
 )

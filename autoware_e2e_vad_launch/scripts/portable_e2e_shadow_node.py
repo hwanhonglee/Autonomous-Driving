@@ -27,6 +27,7 @@ from portable_e2e.runtime import (
     LiveCameraCalibration,
     RuntimeCameraFrame,
     RuntimeInputs,
+    configure_runtime_execution,
     load_rig_calibration,
     sha256_regular_file,
     validate_live_camera_calibration,
@@ -39,11 +40,16 @@ from portable_e2e.runtime_contract import transform_base_trajectory_to_map
 from portable_e2e.runtime_weight_bundle import BUNDLE_ID
 import rclpy
 from rclpy.clock import Clock, ClockType
+from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.time import Time as RosTime
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Float32, Int8, String
+from std_srvs.srv import Trigger
+from tf2_ros import Buffer as TransformBuffer
+from tf2_ros import TransformException, TransformListener
 
 from vad_route_logic import RoutePlan
 
@@ -78,8 +84,11 @@ SHADOW_PATH_TOPIC = f"{SHADOW_TOPIC_PREFIX}shadow_path"
 SHADOW_STATUS_TOPIC = f"{SHADOW_TOPIC_PREFIX}status"
 SHADOW_LATENCY_TOPIC = f"{SHADOW_TOPIC_PREFIX}latency_ms"
 SHADOW_SELECTED_CANDIDATE_TOPIC = f"{SHADOW_TOPIC_PREFIX}selected_candidate"
-SHADOW_ADAPTER_ID = "autoware-e2e.portable-shadow-node.v2"
-SHADOW_STATUS_SCHEMA_ID = "autoware-e2e.portable-shadow-status.v2"
+SHADOW_ARM_SERVICE = "/portable_e2e_shadow/arm_measurement"
+SHADOW_STARTUP_BOUNDARY_SERVICE = "/portable_e2e_shadow/capture_startup_boundary"
+SHADOW_SEAL_SERVICE = "/portable_e2e_shadow/seal_measurement"
+SHADOW_ADAPTER_ID = "autoware-e2e.portable-shadow-node.v3"
+SHADOW_STATUS_SCHEMA_ID = "autoware-e2e.portable-shadow-status.v3"
 SHADOW_OUTPUT_TOPICS = frozenset(
     (
         SHADOW_TRAJECTORY_TOPIC,
@@ -98,6 +107,16 @@ SHADOW_REJECTION_STAGES = (
     "steering",
     "inference",
 )
+
+
+def is_retryable_causal_input_error(error: Exception) -> bool:
+    """Identify state-arrival races that may resolve within the settle window."""
+    # HH_260906 - Retry only bounded missing or stale causal inputs.
+    # HH_260906 - Never retry model or calibration failures.
+    message = str(error)
+    return message.startswith("causal ") and message.endswith(
+        (" is missing", " is stale")
+    )
 
 
 class CausalMessageBuffer:
@@ -145,6 +164,19 @@ def require_sha256(value: str, context: str) -> str:
     return value
 
 
+def require_map_id(value: str) -> str:
+    """Accept one normalized map identity suitable for exact provenance matching."""
+    # HH_260906 - Reject aliases and paths for exact external live-map comparisons.
+    if (
+        not isinstance(value, str)
+        or not 1 <= len(value) <= 64
+        or value != value.lower()
+        or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789_" for character in value)
+    ):
+        raise RuntimeError("declared_map_id must be normalized lowercase ASCII")
+    return value
+
+
 def require_positive_finite(value: float, context: str) -> float:
     """Validate a positive runtime-policy value before publishing provenance."""
     parsed = float(value)
@@ -163,6 +195,8 @@ def classify_shadow_failure(stage: str, error: Exception) -> str:
         ("runtime health gate", "runtime_health"),
         ("CameraInfo", "camera_info_contract"),
         ("camera calibration", "camera_info_contract"),
+        # HH_260906 - Classify missing camera transforms before the generic causal-input marker.
+        ("camera TF", "camera_extrinsics"),
         ("causal ", "causal_input"),
         ("must use map -> base_link", "state_frame"),
         ("must use the base_link frame", "state_frame"),
@@ -203,9 +237,11 @@ def build_shadow_provenance(
     rig_id: str,
     rig_sha256: str,
     contract_sha256: str,
+    declared_map_id: str,
     route_sha256: str,
     runtime_gate: RuntimeGateConfig,
     runtime_policy: dict[str, float],
+    runtime_execution_policy: dict[str, Any],
     device_name: str,
     clock_mode: str,
 ) -> dict[str, Any]:
@@ -224,6 +260,9 @@ def build_shadow_provenance(
         "maximum_sensor_skew_s",
         "maximum_history_gap_s",
         "bundle_timeout_s",
+        "input_settle_timeout_s",
+        "maximum_tf_translation_error_m",
+        "maximum_tf_rotation_error_rad",
         "maneuver_lookahead_m",
         "maneuver_exit_lookahead_m",
         "route_projection_backtrack_m",
@@ -236,6 +275,37 @@ def build_shadow_provenance(
         name: require_positive_finite(runtime_policy[name], f"runtime_policy.{name}")
         for name in sorted(expected_policy_names)
     }
+    expected_execution_names = {
+        "policy_id",
+        "torch_intraop_threads",
+        "torch_interop_threads",
+        "cpu_affinity",
+    }
+    if set(runtime_execution_policy) != expected_execution_names:
+        raise RuntimeError("runtime_execution_policy must contain the exact fields")
+    expected_policy_id = (
+        "portable_e2e.cpu_execution.v1"
+        if device_name == "cpu"
+        else "portable_e2e.cuda_execution.v1"
+    )
+    affinity = runtime_execution_policy.get("cpu_affinity")
+    if (
+        runtime_execution_policy.get("policy_id") != expected_policy_id
+        or type(runtime_execution_policy.get("torch_intraop_threads")) is not int
+        or runtime_execution_policy["torch_intraop_threads"] <= 0
+        or type(runtime_execution_policy.get("torch_interop_threads")) is not int
+        or runtime_execution_policy["torch_interop_threads"] <= 0
+        or not isinstance(affinity, list)
+        or not affinity
+        or any(type(cpu) is not int or cpu < 0 for cpu in affinity)
+        or affinity != sorted(set(affinity))
+    ):
+        raise RuntimeError("runtime_execution_policy is invalid")
+    if device_name == "cpu" and (
+        runtime_execution_policy["torch_intraop_threads"] != 4
+        or runtime_execution_policy["torch_interop_threads"] != 1
+    ):
+        raise RuntimeError("runtime CPU threading policy changed")
     # HH_260906 - Pin execution device and ROS clock semantics with every result.
     if device_name not in ("cpu", "cuda:0"):
         raise RuntimeError("device_name must be cpu or logical cuda:0")
@@ -276,11 +346,14 @@ def build_shadow_provenance(
             contract_sha256, "contract_sha256"
         ),
         "live_camera_info_policy": "causal_nonstale_exact_common10_rig_match",
-        "tf_extrinsic_parity": "UNIMPLEMENTED_BLOCKED",
-        "health_scope": "runtime_inputs_except_camera_extrinsics",
+        "tf_extrinsic_policy": "live_base_link_to_optical_at_image_anchor",
+        "health_scope": "full_runtime_requires_camera_extrinsics",
+        "declared_map_id": require_map_id(declared_map_id),
         "route_sha256": require_sha256(route_sha256, "route_sha256"),
         "runtime_gate": asdict(runtime_gate),
         "runtime_policy": pinned_runtime_policy,
+        # HH_260906 - Bind actual PyTorch thread counts and inherited CPU affinity to every result.
+        "runtime_execution_policy": dict(runtime_execution_policy),
     }
 
 
@@ -415,6 +488,89 @@ def camera_info_message_to_live_calibration(
     )
 
 
+def transform_message_to_matrix(message: Any) -> tuple[float, ...]:
+    """Convert a ROS TransformStamped-like value to a finite row-major matrix."""
+    transform = getattr(message, "transform", message)
+    translation = getattr(transform, "translation", None)
+    rotation = getattr(transform, "rotation", None)
+    if translation is None or rotation is None:
+        raise ContractError("live camera TF is missing transform fields")
+    tx, ty, tz = (
+        float(getattr(translation, axis)) for axis in ("x", "y", "z")
+    )
+    qx, qy, qz, qw = (
+        float(getattr(rotation, axis)) for axis in ("x", "y", "z", "w")
+    )
+    values = (tx, ty, tz, qx, qy, qz, qw)
+    if not all(math.isfinite(value) for value in values):
+        raise ContractError("live camera TF contains NaN or Inf")
+    norm = math.sqrt(qx * qx + qy * qy + qz * qz + qw * qw)
+    if not 0.999 <= norm <= 1.001:
+        raise ContractError("live camera TF quaternion is not normalized")
+    # HH_260906 - Normalize bounded floating-point drift before constructing the rotation matrix.
+    qx, qy, qz, qw = (value / norm for value in (qx, qy, qz, qw))
+    return (
+        1.0 - 2.0 * (qy * qy + qz * qz),
+        2.0 * (qx * qy - qz * qw),
+        2.0 * (qx * qz + qy * qw),
+        tx,
+        2.0 * (qx * qy + qz * qw),
+        1.0 - 2.0 * (qx * qx + qz * qz),
+        2.0 * (qy * qz - qx * qw),
+        ty,
+        2.0 * (qx * qz - qy * qw),
+        2.0 * (qy * qz + qx * qw),
+        1.0 - 2.0 * (qx * qx + qy * qy),
+        tz,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
+
+
+def validate_live_extrinsic(
+    expected_base_from_camera: tuple[float, ...],
+    observed_base_from_camera: tuple[float, ...],
+    *,
+    camera_name: str,
+    maximum_translation_error_m: float,
+    maximum_rotation_error_rad: float,
+) -> dict[str, float]:
+    """Compare one pinned rig transform with the independently observed TF tree."""
+    expected = tuple(float(value) for value in expected_base_from_camera)
+    observed = tuple(float(value) for value in observed_base_from_camera)
+    if len(expected) != 16 or len(observed) != 16:
+        raise ContractError("camera extrinsic matrices must contain 16 values")
+    if not all(math.isfinite(value) for value in (*expected, *observed)):
+        raise ContractError("camera extrinsic matrices contain NaN or Inf")
+    translation_limit = require_positive_finite(
+        maximum_translation_error_m, "maximum_translation_error_m"
+    )
+    rotation_limit = require_positive_finite(
+        maximum_rotation_error_rad, "maximum_rotation_error_rad"
+    )
+    translation_error_m = math.sqrt(
+        sum((expected[index] - observed[index]) ** 2 for index in (3, 7, 11))
+    )
+    # HH_260906 - Use the trace of expected-transpose times observed for frame rotation error.
+    relative_trace = sum(
+        expected[row * 4 + column] * observed[row * 4 + column]
+        for row in range(3)
+        for column in range(3)
+    )
+    cosine = max(-1.0, min(1.0, (relative_trace - 1.0) * 0.5))
+    rotation_error_rad = math.acos(cosine)
+    if translation_error_m > translation_limit:
+        raise ContractError(f"camera TF {camera_name} translation does not match pinned rig")
+    if rotation_error_rad > rotation_limit:
+        raise ContractError(f"camera TF {camera_name} rotation does not match pinned rig")
+    return {
+        "translation_error_m": translation_error_m,
+        "rotation_error_rad": rotation_error_rad,
+    }
+
+
 def make_shadow_trajectory(
     result,
     odometry: Odometry,
@@ -488,6 +644,7 @@ class PortableE2EShadowNode(Node):
         super().__init__("portable_e2e_shadow")
         self._declare_parameters()
         self._load_parameters()
+        self._runtime_execution_policy = configure_runtime_execution(self._device)
         contract_path = self._required_path("contract_file")
         expected_contract_sha256 = require_sha256(
             self._required_text("contract_sha256"), "contract_sha256"
@@ -504,6 +661,9 @@ class PortableE2EShadowNode(Node):
         if contract_sha256_after != expected_contract_sha256:
             raise RuntimeError("contract_file changed while the contract was loaded")
         route_path = self._required_path("route_file")
+        self._declared_map_id = require_map_id(
+            self._required_text("declared_map_id")
+        )
         expected_route_sha256 = require_sha256(
             self._required_text("route_sha256"), "route_sha256"
         )
@@ -576,7 +736,19 @@ class PortableE2EShadowNode(Node):
         self._camera_calibration = {
             camera.name: camera for camera in calibration.cameras
         }
+        # HH_260906 - Observe the live TF tree without publishing or altering any transform.
+        self._tf_buffer = TransformBuffer(cache_time=Duration(seconds=10.0))
+        self._tf_listener = TransformListener(
+            self._tf_buffer,
+            self,
+            spin_thread=False,
+        )
+        self._calibration_extrinsics_verified = False
+        self._tf_extrinsic_state = "UNVERIFIED_REQUIRED"
+        self._tf_extrinsic_errors: dict[str, dict[str, float]] = {}
         self._bundle = ExactCameraBundle()
+        # HH_260906 - Hold one exact camera bundle briefly for same-tick state arrival.
+        self._pending_bundle: tuple[int, tuple[Any, ...], int, bool] | None = None
         self._last_complete_bundle_wall_ns: int | None = None
         self._camera_info_buffers = {
             camera: CausalMessageBuffer() for camera in CAMERA_ORDER
@@ -595,6 +767,20 @@ class PortableE2EShadowNode(Node):
         self._accepted_count = 0
         self._anchor_rejected_count = 0
         self._input_event_rejected_count = 0
+        self._input_settle_deferred_count = 0
+        self._input_settle_timeout_count = 0
+        # HH_260906 - Arm only after rosbag discovers every volatile shadow publisher.
+        self._measurement_armed = False
+        self._armed_status_json: str | None = None
+        # HH_260906 - Track the last pre-arm camera epoch so measurement starts after it.
+        self._maximum_prearm_camera_stamp_ns = -1
+        self._measurement_anchor_floor_ns: int | None = None
+        self._preboundary_filtered_input_count = 0
+        # HH_260906 - Capture one idempotent healthy startup boundary inside the status publisher.
+        self._startup_boundary_status_json: str | None = None
+        # HH_260906 - Seal one deterministic evidence boundary without changing vehicle control.
+        self._measurement_sealed = False
+        self._sealed_status_json: str | None = None
         self._rejection_counts_by_stage = {
             stage: 0 for stage in SHADOW_REJECTION_STAGES
         }
@@ -608,6 +794,7 @@ class PortableE2EShadowNode(Node):
             rig_id=calibration.rig_id,
             rig_sha256=calibration.rig_sha256,
             contract_sha256=contract_sha256_after,
+            declared_map_id=self._declared_map_id,
             route_sha256=loaded_route_sha256,
             runtime_gate=gate,
             runtime_policy={
@@ -618,11 +805,17 @@ class PortableE2EShadowNode(Node):
                 "maximum_sensor_skew_s": self._maximum_sensor_skew_s,
                 "maximum_history_gap_s": self._maximum_history_gap_s,
                 "bundle_timeout_s": self._bundle_timeout_s,
+                "input_settle_timeout_s": self._input_settle_timeout_s,
+                "maximum_tf_translation_error_m": (
+                    self._maximum_tf_translation_error_m
+                ),
+                "maximum_tf_rotation_error_rad": self._maximum_tf_rotation_error_rad,
                 "maneuver_lookahead_m": self._maneuver_lookahead_m,
                 "maneuver_exit_lookahead_m": self._maneuver_exit_lookahead_m,
                 "route_projection_backtrack_m": self._route_projection_backtrack_m,
                 "route_projection_forward_m": self._route_projection_forward_m,
             },
+            runtime_execution_policy=self._runtime_execution_policy,
             device_name=str(self._runtime.device),
             clock_mode=self._clock_mode,
         )
@@ -631,7 +824,7 @@ class PortableE2EShadowNode(Node):
         self._last_status_detail: dict[str, Any] = {
             "reason": "waiting_for_exact_bundle_and_camera_info",
             "failure_code": "waiting_for_inputs",
-            "tf_extrinsic_parity": "UNIMPLEMENTED_BLOCKED",
+            "tf_extrinsic_parity": "UNVERIFIED_REQUIRED",
         }
 
         self._trajectory_publisher = self._create_fixed_publisher(
@@ -648,6 +841,21 @@ class PortableE2EShadowNode(Node):
         )
         self._candidate_publisher = self._create_fixed_publisher(
             Int8, SHADOW_SELECTED_CANDIDATE_TOPIC, OUTPUT_QOS
+        )
+        self._arm_service = self.create_service(
+            Trigger,
+            SHADOW_ARM_SERVICE,
+            self._on_arm_measurement,
+        )
+        self._startup_boundary_service = self.create_service(
+            Trigger,
+            SHADOW_STARTUP_BOUNDARY_SERVICE,
+            self._on_capture_startup_boundary,
+        )
+        self._seal_service = self.create_service(
+            Trigger,
+            SHADOW_SEAL_SERVICE,
+            self._on_seal_measurement,
         )
         for camera in CAMERA_ORDER:
             self.create_subscription(
@@ -705,6 +913,7 @@ class PortableE2EShadowNode(Node):
             "model_config_sha256": "",
             "rig_file": "",
             "rig_sha256": "",
+            "declared_map_id": "",
             "route_file": "",
             "route_sha256": "",
             "device": "cpu",
@@ -716,6 +925,9 @@ class PortableE2EShadowNode(Node):
             "maximum_sensor_skew_s": 0.1,
             "maximum_history_gap_s": 0.15,
             "bundle_timeout_s": 0.3,
+            "input_settle_timeout_s": 0.05,
+            "maximum_tf_translation_error_m": 0.005,
+            "maximum_tf_rotation_error_rad": 0.005,
             "maneuver_lookahead_m": 2.0,
             "maneuver_exit_lookahead_m": 2.5,
             "route_projection_backtrack_m": 3.0,
@@ -765,6 +977,9 @@ class PortableE2EShadowNode(Node):
             "maximum_sensor_skew_s",
             "maximum_history_gap_s",
             "bundle_timeout_s",
+            "input_settle_timeout_s",
+            "maximum_tf_translation_error_m",
+            "maximum_tf_rotation_error_rad",
             "maneuver_lookahead_m",
             "maneuver_exit_lookahead_m",
             "route_projection_backtrack_m",
@@ -800,6 +1015,15 @@ class PortableE2EShadowNode(Node):
         positive_names = set(numeric_names) - {"minimum_first_point_x_m"}
         if any(getattr(self, f"_{name}") <= 0.0 for name in positive_names):
             raise RuntimeError("shadow numeric safety parameters must be positive")
+        # HH_260906 - Bound asynchronous settling below every freshness watchdog threshold.
+        if self._input_settle_timeout_s > min(
+            self._maximum_image_age_s,
+            self._maximum_state_age_s,
+            self._bundle_timeout_s,
+        ):
+            raise RuntimeError(
+                "input_settle_timeout_s must not exceed image, state, or bundle timeouts"
+            )
 
     def _required_text(self, name: str) -> str:
         value = str(self.get_parameter(name).value)
@@ -824,20 +1048,37 @@ class PortableE2EShadowNode(Node):
 
     def _image_callback(self, camera: str):
         def callback(message: Image) -> None:
+            if self._measurement_sealed:
+                return
             try:
+                stamp_ns = stamp_to_nanoseconds(message.header.stamp)
+                if not self._measurement_armed:
+                    self._maximum_prearm_camera_stamp_ns = max(
+                        self._maximum_prearm_camera_stamp_ns,
+                        stamp_ns,
+                    )
+                    return
+                if self._is_preboundary_input(stamp_ns):
+                    return
                 frame = image_message_to_runtime_frame(
                     message,
                     expected_frame_id=self._camera_calibration[camera].optical_frame,
                 )
                 self._bundle.push(camera, frame.timestamp_ns, frame)
             except (ContractError, ValueError) as error:
-                self._reject("image", error)
+                if self._measurement_armed:
+                    self._reject("image", error)
 
         return callback
 
     def _camera_info_callback(self, camera: str):
         def callback(message: CameraInfo) -> None:
+            if not self._measurement_armed or self._measurement_sealed:
+                return
             try:
+                stamp_ns = stamp_to_nanoseconds(message.header.stamp)
+                if self._is_preboundary_input(stamp_ns):
+                    return
                 observed = camera_info_message_to_live_calibration(
                     message, camera_name=camera
                 )
@@ -853,46 +1094,177 @@ class PortableE2EShadowNode(Node):
         return callback
 
     def _on_odometry(self, message: Odometry) -> None:
+        if not self._measurement_armed or self._measurement_sealed:
+            return
         try:
-            self._odometry_buffer.push(
-                stamp_to_nanoseconds(message.header.stamp), message
-            )
+            stamp_ns = stamp_to_nanoseconds(message.header.stamp)
+            if self._is_preboundary_input(stamp_ns):
+                return
+            self._odometry_buffer.push(stamp_ns, message)
         except ContractError as error:
             self._reject("odometry", error)
 
     def _on_acceleration(self, message: AccelWithCovarianceStamped) -> None:
+        if not self._measurement_armed or self._measurement_sealed:
+            return
         try:
-            self._acceleration_buffer.push(
-                stamp_to_nanoseconds(message.header.stamp), message
-            )
+            stamp_ns = stamp_to_nanoseconds(message.header.stamp)
+            if self._is_preboundary_input(stamp_ns):
+                return
+            self._acceleration_buffer.push(stamp_ns, message)
         except ContractError as error:
             self._reject("acceleration", error)
 
     def _on_steering(self, message: SteeringReport) -> None:
+        if not self._measurement_armed or self._measurement_sealed:
+            return
         try:
-            self._steering_buffer.push(stamp_to_nanoseconds(message.stamp), message)
+            stamp_ns = stamp_to_nanoseconds(message.stamp)
+            if self._is_preboundary_input(stamp_ns):
+                return
+            self._steering_buffer.push(stamp_ns, message)
         except ContractError as error:
             self._reject("steering", error)
 
+    def _is_preboundary_input(self, stamp_ns: int) -> bool:
+        # HH_260906 - Exclude queued inputs at or before the atomic arm-time epoch.
+        if self._measurement_anchor_floor_ns is None:
+            raise ContractError("measurement anchor floor is unavailable after arm")
+        if stamp_ns > self._measurement_anchor_floor_ns:
+            return False
+        self._preboundary_filtered_input_count += 1
+        return True
+
     def _on_timer(self) -> None:
-        complete = self._bundle.pop_latest()
-        if complete is None:
-            self._publish_bundle_timeout_if_needed()
+        if not self._measurement_armed or self._measurement_sealed:
             return
-        anchor_ns, frames = complete
-        if anchor_ns <= self._last_processed_anchor_ns:
+        if self._pending_bundle is None:
+            complete = self._bundle.pop_latest()
+            if complete is None:
+                self._publish_bundle_timeout_if_needed()
+                return
+            anchor_ns, frames = complete
+            if anchor_ns <= self._last_processed_anchor_ns:
+                return
+            received_wall_ns = time.monotonic_ns()
+            self._last_complete_bundle_wall_ns = received_wall_ns
+            self._pending_bundle = (anchor_ns, frames, received_wall_ns, False)
+
+        anchor_ns, frames, received_wall_ns, deferred = self._pending_bundle
+        try:
+            inputs_ready = self._anchor_inputs_ready(anchor_ns)
+        except (
+            ArithmeticError,
+            ContractError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as error:
+            self._finish_pending_bundle(anchor_ns, frames, preflight_error=error)
             return
+        if not inputs_ready:
+            if not deferred:
+                # HH_260906 - Count the first not-ready observation even after a scheduler pause.
+                self._input_settle_deferred_count += 1
+                self._pending_bundle = (
+                    anchor_ns,
+                    frames,
+                    received_wall_ns,
+                    True,
+                )
+            elapsed_s = (time.monotonic_ns() - received_wall_ns) * 1.0e-9
+            if elapsed_s < self._input_settle_timeout_s:
+                return
+            self._input_settle_timeout_count += 1
+        self._finish_pending_bundle(anchor_ns, frames)
+
+    def _anchor_inputs_ready(self, anchor_ns: int) -> bool:
+        try:
+            self._validated_camera_info(anchor_ns)
+            self._validated_live_extrinsics(anchor_ns)
+            self._causal_state(self._odometry_buffer, anchor_ns, "odometry")
+            self._causal_state(self._acceleration_buffer, anchor_ns, "acceleration")
+            self._causal_state(self._steering_buffer, anchor_ns, "steering")
+        except ContractError as error:
+            if is_retryable_causal_input_error(error):
+                return False
+            raise
+        return True
+
+    def _validated_live_extrinsics(
+        self,
+        anchor_ns: int,
+    ) -> dict[str, dict[str, float]]:
+        errors: dict[str, dict[str, float]] = {}
+        # HH_260906 - Reset current parity before every six-camera TF observation.
+        self._calibration_extrinsics_verified = False
+        self._tf_extrinsic_state = "UNVERIFIED_REQUIRED"
+        self._tf_extrinsic_errors = {}
+        for camera in CAMERA_ORDER:
+            expected = self._camera_calibration[camera]
+            try:
+                observed = self._tf_buffer.lookup_transform(
+                    "base_link",
+                    expected.optical_frame,
+                    # HH_260906 - Query the exact image time so a future dynamic TF cannot pass.
+                    RosTime(
+                        nanoseconds=anchor_ns,
+                        clock_type=ClockType.ROS_TIME,
+                    ),
+                    timeout=Duration(seconds=0.0),
+                )
+            except TransformException as error:
+                self._tf_extrinsic_state = "UNVERIFIED_REQUIRED"
+                self._tf_extrinsic_errors = {}
+                raise ContractError(f"causal camera TF {camera} is missing") from error
+            try:
+                errors[camera] = validate_live_extrinsic(
+                    expected.base_from_camera,
+                    transform_message_to_matrix(observed),
+                    camera_name=camera,
+                    maximum_translation_error_m=(
+                        self._maximum_tf_translation_error_m
+                    ),
+                    maximum_rotation_error_rad=self._maximum_tf_rotation_error_rad,
+                )
+            except ContractError:
+                self._tf_extrinsic_state = "MISMATCH_REJECTED"
+                self._tf_extrinsic_errors = {}
+                raise
+        # HH_260906 - Mark full health only after all six live transforms match the rig.
+        self._calibration_extrinsics_verified = True
+        self._tf_extrinsic_state = "VERIFIED"
+        self._tf_extrinsic_errors = errors
+        return errors
+
+    def _finish_pending_bundle(
+        self,
+        anchor_ns: int,
+        frames: tuple[Any, ...],
+        *,
+        preflight_error: Exception | None = None,
+    ) -> None:
+        # HH_260906 - Clear ownership before inference and account for each exact anchor once.
+        self._pending_bundle = None
         self._last_processed_anchor_ns = anchor_ns
-        self._last_complete_bundle_wall_ns = time.monotonic_ns()
-        # HH_260906 - Count each fresh exact six-camera bundle exactly once.
         self._anchor_attempt_count += 1
         try:
+            if preflight_error is not None:
+                raise preflight_error
             self._run_shadow(anchor_ns, frames)
         # HH_260906 - Keep any arithmetic failure inside the shadow rejection boundary.
-        except (ArithmeticError, ContractError, RuntimeError, ValueError) as error:
+        except (
+            ArithmeticError,
+            ContractError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as error:
             self._reject("inference", error, anchor_ns=anchor_ns)
 
     def _run_shadow(self, anchor_ns: int, frames: tuple[Any, ...]) -> None:
+        # HH_260906 - Revalidate live camera mounting at execution after any bounded settle wait.
+        self._validated_live_extrinsics(anchor_ns)
         camera_info_stamps = self._validated_camera_info(anchor_ns)
         odometry_ns, odometry = self._causal_state(
             self._odometry_buffer, anchor_ns, "odometry"
@@ -998,8 +1370,13 @@ class PortableE2EShadowNode(Node):
                 "acceleration_timestamp_ns": acceleration_ns,
                 "steering_timestamp_ns": steering_ns,
                 "camera_info_timestamp_ns": camera_info_stamps,
-                "tf_extrinsic_parity": "UNIMPLEMENTED_BLOCKED",
+                "tf_extrinsic_parity": self._tf_extrinsic_state,
+                "tf_extrinsic_errors": self._tf_extrinsic_errors,
                 "trajectory_point_count": len(trajectory.points),
+                "measurement_anchor_floor_ns": self._measurement_anchor_floor_ns,
+                "preboundary_filtered_input_count": (
+                    self._preboundary_filtered_input_count
+                ),
             },
         )
 
@@ -1035,6 +1412,11 @@ class PortableE2EShadowNode(Node):
         return state_ns, message
 
     def _on_status_heartbeat(self) -> None:
+        if not self._measurement_armed or self._measurement_sealed:
+            return
+        # HH_260906 - Avoid publishing prior health while a newer anchor is still settling.
+        if self._pending_bundle is not None:
+            return
         if self._publish_bundle_timeout_if_needed():
             return
         self._publish_status(
@@ -1042,6 +1424,152 @@ class PortableE2EShadowNode(Node):
             anchor_ns=self._last_status_anchor_ns,
             detail=self._last_status_detail,
         )
+
+    def _on_arm_measurement(
+        self,
+        _request: Trigger.Request,
+        response: Trigger.Response,
+    ):
+        """Publish one recorded zero baseline before accepting sensor callbacks."""
+        # HH_260906 - Make arm retries idempotent without duplicating the zero boundary.
+        if self._measurement_armed:
+            response.success = self._armed_status_json is not None
+            response.message = self._armed_status_json or "measurement arm is incomplete"
+            return response
+        bundle_counters = self._bundle.counters()
+        pristine = (
+            not self._measurement_sealed
+            and self._anchor_attempt_count == 0
+            and self._accepted_count == 0
+            and self._anchor_rejected_count == 0
+            and self._input_event_rejected_count == 0
+            and self._input_settle_deferred_count == 0
+            and self._input_settle_timeout_count == 0
+            and all(value == 0 for value in self._rejection_counts_by_stage.values())
+            and all(value == 0 for value in bundle_counters.values())
+            and self._pending_bundle is None
+            and self._last_processed_anchor_ns == -1
+            and self._measurement_anchor_floor_ns is None
+            and self._preboundary_filtered_input_count == 0
+        )
+        if not pristine:
+            response.success = False
+            response.message = "cannot arm a non-pristine shadow measurement"
+            return response
+        # HH_260906 - Freeze a strict source-time floor before enabling measured callbacks.
+        self._measurement_anchor_floor_ns = max(
+            int(self.get_clock().now().nanoseconds),
+            self._maximum_prearm_camera_stamp_ns,
+        )
+        self._measurement_armed = True
+        self._last_status_state = "SHADOW_WAITING"
+        self._last_status_anchor_ns = None
+        self._last_status_detail = {
+            "stage": "measurement",
+            "failure_code": "waiting_for_inputs",
+            "reason": "armed_waiting_for_exact_bundle_and_camera_info",
+            "measurement_anchor_floor_ns": self._measurement_anchor_floor_ns,
+            "measurement_anchor_policy": "strictly_after_arm_source_time",
+        }
+        self._armed_status_json = self._publish_status(
+            self._last_status_state,
+            anchor_ns=None,
+            detail=self._last_status_detail,
+        )
+        response.success = True
+        response.message = self._armed_status_json
+        return response
+
+    def _on_seal_measurement(self, _request: Trigger.Request, response: Trigger.Response):
+        """Quiesce inference and return the exact final healthy status JSON."""
+        # HH_260906 - Make retries idempotent without publishing a second final boundary.
+        if self._measurement_sealed:
+            response.success = self._sealed_status_json is not None
+            response.message = self._sealed_status_json or "measurement seal is incomplete"
+            return response
+        if not self._measurement_armed:
+            response.success = False
+            response.message = "cannot seal before measurement arm"
+            return response
+        if self._publish_bundle_timeout_if_needed():
+            response.success = False
+            response.message = "cannot seal after camera bundle health expired"
+            return response
+        bundle_counters = self._bundle.counters()
+        # HH_260906 - Refuse to hide an incomplete camera anchor at the terminal boundary.
+        if (
+            self._pending_bundle is not None
+            or bundle_counters.get("pending_bundle_count") != 0
+        ):
+            response.success = False
+            response.message = "cannot seal while a camera bundle remains pending"
+            return response
+        if not (
+            self._last_status_state == "SHADOW_OK"
+            and self._calibration_extrinsics_verified
+            and self._tf_extrinsic_state == "VERIFIED"
+        ):
+            response.success = False
+            response.message = "cannot seal without a current fully healthy shadow result"
+            return response
+        # HH_260906 - Set the guard before publishing so no later callback can extend the window.
+        self._measurement_sealed = True
+        self._sealed_status_json = self._publish_status(
+            self._last_status_state,
+            anchor_ns=self._last_status_anchor_ns,
+            detail=self._last_status_detail,
+        )
+        response.success = True
+        response.message = self._sealed_status_json
+        return response
+
+    def _on_capture_startup_boundary(
+        self,
+        _request: Trigger.Request,
+        response: Trigger.Response,
+    ):
+        """Republish and return one clean current health result as an exact boundary."""
+        # HH_260906 - Make client retries idempotent without extending the measured prefix.
+        if self._startup_boundary_status_json is not None:
+            response.success = True
+            response.message = self._startup_boundary_status_json
+            return response
+        if not self._measurement_armed or self._measurement_sealed:
+            response.success = False
+            response.message = "startup boundary requires an active armed measurement"
+            return response
+        bundle_counters = self._bundle.counters()
+        cumulative_bundle_failures = sum(
+            value
+            for name, value in bundle_counters.items()
+            if name != "pending_bundle_count"
+        )
+        clean_current_health = (
+            self._last_status_state == "SHADOW_OK"
+            and self._accepted_count > 0
+            and self._anchor_rejected_count == 0
+            and self._input_event_rejected_count == 0
+            and self._input_settle_timeout_count == 0
+            and all(value == 0 for value in self._rejection_counts_by_stage.values())
+            and cumulative_bundle_failures == 0
+            and bundle_counters.get("pending_bundle_count") == 0
+            and self._pending_bundle is None
+            and self._calibration_extrinsics_verified
+            and self._tf_extrinsic_state == "VERIFIED"
+        )
+        if not clean_current_health:
+            response.success = False
+            response.message = "startup boundary requires clean current shadow health"
+            return response
+        # HH_260906 - Republish status so rosbag records an adjacent semantic pair.
+        self._startup_boundary_status_json = self._publish_status(
+            self._last_status_state,
+            anchor_ns=self._last_status_anchor_ns,
+            detail=self._last_status_detail,
+        )
+        response.success = True
+        response.message = self._startup_boundary_status_json
+        return response
 
     def _publish_bundle_timeout_if_needed(self) -> bool:
         if self._last_complete_bundle_wall_ns is None:
@@ -1077,6 +1605,8 @@ class PortableE2EShadowNode(Node):
         anchor_ns: int | None = None,
         source: str | None = None,
     ) -> None:
+        if not self._measurement_armed or self._measurement_sealed:
+            return
         failure_code = classify_shadow_failure(stage, error)
         # HH_260906 - Keep asynchronous input rejects outside the anchor denominator.
         self._rejection_counts_by_stage[stage] += 1
@@ -1104,7 +1634,9 @@ class PortableE2EShadowNode(Node):
         *,
         anchor_ns: int | None,
         detail: dict[str, Any],
-    ) -> None:
+    ) -> str:
+        if self._measurement_sealed and self._sealed_status_json is not None:
+            raise RuntimeError("status publication attempted after measurement seal")
         # HH_260906 - Fail closed if one processed anchor is absent from the outcome counts.
         if self._anchor_attempt_count != (
             self._accepted_count + self._anchor_rejected_count
@@ -1122,9 +1654,11 @@ class PortableE2EShadowNode(Node):
             )
         )
         inference_inputs_healthy_now = state == "SHADOW_OK"
-        # HH_260906 - Keep overall health false until live camera extrinsics are verified.
+        # HH_260906 - Require both the current six-camera TF check and its provenance state.
         calibration_extrinsics_verified = (
-            self._provenance.get("tf_extrinsic_parity") == "VERIFIED"
+            bool(getattr(self, "_calibration_extrinsics_verified", False))
+            and getattr(self, "_tf_extrinsic_state", "UNVERIFIED_REQUIRED")
+            == "VERIFIED"
         )
         payload = {
             "schema_id": SHADOW_STATUS_SCHEMA_ID,
@@ -1136,6 +1670,11 @@ class PortableE2EShadowNode(Node):
             ),
             "inference_inputs_healthy_now": inference_inputs_healthy_now,
             "calibration_extrinsics_verified": calibration_extrinsics_verified,
+            "tf_extrinsic_parity": getattr(
+                self,
+                "_tf_extrinsic_state",
+                "UNVERIFIED_REQUIRED",
+            ),
             "health_scope": "full_runtime_requires_camera_extrinsic_parity",
             "anchor_timestamp_ns": anchor_ns,
             "status_timestamp_ns": int(self.get_clock().now().nanoseconds),
@@ -1144,6 +1683,10 @@ class PortableE2EShadowNode(Node):
             "accepted_count": self._accepted_count,
             "anchor_rejected_count": self._anchor_rejected_count,
             "input_event_rejected_count": self._input_event_rejected_count,
+            "input_settle_deferred_count": self._input_settle_deferred_count,
+            "input_settle_timeout_count": self._input_settle_timeout_count,
+            "measurement_armed": self._measurement_armed,
+            "measurement_sealed": self._measurement_sealed,
             "rejection_counts_by_stage": dict(self._rejection_counts_by_stage),
             "last_complete_bundle_wall_age_ms": bundle_age_ms,
             "camera_bundle_counters": self._bundle.counters(),
@@ -1152,9 +1695,9 @@ class PortableE2EShadowNode(Node):
             "provenance": self._provenance,
             "detail": detail,
         }
-        self._status_publisher.publish(
-            String(data=json.dumps(payload, sort_keys=True, allow_nan=False))
-        )
+        status_json = json.dumps(payload, sort_keys=True, allow_nan=False)
+        self._status_publisher.publish(String(data=status_json))
+        return status_json
 
 
 def main() -> None:
@@ -1165,12 +1708,23 @@ def main() -> None:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except Exception as error:
+        # HH_260906 - Accept Humble's RCLError only when launch already invalidated the context.
+        if (
+            type(error).__name__ != "RCLError"
+            or rclpy.ok()
+            or not any(
+                fragment in str(error)
+                for fragment in ("context is not valid", "context is invalid")
+            )
+        ):
+            raise
     finally:
         if node is not None:
             try:
                 node.destroy_node()
             except KeyboardInterrupt:
-                # HH_260906 - Treat a repeated launch SIGINT during node teardown as clean shutdown.
+                # HH_260906 - Treat repeated teardown SIGINT as a clean shutdown.
                 pass
         if rclpy.ok():
             try:

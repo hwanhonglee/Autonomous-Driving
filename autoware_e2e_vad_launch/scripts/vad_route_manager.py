@@ -586,12 +586,22 @@ class VadRouteManager(Node):
             )
             if not 0.5 <= quaternion_norm <= 1.5:
                 raise ValueError(f"point {index} quaternion norm is {quaternion_norm:.3f}")
-            if point.longitudinal_velocity_mps < -0.1 or abs(point.longitudinal_velocity_mps) > 20.0:
+            if (
+                point.longitudinal_velocity_mps < -0.1
+                or abs(point.longitudinal_velocity_mps) > 20.0
+            ):
                 raise ValueError(
-                    f"point {index} longitudinal speed is {point.longitudinal_velocity_mps:.2f} m/s"
+                    f"point {index} longitudinal speed is "
+                    f"{point.longitudinal_velocity_mps:.2f} m/s"
                 )
-            time_sec = point.time_from_start.sec + point.time_from_start.nanosec * 1.0e-9
-            if point.time_from_start.sec < 0 or point.time_from_start.nanosec >= 1_000_000_000:
+            time_sec = (
+                point.time_from_start.sec
+                + point.time_from_start.nanosec * 1.0e-9
+            )
+            if (
+                point.time_from_start.sec < 0
+                or point.time_from_start.nanosec >= 1_000_000_000
+            ):
                 raise ValueError(f"point {index} time_from_start is invalid")
             if previous_time is not None and time_sec <= previous_time:
                 raise ValueError(f"point {index} time_from_start is not increasing")
@@ -1139,11 +1149,30 @@ def main():
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except Exception as error:
+        # HH_260906 - Accept publish RCLError only after launch invalidates the ROS context.
+        if (
+            type(error).__name__ != "RCLError"
+            or rclpy.ok()
+            or not any(
+                fragment in str(error)
+                for fragment in ("context is not valid", "context is invalid")
+            )
+        ):
+            raise
     finally:
         if node is not None:
-            node.destroy_node()
+            try:
+                node.destroy_node()
+            except KeyboardInterrupt:
+                # HH_260906 - Treat repeated launch SIGINT during teardown as a clean exit.
+                pass
         if rclpy.ok():
-            rclpy.shutdown()
+            try:
+                rclpy.shutdown()
+            except (KeyboardInterrupt, ExternalShutdownException):
+                # HH_260906 - Keep shutdown idempotent when launch and rclpy signal together.
+                pass
 
 
 if __name__ == "__main__":

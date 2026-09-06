@@ -1,0 +1,454 @@
+{
+  "accepted_latency": {
+    "count": 497,
+    "count_over_100ms": 0,
+    "deadline_ms": 100.0,
+    "maximum_ms": 46.2834358215332,
+    "p50_ms": 19.719758987426758,
+    "p95_ms": 28.09916038513183,
+    "p99_ms": 36.86218185424805
+  },
+  "accepted_status_wall_timing": {
+    "accepted_count": 497,
+    "accepted_outcome_duration_s": 49.660876926,
+    "accepted_outcome_rate_hz": 9.987741471804714,
+    "boundary_inclusive_duration_s": 49.760771086,
+    "boundary_inclusive_gap_count": 498,
+    "boundary_inclusive_timestamp_count": 499,
+    "includes_startup_and_sealed_final_boundaries": true,
+    "last_accepted_to_sealed_final_gap_s": 0.002320618,
+    "maximum_allowed_gap_s": 0.2,
+    "maximum_gap_s": 0.138353,
+    "p95_gap_s": 0.11145645109999998,
+    "p99_gap_s": 0.12090124319999986,
+    "startup_to_first_accepted_gap_s": 0.097573542
+  },
+  "analysis_status": "EVIDENCE_VALID",
+  "analysis_window": {
+    "armed_status_record_index": 0,
+    "armed_status_sha256": "005a19131ebab54c8acc470c4c95b0ac27c475549326ccc453bf760508366b21",
+    "cross_topic_receipt_time_slicing_used": false,
+    "exact_unique_boundary_matches": true,
+    "final_accepted_lifetime_ordinal": 512,
+    "final_status_bag_timestamp_ns": 1788655637509119068,
+    "final_status_record_index": 566,
+    "final_status_sha256": "f9897605ec5b99d3054fc62f1276661977c95c00eb0a5137f2569900a6d795eb",
+    "final_status_wall_timestamp_ns": 1788655637509016170,
+    "healthy_startup_heartbeat_and_terminal_seal": true,
+    "schema_id": "autoware-e2e.portable-shadow-window-boundaries.v2",
+    "selected_accepted_count": 497,
+    "selection_mode": "accepted_lifetime_ordinal",
+    "startup_accepted_lifetime_ordinal": 15,
+    "startup_status_bag_timestamp_ns": 1788655587748323647,
+    "startup_status_record_index": 18,
+    "startup_status_sha256": "5810beb922e1d06c174f203221ce914216313b050293d848a12dfb8f7135f679",
+    "startup_status_wall_timestamp_ns": 1788655587748245084,
+    "status_wall_duration_s": 49.760771086000005
+  },
+  "arm_to_seal_status_accounting": {
+    "anchor_outcomes": {
+      "accepted_count": 512,
+      "accepted_percent": 100.0,
+      "attempted_count": 512,
+      "rejected_count": 0,
+      "rejected_percent": 0.0
+    },
+    "anchor_rejection_reason_histogram": {},
+    "camera_bundle_counters_at_end": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0,
+      "pending_bundle_count": 0
+    },
+    "camera_bundle_counters_at_start": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0,
+      "pending_bundle_count": 0
+    },
+    "camera_bundle_cumulative_delta": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0
+    },
+    "complete_increment_sequence": true,
+    "denominators": {
+      "accepted_count": 512,
+      "anchor_attempt_count": 512,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "exact_anchor_invariant": true,
+    "health_snapshot_counts": {
+      "all_statuses_healthy_shadow_ok_verified": false,
+      "calibration_extrinsics_verified": 566,
+      "camera_bundle_timeout": 0,
+      "extrinsic_blocked_after_inference_inputs": 0,
+      "full_runtime_healthy": 566,
+      "healthy_shadow_ok_verified": 566,
+      "inference_inputs_healthy": 566,
+      "nonhealthy_or_non_ok": 1,
+      "rejected": 0,
+      "total": 567,
+      "waiting": 1
+    },
+    "heartbeat_count": 53,
+    "input_event_rejection_reason_histogram": {},
+    "input_settle": {
+      "input_settle_deferred_count": 0,
+      "input_settle_timeout_count": 0
+    },
+    "lifetime_counters_at_end": {
+      "accepted_count": 512,
+      "anchor_attempt_count": 512,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "lifetime_counters_at_start": {
+      "accepted_count": 0,
+      "anchor_attempt_count": 0,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "map_runtime_status_bound": true,
+    "maximum_observed_pending_bundle_count": 1,
+    "pending_bundle_net_change": 0,
+    "rejection_counts_by_stage": {
+      "acceleration": 0,
+      "camera_info": 0,
+      "image": 0,
+      "inference": 0,
+      "odometry": 0,
+      "steering": 0
+    },
+    "rejection_reason_histogram": {},
+    "state_histogram": {
+      "SHADOW_OK": 566,
+      "SHADOW_WAITING": 1
+    },
+    "state_only_transition_count": 1,
+    "status_message_count": 567,
+    "terminal_exact_heartbeat_observed": true,
+    "tf_extrinsic_parity_histogram": {
+      "UNVERIFIED_REQUIRED": 1,
+      "VERIFIED": 566
+    }
+  },
+  "claims": {
+    "ten_hz": {
+      "pass": true,
+      "requirements": {
+        "anchor_rate_hz": {
+          "met": true,
+          "observed": 9.999999851008067,
+          "required_range": [
+            9.5,
+            10.5
+          ]
+        },
+        "armed_zero_prefix_and_sealed_boundaries": {
+          "met": true,
+          "observed": true
+        },
+        "complete_accepted_ordinal_output_correlation": {
+          "met": true,
+          "observed": true
+        },
+        "continuous_source_anchor_period": {
+          "allowed_absolute_tolerance_ns": 5000,
+          "met": true,
+          "observed_gap_count": 496,
+          "observed_maximum_period_ns": 100000002,
+          "observed_minimum_period_ns": 100000001,
+          "observed_violation_count": 0,
+          "required_period_ns": 100000000
+        },
+        "every_measured_status_fully_healthy": {
+          "met": true,
+          "observed_camera_bundle_timeout_count": 0,
+          "observed_healthy_shadow_ok_verified_count": 549,
+          "observed_rejected_count": 0,
+          "observed_status_count": 549,
+          "observed_waiting_count": 0
+        },
+        "exact_status_heartbeat": {
+          "met": true,
+          "observed_count": 50,
+          "startup_boundary_observed": true
+        },
+        "full_health_for_every_accept": {
+          "met": true,
+          "observed_full_healthy_count": 497,
+          "required_count": 497
+        },
+        "latency_deadline": {
+          "met": true,
+          "observed_count_over_100ms": 0,
+          "observed_p99_ms": 36.86218185424805,
+          "required_p99_maximum_ms": 100.0
+        },
+        "map_provenance_runtime_status_bound": {
+          "met": true,
+          "observed": true
+        },
+        "maximum_accepted_status_wall_gap_s": {
+          "last_accepted_to_sealed_final_gap_s": 0.002320618,
+          "met": true,
+          "observed": 0.138353,
+          "required_maximum_s": 0.2,
+          "scope": "startup boundary through every accepted outcome to sealed final",
+          "startup_to_first_accepted_gap_s": 0.097573542
+        },
+        "minimum_accepted_count": {
+          "met": true,
+          "observed": 497,
+          "required": 101
+        },
+        "minimum_duration_s": {
+          "met": true,
+          "observed": 49.600000739,
+          "required": 10.0
+        },
+        "path_receipt_rate_hz": {
+          "met": true,
+          "observed": 9.98774604243517,
+          "required_range": [
+            9.5,
+            10.5
+          ]
+        },
+        "pre_startup_only_initial_waiting_and_zero_losses": {
+          "met": true,
+          "observed_disallowed_waiting_status_count": 0,
+          "observed_drop_count": 0,
+          "observed_initial_waiting_heartbeat_count": 0,
+          "observed_rejected_status_count": 0,
+          "observed_rejection_count": 0,
+          "observed_timeout_count": 0
+        },
+        "trajectory_receipt_rate_hz": {
+          "met": true,
+          "observed": 9.987748880427523,
+          "required_range": [
+            9.5,
+            10.5
+          ]
+        },
+        "zero_rejections_arm_to_seal": {
+          "met": true,
+          "observed_anchor_rejected_count": 0,
+          "observed_input_event_rejected_count": 0,
+          "observed_rejection_stage_count": 0
+        },
+        "zero_silent_runtime_losses_arm_to_seal": {
+          "deferred_count_is_reporting_only": true,
+          "met": true,
+          "observed_camera_bundle_cumulative_delta": {
+            "dropped_stale_count": 0,
+            "evicted_capacity_count": 0,
+            "expired_pending_count": 0
+          },
+          "observed_input_settle_deferred_count": 0,
+          "observed_input_settle_timeout_count": 0,
+          "observed_terminal_pending_bundle_count": 0
+        }
+      },
+      "scope": "shadow inference and isolated shadow publications only",
+      "status": "ESTABLISHED_FOR_SHADOW_ONLY"
+    },
+    "vehicle_control": {
+      "approved": false,
+      "reason": "shadow topics have no vehicle-control authority",
+      "status": "NOT_APPROVED"
+    }
+  },
+  "health": {
+    "accepted_count": 497,
+    "accepted_extrinsics_verified_count": 497,
+    "accepted_full_healthy_count": 497,
+    "accepted_inference_input_healthy_count": 497,
+    "campaign_runtime_policy": {
+      "input_settle_timeout_s": 0.05,
+      "maximum_tf_rotation_error_rad": 0.005,
+      "maximum_tf_translation_error_m": 0.005
+    },
+    "full_health_complete": true,
+    "inference_inputs_complete": true,
+    "maximum_observed_tf_rotation_error_rad": 0.0,
+    "maximum_observed_tf_translation_error_m": 0.0,
+    "tf_extrinsic_parity": "VERIFIED",
+    "window_status_tf_extrinsic_parity_histogram": {
+      "VERIFIED": 549
+    }
+  },
+  "lifetime_evidence_integrity": {
+    "accepted_status_event_count": 512,
+    "all_measured_anchors_follow_arm_floor": true,
+    "complete_lifetime_prefix_verified": true,
+    "measurement_anchor_floor_ns": 22800000339,
+    "measurement_arm_status_record_index": 0,
+    "measurement_arm_status_sha256": "005a19131ebab54c8acc470c4c95b0ac27c475549326ccc453bf760508366b21",
+    "measurement_arm_zero_baseline_verified": true,
+    "output_topic_lifetime_counts": {
+      "/planning/portable_e2e/latency_ms": 512,
+      "/planning/portable_e2e/selected_candidate": 512,
+      "/planning/portable_e2e/shadow_path": 512,
+      "/planning/portable_e2e/shadow_trajectory": 512
+    },
+    "pre_startup_disallowed_waiting_status_count": 0,
+    "pre_startup_drop_count": 0,
+    "pre_startup_healthy_status_count": 17,
+    "pre_startup_initial_waiting_heartbeat_count": 0,
+    "pre_startup_only_initial_waiting_and_zero_losses": true,
+    "pre_startup_rejected_status_count": 0,
+    "pre_startup_rejection_count": 0,
+    "pre_startup_timeout_count": 0,
+    "publisher_order_header_anchor_match": true,
+    "publisher_order_scalar_status_match": true,
+    "rejected_missing_dropped_or_extra_records": true
+  },
+  "provenance": {
+    "map": {
+      "aligned_route_sha256": "0318822586fc16293198cfe3481a00f520810c0300052b0de688273fd3f630c3",
+      "consistent_with_trial_metadata": true,
+      "declared_map_id": "town03",
+      "declared_matches_independent_observation": true,
+      "map_bundle_sha256": "7475fac775ae85127cce8a444c637b8f4e743f43c1cb9778281a60d26a0cb04a",
+      "map_runtime_binding": true,
+      "observed_map_id": "town03",
+      "route_map_binding_sha256": "003aba6561190abad6337bbb2eebbdeadc0079704d1c9b9e4bcb6ed91ce0819f",
+      "runtime_status_bound": true,
+      "scope": "independent observed map identity and aligned route digest; map bundle digest remains trial metadata"
+    },
+    "status_bound": {
+      "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+      "declared_map_id": "town03",
+      "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+      "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+      "route_sha256": "0318822586fc16293198cfe3481a00f520810c0300052b0de688273fd3f630c3",
+      "runtime_bundle_sha256": "bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e",
+      "runtime_id": "portable_e2e.pytorch_shadow_runtime.v1",
+      "source_checkpoint_sha256": "df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09"
+    },
+    "status_provenance_consistent": true,
+    "trial_provenance_matches_status": true
+  },
+  "schema_id": "autoware-e2e.portable-shadow-evidence-analysis.v2",
+  "selected_candidate_histogram": {
+    "0": 250,
+    "2": 247
+  },
+  "shadow_publications": {
+    "counts_match_accepted_denominator": true,
+    "header_anchors_match_accepted_statuses": true,
+    "path": {
+      "count": 497,
+      "duration_s": 49.6608542,
+      "maximum_gap_ms": 138.328805,
+      "p95_gap_ms": 111.5278085,
+      "p99_gap_ms": 120.97243910000006,
+      "rate_hz": 9.98774604243517
+    },
+    "trajectory": {
+      "count": 497,
+      "duration_s": 49.660840089,
+      "maximum_gap_ms": 138.306974,
+      "p95_gap_ms": 111.160439,
+      "p99_gap_ms": 120.53561415000007,
+      "rate_hz": 9.987748880427523
+    }
+  },
+  "source_normalized_sha256": "120f5b74ca4da13a64a7430f6a814981af6e1c405099a776e71ae7526d2b1817",
+  "source_schema_id": "autoware-e2e.portable-shadow-evidence-normalized.v1",
+  "status_accounting": {
+    "anchor_outcomes": {
+      "accepted_count": 497,
+      "accepted_percent": 100.0,
+      "attempted_count": 497,
+      "rejected_count": 0,
+      "rejected_percent": 0.0
+    },
+    "anchor_rejection_reason_histogram": {},
+    "camera_bundle_counters_at_end": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0,
+      "pending_bundle_count": 0
+    },
+    "camera_bundle_counters_at_start": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0,
+      "pending_bundle_count": 0
+    },
+    "camera_bundle_cumulative_delta": {
+      "dropped_stale_count": 0,
+      "evicted_capacity_count": 0,
+      "expired_pending_count": 0
+    },
+    "complete_increment_sequence": true,
+    "denominators": {
+      "accepted_count": 497,
+      "anchor_attempt_count": 497,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "exact_anchor_invariant": true,
+    "explicit_final_boundary_observed": true,
+    "explicit_startup_boundary_observed": true,
+    "health_snapshot_counts": {
+      "all_statuses_healthy_shadow_ok_verified": true,
+      "calibration_extrinsics_verified": 549,
+      "camera_bundle_timeout": 0,
+      "extrinsic_blocked_after_inference_inputs": 0,
+      "full_runtime_healthy": 549,
+      "healthy_shadow_ok_verified": 549,
+      "inference_inputs_healthy": 549,
+      "nonhealthy_or_non_ok": 0,
+      "rejected": 0,
+      "total": 549,
+      "waiting": 0
+    },
+    "heartbeat_count": 50,
+    "input_event_rejection_reason_histogram": {},
+    "input_settle": {
+      "input_settle_deferred_count": 0,
+      "input_settle_timeout_count": 0
+    },
+    "lifetime_counters_at_end": {
+      "accepted_count": 512,
+      "anchor_attempt_count": 512,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "lifetime_counters_at_start": {
+      "accepted_count": 15,
+      "anchor_attempt_count": 15,
+      "anchor_rejected_count": 0,
+      "input_event_rejected_count": 0
+    },
+    "map_runtime_status_bound": true,
+    "maximum_observed_pending_bundle_count": 1,
+    "pending_bundle_net_change": 0,
+    "rejection_counts_by_stage": {
+      "acceleration": 0,
+      "camera_info": 0,
+      "image": 0,
+      "inference": 0,
+      "odometry": 0,
+      "steering": 0
+    },
+    "rejection_reason_histogram": {},
+    "startup_healthy_semantic_heartbeat_observed": true,
+    "state_histogram": {
+      "SHADOW_OK": 549
+    },
+    "state_only_transition_count": 1,
+    "status_message_count": 549,
+    "terminal_exact_heartbeat_observed": true,
+    "terminal_healthy_measurement_seal_observed": true,
+    "tf_extrinsic_parity_histogram": {
+      "VERIFIED": 549
+    }
+  }
+}

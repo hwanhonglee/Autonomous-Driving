@@ -927,11 +927,14 @@ def capture_interval(physics_hz: float, camera_hz: float) -> int:
 
 
 def exact_camera_bundle(
-    queues: Mapping[str, SimpleQueue], frame: int, timeout_sec: float
+    queues: Mapping[str, SimpleQueue], frame: int, timeout_sec: float, *, timing: Any = None
 ) -> dict[str, Any]:
     deadline = time.monotonic() + timeout_sec
     bundle = {}
     for name in MODEL_CAMERA_ORDER:
+        # HH_260906 - Optional residual wait measurement preserves the single shared deadline and queue order.
+        if timing is not None:
+            timing.begin_camera(name)
         queue = queues[name]
         while True:
             remaining = deadline - time.monotonic()
@@ -950,6 +953,8 @@ def exact_camera_bundle(
                 )
             bundle[name] = image
             break
+        if timing is not None:
+            timing.end_camera()
     timestamps = [float(image.timestamp) for image in bundle.values()]
     if max(timestamps) - min(timestamps) > 1.0e-6:
         raise CollectionError(f"camera frame {frame} is not timestamp-synchronous")
@@ -1172,6 +1177,7 @@ def collect_episode(
     state_records: list[dict[str, Any]],
     camera_records: list[dict[str, Any]],
     manifest: dict[str, Any],
+    *, wall_timing: Any = None,
 ) -> None:
     import carla
     from agents.navigation.basic_agent import BasicAgent
@@ -1455,7 +1461,7 @@ def collect_episode(
         }
         _write_json(partial / "manifest.json", manifest)
 
-        def tick_and_record(phase: str) -> tuple[CatalogGoalStatus, bool, str | None]:
+        def tick_and_record(phase: str, tick_timing: Any = None) -> tuple[CatalogGoalStatus, bool, str | None]:
             nonlocal progress_m, tick_index
             if stop_requested:
                 raise CollectionInterrupted("capture interrupted by signal")
@@ -1464,6 +1470,9 @@ def collect_episode(
                     "capture reached the tick-exact maximum total duration"
                 )
             expected_receipt = acknowledged.receipts[-1] if acknowledged is not None else None
+            # HH_260906 - Disabled timing takes no clocks and does not change the existing command/tick order.
+            if tick_timing is not None:
+                tick_timing.begin_stage("world_tick_snapshot")
             frame = int(world.tick(args.timeout))
             snapshot = world.get_snapshot()
             if int(snapshot.frame) != frame:
@@ -1471,6 +1480,10 @@ def collect_episode(
                     f"world snapshot frame {snapshot.frame} does not match tick {frame}"
                 )
             timestamp = float(snapshot.timestamp.elapsed_seconds)
+            if tick_timing is not None:
+                tick_timing.bind_observation(frame, timestamp)
+                tick_timing.end_stage()
+                tick_timing.begin_stage("observation_control")
 
             raw_snapshot_fields = {}
             if acknowledged is not None:
@@ -1609,18 +1622,31 @@ def collect_episode(
             if observation["first_timestamp"] is None:
                 observation["first_timestamp"] = timestamp
             observation["last_timestamp"] = timestamp
+            if tick_timing is not None:
+                tick_timing.mark_state_recorded()
+                tick_timing.end_stage()
 
             if tick_index % interval == 0:
-                bundle = exact_camera_bundle(queues, frame, args.sensor_timeout_sec)
+                if tick_timing is not None:
+                    tick_timing.begin_stage("camera_queue_wait")
+                    bundle = exact_camera_bundle(queues, frame, args.sensor_timeout_sec, timing=tick_timing)
+                    tick_timing.end_stage()
+                    tick_timing.begin_stage("jpeg_encode_write")
+                else:
+                    bundle = exact_camera_bundle(queues, frame, args.sensor_timeout_sec)
                 image_paths = {}
                 source_timestamps = {}
                 for name in MODEL_CAMERA_ORDER:
+                    if tick_timing is not None:
+                        tick_timing.begin_camera(name)
                     spec = specs[MODEL_CAMERA_ORDER.index(name)]
                     _validate_image_geometry(bundle[name], spec)
                     relative = Path("images") / name / f"{frame:08d}.jpg"
                     _save_jpeg(bundle[name], partial / relative, args.jpeg_quality)
                     image_paths[name] = relative.as_posix()
                     source_timestamps[name] = float(bundle[name].timestamp)
+                    if tick_timing is not None:
+                        tick_timing.end_camera()
                 timestamps = tuple(source_timestamps.values())
                 camera_records.append(
                     {
@@ -1635,13 +1661,20 @@ def collect_episode(
                     }
                 )
                 observation["camera_anchor_count"] += 1
+                if tick_timing is not None:
+                    tick_timing.mark_camera_recorded()
+                    tick_timing.end_stage()
 
+            if tick_timing is not None:
+                tick_timing.begin_stage("control_rpc")
             try:
                 send_control(next_control, "alignment_failure_abort" if alignment is not None and alignment["status"] != "PASS"
                              else "next_" + phase + "_control", frame)
             finally:
                 if acknowledged is not None and acknowledged.receipts:
                     state_records[-1]["control_transport"]["next_command_receipt_sequence"] = acknowledged.receipts[-1]["sequence"]
+            if tick_timing is not None:
+                tick_timing.end_stage()
             tick_index += 1
             if alignment is not None and alignment["status"] != "PASS":
                 raise CollectionError("acknowledged control/frame alignment failed; mismatched row retained")
@@ -1650,6 +1683,13 @@ def collect_episode(
                 # HH_260906 - Retain the offending setup/tail measurement and apply the stop command before aborting.
                 raise CollectionError(goal_stop_governor.failure_reason)
             return goal_status, basic_agent_done, stop_reason
+
+        if wall_timing is not None:
+            # HH_260906 - The wrapper retains failed attempts after the original exception path and never catches it as success.
+            untimed_tick_and_record = tick_and_record
+            def tick_and_record(phase: str) -> tuple[CatalogGoalStatus, bool, str | None]:
+                with wall_timing.tick(phase, tick_index, camera_expected=tick_index % interval == 0) as tick_timing:
+                    return untimed_tick_and_record(phase, tick_timing)
 
         if int(phase_schedule["stationary_warmup"]["scheduled_ticks"]):
             send_control(_blank_brake_control(carla), "stationary_warmup_start", bootstrap_frame)
@@ -1902,6 +1942,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     # HH_260906 - The transport experiment leaves all historical commands and output dictionaries unchanged by default.
     parser.add_argument("--control-transport", choices=("legacy_async", "acknowledged_batch"), default="legacy_async",
                         help="opt-in acknowledged no-tick batch commands with immutable snapshot and strict control/frame alignment")
+    # HH_260906 - Timing is an explicit diagnostic option, not a new default capture or performance claim.
+    parser.add_argument("--wall-timing", action="store_true", help="record optional native-tick wall stages; not GUI FPS or learned inference timing")
     parser.add_argument("--wheelbase-m", type=float, default=WHEELBASE_M)
     parser.add_argument("--spawn-z-offset-m", type=float, default=0.0)
     parser.add_argument("--command-lookahead-m", type=float, default=2.0)
@@ -1991,6 +2033,80 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     except (CollectionError, ValueError) as error:
         parser.error(str(error))
     return args
+
+
+def prepare_wall_timing(args: argparse.Namespace, partial: Path, manifest: dict[str, Any]) -> Any:
+    """HH_260906 - Import and create timing evidence only for an explicit opt-in, before any collector world mutation."""
+    enabled = getattr(args, "wall_timing", False)
+    if type(enabled) is not bool:
+        raise CollectionError("wall_timing must be boolean")
+    if not enabled:
+        return None
+    if __package__:
+        from . import carla_wall_timing as timing_module
+    else:
+        import carla_wall_timing as timing_module
+    if tuple(timing_module.CAMERAS) != MODEL_CAMERA_ORDER:
+        raise CollectionError("wall timing camera order differs from capture")
+    journal = partial / "wall_timing.jsonl"
+    with journal.open("x", encoding="utf-8"):
+        pass
+    def persist(row: Mapping[str, Any]) -> None:
+        # HH_260906 - Persist only after the tick's existing control command; errors stay in the timing diagnostic.
+        with journal.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(row, sort_keys=True, allow_nan=False) + "\n")
+    recorder = timing_module.WallTimingRecorder(enabled=True, physics_hz=args.physics_hz, camera_hz=args.capture_hz, persist=persist)
+    manifest["capture_contract"]["wall_timing"] = {
+        "schema": "carla.expert_wall_timing.v1", "enabled": True, "clock": "time.perf_counter_ns",
+        "stages": list(timing_module.STAGES), "per_camera_stages": ["camera_queue_wait", "jpeg_encode_write"],
+        "journal": "wall_timing.jsonl", "all_attempts_retained": True,
+        "sensor_timestamps_changed": False, "gui_display_fps_measured": False, "learned_inference_measured": False,
+        "bootstrap_setup_teardown_in_native_tick_totals": False,
+        "journal_write_outside_own_tick_total": True, "journal_errors_can_approve_data": False,
+    }
+    manifest["provenance"]["wall_timing_helper_sha256"] = sha256_file(Path(timing_module.__file__))
+    manifest["files"]["wall_timing"] = journal.name
+    return recorder
+
+
+def finalize_wall_timing(recorder: Any, partial: Path, state_records: Sequence[Mapping[str, Any]],
+                         camera_records: Sequence[Mapping[str, Any]], manifest: dict[str, Any], *, capture_succeeded: bool) -> None:
+    """HH_260906 - Finalize diagnostics after owned cleanup; never mask a capture failure or relabel missing journal rows as complete."""
+    if recorder is None:
+        return
+    result: dict[str, Any] = {"status": "FAILED_DIAGNOSTIC", "dataset_admission": False}
+    try:
+        report = recorder.summarize(expected_state_frames=[row["frame"] for row in state_records],
+            expected_camera_frames=[row["frame"] for row in camera_records], capture_succeeded=capture_succeeded,
+            expected_phase_counts={phase: sum(row["capture_phase"] == phase for row in state_records) for phase in CAPTURE_PHASE_ORDER})
+        expected = "".join(json.dumps(row, sort_keys=True, allow_nan=False) + "\n" for row in recorder.records).encode("utf-8")
+        report["memory_records_sha256"] = hashlib.sha256(expected).hexdigest()
+        try:
+            raw = (partial / "wall_timing.jsonl").read_bytes()
+            report["journal_sha256"] = hashlib.sha256(raw).hexdigest()
+            report["journal_exactly_matches_memory"] = raw == expected
+        except Exception as error:
+            report.update(journal_sha256=None, journal_exactly_matches_memory=False, journal_error_type=type(error).__name__)
+        if not report["journal_exactly_matches_memory"]:
+            report["status"] = "PARTIAL_OR_FAILED_DIAGNOSTIC"
+            # HH_260906 - Preserve a separate recovery artifact, never overwrite the failed original timing journal.
+            with (partial / "wall_timing_recovery.jsonl").open("xb") as stream:
+                stream.write(expected)
+            manifest["files"]["wall_timing_recovery"] = "wall_timing_recovery.jsonl"
+            report["recovery_sha256"] = report["memory_records_sha256"]
+        with (partial / "wall_timing_summary.json").open("x", encoding="utf-8") as stream:
+            json.dump(report, stream, indent=2, allow_nan=False)
+            stream.write("\n")
+        manifest["files"]["wall_timing_summary"] = "wall_timing_summary.json"
+        result.update(status=report["status"], attempt_count=report["attempt_count"],
+            journal_sha256=report["journal_sha256"], journal_exactly_matches_memory=report["journal_exactly_matches_memory"],
+            summary_sha256=sha256_file(partial / "wall_timing_summary.json"),
+            native_wall_observation_hz=report["native_wall_observation_hz"],
+            camera_bundle_wall_completion_hz=report["camera_bundle_wall_completion_hz"],
+            simulation_seconds_per_wall_second=report["simulation_seconds_per_wall_second"])
+    except Exception as error:
+        result["error_type"] = type(error).__name__
+    manifest.setdefault("result", {})["wall_timing"] = result
 
 
 def run(args: argparse.Namespace) -> Path:
@@ -2141,12 +2257,14 @@ def run(args: argparse.Namespace) -> Path:
         }
         manifest["files"]["control_receipts"] = "control_receipts.jsonl"
         _write_jsonl(partial / "control_receipts.jsonl", [])
+    wall_timing = prepare_wall_timing(args, partial, manifest)
     _write_json(partial / "manifest.json", manifest)
     error: BaseException | None = None
     try:
-        collect_episode(
-            args, route, specs, partial, state_records, camera_records, manifest
-        )
+        if wall_timing is None:
+            collect_episode(args, route, specs, partial, state_records, camera_records, manifest)
+        else:
+            collect_episode(args, route, specs, partial, state_records, camera_records, manifest, wall_timing=wall_timing)
     except BaseException as caught:
         error = caught
     finally:
@@ -2158,6 +2276,8 @@ def run(args: argparse.Namespace) -> Path:
         manifest.setdefault("result", {})["camera_anchor_count"] = len(camera_records)
         if error:
             manifest["error"] = f"{type(error).__name__}: {error}"
+        # HH_260906 - collect_episode has already attempted owned cleanup before optional diagnostics are summarized.
+        finalize_wall_timing(wall_timing, partial, state_records, camera_records, manifest, capture_succeeded=error is None)
         _write_json(partial / "manifest.json", manifest)
 
     if error is not None:

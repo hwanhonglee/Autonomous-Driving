@@ -86,6 +86,9 @@ for option in "${collector_options[@]}"; do
     --host|--host=*|--port|--port=*|--allow-map-load)
       echo "Collector cannot redirect the owned simulator or load another world." >&2
       exit 2 ;;
+    --wall-timing)
+      # HH_260906 - Only the expert collector imports the optional timing helper.
+      [[ "${capture_mode}" == expert ]] || { echo "Wall timing is expert-only." >&2; exit 2; } ;;
   esac
 done
 # HH_260906 - Resolve the complete strict collector argv before starting any simulator.
@@ -148,6 +151,10 @@ sources = ('scripts/e2e/run_owned_carla_expert_trial.sh', 'scripts/e2e/run_carla
 if mode == 'actuation-response':
     # HH_260906 - Archive the prospective coast/ramp contract together with its importing worker.
     sources += ('scripts/e2e/carla_low_speed_response_matrix.py',)
+# HH_260906 - The explicit timing revision adds one helper; historical ten-source expert archives remain exact.
+wall_timing = mode == 'expert' and '--wall-timing' in options
+if wall_timing:
+    sources += ('scripts/e2e/carla_wall_timing.py',)
 def git(*args):
     return subprocess.run(['git', *args], check=True, capture_output=True,
         text=True, timeout=15).stdout.strip()
@@ -168,6 +175,8 @@ with Path(path).open('x') as stream:
         # HH_260906 - Preserve the exact bound definitions so later unrelated model edits cannot invalidate historical evidence.
         'source_sha256': source_hashes, 'source_bytes_archived': True,
         'bounds_source_bytes_archived': True,
+        **({'wall_timing_enabled': True, 'wall_timing_source_bytes_archived': True,
+            'wall_timing_schema': 'carla.expert_wall_timing.v1'} if wall_timing else {}),
         'route_path': route, 'route_sha256': hashlib.sha256(Path(route).read_bytes()).hexdigest(),
         'map': town, 'host': '127.0.0.1', 'port': int(port), 'quality': quality,
         'capture_mode': mode, 'worker_path': worker,

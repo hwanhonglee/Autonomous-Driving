@@ -5,7 +5,7 @@ import math
 
 import pytest
 
-from scripts.e2e.audit_carla_wheel_reference import analyze_case, inverse_rotate
+from scripts.e2e.audit_carla_wheel_reference import analyze_case, inverse_rotate, reference_identity
 
 
 def fixture():
@@ -27,6 +27,17 @@ def test_world_centimetres_are_translated_and_rotated_without_mutation():
     assert result["front_track_distance_m"] == pytest.approx(1.6)
     assert result["rear_track_distance_m"] == pytest.approx(1.5)
     assert result["reported_center_of_mass_parameter"] == report["vehicle_physics"]["values"]["center_of_mass"]
+
+
+@pytest.mark.parametrize("changed_spawn,physics_identical", [(False, True), (True, True), (False, False), (True, False)])
+def test_physics_equality_does_not_claim_declared_spawn_equality(changed_spawn, physics_identical):
+    cases = [analyze_case(fixture()), analyze_case(fixture())]
+    if changed_spawn:
+        cases[1]["declared_actor_spawn_carla"]["x"] += .01
+    result = reference_identity(cases, physics_identical)
+    assert result["all_cases_same_declared_spawn"] is (not changed_spawn)
+    assert result["all_cases_same_physics"] is physics_identical
+    assert result["all_cases_same_spawn_and_physics"] is (not changed_spawn and physics_identical)
 
 
 @pytest.mark.parametrize("vector,pose,expected", [

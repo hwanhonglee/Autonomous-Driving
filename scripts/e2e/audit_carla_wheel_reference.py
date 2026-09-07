@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -70,6 +69,14 @@ def analyze_case(report):
         "measurement_notice": "Physics was queried immediately after spawn, before the first recorded tick. Declared spawn is not an independently observed same-frame actor pose; midpoint is not a ground-contact/no-slip point or measured COM."}
 
 
+def reference_identity(cases, physics_identical):
+    """HH_260906 - Verify spawn equality separately; equal physics never implies an equal declared origin."""
+    base.require(cases and type(physics_identical) is bool, "nonempty cases and explicit physics identity required")
+    same_spawn = all(case["declared_actor_spawn_carla"] == cases[0]["declared_actor_spawn_carla"] for case in cases)
+    return {"all_cases_same_declared_spawn": same_spawn, "all_cases_same_physics": physics_identical,
+            "all_cases_same_spawn_and_physics": same_spawn and physics_identical}
+
+
 def run(trial_root, output, carla_root, unreal_root):
     """HH_260906 - Verify all twelve existing measurements and source bytes before writing a separate diagnostic."""
     trial_root, output = Path(trial_root).resolve(), Path(output)
@@ -98,7 +105,7 @@ def run(trial_root, output, carla_root, unreal_root):
     base.require(all(base.sha(ROOT / name) == value for name, value in code.items()), "diagnostic source changed")
     result = {"schema": "carla.declared_wheel_reference_diagnostic.v1", "status": "DIAGNOSED_CALIBRATION_UNCHANGED",
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "cases": cases,
-        "included_case_count": 12, "all_cases_same_spawn_and_physics": verified["vehicle_physics_identical_across_all_cases"],
+        "included_case_count": 12, **reference_identity(cases, verified["vehicle_physics_identical_across_all_cases"]),
         "source_sha256": code, "inspected_primary_source_sha256": PRIMARY_FILES,
         "source_manifest": verified["source_manifest"], "original_measurement_status": verified["status"],
         "scope": {"new_simulator_access": False, "model_loaded": False, "training": False, "calibration_changed": False,

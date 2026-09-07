@@ -283,8 +283,13 @@ def analyze_native(states, cameras, route, config, bounds):
             and all(b[2] >= a[2] and (b[2] > a[2] or math.dist(a[:2], b[:2]) <= 1.0e-9)
                     for a, b in zip(points, points[1:])), "invalid route arc")
     final = points[-1]
-    tangent = (final[0] - points[-2][0], final[1] - points[-2][1])
-    tangent_length = math.hypot(*tangent)
+    # HH_260906 - Exact terminal duplicate catalog points retain their bytes and indices; use the nearest prior distinct XY tangent.
+    tangent, tangent_length = (0.0, 0.0), 0.0
+    for previous in reversed(points[:-1]):
+        tangent = (final[0] - previous[0], final[1] - previous[1])
+        tangent_length = math.hypot(*tangent)
+        if tangent_length > 0:
+            break
     require(tangent_length > 0, "missing terminal route tangent")
     limits = {key: number(config[key]) for key in ("goal_tolerance_m", "stopped_speed_mps", "hold_seconds",
         "minimum_tail_seconds", "maximum_projection_step_m", "maximum_projection_error_m")}

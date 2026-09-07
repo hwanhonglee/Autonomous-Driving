@@ -2,8 +2,10 @@
 
 import copy
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -97,6 +99,35 @@ def test_duplicate_route_point_is_allowed_only_at_identical_arc_and_position(nat
     native[2]["route"][1]["x"] = 0.1
     with pytest.raises(summary.EvidenceError, match="invalid route arc"):
         analyze(native)
+
+
+def test_terminal_duplicate_catalog_points_preserve_raw_route_and_exact_numerical_output(native):
+    original = summary.analyze_native(*native, summary.source_bounds())
+    native[2]["route"].extend([copy.deepcopy(native[2]["route"][-1]) for _ in range(3)])
+    preserved = copy.deepcopy(native)
+    assert summary.analyze_native(*native, summary.source_bounds()) == original
+    assert native == preserved
+
+
+def test_all_coincident_route_has_no_terminal_tangent_and_cannot_pass(native):
+    native[2]["route"][-1]["x"] = 0.
+    with pytest.raises(summary.EvidenceError, match="missing terminal route tangent"):
+        analyze(native)
+
+
+@pytest.mark.parametrize("interior_duplicate", [False, True])
+def test_preexisting_numerical_output_is_exactly_equal_to_pre_fix_source(native, tmp_path, interior_duplicate):
+    # HH_260906 - Preserve old valid-route outputs against the actual historical implementation, not a rewritten expectation.
+    source = subprocess.check_output(["git", "show", "3535d97:scripts/e2e/summarize_carla_goal_stop_trials.py"], cwd=Path(__file__).resolve().parents[1])
+    path = tmp_path / "old_summary.py"
+    path.write_bytes(source)
+    spec = importlib.util.spec_from_file_location("hh_pre_duplicate_endpoint_summary", path)
+    old = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(old)
+    if interior_duplicate:
+        native[2]["route"].insert(1, copy.deepcopy(native[2]["route"][0]))
+    bounds = summary.source_bounds()
+    assert summary.analyze_native(*native, bounds) == old.analyze_native(*native, bounds)
 
 
 def _write(path, value, jsonl=False):

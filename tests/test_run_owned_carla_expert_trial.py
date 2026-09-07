@@ -33,6 +33,7 @@ def harness(tmp_path):
         ' if [[ -n ${E2E_TRIAL_TEST_RACE_OUTPUT:-} ]]; then mkdir -- "$E2E_TRIAL_TEST_RACE_OUTPUT"; printf keep-original > "$E2E_TRIAL_TEST_RACE_OUTPUT/server.log"; fi\n'
         " [[ ${E2E_TRIAL_TEST_LOCKED:-0} == 0 ]]; }\n")
     (scripts / "carla_goal_stop_profile.py").write_text("# HH_260906 - Fixture-only hash placeholder, never vehicle control.\n")
+    (scripts / "carla_low_speed_response_matrix.py").write_text("# HH_260906 - Fixture-only matrix source archive.\n")
     (scripts / "run_carla_map.sh").write_text(
         "#!/usr/bin/env bash\n# HH_260906 - The fake process does not open a CARLA port.\n"
         'exec python3 scripts/e2e/fake_server.py "$@"\n')
@@ -227,7 +228,7 @@ def test_named_actuation_worker_has_separate_output_and_exact_source_provenance(
     assert plan["capture_mode"] == "actuation-response"
     assert plan["worker_path"] == "scripts/e2e/calibrate_carla_low_speed_response.py"
     assert plan["collector_argv"][0] == str(harness["output"] / "actuation")
-    assert len(plan["source_sha256"]) == 9
+    assert len(plan["source_sha256"]) == 10
     assert plan["learned_model_control"] is False
     result = json.loads((harness["output"] / "owner_result.json").read_text())
     assert result["capture_mode"] == "actuation-response"

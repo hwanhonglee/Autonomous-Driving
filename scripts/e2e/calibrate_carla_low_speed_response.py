@@ -17,9 +17,11 @@ from typing import Any, Mapping, Sequence
 if __package__:
     from . import collect_carla_vad_expert as capture
     from .carla_goal_stop_profile import bounded_route_projection, source_motion_bounds
+    from .carla_low_speed_response_matrix import IdentificationCase, hold_control, identification_matrix, matrix_contract
 else:
     import collect_carla_vad_expert as capture
     from carla_goal_stop_profile import bounded_route_projection, source_motion_bounds
+    from carla_low_speed_response_matrix import IdentificationCase, hold_control, identification_matrix, matrix_contract
 
 
 SCHEMA = "carla.low_speed_response_calibration.v1"
@@ -62,7 +64,12 @@ class ResponseCase:
     level: float
 
 
-def case_matrix() -> tuple[ResponseCase, ...]:
+def case_matrix(matrix_id: str = "low_speed_v1") -> tuple[ResponseCase | IdentificationCase, ...]:
+    # HH_260906 - Keep the original twelve commands as the default; opt in to a distinct identification matrix.
+    if matrix_id == "low_speed_v2":
+        return identification_matrix()
+    if matrix_id != "low_speed_v1":
+        raise CalibrationError("unknown low-speed response matrix")
     cases = []
     for kind, levels in (("throttle", (0.05, 0.10, 0.15, 0.20, 0.30, 0.40)),
                          ("brake", (0.02, 0.04, 0.06, 0.08, 0.10, 0.12))):
@@ -194,7 +201,9 @@ def analyze_rates(records: Sequence[Mapping[str, Any]], bounds: Mapping[str, Any
                               "from_speed_mps": initial_speed, "to_speed_mps": speed,
                               "dt_sec": dt, "speed_rate_mps2": rate})
         phase_reports = {}
-        for phase in ("all", "settle", "prepare", "throttle_hold", "brake_hold"):
+        phases = ("all", "settle", "prepare", "throttle_hold", "brake_hold") + tuple(
+            phase for phase in ("coast_hold", "throttle_ramp") if any(row["phase"] == phase for row in records))
+        for phase in phases:
             selected = intervals if phase == "all" else [row for row in intervals if row["to_phase"] == phase]
             rates = [row["speed_rate_mps2"] for row in selected]
             report = {"interval_count": len(selected), "minimum_speed_rate_mps2": min(rates) if rates else None,
@@ -270,7 +279,7 @@ def exclusive_world(world: Any) -> None:
 
 
 def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mapping[str, Any],
-                 case: ResponseCase, directory: Path, stop_requested: Any,
+                 case: ResponseCase | IdentificationCase, directory: Path, stop_requested: Any,
                  bounds: Mapping[str, Any]) -> dict[str, Any]:
     """HH_260906 - Run one fresh-actor case; no velocity injection, ROS node, learner or camera exists."""
     exclusive_world(world)
@@ -278,6 +287,7 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
     actors, records = [], []
     events = capture.EventRecorder()
     report = {"schema": SCHEMA, "case": asdict(case), "status": "running", "started_at": capture.utc_now(),
+              "matrix_id": getattr(args, "matrix", "low_speed_v1"),
               "training_data": False, "command_source": "predeclared direct CARLA VehicleControl pedal experiment"}
     error = None
     try:
@@ -345,10 +355,15 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
 
         for _ in range(round(SETTLE_SECONDS * PHYSICS_HZ)):
             tick("settle", 0.0, 1.0)
-        if case.kind == "throttle":
+        if case.kind == "throttle" and isinstance(case, ResponseCase):
             for _ in range(round(THROTTLE_SECONDS * PHYSICS_HZ)):
                 tick("throttle_hold", case.level, 0.0)
-        else:
+        elif case.kind in ("throttle", "throttle_ramp") and isinstance(case, IdentificationCase):
+            phase = "throttle_hold" if case.kind == "throttle" else "throttle_ramp"
+            for index in range(round(case.hold_seconds * PHYSICS_HZ)):
+                throttle, brake = hold_control(case, index)
+                tick(phase, throttle, brake)
+        elif case.kind in ("brake", "coast"):
             prepared = None
             for _ in range(round(PREPARE_SECONDS * PHYSICS_HZ)):
                 prepared = tick("prepare", PREPARE_THROTTLE, 0.0)
@@ -356,10 +371,17 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
                     break
             if prepared is None or math.hypot(prepared["vx"], prepared["vy"]) < PREPARE_SPEED_MPS:
                 raise CalibrationError("preparation did not reach measured 3 m/s within 15 seconds")
-            report["brake_entry_speed_mps"] = math.hypot(prepared["vx"], prepared["vy"])
-            report["brake_entry_frame"] = prepared["frame"]
-            for _ in range(round(BRAKE_SECONDS * PHYSICS_HZ)):
-                tick("brake_hold", 0.0, case.level)
+            report[f"{case.kind}_entry_speed_mps"] = math.hypot(prepared["vx"], prepared["vy"])
+            report[f"{case.kind}_entry_frame"] = prepared["frame"]
+            if case.kind == "brake":
+                for _ in range(round(BRAKE_SECONDS * PHYSICS_HZ)):
+                    tick("brake_hold", 0.0, case.level)
+            else:
+                for index in range(round(case.hold_seconds * PHYSICS_HZ)):
+                    throttle, brake = hold_control(case, index)
+                    tick("coast_hold", throttle, brake)
+        else:
+            raise CalibrationError("case kind is outside the selected immutable matrix")
         report["status"] = "complete"
     except BaseException as caught:
         error = caught
@@ -391,7 +413,8 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
             report.update(status="failed", error=str(error))
         report.update(finished_at=capture.utc_now(), state_count=len(records),
                       phase_counts={phase: sum(row["phase"] == phase for row in records)
-                                    for phase in ("settle", "prepare", "throttle_hold", "brake_hold")},
+                                    for phase in ("settle", "prepare", "throttle_hold", "brake_hold") + tuple(
+                                        name for name in ("coast_hold", "throttle_ramp") if any(row["phase"] == name for row in records))},
                       final_speed_mps=math.hypot(records[-1]["vx"], records[-1]["vy"]) if records else None,
                       maximum_speed_mps=max((math.hypot(row["vx"], row["vy"]) for row in records), default=None))
         capture._write_jsonl(directory / "states.jsonl", records)
@@ -420,6 +443,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=2100)
     parser.add_argument("--timeout", type=float, default=5.0)
+    parser.add_argument("--matrix", choices=("low_speed_v1", "low_speed_v2"), default="low_speed_v1")
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65535 or not math.isfinite(args.timeout) or not 0 < args.timeout <= 30:
         parser.error("port or bounded RPC timeout is invalid")
@@ -442,12 +466,15 @@ def run(args: argparse.Namespace) -> Path:
     if float(route["route"][-1]["distance_m"]) < MAXIMUM_TRAVEL_M:
         raise CalibrationError("calibration route is shorter than its maximum travel guard")
     bounds = source_motion_bounds()
+    selected_matrix = case_matrix(args.matrix)
     partial.mkdir(parents=True)
     shutil.copy2(route_path, partial / "route.json")
-    manifest = {"schema": SCHEMA, "status": "running", "created_at": capture.utc_now(), "training_data": False,
+    started_at = capture.utc_now()
+    manifest = {"schema": SCHEMA, "status": "running", "created_at": started_at, "training_data": False,
+                "matrix_id": args.matrix, "run_id": f"{args.matrix}:{started_at}:{output.parent.name}/{output.name}",
                 "route_sha256": capture.sha256_file(route_path), "physics_hz": PHYSICS_HZ,
-                "matrix": [asdict(case) for case in case_matrix()], "completed_cases": [],
-                "case_ledger": [{"case_id": case.case_id, "status": "not_started"} for case in case_matrix()],
+                "matrix": [asdict(case) for case in selected_matrix], "completed_cases": [],
+                "case_ledger": [{"case_id": case.case_id, "status": "not_started"} for case in selected_matrix],
                 "workspace_ownership": inherited_lock,
                 "limits": {"maximum_travel_m": MAXIMUM_TRAVEL_M, "maximum_cte_m": MAXIMUM_CTE_M,
                            "maximum_speed_mps": MAXIMUM_SPEED_MPS, "maximum_reverse_speed_mps": 0.1},
@@ -458,8 +485,13 @@ def run(args: argparse.Namespace) -> Path:
                 "wheelbase_m": WHEELBASE_M, "weather": "ClearNoon", "client_map_loading_allowed": False,
                 "bounds": bounds, "source_sha256": {
                     name: capture.sha256_file(Path(__file__).with_name(name))
-                    for name in (Path(__file__).name, "collect_carla_vad_expert.py", "carla_goal_stop_profile.py")},
+                    for name in (Path(__file__).name, "collect_carla_vad_expert.py", "carla_goal_stop_profile.py", "carla_low_speed_response_matrix.py")},
                 "notice": "Measurement only, not expert training data or learned driving. Every observed settle/start/stop sample is retained; no fit-eligibility filtering."}
+    if args.matrix == "low_speed_v2":
+        # HH_260906 - Declare coast/ramp timing separately from the unchanged v1 brake-hold contract.
+        manifest["identification_matrix_contract"] = matrix_contract()
+        manifest["phase_contract"].update(coast_hold_seconds=20.0, throttle_ramp_seconds=8.0,
+                                          throttle_ramp_definition=matrix_contract()["ramp_policy"])
     capture._write_json(partial / "manifest.json", manifest)
     world = client = None
     original_settings = original_weather = None
@@ -490,7 +522,7 @@ def run(args: argparse.Namespace) -> Path:
         actual_settings = world.get_settings()
         validate_world_timing(actual_settings)
         manifest["runtime"]["capture_world_settings"] = capture._settings_dict(actual_settings)
-        for index, case in enumerate(case_matrix()):
+        for index, case in enumerate(selected_matrix):
             exclusive_world(world)
             manifest["case_ledger"][index]["status"] = "running"
             capture._write_json(partial / "manifest.json", manifest)

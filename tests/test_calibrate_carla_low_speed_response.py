@@ -49,11 +49,23 @@ def test_cli_preserves_wrapper_contract_without_allowing_map_load():
     args = calibration.parse_args(["new-output", "route.json", "--host", "127.0.0.1", "--port", "2100"])
     assert args.host == "127.0.0.1" and args.port == 2100
     assert args.physics_hz == 20 and args.allow_map_load is False
+    assert args.matrix == "low_speed_v1"
+
+
+def test_explicit_v2_matrix_does_not_replace_the_v1_default():
+    args = calibration.parse_args(["new-output", "route.json", "--matrix", "low_speed_v2"])
+    assert len(calibration.case_matrix(args.matrix)) == 9
+    assert len(calibration.case_matrix()) == 12
+    assert calibration.case_matrix()[0].case_id == "01_throttle_0.05"
+    assert calibration.case_matrix()[-1].case_id == "12_brake_0.12"
+    with pytest.raises(calibration.CalibrationError, match="unknown"):
+        calibration.case_matrix("not_declared")
 
 
 @pytest.mark.parametrize("flags", [["--ho", "127.0.0.2"], ["--po", "2101"], ["--allow-m"],
                                     ["--allow-map-load"], ["--physics-hz", "10"], ["--port", "0"],
-                                    ["--port", "65536"], ["--timeout", "nan"], ["--timeout", "31"]])
+                                    ["--port", "65536"], ["--timeout", "nan"], ["--timeout", "31"],
+                                    ["--matrix", "unknown"], ["--mat", "low_speed_v2"]])
 def test_cli_rejects_abbreviations_mutations_and_invalid_bounds(flags):
     with pytest.raises(SystemExit):
         calibration.parse_args(["new-output", "route.json", *flags])
@@ -115,6 +127,17 @@ def test_rates_retain_start_stop_and_boundary_at_both_10hz_offsets():
     assert native["brake_hold"]["phase_boundary_intervals"][0]["from_phase"] == "throttle_hold"
     assert result["measurements"]["derived_10hz_offset_0"]["sample_count"] == 3
     assert result["measurements"]["derived_10hz_offset_1"]["sample_count"] == 3
+
+
+def test_rate_analysis_preserves_new_coast_and_ramp_phases_separately():
+    rows = [dict(frame=index, timestamp=index * 0.05, vx=speed, vy=0.0, phase=phase)
+            for index, (speed, phase) in enumerate([(3.0, "prepare"), (2.0, "coast_hold"),
+                                                    (1.0, "coast_hold"), (0.0, "throttle_ramp")])]
+    phases = calibration.analyze_rates(rows, BOUNDS)["measurements"]["native_20hz"]["phases"]
+    assert phases["coast_hold"]["interval_count"] == 2
+    assert phases["coast_hold"]["minimum_speed_rate_mps2"] == pytest.approx(-20)
+    assert phases["coast_hold"]["phase_boundary_intervals"][0]["from_phase"] == "prepare"
+    assert phases["throttle_ramp"]["interval_count"] == 1
 
 
 def test_destroy_owned_never_discovers_or_deletes_foreign_actors():

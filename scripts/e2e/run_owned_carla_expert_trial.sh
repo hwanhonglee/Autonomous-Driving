@@ -116,6 +116,9 @@ sources = ('scripts/e2e/run_owned_carla_expert_trial.sh', 'scripts/e2e/run_carla
     'scripts/e2e/process_group_cleanup.sh', 'scripts/e2e/workspace_runtime_lock.sh',
     'scripts/e2e/probe_carla_server.py', 'scripts/e2e/env.sh',
     'scripts/e2e/collect_carla_vad_expert.py', 'scripts/e2e/carla_goal_stop_profile.py', worker)
+if mode == 'actuation-response':
+    # HH_260906 - Archive the prospective coast/ramp contract together with its importing worker.
+    sources += ('scripts/e2e/carla_low_speed_response_matrix.py',)
 def git(*args):
     return subprocess.run(['git', *args], check=True, capture_output=True,
         text=True, timeout=15).stdout.strip()

@@ -1,0 +1,99 @@
+{
+  "schema": "carla.control_transport_source_inspection.v1",
+  "inspection_date": "2026-09-08",
+  "local_source_head_at_inspection": "25623bfdb3ecee680eb27b644f8ab3c2ffd4403a",
+  "local_describe_at_inspection": "0.9.15-dev-dirty",
+  "source_files": [
+    {
+      "path": "LibCarla/source/carla/client/Vehicle.cpp",
+      "sha256": "b6add7f50b913c44b116e122aa2a8f7c1e75208ce4c114c0f8ac1aa75a6dd759",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/client/detail/Client.cpp",
+      "sha256": "d4672f5b430cfb7224d1ae83d87125beb49d25ba80da8867ee3ff03d6706d41c",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/client/detail/Simulator.cpp",
+      "sha256": "67b9eb6e1d692469d6dcbe03ce981385114bc4693d28e6efd4826d4dab519ea5",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/client/detail/Simulator.h",
+      "sha256": "9ebb453f568356af4d7556adf95719b5692a8979937e62a020a32f52fad484c8",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/client/ActorSnapshot.h",
+      "sha256": "0661ce9e5bf4789028273ce1cd0ff144e549359d654c1751b2270fcd8d444084",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/rpc/Server.h",
+      "sha256": "dc40af145d410b994e0cd6f02fd66744a9f24b8671e8c5997467402394585f75",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "LibCarla/source/carla/rpc/Client.h",
+      "sha256": "13e74f4b4d45ef771a974964a7f3559ea33906d818ee39c3f95fe8de23dc38bb",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "PythonAPI/carla/source/libcarla/Client.cpp",
+      "sha256": "999e69519ca8bc75ae056f27b154d821aebc0f83d4ff9c396c703a17666e8b4f",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "PythonAPI/carla/source/libcarla/Snapshot.cpp",
+      "sha256": "65ba5921d3897d942bc7697bbc6af53aa7ed5668fc947dd92f74ba2d428f1f0d",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Server/CarlaServer.cpp",
+      "sha256": "6c7ca2b804afc7cd169dceb5249a94be866d37b6fc0fa72a95a62f46ff76cb70",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Game/CarlaEngine.cpp",
+      "sha256": "09b600afeb6504e1a83d8f0b2713683487317910bcc0b8f7a588b4b129fb3eb6",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Sensor/WorldObserver.cpp",
+      "sha256": "5a5cd9279bfcd95ab7250a868f7bbd3ce9cfeb3ec1bc6dbc9d032ea4cedb8695",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/CarlaWheeledVehicle.cpp",
+      "sha256": "1244cb0c6d64e619cb34898a4b8976bc2e28c8c6748efabb7ec5eac46c341c44",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/CarlaWheeledVehicle.h",
+      "sha256": "1588342d4f677b43738296698213acc0e38393611dd309b5e164726e1a0a0a8b",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/WheeledVehicleAIController.cpp",
+      "sha256": "a0d62018fa4d79ed736542ea926ee51836feee7c2cc7b0ba793d9fc0889cb902",
+      "matched_local_head_bytes_at_inspection": true
+    },
+    {
+      "path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/MovementComponents/DefaultMovementComponent.cpp",
+      "sha256": "55b38bf86da4a5e6eb6ebc62ce0f3e6da1b8aa4dcbc0138af36e550436aca42f",
+      "matched_local_head_bytes_at_inspection": true
+    }
+  ],
+  "executed_server_or_python_binary_match_proven": false,
+  "findings": [
+    "Vehicle.apply_control sends an asynchronous RPC and does not await command acceptance.",
+    "world.tick synchronously sends tick_cue then waits until the cached episode frame reaches the requested frame.",
+    "Vehicle.get_control reads the same cached EpisodeState actor data as live kinematic getters; it is not a new server RPC.",
+    "C++ ActorSnapshot includes vehicle control, but the Python binding exposes only transform, velocity, angular velocity and acceleration.",
+    "apply_batch_sync with one ApplyVehicleControl and False awaits the same server handler without requesting a tick.",
+    "Server input acceptance, prephysics control flush, postphysics observer reporting and actual movement filtering are distinct stages.",
+    "All old two-row matches are observational associations, not proof of physical command latency; no historical labels were shifted."
+  ],
+  "limitations": "These exact local primary-source bytes were inspected read-only. Matching version strings do not prove that the installed client or executed server was built from them."
+}

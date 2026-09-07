@@ -17,11 +17,13 @@ from typing import Any, Mapping, Sequence
 if __package__:
     from . import collect_carla_vad_expert as capture
     from .carla_goal_stop_profile import bounded_route_projection, source_motion_bounds
-    from .carla_low_speed_response_matrix import IdentificationCase, hold_control, identification_matrix, matrix_contract
+    from .carla_low_speed_response_matrix import (IdentificationCase, TwoStageCase, hold_control,
+        identification_matrix, matrix_contract, progressive_identification_matrix, progressive_matrix_contract)
 else:
     import collect_carla_vad_expert as capture
     from carla_goal_stop_profile import bounded_route_projection, source_motion_bounds
-    from carla_low_speed_response_matrix import IdentificationCase, hold_control, identification_matrix, matrix_contract
+    from carla_low_speed_response_matrix import (IdentificationCase, TwoStageCase, hold_control,
+        identification_matrix, matrix_contract, progressive_identification_matrix, progressive_matrix_contract)
 
 
 SCHEMA = "carla.low_speed_response_calibration.v1"
@@ -68,6 +70,8 @@ def case_matrix(matrix_id: str = "low_speed_v1") -> tuple[ResponseCase | Identif
     # HH_260906 - Keep the original twelve commands as the default; opt in to a distinct identification matrix.
     if matrix_id == "low_speed_v2":
         return identification_matrix()
+    if matrix_id == "low_speed_v3":
+        return progressive_identification_matrix()
     if matrix_id != "low_speed_v1":
         raise CalibrationError("unknown low-speed response matrix")
     cases = []
@@ -202,7 +206,8 @@ def analyze_rates(records: Sequence[Mapping[str, Any]], bounds: Mapping[str, Any
                               "dt_sec": dt, "speed_rate_mps2": rate})
         phase_reports = {}
         phases = ("all", "settle", "prepare", "throttle_hold", "brake_hold") + tuple(
-            phase for phase in ("coast_hold", "throttle_ramp") if any(row["phase"] == phase for row in records))
+            phase for phase in ("coast_hold", "throttle_ramp", "launch_prepare", "post_handoff_ramp")
+            if any(row["phase"] == phase for row in records))
         for phase in phases:
             selected = intervals if phase == "all" else [row for row in intervals if row["to_phase"] == phase]
             rates = [row["speed_rate_mps2"] for row in selected]
@@ -276,6 +281,72 @@ def exclusive_world(world: Any) -> None:
     for pattern in ("walker.pedestrian.*", "controller.ai.walker"):
         if list(world.get_actors().filter(pattern)):
             raise CalibrationError("CARLA world contains foreign dynamic actors")
+
+
+def run_two_stage(case: TwoStageCase, tick: Any, report: dict[str, Any]) -> None:
+    """HH_260906 - Keep measured handoff and early completion explicit without swallowing failed startup data."""
+    metadata = {"status": "launching", "launch_ticks": 0, "post_handoff_ticks": 0,
+                "handoff_speed_threshold_mps": case.handoff_speed_mps,
+                "measured_speed_stop_mps": case.measured_speed_stop_mps,
+                "reached_measured_speed_stop": False}
+    report["two_stage"] = metadata
+    handoff = None
+    for _ in range(round(case.launch_maximum_seconds * PHYSICS_HZ)):
+        observed = tick("launch_prepare", case.launch_throttle, 0.0)
+        metadata["launch_ticks"] += 1
+        if math.hypot(observed["vx"], observed["vy"]) >= case.handoff_speed_mps:
+            handoff = observed
+            break
+    if handoff is None:
+        metadata.update(status="failed", completion_reason="handoff_not_reached_within_launch_limit")
+        raise CalibrationError("two-stage launch did not reach measured handoff within eight seconds")
+    metadata.update(status="post_handoff_ramp", handoff_frame=handoff["frame"],
+                    handoff_timestamp=handoff["timestamp"], handoff_speed_mps=math.hypot(handoff["vx"], handoff["vy"]),
+                    handoff_travel_m=handoff["travel_m"], handoff_route_progress_m=handoff["route_progress_m"])
+    for index in range(round(case.hold_seconds * PHYSICS_HZ)):
+        throttle, brake = hold_control(case, index)
+        observed = tick("post_handoff_ramp", throttle, brake)
+        metadata["post_handoff_ticks"] += 1
+        reached = math.hypot(observed["vx"], observed["vy"]) >= case.measured_speed_stop_mps
+        metadata.update(last_frame=observed["frame"], last_speed_mps=math.hypot(observed["vx"], observed["vy"]),
+                        post_handoff_elapsed_seconds=observed["timestamp"] - handoff["timestamp"],
+                        reached_measured_speed_stop=reached)
+        if reached:
+            break
+    metadata.update(status="complete", completion_reason=("first_measured_30kph_crossing"
+                    if metadata["reached_measured_speed_stop"] else "post_handoff_time_limit"))
+
+
+def coast_stop_observation(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """HH_260906 - Measure the full zero-pedal coast and observed continuous slow dwell without forcing a stop."""
+    rows = [row for row in records if row["phase"] == "coast_hold"]
+    result = {"maximum_speed_mps": 0.10, "required_continuous_seconds": 2.0,
+              "sample_count": len(rows), "first_below_threshold_frame": None,
+              "first_verified_dwell_frame": None, "longest_observed_dwell_seconds": 0.0,
+              "verified_dwell_observed": False, "measurement_valid": True,
+              "notice": "Observed scalar speed only, not goal-position completion; no final brake is applied."}
+    if (any(not math.isfinite(row["timestamp"]) or not math.isfinite(math.hypot(row["vx"], row["vy"])) for row in rows)
+            or any(second["frame"] - first["frame"] != 1 or abs(second["timestamp"] - first["timestamp"] - .05) > 1e-4
+                   for first, second in zip(rows, rows[1:]))):
+        # HH_260906 - A gap or nonfinite value cannot establish continuous dwell, even in retained failed evidence.
+        result.update(measurement_valid=False, validity_failure="nonfinite_or_noncontiguous_coast_measurements")
+        return result
+    first = None
+    for row in rows:
+        if math.hypot(row["vx"], row["vy"]) <= 0.10:
+            if first is None:
+                first = row
+            if result["first_below_threshold_frame"] is None:
+                result["first_below_threshold_frame"] = row["frame"]
+            duration = row["timestamp"] - first["timestamp"]
+            result["longest_observed_dwell_seconds"] = max(result["longest_observed_dwell_seconds"], duration)
+            if duration >= 2.0 and result["first_verified_dwell_frame"] is None:
+                result.update(first_verified_dwell_frame=row["frame"], first_verified_dwell_timestamp=row["timestamp"],
+                              first_verified_dwell_travel_m=row["travel_m"],
+                              first_verified_dwell_route_progress_m=row["route_progress_m"], verified_dwell_observed=True)
+        else:
+            first = None
+    return result
 
 
 def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mapping[str, Any],
@@ -355,7 +426,9 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
 
         for _ in range(round(SETTLE_SECONDS * PHYSICS_HZ)):
             tick("settle", 0.0, 1.0)
-        if case.kind == "throttle" and isinstance(case, ResponseCase):
+        if case.kind == "two_stage_ramp" and isinstance(case, TwoStageCase):
+            run_two_stage(case, tick, report)
+        elif case.kind == "throttle" and isinstance(case, ResponseCase):
             for _ in range(round(THROTTLE_SECONDS * PHYSICS_HZ)):
                 tick("throttle_hold", case.level, 0.0)
         elif case.kind in ("throttle", "throttle_ramp") and isinstance(case, IdentificationCase):
@@ -414,10 +487,13 @@ def collect_case(carla: Any, world: Any, args: argparse.Namespace, route: Mappin
         report.update(finished_at=capture.utc_now(), state_count=len(records),
                       phase_counts={phase: sum(row["phase"] == phase for row in records)
                                     for phase in ("settle", "prepare", "throttle_hold", "brake_hold") + tuple(
-                                        name for name in ("coast_hold", "throttle_ramp") if any(row["phase"] == name for row in records))},
+                                        name for name in ("coast_hold", "throttle_ramp", "launch_prepare", "post_handoff_ramp")
+                                        if any(row["phase"] == name for row in records))},
                       final_speed_mps=math.hypot(records[-1]["vx"], records[-1]["vy"]) if records else None,
                       maximum_speed_mps=max((math.hypot(row["vx"], row["vy"]) for row in records), default=None))
         capture._write_jsonl(directory / "states.jsonl", records)
+        if getattr(args, "matrix", "low_speed_v1") == "low_speed_v3" and case.kind == "coast":
+            report["coast_stop_observation"] = coast_stop_observation(records)
         try:
             report["motion_analysis"] = analyze_rates(records, bounds)
             if any(item["cadence_violation_count"] or item["frame_stride_violation_count"]
@@ -443,7 +519,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=2100)
     parser.add_argument("--timeout", type=float, default=5.0)
-    parser.add_argument("--matrix", choices=("low_speed_v1", "low_speed_v2"), default="low_speed_v1")
+    parser.add_argument("--matrix", choices=("low_speed_v1", "low_speed_v2", "low_speed_v3"), default="low_speed_v1")
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65535 or not math.isfinite(args.timeout) or not 0 < args.timeout <= 30:
         parser.error("port or bounded RPC timeout is invalid")
@@ -492,6 +568,13 @@ def run(args: argparse.Namespace) -> Path:
         manifest["identification_matrix_contract"] = matrix_contract()
         manifest["phase_contract"].update(coast_hold_seconds=20.0, throttle_ramp_seconds=8.0,
                                           throttle_ramp_definition=matrix_contract()["ramp_policy"])
+    elif args.matrix == "low_speed_v3":
+        # HH_260906 - Six-case v3 timing is opt-in; original v1 and v2 contracts remain byte-for-byte structured alike.
+        contract = progressive_matrix_contract()
+        manifest["identification_matrix_contract"] = contract
+        manifest["phase_contract"].update(coast_hold_seconds=45.0, coast_hold_ticks=900,
+                                          launch_prepare_maximum_seconds=8.0,
+                                          two_stage_definition=contract["two_stage_policy"])
     capture._write_json(partial / "manifest.json", manifest)
     world = client = None
     original_settings = original_weather = None

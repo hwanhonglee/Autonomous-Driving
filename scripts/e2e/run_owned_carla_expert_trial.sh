@@ -9,7 +9,7 @@ source scripts/e2e/process_group_cleanup.sh
 source scripts/e2e/workspace_runtime_lock.sh
 
 usage() {
-  echo "Usage: run_owned_carla_expert_trial.sh OUTPUT_ROOT ROUTE_JSON [--port PORT] [--quality Low|Epic] [--wall-timeout-sec SEC] [--capture-mode expert|actuation-response] [-- COLLECTOR_OPTIONS...]"
+  echo "Usage: run_owned_carla_expert_trial.sh OUTPUT_ROOT ROUTE_JSON [--port PORT] [--quality Low|Epic] [--wall-timeout-sec SEC] [--finish-before-utc YYYY-MM-DDTHH:MM:SSZ] [--capture-mode expert|actuation-response] [-- COLLECTOR_OPTIONS...]"
 }
 if [[ $# -lt 2 ]]; then usage >&2; exit 2; fi
 output_root="$(realpath -m -- "$1")"
@@ -18,6 +18,7 @@ shift 2
 port=2100
 quality=Low
 wall_timeout=900
+finish_before_utc=""
 capture_mode=expert
 collector_options=()
 while [[ $# -gt 0 ]]; do
@@ -25,6 +26,7 @@ while [[ $# -gt 0 ]]; do
     --port) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; port="$2"; shift 2 ;;
     --quality) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; quality="$2"; shift 2 ;;
     --wall-timeout-sec) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; wall_timeout="$2"; shift 2 ;;
+    --finish-before-utc) [[ $# -ge 2 && -n "$2" ]] || { usage >&2; exit 2; }; finish_before_utc="$2"; shift 2 ;;
     --capture-mode) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; capture_mode="$2"; shift 2 ;;
     --) shift; collector_options=("$@"); break ;;
     *) usage >&2; exit 2 ;;
@@ -33,6 +35,27 @@ done
 [[ "${port}" =~ ^[0-9]+$ ]] && (( port >= 1024 && port <= 65533 )) || exit 2
 [[ "${wall_timeout}" =~ ^[0-9]+$ ]] && (( wall_timeout > 0 && wall_timeout <= 3600 )) || exit 2
 [[ "${quality}" == Low || "${quality}" == Epic ]] || exit 2
+# HH_260906 - Reserve startup, timeout escalation, and owned cleanup before an explicit UTC work boundary.
+check_finish_budget() {
+  python3 - "${finish_before_utc}" "${wall_timeout}" "$1" <<'PY'
+from datetime import datetime, timezone
+import re
+import sys
+text, capture_seconds, overhead_seconds = sys.argv[1:]
+if text:
+    if re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', text) is None:
+        raise SystemExit('finish boundary must use YYYY-MM-DDTHH:MM:SSZ')
+    try:
+        deadline = datetime.fromisoformat(text[:-1] + '+00:00')
+    except ValueError:
+        raise SystemExit('finish boundary is not a valid UTC datetime')
+    remaining = (deadline - datetime.now(timezone.utc)).total_seconds()
+    needed = int(capture_seconds) + int(overhead_seconds)
+    if remaining < needed:
+        raise SystemExit(f'Insufficient time before finish boundary: {remaining:.1f}s remains, {needed}s reserved')
+PY
+}
+check_finish_budget 330 || exit 2
 # HH_260906 - Permit only named repository workers, never an arbitrary supplied executable.
 case "${capture_mode}" in
   expert)
@@ -103,7 +126,7 @@ PY
 mkdir -p "$(dirname "${output_root}")"
 mkdir -- "${output_root}"
 mkdir -- "${output_root}/lifecycle"
-python3 - "${output_root}/owner_plan.json" "${route_file}" "${map_name}" "${port}" "${quality}" "${wall_timeout}" "${capture_mode}" "${worker_path}" "${worker_output_name}" "${collector_options[@]}" <<'PY'
+python3 - "${output_root}/owner_plan.json" "${route_file}" "${map_name}" "${port}" "${quality}" "${wall_timeout}" "${capture_mode}" "${worker_path}" "${worker_output_name}" "${finish_before_utc}" "${collector_options[@]}" <<'PY'
 # HH_260906 - Preserve the source and command contract even when simulator startup fails.
 from datetime import datetime, timezone
 import hashlib
@@ -111,7 +134,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-path, route, town, port, quality, timeout, mode, worker, output_name, *options = sys.argv[1:]
+path, route, town, port, quality, timeout, mode, worker, output_name, finish_before, *options = sys.argv[1:]
 sources = ('scripts/e2e/run_owned_carla_expert_trial.sh', 'scripts/e2e/run_carla_map.sh',
     'scripts/e2e/process_group_cleanup.sh', 'scripts/e2e/workspace_runtime_lock.sh',
     'scripts/e2e/probe_carla_server.py', 'scripts/e2e/env.sh',
@@ -141,6 +164,9 @@ with Path(path).open('x') as stream:
         'map': town, 'host': '127.0.0.1', 'port': int(port), 'quality': quality,
         'capture_mode': mode, 'worker_path': worker,
         'collector_wall_timeout_sec': int(timeout), 'server_startup_timeout_sec': 180,
+        'finish_before_utc': finish_before or None,
+        'finish_budget_policy': {'prelaunch_overhead_sec': 330, 'precapture_overhead_sec': 120,
+            'notice': 'Admission budget checks, not a hard real-time OS guarantee; no unrelated processes are signaled.'},
         'collector_argv': [str(Path(path).parent / output_name), route, '--host', '127.0.0.1', '--port', port, *options],
         'server_extra_options': ['-RenderOffScreen', '-nosound'],
         'learned_model_control': False, 'vehicle_control_approved': False}, stream, indent=2)
@@ -197,6 +223,7 @@ PY
 }
 trap cleanup EXIT
 trap 'exit 130' INT TERM HUP
+check_finish_budget 330 || exit 2
 setsid bash scripts/e2e/run_carla_map.sh "${map_name}" --port "${port}" --quality "${quality}" \
   --startup-timeout-sec 180 -- -RenderOffScreen -nosound >"${output_root}/server.log" 2>&1 &
 server_pid=$!
@@ -223,6 +250,8 @@ with Path(path).open('x') as stream:
         'server_pgid': int(pid), 'route_sha256': hashlib.sha256(Path(route).read_bytes()).hexdigest(),
         'map': town, 'port': int(port), 'quality': quality, 'learned_model_control': False}, stream, indent=2)
 PY
+# HH_260906 - Recheck after actual startup; refuse capture and clean only the owned server if the budget shrank.
+check_finish_budget 120 || exit 2
 setsid timeout --signal=INT --kill-after=15 "${wall_timeout}" \
   python3 "${worker_path}" "${output_root}/${worker_output_name}" "${route_file}" \
   --host 127.0.0.1 --port "${port}" "${collector_options[@]}" >"${output_root}/collector.log" 2>&1 &

@@ -110,6 +110,25 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 물리 엔진 내부 원인은 이 API 기록만으로 확정하지 않으며, 차량 물리 설정·QA 기준을
 바꾸거나 출발·정지 표본을 잘라 통과시키지 않습니다.
 
+## 작업 종료 시각을 넘기지 않도록 새 실행 제한
+
+<!-- HH_260906 - Explain the explicit UTC admission budget without promising hard real-time process termination. -->
+
+소유 실행 helper의 `--finish-before-utc`는 작업 경계를 **UTC**로 받습니다. 예를 들어
+2026-09-08 오전 10시 한국 시간은 `2026-09-08T01:00:00Z`입니다. 위 명령에서
+`--capture-mode`와 같은 helper 옵션 위치, 즉 마지막 `--`보다 앞에 넣습니다.
+
+```bash
+# HH_260906 - This is an additional owner option, not a command or a collector option.
+--finish-before-utc 2026-09-08T01:00:00Z
+```
+
+서버를 띄우기 전에는 수집 wall timeout 외에 330초를, 시작된 후 수집 직전에는 120초를
+더 확보할 수 있어야 합니다. 여유가 부족하면 새 수집을 거절하고 자신이 만든 서버만
+정리합니다. 지정 시각·예약 정책은 `owner_plan.json`에 기록합니다. 옵션을 생략하면
+기존 시간 제한 방식이 유지됩니다. 이것은 시작 전 시간 예산 검사이며, 운영체제 지연까지
+막는 하드 실시간 종료 보장은 아닙니다. 다른 프로세스를 종료하지 않습니다.
+
 ## 정답 데이터로 채택하기까지
 
 계측 결과로 새 수집 제어 profile을 정하고 변경 이유·설정을 고정한 뒤, 우선 동일 Town07

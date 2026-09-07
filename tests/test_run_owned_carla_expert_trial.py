@@ -154,6 +154,7 @@ def test_forwarded_help_never_launches_a_world(harness, flag):
     ["--port", "65534"], ["--wall-timeout-sec", "0"], ["--wall-timeout-sec", "3601"],
     ["--quality", "Medium"],
     ["--capture-mode"], ["--capture-mode", "arbitrary-command"],
+    ["--finish-before-utc"],
 ])
 def test_invalid_owner_options_fail_before_launch(harness, options):
     result = _run(harness, *options)
@@ -168,6 +169,37 @@ def test_known_c_track_low_crash_is_rejected_before_launch(harness):
     assert result.returncode == 2
     assert "requires Epic quality" in result.stderr
     assert not harness["events"].exists()
+
+
+@pytest.mark.parametrize("deadline", ["", "2026-09-08", "2026-09-08T10:00:00+09:00",
+                                     "2026-13-08T01:00:00Z", "2000-01-01T00:00:00Z"])
+def test_invalid_or_expired_finish_boundary_never_starts_a_child(harness, deadline):
+    # HH_260906 - Empty explicit values and ambiguous/non-UTC dates must not disable the deadline guard.
+    result = _run(harness, "--finish-before-utc", deadline)
+    assert result.returncode == 2
+    assert not harness["events"].exists()
+    assert not harness["output"].exists()
+
+
+def test_finish_budget_reserves_startup_and_cleanup_before_capture(harness):
+    # HH_260906 - A future instant is insufficient unless it covers the whole declared admission budget.
+    from datetime import datetime, timedelta, timezone
+    deadline = (datetime.now(timezone.utc) + timedelta(seconds=120)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    result = _run(harness, "--wall-timeout-sec", "1", "--finish-before-utc", deadline)
+    assert result.returncode == 2
+    assert "Insufficient time" in result.stderr
+    assert not harness["events"].exists()
+
+
+def test_valid_finish_boundary_is_recorded_without_changing_owned_scope(harness):
+    # HH_260906 - Use a distant valid date so clock drift cannot make this process-scope test flaky.
+    result = _run(harness, "--finish-before-utc", "2099-01-01T00:00:00Z")
+    assert result.returncode == 0, result.stderr
+    plan = json.loads((harness["output"] / "owner_plan.json").read_text())
+    assert plan["finish_before_utc"] == "2099-01-01T00:00:00Z"
+    assert plan["finish_budget_policy"]["prelaunch_overhead_sec"] == 330
+    assert plan["finish_budget_policy"]["precapture_overhead_sec"] == 120
+    assert json.loads((harness["output"] / "lifecycle/stopped.json").read_text())["status"] == "PASS"
 
 
 def test_existing_output_is_not_modified(harness):

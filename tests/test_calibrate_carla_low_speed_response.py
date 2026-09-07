@@ -62,6 +62,117 @@ def test_explicit_v2_matrix_does_not_replace_the_v1_default():
         calibration.case_matrix("not_declared")
 
 
+def test_explicit_v3_preserves_both_old_matrices_and_strict_parser():
+    """HH_260906 - Require explicit v3 selection without adding any server or physics mutation option."""
+    args = calibration.parse_args(["new-output", "route.json", "--matrix", "low_speed_v3"])
+    assert args.matrix == "low_speed_v3" and args.allow_map_load is False and args.physics_hz == 20
+    assert [len(calibration.case_matrix(name)) for name in ("low_speed_v1", "low_speed_v2", "low_speed_v3")] == [12, 9, 6]
+    assert calibration.parse_args(["new-output", "route.json"]).matrix == "low_speed_v1"
+    with pytest.raises(SystemExit):
+        calibration.parse_args(["new-output", "route.json", "--mat", "low_speed_v3"])
+
+
+def two_stage_tick_fixture(launch_speeds, ramp_speeds):
+    """HH_260906 - Exercise real phase dispatch and every command without constructing a CARLA client."""
+    commands = []
+    launch, ramp = iter(launch_speeds), iter(ramp_speeds)
+    def tick(phase, throttle, brake):
+        speed = next(launch if phase == "launch_prepare" else ramp)
+        commands.append((phase, throttle, brake))
+        return {"frame": 100 + len(commands), "timestamp": len(commands) * .05,
+                "vx": speed, "vy": 0., "travel_m": len(commands) * .1,
+                "route_progress_m": len(commands) * .1}
+    return tick, commands
+
+
+@pytest.mark.parametrize("case_index", [2, 3, 4, 5])
+def test_v3_handoff_first_crossing_then_exact240_ramp_ticks(case_index):
+    """HH_260906 - A 12-second observation limit remains complete even when 30 kph was not reached."""
+    case = calibration.case_matrix("low_speed_v3")[case_index]
+    tick, commands = two_stage_tick_fixture([0., case.handoff_speed_mps - .01, case.handoff_speed_mps], [2.] * 240)
+    report = {}
+    calibration.run_two_stage(case, tick, report)
+    state = report["two_stage"]
+    assert len(commands) == 243 and state["launch_ticks"] == 3 and state["post_handoff_ticks"] == 240
+    assert commands[:3] == [("launch_prepare", .15, 0.)] * 3
+    assert commands[3][0] == "post_handoff_ramp" and commands[3][1] == pytest.approx(.15 + case.ramp_rate_per_second / 20)
+    assert state["handoff_frame"] == 103 and state["handoff_speed_mps"] == case.handoff_speed_mps
+    assert state["completion_reason"] == "post_handoff_time_limit" and state["status"] == "complete"
+    assert state["reached_measured_speed_stop"] is False
+    assert state["post_handoff_elapsed_seconds"] == pytest.approx(12.)
+
+
+def test_v3_speed_termination_is_first_measured_threshold_not_request():
+    """HH_260906 - Keep the threshold-crossing sample and stop issuing later commands immediately."""
+    case = calibration.case_matrix("low_speed_v3")[2]
+    tick, commands = two_stage_tick_fixture([case.handoff_speed_mps], [case.measured_speed_stop_mps - 1e-6, case.measured_speed_stop_mps, 99.])
+    report = {}
+    calibration.run_two_stage(case, tick, report)
+    assert len(commands) == 3
+    state = report["two_stage"]
+    assert state["post_handoff_ticks"] == 2 and state["reached_measured_speed_stop"] is True
+    assert state["completion_reason"] == "first_measured_30kph_crossing"
+    assert state["last_speed_mps"] == 30. / 3.6
+
+
+def test_v3_failed_handoff_retains160_startup_commands_and_never_enters_ramp():
+    """HH_260906 - Keep a stalled or insufficient launch as failed evidence instead of inventing a handoff."""
+    case = calibration.case_matrix("low_speed_v3")[4]
+    tick, commands = two_stage_tick_fixture([.999] * 160, [])
+    report = {}
+    with pytest.raises(calibration.CalibrationError, match="eight seconds"):
+        calibration.run_two_stage(case, tick, report)
+    assert len(commands) == 160 and all(command[0] == "launch_prepare" for command in commands)
+    assert report["two_stage"]["launch_ticks"] == 160 and report["two_stage"]["post_handoff_ticks"] == 0
+    assert report["two_stage"]["completion_reason"] == "handoff_not_reached_within_launch_limit"
+
+
+def test_v3_handoff_on_last_allowed_tick_is_not_rejected():
+    """HH_260906 - The last declared launch sample still belongs to the inclusive 160-tick limit."""
+    case = calibration.case_matrix("low_speed_v3")[2]
+    tick, commands = two_stage_tick_fixture([0.] * 159 + [.5], [case.measured_speed_stop_mps])
+    report = {}
+    calibration.run_two_stage(case, tick, report)
+    assert len(commands) == 161 and report["two_stage"]["launch_ticks"] == 160
+
+
+def test_v3_handoff_phase_boundary_is_in_native_and_both_decimations():
+    """HH_260906 - Do not hide a handoff impulse through phase splitting or favorable ten-Hz alignment."""
+    rows = [dict(frame=index, timestamp=index * .05, vx=speed, vy=0., phase=phase)
+            for index, (speed, phase) in enumerate([(0., "settle"), (.1, "launch_prepare"),
+                (.5, "launch_prepare"), (1., "post_handoff_ramp"), (1.1, "post_handoff_ramp"), (1.2, "post_handoff_ramp")])]
+    result = calibration.analyze_rates(rows, BOUNDS)
+    for cadence in result["measurements"].values():
+        phases = cadence["phases"]
+        assert phases["post_handoff_ramp"]["phase_boundary_intervals"]
+        assert phases["post_handoff_ramp"]["physical_decoder"]["violation_count"] >= 1
+
+
+def test_coast_observation_requires_continuous_two_seconds_and_never_implies_goal_stop():
+    """HH_260906 - Count observed time from the first low-speed sample; prior deceleration is not dwell."""
+    def rows(speeds):
+        return [dict(frame=index, timestamp=index * .05, vx=speed, vy=0., phase="coast_hold",
+                     travel_m=float(index), route_progress_m=float(index)) for index, speed in enumerate(speeds)]
+    insufficient = calibration.coast_stop_observation(rows([.1] * 40))
+    assert insufficient["verified_dwell_observed"] is False
+    interrupted = calibration.coast_stop_observation(rows([.1] * 30 + [.10001] + [.1] * 30))
+    assert interrupted["verified_dwell_observed"] is False
+    observed = calibration.coast_stop_observation(rows([.2] + [.1] * 41))
+    assert observed["first_below_threshold_frame"] == 1 and observed["first_verified_dwell_frame"] == 41
+    assert observed["verified_dwell_observed"] is True
+    assert calibration.coast_stop_observation([])["verified_dwell_observed"] is False
+
+
+@pytest.mark.parametrize("changes", [{"timestamp": 2.}, {"frame": 100}, {"vx": math.nan}])
+def test_coast_dwell_rejects_missing_or_nonfinite_measurements(changes):
+    """HH_260906 - Two sparse low-speed endpoints do not prove two seconds of continuous dwell."""
+    rows = [dict(frame=index, timestamp=index * .05, vx=.01, vy=0., phase="coast_hold",
+                 travel_m=1., route_progress_m=1.) for index in range(2)]
+    rows[1].update(changes)
+    result = calibration.coast_stop_observation(rows)
+    assert result["measurement_valid"] is False and result["verified_dwell_observed"] is False
+
+
 @pytest.mark.parametrize("flags", [["--ho", "127.0.0.2"], ["--po", "2101"], ["--allow-m"],
                                     ["--allow-map-load"], ["--physics-hz", "10"], ["--port", "0"],
                                     ["--port", "65536"], ["--timeout", "nan"], ["--timeout", "31"],

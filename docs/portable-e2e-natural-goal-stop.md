@@ -175,6 +175,28 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 
 ## 정답 데이터로 채택하기까지
 
+<!-- HH_260906 - Render diagnostic evidence directly without turning a failed raw episode into validated training samples. -->
+
+종료된 실제 수집의 6개 카메라·차량 중심 경로를 보려면 로컬에서 다음을 실행합니다.
+출력은 새 폴더여야 하며, 실패한 `episode.partial`도 원래 실패 상태로 표시합니다.
+
+```bash
+# HH_260906 - This is a recorded-data dashboard, not a live Autoware screenshot or learned driving run.
+python3 -m scripts.e2e.render_carla_raw_trial \
+  artifacts/training/2026-09-08/comfortable_goal_stop_v3/town07_straight_calibration/run_001 \
+  artifacts/training/2026-09-08/comfortable_goal_stop_v3_visual/example_run_001 \
+  --camera-stride 5 --playback-fps 10
+```
+
+원본 시야를 자르지 않은 6개 카메라, 항상 중앙에 놓인 차량과 전체 경로 inset,
+관측 속도·가감속·제어값·주행 phase를 함께 표시합니다. `Reported` 제어값은 API가
+보고한 값이며 해당 프레임의 물리 적용 시점이 별도로 입증됐다는 뜻은 아닙니다.
+GIF는 10 Hz 원본 카메라의 다섯 장마다 한 장을 10 fps로 재생하는 약 5배속 미리보기입니다.
+실제 simulation timestamp를 함께 보여주며 실시간 성능 계측으로 사용하면 안 됩니다.
+주황색 미래 궤적은 기록에서 관측한 위치이고 모델 예측이 아닙니다. 마지막 부분에 없는
+미래 위치를 만들거나 학습 sample로 내보내지 않습니다. 표시한 원본 이미지와 metadata의
+SHA, PNG/GIF에 사용한 frame index는 `visual_provenance.json`에서 확인합니다.
+
 계측 결과로 새 수집 제어 profile을 정하고 변경 이유·설정을 고정한 뒤, 우선 동일 Town07
 직진 경로에서 다시 수집합니다. 이때 목표 속도 30 km/h와 실제 도달 속도, 자연스러운 접근,
 목표 1 m 이내 정지·0.1 m/s 이하 2초 유지·정지 후 6.5초 기록을 따로 확인합니다.

@@ -234,6 +234,9 @@ def _future_timing_summary(sample: Mapping[str, Any]) -> str:
 
 
 def _future_legend_label(sample: Mapping[str, Any]) -> str:
+    # HH_260906 - Raw diagnostics display observed future motion without claiming exported training labels.
+    if sample.get("visualization_only") is True:
+        return "recorded future"
     horizons = _future_horizons(sample)
     if horizons:
         return f"future label (to {_format_number(horizons[-1])} s)"

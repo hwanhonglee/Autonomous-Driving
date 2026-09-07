@@ -42,3 +42,10 @@ v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월
 다음 작업은 같은 수집기의 Low/Epic 실제 시간 계측, 현재 decoder의 표현 가능성 진단,
 별도로 선언한 낮은 속도의 C-track 회전 개발 시험입니다. 실험 시작과 완료·통과는
 각 결과 폴더의 실행 기록을 기준으로 구분합니다.
+
+<!-- HH_260906 - Record the completed prospective quality/timing pair without attributing unmeasured GUI or inference latency. -->
+[16 Low/Epic 동일 경로 실제 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/16_wall_timing_quality/README.md)은
+각 1회 완료됐습니다. 각각 상태 1,462개·카메라 묶음 731개·ACK 1,466개가 모두 일치하고,
+실제 시간 기준 카메라 묶음 처리량은 36.5/40.6 Hz였습니다. 전체 준비·GUI·Autoware·추론을
+측정한 것이 아니며, 단일 순차 비교로 렌더 품질의 일반적 성능 차이를 단정하지 않습니다.
+원본 6카메라·차량 중심 경로 PNG 13장·GIF 2개와 모든 tick 지연을 함께 공개했습니다.

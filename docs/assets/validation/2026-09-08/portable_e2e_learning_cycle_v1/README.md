@@ -23,6 +23,7 @@
 | [13 원본 영상·저속 곡률 진단](13_raw_pre_admission_diagnostics/README.md) | 초기 v3 JPEG 8,838장·전체 미래 1,343개, 실제 곡률·위치 변화 분석 | 저속 XY 곡률 불일치 유지; 원인 단정·라벨 수정 없음 |
 | [14 정상 브레이크 제거 A/B와 실제 화면](14_brake_free_goal_stop/README.md) | 기존 ACK 실패 2회 + 정상 brake=0 반복 2회, 실제 PNG 13장·GIF 2개 | V4 두 회 모두 스칼라·정지·제어 기록 충족; 데이터 미승인 |
 | [15 데이터 기준점과 남은 궤적 문제](15_data_reference_and_raw_geometry/README.md) | V4 JPEG 8,802장·미래 1,337개 전체 검사, 바퀴·virtual base 기준 대조 | 저속 곡률 실패 유지; 좌표 기록 재현과 물리 기준점 승인은 별개 |
+| [16 Low/Epic 주행 처리 시간과 실제 화면](16_wall_timing_quality/README.md) | 같은 Town07 경로 각 1회, 모든 tick·카메라·ACK, PNG 13장·GIF 2개 | 수집 묶음 벽시계 36.5/40.6 Hz; GUI FPS·추론 측정이나 전체 끊김 해결 주장은 아님 |
 
 ## 두 환경에서 실제로 한 일
 

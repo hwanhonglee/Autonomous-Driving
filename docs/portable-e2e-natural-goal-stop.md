@@ -179,6 +179,27 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 속도 및 가감속 한계는 바꾸지 않습니다. raw 3D 값 추가는 가속도 기준점을 보정한 것도
 아닙니다. 실제 비교 결과와 독립 감사가 끝나기 전에는 학습 데이터로 채택하지 않습니다.
 
+## 정상 브레이크만 제외하는 네 번째 개발 비교
+
+<!-- HH_260906 - Isolate one normal-control parameter after the acknowledged protocol comparison; retain unsuccessful stopping evidence. -->
+
+실제 `comfortable_v3` + 수신 확인 방식의 두 실행에서 수집기가 기록한 제어 불일치는
+모두 0건이었지만, 정상 접근 중 급감속은 다시 발생했습니다. 수신 확인이 물리 감속 문제까지
+해결했다는 뜻은 아닙니다. 두 실행 모두 미승인 상태로 유지합니다.
+
+`comfortable_v4`는 위 v3 명령에서 `--goal-stop-profile comfortable_v4`와
+`--control-transport acknowledged_batch`를 사용합니다. profile 이름을 제외하면
+고정 제어 설정에서 **정상 brake 상한 0.10 → 0.00 한 항목만** 바뀝니다.
+출발·목표 속도·조향·접근 거리·타력 진입 속도·정지 거리·시간·품질 기준은 그대로입니다.
+다른 출력 폴더를 사용하고 실행 전 계획에 시도 수를 고정해야 합니다.
+
+이는 비상 브레이크를 끄는 기능이 아닙니다. BasicAgent 비상 제동, 수집 시작 전 정지,
+실패 종료 및 이미 정지한 후 tail의 브레이크는 유지합니다. 정상 감속이 부족해서 타력
+진입 때 2.8–3.2 m/s 조건을 만족하지 못하면 해당 관측을 보존하고 실패로 종료합니다.
+늦은 제동이나 허용 범위 확대로 성공 처리하지 않습니다. `comfortable_v3` 자체와 기본
+`disabled` 동작은 바뀌지 않았습니다. 새 이름은 실험을 구분하기 위한 것이며 개선 성공,
+학습 데이터 승인 또는 모델 주행 검증을 의미하지 않습니다.
+
 ## 작업 종료 시각을 넘기지 않도록 새 실행 제한
 
 <!-- HH_260906 - Explain the explicit UTC admission budget without promising hard real-time process termination. -->

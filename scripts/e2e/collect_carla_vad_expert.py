@@ -1565,7 +1565,9 @@ def collect_episode(
                 if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor):
                     # HH_260906 - A newly requested hazard brake is applied now and observed before next-tick failure.
                     if phase == "driving" and stop_reason is None:
-                        goal_stop_record["control_source"] = "BasicAgent_lateral_and_emergency_with_development_v3_normal_longitudinal"
+                        # HH_260906 - Keep legacy v3 provenance exact while naming the new brake-only revision correctly.
+                        version = goal_stop_governor.config.profile_id.removeprefix("comfortable_")
+                        goal_stop_record["control_source"] = f"BasicAgent_lateral_and_emergency_with_development_{version}_normal_longitudinal"
                     annotate_development_control(goal_stop_record, goal_stop_governor, stop_reason)
             if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
                     and goal_stop_record["next_control_is_unchanged_emergency_override"]):
@@ -1681,7 +1683,7 @@ def collect_episode(
         velocity = (state_records[-1]["world_velocity_carla"] if state_records else bootstrap_raw["world_velocity_carla"]
                     ) if acknowledged is not None else _vector_tuple(ego.get_velocity())
         if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
-                and goal_stop_governor.failure_reason == "comfortable_v3_emergency_override"):
+                and goal_stop_governor.failure_reason == f"{goal_stop_governor.config.profile_id}_emergency_override"):
             # HH_260906 - Initial engagement also preserves the exact emergency return before the following measured tick.
             suppress_stopped_brake_steering(
                 initial_drive_control,
@@ -1758,7 +1760,7 @@ def collect_episode(
             )
         if not goal_status.reached:
             if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
-                raise CollectionError(f"comfortable_v3 development pilot failed: {stop_reason}")
+                raise CollectionError(f"{goal_stop_config.profile_id} development pilot failed: {stop_reason}")
             raise CollectionError(
                 "BasicAgent reported done before the catalog goal: "
                 f"remaining route {goal_status.remaining_route_m:.3f} m, "
@@ -1906,7 +1908,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--command-exit-lookahead-m", type=float, default=2.5)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     # HH_260906 - This experimental goal-stop governor is never enabled by an old command.
-    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3"), default="disabled",
+    # HH_260906 - comfortable_v4 isolates zero normal brake under acknowledged transport; default and emergency behavior are unchanged.
+    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4"), default="disabled",
                         help="opt-in measured goal stop; requires 20/10 Hz, <=30 km/h, 1 m tolerance and >=6.5 s tail")
     parser.add_argument(
         "--basic-agent-base-min-distance-m",

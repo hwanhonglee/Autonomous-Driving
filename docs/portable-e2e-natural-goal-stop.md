@@ -1,0 +1,90 @@
+# 자연스러운 종점 정지 — 수집기 보정과 데이터 채택 절차
+
+<!-- HH_260906 - Explain expert calibration separately from learned-model control and keep raw failures reproducible. -->
+
+이 절차는 **로컬 CARLA PC**에서 학습 정답을 만드는 수집기를 고치는 작업입니다.
+Pro6000에서 CARLA나 Autoware를 빌드·실행하지 않습니다. 기존 Portable 모델을 교체하거나
+실차를 움직이는 명령도 아닙니다. 원격은 검증된 새 데이터를 받은 뒤 개인 venv·GPU0에서
+학습·평가하는 역할입니다.
+
+## 왜 먼저 수집기를 고치나
+
+기존 주행은 위치상 목표에 도달하면 움직이는 상태에서도 강한 제동으로 꼬리 구간을
+시작했습니다. [정답 진단](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md)에서
+일부 정답의 급감속이 모델 디코더의 ±2.9 m/s² 한계를 넘는 것을 확인했습니다.
+종점 이외 구간에도 충돌이 있으므로, 꼬리 제동 하나만 바꿔 전부 해결됐다고 하지 않습니다.
+
+`comfortable_v1`은 route arc 기반 목표 속도와 실제 정지 유지 조건을 추가한 최초 시험입니다.
+출발 가속이 과했고 BasicAgent가 목표보다 일찍 종료했습니다. `comfortable_v2`는 실제
+지도상의 종점 waypoint를 연결하고 가속·제동 입력을 제한한 후속 보정입니다. 목표 앞 정지는
+됐지만 저속 급감속이 남았고 실제 최고 속도도 16.7 km/h였습니다. 둘 다 수집 품질 FAIL로
+학습 데이터에 넣지 않았습니다. 이는 여러 제어 설정을 함께 바꾼 수집기 보정이며, 단일 변수의
+모델 A/B 실험이 아닙니다.
+
+기존 수집기 기본값은 `--goal-stop-profile disabled`로 유지합니다. 보정 profile은 명시적으로
+선택할 때만 사용하며, 결과를 보고 기존 원본 라벨을 잘라내거나 속도를 바꿔 적지 않습니다.
+
+## 로컬에서 실행 전 확인
+
+1. 로컬 터미널에서 이 저장소의 최상위 폴더로 이동합니다. `pwd`와 `git status`로 위치와
+   변경 사항을 확인합니다. 현재 켜 둔 다른 CARLA/Autoware 작업이 있으면 종료 여부를
+   먼저 직접 판단해야 합니다. 이 helper는 다른 작업을 대신 종료하지 않습니다.
+2. 이미 준비된 CARLA 0.9.15·ROS 환경을 사용합니다. 패키지 설치 명령은 없습니다.
+3. 출력 경로는 **새 폴더 이름**으로 정합니다. 이전 결과 폴더를 주면 덮어쓰지 않고 거부합니다.
+4. 먼저 가속·제동 응답을 계측한 뒤 결과를 읽습니다. 이 계측 자료 자체를 학습 데이터로
+   변환하지 않습니다.
+
+```bash
+# HH_260906 - Run only on the local CARLA PC, from the repository root.
+bash scripts/e2e/run_owned_carla_expert_trial.sh \
+  artifacts/training/2026-09-08/low_speed_response/example_run_001 \
+  docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json \
+  --port 2100 --quality Low --wall-timeout-sec 900 \
+  --capture-mode actuation-response
+```
+
+위 명령은 이 실행이 소유하는 CARLA 서버 한 개를 시작하고, 같은 Prius 차량의 짧은
+가속·제동 응답을 순서대로 기록한 뒤 자신이 만든 프로세스만 정리합니다. workspace lock과
+포트 점유를 먼저 확인합니다. CARLA가 이미 쓰이고 있으면 실패하므로 다른 프로세스를
+`kill`해서 우회하지 않습니다. 원격 SSH 터미널에서 실행하면 안 됩니다.
+
+## 계측과 파일 읽는 방법
+
+- 가속 6개 입력: 0.05 / 0.10 / 0.15 / 0.20 / 0.30 / 0.40을 각각 8초 적용합니다.
+- 제동 6개 입력: 0.02 / 0.04 / 0.06 / 0.08 / 0.10 / 0.12를 각각 15초 적용합니다.
+  제동 전에는 실제 속도가 3 m/s 이상이 될 때까지 가속합니다. 정확히 같은 초기 속도로
+  인위적으로 덮어쓰지 않고, 각 시험의 실제 제동 시작 속도를 별도로 기록합니다.
+- 각 시험마다 새 차량을 생성하며, 출발 전 3.5초 안정화 기록도 남깁니다. 출발·정지 직전의
+  순간값을 fitting 편의상 제외하지 않습니다. 시뮬레이션 시간과 실제 대기 시간은 다릅니다.
+- 물리 20 Hz의 실제 상태와 요청·적용 pedal, 기어, 실제 차량 물리 설정을 저장합니다.
+  10 Hz 요약은 이 상태를 두 가지 offset으로 추출한 것이며, 카메라 10 Hz 수집을 뜻하지
+  않습니다. 이 시험은 카메라·Autoware·학습 모델 제어를 실행하지 않습니다.
+
+출력 폴더의 `owner_plan.json`은 실행 전 설정과 소스 hash, `provenance/`는 실행 소스의
+private 원본 사본, `owner_result.json`은 종료·소스 불변성 확인 결과입니다.
+`lifecycle/ready.json`과 `stopped.json`은 시작·정리 증거입니다. `collector.log`에는 측정
+worker의 출력이 저장됩니다. 성공 시 측정 자료는 `actuation/`, 실패 시 `actuation.partial/`에
+남습니다. `.partial`을 성공 폴더로 이름만 바꾸지 않습니다.
+
+`complete`는 **선언한 계측을 완료했다**는 뜻입니다. 입력을 받은 차량이 항상 편안하게
+움직였거나 자율주행 기능에 합격했다는 뜻이 아닙니다. 오히려 이번 계측은 순간 가감속을
+찾기 위한 시험입니다. 실제 RPM·타이어 내부 마찰 상태처럼 API로 측정하지 못한 값은
+측정했다고 주장하지 않습니다.
+
+## 정답 데이터로 채택하기까지
+
+계측 결과로 새 수집 제어 profile을 정하고 변경 이유·설정을 고정한 뒤, 우선 동일 Town07
+직진 경로에서 다시 수집합니다. 이때 목표 속도 30 km/h와 실제 도달 속도, 자연스러운 접근,
+목표 1 m 이내 정지·0.1 m/s 이하 2초 유지·정지 후 6.5초 기록을 따로 확인합니다.
+기준점은 현재 `base_link`이며 전방 범퍼의 정지선 안전 판정을 대신하지 않습니다.
+
+소스·route·센서 hash, camera coverage/cadence, 실제 가감속, 충돌·차선 침범을 확인하고
+Common10 변환·라벨의 속도 및 독립 XY 진단을 통과해야 새 데이터 후보가 됩니다.
+scalar 가감속 검사만으로 전체 decoder의 표현 가능성이나 주행 안전을 보장하지 않습니다.
+
+그 후에 회전·독립 episode를 늘리고 별도 버전으로 전송합니다. 기존 train/val/test를
+덮어쓰거나 같은 주행을 잘라 split하지 않습니다. 새 학습은 원격 개인 venv·GPU0에서
+고정된 조건으로 수행하고 모든 seed 결과를 비교합니다. 실패 raw 자료는 원인과 분모를
+남기되, 공개 영상이나 학습 데이터에 성공으로 섞지 않습니다.
+
+[현재 결과 모음](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)

@@ -24,6 +24,20 @@ from typing import Any, Mapping, Sequence
 
 import yaml
 
+# HH_260906 - Keep goal-stop collection opt-in and independent of learned actuation.
+if __package__:
+    from .carla_goal_stop_profile import (
+        GoalStopGovernor, bounded_route_projection, complete_terminal_plan, configuration_from_args,
+        goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
+        measured_stop_quality, source_motion_bounds, terminal_overshoot_m,
+    )
+else:
+    from carla_goal_stop_profile import (
+        GoalStopGovernor, bounded_route_projection, complete_terminal_plan, configuration_from_args,
+        goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
+        measured_stop_quality, source_motion_bounds, terminal_overshoot_m,
+    )
+
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MAPPING = (
@@ -1059,6 +1073,13 @@ def collect_episode(
 
     stationary_warmup_sec = float(getattr(args, "stationary_warmup_sec", 0.0))
     stationary_tail_sec = float(getattr(args, "stationary_tail_sec", 0.0))
+    # HH_260906 - Resolve the fixed profile before changing any simulator state.
+    goal_stop_config = configuration_from_args(args)
+    goal_stop_bounds = source_motion_bounds() if goal_stop_config else None
+    goal_stop_governor = (
+        GoalStopGovernor(goal_stop_config, args.target_speed_kmh / 3.6, args.physics_hz)
+        if goal_stop_config else None
+    )
     phase_schedule = capture_phase_schedule(
         args.physics_hz,
         args.max_duration_sec,
@@ -1203,6 +1224,14 @@ def collect_episode(
         plan = planner.trace_route(start_location, goal_location)
         if len(plan) < 2:
             raise CollectionError("BasicAgent global plan contains fewer than two points")
+        if goal_stop_config:
+            # HH_260906 - GRP can end up to two samples early, before the exact catalog stop window.
+            plan, terminal_plan = complete_terminal_plan(
+                plan, carla_map.get_waypoint(goal_location),
+                {name: float(goal_center[name]) for name in ("x", "y", "z")}, sampling_resolution,
+            )
+            terminal_plan["global_route_planner_source"] = _python_class_source_provenance(planner)
+            manifest["capture_contract"]["goal_stop_profile"]["terminal_plan"] = terminal_plan
         agent = BasicAgent(
             ego,
             target_speed=args.target_speed_kmh,
@@ -1212,6 +1241,13 @@ def collect_episode(
         )
         agent.set_global_plan(plan)
         local_planner = agent.get_local_planner()
+        if goal_stop_config:
+            # HH_260906 - Hazard braking remains BasicAgent's original emergency override.
+            goal_stop_control = install_normal_brake_cap(
+                local_planner, goal_stop_config.normal_brake_cap, goal_stop_config.normal_throttle_cap,
+            )
+            goal_stop_control["unchanged_basic_agent_emergency_brake"] = float(agent._max_brake)
+            manifest["capture_contract"]["goal_stop_profile"]["effective_control"] = goal_stop_control
 
         # CARLA 0.9.15 can report the actor at the origin until its first world
         # tick.  Advance one disclosed, unrecorded setup tick under full brake so
@@ -1306,7 +1342,14 @@ def collect_episode(
                 args.wheelbase_m,
             )
             vehicle_fields = measured_vehicle_fields(ego, carla)
-            projection = projector.project(state["x"], state["y"], progress_m)
+            if goal_stop_config:
+                # HH_260906 - The legacy 80 m nearest-segment search can jump across close loops.
+                projection = Projection(*bounded_route_projection(
+                    projector.points, state["x"], state["y"], progress_m,
+                    goal_stop_config.maximum_projection_step_m,
+                ))
+            else:
+                projection = projector.project(state["x"], state["y"], progress_m)
             progress_m = projection.progress_m
             command = projector.command_at(
                 progress_m, args.command_lookahead_m, args.command_exit_lookahead_m
@@ -1322,6 +1365,7 @@ def collect_episode(
                 args.goal_tolerance_m,
             )
             basic_agent_done = bool(agent.done())
+            goal_stop_record = None
             stop_reason = (
                 termination_reason(
                     basic_agent_done=basic_agent_done,
@@ -1330,11 +1374,42 @@ def collect_episode(
                 if phase == "driving"
                 else None
             )
+            if goal_stop_governor:
+                # HH_260906 - A position-only goal at cruising speed must not trigger the full-brake tail.
+                goal_stop_record = goal_stop_governor.update(
+                    goal_status.remaining_route_m, goal_status.planar_distance_m,
+                    math.hypot(state["vx"], state["vy"]),
+                    terminal_overshoot_m(projector.points, state["x"], state["y"]),
+                    count_hold=phase == "driving",
+                )
+                stop_reason = None
+                if phase == "driving":
+                    agent.set_target_speed(goal_stop_record["target_speed_mps"] * 3.6)
+                    stop_reason = goal_stop_termination_reason(
+                        goal_stop_record, basic_agent_done, projection.cross_track_error_m, goal_stop_config,
+                    )
+                else:
+                    # HH_260906 - Setup and tail use explicit brake, not a latent speed command.
+                    goal_stop_governor.target_speed_mps = 0.0
+                    goal_stop_record["target_speed_mps"] = 0.0
+                goal_status = CatalogGoalStatus(
+                    measured_goal_completion(goal_stop_record, projection.cross_track_error_m, goal_stop_config),
+                    goal_status.remaining_route_m, goal_status.planar_distance_m,
+                )
             next_control = (
                 agent.run_step()
                 if phase == "driving" and stop_reason is None
                 else _blank_brake_control(carla)
             )
+            if goal_stop_record is not None:
+                goal_stop_record["basic_agent_done"] = basic_agent_done
+                goal_stop_record["termination_reason"] = stop_reason
+                goal_stop_record["control_source"] = (
+                    "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    if phase == "driving" and stop_reason is None
+                    else "full_brake_measured_stop_tail_or_setup" if phase != "driving" or goal_status.reached
+                    else "full_brake_failed_capture_abort_not_comfortable_data"
+                )
             suppress_stopped_brake_steering(
                 next_control,
                 math.hypot(state["vx"], state["vy"]),
@@ -1356,6 +1431,8 @@ def collect_episode(
                     "lane_invasion": [],
                 }
             )
+            if goal_stop_record is not None:
+                state_records[-1]["goal_stop"] = goal_stop_record
             observation = phase_observations[phase]
             observation["state_count"] += 1
             if observation["first_timestamp"] is None:
@@ -1397,6 +1474,22 @@ def collect_episode(
         for _ in range(int(phase_schedule["stationary_warmup"]["scheduled_ticks"])):
             tick_and_record("stationary_warmup")
 
+        if goal_stop_governor:
+            # HH_260906 - Ramp the initial command too; do not insert a full-speed first tick.
+            goal_stop_governor.target_speed_mps = 0.0
+            initial_state = state_records[-1] if state_records else base_link_state(
+                _transform_dict(ego.get_transform()), _vector_tuple(ego.get_velocity()),
+                _vector_tuple(ego.get_acceleration()), float(ego.get_angular_velocity().z), args.wheelbase_m,
+            )
+            initial_goal_stop = goal_stop_governor.update(
+                max(0.0, projector.length_m - progress_m),
+                math.hypot(initial_state["x"] - float(final_route_point["x"]),
+                           initial_state["y"] - float(final_route_point["y"])),
+                math.hypot(initial_state["vx"], initial_state["vy"]),
+                terminal_overshoot_m(projector.points, initial_state["x"], initial_state["y"]),
+                count_hold=False,
+            )
+            agent.set_target_speed(initial_goal_stop["target_speed_mps"] * 3.6)
         initial_drive_control = agent.run_step()
         velocity = _vector_tuple(ego.get_velocity())
         suppress_stopped_brake_steering(
@@ -1407,6 +1500,13 @@ def collect_episode(
         ego.apply_control(initial_drive_control)
         if state_records and state_records[-1]["capture_phase"] == "stationary_warmup":
             state_records[-1]["next_control"] = control_dict(initial_drive_control)
+            if goal_stop_governor:
+                # HH_260906 - The final warmup state's next command actually starts driving.
+                state_records[-1]["goal_stop"].update(initial_goal_stop)
+                state_records[-1]["goal_stop"]["control_source"] = (
+                    "BasicAgent_initial_drive_command_with_route_arc_target_emergency_unchanged"
+                )
+                state_records[-1]["goal_stop"]["next_control_starts_driving"] = True
 
         goal_status: CatalogGoalStatus | None = None
         basic_agent_done = False
@@ -1458,6 +1558,15 @@ def collect_episode(
                 f"planar base_link distance {goal_status.planar_distance_m:.3f} m "
                 f"(tolerance {args.goal_tolerance_m:.3f} m)"
             )
+        if goal_stop_config:
+            # HH_260906 - Reject measured violations instead of claiming the requested cap worked.
+            quality = measured_stop_quality(
+                state_records, [r["frame"] for r in camera_records], goal_stop_config,
+                goal_stop_bounds, goal_status.reached,
+            )
+            manifest["result"]["goal_stop_quality"] = quality
+            if quality["status"] != "PASS":
+                raise CollectionError("comfortable goal-stop measured quality failed; preserve partial evidence")
     finally:
         server_available = _server_available_for_cleanup(
             client, min(args.timeout, 2.0), cleanup_errors
@@ -1482,6 +1591,17 @@ def collect_episode(
         result["capture_phases"] = summarize_capture_phases(
             phase_schedule, phase_observations, args.physics_hz
         )
+        if goal_stop_config:
+            # HH_260906 - Failed and interrupted captures retain the same measured quality ledger.
+            try:
+                result["goal_stop_quality"] = measured_stop_quality(
+                    state_records, [r["frame"] for r in camera_records], goal_stop_config,
+                    goal_stop_bounds, bool(result.get("goal_reached")),
+                )
+            except Exception as quality_error:
+                # HH_260906 - A bad quality record must never skip world restoration or actor cleanup.
+                result["goal_stop_quality"] = {"status": "FAIL", "error": str(quality_error)}
+                cleanup_errors.append(f"goal-stop quality failed: {quality_error}")
         if server_available:
             try:
                 world.set_weather(original_weather)
@@ -1504,7 +1624,9 @@ def collect_episode(
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Collect a six-camera CARLA VAD dataset driven by BasicAgent."
+        description="Collect a six-camera CARLA VAD dataset driven by BasicAgent.",
+        # HH_260906 - Reject abbreviated host/port/map-load flags before an ownership wrapper launches CARLA.
+        allow_abbrev=False,
     )
     parser.add_argument("output", type=Path, help="final dataset directory")
     parser.add_argument("route_file", type=Path, help="route JSON from prepare_carla_route.py")
@@ -1548,6 +1670,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--command-lookahead-m", type=float, default=2.0)
     parser.add_argument("--command-exit-lookahead-m", type=float, default=2.5)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
+    # HH_260906 - This experimental goal-stop governor is never enabled by an old command.
+    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2"), default="disabled",
+                        help="opt-in measured goal stop; requires 20/10 Hz, <=30 km/h, 1 m tolerance and >=6.5 s tail")
     parser.add_argument(
         "--basic-agent-base-min-distance-m",
         type=float,
@@ -1617,6 +1742,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         parser.error("goal-tolerance-m must be positive and finite")
     try:
         capture_interval(args.physics_hz, args.capture_hz)
+        configuration_from_args(args)
         basic_agent_control_configuration(args, sampling_resolution_m=1.0)
         args.capture_phase_schedule = capture_phase_schedule(
             args.physics_hz,
@@ -1624,7 +1750,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             args.stationary_warmup_sec,
             args.stationary_tail_sec,
         )
-    except CollectionError as error:
+    except (CollectionError, ValueError) as error:
         parser.error(str(error))
     return args
 
@@ -1651,6 +1777,7 @@ def run(args: argparse.Namespace) -> Path:
     _, basic_agent_control = basic_agent_control_configuration(
         args, sampling_resolution
     )
+    goal_stop_config = configuration_from_args(args)
 
     partial.mkdir(parents=True)
     shutil.copy2(route_path, partial / "route.json")
@@ -1743,6 +1870,15 @@ def run(args: argparse.Namespace) -> Path:
             "images": "images/<CAMERA>/<CARLA_FRAME>.jpg",
         },
     }
+    if goal_stop_config:
+        # HH_260906 - Record helper bytes and fixed settings without changing legacy manifests.
+        helper_path = Path(__file__).with_name("carla_goal_stop_profile.py")
+        manifest["capture_contract"]["goal_stop_profile"] = {
+            **asdict(goal_stop_config), "control_source": "CARLA BasicAgent expert, not a learned model",
+            "tail_policy": "full brake only after measured stop and continuous dwell",
+            "bounds": source_motion_bounds(),
+        }
+        manifest["provenance"]["goal_stop_helper_sha256"] = sha256_file(helper_path)
     _write_json(partial / "manifest.json", manifest)
     error: BaseException | None = None
     try:

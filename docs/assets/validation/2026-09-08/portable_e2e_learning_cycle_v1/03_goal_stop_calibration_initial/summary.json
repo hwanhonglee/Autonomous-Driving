@@ -1,0 +1,3098 @@
+{
+  "schema": "portable_e2e.goal_stop_trial_summary.v1",
+  "status": "FINALIZED_TRIALS_REVIEWED_NOT_PROMOTED",
+  "created_at_utc": "2026-09-07T17:00:32.594689+00:00",
+  "summarizer_source_sha256": "4b1b97389df67c8f2a4f77d54ce14986da40bd02b75f7a5e655500b1873029e7",
+  "total_discovered_and_included_trials": 2,
+  "failed_trial_count": 2,
+  "raw_quality_candidate_count": 0,
+  "trials": [
+    {
+      "trial_id": "run_001",
+      "owner_exit_code": 1,
+      "owner_stopped_proof": true,
+      "owner_plan_recorded": false,
+      "map": "Town07",
+      "quality": "Low",
+      "status": "FAILED_RAW_QA_OR_CAPTURE",
+      "raw_data_available": true,
+      "raw_quality_candidate": false,
+      "source_manifest": [
+        {
+          "path": "owner_result.json",
+          "sha256": "54bf1414f6eba14c1ed191dba3d82b56109526311fb932e4943e27a5acac2812",
+          "size_bytes": 149
+        },
+        {
+          "path": "lifecycle/stopped.json",
+          "sha256": "f15b030845aecd755e14f05799ebf269b82ac21ea79711e9db5bba5b0e81620c",
+          "size_bytes": 744
+        },
+        {
+          "path": "owner_started.json",
+          "sha256": "88967d091bcea6d2ec7ead778c5fa5d41667948dc4a768a462b0166f526fbecc",
+          "size_bytes": 282
+        },
+        {
+          "path": "episode.partial/manifest.json",
+          "sha256": "14971c147d01b505840177541d228d6134772a657c8cf9f94cb6ebb33769109e",
+          "size_bytes": 46781
+        },
+        {
+          "path": "episode.partial/route.json",
+          "sha256": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+          "size_bytes": 89741
+        },
+        {
+          "path": "episode.partial/states.jsonl",
+          "sha256": "1d65370a1f07d7ff33fa55cb5163a5a073280e20131a3d3e3fbdcffbc83b221f",
+          "size_bytes": 1090754
+        },
+        {
+          "path": "episode.partial/camera_frames.jsonl",
+          "sha256": "f36f81256dc2a73b4156c77f97186c4b1c65fc2c0a4083e074bba09ec1e8bd79",
+          "size_bytes": 250873
+        }
+      ],
+      "learned_model_control": false,
+      "vehicle_control_approved": false,
+      "capture_status": "failed",
+      "profile_id": "comfortable_v1",
+      "goal_stop_profile": {
+        "profile_id": "comfortable_v1",
+        "desired_deceleration_mps2": 1.5,
+        "target_acceleration_limit_mps2": 1.5,
+        "stop_buffer_m": 0.75,
+        "goal_tolerance_m": 1.0,
+        "stopped_speed_mps": 0.1,
+        "hold_seconds": 2.0,
+        "normal_brake_cap": 0.1,
+        "minimum_tail_seconds": 6.5,
+        "maximum_projection_step_m": 1.0,
+        "maximum_projection_error_m": 3.0,
+        "control_source": "CARLA BasicAgent expert, not a learned model",
+        "tail_policy": "full brake only after measured stop and continuous dwell"
+      },
+      "nominal_target_speed_kmh": 30.0,
+      "collector_reported_goal_reached": false,
+      "collector_reported_quality_status": "FAIL",
+      "termination_reason": "basic_agent_done_before_comfortable_goal_window",
+      "collector_source_sha256": "bdc1be428b1a86571292102a8e233aa4c695ff46184ab08c389ba1407f2584cc",
+      "goal_stop_helper_sha256": "494d1f4b99f9c4c8423f62c1122e6b32e8d2f6587709786d2dc5142c84d3d66f",
+      "independent_qa": {
+        "flags": {
+          "native_frame_sequence_complete": true,
+          "native_20hz_cadence": true,
+          "camera_exact_10hz_full_capture_coverage": true,
+          "camera_10hz_cadence": true,
+          "native_decoder_speed_rate_clear": false,
+          "camera_decoder_speed_rate_clear": false,
+          "measured_stop_and_two_second_dwell": false,
+          "full_stopped_goal_tail": false,
+          "route_projection_matches_recording": true,
+          "route_cross_track_within_limit": true,
+          "maximum_measured_speed_within_30kph": false,
+          "no_recorded_collision_or_lane_invasion": true,
+          "manifest_state_and_camera_counts_match": true,
+          "manifest_events_match": true,
+          "capture_cleanup_completed": true,
+          "collector_goal_claim_matches_measured_goal": true
+        },
+        "failed_flags": [
+          "native_decoder_speed_rate_clear",
+          "camera_decoder_speed_rate_clear",
+          "measured_stop_and_two_second_dwell",
+          "full_stopped_goal_tail",
+          "maximum_measured_speed_within_30kph"
+        ],
+        "raw_scalar_quality_clear": false,
+        "goal_reached_independently": false,
+        "goal_dwell_seconds": 0.0,
+        "tail_elapsed_from_driving_end_seconds": 0.0,
+        "final_driving": {
+          "frame": 2889,
+          "timestamp": 37.18503905239049,
+          "elapsed_s": 32.9000004902482,
+          "phase": "driving",
+          "speed_mps": 2.996816310500422,
+          "target_speed_mps": 1.8111162284425144,
+          "remaining_route_m": 1.8433806643092794,
+          "goal_error_m": 1.843380682076448,
+          "terminal_overshoot_m": -1.8433806772164956,
+          "recomputed_route_cte_m": 0.0001353184810048021,
+          "recorded_route_projection_error_m": 0.0,
+          "stopped_in_goal": false,
+          "current_control": {
+            "throttle": 0.0,
+            "brake": 0.10000000149011612,
+            "steer": 0.0
+          },
+          "next_control": {
+            "throttle": 0.0,
+            "brake": 1.0,
+            "steer": 0.0
+          },
+          "control_source": "full_brake_failed_capture_abort_not_comfortable_data",
+          "collision": 0,
+          "lane_invasion": 0
+        },
+        "maximum_measured_speed_kmh": 30.031763514445867,
+        "maximum_recorded_projection_discrepancy_m": 0.0,
+        "phase_counts": {
+          "stationary_warmup": {
+            "native_states": 70,
+            "camera_anchors": 35
+          },
+          "driving": {
+            "native_states": 589,
+            "camera_anchors": 295
+          },
+          "stationary_tail": {
+            "native_states": 0,
+            "camera_anchors": 0
+          }
+        },
+        "event_counts": {
+          "collision": 0,
+          "lane_invasion": 0
+        },
+        "control_ranges": {
+          "current_control": {
+            "throttle": {
+              "minimum": 0.0,
+              "maximum": 0.75
+            },
+            "brake": {
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "steer": {
+              "minimum": -0.02462795376777649,
+              "maximum": 0.800000011920929
+            }
+          },
+          "next_control": {
+            "throttle": {
+              "minimum": 0.0,
+              "maximum": 0.75
+            },
+            "brake": {
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "steer": {
+              "minimum": -0.02462795376777649,
+              "maximum": 0.800000011920929
+            }
+          }
+        },
+        "speed_rate_qa": {
+          "native_20hz": {
+            "interval_count": 658,
+            "cadence_violation_count": 0,
+            "by_phase": {
+              "all": {
+                "interval_count": 658,
+                "minimum_mps2": -1.7273666180177625,
+                "maximum_mps2": 5.530545499298175,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2300,
+                    "to_frame": 2301,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 8.761822475712908e-08,
+                    "speed_rate_mps2": 1.7523644690303163e-06,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.5261819362640381,
+                      "brake": 0.0,
+                      "steer": 0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 6,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2308,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.8500000573694706,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.3480739504834368,
+                      "speed_rate_mps2": 5.530545499298175,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_goal_remaining_m": 210.2654213839856,
+                      "to_goal_error_m": 210.10746141473896,
+                      "to_command_target_speed_mps": 0.675,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2310,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9500000588595867,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.5974221392046764,
+                      "speed_rate_mps2": 2.921158939915956,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_goal_remaining_m": 210.2165803105134,
+                      "to_goal_error_m": 210.05861850863917,
+                      "to_command_target_speed_mps": 0.825,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2310,
+                      "to_frame": 2311,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.5974221392046764,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.696267692825671,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2321,
+                      "to_frame": 2322,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 1.4117219509350127,
+                      "to_speed_mps": 1.577741794532787,
+                      "speed_rate_mps2": 3.3203968224777163,
+                      "from_applied_control": {
+                        "throttle": 0.6531834006309509,
+                        "brake": 0.0,
+                        "steer": -0.00035692809615284204
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_next_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "to_goal_remaining_m": 209.5397400066292,
+                      "to_goal_error_m": 209.38179876797665,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2323,
+                      "to_frame": 2324,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.6500000692903996,
+                      "from_speed_mps": 1.6037016297907878,
+                      "to_speed_mps": 1.7655724335216287,
+                      "speed_rate_mps2": 3.237416026375561,
+                      "from_applied_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "from_next_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_next_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "to_goal_remaining_m": 209.37497316509425,
+                      "to_goal_error_m": 209.21703475451483,
+                      "to_command_target_speed_mps": 1.8749999999999993,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2325,
+                      "to_frame": 2326,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.750000070780516,
+                      "from_speed_mps": 1.7880178764894863,
+                      "to_speed_mps": 1.934984130458281,
+                      "speed_rate_mps2": 2.93932503557654,
+                      "from_applied_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "from_next_control": {
+                        "throttle": 0.5987707376480103,
+                        "brake": 0.0,
+                        "steer": -0.00043757676030509174
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.5987707376480103,
+                        "brake": 0.0,
+                        "steer": -0.00043757676030509174
+                      },
+                      "to_next_control": {
+                        "throttle": 0.3396071195602417,
+                        "brake": 0.0,
+                        "steer": -0.0004137834766879678
+                      },
+                      "to_goal_remaining_m": 209.1921236102146,
+                      "to_goal_error_m": 209.03418827545755,
+                      "to_command_target_speed_mps": 2.0249999999999995,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2308,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.8500000573694706,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.3480739504834368,
+                      "speed_rate_mps2": 5.530545499298175,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_goal_remaining_m": 210.2654213839856,
+                      "to_goal_error_m": 210.10746141473896,
+                      "to_command_target_speed_mps": 0.675,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2310,
+                      "to_frame": 2311,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.5974221392046764,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.696267692825671,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2321,
+                      "to_frame": 2322,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 1.4117219509350127,
+                      "to_speed_mps": 1.577741794532787,
+                      "speed_rate_mps2": 3.3203968224777163,
+                      "from_applied_control": {
+                        "throttle": 0.6531834006309509,
+                        "brake": 0.0,
+                        "steer": -0.00035692809615284204
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_next_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "to_goal_remaining_m": 209.5397400066292,
+                      "to_goal_error_m": 209.38179876797665,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2323,
+                      "to_frame": 2324,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.6500000692903996,
+                      "from_speed_mps": 1.6037016297907878,
+                      "to_speed_mps": 1.7655724335216287,
+                      "speed_rate_mps2": 3.237416026375561,
+                      "from_applied_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "from_next_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_next_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "to_goal_remaining_m": 209.37497316509425,
+                      "to_goal_error_m": 209.21703475451483,
+                      "to_command_target_speed_mps": 1.8749999999999993,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_warmup": {
+                "interval_count": 69,
+                "minimum_mps2": -1.0118591528219602e-05,
+                "maximum_mps2": 2.0221670158673243e-05,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              },
+              "driving": {
+                "interval_count": 589,
+                "minimum_mps2": -1.7273666180177625,
+                "maximum_mps2": 5.530545499298175,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2300,
+                    "to_frame": 2301,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 8.761822475712908e-08,
+                    "speed_rate_mps2": 1.7523644690303163e-06,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.5261819362640381,
+                      "brake": 0.0,
+                      "steer": 0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 6,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2308,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.8500000573694706,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.3480739504834368,
+                      "speed_rate_mps2": 5.530545499298175,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_goal_remaining_m": 210.2654213839856,
+                      "to_goal_error_m": 210.10746141473896,
+                      "to_command_target_speed_mps": 0.675,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2310,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9500000588595867,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.5974221392046764,
+                      "speed_rate_mps2": 2.921158939915956,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_goal_remaining_m": 210.2165803105134,
+                      "to_goal_error_m": 210.05861850863917,
+                      "to_command_target_speed_mps": 0.825,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2310,
+                      "to_frame": 2311,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.5974221392046764,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.696267692825671,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2321,
+                      "to_frame": 2322,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 1.4117219509350127,
+                      "to_speed_mps": 1.577741794532787,
+                      "speed_rate_mps2": 3.3203968224777163,
+                      "from_applied_control": {
+                        "throttle": 0.6531834006309509,
+                        "brake": 0.0,
+                        "steer": -0.00035692809615284204
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_next_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "to_goal_remaining_m": 209.5397400066292,
+                      "to_goal_error_m": 209.38179876797665,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2323,
+                      "to_frame": 2324,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.6500000692903996,
+                      "from_speed_mps": 1.6037016297907878,
+                      "to_speed_mps": 1.7655724335216287,
+                      "speed_rate_mps2": 3.237416026375561,
+                      "from_applied_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "from_next_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_next_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "to_goal_remaining_m": 209.37497316509425,
+                      "to_goal_error_m": 209.21703475451483,
+                      "to_command_target_speed_mps": 1.8749999999999993,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2325,
+                      "to_frame": 2326,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.750000070780516,
+                      "from_speed_mps": 1.7880178764894863,
+                      "to_speed_mps": 1.934984130458281,
+                      "speed_rate_mps2": 2.93932503557654,
+                      "from_applied_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "from_next_control": {
+                        "throttle": 0.5987707376480103,
+                        "brake": 0.0,
+                        "steer": -0.00043757676030509174
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.5987707376480103,
+                        "brake": 0.0,
+                        "steer": -0.00043757676030509174
+                      },
+                      "to_next_control": {
+                        "throttle": 0.3396071195602417,
+                        "brake": 0.0,
+                        "steer": -0.0004137834766879678
+                      },
+                      "to_goal_remaining_m": 209.1921236102146,
+                      "to_goal_error_m": 209.03418827545755,
+                      "to_command_target_speed_mps": 2.0249999999999995,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2308,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.8500000573694706,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.3480739504834368,
+                      "speed_rate_mps2": 5.530545499298175,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_goal_remaining_m": 210.2654213839856,
+                      "to_goal_error_m": 210.10746141473896,
+                      "to_command_target_speed_mps": 0.675,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2310,
+                      "to_frame": 2311,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.5974221392046764,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.696267692825671,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2321,
+                      "to_frame": 2322,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 1.4117219509350127,
+                      "to_speed_mps": 1.577741794532787,
+                      "speed_rate_mps2": 3.3203968224777163,
+                      "from_applied_control": {
+                        "throttle": 0.6531834006309509,
+                        "brake": 0.0,
+                        "steer": -0.00035692809615284204
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0006135416915640235
+                      },
+                      "to_next_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "to_goal_remaining_m": 209.5397400066292,
+                      "to_goal_error_m": 209.38179876797665,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2323,
+                      "to_frame": 2324,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.6500000692903996,
+                      "from_speed_mps": 1.6037016297907878,
+                      "to_speed_mps": 1.7655724335216287,
+                      "speed_rate_mps2": 3.237416026375561,
+                      "from_applied_control": {
+                        "throttle": 0.5446397662162781,
+                        "brake": 0.0,
+                        "steer": -0.0005758755141869187
+                      },
+                      "from_next_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.7218745946884155,
+                        "brake": 0.0,
+                        "steer": -0.000526330666616559
+                      },
+                      "to_next_control": {
+                        "throttle": 0.40943124890327454,
+                        "brake": 0.0,
+                        "steer": -0.00047132695908658206
+                      },
+                      "to_goal_remaining_m": 209.37497316509425,
+                      "to_goal_error_m": 209.21703475451483,
+                      "to_command_target_speed_mps": 1.8749999999999993,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_tail": {
+                "interval_count": 0,
+                "minimum_mps2": null,
+                "maximum_mps2": null,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": false
+                }
+              }
+            }
+          },
+          "camera_10hz": {
+            "interval_count": 329,
+            "cadence_violation_count": 0,
+            "by_phase": {
+              "all": {
+                "interval_count": 329,
+                "minimum_mps2": -1.7272235351228973,
+                "maximum_mps2": 3.79817512974773,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2299,
+                    "to_frame": 2301,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 8.761822475712908e-08,
+                    "speed_rate_mps2": 8.761822345151581e-07,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.5261819362640381,
+                      "brake": 0.0,
+                      "steer": 0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 2,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2309,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9000000581145287,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.45136419003244554,
+                      "speed_rate_mps2": 3.79817512974773,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_goal_remaining_m": 210.24496401024032,
+                      "to_goal_error_m": 210.08699970466407,
+                      "to_command_target_speed_mps": 0.75,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2311,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.3087133163708136,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 2,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2309,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9000000581145287,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.45136419003244554,
+                      "speed_rate_mps2": 3.79817512974773,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_goal_remaining_m": 210.24496401024032,
+                      "to_goal_error_m": 210.08699970466407,
+                      "to_command_target_speed_mps": 0.75,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2311,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.3087133163708136,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_warmup": {
+                "interval_count": 34,
+                "minimum_mps2": -7.767944212989581e-06,
+                "maximum_mps2": 1.0110835079336622e-05,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              },
+              "driving": {
+                "interval_count": 295,
+                "minimum_mps2": -1.7272235351228973,
+                "maximum_mps2": 3.79817512974773,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2299,
+                    "to_frame": 2301,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 8.761822475712908e-08,
+                    "speed_rate_mps2": 8.761822345151581e-07,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.27000001072883606,
+                      "brake": 0.0,
+                      "steer": 0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.5261819362640381,
+                      "brake": 0.0,
+                      "steer": 0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 2,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2309,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9000000581145287,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.45136419003244554,
+                      "speed_rate_mps2": 3.79817512974773,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_goal_remaining_m": 210.24496401024032,
+                      "to_goal_error_m": 210.08699970466407,
+                      "to_command_target_speed_mps": 0.75,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2311,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.3087133163708136,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 2,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2307,
+                      "to_frame": 2309,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 3.9000000581145287,
+                      "from_speed_mps": 0.07154667139795058,
+                      "to_speed_mps": 0.45136419003244554,
+                      "speed_rate_mps2": 3.79817512974773,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.20000000298023224
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 0.10000000149011612
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "to_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_goal_remaining_m": 210.24496401024032,
+                      "to_goal_error_m": 210.08699970466407,
+                      "to_command_target_speed_mps": 0.75,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 2309,
+                      "to_frame": 2311,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.000000059604645,
+                      "from_speed_mps": 0.45136419003244554,
+                      "to_speed_mps": 0.7822355265998939,
+                      "speed_rate_mps2": 3.3087133163708136,
+                      "from_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": 1.3877787807814457e-16
+                      },
+                      "from_next_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.0051224748603999615
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.75,
+                        "brake": 0.0,
+                        "steer": -0.00173375871963799
+                      },
+                      "to_next_control": {
+                        "throttle": 0.4543067216873169,
+                        "brake": 0.0,
+                        "steer": -0.0011506704613566399
+                      },
+                      "to_goal_remaining_m": 210.18103968099567,
+                      "to_goal_error_m": 210.0230808964114,
+                      "to_command_target_speed_mps": 0.8999999999999999,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_tail": {
+                "interval_count": 0,
+                "minimum_mps2": null,
+                "maximum_mps2": null,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "trial_id": "run_002",
+      "owner_exit_code": 1,
+      "owner_stopped_proof": true,
+      "owner_plan_recorded": true,
+      "map": "Town07",
+      "quality": "Low",
+      "status": "FAILED_RAW_QA_OR_CAPTURE",
+      "raw_data_available": true,
+      "raw_quality_candidate": false,
+      "source_manifest": [
+        {
+          "path": "owner_result.json",
+          "sha256": "db354776fb8357a95c75313b1cccd5e37d6c0237e1f877f1519a18285be589c1",
+          "size_bytes": 149
+        },
+        {
+          "path": "lifecycle/stopped.json",
+          "sha256": "e9d9d91d097b69426375791e634eb4d79ab72ef4c8e57537fd32725c84fed074",
+          "size_bytes": 743
+        },
+        {
+          "path": "owner_plan.json",
+          "sha256": "4e355043640de2b2cde11155aec41b5a57f985c445e51be95d221a8cf22d39da",
+          "size_bytes": 4296
+        },
+        {
+          "path": "owner_started.json",
+          "sha256": "580cbdd03573575aa0648d96176f3d19e178949d8c47bbae83c010866ec546b5",
+          "size_bytes": 282
+        },
+        {
+          "path": "episode.partial/manifest.json",
+          "sha256": "b9843caaa06a5b3bb73a57e517f9a6fbe6a26c27b6ee47ea8ef31c0778a84351",
+          "size_bytes": 51078
+        },
+        {
+          "path": "episode.partial/route.json",
+          "sha256": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+          "size_bytes": 89741
+        },
+        {
+          "path": "episode.partial/states.jsonl",
+          "sha256": "f60af3d4af8a319c95b3656e25977b74ff329507d99315abb3a8f974514f09f0",
+          "size_bytes": 2263801
+        },
+        {
+          "path": "episode.partial/camera_frames.jsonl",
+          "sha256": "0bc429dd7d591574ad1f95b96903801b543ee1b1b87d1e2508ccd7d7b0f4ab04",
+          "size_bytes": 523854
+        }
+      ],
+      "learned_model_control": false,
+      "vehicle_control_approved": false,
+      "capture_status": "failed",
+      "profile_id": "comfortable_v2",
+      "goal_stop_profile": {
+        "profile_id": "comfortable_v2",
+        "desired_deceleration_mps2": 1.0,
+        "target_acceleration_limit_mps2": 1.5,
+        "stop_buffer_m": 0.75,
+        "goal_tolerance_m": 1.0,
+        "stopped_speed_mps": 0.1,
+        "hold_seconds": 2.0,
+        "normal_brake_cap": 0.15,
+        "normal_throttle_cap": 0.2,
+        "minimum_tail_seconds": 6.5,
+        "maximum_projection_step_m": 1.0,
+        "maximum_projection_error_m": 3.0,
+        "control_source": "CARLA BasicAgent expert, not a learned model",
+        "tail_policy": "full brake only after measured stop and continuous dwell"
+      },
+      "nominal_target_speed_kmh": 30.0,
+      "collector_reported_goal_reached": true,
+      "collector_reported_quality_status": "FAIL",
+      "termination_reason": "comfortable_goal_measured_stop_and_dwell",
+      "collector_source_sha256": "99107a76653584cb0cbbc5224c09242022bea7124e3de8c79166c6ab4c62dfc5",
+      "goal_stop_helper_sha256": "840a15999b46c71d0561a024997900b0297d9b3ea30cab829a7b0e7a3c52b1f2",
+      "independent_qa": {
+        "flags": {
+          "native_frame_sequence_complete": true,
+          "native_20hz_cadence": true,
+          "camera_exact_10hz_full_capture_coverage": true,
+          "camera_10hz_cadence": true,
+          "native_decoder_speed_rate_clear": false,
+          "camera_decoder_speed_rate_clear": false,
+          "measured_stop_and_two_second_dwell": true,
+          "full_stopped_goal_tail": true,
+          "route_projection_matches_recording": true,
+          "route_cross_track_within_limit": true,
+          "maximum_measured_speed_within_30kph": true,
+          "no_recorded_collision_or_lane_invasion": true,
+          "manifest_state_and_camera_counts_match": true,
+          "manifest_events_match": true,
+          "capture_cleanup_completed": true,
+          "collector_goal_claim_matches_measured_goal": true
+        },
+        "failed_flags": [
+          "native_decoder_speed_rate_clear",
+          "camera_decoder_speed_rate_clear"
+        ],
+        "raw_scalar_quality_clear": false,
+        "goal_reached_independently": true,
+        "goal_dwell_seconds": 2.0000000298023224,
+        "tail_elapsed_from_driving_end_seconds": 6.500000096857548,
+        "final_driving": {
+          "frame": 3508,
+          "timestamp": 66.6762285536388,
+          "elapsed_s": 62.40000092983246,
+          "phase": "driving",
+          "speed_mps": 0.0,
+          "target_speed_mps": 0.0,
+          "remaining_route_m": 0.9696464090142172,
+          "goal_error_m": 0.9696508884247309,
+          "terminal_overshoot_m": -0.9696464090142298,
+          "recomputed_route_cte_m": 0.0029473562185542874,
+          "recorded_route_projection_error_m": 0.0,
+          "stopped_in_goal": true,
+          "current_control": {
+            "throttle": 0.0,
+            "brake": 0.15000000596046448,
+            "steer": 0.0
+          },
+          "next_control": {
+            "throttle": 0.0,
+            "brake": 1.0,
+            "steer": 0.0
+          },
+          "control_source": "full_brake_measured_stop_tail_or_setup",
+          "collision": 0,
+          "lane_invasion": 0
+        },
+        "maximum_measured_speed_kmh": 16.685145710453593,
+        "maximum_recorded_projection_discrepancy_m": 0.0,
+        "phase_counts": {
+          "stationary_warmup": {
+            "native_states": 70,
+            "camera_anchors": 35
+          },
+          "driving": {
+            "native_states": 1179,
+            "camera_anchors": 590
+          },
+          "stationary_tail": {
+            "native_states": 130,
+            "camera_anchors": 65
+          }
+        },
+        "event_counts": {
+          "collision": 0,
+          "lane_invasion": 0
+        },
+        "control_ranges": {
+          "current_control": {
+            "throttle": {
+              "minimum": 0.0,
+              "maximum": 0.20000000298023224
+            },
+            "brake": {
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "steer": {
+              "minimum": -0.800000011920929,
+              "maximum": 0.04163825884461403
+            }
+          },
+          "next_control": {
+            "throttle": {
+              "minimum": 0.0,
+              "maximum": 0.20000000298023224
+            },
+            "brake": {
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "steer": {
+              "minimum": -0.800000011920929,
+              "maximum": 0.04163825884461403
+            }
+          }
+        },
+        "speed_rate_qa": {
+          "native_20hz": {
+            "interval_count": 1378,
+            "cadence_violation_count": 0,
+            "by_phase": {
+              "all": {
+                "interval_count": 1378,
+                "minimum_mps2": -22.49228726772685,
+                "maximum_mps2": 4.0731466854047005,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2329,
+                    "to_frame": 2330,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 7.62432592761831e-08,
+                    "speed_rate_mps2": 1.5248651628014004e-06,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  },
+                  {
+                    "from_frame": 3508,
+                    "to_frame": 3509,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "driving",
+                    "to_phase": "stationary_tail",
+                    "time_from_capture_start_s": 62.45000093057752,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 0.0,
+                    "speed_rate_mps2": 0.0,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 0.15000000596046448,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_goal_remaining_m": 0.9696464090142172,
+                    "to_goal_error_m": 0.9696508884247309,
+                    "to_command_target_speed_mps": 0.0,
+                    "to_control_source": "full_brake_measured_stop_tail_or_setup"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 5,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2350,
+                      "to_frame": 2351,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 2.4098052359821103e-08,
+                      "to_speed_mps": 0.20365736140301816,
+                      "speed_rate_mps2": 4.0731466854047005,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.438355626414705e-07
+                      },
+                      "to_goal_remaining_m": 210.27412005498672,
+                      "to_goal_error_m": 210.11616145823947,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3431,
+                      "to_frame": 3432,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.5905878911148417,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -8.316891504966856,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3432,
+                      "to_frame": 3433,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.650000873953104,
+                      "from_speed_mps": 1.1747433096699318,
+                      "to_speed_mps": 0.9446548777518368,
+                      "speed_rate_mps2": -4.601768569790205,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.00525325583294034
+                      },
+                      "to_goal_remaining_m": 1.8413482252857705,
+                      "to_goal_error_m": 1.8413521002863498,
+                      "to_command_target_speed_mps": 1.4773951572181157,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3443,
+                      "to_frame": 3444,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.1314371784334452,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -22.49228726772685,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3467,
+                      "to_frame": 3468,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5251625021977846,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -10.492055884917866,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2350,
+                      "to_frame": 2351,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 2.4098052359821103e-08,
+                      "to_speed_mps": 0.20365736140301816,
+                      "speed_rate_mps2": 4.0731466854047005,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.438355626414705e-07
+                      },
+                      "to_goal_remaining_m": 210.27412005498672,
+                      "to_goal_error_m": 210.11616145823947,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3431,
+                      "to_frame": 3432,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.5905878911148417,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -8.316891504966856,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3443,
+                      "to_frame": 3444,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.1314371784334452,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -22.49228726772685,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3467,
+                      "to_frame": 3468,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5251625021977846,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -10.492055884917866,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_warmup": {
+                "interval_count": 69,
+                "minimum_mps2": -1.0118591528219602e-05,
+                "maximum_mps2": 2.0221670158673243e-05,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              },
+              "driving": {
+                "interval_count": 1179,
+                "minimum_mps2": -22.49228726772685,
+                "maximum_mps2": 4.0731466854047005,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2329,
+                    "to_frame": 2330,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 7.62432592761831e-08,
+                    "speed_rate_mps2": 1.5248651628014004e-06,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 5,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2350,
+                      "to_frame": 2351,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 2.4098052359821103e-08,
+                      "to_speed_mps": 0.20365736140301816,
+                      "speed_rate_mps2": 4.0731466854047005,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.438355626414705e-07
+                      },
+                      "to_goal_remaining_m": 210.27412005498672,
+                      "to_goal_error_m": 210.11616145823947,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3431,
+                      "to_frame": 3432,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.5905878911148417,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -8.316891504966856,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3432,
+                      "to_frame": 3433,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.650000873953104,
+                      "from_speed_mps": 1.1747433096699318,
+                      "to_speed_mps": 0.9446548777518368,
+                      "speed_rate_mps2": -4.601768569790205,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.00525325583294034
+                      },
+                      "to_goal_remaining_m": 1.8413482252857705,
+                      "to_goal_error_m": 1.8413521002863498,
+                      "to_command_target_speed_mps": 1.4773951572181157,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3443,
+                      "to_frame": 3444,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.1314371784334452,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -22.49228726772685,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3467,
+                      "to_frame": 3468,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5251625021977846,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -10.492055884917866,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 2350,
+                      "to_frame": 2351,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 4.550000067800283,
+                      "from_speed_mps": 2.4098052359821103e-08,
+                      "to_speed_mps": 0.20365736140301816,
+                      "speed_rate_mps2": 4.0731466854047005,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.322475655906601e-06
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -6.438355626414705e-07
+                      },
+                      "to_goal_remaining_m": 210.27412005498672,
+                      "to_goal_error_m": 210.11616145823947,
+                      "to_command_target_speed_mps": 1.7249999999999994,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3431,
+                      "to_frame": 3432,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.5905878911148417,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -8.316891504966856,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3443,
+                      "to_frame": 3444,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.1314371784334452,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -22.49228726772685,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3467,
+                      "to_frame": 3468,
+                      "dt_s": 0.05000000074505806,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5251625021977846,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -10.492055884917866,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_tail": {
+                "interval_count": 130,
+                "minimum_mps2": 0.0,
+                "maximum_mps2": 0.0,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 3508,
+                    "to_frame": 3509,
+                    "dt_s": 0.05000000074505806,
+                    "from_phase": "driving",
+                    "to_phase": "stationary_tail",
+                    "time_from_capture_start_s": 62.45000093057752,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 0.0,
+                    "speed_rate_mps2": 0.0,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 0.15000000596046448,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_goal_remaining_m": 0.9696464090142172,
+                    "to_goal_error_m": 0.9696508884247309,
+                    "to_command_target_speed_mps": 0.0,
+                    "to_control_source": "full_brake_measured_stop_tail_or_setup"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              }
+            }
+          },
+          "camera_10hz": {
+            "interval_count": 689,
+            "cadence_violation_count": 0,
+            "by_phase": {
+              "all": {
+                "interval_count": 689,
+                "minimum_mps2": -10.243416568962365,
+                "maximum_mps2": 2.776215534848211,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2328,
+                    "to_frame": 2330,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 7.62432592761831e-08,
+                    "speed_rate_mps2": 7.624325814007002e-07,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  },
+                  {
+                    "from_frame": 3508,
+                    "to_frame": 3510,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "driving",
+                    "to_phase": "stationary_tail",
+                    "time_from_capture_start_s": 62.500000931322575,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 0.0,
+                    "speed_rate_mps2": 0.0,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 0.15000000596046448,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_goal_remaining_m": 0.9696464090142172,
+                    "to_goal_error_m": 0.9696508884247309,
+                    "to_command_target_speed_mps": 0.0,
+                    "to_control_source": "full_brake_measured_stop_tail_or_setup"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 3430,
+                      "to_frame": 3432,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.6409673940145892,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -4.662240773973773,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1269725114107132,
+                        "steer": -0.000990594387985766
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3432,
+                      "to_frame": 3434,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.70000087469816,
+                      "from_speed_mps": 1.1747433096699318,
+                      "to_speed_mps": 0.8769056434202447,
+                      "speed_rate_mps2": -2.978376618115601,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.00525325583294034
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.002337904879823327
+                      },
+                      "to_goal_remaining_m": 1.7961820466772167,
+                      "to_goal_error_m": 1.7961865568673707,
+                      "to_command_target_speed_mps": 1.4465006371773341,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3442,
+                      "to_frame": 3444,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.0311644704491594,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -10.243416568962365,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0014622606104239821
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3466,
+                      "to_frame": 3468,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5766964048821609,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -5.761366961623546,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0005285099614411592
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 1,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 3442,
+                      "to_frame": 3444,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.0311644704491594,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -10.243416568962365,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0014622606104239821
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_warmup": {
+                "interval_count": 34,
+                "minimum_mps2": -7.767944212989581e-06,
+                "maximum_mps2": 1.0110835079336622e-05,
+                "phase_boundary_intervals": [],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              },
+              "driving": {
+                "interval_count": 590,
+                "minimum_mps2": -10.243416568962365,
+                "maximum_mps2": 2.776215534848211,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 2328,
+                    "to_frame": 2330,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "stationary_warmup",
+                    "to_phase": "driving",
+                    "time_from_capture_start_s": 3.500000052154064,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 7.62432592761831e-08,
+                    "speed_rate_mps2": 7.624325814007002e-07,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.800000011920929
+                    },
+                    "to_next_control": {
+                      "throttle": 0.20000000298023224,
+                      "brake": 0.0,
+                      "steer": -0.699999988079071
+                    },
+                    "to_goal_remaining_m": 210.27949151326317,
+                    "to_goal_error_m": 210.12153281602787,
+                    "to_command_target_speed_mps": 0.15000000000000002,
+                    "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 4,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 3430,
+                      "to_frame": 3432,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.600000873208046,
+                      "from_speed_mps": 1.6409673940145892,
+                      "to_speed_mps": 1.1747433096699318,
+                      "speed_rate_mps2": -4.662240773973773,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1269725114107132,
+                        "steer": -0.000990594387985766
+                      },
+                      "from_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.1291205734014511,
+                        "steer": 0.0010317107662558556
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_goal_remaining_m": 1.8864098960131344,
+                      "to_goal_error_m": 1.8864106528891174,
+                      "to_command_target_speed_mps": 1.5075874077566012,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3432,
+                      "to_frame": 3434,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 58.70000087469816,
+                      "from_speed_mps": 1.1747433096699318,
+                      "to_speed_mps": 0.8769056434202447,
+                      "speed_rate_mps2": -2.978376618115601,
+                      "from_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.13119284808635712,
+                        "steer": -0.0009594816365279257
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.003827218431979418
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.00525325583294034
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.002337904879823327
+                      },
+                      "to_goal_remaining_m": 1.7961820466772167,
+                      "to_goal_error_m": 1.7961865568673707,
+                      "to_command_target_speed_mps": 1.4465006371773341,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3442,
+                      "to_frame": 3444,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.0311644704491594,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -10.243416568962365,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0014622606104239821
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    },
+                    {
+                      "from_frame": 3466,
+                      "to_frame": 3468,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 60.400000900030136,
+                      "from_speed_mps": 0.5766964048821609,
+                      "to_speed_mps": 0.0005597001347005773,
+                      "speed_rate_mps2": -5.761366961623546,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0005285099614411592
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": 3.4294265788048506e-05
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_next_control": {
+                        "throttle": 0.0,
+                        "brake": 0.15000000596046448,
+                        "steer": 0.0
+                      },
+                      "to_goal_remaining_m": 0.9697683588011898,
+                      "to_goal_error_m": 0.9697728375044267,
+                      "to_command_target_speed_mps": 0.0,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 1,
+                  "violation_intervals": [
+                    {
+                      "from_frame": 3442,
+                      "to_frame": 3444,
+                      "dt_s": 0.10000000149011612,
+                      "from_phase": "driving",
+                      "to_phase": "driving",
+                      "time_from_capture_start_s": 59.20000088214874,
+                      "from_speed_mps": 1.0311644704491594,
+                      "to_speed_mps": 0.0068227982890427365,
+                      "speed_rate_mps2": -10.243416568962365,
+                      "from_applied_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0014622606104239821
+                      },
+                      "from_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.001413315418176353
+                      },
+                      "to_applied_control": {
+                        "throttle": 0.0,
+                        "brake": 0.12986460328102112,
+                        "steer": -0.0015736722853034735
+                      },
+                      "to_next_control": {
+                        "throttle": 0.20000000298023224,
+                        "brake": 0.0,
+                        "steer": -0.0013813269324600697
+                      },
+                      "to_goal_remaining_m": 1.3200482026528277,
+                      "to_goal_error_m": 1.320052664178803,
+                      "to_command_target_speed_mps": 1.0677529701694375,
+                      "to_control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+                    }
+                  ],
+                  "assessed_and_clear": false
+                }
+              },
+              "stationary_tail": {
+                "interval_count": 65,
+                "minimum_mps2": 0.0,
+                "maximum_mps2": 0.0,
+                "phase_boundary_intervals": [
+                  {
+                    "from_frame": 3508,
+                    "to_frame": 3510,
+                    "dt_s": 0.10000000149011612,
+                    "from_phase": "driving",
+                    "to_phase": "stationary_tail",
+                    "time_from_capture_start_s": 62.500000931322575,
+                    "from_speed_mps": 0.0,
+                    "to_speed_mps": 0.0,
+                    "speed_rate_mps2": 0.0,
+                    "from_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 0.15000000596046448,
+                      "steer": 0.0
+                    },
+                    "from_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_applied_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_next_control": {
+                      "throttle": 0.0,
+                      "brake": 1.0,
+                      "steer": 0.0
+                    },
+                    "to_goal_remaining_m": 0.9696464090142172,
+                    "to_goal_error_m": 0.9696508884247309,
+                    "to_command_target_speed_mps": 0.0,
+                    "to_control_source": "full_brake_measured_stop_tail_or_setup"
+                  }
+                ],
+                "physical_decoder": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                },
+                "runtime_speed_rate_gate": {
+                  "violation_count": 0,
+                  "violation_intervals": [],
+                  "assessed_and_clear": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "scalar_bounds": {
+    "physical_decoder": {
+      "maximum_acceleration_mps2": 2.9,
+      "maximum_deceleration_mps2": 2.9
+    },
+    "runtime_speed_rate_gate": {
+      "maximum_acceleration_mps2": 3.0,
+      "maximum_deceleration_mps2": 6.0
+    },
+    "source_sha256": {
+      "portable_e2e/model.py": "6d21485cdce8728e5f3f2ae19d25a71d866a75e806a71a67623dbcca20fe28be",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+    }
+  },
+  "scope": {
+    "all_discovered_trials_in_denominator": true,
+    "original_inputs_modified": false,
+    "camera_jsonl_metadata_read": true,
+    "camera_pixels_opened": false,
+    "model_loaded": false,
+    "learned_model_control": false,
+    "live_simulator_access": false,
+    "test_dataset_used": false,
+    "automatic_promotion": false
+  },
+  "limitations": [
+    "Raw scalar QA is not full XY/decoder feasibility or learned driving validation.",
+    "Nominal speed settings are separate from maximum measured speed; no 30 km/h pass follows from a nominal setting.",
+    "Phase boundaries retain preceding states; low-speed spikes are not removed.",
+    "Stored source bytes are hashed without assuming historical runs had the latest wrapper provenance.",
+    "Camera metadata coverage is audited; JPEG bytes, camera geometry and image content are not validated here."
+  ]
+}

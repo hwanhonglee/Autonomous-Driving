@@ -10,6 +10,8 @@
 |---|---|---|
 | [01 정답 데이터의 감속 한계 분석](01_target_feasibility/README.md) | 기존 train/val의 실제 속도·XY를 모델의 그대로인 한계와 대조 | 진단 완료; 원본 라벨 유지 |
 | [02 경로 생성기 고정·선택기 학습](02_frozen_selector/README.md) | C 생성기 3개 각각에 선택기 3종, 총 9회 추가 학습·고정 시점 경로 PNG | 전부 완료, 세 방식 모두 종합 상대·절대 FAIL |
+| [03 초기 자연 정지 수집 보정](03_goal_stop_calibration_initial/README.md) | Town07 두 시도의 실제 속도·가감속·목표 정지 분석 | 두 번째 목표 정지는 성공, 두 시도 모두 데이터 품질 FAIL |
+| [05 초기 코드 전체 회귀 검사](05_code_validation_initial/README.md) | 선택기·진단·수집 보정·고정 페달 계측 v1 포함 원본 로그 | 2,633 passed / 6 skipped |
 
 ## 두 환경에서 실제로 한 일
 
@@ -58,5 +60,6 @@ Town07 동일 학습 경로의 첫 두 보정 시험은 모두 실패 자료로 
 
 [전날 결과](../../2026-09-07/portable_e2e_learning_cycle_v1/README.md) ·
 [선택기 실험 설계](../../../../portable-e2e-frozen-selector.md) ·
+[로컬 정지 보정 실행 안내](../../../../portable-e2e-natural-goal-stop.md) ·
 [두 PC의 운용 순서](../../../../portable-e2e-learning-loop.md) ·
 [9개 상위·30개 하위 기능표](../../../../portable-e2e-feature-roadmap.md)

@@ -1,0 +1,162 @@
+{
+  "schema": "carla_expert.low_speed_xy_explanation.v1",
+  "created_at_utc": "2026-09-07T19:12:34.933320+00:00",
+  "status": "DIAGNOSED_NOT_ADMITTED",
+  "source_pins": {
+    "scripts/e2e/analyze_carla_low_speed_xy.py": "7aff902fe25f574c4ea678b5638b6d246e8877d15c7f99ad24056248bc84edab",
+    "portable_e2e/config/common_10hz_v1.contract.json": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+    "portable_e2e/contract.py": "9a66674cfcdacfbb8a504bb10371238023bf2fd149eda048b42c4badffe1fa26",
+    "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "scripts/e2e/audit_carla_comfortable_v3_trial.py": "ba0c81cb0faf9d1c7f178cdea25f31861c73f416578b935a8240dcf25d53efed",
+    "scripts/e2e/audit_carla_raw_pre_admission.py": "8aea85d259a5cb789a5f5bd8e34b9f230ab44838c68de7cd804ab1e50967980e",
+    "scripts/e2e/audit_portable_target_feasibility.py": "8b56a4990f51639ec5ff9bca12f7453051772d1984e4db768613384b25f00894",
+    "scripts/e2e/prepare_carla_common10_dataset.py": "c63c7e5b7e0c06336c885f2d6120e3e8a8a74daf372ddf5df167eac2b4b4b666",
+    "scripts/e2e/summarize_carla_goal_stop_trials.py": "623fe185cfb823392629d62e10fa45ed5da893572ceb901c2e33f3b4f4802771"
+  },
+  "prior_diagnostic_pins": {
+    "summary.json": "d55d714426b06413e4d0088aeea0d9854c7d31938b1d27c2c5bd55459f2dfb98",
+    "future_anchor_audit.jsonl": "2d1fc8fe9dd1d2976e43a45d1e2960f93b022f3b250d12ca822b3e3fa57a554c",
+    "jpeg_audit.jsonl": "1c87b1e62d22bbb70887ea195168dd1928716332af111439b1439ad8982b3133"
+  },
+  "trials": [
+    {
+      "trial": "run_001",
+      "full_64_anchor_count": 669,
+      "full_64_anchor_counts_by_phase": {
+        "stationary_warmup": 35,
+        "driving": 634
+      },
+      "all_valid_steps": 42816,
+      "assessed_curvature_steps": 39575,
+      "curvature_violating_steps": 519,
+      "curvature_violating_anchors": 149,
+      "unique_100ms_violation_ticks": 56,
+      "skip_threshold_budget_could_explain_count": 0,
+      "four_ulp_sensitivity_could_cover_count": 455,
+      "zero_pitch_center_proxy_still_failed_count": 393,
+      "body_yaw_proxy_within_curvature_bound_count": 519,
+      "xy_speed_range_mps": [
+        0.04262371598683362,
+        0.4261526768435568
+      ],
+      "worst_curvature_witness": {
+        "trial": "run_001",
+        "anchor_frame": 4064,
+        "anchor_phase": "driving",
+        "target_timestamp_ns": 71236135580,
+        "target_tick": 669,
+        "future_region": "near_goal",
+        "existing_lateral_acceleration": 0.15858598422374498,
+        "raw_anchor_velocity_slip_rad": -0.2882546090056634,
+        "point_index": 1,
+        "distance_m": 0.00426237171080465,
+        "xy_speed_mps": 0.0426237171080465,
+        "heading_change_rad": 0.13086821743413557,
+        "allowed_heading_change_rad": 0.0008524743421609301,
+        "curvature_rad_per_m": 30.703145176756596,
+        "curvature_failed": true,
+        "preceding_unassessed_distance_m": 0.0,
+        "skip_threshold_budget_can_explain_failure": false,
+        "body_yaw_change_rad": 0.00030466560741815307,
+        "body_yaw_change_over_xy_distance": 0.07147795361109843,
+        "four_float32_ulp_position_sensitivity_m": 8.631674575031098e-05,
+        "four_ulp_sensitivity_can_cover_excess_angle": false,
+        "zero_pitch_actor_center_proxy_curvature": 6.8282233523582345,
+        "zero_pitch_actor_center_proxy_failed": true,
+        "pose_step_world_xy_m": [
+          0.0005562181258937926,
+          0.0042259240406679055
+        ],
+        "planar_yaw_reference_offset_delta_xy_m": [
+          -0.0004341478149939436,
+          7.649464027949943e-07
+        ],
+        "instantaneous_speed_label_mps": 6.37057793699195e-05,
+        "end_speed_vs_interval_xy_speed_error_mps": -0.04256001132867658
+      },
+      "all_original_failures_retained": true,
+      "actor_center_pitch_roll_were_recorded": false
+    },
+    {
+      "trial": "run_002",
+      "full_64_anchor_count": 674,
+      "full_64_anchor_counts_by_phase": {
+        "stationary_warmup": 35,
+        "driving": 639
+      },
+      "all_valid_steps": 43136,
+      "assessed_curvature_steps": 39895,
+      "curvature_violating_steps": 599,
+      "curvature_violating_anchors": 156,
+      "unique_100ms_violation_ticks": 59,
+      "skip_threshold_budget_could_explain_count": 0,
+      "four_ulp_sensitivity_could_cover_count": 534,
+      "zero_pitch_center_proxy_still_failed_count": 447,
+      "body_yaw_proxy_within_curvature_bound_count": 599,
+      "xy_speed_range_mps": [
+        0.03977286438121059,
+        0.3357589782658065
+      ],
+      "worst_curvature_witness": {
+        "trial": "run_002",
+        "anchor_frame": 4131,
+        "anchor_phase": "driving",
+        "target_timestamp_ns": 71842781842,
+        "target_tick": 674,
+        "future_region": "near_goal",
+        "existing_lateral_acceleration": 0.16198106798712947,
+        "raw_anchor_velocity_slip_rad": -0.3088724907075727,
+        "point_index": 1,
+        "distance_m": 0.00397728648994749,
+        "xy_speed_mps": 0.039772864899474895,
+        "heading_change_rad": 0.14423238399118632,
+        "allowed_heading_change_rad": 0.0007954572979894979,
+        "curvature_rad_per_m": 36.264016775188495,
+        "curvature_failed": true,
+        "preceding_unassessed_distance_m": 0.0,
+        "skip_threshold_budget_can_explain_failure": false,
+        "body_yaw_change_rad": 0.0003047987624582582,
+        "body_yaw_change_over_xy_distance": 0.07663485223622458,
+        "four_float32_ulp_position_sensitivity_m": 8.631674575031098e-05,
+        "four_ulp_sensitivity_can_cover_excess_angle": false,
+        "zero_pitch_actor_center_proxy_curvature": 8.852013159252206,
+        "zero_pitch_actor_center_proxy_failed": true,
+        "pose_step_world_xy_m": [
+          0.0005716666263140269,
+          0.003935988451644334
+        ],
+        "planar_yaw_reference_offset_delta_xy_m": [
+          -0.0004343375293470234,
+          7.828338113831726e-07
+        ],
+        "instantaneous_speed_label_mps": 5.9305580657394246e-05,
+        "end_speed_vs_interval_xy_speed_error_mps": -0.0397135593188175
+      },
+      "all_original_failures_retained": true,
+      "actor_center_pitch_roll_were_recorded": false
+    }
+  ],
+  "formulas": {
+    "curvature": "abs(wrap(displacement_heading_i - previous_assessed_heading)) / distance_i",
+    "decoder_heading_bound": "abs(delta_heading_i) <= min(0.2, 2.8/max(entry_speed,speed_i)^2) * speed_i * 0.1",
+    "lateral_crossover_speed_mps": 3.7416573867739413,
+    "skip_threshold": "Existing audit ignores heading update when distance <=0.0001m; hypothetical cumulative skipped-distance budget is checked without changing any verdict.",
+    "center_proxy": "world rear XY + 1.425*[cos(yaw),sin(yaw)] assumes pitch=0 and is NOT observed actor-center truth or replacement labels.",
+    "four_ulp_sensitivity": "Assume endpoint XY perturbation radius4*hypot(float32_spacing(x),float32_spacing(y)); angular sensitivity asin(2eps/d_i)+asin(2eps/d_previous). Not a measured noise bound or correction."
+  },
+  "scope": {
+    "labels_changed": false,
+    "gates_changed": false,
+    "masks_changed": false,
+    "model_loaded": false,
+    "training_data_approved": false,
+    "test_payload_read": false,
+    "camera_pixels_redecoded": false
+  },
+  "limitations": [
+    "The old raw capture lacks actor-center transform/pitch/roll and immutable-frame kinematic brackets; exact source attribution is impossible retrospectively.",
+    "Low lateral acceleration and small body-yaw changes do not override the separate XY curvature constraint.",
+    "Velocity endpoint labels and integrated XY interval speeds are distinct even for continuous physically smooth motion."
+  ]
+}

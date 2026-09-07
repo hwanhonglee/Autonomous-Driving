@@ -22,7 +22,9 @@ from .dataset import CALIBRATION_FEATURE_NAMES, FEATURE_NAMES
 
 MODEL_ID = "portable_e2e.perspective_trajectory.v0"
 PHYSICAL_MODEL_ID = "portable_e2e.perspective_trajectory.physical.v1"
-SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID))
+# HH_260906 - Keep candidate-aware scoring research separate from deployable model IDs.
+CANDIDATE_RANK_MODEL_ID = "portable_e2e.perspective_trajectory.candidate_rank.v1"
+SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID))
 IMAGE_ENCODER_DOWNSAMPLE_STAGES = 4
 # HH_260906 - Physical v1 predicts bounded 100 ms route-relative motion steps.
 PHYSICAL_TIME_STEP_S = 0.1
@@ -122,7 +124,7 @@ class ModelConfig:
                     f"model.{name} must be finite and in [{minimum}, {maximum}]"
                 )
         # HH_260906 - Pin the physical decoder's declared step safety envelope.
-        if self.model_id == PHYSICAL_MODEL_ID and not math.isclose(
+        if self.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID) and not math.isclose(
             float(self.maximum_step_m), 1.0, rel_tol=0.0, abs_tol=1.0e-12
         ):
             raise ContractError("physical v1 maximum_step_m must be exactly 1.0")
@@ -272,11 +274,24 @@ class PerspectiveTrajectoryModel(nn.Module):
         )
         self.candidate_head = nn.Linear(cfg.hidden_width, cfg.candidate_count)
         self.reset_parameters()
+        # HH_260906 - Replace only the research scorer after legacy initialization so
+        # HH_260906 - identical seeds retain identical shared encoder and decoder weights.
+        if cfg.model_id == CANDIDATE_RANK_MODEL_ID:
+            self.candidate_head = nn.Sequential(
+                nn.Linear(cfg.hidden_width + cfg.future_points * 3, cfg.hidden_width),
+                nn.ReLU(inplace=True),
+                nn.Linear(cfg.hidden_width, 1),
+            )
+            nn.init.zeros_(self.candidate_head[-1].bias)
 
     def reset_parameters(self) -> None:
         nn.init.normal_(self.camera_embedding, mean=0.0, std=0.02)
         nn.init.zeros_(self.trajectory_head.bias)
-        nn.init.zeros_(self.candidate_head.bias)
+        # HH_260906 - Preserve the legacy reset path and share one research output bias.
+        if isinstance(self.candidate_head, nn.Linear):
+            nn.init.zeros_(self.candidate_head.bias)
+        else:
+            nn.init.zeros_(self.candidate_head[-1].bias)
 
     def _check_inputs(
         self,
@@ -424,15 +439,36 @@ class PerspectiveTrajectoryModel(nn.Module):
         raw = self.trajectory_head(fused).reshape(
             batch, cfg.candidate_count, cfg.future_points, trajectory_channels
         )
-        if cfg.model_id == PHYSICAL_MODEL_ID:
+        if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID):
             trajectory_xy, trajectory_speed = self._decode_physical_v1(
                 raw, ego_history, route_xy, route_mask
             )
+            if cfg.model_id == CANDIDATE_RANK_MODEL_ID:
+                return trajectory_xy, trajectory_speed, self._score_candidates(
+                    fused, trajectory_xy, trajectory_speed
+                )
             return trajectory_xy, trajectory_speed, self.candidate_head(fused)
         step_xy = torch.tanh(raw[..., :2]) * float(cfg.maximum_step_m)
         trajectory_xy = torch.cumsum(step_xy, dim=2)
         trajectory_speed = F.softplus(raw[..., 2])
         return trajectory_xy, trajectory_speed, self.candidate_head(fused)
+
+    def _score_candidates(
+        self, fused: Tensor, trajectory_xy: Tensor, trajectory_speed: Tensor
+    ) -> Tensor:
+        """HH_260906 - Rank detached geometry with one permutation-equivariant MLP."""
+        # HH_260906 - Normalize each trajectory without candidate-index embeddings or biases.
+        geometry = torch.cat(
+            (
+                trajectory_xy.detach().flatten(2) / float(self.config.route_scale_m),
+                trajectory_speed.detach() / PHYSICAL_MAXIMUM_SPEED_MPS,
+            ),
+            dim=2,
+        )
+        context = fused.unsqueeze(1).expand(-1, geometry.shape[1], -1)
+        # HH_260906 - Detach blocks direct score gradients into decoded trajectories;
+        # HH_260906 - shared context gradients can still change later trajectory generation.
+        return self.candidate_head(torch.cat((context, geometry), dim=2)).squeeze(-1)
 
     def _decode_physical_v1(
         self,

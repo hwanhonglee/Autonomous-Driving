@@ -1279,6 +1279,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=1.0e-4)
+    # HH_260906 - Expose the existing score-loss coefficient without changing the default objective.
+    parser.add_argument(
+        "--candidate-score-weight",
+        type=float,
+        default=TrajectoryLossConfig().candidate_score_weight,
+        help="nonnegative candidate-score loss coefficient; exact resume requires its original value",
+    )
     parser.add_argument("--max-steps", type=int, default=1000)
     parser.add_argument("--checkpoint-interval", type=int, default=100)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -1307,6 +1314,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     try:
+        # HH_260906 - Reject invalid score coefficients before dataset access or run-directory creation.
+        loss_config = TrajectoryLossConfig(candidate_score_weight=args.candidate_score_weight)
+        loss_config.validate()
         model_config = _load_model_config(args.model_config.expanduser().resolve())
         loaded = load_training_examples(
             args.dataset,
@@ -1343,7 +1353,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             ),
             model_config=model_config,
             train_config=train_config,
-            loss_config=TrajectoryLossConfig(),
+            loss_config=loss_config,
             device_name=args.device,
             resume=args.resume,
             training_split=loaded.split,

@@ -81,27 +81,56 @@ class TurnLowDevelopmentGoalStopConfig(BrakeFreeDevelopmentGoalStopConfig):
     route_length_m: float = 206.31622010469437
 
 
+@dataclass(frozen=True)
+class TurnLaunchDevelopmentGoalStopConfig(TurnLowDevelopmentGoalStopConfig):
+    """HH_260906 - Compare fixed launch pedals while preserving a common post-handoff ramp origin and every full-route check."""
+
+    profile_id: str = "turn_launch_015_v1"
+    post_handoff_initial_throttle: float = 0.15
+
+
+# HH_260906 - Four named prospective cases are not an arbitrary throttle override or an automatic retry policy.
+TURN_LAUNCH_PEDALS = {"turn_launch_012_v1": 0.12, "turn_launch_013_v1": 0.13,
+                      "turn_launch_014_v1": 0.14, "turn_launch_015_v1": 0.15}
+
+
+def turn_launch_configuration(profile: str) -> TurnLaunchDevelopmentGoalStopConfig:
+    """HH_260906 - Resolve only a frozen named launch case; unknown revisions fail before simulator access."""
+    if profile not in TURN_LAUNCH_PEDALS:
+        raise ValueError("unknown fixed turn launch case")
+    return replace(TurnLaunchDevelopmentGoalStopConfig(), profile_id=profile,
+                   launch_throttle=TURN_LAUNCH_PEDALS[profile])
+
+
+def is_low_turn_config(config: Any) -> bool:
+    """HH_260906 - Preserve exact-type admission for the original low-speed and separately named launch families."""
+    return type(config) in (TurnLowDevelopmentGoalStopConfig, TurnLaunchDevelopmentGoalStopConfig)
+
+
 def configuration_from_args(args: Any) -> ComfortableGoalStopConfig | None:
     """HH_260906 - Require explicit compatible settings without changing legacy defaults."""
     profile = getattr(args, "goal_stop_profile", "disabled")
     if profile == "disabled":
         return None
-    if profile not in ("comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4", "turn_low_v1"):
+    if profile not in ("comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4", "turn_low_v1", *TURN_LAUNCH_PEDALS):
         raise ValueError("unknown goal-stop profile")
     config = ComfortableGoalStopConfig()
     if profile == "comfortable_v2":
         # HH_260906 - Joint calibration responds to measured launch spikes and braking lag, not looser QA.
         config = replace(config, profile_id=profile, desired_deceleration_mps2=1.0,
                          normal_throttle_cap=0.20, normal_brake_cap=0.15)
-    if profile in ("comfortable_v3", "comfortable_v4", "turn_low_v1"):
-        config = {"comfortable_v3": DevelopmentGoalStopConfig, "comfortable_v4": BrakeFreeDevelopmentGoalStopConfig,
-                  "turn_low_v1": TurnLowDevelopmentGoalStopConfig}[profile]()
+    if profile in ("comfortable_v3", "comfortable_v4", "turn_low_v1", *TURN_LAUNCH_PEDALS):
+        config = (turn_launch_configuration(profile) if profile in TURN_LAUNCH_PEDALS else
+                  {"comfortable_v3": DevelopmentGoalStopConfig, "comfortable_v4": BrakeFreeDevelopmentGoalStopConfig,
+                   "turn_low_v1": TurnLowDevelopmentGoalStopConfig}[profile]())
+        if profile in TURN_LAUNCH_PEDALS and getattr(args, "agent_initialization", "before_bootstrap") != "after_bootstrap":
+            raise ValueError(f"{profile} requires the independently observed after_bootstrap initialization")
         # HH_260906 - The brake-only comparison must use the reviewed acknowledged transport, not the legacy async path.
-        if profile in ("comfortable_v4", "turn_low_v1") and getattr(args, "control_transport", "legacy_async") != "acknowledged_batch":
+        if profile in ("comfortable_v4", "turn_low_v1", *TURN_LAUNCH_PEDALS) and getattr(args, "control_transport", "legacy_async") != "acknowledged_batch":
             raise ValueError(f"{profile} requires control_transport=acknowledged_batch")
-        if profile == "turn_low_v1" and float(args.target_speed_kmh) != 14.4:
-            raise ValueError("turn_low_v1 requires target_speed_kmh=14.4 for a separate low-speed turn diagnostic")
-        if profile != "turn_low_v1" and float(args.target_speed_kmh) != 28.8:
+        if is_low_turn_config(config) and float(args.target_speed_kmh) != 14.4:
+            raise ValueError(f"{profile} requires target_speed_kmh=14.4 for a separate low-speed turn diagnostic")
+        if not is_low_turn_config(config) and float(args.target_speed_kmh) != 28.8:
             raise ValueError(f"{profile} requires target_speed_kmh=28.8 (8 m/s nominal 30 km/h class)")
         if float(getattr(args, "stationary_warmup_sec", 0.0)) != 3.5:
             raise ValueError(f"{profile} requires stationary_warmup_sec=3.5")
@@ -129,7 +158,7 @@ def validate_development_route(args: Any, route: Mapping[str, Any], route_path: 
     if not isinstance(config, DevelopmentGoalStopConfig):
         return
     # HH_260906 - The original unaligned CARLA route is a separate exact input; historical Town07 guards stay intact.
-    low_turn = type(config) is TurnLowDevelopmentGoalStopConfig
+    low_turn = is_low_turn_config(config)
     town, scenario = ("C_track_1_0_7", "left") if low_turn else ("Town07", "straight")
     if (hashlib.sha256(route_path.read_bytes()).hexdigest() != config.route_sha256
             or route.get("town") != town or route.get("scenario") != scenario
@@ -265,10 +294,12 @@ class DevelopmentGoalStopGovernor(GoalStopGovernor):
         expected = {DevelopmentGoalStopConfig: DevelopmentGoalStopConfig(),
                     BrakeFreeDevelopmentGoalStopConfig: BrakeFreeDevelopmentGoalStopConfig(),
                     TurnLowDevelopmentGoalStopConfig: TurnLowDevelopmentGoalStopConfig()}.get(type(config))
-        frozen_nominal = 4.0 if type(config) is TurnLowDevelopmentGoalStopConfig else 8.0
+        if type(config) is TurnLaunchDevelopmentGoalStopConfig:
+            expected = turn_launch_configuration(config.profile_id)
+        frozen_nominal = 4.0 if is_low_turn_config(config) else 8.0
         if expected is None or config != expected or cruise_speed_mps != frozen_nominal or physics_hz != 20.0:
             raise ValueError("development pilot requires its exact frozen configuration and 20 Hz clock")
-        if type(config) is TurnLowDevelopmentGoalStopConfig and any(type(value) is not type(asdict(expected)[key])
+        if is_low_turn_config(config) and any(type(value) is not type(asdict(expected)[key])
                                                                   for key, value in asdict(config).items()):
             raise ValueError("turn_low_v1 frozen configuration field types cannot be substituted")
         super().__init__(config, cruise_speed_mps, physics_hz)
@@ -336,8 +367,10 @@ class DevelopmentGoalStopGovernor(GoalStopGovernor):
         else:
             self.target_speed_mps = min(envelope, previous_target + cfg.target_acceleration_limit_mps2 * self.dt)
         handoff_elapsed = None if self.handoff_at is None else timer_timestamp - self.handoff_at
+        # HH_260906 - New launch cases share the original .15 post-handoff origin; changing the launch pedal cannot silently change the later ramp.
+        ramp_origin = cfg.post_handoff_initial_throttle if type(cfg) is TurnLaunchDevelopmentGoalStopConfig else cfg.launch_throttle
         cap = cfg.launch_throttle if handoff_elapsed is None else min(
-            float(cfg.normal_throttle_cap), cfg.launch_throttle
+            float(cfg.normal_throttle_cap), ramp_origin
             + cfg.post_handoff_throttle_ramp_per_second * (handoff_elapsed + self.dt))
         state = ("complete" if record["complete"] else "coast_low" if self.coast_started_at is not None
                  else "launch_low" if self.handoff_at is None else "normal_pid") if driving else "setup_or_tail"
@@ -628,7 +661,7 @@ def measured_stop_quality(records: Sequence[Mapping[str, Any]], camera_frames: S
             "training_data_approved": False,
             "notice": "Development pilot only; full future XY feasibility and independent dataset admission remain separate.",
         }
-        if type(config) is TurnLowDevelopmentGoalStopConfig:
+        if is_low_turn_config(config):
             # HH_260906 - Low-speed stability cannot be reinterpreted as satisfying the old 30 km/h cruise criterion.
             report["development_pilot"].update({
                 "cruise_interpretation": "Low-speed turn stability: measured 3.8..4.2 m/s continuously for 5 seconds.",

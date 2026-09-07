@@ -28,6 +28,7 @@ import yaml
 if __package__:
     from .carla_goal_stop_profile import (
         DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor, TurnLowDevelopmentGoalStopConfig,
+        TURN_LAUNCH_PEDALS, is_low_turn_config,
         annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
         measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
@@ -35,6 +36,7 @@ if __package__:
 else:
     from carla_goal_stop_profile import (
         DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor, TurnLowDevelopmentGoalStopConfig,
+        TURN_LAUNCH_PEDALS, is_low_turn_config,
         annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
         measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
@@ -1912,7 +1914,7 @@ def collect_episode(
         }
         if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
             manifest["result"].update({"training_data_approved": False, "development_only": True})
-            if type(goal_stop_config) is TurnLowDevelopmentGoalStopConfig:
+            if is_low_turn_config(goal_stop_config):
                 # HH_260906 - Final result replacement must retain the separate low-speed interpretation.
                 manifest["result"]["qualification_30_kph"] = "NOT_CLAIMED"
             # HH_260906 - A failed pilot still reports measured cruise and speed checks without requiring a tail.
@@ -2076,7 +2078,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     # HH_260906 - This experimental goal-stop governor is never enabled by an old command.
     # HH_260906 - comfortable_v4 isolates zero normal brake under acknowledged transport; default and emergency behavior are unchanged.
-    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4", "turn_low_v1"), default="disabled",
+    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4", "turn_low_v1", *TURN_LAUNCH_PEDALS), default="disabled",
                         help="opt-in measured goal stop; requires 20/10 Hz, <=30 km/h, 1 m tolerance and >=6.5 s tail")
     parser.add_argument(
         "--basic-agent-base-min-distance-m",
@@ -2370,7 +2372,7 @@ def run(args: argparse.Namespace) -> Path:
                 "full_future_xy_admission": "Pending independent post-capture audit; scalar pilot completion is not dataset approval.",
             })
             manifest["result"] = {"training_data_approved": False, "development_only": True}
-        if type(goal_stop_config) is TurnLowDevelopmentGoalStopConfig:
+        if is_low_turn_config(goal_stop_config):
             # HH_260906 - CARLA pose/waypoints stay unshifted; downstream map alignment is metadata, never a native-state rewrite.
             manifest["capture_contract"]["goal_stop_profile"].update({
                 "pilot_scope": "Exact C-track left low-speed diagnostic only; nominal 14.4 km/h, actual maximum 4.3 m/s.",

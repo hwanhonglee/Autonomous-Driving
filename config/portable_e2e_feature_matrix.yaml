@@ -1,7 +1,7 @@
 # HH_260906 - Define auditable feature requirements for the portable E2E program.
 schema_id: autoware-e2e.portable-feature-matrix.v1
 schema_version: 1
-as_of: "2026-09-07"
+as_of: "2026-09-08"
 scope: portable_e2e_learned_trajectory_program
 gate_revision: engineering_screening_v0_20260906
 main_feature_count: 9
@@ -18,13 +18,17 @@ scope_boundary:
   current_runtime: "Pinned non-executable runtime bundle bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e completed Town07 straight, C-track left turn, and Town03 left turn live CARLA shadow at 10 Hz; all three EVIDENCE_VALID and ESTABLISHED_FOR_SHADOW_ONLY. Six later 30 km/h control A/B arms also retained valid 10 Hz shadow. Autoware VAD owned vehicle control; learned closed-loop count remains zero."
   current_runtime_audit: "Historical physical-v1 offline geometry gate v6 selected PASS 326/337, any candidate PASS 326/337, all candidates PASS 325/337; selected index 2 was used for 337/337. Live runtime uses gate v8; historical v6 counts are not a v8 re-audit."
   physical_v1: "Trained and evaluated: selected val ADE/FDE 4.2615/10.9172 m, speed MAE 1.3933 m/s. Selected index remains fixed to c2; this does not prove that candidate geometries are identical. Quality/frozen-test requirements are unmet; no learned closed-loop or real-vehicle approval."
-  current_campaign: "All four 2026-09-07 campaigns are COMPLETE_NOT_PROMOTED: six LR A/B runs, three expanded-data C runs, three selector-weight D runs, and three candidate-aware scorer E runs, each followed by val337 and runtime gate v8 audit. These are fifteen distinct training runs; reused C baselines are not counted again. A/B relative screen fails seed 20260905; C absolute quality fails all three seeds; D/C and E/C relative screens fail seed 20260903. All D and E seeds fail absolute quality. Final E stage completed 2026-09-07T14:34:14Z. No candidate replaces the deployed shadow checkpoint."
+  current_campaign: "The 2026-09-08 frozen-selector campaign completed nine head-only fits on three existing C generators at 01:32:00 KST, with all three arms failing their all-seed relative and absolute screens. This is separate from the four COMPLETE_NOT_PROMOTED full-model campaigns on 2026-09-07: six LR A/B runs, three expanded-data C runs, three selector-weight D runs, and three candidate-aware scorer E runs, each followed by val337 and runtime gate v8 audit. Those are fifteen distinct full-model training runs; reused C baselines and the nine new head-only fits are not counted as additional full-model runs. A/B relative screen fails seed 20260905; C absolute quality fails all three seeds; D/C and E/C relative screens fail seed 20260903. All D and E seeds fail absolute quality. No candidate replaces the deployed shadow checkpoint."
   available_training_dataset: "The v3 corpus adds Town01 right-turn train534 and Town04 straight test309: train1147, val337, test309. Original train/val are preserved; the held-out test is not used for model evaluation or selection. Feature labels, scenario diversity, and learned closed-loop evidence remain incomplete."
   first_pair_selector_diagnosis: "Seed 20260903: A selects c2 for 337/337 and B selects c4 for 337/337. Mean pairwise path separation is 7.534858/7.545791 m, demonstrating distinct candidate geometries. Selected ADE improves 4.261500 to 4.150919 m while mean ADE selection regret rises 2.500854 to 2.515469 m; val-only development evidence, not promotion."
   first_pair_selector_weight_diagnosis: "Seed 20260903 on v3: C score weight 0.1 selects c2/c3 while D weight 0.5 selects c0/c1/c2/c3. ADE-oracle agreement falls from 232/337 to 175/337 and mean regret rises from 2.322154 to 2.714173 m; more selected indices do not establish better selection. CPU-only diagnostic, not live 10 Hz or closed-loop evidence."
   # HH_260906 - Record completed candidate-aware scorer research without changing deployed runtime or feature approval.
   candidate_rank_v1: "E changes the scorer architecture, not the physical decoder, loss, evaluator, or runtime gate: 1068249 parameters versus C 954590. Ordered seeds 20260903/20260904/20260905 have GPU val selected ADE C 3.874328/6.258545/4.789547 m versus E 4.735725/4.539105/4.228415 m, and FDE C 9.827706/12.897454/11.866288 m versus E 9.413042/9.709312/9.348654 m. All six C/E geometry audits accept 336/337 selected trajectories. E remains research-only: no E live 10 Hz, deployment, learned closed-loop, or vehicle-control claim."
   objective_alignment_diagnosis: "Six C/D CPU reports keep train1147 and val337 separate. Higher score weight improves in-sample selector/composite-oracle agreement in all three seeds but validation changes are mixed; the loss-oracle versus ADE-oracle distinction alone does not explain the full selection gap. D seed20260904 CPU/GPU selected histograms differ, so diagnostic and original GPU metrics remain separate."
+  # HH_260906 - Add completed scorer-only and unchanged-label evidence without advancing any learned feature or release status.
+  frozen_selector_v1: "Remote personal py312 venv and GPU0 completed three C parents times linear_continue/linear_reset/candidate_reset: nine head-only fits, each 1540 steps and 6155 exposures (five full train1147 epochs plus 420 partial-epoch exposures). Generator, candidate XY/speed, caches, and oracle are unchanged. Same-cache C versus candidate_reset val ADE/FDE for seeds 20260903/04/05: 3.874328/9.827706 to 3.852200/8.844149, 6.258545/12.897454 to 5.228551/11.255055, and 4.789547/11.866288 to 5.154170/11.271210 m. The last seed regresses ADE and speed MAE; every arm fails its all-three-seed relative screen and every head fails absolute quality. All twelve original/head selected geometry results are 336/337. Seventy-two original offline val route PNGs are not live CARLA or Autoware control evidence."
+  target_feasibility_audit: "Read-only v3 train1147/val337 target audit: at 6.4 s, speed-label decoder-deceleration violations occur in 294 train and 108 val anchor windows; independently derived XY violations occur in 263 train and 108 val windows. These are overlapping future windows, not independent hard-stop event counts. The decoder remains at acceleration/deceleration +/-2.9 m/s2; the separate runtime speed-rate gate remains +3/-6 m/s2. Pre-tail violations also exist, so changing only final forced braking does not explain or repair the entire corpus. No labels or masks were edited; this diagnostic opened only test episode metadata for split checks, not test samples/images/trajectory statistics."
+  expert_stop_calibration: "The first two local Town07 BasicAgent collection-control calibration trials both failed and were not admitted to training data. Trial one declared completion 1.84 m before the target and exceeded launch acceleration. Trial two stopped 0.97 m before the target with a two-second dwell and tail recording, but launch acceleration and low-speed deceleration failed quality checks; its measured peak was about 16.7 km/h, not the commanded 30 km/h. These are expert data-collection trials, not Portable learned driving or Autoware VAD control. Low-speed throttle/brake characterization and new qualified independent episodes are next."
   excluded_claims:
     - "Historical Autoware VAD runtime media do not prove execution of the portable E2E checkpoint."
     - "Expert-agent success does not prove learned-model closed-loop success."
@@ -32,6 +36,21 @@ scope_boundary:
     - "No feature is approved for public-road or real-vehicle actuation."
 
 authoritative_evidence:
+  - id: EVIDENCE-20260908-LEARNING
+    path: docs/validation-2026-09-08-portable-learning.md
+    meaning: "Current environment-separated work ledger: completed frozen-selector head fits, target audit, failed expert calibration, unchanged shadow deployment and no learned-control approval."
+  - id: EVIDENCE-20260908-TARGET-FEASIBILITY
+    path: docs/assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md
+    meaning: "Read-only train/val target deceleration feasibility against unchanged decoder bounds, separate speed-label and XY evidence, overlapping-window denominators and no label mutation."
+  - id: EVIDENCE-20260908-FROZEN-SELECTOR
+    path: docs/assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md
+    meaning: "Nine head-only fits on three frozen C generators, same-cache original baselines, all-three-seed FAIL, original72 offline route PNGs, measured training curves and raw/public hash provenance."
+  - id: EVIDENCE-20260908-EXPERT-CALIBRATION
+    path: docs/assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md
+    meaning: "Current local collection-control ledger: the first two Town07 expert calibration trials failed and were excluded from training; low-speed response characterization precedes new-data qualification."
+  - id: FROZEN-SELECTOR-DESIGN
+    path: docs/portable-e2e-frozen-selector.md
+    meaning: "Predeclared fixed-generator/head-only comparison, actual failed outcomes, unchanged loss/gates, and research-only artifact boundary."
   - id: EVIDENCE-20260905
     path: docs/validation-2026-09-05-portable-e2e-common10-30kph.md
     meaning: "Historical one-epoch three-episode data, training, and open-loop baseline."
@@ -218,8 +237,8 @@ learning_sequence:
   - id: ITER-01
     features: [SEN-01, SEN-02, SEN-03, SEN-04, RTE-01, RTE-02, RTE-03, RTE-04, SPD-01, SPD-02, SPD-03, SAF-01, SAF-02, SAF-03]
     prerequisites: "Retain physical-v1 and immutable train/val manifests; freeze the experiment settings and retain all candidate results."
-    local_next: "Collect independent straight/left/right/goal-stop routes with lane/drivable labels and untouched test groups; retain current shadow timing and implement selector/fallback fault scenarios."
-    training_next: "Run bounded physical-v1 loss/ranking A/B on existing train/val, then at least three seeds on expanded data; measure all candidates, geometry, speed, comfort, and subgroup regressions."
+    local_next: "First characterize low-speed throttle/brake responses after the two failed expert trials, requalify natural 30 km/h straight goal stops, then collect independent straight/left/right/stop episodes with lane/drivable labels and untouched test groups. Preserve current shadow timing and prepare selector/fallback fault scenarios."
+    training_next: "Preserve the rejected full-model and frozen-head campaigns; qualify, version and transfer new data before the next fixed three-seed comparison. Measure candidate/oracle geometry, ADE/FDE, speed, comfort and subgroup regressions without editing old labels, opening test outcomes or weakening gates."
     exit: "Passing offline candidates may enter isolated shadow; learned CARLA control requires tested selection/fallback and explicit causal ownership. SAF real-release requirements remain pending."
   - id: ITER-02
     features: [TRF-01, TRF-02, TRF-03, TRF-04]

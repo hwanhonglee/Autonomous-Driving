@@ -2,7 +2,8 @@
 
 <!-- HH_260906 - Separate selector-only learning from generator changes and from runtime deployment. -->
 
-2026-09-08에 진행하는 다음 통제 실험이다. 이전 [C/E 비교](portable-e2e-candidate-ranking.md)는
+2026-09-08에 완료한 통제 실험이다. 실제 결과는 아래 마지막 절과
+[전체 증거 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md)에서 확인할 수 있다. 이전 [C/E 비교](portable-e2e-candidate-ranking.md)는
 선택 head를 바꿨지만 공통 특징의 학습 때문에 경로 생성 결과도 달라졌다. 이번에는 기존 C의
 완료된 세 checkpoint를 그대로 두고, 각 모델에서 뽑은 입력 특징·후보 경로·속도를 고정한다.
 
@@ -53,3 +54,35 @@ train 1,147 / 개발용 val 337이며 독립 Town04 test는 모델 평가·학�
 이 결과는 별도 **head-only 연구 artifact**다. 기존 trainer나 runtime checkpoint로
 위장하지 않으며, 정상 runtime loader는 이 ID를 거부한다. 운용 모델 교체·차량 제어·
 실시간 10 Hz 성공을 의미하지 않는다. 경로 PNG도 오프라인 예측 분석이다.
+
+## 실제 완료 결과 — 2026-09-08 01:32 KST
+
+<!-- HH_260906 - Record all three-seed failures without treating scorer-only fits as full-model training or runtime approval. -->
+
+원격 실행은 **01:29:13–01:32:00 KST**, 고정 소스
+`e44cddeb986e5292981c2ee727d49c9aaae4ded6`에서 3개 C parent × 3종 선택기, 총 **9회 head 전용 학습**을 완료했다.
+생성기는 다시 학습하지 않았다. 각 head는 1,540 steps·6,155 sample exposures이며,
+5개 full epoch와 420개 노출분의 partial epoch다. 학습 batch는 기본 4개, 각 full epoch 마지막은 3개다.
+
+모든 방식이 **3-seed 종합 상대 FAIL / 절대 FAIL**이다. 운용 checkpoint와 제어 승인 상태는 변경하지 않았다.
+후보 인지 MLP의 상세 비교는 다음과 같다. 비교 기준은 과거 별도 평가값이 아니라 **같은 캐시·장치에서 계산한 원래 C 점수**다.
+
+| Seed | 원래 C ADE / FDE (m) | 후보 인지 MLP ADE / FDE (m) | 상대 판정 |
+|---|---:|---:|---|
+| 20260903 | 3.874328 / 9.827706 | 3.852200 / 8.844149 | PASS |
+| 20260904 | 6.258545 / 12.897454 | 5.228551 / 11.255055 | PASS |
+| 20260905 | 4.789547 / 11.866288 | 5.154170 / 11.271210 | FAIL — ADE·속도 MAE 악화 |
+
+기존 Linear 이어 학습은 seed 20260904만 상대 PASS였고, Linear 새 초기화는 세 seed 모두 상대 FAIL이었다.
+원래 C와 모든 head의 selected geometry는 **336/337**이며 후보 XY·속도·oracle은 바뀌지 않았다.
+선택기만 추가 학습해도 일부 seed는 개선되지만, 일관된 개선이나 충분한 절대 품질은 아직 확보하지 못했다.
+이를 후보 입력만의 인과 효과나 자율주행 기능 완성으로 해석하지 않는다.
+
+- [모든 12행 비교·선택기 9회 판정](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md)
+- [실제 학습 기록 그래프](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/visuals/01_measured_scorer_training.png): 분류 loss·clipping 전 gradient norm, 실제 batch와 가중 epoch 평균만 표시
+- [동일 캐시 val 비교](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/visuals/02_same_cache_validation.png)
+- [원본 경로 그림 72장과 SHA 검증 안내](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md#원본-경로-그림-72장): 3 seed × 원래 C·3개 head × 고정 val phase 6개
+
+경로 그림은 ego 중심의 **오프라인 후보·정답 분석**이며 Autoware 실시간 화면이나 learned closed-loop 주행 촬영이 아니다.
+Train/val과 무결성 검사에 대한 범위는 위 계획대로 유지했다. 공개 metadata는 개인 경로를 치환한 view이며 원본 SHA를 함께 보존한다.
+checkpoint·cache·logit tensor와 원격 실행 runner는 private 원본에 남아 있다.

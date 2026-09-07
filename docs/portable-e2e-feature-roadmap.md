@@ -1,6 +1,6 @@
 # Portable E2E 자율주행 기능 요구사항·로드맵
 
-> 기준일: 2026-09-07
+> 기준일: 2026-09-08
 >
 > 기계 판독 원본: [`config/portable_e2e_feature_matrix.yaml`](../config/portable_e2e_feature_matrix.yaml)
 
@@ -9,7 +9,9 @@
 <!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
 목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 현재 완료된 것은
 `common_10hz_v1` 데이터·학습 배선, CARLA-only physical-v1 학습·open-loop 평가,
-로컬 3장면의 10 Hz shadow 계측과 오늘의 네 캠페인 총 15회 학습·평가·감사다. 새 후보들은
+로컬 3장면의 10 Hz shadow 계측, **9월 7일 네 캠페인의 전체 모델 학습·평가·감사 15회**,
+**9월 8일 고정 C 생성기 위 선택기 전용 학습 9회**와 정답 데이터 감속 진단이다. 둘은 다른
+학습 단위이며 합쳐서 전체 모델 학습 24회라고 세지 않는다. 새 후보들은
 채택 기준을 통과하지 못해 기존 shadow checkpoint를 유지한다. 학습된
 checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 30개 중
 `CLOSED_LOOP_PASS`인 기능은 **0개**다.
@@ -30,12 +32,28 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 - source checkpoint
   `df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09`와 runtime bundle
   `bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e`를 고정했다.
-- 오늘 별도로 학습한 LR A/B 6회, 데이터 확장 C 3회, selector 가중치 D 3회,
+- 9월 7일 별도로 학습한 LR A/B 6회, 데이터 확장 C 3회, selector 가중치 D 3회,
   후보 경로를 입력받는 점수 모델 E 3회는 모두
   학습·val337·gate v8 감사를 완료했지만 승격하지 않았다. A/B는 seed `20260905`, D/C는
   seed `20260903`, E/C도 seed `20260903`에서 상대 기준을 통과하지 못했고 C·D·E의
   절대 품질 판정은 모든 seed에서 FAIL이었다. C baseline을 D/E 비교에 재사용한 것은 추가
   학습 횟수로 세지 않는다. E는 연구용이며 기존 운용 checkpoint를 대체하지 않는다.
+- 9월 8일 01:29:13–01:32:00 KST에는 기존 C 생성기 3개에서 각각 Linear 이어 학습·
+  Linear 새 초기화·후보 인지 MLP를 추가 학습했다. **9회 모두 head만 학습**했고 원래
+  C·후보 XY/속도·oracle은 그대로다. 세 방식 모두 3-seed 종합 상대·절대 FAIL이다.
+  후보 인지 MLP는 첫 두 seed만 상대 PASS이며 마지막 seed의 ADE·속도 오차가 악화했다.
+  원래 C와 모든 head의 selected geometry는 `336/337`이다. 72장 경로 PNG는 오프라인
+  val 예측이며 learned closed-loop나 실시간 10 Hz 증거가 아니다.
+- 원본 정답의 6.4초 미래 창에서 모델 감속 한계를 넘는 속도 라벨/독립 XY 창은
+  train `294/263개`(전체 1,147), val `108/108개`(전체 337)였다. 창이 서로 겹치므로
+  급정지 사건 수가 아니다. 모델의 가감속 한계 `±2.9 m/s²`와 별도 runtime rate gate
+  `+3/−6 m/s²`는 그대로이며, 정답 수정이나 샘플 삭제 없이 분석했다. 꼬리 구간 이전에도
+  위반이 있어 마지막 강제 정지만 고친다고 전체 문제가 해소되지는 않는다.
+- 로컬 Town07 BasicAgent 정지 수집 제어의 **첫 두 보정 시험은 모두 FAIL**이며 학습
+  데이터로 채택하지 않았다. 첫 시험은 목표 1.84 m 전 완료 선언과 출발 가속 초과,
+  두 번째는 목표 0.97 m 전 정지·2초 유지 후에도 출발 가속과 저속 급감속이 문제였다.
+  두 번째 실제 최고 속도 약 16.7 km/h는 명령 30 km/h와 다르다. 이는 학습 정답용
+  expert 시험이며 Portable나 Autoware VAD의 차량 제어 결과가 아니다.
 - 데이터는 Town01 우회전 train 534개와 Town04 직진 test 309개를 추가해 v3의
   train/val/test가 `1,147/337/309`개가 됐다. 기존 train/val은 보존됐고 test는 모델 평가·선택에
   사용하지 않았다. 여전히 모든 기능에 필요한 label·독립 시나리오가 갖춰진 것은 아니다.
@@ -57,7 +75,10 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 [2026-09-06 duration A/B evidence](assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md),
 [physical-v1 3장면 shadow evidence](assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/README.md),
 [2026-09-07 제어 A/B](validation-2026-09-07-control-ab.md),
-[오늘의 반복 학습 결과](validation-2026-09-07-portable-learning.md),
+[9월 7일 전체 모델 반복 학습 결과](validation-2026-09-07-portable-learning.md),
+[9월 8일 최신 진행 기록](validation-2026-09-08-portable-learning.md),
+[정답 감속 진단](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md),
+[선택기 전용 9회 결과](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md),
 운용 경계는 [학습·운용 가이드](portable-e2e-training.md), 모델 ABI는
 [Model v0 설계](portable-e2e-model-v0.md), 로컬 runtime 시작 절차는
 [10 Hz shadow runtime 가이드](portable-e2e-shadow-runtime.md)에 있다.
@@ -238,6 +259,25 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 
 ## 구현 우선순위
 
+<!-- HH_260906 - Prioritize qualified natural-stop expert data after failed scorer-only comparisons without changing any feature gate. -->
+9월 8일의 최신 완료 실험은 [고정 생성기·선택기 분리 학습](portable-e2e-frozen-selector.md)이다.
+세 C parent마다 3개 head를 학습한 9회는 각각 1,540 steps·6,155 exposures이며
+5개 full epoch와 420개 노출분의 partial epoch다. 같은 캐시의 원래 C 점수와 비교한
+세 방식의 종합 판정은 모두 FAIL이고 기존 운용 checkpoint·bundle은 유지한다.
+[원본 72 PNG·학습 기록·모든 seed 비교](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md)에
+실패 결과와 원본/공개본 SHA를 보존했다.
+
+[정답 감속 진단](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md)과
+[첫 두 expert 보정 실패 기록](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)을
+근거로 다음 순서는 **저속 가속·제동 응답 분리 계측 → 자연스러운 30 km/h 직진 정지
+재검증 → 회전·독립 episode 확장 → 새 데이터 버전 검증·전송 → 고정 3-seed 재학습·평가**다.
+두 실패 수집은 원본 실패 자료로 보존하며 학습 데이터에 섞지 않는다. 원래 라벨·test·
+decoder·runtime gate를 결과에 맞춰 덮어쓰거나 완화하지 않는다.
+
+선택기 학습의 전체 corpus 무결성 검사에서 test 파일 bytes를 읽을 수 있지만 test 예측·
+학습·모델 선택은 하지 않았다. 별도 정답 감속 진단은 test episode 메타데이터로 split만
+확인했고 test 샘플·이미지·궤적 통계는 열지 않았다. 두 범위를 혼동하지 않는다.
+
 <!-- HH_260906 - Separate completed research campaigns from the unchanged shadow deployment and outstanding feature gates. -->
 2026-09-07의 반복 학습은 **네 캠페인 모두 완료, 새 모델 미채택**으로 정리했다.
 마지막 E 감사 완료 시각은 `14:34:14 UTC`(`23:34:14 KST`)다.
@@ -249,7 +289,8 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 | [selector weight D/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/07_selector_weight_ab/README.md), 같은 v3에서 0.1→0.5 | D 3회 완료 | seed 20260903 상대 비교 FAIL, 모든 D seed 절대 품질 FAIL, 미채택 |
 | [후보 경로 인지 점수 E/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/11_candidate_rank_ab/README.md), 같은 v3·가중치 0.1, 점수 모델 구조 변경 | E 3회 완료 | seed 20260903 상대 비교 FAIL, 모든 E seed 절대 품질 FAIL, 미채택 |
 
-전체 자료는 [오늘의 검증 보고서](validation-2026-09-07-portable-learning.md), 실행 흐름은
+전날 전체 모델 자료는 [9월 7일 검증 보고서](validation-2026-09-07-portable-learning.md), 최신 진행은
+[9월 8일 보고서](validation-2026-09-08-portable-learning.md), 실행 흐름은
 [학습·검증 반복 가이드](portable-e2e-learning-loop.md)에 있다. 위 15회는 30개 기능의 완료
 횟수가 아니며 새 후보가 로컬 차량을 제어했다는 의미도 아니다.
 
@@ -292,16 +333,16 @@ train1147과 val337로 분리해 완료했다. 가중치를 높이면 학습 데
 runtime 검사 → shadow → 조건 충족 시 learned closed-loop**다. loss가 내려가는 것만 보고
 epoch를 계속 늘리지 않고, 매 run의 모델·데이터·설정 hash와 채택/보류 이유를 남긴다.
 
-완료한 LR·데이터 확장·selector 가중치·후보 경로 인지 점수 모델 실험과 목표 일치 진단을
-바탕으로 다음 loss/ranking·데이터
-비교를 새 고정 계획으로 진행한다. 이 val을 반복 관찰한 결과는 개발용 비교이며 독립 최종
+완료한 LR·데이터 확장·selector 가중치·후보 경로 인지 점수 모델 실험, 목표 일치 진단과
+고정 생성기/선택기 비교를 바탕으로 정답 수집 제어·새 데이터 자격 검증을 먼저 진행한다.
+다음 학습 비교는 새 고정 계획을 사용한다. 이 val을 반복 관찰한 결과는 개발용 비교이며 독립 최종
 test 성능이라고 부르지 않는다. 새 test는 route/site/day 단위로 분리하고, 열기 전에
 설정·threshold를 고정한다. 후보 채택에는 최소 3개 seed 비교가 필요하다.
 
 <!-- HH_260906 - Map all thirty requirements to concrete collection, learning, and evaluation dependencies. -->
 | 반복 묶음 | 추적 기능 | 로컬 데이터·시험 준비 | Pro6000 학습·검증 | 다음 묶음으로 넘어갈 근거 |
 |---|---|---|---|---|
-| `ITER-01` 기본 주행·런타임 | `SEN-01~04`, `RTE-01~04`, `SPD-01~03`, `SAF-01~03` | 독립 직진·좌/우회전·종점정지, lane/drivable label, 속도·가감속·jerk 계측, selector/fallback fault | physical-v1 loss/ranking A/B, 후보별 geometry·ADE/FDE·speed·comfort, 3-seed 비교 | offline 품질·parity·shadow 통과 후 제어 소유권과 fallback을 검증한 CARLA 폐루프. `SAF` 실차 단계는 계속 별도 추적 |
+| `ITER-01` 기본 주행·런타임 | `SEN-01~04`, `RTE-01~04`, `SPD-01~03`, `SAF-01~03` | 저속 throttle/brake 계측·30 km/h 자연 정지 재검증 후 독립 직진·회전 확장, lane/drivable label, selector/fallback fault | 실패한 전체 모델·head 비교 보존, 새 데이터 검증·전송 후 고정 3-seed geometry·ADE/FDE·speed·comfort 비교 | offline 품질·parity·shadow 통과 후 제어 소유권과 fallback을 검증한 CARLA 폐루프. `SAF` 실차 단계는 계속 별도 추적 |
 | `ITER-02` 교통규칙 | `TRF-01~04` | 관련 신호·정지선/표지·우선권·보행자·가림 label과 phase/교차 시나리오 | behavior·interaction head, 위험 miss·정지/우선권 위반 평가 | 각 기능의 독립 test와 CARLA gate |
 | `ITER-03` 추종·ACC | `ACC-01~03` | lead ID/거리/상대속도·gap/TTC, 정지/급감속 lead·cut-in/out | 선행차 상태·추종 trajectory, gap·반응시간·충돌 비교 | 독립 lead profile과 seed에서 ACC gate |
 | `ITER-04` 장애물·위험 | `OBS-01~04` | occupancy·legal corridor·candidate collision/TTC, pass/stop·no-path·moving hazard·독립 AEB | occupancy/motion·risk ranking, 위험 false negative·clearance | 장애물 gate와 독립 AEB gate를 각각 통과 |

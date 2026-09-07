@@ -1,0 +1,147 @@
+{
+  "automatic_promotion": false,
+  "completed_at_utc": "2026-09-07T16:32:00.964042+00:00",
+  "completed_head_fits": 9,
+  "completed_parent_caches": 3,
+  "created_at_utc": "2026-09-07T16:29:13.180216+00:00",
+  "dataset_integrity_scope": "The entire declared corpus, including test, is checked for integrity; no test model predictions or outcome analysis.",
+  "plan": {
+    "absolute_limits_m": {
+      "ade_1p0s_m": 0.5,
+      "ade_3p0s_m": 1.0,
+      "ade_6p4s_m": 2.0,
+      "fde_6p4s_m": 4.0
+    },
+    "arms": [
+      "linear_continue",
+      "linear_reset",
+      "candidate_reset"
+    ],
+    "batch_size": 4,
+    "campaign_id": "hh260908-frozen-selector-3seeds-v1",
+    "candidate_score_weight": 0.1,
+    "comment": "HH_260906 - Predeclare a cached scorer-only experiment before observing any new head training results.",
+    "comparison_limits": "linear_continue versus original tests extra selector fitting; linear_reset controls fresh initialization; candidate_reset changes whole scorer depth/capacity/geometry inputs and is not a pure geometry-input causal test. All heads use fresh optimizer state, not exact resume.",
+    "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+    "deadline_utc": "2026-09-08T01:00:00+00:00",
+    "deployment_policy": "Head-only research checkpoint ID is rejected by normal train/evaluate/runtime loaders. No merged deployable model, runtime allowlist change, actuation or gate weakening. Preserve all failed outcomes and the deployed shadow model.",
+    "freeze_policy": "Use each complete C checkpoint separately; freeze all model parameters and buffers in eval mode, cache context and predicted XY/speed without gradients, and hash them before and after head fitting. Never pool candidate indices across parent generators.",
+    "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "learning_rate": 0.0001,
+    "manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+    "maximum_gradient_norm": 5.0,
+    "parent_campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+    "relative_policy": "Every paired seed must improve selected ADE and FDE versus its original C logits on the same cache, with no selected geometry regression and no speed MAE increase above five percent.",
+    "sampling_policy": "All new arms share train._epoch_batches no-plan CPU randperm(seed+epoch). This differs from the historical original domain-aware order and is not claimed to reproduce it.",
+    "schema": "portable_e2e.frozen_selector_plan.v1",
+    "seeds": [
+      20260903,
+      20260904,
+      20260905
+    ],
+    "steps": 1540,
+    "target_policy": "Use the existing full composite trajectory_loss oracle and original XY/speed/yaw/valid targets. Labels and oracle metrics are never scorer inputs. No validation gradients, no early stopping and no held-out test evaluation.",
+    "train_samples": 1147,
+    "val_samples": 337,
+    "weight_decay": 0.0001
+  },
+  "plan_sha256": "09f98d0a088088f723f9d5ac9929dae8879dc64319447a7bafd5356a9f4f30f8",
+  "runner_sha256": "1b02ba299e329c99a918616823244af34b63c968ced53caf5bbf5a9cb33fb0ff",
+  "schema": "portable_e2e.frozen_selector_campaign.v1",
+  "source": {
+    "diagnostic_source_commit": "e44cddeb986e5292981c2ee727d49c9aaae4ded6",
+    "source_sha256": {
+      "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+      "portable_e2e/audit_runtime.py": "fb96c4a75cf825e0490d413e075b0b9cb9808e4af96ac057ce706595a71a5bb1",
+      "portable_e2e/compare.py": "1be5ffb51e50d630433c5ff1ce85c84bd4257757ecd75fa4c6a0ef808ad2773b",
+      "portable_e2e/contract.py": "9a66674cfcdacfbb8a504bb10371238023bf2fd149eda048b42c4badffe1fa26",
+      "portable_e2e/control_flow_smoke.py": "33a58a2e5bdb28255adf23998dbecabad529b42652d141f02daa952f9af93b01",
+      "portable_e2e/dataset.py": "a1c7b4febd2006ec8de3b40e6c5525fc97a6db0cd2b0cea1131b0379206d2bba",
+      "portable_e2e/evaluate.py": "ce7f2326e7df1f3462dc2be495f1017b895c3ff142b07f0dbcdb09f4a861bc07",
+      "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+      "portable_e2e/losses.py": "23ca46a42155124dc29c08d26354761d1bc8233829c0c588292a0c607f608d85",
+      "portable_e2e/model.py": "6d21485cdce8728e5f3f2ae19d25a71d866a75e806a71a67623dbcca20fe28be",
+      "portable_e2e/runtime.py": "bd1f672efe5cf571744bd4c5ef7655435dc67dddadc41c23fddddb82d721a57b",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "portable_e2e/runtime_weight_bundle.py": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636",
+      "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+      "portable_e2e/train.py": "5abc33d23a25b23bafab6283bfee3089bb49c9b62d8e618b2a1607ac4c4897a8",
+      "portable_e2e/validate.py": "f2e8ae57ab25fc049e6035c3565891d5afe98030fed9e11c392e1d2e1e78ed36",
+      "portable_e2e/visualize.py": "5bf0c16fd4e5fea0cc33402097642573ed2b9992bb5b3ce51cad88fc4be6ea2c",
+      "scripts/e2e/diagnose_portable_selector.py": "1524e18a92758a8dc95bf86a4d7c11524a139e5c027fd4e6d9ba0f17a7dfc022"
+    }
+  },
+  "source_commit": "e44cddeb986e5292981c2ee727d49c9aaae4ded6",
+  "stages": [
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/scripts/e2e/run_portable_frozen_selector.py",
+        "--seed",
+        "20260903",
+        "--expected-source-commit",
+        "e44cddeb986e5292981c2ee727d49c9aaae4ded6",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260908-frozen-selector-3seeds-v1/seed_20260903",
+        "--deadline-utc",
+        "2026-09-08T01:00:00+00:00"
+      ],
+      "completed_head_fits": 3,
+      "finished_at_utc": "2026-09-07T16:30:09.116284+00:00",
+      "result_sha256": "5b6bded288a3490d6c6b2a85d5ad204c964e3fe6fa050d18eee81a05f89a772e",
+      "returncode": 0,
+      "seed": 20260903,
+      "started_at_utc": "2026-09-07T16:29:13.238259+00:00",
+      "status": "COMPLETE_NOT_PROMOTED"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/scripts/e2e/run_portable_frozen_selector.py",
+        "--seed",
+        "20260904",
+        "--expected-source-commit",
+        "e44cddeb986e5292981c2ee727d49c9aaae4ded6",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260908-frozen-selector-3seeds-v1/seed_20260904",
+        "--deadline-utc",
+        "2026-09-08T01:00:00+00:00"
+      ],
+      "completed_head_fits": 3,
+      "finished_at_utc": "2026-09-07T16:31:05.155533+00:00",
+      "result_sha256": "1f5ee5666955eb0451adf33ffd865f51d698eacfacb69f0f7635cb620939c516",
+      "returncode": 0,
+      "seed": 20260904,
+      "started_at_utc": "2026-09-07T16:30:09.175489+00:00",
+      "status": "COMPLETE_NOT_PROMOTED"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/scripts/e2e/run_portable_frozen_selector.py",
+        "--seed",
+        "20260905",
+        "--expected-source-commit",
+        "e44cddeb986e5292981c2ee727d49c9aaae4ded6",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260908-frozen-selector-3seeds-v1/seed_20260905",
+        "--deadline-utc",
+        "2026-09-08T01:00:00+00:00"
+      ],
+      "completed_head_fits": 3,
+      "finished_at_utc": "2026-09-07T16:32:00.946392+00:00",
+      "result_sha256": "814f72dda1b6e6169b76e51576dc9a0f7a196967145e03d040240458fee0fcc5",
+      "returncode": 0,
+      "seed": 20260905,
+      "started_at_utc": "2026-09-07T16:31:05.215814+00:00",
+      "status": "COMPLETE_NOT_PROMOTED"
+    }
+  ],
+  "status": "FROZEN_SELECTOR_CAMPAIGN_COMPLETE_NOT_PROMOTED",
+  "test_evaluated": false,
+  "test_used_for_training_or_selection": false,
+  "updated_at_utc": "2026-09-07T16:32:00.964069+00:00",
+  "vehicle_control_approved": false,
+  "publication_notice": "Redacted metadata view; replay requires the private original identified by raw_source_sha256.",
+  "raw_source_sha256": "5353b52aa352e0c10be786317a9bf169b61b81171371a000eebddd3b1141916b"
+}

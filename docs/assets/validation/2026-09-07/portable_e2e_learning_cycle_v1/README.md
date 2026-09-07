@@ -3,6 +3,7 @@
 <!-- HH_260906 - Keep learned-model validation, expert demonstrations, and transfer proofs in separate categories. -->
 
 2026-09-07 실행 자료. **새 Portable 모델의 실차·차량 제어 승인은 없다.**
+후속 9월 8일 작업은 [최신 학습·수집 개선 자료](../../2026-09-08/portable_e2e_learning_cycle_v1/README.md)에 이어서 기록한다.
 이 폴더의 CARLA 카메라 영상은 학습 정답을 수집한 BasicAgent 주행이며, 학습 모델의
 closed-loop 주행 성공 영상이 아니다. 기존 Autoware VAD 주행은
 [별도 제어·shadow 검증](../control_ab_30kph_and_60kph_readiness_v1/README.md)에서 확인한다.
@@ -27,7 +28,8 @@ closed-loop 주행 성공 영상이 아니다. 기존 Autoware VAD 주행은
 
 - **Pro6000:** 개인 py312 venv, GPU0만 사용. 기존 데이터 A/B 6회, 새 데이터 학습 3회,
   선택 손실 변경 3회, 후보 경로 인지 선택 구조 3회를 완료했다. **4개 캠페인 / 총 15회**다.
-  모델마다 학습 → val 평가 → 경로 형상 검사를 수행했다. test는 열지 않았다.
+  모델마다 학습 → val 평가 → 경로 형상 검사를 수행했다. test 예측·성능 평가·선택은 하지 않았다.
+  전체 corpus 형식·hash 검증 과정에서는 test 파일의 무결성도 확인하므로, test 파일을 전혀 읽지 않았다는 뜻은 아니다.
   마지막 학습 캠페인 단계는 23:34:14 KST, 후속 CPU 경로 진단은 약 23:34:30 KST에
   끝났다. 현재 이 캠페인들의 학습·진단은 실행 중이 아니다. 자동으로 모든 기능을
   추가하는 무한 학습 작업은 아니다.

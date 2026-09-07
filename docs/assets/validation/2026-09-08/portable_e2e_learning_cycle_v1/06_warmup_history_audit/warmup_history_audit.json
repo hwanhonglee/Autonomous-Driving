@@ -1,0 +1,235 @@
+{
+  "schema": "portable_e2e.warmup_history_audit.public.v1",
+  "comment": "HH_260906 - Publish measured anchor accounting without changing datasets, history semantics or future policy.",
+  "as_of": "2026-09-08",
+  "status": "READ_ONLY_COMPLETE_POLICY_NOT_ADOPTED",
+  "publication_notice": "Compact metadata view of the private route-and-warmup review, rechecked against source bytes and train/val frame metadata. No private absolute paths, sample payloads, camera pixels, or proposed route assignments are published.",
+  "raw_source_sha256": "28a2b19be3c4e09dbba4eb7573f93790fb98eaf9ea922c95a36866af662f64ac",
+  "existing_dataset_changed": false,
+  "policy_implemented": false,
+  "model_evaluated": false,
+  "test_evaluated": false,
+  "test_sample_image_target_payload_opened": false,
+  "test_episode_metadata_used_for_split_only": true,
+  "vehicle_control_approved": false,
+  "dataset_id": "carla-common10-30kph-five-episodes-20260907-v3",
+  "method": {
+    "source_hashes_verified": 30,
+    "primary_source_hash_manifest": "provenance.json",
+    "join": "Join each train/val prepared source_sample_id final CARLA frame number to same-source camera_frames.jsonl frame and capture_phase; verify samples.jsonl against episode.json and native manifest/camera-frame bytes against collection_config.json source_hashes.",
+    "history_count": "Use the current plus previous nine sequence indices within the same episode, as Common10TorchDataset._ego_history does. Count warmup history slots without loading camera pixels or running a model.",
+    "historic_v2_check": "All three original v2 samples.jsonl files are byte-identical to their v3 counterparts; those matching hashes are recorded in historical_v2_sample_identity.",
+    "limitation": "This is a source/metadata audit performed by read-only inspection, not a new committed standalone audit runner or proof of model-error causation."
+  },
+  "phase_totals": {
+    "train": {
+      "anchors": 1147,
+      "warmup": 105,
+      "driving": 1042
+    },
+    "val": {
+      "anchors": 337,
+      "warmup": 35,
+      "driving": 302
+    }
+  },
+  "historical_v2_phase_totals": {
+    "train": {
+      "anchors": 613,
+      "warmup": 70,
+      "driving": 543
+    },
+    "val": {
+      "anchors": 337,
+      "warmup": 35,
+      "driving": 302
+    }
+  },
+  "episodes": [
+    {
+      "episode_id": "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a",
+      "site_id": "Town07",
+      "split": "train",
+      "sample_count": 309,
+      "raw_camera_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 274,
+        "stationary_tail": 65
+      },
+      "selected_anchor_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 274
+      },
+      "warmup_sequence_index_first": 0,
+      "warmup_sequence_index_last": 34,
+      "warmup_full_10_frame_history_count": 26,
+      "first_driving_sequence_index": 35,
+      "driving_anchors_using_warmup_history_count": 9
+    },
+    {
+      "episode_id": "carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7",
+      "site_id": "C_track_1_0_7",
+      "split": "train",
+      "sample_count": 304,
+      "raw_camera_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 269,
+        "stationary_tail": 65
+      },
+      "selected_anchor_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 269
+      },
+      "warmup_sequence_index_first": 0,
+      "warmup_sequence_index_last": 34,
+      "warmup_full_10_frame_history_count": 26,
+      "first_driving_sequence_index": 35,
+      "driving_anchors_using_warmup_history_count": 9
+    },
+    {
+      "episode_id": "carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9",
+      "site_id": "Town03",
+      "split": "val",
+      "sample_count": 337,
+      "raw_camera_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 302,
+        "stationary_tail": 65
+      },
+      "selected_anchor_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 302
+      },
+      "warmup_sequence_index_first": 0,
+      "warmup_sequence_index_last": 34,
+      "warmup_full_10_frame_history_count": 26,
+      "first_driving_sequence_index": 35,
+      "driving_anchors_using_warmup_history_count": 9
+    },
+    {
+      "episode_id": "carla_town01_town01_right_s0001_p00_ClearNoon_s0001_1af7c32f1f1f",
+      "site_id": "Town01",
+      "split": "train",
+      "sample_count": 534,
+      "raw_camera_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 499,
+        "stationary_tail": 65
+      },
+      "selected_anchor_phase_counts": {
+        "stationary_warmup": 35,
+        "driving": 499
+      },
+      "warmup_sequence_index_first": 0,
+      "warmup_sequence_index_last": 34,
+      "warmup_full_10_frame_history_count": 26,
+      "first_driving_sequence_index": 35,
+      "driving_anchors_using_warmup_history_count": 9
+    }
+  ],
+  "history_contract": {
+    "ego_history_frames": 10,
+    "previous_frame_count": 9,
+    "previous_time_span_seconds": 0.9,
+    "native_camera_hz": 10,
+    "warmup_control_source": "full_service_brake",
+    "warmup_duration_seconds": 3.5,
+    "warmup_physics_ticks": 70,
+    "physics_hz": 20,
+    "warmup_to_driving_history": [
+      {
+        "driving_sequence_index": 35,
+        "warmup_context_slots": 9
+      },
+      {
+        "driving_sequence_index": 36,
+        "warmup_context_slots": 8
+      },
+      {
+        "driving_sequence_index": 37,
+        "warmup_context_slots": 7
+      },
+      {
+        "driving_sequence_index": 38,
+        "warmup_context_slots": 6
+      },
+      {
+        "driving_sequence_index": 39,
+        "warmup_context_slots": 5
+      },
+      {
+        "driving_sequence_index": 40,
+        "warmup_context_slots": 4
+      },
+      {
+        "driving_sequence_index": 41,
+        "warmup_context_slots": 3
+      },
+      {
+        "driving_sequence_index": 42,
+        "warmup_context_slots": 2
+      },
+      {
+        "driving_sequence_index": 43,
+        "warmup_context_slots": 1
+      }
+    ],
+    "anchor_phases": [
+      "stationary_warmup",
+      "driving"
+    ],
+    "stationary_tail_anchor_eligible": false,
+    "stationary_tail_role": "Native future-label context; not an optimizer/evaluation anchor."
+  },
+  "feature_names": [
+    "bias",
+    "velocity_x_mps",
+    "velocity_y_mps",
+    "acceleration_x_mps2",
+    "acceleration_y_mps2",
+    "yaw_rate_radps",
+    "steering_tire_angle_rad",
+    "command_left",
+    "command_right",
+    "command_straight",
+    "command_lane_follow",
+    "command_change_left",
+    "command_change_right"
+  ],
+  "explicit_model_input_tensors": [
+    "images",
+    "calibration",
+    "ego_history",
+    "ego_history_mask",
+    "route_xy",
+    "route_mask"
+  ],
+  "explicit_release_contract": {
+    "absent_explicit_inputs": [
+      "capture_phase",
+      "scheduled_release_countdown",
+      "engagement_or_release_flag",
+      "throttle",
+      "brake",
+      "absolute_timestamp"
+    ],
+    "metadata_role": "Timestamps and sequence indices support causal lookup; they are not a release-countdown input tensor.",
+    "unobservability_proven": false,
+    "uncertainty": "History masks, settling state, routes and camera-visible scene changes may supply correlated cues. No pixel or full-input equivalence analysis was performed; neither complete departure-intent unobservability nor causation of model errors is established."
+  },
+  "prospective_history_only_warmup_policy": {
+    "adopted": false,
+    "applies_to": "A newly versioned and predeclared corpus/loader contract only; do not filter or rewrite the existing v3 or historical evaluations.",
+    "proposal": "Keep native warmup images/states and source identity for sensor settling and causal history, but exclude externally scheduled warmup anchors from future optimization and comparable new development metrics.",
+    "implementation_dependency": "Separate optimizer/evaluation anchor indices from the full per-episode causal history store. Current Common10TorchDataset._ego_history looks up history only within self.examples, so simply dropping warmup examples loses the first nine driving histories and is not a correct implementation.",
+    "retained_labels": "Retain every valid driving-phase stop/traffic wait and natural route-end target. Do not globally drop all zero-speed samples, clamp targets, or erase poor-quality evidence.",
+    "onset_contract": "Freeze an explicit external engagement boundary for collection/runtime ownership, or an explicitly model-observable departure-intent input with a new ABI if required. Do not train a countdown proxy silently or pretend this proposal adds a release cue.",
+    "evaluation_dependency": "Freeze full train/val definitions and expected denominators before new training; preserve the old337-anchor validation as a labelled legacy reference. New policy changes denominators and is not directly the same evaluation.",
+    "accounting_only_if_applied_to_old_v3": "Removing only the105/35 warmup anchors would leave1042train/302val anchors, but no such mutation or filtered evaluation was performed."
+  },
+  "historical_document_correction": {
+    "path": "docs/validation-2026-09-05-portable-e2e-common10-30kph.md",
+    "section": "Common10 corpus",
+    "correction": "Warmup anchors were included (v2 train70/613 and val35/337); only the65 stationary-tail anchors per episode were excluded. Historical data, metrics and denominators remain unchanged."
+  }
+}

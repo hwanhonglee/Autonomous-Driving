@@ -66,8 +66,14 @@ raw camera frame, 개인 가상환경과 checkpoint 원본은 Git 배포 대상�
 
 세 episode는 target profile `30 kph`, `ClearNoon`, seed `0000`, 20 Hz physics와
 10 Hz six-camera라는 공통 수집 계약을 사용했다. 여기서 `30 kph`는 목표 profile의
-이름이며 모든 순간에 실제 속도 30 kph를 유지했다는 뜻은 아니다. 정지 warm-up과
-6.5초 stationary tail은 원본에 보존하되 학습 anchor에서는 제외했다.
+이름이며 모든 순간에 실제 속도 30 kph를 유지했다는 뜻은 아니다.
+
+<!-- HH_260906 - Correct the historical warmup exclusion claim using unchanged v2 sample bytes and source-frame phase bindings. -->
+2026-09-08 확인·정정: 정지 warm-up은 각 episode 35개씩 **학습·평가 anchor에 포함**했다
+(당시 v2 train 70/613개, val 35/337개). 6.5초 stationary tail 65개씩만 원본의 미래 정답
+문맥으로 보존하고 anchor에서 제외했다. 기존 데이터·평가 수치·분모는 변경하지 않았다.
+[Warmup·과거 입력 감사와 원본 해시](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/06_warmup_history_audit/README.md)에서
+v2/v3 원본 동일성과 포함 개수를 확인한다.
 
 | Split | Map / 장면 | 방향 | Sample | 유효 구간 | 이동거리 | 유효 camera rate |
 |---|---|---|---:|---:|---:|---:|

@@ -44,6 +44,9 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
   후보 인지 MLP는 첫 두 seed만 상대 PASS이며 마지막 seed의 ADE·속도 오차가 악화했다.
   원래 C와 모든 head의 selected geometry는 `336/337`이다. 72장 경로 PNG는 오프라인
   val 예측이며 learned closed-loop나 실시간 10 Hz 증거가 아니다.
+  공통 selected 실패 1개는 val index108의 현재 속도 약 `30.02757 km/h`가 30 km/h 입력
+  gate를 초과한 사전 조건 거절이다. 이를 head의 경로 형상 결함으로 단정하지 않으며,
+  sample 제거·gate 완화·미검사 형상 통과 주장 없이 원래 판정을 유지한다.
 - 원본 정답의 6.4초 미래 창에서 모델 감속 한계를 넘는 속도 라벨/독립 XY 창은
   train `294/263개`(전체 1,147), val `108/108개`(전체 337)였다. 창이 서로 겹치므로
   급정지 사건 수가 아니다. 모델의 가감속 한계 `±2.9 m/s²`와 별도 runtime rate gate
@@ -54,6 +57,14 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
   두 번째는 목표 0.97 m 전 정지·2초 유지 후에도 출발 가속과 저속 급감속이 문제였다.
   두 번째 실제 최고 속도 약 16.7 km/h는 명령 30 km/h와 다르다. 이는 학습 정답용
   expert 시험이며 Portable나 Autoware VAD의 차량 제어 결과가 아니다.
+- 이후 일정 가속 6개·제동 6개 **고정 페달 시험 12개**를 완료했다. 제어기 없이 페달을
+  유지해도 출발 가속과 저속 급정지가 남았고 제동 6개 최소 가속은 약
+  `−16.32 ~ −24.63 m/s²`였다. 제어기 전환만으로 원인을 단정할 수 없으며 물리 내부
+  상태의 구체적인 원인은 미확정이다. 계측 완료가 제어·데이터 품질 PASS는 아니다.
+- 메타데이터 감사에서 v3 warmup 앵커가 train `105/1,147`, val `35/337`에 포함됨을
+  확인하고 과거 문서의 제외 설명을 정정했다. 첫 9개 driving 앵커는 warmup 상태를
+  과거 입력으로도 쓴다. 기존 데이터·평가는 그대로이며, history-only 정책은 별도
+  앵커 인덱스·과거 문맥 계약이 필요한 미채택 제안이다. 모델 오차의 원인이라는 증명은 아니다.
 - 데이터는 Town01 우회전 train 534개와 Town04 직진 test 309개를 추가해 v3의
   train/val/test가 `1,147/337/309`개가 됐다. 기존 train/val은 보존됐고 test는 모델 평가·선택에
   사용하지 않았다. 여전히 모든 기능에 필요한 label·독립 시나리오가 갖춰진 것은 아니다.
@@ -79,6 +90,8 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 [9월 8일 최신 진행 기록](validation-2026-09-08-portable-learning.md),
 [정답 감속 진단](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md),
 [선택기 전용 9회 결과](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/02_frozen_selector/README.md),
+[고정 페달 12개 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/04_pedal_response_calibration/README.md),
+[Warmup·과거 입력 감사](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/06_warmup_history_audit/README.md),
 운용 경계는 [학습·운용 가이드](portable-e2e-training.md), 모델 ABI는
 [Model v0 설계](portable-e2e-model-v0.md), 로컬 runtime 시작 절차는
 [10 Hz shadow runtime 가이드](portable-e2e-shadow-runtime.md)에 있다.
@@ -268,11 +281,18 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 실패 결과와 원본/공개본 SHA를 보존했다.
 
 [정답 감속 진단](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/01_target_feasibility/README.md)과
-[첫 두 expert 보정 실패 기록](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)을
-근거로 다음 순서는 **저속 가속·제동 응답 분리 계측 → 자연스러운 30 km/h 직진 정지
+[첫 두 expert 보정 실패 기록](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md),
+[완료한 고정 페달 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/04_pedal_response_calibration/README.md)을
+근거로 다음 순서는 **저속 응답 원인 추가 분리·수집 제어 개선 → 자연스러운 30 km/h 직진 정지
 재검증 → 회전·독립 episode 확장 → 새 데이터 버전 검증·전송 → 고정 3-seed 재학습·평가**다.
 두 실패 수집은 원본 실패 자료로 보존하며 학습 데이터에 섞지 않는다. 원래 라벨·test·
 decoder·runtime gate를 결과에 맞춰 덮어쓰거나 완화하지 않는다.
+
+<!-- HH_260906 - Keep prospective history-only warmup indexing separate from unchanged feature and dataset approvals. -->
+[Warmup/history 감사](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/06_warmup_history_audit/README.md)에
+따라 향후 warmup을 과거 입력으로만 쓰려면 전체 causal history와 학습·평가 앵커 인덱스를
+분리해야 한다. 단순 행 삭제나 모든 정지 표본 제거는 해당 제안의 구현이 아니다.
+아직 정책을 채택하지 않았으며 새 데이터·ABI·분모는 별도 사전 계약이 필요하다.
 
 선택기 학습의 전체 corpus 무결성 검사에서 test 파일 bytes를 읽을 수 있지만 test 예측·
 학습·모델 선택은 하지 않았다. 별도 정답 감속 진단은 test episode 메타데이터로 split만

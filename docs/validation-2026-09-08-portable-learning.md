@@ -5,6 +5,16 @@
 [최신 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에
 정답 데이터 진단, 생성기를 고정한 선택기 9회 학습, 로컬 자연 정지 수집 개선을 분리해 기록합니다.
 
+<!-- HH_260906 - Add completed pedal measurements and corrected warmup accounting without promoting data or models. -->
+로컬의 [고정 페달 12개 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/04_pedal_response_calibration/README.md)은
+완료됐습니다. 일정한 페달에서도 출발 가속과 저속 급정지가 남아 기존 제어기 전환만을 원인으로
+단정할 수 없습니다. 특정 물리 내부 원인은 미확정이며, 앞선 자연 정지 수집 두 시도는 모두 품질 FAIL로
+학습에 채택하지 않았습니다. 다음은 이 계측에 근거한 원인 분리·수집 제어 개선과 재검증입니다.
+
+[Warmup·과거 입력 감사](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/06_warmup_history_audit/README.md)는
+v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월 5일 문서의 잘못된 제외
+설명을 정정했으며, 기존 데이터·평가 분모는 유지합니다. 향후 history-only 방안은 미채택 제안입니다.
+
 원격은 개인 venv·GPU0의 학습/평가 전용, 로컬은 CARLA 데이터 수집·추론/제어 검증 전용입니다.
 새 선택기들은 세 seed 전체 기준을 통과하지 못해 승격하지 않았습니다. 학습 모델의
 폐루프 주행·실차 제어 승인은 없으며 기존 shadow 모델을 유지합니다.

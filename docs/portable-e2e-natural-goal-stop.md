@@ -71,6 +71,45 @@ worker의 출력이 저장됩니다. 성공 시 측정 자료는 `actuation/`, �
 찾기 위한 시험입니다. 실제 RPM·타이어 내부 마찰 상태처럼 API로 측정하지 못한 값은
 측정했다고 주장하지 않습니다.
 
+## 타력 주행·출발 반복·스로틀 ramp 후속 계측
+
+<!-- HH_260906 - Keep the second identification matrix distinct from a qualified goal-stop controller. -->
+
+첫 12개 실험에서는 일정한 제동만으로도 저속 급감속이 재현됐습니다.
+[실제 결과와 그래프](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/04_pedal_response_calibration/README.md)를
+확인한 뒤, 다음 9개 조건을 실행 전에 고정했습니다. 기본 명령은 여전히 첫 12개 실험입니다.
+후속 조건은 `--matrix low_speed_v2`를 명시해야 합니다.
+
+```bash
+# HH_260906 - Select the nine-case identification matrix explicitly; do not reuse an output directory.
+bash scripts/e2e/run_owned_carla_expert_trial.sh \
+  artifacts/training/2026-09-08/low_speed_response/example_v2_run_001 \
+  docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json \
+  --port 2100 --quality Low --wall-timeout-sec 900 \
+  --capture-mode actuation-response -- --matrix low_speed_v2
+```
+
+- 타력 주행 2회: 기존과 같은 throttle 0.30 준비 후, 측정 속도가 처음 3 m/s 이상이 되면
+  throttle·brake를 모두 0으로 하고 20초 기록합니다.
+- 출발 반복 3회: throttle 0.15를 8초 유지합니다. 서로 다른 차량으로 시작하지만 같은
+  초기 조건의 반복이므로, 서로 독립적인 경로·환경 검증으로 세지 않습니다.
+- ramp 4회: throttle을 초당 0.01 / 0.025 / 0.05 / 0.10씩 올려 8초 기록합니다.
+  상한은 0.40이지만 마지막 입력은 각각 **0.08 / 0.20 / 0.40 / 0.40**입니다.
+  느린 ramp까지 모두 같은 최대 입력에 도달한 비교라고 설명하지 않습니다.
+
+실제 9개 계측은 완료됐습니다. 타력 구간은 스칼라 가감속 한계 안이었으나, 20초 후에도
+0.1864 m/s로 움직여 정지 기준 0.1 m/s를 충족하지 않았습니다. 준비 구간의 출발 초과도
+그대로 남습니다. throttle 0.15 반복 세 번의 최대 가속은 모두 2.893276 m/s²였지만
+2.9 한계까지 여유가 작습니다. 실제로 움직인 ramp 세 조건은 모두 순간 가속 한계를
+넘었습니다. 천천히 pedal을 올리면 반드시 해결된다는 가정은 채택하지 않습니다.
+[9개 전체 결과·그래프·검증 명령](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/07_coast_ramp_identification/README.md)을
+한 카테고리에 모았습니다.
+
+따라서 다음 단계는 더 긴 타력 정지 거리와, 측정 속도에 따라 전환하는 두 단계 출발을
+별도 계측하는 것입니다. 이것은 아직 새 주행 profile이나 학습 데이터의 승인이 아닙니다.
+물리 엔진 내부 원인은 이 API 기록만으로 확정하지 않으며, 차량 물리 설정·QA 기준을
+바꾸거나 출발·정지 표본을 잘라 통과시키지 않습니다.
+
 ## 정답 데이터로 채택하기까지
 
 계측 결과로 새 수집 제어 profile을 정하고 변경 이유·설정을 고정한 뒤, 우선 동일 Town07

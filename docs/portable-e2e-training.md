@@ -1,9 +1,11 @@
 # Portable E2E 학습·운용 가이드
 
-> 기준일: 2026-09-06
+> 기준일: 2026-09-07
 > 이 문서는 현재 저장소에 실제로 존재하는 기능과 앞으로 실행할 절차를 구분한다.
-> 3-episode CARLA corpus의 연구용 v0 10-epoch checkpoint와 open-loop 평가는 생겼지만,
-> 입증된 closed-loop 주행 성능과 실차 제어 승인은 아직 없다.
+> 기존 physical-v1 학습·val337·3장면 10 Hz shadow와 오늘의 12회 후속 학습·평가·감사는 완료됐다.
+> 후속 후보들은 채택되지 않아 기존 shadow 모델을 유지하며, learned closed-loop와 실차 제어 승인은 없다.
+
+<!-- HH_260906 - Distinguish completed physical-v1 experiments from historical v0 results and future training iterations. -->
 
 처음 shadow runtime을 실행하는 사람은
 [10 Hz shadow runtime 초보자 가이드](portable-e2e-shadow-runtime.md)를 먼저 보고, 기능별
@@ -19,7 +21,8 @@
 3. 검증된 manifest를 framework-neutral example로 읽는 loader
 4. 아무 ML package도 설치하지 않고 실행하는 CPU control-flow smoke
 5. 여섯 JPEG, calibration, 최근 1초 ego history와 route를 읽는 PyTorch dataset
-6. 6개의 6.4초 `(x, y, speed)` 후보를 출력하는 1,053,278-parameter baseline
+6. 6개의 6.4초 `(x, y, speed)` 후보를 출력하는 baseline: v0 1,053,278개,
+   physical-v1 954,590개 parameter
 7. best-of-K trajectory loss, 실제 backprop/optimizer, checkpoint와 exact resume
 8. `val`/`test` 전용 open-loop evaluator, 차량 중심 trajectory PNG, 공정성 검사가 있는
    report A/B comparison
@@ -45,10 +48,26 @@ import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode�
 
 - 실제 데이터로 학습을 끝낸 checkpoint
 - 장애물 회피·차선 변경·정지·ACC 성능이 검증된 multi-task model
-- 실제 ROS/CARLA에서 실행·계측을 마친 Portable E2E shadow runtime
 - drivable/collision safety selector, 기존 planner fallback과 MRM
-- CARLA closed-loop 합격 결과 또는 target PC의 10 Hz latency 결과
+- Portable learned CARLA closed-loop 합격 결과와 전체 release gate를 충족한 runtime
 - 실차 replay/shadow/폐쇄 시험장 승인
+
+**기존 shadow 운용 모델의 완료 이력**은 CARLA train 613개를 사용한 physical-v1 10 epoch·1,540 step,
+Town03 우회전 val 337개 평가, Town07 직진·C-track 좌회전·Town03 좌회전의 로컬 live
+shadow다. 세 장면 모두 `EVIDENCE_VALID`, 10 Hz `ESTABLISHED_FOR_SHADOW_ONLY`였으며
+9월 7일 후속 제어 A/B 여섯 arm에서도 shadow 계측이 유효했다. 학습 모델은 격리 topic에만
+출력했고 실제 차량 actor의 제어 주체는 Autoware VAD였다. 자세한 수치는
+[shadow 가이드](portable-e2e-shadow-runtime.md#2-가장-중요한-현재-결과)와
+[후속 제어 A/B 보고서](validation-2026-09-07-control-ab.md)에 있다.
+
+<!-- HH_260906 - Keep completed research campaigns separate from the unchanged deployed shadow checkpoint. -->
+**오늘의 후속 학습도 완료**했다. LR A/B 6회, 확장 데이터 C 3회, selector 가중치 D 3회에
+대해 각각 학습·val337 평가·runtime gate v8 감사를 마쳤다. A/B는 seed `20260905`, D/C는
+seed `20260903`에서 상대 기준을 통과하지 못했고 절대 품질 판정도 각 캠페인의 후보
+seed에서 FAIL이었다. 새 checkpoint는 연구용으로 보존하며 기존 shadow 모델을 교체하지
+않았다. 데이터는 v3 `train 1,147 / val 337 / test 309`개로 확장했고 test는 모델 평가나
+선택에 사용하지 않았다. [오늘의 결과와 분류된 증거](validation-2026-09-07-portable-learning.md)를
+먼저 확인한 뒤 아래 절차를 읽는다.
 
 따라서 지금 생성되는 `.pt`와 shadow trajectory는 연구용일 뿐 actuator 명령으로 사용하면 안
 된다.
@@ -56,11 +75,11 @@ import하지 않는다. `portable_e2e.train`은 반대로 실제 JPEG를 decode�
 
 `.pt` checkpoint는 trainer, evaluator와 read-only auditor에서만 사용한다. live shadow
 runtime은 `.pt`를 직접 읽지 않으며 source checkpoint hash와 별도로 SHA-256을 고정한
-`.runtime.npz` bundle만 받는다. 현재 source checkpoint
-`370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 내보낸 bundle
-`b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`은 로컬 CPU strict
-load를 통과했지만 실제 ROS/CARLA에서 실행한
-결과는 아니다.
+`.runtime.npz` bundle만 받는다. 현재 유지하는 기존 shadow source checkpoint
+`df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09`에서 내보낸 bundle
+`bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e`은 로컬 strict
+load와 위 CARLA shadow에 사용한 physical-v1이다. 아래에서 별도로 나오는 v0 checkpoint와
+geometry 실패 수치는 역사적 기준선으로 보존한다.
 
 ## 2. 로컬 PC, Git 저장소, 원격 학습 서버의 역할
 
@@ -920,18 +939,25 @@ A/B 비교에서는 warm-up batch/sample 수까지 같아야 하지만 실제 wa
 **참고값**이다. 전용 자원, 고정 power/clock, 반복 run과 p50/p95/p99를 갖춘 target PC
 benchmark를 대신하지 않으며, 이 표도 closed-loop 또는 차량 제어 승인이 아니다.
 
-### 10.1 현재 Common10에서 physical v1 10-epoch A/B 만들기
+### 10.1 기존 v2 Common10에서 physical v1 10-epoch 실행 재현하기
 
+이 구성의 첫 physical-v1 학습과 val337 평가는 2026-09-06에 완료했다. 아래는 새 run에서
+재현하거나 설정 A/B를 시작하는 절차이며 기존 완료 run을 덮어쓰는 명령이 아니다.
 8.1절 CPU one-step과 9절의 GPU one-step/evaluate가 모두 통과하고 GPU 0이 계속 비어 있을
-때만 아래 정식 후보를 시작한다. 현재 train split은 613 samples이고 batch 4에서 한 epoch가
+때만 아래 정식 후보를 시작한다. 이 재현 절차의 **v2** train split은 613 samples이고 batch 4에서 한 epoch가
 154 steps이므로 1,540 steps가 정확히 10 epochs다. dataset 또는 batch를 바꾸면 이 숫자를
 복사하지 말고 새 sampling plan의 `batches_per_epoch × 10`을 사용한다.
+
+오늘 확장한 **v3**의 train은 1,147개다. C/D 캠페인은 계산량 비교를 위해 동일한 1,540
+optimizer steps를 고정했으며, 이것을 v3의 10 epochs라고 부르면 안 된다. 아래 명령은
+기존 v2 재현용이고 새 캠페인의 데이터·step 계획은
+[학습·검증 반복 가이드](portable-e2e-learning-loop.md)에서 별도로 고정한다.
 
 ```bash
 physical_config="$REPO_ROOT/portable_e2e/config/perspective_trajectory_physical_v1.model.json"
 physical_full_run="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-b4-seed20260903"
 physical_full_eval="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-val"
-physical_full_audit="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-gate-v6.json"
+physical_full_audit="$PORTABLE_E2E_ROOT/runs/<run-id>-physical-v1-e10-runtime-gate.json"
 
 test ! -e "$physical_full_run"
 test ! -e "$physical_full_eval"
@@ -969,9 +995,11 @@ CUDA_VISIBLE_DEVICES="$gpu_uuid" python -m portable_e2e.audit_runtime "$dataset_
   --batch-size 4
 ```
 
-학습 성공만으로 채택하지 않는다. v0와 같은 337개 Town03 분모, 같은 horizon metric, 같은
-gate v6에서 비교하고 candidate collapse, speed-rate, curvature, heading, current-speed reject를 각각
-확인한다. physical v1이 구조적으로 step/speed consistency를 제한해도 장애물·drivable area·
+학습 성공만으로 채택하지 않는다. 기준 모델과 같은 337개 Town03 분모, 같은 horizon metric,
+같은 실제 audit gate ID에서 비교하고 selected-index 빈도와 candidate별 geometry, speed-rate, curvature, heading,
+current-speed reject를 각각 확인한다. 보존한 첫 physical-v1 offline audit은 v6이고 현재
+runtime은 v8이므로 새 결과를 historical v6로 이름만 바꿔 비교하지 않는다.
+physical v1이 구조적으로 step/speed consistency를 제한해도 장애물·drivable area·
 신호 안전을 증명하는 것은 아니다.
 
 ### 10.2 완료 checkpoint를 비실행 runtime bundle로 export하기
@@ -1256,7 +1284,7 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 
 ## 12. 실행 순서와 완료 기준
 
-2026-09-06 현재 첫 3-episode baseline은 다음 범위까지 완료됐다.
+2026-09-07 기준 완료한 범위는 다음과 같다.
 
 1. **완료 — native 수집:** Town07 직진, CTrack 좌회전, Town03 우회전을 20 Hz physics,
    six-camera 10 Hz, warm-up→BasicAgent driving→stationary tail로 새로 수집했다. 세 episode
@@ -1265,53 +1293,78 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
    `val`로 분리해 총 950개를 planning validation했다. 로컬과 원격 prepared tree는
    5,718 files, 27 directories, 597,635,140 bytes 및 manifest SHA-256이 일치했고 checksum
    dry-run 차이는 0건이었다.
-3. **완료 — 학습 경로:** 개인 venv의 CPU 1-step smoke를 통과하고, 허용된 GPU0만 노출해
-   train 613개를 replacement 없이 v0 10 epoch, 1,540 optimizer step 학습했다. 2026-09-05의
-   1 epoch, 154 step 결과는 역사적 duration A/B 기준선으로 보존한다.
-4. **완료 — 독립 route validation:** 학습에 넣지 않은 Town03 우회전 `val` 337개 전체를
-   open-loop 평가했다. 현재 6.4초 ADE/FDE는 `6.567681/16.171295 m`, speed MAE는
-   `1.872983 m/s`, yaw MAE는 `0.379922 rad`, kinematic speed MAE는 `1.697376 m/s`다.
-   model-forward `0.702218 ms/sample`은 full runtime latency가 아니며
-   `vehicle_control_approved=false`다. 1-epoch 역사적 수치는
+3. **완료 — v0 역사적 기준선:** 개인 venv의 CPU 1-step smoke 이후 GPU0에서 train 613개를
+   replacement 없이 v0 10 epoch, 1,540 step 학습했다. Town03 `val` 337개에서 6.4초
+   ADE/FDE `6.567681/16.171295 m`, speed MAE `1.872983 m/s`였고 gate v6 selected
+   geometry PASS `0/337`, candidate 1 선택 `337/337`이었다. 1-epoch 역사적 수치는
    [2026-09-05 Common10 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md),
-   현재 duration A/B는
+   v0 duration A/B는
    [2026-09-06 evidence](assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md)에 있다.
-5. **완료 — runtime gate v6 사전감사, 결과는 FAIL:** Town03 `val` 전체에서 candidate
-   `c0~c5` 각각 geometry PASS는 `0/337`이고 최고 logit 선택은 index 1에 `337/337`
-   고정됐다. 완료된 최신 full-split 재감사의 selected failure는 geometric-speed·
-   speed-disagreement·step·reported/geometric-speed-rate·distance-disagreement·curvature·
-   lateral-acceleration이 각각 `326`, heading `310`, backward-step `94`, speed `47`이다.
-6. **완료 — bundle export와 로컬 strict load:** source checkpoint SHA-256
-   `370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 non-executable
-   runtime bundle SHA-256
-   `b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`을 내보내고
-   pinned CPU strict load를 확인했다. 이는 live ROS/CARLA 또는 10 Hz runtime PASS가 아니다.
-7. **완료 — shadow code 배선:** runtime bundle/source checkpoint/rig/route hash, exact camera bundle, causal state와 freshness,
-   selected-output geometry와 100 ms deadline을 검사하고 `/planning/portable_e2e/`에만
-   발행하는 코드와 launch를 추가했다. 이는 source/unit 단계이며 `P3_RUNTIME` PASS가 아니다.
-8. **완료 — physical v1 source/unit:** 100 ms acceleration-bounded speed integration,
-   30 km/h 상한과 route-relative heading을 가진 decoder는 구현·단위검사를 통과했지만 아직
-   학습하거나 CARLA에서 실행하지 않았다.
+4. **완료 — physical-v1 학습·평가:** 100 ms acceleration-bounded decoder를 별도 새 run에서
+   train 613개, 10 epoch, 1,540 step 학습했다. Town03 우회전 val 337개의 6.4초 selected
+   ADE/FDE는 `4.2615/10.9172 m`, speed MAE는 `1.3933 m/s`다. historical offline gate
+   v6에서 selected/any-candidate PASS는 각각 `326/337`, all-candidate PASS는 `325/337`다.
+   c2 선택 `337/337`로 selected index가 고정됐고 절대 품질·독립 test 요구도 미달이다.
+   선택 빈도만으로 여섯 후보의 geometry가 같다고 판정하지 않는다.
+5. **완료 — physical-v1 bundle export와 로컬 strict load:** source checkpoint
+   `df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09`와 비실행 runtime
+   bundle `bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e`를 고정했다.
+6. **완료 — sensor-fed CARLA shadow:** Town07 직진·C-track 좌회전·Town03 좌회전을 같은
+   rig/contract와 runtime gate v8로 계측했다. 각각 accepted `547/508/497`, inference p99
+   `40.408/38.482/36.862 ms`이고 3/3이 `EVIDENCE_VALID`, 10 Hz
+   `ESTABLISHED_FOR_SHADOW_ONLY`였다. 원본 경로·전체화면·GIF·판정은
+   [physical-v1 발행 폴더](assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/README.md)에 있다.
+7. **완료 — 후속 30 km/h 제어 A/B 동시 shadow:** 9월 7일 여섯 arm에서도 10 Hz shadow가
+   유효했다. 새 제어 설정은 승격되지 않았으며 차량 제어 주체는 Autoware VAD다. Portable
+   learned closed-loop 실적은 **0회**, `vehicle_control_approved=false`를 유지한다.
 
-다음 실행 순서는 아래와 같다.
+8. **완료 — v3 데이터 확장·검증·전송:** Town01 우회전 train 534개와 Town04 직진
+   test 309개를 추가해 `train 1,147 / val 337 / test 309`개를 확보했다. 기존 train/val은
+   보존했고 held-out test는 모델 평가·선택에 사용하지 않았다.
+9. **완료 — 후속 학습 12회, 새 모델 미채택:** 아래 세 캠페인이 모두 학습·val337·gate v8
+   감사를 끝냈다. 마지막 D stage 완료는 `2026-09-07T03:02:16.251393Z`(`12:02:16 KST`)다.
 
-1. **독립 `test` 확보:** 학습·validation episode를 잘라 재사용하지 않고, unseen map/route와
-   다른 weather·seed의 새 episode를 수집해 고정 `test` split을 만든다. 동시에 지원 가능한
-   모든 Town의 직진·회전 Common10 범위를 확장한다.
-2. **모델 A/B:** 고정된 train/val/test, seed, batch, runtime/hardware와 metric 분모를 유지해
-   두 개 이상의 baseline을 비교한다. training loss만으로 채택하지 않고 horizon별 ADE/FDE,
-   속도·yaw·kinematic metric과 domain/map별 퇴행 gate를 미리 정한다.
-3. **모델 출력 gate 회복:** 현재 speed-disagreement/step/heading failure와 index 1 고정의 원인을
-   output scale, loss, ranking과 dataset 관점으로 분해한다. offline candidate geometry와 절대
-   trajectory gate를 통과하지 못하면 threshold를 풀어 shadow/closed-loop로 넘기지 않는다.
-   최신 속도·가감속·곡률·횡가속 검사를 포함한 gate v6 full-split 감사 결과를 기준선으로 고정한다.
-4. **Autoware shadow와 closed-loop 준비:**
-   [shadow runtime 가이드](portable-e2e-shadow-runtime.md)대로 로컬에서 exact bundle,
-   reject 전체 분모와 sensor-to-plan 10 Hz latency를 먼저 측정한다. drivable/collision selector,
-   fallback과 독립 safety boundary를 구현한 뒤에만 CARLA 30 km/h learned closed-loop를
-   검토한다.
-5. **기능 확장:** 정지선·신호, ACC·선행차, 정적/동적 장애물 회피, 차선 변경 순으로 scenario와
-   label/head, closed-loop 합격 기준을 각각 추가한다.
+<!-- HH_260906 - Report all completed campaigns without treating completion as quality approval or runtime promotion. -->
+| 캠페인 | 완료한 학습 수 | 실제 판정 |
+|---|---:|---|
+| [LR A/B](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/01_learning_rate_ab/README.md) | 6 | seed 20260905 상대 기준 실패, 후보 3개 seed 모두 절대 품질 FAIL |
+| [확장 데이터 C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/06_data_expansion/README.md) | 3 | 3개 seed 모두 절대 품질 FAIL; 서로 다른 corpus 간 자동 승격 비교는 하지 않음 |
+| [selector 가중치 D/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/07_selector_weight_ab/README.md) | 3 | seed 20260903 상대 기준 실패, D 3개 seed 모두 절대 품질 FAIL |
+
+첫 seed `20260903`의 A/B에 대해서는 [selector 진단 발행본](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/04_selection_diagnostics/README.md)도
+완료했다. 선택은 A의 c2에서 B의 c4로 바뀌었지만 각 337/337로 고정됐으며, 후보 geometry는
+서로 다르다는 것을 거리 수치와 고정 index 그림으로 확인했다. selected ADE는
+`4.261500 → 4.150919 m`, 평균 selection regret는 `2.500854 → 2.515469 m`였다.
+[같은 seed의 C/D 진단](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/08_selector_weight_diagnostics/README.md)에서는
+가중치를 0.1→0.5로 올리자 선택 index가 2종→4종으로 늘었지만 oracle 일치율은
+`232/337 → 175/337`, 평균 regret는 `2.322154 → 2.714173 m`로 악화됐다. 선택 빈도만으로
+품질 개선을 주장하지 않는다. 두 진단은 기존 개인 venv의 CPU·4 threads로 val만 분석했고
+held-out test는 열지 않았다. 약 11~13초의 분석 소요 시간은 live 10 Hz 성능 증거가 아니다.
+
+[오늘의 전체 결과](validation-2026-09-07-portable-learning.md)와
+[학습·검증 반복 가이드](portable-e2e-learning-loop.md)에 이어 **다음 실행 순서**는 다음과 같다.
+기존 shadow 모델은 그대로 유지하며, 12회 학습 완료를 30개 기능 완료로 해석하지 않는다.
+
+1. **다음 개발 A/B:** 완료된 LR·데이터 확장·selector 가중치 실험의 실패 분석을 바탕으로
+   v3와 val337, seed/step budget을 고정한 새 계획을 먼저 선언한다. loss/ranking 설정은
+   한 번에 하나씩 바꾸고 후보별 ADE/FDE와 geometry, oracle regret,
+   speed·yaw·kinematic metric을 비교하며 미달·퇴행 후보도 함께 보존한다. 같은 val을 반복
+   보는 개발 실험은 독립 최종 test 합격으로 취급하지 않는다.
+2. **병행할 데이터 확장:** 확보한 Town04 직진 test309는 계속 보존하고, 학습·validation
+   episode를 잘라 재사용하지 않으며 unseen map/route·weather·seed의 독립 회전 test와
+   다양한 train/val episode를 추가한다. 직진·좌/우회전·종점정지와 lane/drivable label을
+   확장하고 map/site/day 분리·Common10·hash 검증 뒤 원격으로 보낸다.
+3. **정식 후보 비교:** 확장한 dataset/split, seed budget, batch, runtime/hardware, gate ID와
+   metric 분모를 고정하고 최소 3개 seed로 비교한다. candidate 선택 다양성만 높이는 대신
+   잘못된 경로가 늘어나는지, 안전 중요 subgroup이 퇴행하는지도 함께 판정한다.
+4. **로컬 shadow 회귀·closed-loop 준비:** 새 후보의 full-set export parity와 고정 geometry
+   gate를 확인한 다음 기존 3장면 shadow·10 Hz·reject 분모를 재계측한다. drivable/collision
+   selector, fallback, fault injection과 제어 소유권을 검증한 뒤 CARLA learned closed-loop를
+   진행한다. 원격 학습은 로컬 카메라/제어 계측과 병행할 수 있다.
+5. **기능 확장:** [9개/30개 로드맵](portable-e2e-feature-roadmap.md#구현-우선순위)의 `ITER-01~06`
+   순으로 교통규칙·보행자, ACC·cut-in/out, 정적/동적 장애물·risk·독립 AEB, 차선변경·합류,
+   저속정차·주차/후진의 scenario·label·head·평가를 추가한다. 입력/label이 없는 기능은 기존
+   corpus의 반복 학습만으로 완료 처리하지 않는다.
 6. **실측과 속도 확장:** 권리와 센서 provenance가 확인된 실제 데이터로 replay와 shadow를
    거친 뒤 폐쇄 시험장으로 이동한다. 60 km/h는 30 km/h closed-loop 기준선을 통과한 뒤
    정지거리·곡률·횡가속도·actuator saturation·fallback을 별도 gate로 검증한다.

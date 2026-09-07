@@ -1,0 +1,145 @@
+{
+  "completed_at_utc": "2026-09-07T02:27:24.893799Z",
+  "corpus_fingerprint_sha256": "17c248440efca864e6c322ca5a1602d08cd1a0eabfa71e10545049181a86e073",
+  "created_at_utc": "2026-09-07T02:24:22.156657Z",
+  "dataset_fingerprint_sha256": "3b6dd9dd21b9ac3d9db174974c6eee724457288c3c89f99f1c5152b49c992676",
+  "dataset_size": 613,
+  "device": "cuda:0",
+  "hardware": {
+    "compute_capability": [
+      12,
+      0
+    ],
+    "device": "cuda:0",
+    "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "device_type": "cuda",
+    "device_uuid": "59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "total_memory_bytes": 101973819392
+  },
+  "last_metrics": {
+    "batch_domain_sample_counts": {
+      "carla": 1
+    },
+    "candidate_score_loss": 1.502476692199707,
+    "domain_samples_seen": {
+      "carla": 6130
+    },
+    "epoch": 9,
+    "global_step": 1540,
+    "gradient_norm": 20.05608367919922,
+    "loss": 0.2875638008117676,
+    "regression_loss": 0.13731610774993896,
+    "samples_seen": 6130,
+    "selected_ade_m": 4.523645877838135,
+    "selected_fde_m": 6.871062755584717,
+    "selected_kinematic_speed_mae_mps": 2.978835254907608e-06,
+    "selected_speed_mae_mps": 1.1293129920959473,
+    "selected_yaw_mae_rad": 0.05696076527237892
+  },
+  "loss_config": {
+    "candidate_score_weight": 0.1,
+    "final_displacement_weight": 0.5,
+    "kinematic_speed_weight": 0.05,
+    "speed_weight": 0.2,
+    "xy_weight": 1.0,
+    "yaw_weight": 0.1
+  },
+  "model_config": {
+    "calibration_features": 16,
+    "camera_count": 6,
+    "camera_fusion_width": 192,
+    "candidate_count": 6,
+    "ego_embedding": 64,
+    "ego_features": 13,
+    "ego_history_frames": 10,
+    "encoder_base_channels": 24,
+    "future_points": 64,
+    "hidden_width": 256,
+    "image_channels": 3,
+    "image_embedding": 96,
+    "image_grid_height": 3,
+    "image_grid_width": 5,
+    "image_height": 180,
+    "image_width": 320,
+    "maximum_step_m": 1.0,
+    "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+    "route_embedding": 96,
+    "route_points": 128,
+    "route_scale_m": 120.0
+  },
+  "model_parameter_count": 954590,
+  "runtime": {
+    "cublas_workspace_config": ":4096:8",
+    "cuda_matmul_allow_tf32": false,
+    "cudnn": 92000,
+    "cudnn_allow_tf32": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "mkl_num_threads": "16",
+    "numpy": "2.5.2",
+    "omp_num_threads": "16",
+    "pillow": "12.3.0",
+    "python": "3.12.3",
+    "torch": "2.13.0+cu130",
+    "torch_cuda": "13.0",
+    "torch_num_interop_threads": 64,
+    "torch_num_threads": 16
+  },
+  "sampling_plan": {
+    "batch_size": 4,
+    "batches_per_epoch": 154,
+    "dataset_domain_counts": {
+      "carla": 613
+    },
+    "domain_ratios": {},
+    "epoch_discarded_sample_counts": {
+      "carla": 0
+    },
+    "epoch_domain_sample_counts": {
+      "carla": 613
+    },
+    "epoch_sample_count": 613,
+    "known_domains": [
+      "carla",
+      "real"
+    ],
+    "order_algorithm": "proportional_weighted_interleave_v1",
+    "policy": "uniform_without_replacement",
+    "replacement": false,
+    "seed_derivation": "sha256_seed_epoch_named_stream_v1"
+  },
+  "sampling_plan_sha256": "d72c26f3f83a9d8637938ba0d9f5975ed7109538533f50bfc989fdcbd66f04c1",
+  "state": {
+    "domain_samples_seen": {
+      "carla": 6130
+    },
+    "epoch": 10,
+    "global_step": 1540,
+    "next_batch_index": 0,
+    "samples_seen": 6130
+  },
+  "status": "TRAINING_TARGET_REACHED",
+  "train_config": {
+    "batch_size": 4,
+    "checkpoint_interval": 154,
+    "domain_ratios": [],
+    "learning_rate": 0.0001,
+    "max_steps": 1540,
+    "maximum_gradient_norm": 5.0,
+    "num_workers": 0,
+    "sampling_policy": "uniform_without_replacement",
+    "seed": 20260905,
+    "verify_image_sha256": true,
+    "weight_decay": 0.0001
+  },
+  "trainer_id": "portable_e2e.pytorch_trainer.v1",
+  "training_episode_ids": [
+    "carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7",
+    "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a"
+  ],
+  "training_split": "train",
+  "warning": "RESEARCH CHECKPOINT \u2014 NOT APPROVED FOR VEHICLE CONTROL",
+  "publication_notice": "Redacted metadata view; replay requires the private original identified by raw_source_sha256.",
+  "raw_source_sha256": "abc7ecde42486a9001dde9198ffeb8d9290a74b5b02036d2668d379a2039de0e"
+}

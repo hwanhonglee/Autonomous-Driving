@@ -1,0 +1,33 @@
+{
+  "schema": "portable_e2e.data_expansion_campaign.v1",
+  "campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+  "source_commit": "081a71f7fc014d2864b790b0b0cae7378ae18e4c",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_config": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+  "seeds": [
+    20260903,
+    20260904,
+    20260905
+  ],
+  "arms": {
+    "C_expanded_data": 0.0001
+  },
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "prerequisite_campaign_id": "hh260907-physical-v1-lr-ab-3seeds-v1",
+  "prerequisite_timeout_seconds": 3600,
+  "decision": {
+    "purpose": "Prospective development experiment adding Town01 right-turn training while retaining Town03 val337 and untouched Town04 test.",
+    "budget": "Same 1540 optimizer-step budget as the preceding campaign; 287 batches per expanded epoch, approximately 5.37 epochs, not 10 epochs.",
+    "comparison": "Exploratory cross-corpus comparison only. The old v2 and expanded v3 corpus fingerprints differ; do not claim compare.py compatibility across those corpora.",
+    "test_policy": "Never evaluate or select on held-out Town04 test during this campaign.",
+    "promotion": "No automatic promotion, no control approval; independent test, scenario coverage, 10Hz shadow and closed-loop gates remain mandatory."
+  },
+  "publication_notice": "Redacted metadata view; replay requires the private original identified by raw_source_sha256.",
+  "raw_source_sha256": "1dc75e37e9d9723f09793728643ca5f13e5c30858b5f7098ba53653823bd01d1"
+}

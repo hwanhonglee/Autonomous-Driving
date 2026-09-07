@@ -2,25 +2,27 @@
 
 ## 0. 문서 상태
 
-이 문서는 2026-09-06 현재 저장소에 구현된 최소 trajectory baseline과 앞으로 비교할
+<!-- HH_260906 - Separate historical v0 evidence from the completed physical-v1 shadow baseline. -->
+이 문서는 2026-09-07 현재 저장소에 구현된 최소 trajectory baseline과 앞으로 비교할
 모델 설계를 함께 기록한다. 다음 네 문장을 먼저 구분해야 한다.
 
 - **모델·trainer·evaluator와 격리된 Autoware shadow runtime 코드는 구현되어 있다.**
-- **현재 연구 기준선은 v0 10-epoch checkpoint와 Town03 open-loop 결과다.**
-- **실제 ROS/CARLA shadow 연속 실행과 learned closed-loop 결과는 아직 없다.**
+- **현재 연구 기준선은 physical-v1 10-epoch checkpoint이며 v0 결과는 역사적 비교 기준이다.**
+- **physical-v1은 Town03 val337과 CARLA 3장면 10 Hz shadow 계측을 완료했지만 learned closed-loop 결과는 아직 없다.**
 - **현재 코드는 실차 또는 Autoware 차량 제어에 사용할 수 있는 완성 모델이 아니다.**
 
 구현된 baseline은 특정 VAD repository에 의존하지 않는 PyTorch planning core다. 여섯
 카메라, calibration, ego history와 route를 받아 6개의 미래 trajectory 후보를 낸다.
 throttle, brake, steering을 직접 출력하지 않는다.
 
-현재 기본 model의 parameter 수는 **1,053,278개**다. 이 값은
+기존 v0 model의 parameter 수는 **1,053,278개**다. 이 값은
 [`perspective_trajectory_v0.model.json`](../portable_e2e/config/perspective_trajectory_v0.model.json)의
 현재 기본 설정과 [`parameter_count`](../portable_e2e/model.py) 결과다. config나 layer를
-바꾸면 다시 측정해야 한다.
+바꾸면 다시 측정해야 한다. 별도 physical-v1 설정의 parameter 수는 **954,590개**다.
+두 decoder의 설정과 checkpoint는 서로 바꿔 사용할 수 없다.
 
 Pro6000의 개인 프로젝트 venv에는 PyTorch `2.13.0+cu130`, NumPy `2.5.2`, Pillow `12.3.0`을
-고정해 CPU 1-step과 physical GPU 0만 사용한 v0 10-epoch 학습을 완료했다. 이는 개인 venv의
+고정해 CPU 1-step과 physical GPU 0만 사용한 v0·physical-v1 10-epoch 학습을 완료했다. 이는 개인 venv의
 확인 결과이며 시스템 Python, Conda base 또는 다른 GPU를 사용해도 된다는 뜻이 아니다.
 checkpoint는 연구용 artifact이고 Git에는 포함하지 않는다.
 
@@ -113,15 +115,17 @@ backward를 지원하기 위한 계약이다.
 ego history는 13→64 projection 뒤 64차원 GRU의 마지막 causal state를 사용한다. camera 192,
 ego 64, route 96을 이어 붙인 352차원 feature를 256차원 fusion MLP에 통과시킨다.
 
-### 1.3 실제 출력 ABI
+### 1.3 공통 출력 ABI와 decoder별 차이
 
 | 출력 | 형상 | 구현 |
 |---|---|---|
 | `trajectory_xy_m` | `[B, 6, 64, 2]` | 0.1~6.4초 후보별 XY; bounded step을 누적해 생성 |
-| `speed_mps` | `[B, 6, 64]` | softplus로 음수가 아닌 후보별 목표 속도 생성 |
+| `speed_mps` | `[B, 6, 64]` | v0은 softplus, physical-v1은 bounded acceleration을 100 ms 간격으로 적분 |
 | `candidate_logits` | `[B, 6]` | 후보 선택 score의 정규화 전 값 |
 
-각 XY step은 config의 `maximum_step_m=3.0`으로 제한한 뒤 누적한다. 이 값은 물리적
+v0의 각 XY step은 config의 `maximum_step_m=3.0`으로 제한한 뒤 누적한다. physical-v1은
+별도 `maximum_step_m=1.0` 계약으로 30 km/h 이하 속도와 route-relative heading을 결합하고
+곡률·횡가속도 한계 안에서 XY를 적분한다. 이 구조적 제한은 물리적
 안전성을 인증하지 않는다. 출력 yaw, uncertainty, occupancy, object, signal 또는 명시적
 health head는 아직 없다. yaw는 XY step에서 계산해 학습 metric에 사용한다.
 
@@ -145,7 +149,10 @@ gradient norm을 `metrics.jsonl`에 기록한다. evaluator는 별도 `val` 또�
 horizon까지 없는 sample은 그 horizon의 분모에 포함하지 않고 count를 함께 기록한다.
 전체 평균과 별도로 `carla`/`real` sample 수, metric, metric별 분모도 기록한다. A/B
 comparison은 이 domain 구성이 같지 않거나 domain metric 구조가 잘못되면 거부하고 두 domain을
-별도 표로 출력한다.
+별도 표로 출력한다. 비교 표의 `selection_regret_ade_m`은 같은 sample과 유효 future point에서
+`selected_ade_m - oracle_ade_m`로 계산한다. 이때 oracle은 후보별 ADE 최솟값이며,
+XY·speed·yaw·FDE를 합친 학습 loss의 최솟값 후보와 다를 수 있다. 이 진단은 index 사용률이나
+후보 간 경로 다양성을 대신하지 않는다.
 
 이 metric이 finite라는 사실은 주행이 좋다는 뜻이 아니다. random initialization이나
 one-step checkpoint도 finite metric과 PNG를 만들 수 있다.
@@ -168,7 +175,7 @@ one-step checkpoint도 finite metric과 PNG를 만들 수 있다.
 sampling과 report schema가 추가된 현재 trainer/checkpoint/evaluation/comparison ID는 v1이다.
 여기서 model ID의 `perspective_trajectory.v0`와 checkpoint schema v1은 서로 다른 version
 축이다. 구형 checkpoint schema를 같은 형식이라고 가장해 재개하지 않고 명시적으로 거부한다.
-현재 v0 10-epoch 연구 checkpoint는 v1 schema로 생성됐으며 공개 보고서에 byte SHA-256을
+기존 v0와 physical-v1 10-epoch 연구 checkpoint는 v1 schema로 생성됐으며 공개 보고서에 byte SHA-256을
 고정했다. 자동 migration은 제공하지 않는다.
 
 `.pt` checkpoint는 trainer, evaluator와 read-only auditor에서만 제한적으로 읽는다. live
@@ -268,19 +275,24 @@ label과 validator가 준비된 head만 추가한다. 없는 label을 0으로 �
 - best-of-K, yaw/speed/kinematic consistency loss
 - 실제 optimizer/checkpoint/evaluator/PNG
 - Town07 직진 309개와 CTrack 좌회전 304개 학습, Town03 우회전 337개 validation
-- 1 epoch 154 step은 2026-09-05 역사적 기준선이고 현재 연구 결과는 10 epoch 1,540 step
-- 현재 6.4초 ADE/FDE `6.567681/16.171295 m`, speed MAE `1.872983 m/s`, yaw MAE
+- 아래 v0 결과는 역사적 비교 기준이며 1 epoch 154 step과 10 epoch 1,540 step을 비교
+- v0 10-epoch 6.4초 ADE/FDE `6.567681/16.171295 m`, speed MAE `1.872983 m/s`, yaw MAE
   `0.379922 rad`, kinematic speed MAE `1.697376 m/s`로 개선됐지만 초기 gate 미달
 - model-forward `0.702218 ms/sample`은 전처리·ROS·selector를 제외한 open-loop 참고값
 - runtime geometry gate v6의 Town03 전체 감사에서 여섯 후보 각각 PASS `0/337`이며,
   learned selector는 candidate 1을 `337/337` 선택
-- 완료된 최신 full-split 재감사의 selected failure는 geometric-speed·speed-disagreement·
+- 보존된 v0 gate-v6 full-split 재감사의 selected failure는 geometric-speed·speed-disagreement·
   step·reported/geometric-speed-rate·distance-disagreement·curvature·lateral-acceleration이
   각각 `326`, heading `310`, backward-step `94`, speed `47`이다.
 
 별도 `perspective_trajectory.physical.v1` decoder도 구현하고 단위검사를 통과했다. 이 decoder는
 100 ms 속도 적분, 30 km/h 상한, bounded acceleration과 route-relative heading을 구조적으로
-제약하지만 아직 학습·open-loop·CARLA 실행을 하지 않았으므로 v0보다 낫다고 주장하지 않는다.
+제약한다. 10 epoch 학습과 Town03 val337 평가를 완료했으며 selected ADE/FDE는
+`4.261509/10.917244 m`, oracle ADE는 `1.760656 m`다. 학습 직후 보존한 gate-v6 selected
+geometry PASS는 `326/337`이고 c2 선택은 `337/337`이다. 이후 current gate v8을 사용한
+Town07 직진·C-track 좌회전·Town03 좌회전의 10 Hz shadow 계측도 완료했다.
+이 수치들은 open-loop·shadow 개선 근거이며 learned closed-loop 또는 전체 기능 PASS가 아니다.
+상세 기록은 [physical-v1 shadow 결과](portable-e2e-shadow-runtime.md#physical-v1-결과)에 있다.
 
 ### M2 — static geometry: 미구현
 
@@ -429,7 +441,7 @@ label처럼 만드는 것은 금지한다.
 현재 evaluator는 이 중 기본 trajectory/speed/yaw/kinematic metric과 forward time, PNG까지만
 구현했다. 나머지를 이미 제공한다고 해석하면 안 된다.
 
-현재 v0 10-epoch Town03 `val` 337개의 6.4초 ADE/FDE는
+역사적 v0 10-epoch Town03 `val` 337개의 6.4초 ADE/FDE는
 `6.567681/16.171295 m`이고 speed/yaw/kinematic speed MAE는 각각
 `1.872983 m/s`, `0.379922 rad`, `1.697376 m/s`다. model-forward
 `0.702218 ms/sample`은 decode, tensorization, ROS transport, selector와 controller를 포함하지
@@ -493,11 +505,11 @@ speed/step/heading/extent와 100 ms deadline을 검사한다. 통과한 결과�
 `/planning/portable_e2e/` 아래의 고정 격리 topic에만 발행하고 output remap을 거부한다.
 1초 status heartbeat에는 항상 `vehicle_control_approved=false`를 기록한다.
 
-live CameraInfo의 intrinsic·rectification parity는 구현됐다. live TF extrinsic parity는
-**UNIMPLEMENTED_BLOCKED**이며 drivable corridor, object collision,
+live CameraInfo의 intrinsic·rectification parity와 live TF extrinsic parity는 구현됐고
+CARLA 3장면의 accepted anchor에서 검증했다. drivable corridor, object collision,
 uncertainty, 기존 planner fallback/MRM, 독립 AEB 연동 또는 canonical trajectory authorization을
-구현하지 않았다. 실제 ROS/CARLA shadow도 아직 실행하지 않았다. 따라서 shadow adapter 코드가
-생겼다는 사실은 `P3_RUNTIME` 통과나 Autoware 제어 통합 완료가 아니다. 상세한 시작·관찰 절차는
+구현하지 않았다. 실제 ROS/CARLA 실행의 증거 범위는 **shadow-only 10 Hz**이며
+Autoware 제어 통합 완료 또는 기능 전체 `P3_RUNTIME` 통과와 같지 않다. 상세한 시작·관찰 절차는
 [10 Hz shadow runtime 가이드](portable-e2e-shadow-runtime.md)에 있다.
 
 모델 checkpoint가 이 계층을 대신하지 않는다. 비 Autoware 시스템은 같은 core ABI에 별도
@@ -505,22 +517,21 @@ adapter를 붙인다.
 
 ## 10. 다음 실제 실행 순서
 
-현재까지 Common10 3-episode corpus, CPU 1-step, GPU0 v0 10 epoch와 Town03 `val` 337개
-open-loop를 완료했다. source checkpoint SHA-256
-`370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 내보낸
+현재까지 Common10 3-episode corpus, CPU 1-step, GPU0 physical-v1 10 epoch와 Town03 `val`
+337개 open-loop, CARLA 3장면 10 Hz shadow 계측을 완료했다. source checkpoint SHA-256
+`df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09`에서 내보낸
 non-executable runtime bundle SHA-256
-`b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`은 로컬 strict load를
-통과했다. gate v6 전체 감사에서
-candidate `c0~c5`와 selected trajectory는 각각 `0/337`이고 selector는 candidate 1에
-`337/337` 고정됐다. speed-rate·curvature·lateral-acceleration을 포함한 최종 재감사는 완료했으며 실제 ROS/CARLA shadow는
-아직 실행하지 않았다. 상세 명령은
+`bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e`은 로컬 strict load를
+통과했다. 선택 index c2 고정과 큰 selected ADE/FDE가 다음 학습 개선 대상이다.
+기존 v0 실패 자료와 physical-v1의 historical offline gate v6 자료는 그대로 보존하며,
+새 A/B에서는 기준선과 후보를 동일한 current gate v8으로 재감사한다. 상세 명령은
 [학습·운용 가이드](portable-e2e-training.md)와
 [shadow runtime 가이드](portable-e2e-shadow-runtime.md)에 있다.
 
-1. 현재 checkpoint의 step/heading/curvature 실패와 candidate index 1 고정을 재현·원인 분해
+1. physical-v1의 selected/oracle ADE 차이와 c2 선택 고정을 재현하고 fixed train/val·seed·학습량의 A/B로 원인 분해
 2. 기존 train/val을 자르지 않은 unseen straight/left/right/stop `test` episode 신규 수집
 3. fixed split·seed·budget으로 Perspective baseline 고도화와 Geometry-BEV 후보 A/B
-4. offline absolute geometry·candidate-diversity gate를 통과한 checkpoint만 shadow 후보로 승격
+4. offline absolute quality·geometry gate를 통과한 checkpoint만 shadow 후보로 승격하고 candidate 다양성은 별도 계측
 5. 로컬 Autoware/CARLA shadow에서 exact bundle, 전체 sensor-to-plan 지연, reject 분모 계측
 6. drivable/collision selector, deterministic fallback/MRM과 독립 safety boundary 구현
 7. 30 km/h CARLA learned closed-loop를 모든 지원 Town의 직진·회전·정지로 확대

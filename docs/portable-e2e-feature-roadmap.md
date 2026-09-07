@@ -1,13 +1,16 @@
 # Portable E2E 자율주행 기능 요구사항·로드맵
 
-> 기준일: 2026-09-06
+> 기준일: 2026-09-07
 >
 > 기계 판독 원본: [`config/portable_e2e_feature_matrix.yaml`](../config/portable_e2e_feature_matrix.yaml)
 
 ## 현재 결론
 
+<!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
 목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 현재 완료된 것은
-`common_10hz_v1` 데이터·학습 배선과 첫 CARLA-only open-loop baseline이다. 학습된
+`common_10hz_v1` 데이터·학습 배선, CARLA-only physical-v1 학습·open-loop 평가,
+로컬 3장면의 10 Hz shadow 계측과 오늘의 세 캠페인 총 12회 학습·평가·감사다. 새 후보들은
+채택 기준을 통과하지 못해 기존 shadow checkpoint를 유지한다. 학습된
 checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 30개 중
 `CLOSED_LOOP_PASS`인 기능은 **0개**다.
 
@@ -15,26 +18,33 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 
 - Town07 직진 309개와 CTrack 좌회전 304개를 학습하고 Town03 우회전 337개를
   validation한 총 950개 CARLA sample은 데이터 계약을 통과했다.
-- 현재 v0 10-epoch Town03 open-loop 6.4초 ADE/FDE는 `6.567681/16.171295 m`, speed
-  MAE는 `1.872983 m/s`, yaw MAE는 `0.379922 rad`, kinematic speed MAE는
-  `1.697376 m/s`다. 2026-09-05의 1-epoch 값은 역사적 A/B 기준선이며 현재 값도 아래 초기
-  품질 gate를 통과하지 못한다.
-- `0.702218 ms/sample`은 Pro6000의 model-forward 한 구간일 뿐 전처리, ROS, TF,
-  selector, controller를 포함한 10 Hz runtime 판정이 아니다.
-- runtime geometry gate v6의 Town03 전체 감사에서 candidate `c0~c5` 각각 geometry
-  PASS가 `0/337`이고 최고 logit 선택은 index 1에 `337/337` 고정됐다. 완료된 최신
-  full-split 재감사의 selected failure는 geometric-speed·speed-disagreement·step·reported/
-  geometric-speed-rate·distance-disagreement·curvature·lateral-acceleration이 각각 `326`,
-  heading `310`, backward-step `94`, speed `47`이다.
+- **기존 shadow 운용 checkpoint** physical-v1은 train 613개로 10 epoch, 1,540 optimizer step을 완료했다. Town03 `val`
+  337개에서 6.4초 selected ADE/FDE는 `4.2615/10.9172 m`, speed MAE는 `1.3933 m/s`다.
+  기존 v0의 `6.567681/16.171295 m`, `1.872983 m/s`보다 개선됐지만 아래 초기 품질 gate와
+  독립 test·3-seed 요구는 아직 충족하지 못했다.
+- 학습 직후 보존한 physical-v1 offline geometry gate v6에서 selected PASS는 `326/337`,
+  하나 이상 candidate PASS는 `326/337`, 모든 candidate PASS는 `325/337`이다. 선택은 c2에
+  `337/337` 고정되어 후보 선택·품질을 추가 분석해야 한다. 이 빈도만으로 여섯 후보의 경로
+  모양이 같다고 단정하지 않는다. live runtime gate는 v8이며
+  이 historical v6 분모를 v8 결과로 바꾸어 읽지 않는다.
 - source checkpoint
-  `370f12dbfa15cc17fa29931bc3c9dd3140dbd7c0a61d976af296fd223b2becf0`에서 내보낸
-  non-executable runtime bundle
-  `b9b10e1604ac59eb4375b233d80b8f7ea04d983c0b841d6afddbc39e008c292c`은 로컬 CPU strict
-  load를 통과했다. live ROS/CARLA나 10 Hz PASS는 아니다.
-- physical v1 decoder는 구현·단위검사를 통과했지만 아직 학습·평가·CARLA 실행을 하지 않았다.
-- 격리된 Autoware shadow adapter와 10 Hz 목표 sensor profile의 source/unit 배선은 생겼지만,
-  ROS graph startup smoke만 실행했다. sensor-fed trajectory와 CARLA shadow는 아직 실행하지
-  않았다. 따라서 `P3_RUNTIME` 단계는 미통과다.
+  `df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09`와 runtime bundle
+  `bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e`를 고정했다.
+- 오늘 별도로 학습한 LR A/B 6회, 데이터 확장 C 3회, selector 가중치 D 3회는 모두
+  학습·val337·gate v8 감사를 완료했지만 승격하지 않았다. A/B는 seed `20260905`, D/C는
+  seed `20260903`에서 상대 기준을 통과하지 못했고 C와 D의 절대 품질 판정은 모든 seed에서
+  FAIL이었다. 위 기존 운용 checkpoint와 이 새 후보들을 구분한다.
+- 데이터는 Town01 우회전 train 534개와 Town04 직진 test 309개를 추가해 v3의
+  train/val/test가 `1,147/337/309`개가 됐다. 기존 train/val은 보존됐고 test는 모델 평가·선택에
+  사용하지 않았다. 여전히 모든 기능에 필요한 label·독립 시나리오가 갖춰진 것은 아니다.
+- Town07 직진, C-track 좌회전, Town03 좌회전에서 sensor-fed Portable trajectory를
+  기록했고 3/3 장면이 `EVIDENCE_VALID`, 10 Hz `ESTABLISHED_FOR_SHADOW_ONLY`였다.
+  accepted 수는 각각 `547/508/497`, inference p99는 `40.408/38.482/36.862 ms`였다.
+  Town03 **우회전 val**과 **좌회전 live shadow**는 다른 episode다.
+- 9월 7일의 30 km/h 제어 A/B 여섯 arm에서도 Portable 10 Hz shadow는 유효했다. 차량
+  제어는 Autoware VAD가 소유했고 새 제어 설정은 승격되지 않았다. Portable의 learned
+  closed-loop 실적은 0회이며, `SAF-01`의 full frozen-set parity·fault/fallback·release
+  요구도 모두 완료된 것은 아니다.
 - Town03 expert가 신호를 기다린 기록은 있으나 신호 상태가 현재 모델 입력이나 label은
   아니다. 따라서 교통신호 기능은 `EXPERT_BEHAVIOR_ONLY`다.
 - 과거 Autoware VAD 화면은 별도 stack의 역사적 증거다. 이번 portable E2E checkpoint의
@@ -43,6 +53,9 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 자세한 현재 수치는
 [2026-09-05 Common10 학습·검증 보고서](validation-2026-09-05-portable-e2e-common10-30kph.md),
 [2026-09-06 duration A/B evidence](assets/validation/2026-09-06/portable_e2e_v0_duration_ab_v1/README.md),
+[physical-v1 3장면 shadow evidence](assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3/README.md),
+[2026-09-07 제어 A/B](validation-2026-09-07-control-ab.md),
+[오늘의 반복 학습 결과](validation-2026-09-07-portable-learning.md),
 운용 경계는 [학습·운용 가이드](portable-e2e-training.md), 모델 ABI는
 [Model v0 설계](portable-e2e-model-v0.md), 로컬 runtime 시작 절차는
 [10 Hz shadow runtime 가이드](portable-e2e-shadow-runtime.md)에 있다.
@@ -56,6 +69,7 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 | `EXPERT_BEHAVIOR_ONLY` | expert는 동작했지만 모델 입력·label·평가가 없음 |
 | `OPEN_LOOP_MEASURED_BELOW_TARGET` | open-loop 수치는 있으나 test/품질 gate가 미달 |
 | `MODEL_FORWARD_ONLY` | 모델 forward 배선·시간만 있음. runtime/폐루프가 없음 |
+| `SHADOW_MEASURED_CARLA_ONLY` | 로컬 sensor-fed CARLA shadow·지연 계측 완료. 전체 release gate와 learned 제어 승인은 미완료 |
 | `NOT_STARTED` | 기능별 자격 데이터와 평가 증거가 없음 |
 | `BLOCKED` | 명시한 선행조건이 없어 fail-closed 상태 |
 | `CLOSED_LOOP_PASS` | 학습 모델이 원인인 폐루프 결과가 사전 기준을 모두 통과했을 때만 사용 |
@@ -76,9 +90,10 @@ recorded-pose replay, historical VAD 실행으로 portable checkpoint의 폐루�
 | `P5_REAL_SHADOW` | actuator를 끈 실측 replay/shadow와 intervention mining 통과 |
 | `P6_CLOSED_COURSE` | 보정된 실차가 폐쇄 시험장 계획 통과. 공도 승인은 별도 |
 
-모든 하위 기능은 현재 단계와 목표 단계를 함께 가진다. 앞 단계가 미완료면 뒤 단계가 좋아
-보여도 승격하지 않는다. 예를 들어 빠른 GPU forward는 `P3_RUNTIME`을, open-loop ADE는
-`P4_CARLA_CLOSED_LOOP`를 대신하지 않는다.
+모든 하위 기능은 현재 작업 중인 gate와 목표 단계를 함께 가진다. `current_stage`는 그 단계의
+완료 선언이 아니며 `status`와 근거를 함께 읽는다. 앞선 품질·데이터 gate가 미완료인 상태의
+shadow 계측도 제어 승격 근거가 되지 않는다. 빠른 GPU forward는 `P3_RUNTIME`을,
+open-loop ADE는 `P4_CARLA_CLOSED_LOOP`를 대신하지 않는다.
 
 ## 공통 데이터·평가 규칙
 
@@ -137,7 +152,7 @@ Pro6000에서는 프로젝트 개인 venv만 사용하고, 실행 직전 비어 
 | `MF-06` | 충돌위험·장애물 대응 | 4 | 시작 전 | occupancy/motion/risk label + 독립 AEB |
 | `MF-07` | 차선변경·합류 | 3 | 시작 전 | 좌/우 command, legal boundary, gap label |
 | `MF-08` | 저속 정차·주차 | 2 | 시작 전 | near-field coverage와 terminal pose data |
-| `MF-09` | 런타임 안전·실차 전환 | 3 | source/unit + 입력 없는 ROS startup smoke | parity/latency/reject/fallback |
+| `MF-09` | 런타임 안전·실차 전환 | 3 | 3장면 + 후속 6 arm의 10 Hz shadow 계측 | full-set parity·selector·fault/fallback·learned ownership |
 
 ## 30개 추적 요구사항
 
@@ -157,16 +172,16 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 
 | ID | 기능 | 단계 / 상태 | 데이터 요구 | Open-loop 통과 | Closed-loop 통과 | Local / Pro6000 |
 |---|---|---|---|---|---|---|
-| `RTE-01` | 직진 차로 유지 | P1→P4 / data partial | 3개 이상 site의 독립 train/val/test straight | 공통 ADE/FDE + lane exit<=1% | success>=95%, collision/lane 0, CTE p95<=0.35 m,max<=0.75 m/20 | holdout 수집·폐루프 / 3-seed A/B |
+| `RTE-01` | 직진 차로 유지 | P1→P4 / data partial | Town07 train·Town04 test 확보, 3개 이상 site와 독립 val 확장 필요 | 공통 ADE/FDE + lane exit<=1% | success>=95%, collision/lane 0, CTE p95<=0.35 m,max<=0.75 m/20 | holdout 수집·폐루프 / 3-seed A/B |
 | `RTE-02` | 좌회전 | P1→P4 / data partial | lead+arc+tail, signal/priority/lane 포함 split | 공통 ADE/FDE, wrong direction 0 | branch 100%, success>=95%, collision/lane 0, CTE p95<=0.40 m/20 | 교차로 생성·폐루프 / curvature·yaw A/B |
-| `RTE-03` | 우회전 | P2→P4 / below target | Town03 외 train과 untouched test 필요 | 공통 ADE/FDE; 현재 6.4 s 6.568/16.171 m로 미달 | branch 100%, success>=95%, collision/lane 0, CTE p95<=0.40 m/20 | train/test 수집·폐루프 / error 축소 A/B |
+| `RTE-03` | 우회전 | P2→P4 / below target | Town01 train534·Town03 val337, untouched 우회전 test 필요 | 공통 ADE/FDE; 기존 shadow physical-v1 6.4 s 4.262/10.917 m로 미달 | branch 100%, success>=95%, collision/lane 0, CTE p95<=0.40 m/20 | train/test 수집·폐루프 / error 축소 A/B |
 | `RTE-04` | 경로 종점 정지 | P1→P4 / data partial | bumper-relative target+natural approach+tail | position<=0.5 m,speed MAE<=0.5 m/s,false stop<=1% | 1 m 이내 정지>=95%, <=0.1 m/s 2초, overshoot/collision 0 | stop error 계측 / stop trajectory 학습 |
 
 ### MF-03 속도·승차감
 
 | ID | 기능 | 단계 / 상태 | 데이터 요구 | Open-loop 통과 | Closed-loop 통과 | Local / Pro6000 |
 |---|---|---|---|---|---|---|
-| `SPD-01` | 30 km/h 추종 | P2→P4 / below target | straight/turn speed, limit, grade, curvature, actuator | speed MAE<=1.0 m/s; 현재 1.873 m/s | steady 직선 ±3 km/h>=80%, overspeed>33 km/h 0 | actuation 보정·동일경로 / speed A/B |
+| `SPD-01` | 30 km/h 추종 | P2→P4 / below target | straight/turn speed, limit, grade, curvature, actuator | speed MAE<=1.0 m/s; physical-v1 1.393 m/s | steady 직선 ±3 km/h>=80%, overspeed>33 km/h 0 | actuation 보정·동일경로 / speed A/B |
 | `SPD-02` | 곡률·상황 감속 | P0→P4 / not started | curvature/friction/visibility/safe-speed | envelope 위반 0, lateral accel<=2.0 m/s² | lateral accel<=2.0 m/s², lane/collision/saturation 0 | friction/curve scenario / envelope-risk head |
 | `SPD-03` | accel·decel·jerk | P0→P4 / not started | IMU/actuator/grade/intervention/emergency mask | accel MAE<=0.5 m/s², jerk MAE<=1.0 m/s³ | normal accel -3~2 m/s², |jerk| p95<=2.5 m/s³ | synchronized response / comfort regularization |
 
@@ -215,23 +230,59 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 
 | ID | 기능 | 단계 / 상태 | 데이터 요구 | Open-loop 통과 | Closed-loop 통과 | Local / Pro6000 |
 |---|---|---|---|---|---|---|
-| `SAF-01` | export·지연·freshness | P2→P3 / forward only | target-PC full timing,queue,stale/drop,model hash | engine parity XY<=0.05 m,speed<=0.1 m/s full test | sensor-to-plan p99<=100 ms,deadline/drop0,stale reject100% | adapter·full timing / export·parity vector |
+| `SAF-01` | export·지연·freshness | P3→P3 / shadow measured CARLA-only | target-PC full timing,queue,stale/drop,model hash | engine parity XY<=0.05 m,speed<=0.1 m/s full test | sensor-to-plan p99<=100 ms,deadline/drop0,stale reject100% | shadow 계측 완료·fault 확장 / export·full-set parity |
 | `SAF-02` | uncertainty·ODD·selector | P0→P5 / not started | ID/OOD weather/rig/map,corruption,ambiguity,fallback | OOD AUROC>=0.95,invalid reject100%,false reject<=1% | rejected output to control0,no-safe fallback<=1 cycle | ODD·mux·fault / confidence calibration |
 | `SAF-03` | fallback·MRM·release | P0→P6 / not started | fault taxonomy,stop path,health,intervention,signed provenance | 모든 fault의 deterministic fallback,command owner 충돌0 | CARLA MRM PASS→real shadow>=10 h→closed-course 30회 | MRM·release owner / immutable artifact·mining |
 
 ## 구현 우선순위
 
-1. `SEN-04`, `RTE-01~04`, `SPD-01`에 필요한 독립 test episode와 lane/drivable label을
-   먼저 만든다. 현재 Town03 `val`을 test로 바꾸지 않는다.
-2. 동일 split과 최소 3 seed로 v0 10-epoch 기준선, untrained physical v1과 Geometry-BEV
-   후보를 A/B한다. 1-epoch의 gradient clipping 관찰만 현재 10-epoch 전체 학습으로 일반화하지
-   않고 learning rate, loss scale과 gradient 분포를 새 run마다 채택 gate에 포함한다.
-3. `SAF-01~02` adapter·parity·freshness·selector를 구현한 뒤에만 `RTE-01~04`의
-   30 km/h CARLA closed-loop를 실행한다.
-4. 기본 경로·정지 gate가 통과하면 `TRF`→`ACC`→`OBS`→`LCM` 순으로 scenario와 head를
-   하나씩 추가한다. AEB는 learned model과 독립된 계층으로 유지한다.
-5. 30 km/h 폐루프 기준선과 real replay/shadow 전에는 60 km/h 또는 실차 actuator 연결로
-   승격하지 않는다.
+<!-- HH_260906 - Separate completed research campaigns from the unchanged shadow deployment and outstanding feature gates. -->
+2026-09-07의 반복 학습은 **세 캠페인 모두 완료, 새 모델 미채택**으로 정리했다.
+마지막 D 감사 완료 시각은 `03:02:16 UTC`(`12:02:16 KST`)다.
+
+| 실험 | 학습·평가·감사 | 판정 |
+|---|---:|---|
+| [LR A/B](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/01_learning_rate_ab/README.md), v2 train613 | 6회 완료 | seed 20260905 상대 비교 FAIL, 전체 절대 품질 FAIL, 미채택 |
+| [데이터 확장 C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/06_data_expansion/README.md), v3 train1147 | 3회 완료 | 모든 seed 절대 품질 FAIL, 다른 corpus와의 자동 비교·승격 없음 |
+| [selector weight D/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/07_selector_weight_ab/README.md), 같은 v3에서 0.1→0.5 | D 3회 완료 | seed 20260903 상대 비교 FAIL, 모든 D seed 절대 품질 FAIL, 미채택 |
+
+전체 자료는 [오늘의 검증 보고서](validation-2026-09-07-portable-learning.md), 실행 흐름은
+[학습·검증 반복 가이드](portable-e2e-learning-loop.md)에 있다. 위 12회는 30개 기능의 완료
+횟수가 아니며 새 후보가 로컬 차량을 제어했다는 의미도 아니다.
+
+이후 **첫 seed `20260903`의 selector 진단**을 완료했다. A는 c2, B는 c4를 각각
+337/337 선택했지만 후보 간 평균 경로 거리는 `7.534858/7.545791 m`로 실제 경로들은
+서로 달랐다. B의 selected ADE는 `4.261500 → 4.150919 m`로 개선됐지만 ADE oracle 대비
+평균 regret는 `2.500854 → 2.515469 m`로 증가했다. [val337 진단과 고정 phase PNG 12개](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/04_selection_diagnostics/README.md)에
+수치·정의·SHA를 보존했다. 추가한 [첫 seed C/D 진단](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/08_selector_weight_diagnostics/README.md)에서는
+선택 index 종류가 늘어도 oracle 일치율이 `68.84% → 51.93%`, 평균 regret가
+`2.322154 → 2.714173 m`로 악화됨을 확인했다. 이 CPU 진단은 live 10 Hz 증거가 아니며
+현재 운용 모델은 자동 교체하지 않는다.
+
+반복 단위는 **실패 분석 → 필요한 데이터·label 확보 → 학습 → 고정 val 평가 → geometry·
+runtime 검사 → shadow → 조건 충족 시 learned closed-loop**다. loss가 내려가는 것만 보고
+epoch를 계속 늘리지 않고, 매 run의 모델·데이터·설정 hash와 채택/보류 이유를 남긴다.
+
+완료한 LR·데이터 확장·selector 가중치 실험의 실패를 바탕으로 다음 loss/ranking·데이터
+비교를 새 고정 계획으로 진행한다. 이 val을 반복 관찰한 결과는 개발용 비교이며 독립 최종
+test 성능이라고 부르지 않는다. 새 test는 route/site/day 단위로 분리하고, 열기 전에
+설정·threshold를 고정한다. 후보 채택에는 최소 3개 seed 비교가 필요하다.
+
+<!-- HH_260906 - Map all thirty requirements to concrete collection, learning, and evaluation dependencies. -->
+| 반복 묶음 | 추적 기능 | 로컬 데이터·시험 준비 | Pro6000 학습·검증 | 다음 묶음으로 넘어갈 근거 |
+|---|---|---|---|---|
+| `ITER-01` 기본 주행·런타임 | `SEN-01~04`, `RTE-01~04`, `SPD-01~03`, `SAF-01~03` | 독립 직진·좌/우회전·종점정지, lane/drivable label, 속도·가감속·jerk 계측, selector/fallback fault | physical-v1 loss/ranking A/B, 후보별 geometry·ADE/FDE·speed·comfort, 3-seed 비교 | offline 품질·parity·shadow 통과 후 제어 소유권과 fallback을 검증한 CARLA 폐루프. `SAF` 실차 단계는 계속 별도 추적 |
+| `ITER-02` 교통규칙 | `TRF-01~04` | 관련 신호·정지선/표지·우선권·보행자·가림 label과 phase/교차 시나리오 | behavior·interaction head, 위험 miss·정지/우선권 위반 평가 | 각 기능의 독립 test와 CARLA gate |
+| `ITER-03` 추종·ACC | `ACC-01~03` | lead ID/거리/상대속도·gap/TTC, 정지/급감속 lead·cut-in/out | 선행차 상태·추종 trajectory, gap·반응시간·충돌 비교 | 독립 lead profile과 seed에서 ACC gate |
+| `ITER-04` 장애물·위험 | `OBS-01~04` | occupancy·legal corridor·candidate collision/TTC, pass/stop·no-path·moving hazard·독립 AEB | occupancy/motion·risk ranking, 위험 false negative·clearance | 장애물 gate와 독립 AEB gate를 각각 통과 |
+| `ITER-05` 차선변경·합류 | `LCM-01~03` | legal boundary·옆 차로/후방 gap·blind spot·abort/return label | maneuver별 후보와 gap 수용, illegal 선택·rear TTC·복귀 평가 | 새 topology/traffic/weather에서 left/right/merge gate |
+| `ITER-06` 저속·주차 | `LSP-01~02` | 근거리 보정·정차/주차 목표·후진·접촉/종점 pose | 별도 저속/후진 모델, terminal pose·collision 평가 | CARLA 저속 gate 후 real replay/shadow와 폐쇄시험장 |
+
+모든 묶음은 현재의 30개 요구사항을 배정한 작업 순서이며 완료 실적이 아니다. 신호·객체·차선
+label이 없는 기존 corpus를 반복 학습하는 것만으로 후속 기능이 생기지는 않는다. Geometry-BEV
+같은 추가 구조도 필요한 label·입력 계약과 동일 조건 평가가 준비된 뒤 별도 후보로 비교한다.
+30 km/h Portable learned closed-loop 기준선, 속도별 정지거리·곡률·횡가속·fallback 검증 뒤에
+속도를 확장한다. 기존 VAD의 60 km/h 계측은 Portable 모델의 해당 속도 학습 실적이 아니다.
 
 ## 추적·변경 규칙
 

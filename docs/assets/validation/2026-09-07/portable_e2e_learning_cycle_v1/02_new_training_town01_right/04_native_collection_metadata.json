@@ -1,0 +1,595 @@
+{
+  "publication_notice": "Metadata view with machine-specific root placeholders. The original source digest is retained. This is not a standalone training dataset.",
+  "raw_source_path": "artifacts/training/2026-09-07/independent_common10_v1/town01_right_train_retry_02/run_001/episode/manifest.json",
+  "raw_source_sha256": "fdf5163a03551b69d5f095cb02f1103e2d1c0571acfa909acee2f84c53c574bb",
+  "record": {
+    "schema_version": 1,
+    "status": "complete",
+    "created_at": "2026-09-07T02:12:53.038042+00:00",
+    "coordinate_contract": {
+      "map_frame": "ROS map: x forward/east, y left, z up",
+      "ego_frame": "ROS rear-axle base_link: x forward, y left, z up",
+      "pose_fields": [
+        "x",
+        "y",
+        "z",
+        "yaw"
+      ],
+      "dynamics_fields": [
+        "vx",
+        "vy",
+        "ax",
+        "ay",
+        "yaw_rate"
+      ],
+      "measured_vehicle_fields": [
+        "front_left_wheel_steer_angle_carla_deg",
+        "front_right_wheel_steer_angle_carla_deg",
+        "front_left_wheel_steer_angle_ros_rad",
+        "front_right_wheel_steer_angle_ros_rad",
+        "steering_tire_angle_rad",
+        "speed_limit_carla_kmh",
+        "speed_limit_mps"
+      ],
+      "wheelbase_m": 2.85
+    },
+    "capture_contract": {
+      "physics_hz": 20.0,
+      "camera_hz": 10.0,
+      "camera_interval_ticks": 2,
+      "camera_order": [
+        "CAM_FRONT",
+        "CAM_BACK",
+        "CAM_FRONT_LEFT",
+        "CAM_BACK_LEFT",
+        "CAM_FRONT_RIGHT",
+        "CAM_BACK_RIGHT"
+      ],
+      "image_encoding": "jpeg_bgr8",
+      "jpeg_quality": 95,
+      "target_speed_kmh": 30.0,
+      "maximum_total_duration_sec": 120.0,
+      "capture_phase_field": "capture_phase",
+      "capture_phase_schedule": {
+        "order": [
+          "stationary_warmup",
+          "driving",
+          "stationary_tail"
+        ],
+        "maximum_total_duration_sec": 120.0,
+        "maximum_total_ticks": 2400,
+        "rounding_policy": {
+          "stationary_duration": "ceil_to_physics_tick",
+          "maximum_total_duration": "floor_to_physics_tick"
+        },
+        "stationary_warmup": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 3.5,
+          "scheduled_ticks": 70,
+          "scheduled_duration_sec": 3.5
+        },
+        "driving": {
+          "control_source": "carla.BasicAgent",
+          "maximum_ticks": 2200,
+          "maximum_duration_sec": 110.0
+        },
+        "stationary_tail": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 6.5,
+          "scheduled_ticks": 130,
+          "scheduled_duration_sec": 6.5
+        }
+      },
+      "seed": 1,
+      "spawn_z_offset_m": 0.5,
+      "command_lookahead_m": 2.0,
+      "command_exit_lookahead_m": 2.5,
+      "goal_tolerance_m": 2.5,
+      "stopped_brake_steering_suppressed": true,
+      "client_map_loading_allowed": false,
+      "basic_agent_control": {
+        "provider": "CARLA PythonAPI BasicAgent",
+        "option_injection": "BasicAgent(..., opt_dict=effective_opt_dict)",
+        "effective_opt_dict": {
+          "dt": 0.05,
+          "target_speed": 30.0,
+          "sampling_resolution": 1.0,
+          "base_min_distance": 2.0,
+          "distance_ratio": 0.2,
+          "lateral_control_dict": {
+            "K_P": 1.95,
+            "K_I": 0.05,
+            "K_D": 0.2,
+            "dt": 0.05
+          },
+          "max_steering": 0.8,
+          "offset": 0.0
+        },
+        "waypoint_purge_lookahead": {
+          "formula": "base_min_distance_m + distance_ratio_s * speed_mps",
+          "base_min_distance_m": 2.0,
+          "distance_ratio_s": 0.2,
+          "upstream_option_keys": [
+            "base_min_distance",
+            "distance_ratio"
+          ]
+        },
+        "lateral_pid": {
+          "kp": 1.95,
+          "ki": 0.05,
+          "kd": 0.2,
+          "dt_sec": 0.05,
+          "upstream_option_key": "lateral_control_dict"
+        },
+        "normalized_max_steering": 0.8,
+        "lane_offset_m": 0.0,
+        "lane_offset_sign_convention": "positive-right, negative-left",
+        "collector_cli": {
+          "--basic-agent-base-min-distance-m": 2.0,
+          "--basic-agent-distance-ratio": 0.2,
+          "--basic-agent-lateral-kp": 1.95,
+          "--basic-agent-lateral-ki": 0.05,
+          "--basic-agent-lateral-kd": 0.2,
+          "--basic-agent-max-steering": 0.8,
+          "--basic-agent-lane-offset-m": 0.0
+        },
+        "compatibility_defaults": {
+          "base_min_distance_m": 3.0,
+          "distance_ratio_s": 0.5,
+          "lateral_pid_kp": 1.95,
+          "lateral_pid_ki": 0.05,
+          "lateral_pid_kd": 0.2,
+          "lateral_pid_dt_sec": 0.05,
+          "max_steering": 0.8,
+          "lane_offset_m": 0.0
+        }
+      },
+      "measured_vehicle_state": {
+        "steering_source": "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)",
+        "steering_source_unit": "degree",
+        "carla_steering_sign": "positive-right",
+        "ros_steering_sign": "positive-left",
+        "wheel_conversion": "ros_rad=-radians(carla_deg)",
+        "virtual_tire_conversion": "Ackermann harmonic mean of wheel tangents",
+        "normalized_vehicle_control_steer_used_as_angle": false,
+        "speed_limit_source": "carla.Vehicle.get_speed_limit",
+        "speed_limit_source_unit": "km/h",
+        "speed_limit_output_unit": "m/s",
+        "speed_limit_conversion": "m/s=(km/h)/3.6"
+      }
+    },
+    "provenance": {
+      "source_route": "${REPO_ROOT}/artifacts/training/2026-09-07/independent_common10_v1/town01_right_train_retry_02/town01_right_s0001_p00.aligned.json",
+      "route_sha256": "22c33359f618d4901aa627c3c6307b80e2ba2cab29a6f26edf664a937bd50785",
+      "mapping_file": "${REPO_ROOT}/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml",
+      "mapping_sha256": "9aaff2befed7ad12376b2e04bbdd51bd1808a3bafe39d87a6f6b241dbcca3136",
+      "calibration_file": "${REPO_ROOT}/src/launcher/autoware_launch/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml",
+      "calibration_sha256": "5022cd1de5b48e9c824b6f2f8c59991fa665eeaf7a7bafd084c88acdb65e4bea",
+      "collector_file": "${REPO_ROOT}/scripts/e2e/collect_carla_vad_expert.py",
+      "collector_sha256": "129237e7b586dcfff5239fd4b8a7bc759800f9e62809526e1e2e16543c1093cb",
+      "spawn_z_offset_m": 0.5,
+      "basic_agent_control": {
+        "configuration_reference": "capture_contract.basic_agent_control",
+        "runtime_source_reference": "runtime.basic_agent_control.implementation_sources",
+        "external_carla_source_patch_required": false
+      },
+      "runtime_measurements": {
+        "front_wheel_steering": "carla.Vehicle.get_wheel_steer_angle(FL_Wheel,FR_Wheel)",
+        "speed_limit": "carla.Vehicle.get_speed_limit"
+      }
+    },
+    "cameras": [
+      {
+        "name": "CAM_FRONT",
+        "model_index": 0,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 70.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_FRONT/camera_optical_link",
+        "ros_extrinsic": {
+          "x": 2.225,
+          "y": 0.0,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.0
+        },
+        "carla_extrinsic": {
+          "x": 0.8,
+          "y": -0.0,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": -0.0
+        },
+        "intrinsic": {
+          "fx": 457.0073621574767,
+          "fy": 457.0073621574767,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      },
+      {
+        "name": "CAM_BACK",
+        "model_index": 1,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 110.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_BACK/camera_optical_link",
+        "ros_extrinsic": {
+          "x": -0.575,
+          "y": 0.0,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 3.141593
+        },
+        "carla_extrinsic": {
+          "x": -2.0,
+          "y": -0.0,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": -180.00001984784282
+        },
+        "intrinsic": {
+          "fx": 224.06641222710715,
+          "fy": 224.06641222710715,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      },
+      {
+        "name": "CAM_FRONT_LEFT",
+        "model_index": 2,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 70.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_FRONT_LEFT/camera_optical_link",
+        "ros_extrinsic": {
+          "x": 1.695,
+          "y": 0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 0.959931
+        },
+        "carla_extrinsic": {
+          "x": 0.27,
+          "y": -0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": -54.999994923772626
+        },
+        "intrinsic": {
+          "fx": 457.0073621574767,
+          "fy": 457.0073621574767,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      },
+      {
+        "name": "CAM_BACK_LEFT",
+        "model_index": 3,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 70.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_BACK_LEFT/camera_optical_link",
+        "ros_extrinsic": {
+          "x": 1.105,
+          "y": 0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": 1.919862
+        },
+        "carla_extrinsic": {
+          "x": -0.32000000000000006,
+          "y": -0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": -109.99998984754525
+        },
+        "intrinsic": {
+          "fx": 457.0073621574767,
+          "fy": 457.0073621574767,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      },
+      {
+        "name": "CAM_FRONT_RIGHT",
+        "model_index": 4,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 70.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_FRONT_RIGHT/camera_optical_link",
+        "ros_extrinsic": {
+          "x": 1.695,
+          "y": -0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": -0.959931
+        },
+        "carla_extrinsic": {
+          "x": 0.27,
+          "y": 0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": 54.999994923772626
+        },
+        "intrinsic": {
+          "fx": 457.0073621574767,
+          "fy": 457.0073621574767,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      },
+      {
+        "name": "CAM_BACK_RIGHT",
+        "model_index": 5,
+        "carla_type": "sensor.camera.rgb",
+        "width": 640,
+        "height": 360,
+        "fov_degrees": 70.0,
+        "sensor_tick": 0.0,
+        "enable_postprocess_effects": false,
+        "frame_id": "CAM_BACK_RIGHT/camera_optical_link",
+        "ros_extrinsic": {
+          "x": 1.105,
+          "y": -0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": 0.0,
+          "yaw": -1.919862
+        },
+        "carla_extrinsic": {
+          "x": -0.32000000000000006,
+          "y": 0.55,
+          "z": 1.6,
+          "roll": 0.0,
+          "pitch": -0.0,
+          "yaw": 109.99998984754525
+        },
+        "intrinsic": {
+          "fx": 457.0073621574767,
+          "fy": 457.0073621574767,
+          "cx": 320.0,
+          "cy": 180.0
+        }
+      }
+    ],
+    "files": {
+      "route": "route.json",
+      "states": "states.jsonl",
+      "camera_frames": "camera_frames.jsonl",
+      "images": "images/<CAMERA>/<CARLA_FRAME>.jpg"
+    },
+    "runtime": {
+      "carla_version": "unknown",
+      "server_version": "0.9.15-dev-dirty",
+      "client_version": "0.9.15-dev-dirty",
+      "town": "Town01",
+      "weather": "ClearNoon",
+      "client_map_loading_allowed": false,
+      "client_map_loading_performed": false,
+      "original_world_settings": {
+        "synchronous_mode": false,
+        "fixed_delta_seconds": null,
+        "no_rendering_mode": false,
+        "substepping": true,
+        "max_substep_delta_time": 0.01,
+        "max_substeps": 10
+      },
+      "capture_world_settings": {
+        "synchronous_mode": true,
+        "fixed_delta_seconds": 0.05,
+        "no_rendering_mode": false,
+        "substepping": true,
+        "max_substep_delta_time": 0.01,
+        "max_substeps": 10
+      },
+      "vehicle_type": "vehicle.toyota.prius",
+      "role_name": "autoware_e2e_expert",
+      "spawn_z_offset_m": 0.5,
+      "actor_center_start_carla": {
+        "x": 297.9749938964973,
+        "y": 129.7500060720073,
+        "z": 0.29999998211860657,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 179.999755859375
+      },
+      "actor_center_spawn_carla": {
+        "x": 297.9749938964973,
+        "y": 129.7500060720073,
+        "z": 0.7999999821186066,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": 179.999755859375
+      },
+      "goal_center_carla": {
+        "x": 92.10997795130362,
+        "y": 104.23653717042937,
+        "z": 0.0,
+        "roll": 0.0,
+        "pitch": 0.0,
+        "yaw": -90.00029754638672
+      },
+      "catalog_goal_base_link": {
+        "x": 92.1099853515625,
+        "y": -105.66153717041016
+      },
+      "basic_agent_plan_points": 231,
+      "basic_agent_control": {
+        "effective_opt_dict": {
+          "dt": 0.05,
+          "target_speed": 30.0,
+          "sampling_resolution": 1.0,
+          "base_min_distance": 2.0,
+          "distance_ratio": 0.2,
+          "lateral_control_dict": {
+            "K_P": 1.95,
+            "K_I": 0.05,
+            "K_D": 0.2,
+            "dt": 0.05
+          },
+          "max_steering": 0.8,
+          "offset": 0.0
+        },
+        "implementation_sources": {
+          "basic_agent": {
+            "python_class": "agents.navigation.basic_agent.BasicAgent",
+            "source_file": "${CARLA_ROOT}/PythonAPI/carla/agents/navigation/basic_agent.py",
+            "source_sha256": "7eb47c0ac30f36e2e71266e918c27fc02c8ff7b74d8f75259c313022e50be2ff"
+          },
+          "local_planner": {
+            "python_class": "agents.navigation.local_planner.LocalPlanner",
+            "source_file": "${CARLA_ROOT}/PythonAPI/carla/agents/navigation/local_planner.py",
+            "source_sha256": "7a5db9112b0d107038765abfb87b2d7a418b98e4d2c0aa92a4aade53c95b319f"
+          },
+          "vehicle_controller": {
+            "python_class": "agents.navigation.controller.VehiclePIDController",
+            "source_file": "${CARLA_ROOT}/PythonAPI/carla/agents/navigation/controller.py",
+            "source_sha256": "f95f427a5ad5ba50a96f6971df72a5f3ec078c8457b0ba2a12558396e8b5c402"
+          }
+        }
+      },
+      "capture_origin_timestamp": 59.47390132630244,
+      "pre_capture_bootstrap": {
+        "frame": 25786,
+        "timestamp": 59.47390132630244,
+        "control": {
+          "throttle": 0.0,
+          "steer": 0.0,
+          "brake": 1.0,
+          "hand_brake": false,
+          "reverse": false,
+          "gear": 0,
+          "manual_gear_shift": false
+        },
+        "recorded": false,
+        "included_in_maximum_total_duration": false,
+        "reason": "initialize CARLA actor state before BasicAgent control"
+      },
+      "capture_phase_schedule": {
+        "order": [
+          "stationary_warmup",
+          "driving",
+          "stationary_tail"
+        ],
+        "maximum_total_duration_sec": 120.0,
+        "maximum_total_ticks": 2400,
+        "rounding_policy": {
+          "stationary_duration": "ceil_to_physics_tick",
+          "maximum_total_duration": "floor_to_physics_tick"
+        },
+        "stationary_warmup": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 3.5,
+          "scheduled_ticks": 70,
+          "scheduled_duration_sec": 3.5
+        },
+        "driving": {
+          "control_source": "carla.BasicAgent",
+          "maximum_ticks": 2200,
+          "maximum_duration_sec": 110.0
+        },
+        "stationary_tail": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 6.5,
+          "scheduled_ticks": 130,
+          "scheduled_duration_sec": 6.5
+        }
+      }
+    },
+    "result": {
+      "goal_reached": true,
+      "termination_reason": "catalog_goal_tolerance",
+      "basic_agent_done": false,
+      "state_count": 1197,
+      "camera_anchor_count": 599,
+      "duration_sec": 59.80000089108944,
+      "elapsed_sim_sec": 59.85,
+      "capture_phases": {
+        "order": [
+          "stationary_warmup",
+          "driving",
+          "stationary_tail"
+        ],
+        "maximum_total_duration_sec": 120.0,
+        "maximum_total_ticks": 2400,
+        "stationary_warmup": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 3.5,
+          "scheduled_ticks": 70,
+          "scheduled_duration_sec": 3.5,
+          "state_count": 70,
+          "camera_anchor_count": 35,
+          "first_timestamp": 59.5239013270475,
+          "last_timestamp": 62.9739013784565,
+          "timestamp_span_sec": 3.450000051409006,
+          "elapsed_sim_sec": 3.5
+        },
+        "driving": {
+          "control_source": "carla.BasicAgent",
+          "maximum_ticks": 2200,
+          "maximum_duration_sec": 110.0,
+          "state_count": 997,
+          "camera_anchor_count": 499,
+          "first_timestamp": 63.02390137920156,
+          "last_timestamp": 112.82390212127939,
+          "timestamp_span_sec": 49.80000074207783,
+          "elapsed_sim_sec": 49.85
+        },
+        "stationary_tail": {
+          "control_source": "full_service_brake",
+          "requested_duration_sec": 6.5,
+          "scheduled_ticks": 130,
+          "scheduled_duration_sec": 6.5,
+          "state_count": 130,
+          "camera_anchor_count": 65,
+          "first_timestamp": 112.87390212202445,
+          "last_timestamp": 119.32390221813694,
+          "timestamp_span_sec": 6.45000009611249,
+          "elapsed_sim_sec": 6.5
+        },
+        "observed_total_ticks": 1197,
+        "observed_total_elapsed_sim_sec": 59.85
+      },
+      "final_route_progress_m": 226.00222623337456,
+      "post_capture_route_progress_m": 228.25107048187067,
+      "route_length_m": 228.25107048187067,
+      "final_remaining_route_m": 2.2488442484961126,
+      "final_catalog_goal_distance_m": 2.235819644945139,
+      "goal_tolerance_m": 2.5,
+      "collision_event_count": 0,
+      "lane_invasion_event_count": 0
+    },
+    "cleanup": {
+      "completed": true,
+      "server_available": true,
+      "errors": []
+    },
+    "finished_at": "2026-09-07T02:13:18.399196+00:00"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "portable_e2e.lr_ab_campaign.v1",
+  "campaign_id": "hh260907-physical-v1-lr-ab-3seeds-v1",
+  "source_commit": "081a71f7fc014d2864b790b0b0cae7378ae18e4c",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-town07-ctrack-town03-20260905-v2",
+  "model_config": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+  "seeds": [
+    20260903,
+    20260904,
+    20260905
+  ],
+  "arms": {
+    "A_baseline": 0.0001,
+    "B_lower_lr": 3e-05
+  },
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "decision": {
+    "purpose": "Development only; never automatic promotion or actuation",
+    "primary": [
+      "selected_ade_m",
+      "selected_fde_m"
+    ],
+    "diagnostic": [
+      "oracle_ade_m",
+      "selection_regret_m",
+      "geometry_v8",
+      "speed_mae",
+      "selected_candidate_histogram"
+    ],
+    "candidate_screen": "Both primary metrics must improve in all three paired seeds; selected geometry pass count must not fall, speed MAE must not rise more than 5% in any pair",
+    "absolute_limits_m": {
+      "ade_1p0s": 0.5,
+      "ade_3p0s": 1.0,
+      "ade_6p4s": 2.0,
+      "fde_6p4s": 4.0
+    },
+    "test_policy": "Never evaluate or select on new held-out Town04 test during this campaign",
+    "remaining": "Independent test, scenario coverage, 10Hz shadow and closed-loop safety gates remain mandatory"
+  },
+  "publication_notice": "Redacted metadata view; replay requires the private original identified by raw_source_sha256.",
+  "raw_source_sha256": "41d9698ab41fd7eaf8f3758a70a6a5165cb1ebb3c54db5dfe3ca76899d58ff96"
+}

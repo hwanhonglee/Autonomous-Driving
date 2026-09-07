@@ -55,6 +55,8 @@ REQUIRED_TIMING_FIELDS = frozenset(
 )
 SUMMARY_METRICS = (
     "selected_ade_m",
+    "oracle_ade_m",
+    "selection_regret_ade_m",
     "selected_fde_m",
     "selected_speed_mae_mps",
     "selected_yaw_mae_rad",
@@ -66,6 +68,27 @@ SUMMARY_METRICS = (
     "ade_6p4s_m",
     "fde_6p4s_m",
 )
+
+
+def _selection_regret_ade(metrics: Mapping[str, Any], context: str) -> float:
+    """HH_260906 - Derive regret from equal-denominator selected and ADE-oracle means."""
+    selected = float(metrics["selected_ade_m"])
+    oracle = float(metrics["oracle_ade_m"])
+    regret = selected - oracle
+    # HH_260906 - Permit float32 reduction noise, never a materially better-than-oracle selection.
+    if regret < 0.0 and not math.isclose(
+        selected, oracle, rel_tol=1.0e-6, abs_tol=1.0e-6
+    ):
+        raise ContractError(f"{context} oracle_ade_m exceeds selected_ade_m")
+    return max(0.0, regret)
+
+
+def _summary_metrics(metrics: Mapping[str, Any]) -> dict[str, Any]:
+    """HH_260906 - Keep the evaluation schema unchanged while exposing selection regret."""
+    return {
+        **{name: metrics[name] for name in SUMMARY_METRICS if name in metrics},
+        "selection_regret_ade_m": _selection_regret_ade(metrics, "summary"),
+    }
 
 
 def _nonempty_string(report: Mapping[str, Any], name: str, path: Path) -> str:
@@ -239,6 +262,7 @@ def _validate_domain_metrics(
                 raise ContractError(
                     f"{path} per-domain {domain!r} metric {name!r} must be nonnegative"
                 )
+        _selection_regret_ade(domain_metrics, f"{path} per-domain {domain!r}")
 
         domain_counts = domain_value["metric_counts"]
         if not isinstance(domain_counts, dict) or set(domain_counts) != set(
@@ -392,6 +416,7 @@ def _read_report(path: Path) -> Mapping[str, Any]:
             raise ContractError(
                 f"{path} core metric count {name!r} must equal sample_count"
             )
+    _selection_regret_ade(metrics, str(path))
     _validate_domain_metrics(report, path, sample_count)
     return report
 
@@ -474,21 +499,18 @@ def compare_reports(paths: Sequence[Path]) -> dict[str, Any]:
             "training_domain_samples_seen": report[
                 "training_domain_samples_seen"
             ],
-            "metrics": {
-                name: metrics[name] for name in SUMMARY_METRICS if name in metrics
-            },
+            "metrics": _summary_metrics(metrics),
             "per_domain_metrics": {
                 domain: {
                     "sample_count": domain_report["sample_count"],
-                    "metrics": {
-                        name: domain_report["metrics"][name]
-                        for name in SUMMARY_METRICS
-                        if name in domain_report["metrics"]
-                    },
+                    "metrics": _summary_metrics(domain_report["metrics"]),
                     "metric_counts": {
-                        name: domain_report["metric_counts"][name]
-                        for name in SUMMARY_METRICS
-                        if name in domain_report["metric_counts"]
+                        **{
+                            name: domain_report["metric_counts"][name]
+                            for name in SUMMARY_METRICS
+                            if name in domain_report["metric_counts"]
+                        },
+                        "selection_regret_ade_m": domain_report["sample_count"],
                     },
                 }
                 for domain, domain_report in report["per_domain_metrics"].items()
@@ -512,7 +534,18 @@ def compare_reports(paths: Sequence[Path]) -> dict[str, Any]:
         "warmup_samples": reference_timing["warmup_samples"],
         "runtime": reference["runtime"],
         "hardware": reference["hardware"],
-        "metric_counts": reference_counts,
+        "metric_counts": {
+            **reference_counts,
+            "selection_regret_ade_m": reference["sample_count"],
+        },
+        "derived_metric_definitions": {
+            "selection_regret_ade_m": (
+                "selected_ade_m - oracle_ade_m on the same samples and valid future points; "
+                "oracle is the per-sample minimum ADE over candidates, not the composite-loss "
+                "training winner; float32 roundoff below zero is clamped to zero; "
+                "this target-informed diagnostic does not measure geometric candidate diversity"
+            ),
+        },
         "reports": rows,
         "warning": (
             "OPEN-LOOP COMPARISON ONLY — LATENCY IS REFERENCE-ONLY BECAUSE "
@@ -552,6 +585,11 @@ def _markdown(comparison: Mapping[str, Any]) -> str:
             "scheduler reservation was enforced"
         ),
         "- this table does not grant closed-loop or vehicle-control approval",
+        (
+            "- selection_regret_ade_m = selected_ade_m - oracle_ade_m; the oracle uses "
+            "target-informed minimum ADE, not the composite-loss training winner; "
+            "this diagnostic does not measure geometric candidate diversity"
+        ),
         "",
         "| " + " | ".join(headings) + " |",
         "| " + " | ".join("---" for _ in headings) + " |",

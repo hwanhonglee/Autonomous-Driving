@@ -71,8 +71,12 @@ reverse-speed jitter와 전체 증거 계약이 추가됐다. historical JSON의
 않는다.
 
 geometry gate 통과율은 v0의 `0/337`에서 크게 개선됐다. 거부된 11개는 기록된 현재 속도가
-30 km/h 입력 상한을 이미 넘은 sample이다. 그러나 candidate가 c2 하나로 붕괴했고 selected
-ADE/FDE도 크므로 이는 **실제 제어 승인 결과가 아니다**. 이번 세 장면에서는 기존 Autoware
+30 km/h 입력 상한을 이미 넘은 sample이다. 선택 index는 c2에 `337/337` 고정됐지만,
+이 사실만으로 여섯 후보의 경로가 서로 같아졌다고 결론 내릴 수는 없다. 같은 평가의
+oracle ADE는 `1.760656 m`, selected ADE는 `4.261509 m`로 차이 `2.500854 m`가 있어
+평균적으로 더 정확한 후보를 선택할 여지가 남아 있다. 이 차이는 정답으로 계산한
+선택 오차 진단이며 후보 간 경로 거리나 주행 안전성을 뜻하지 않는다. selected ADE/FDE가
+크므로 이는 **실제 제어 승인 결과가 아니다**. 이번 세 장면에서는 기존 Autoware
 VAD가 계속 제어를 소유하고 physical-v1은 shadow 출력과 지연만 기록한다.
 
 ### physical-v1 CARLA live shadow 결과

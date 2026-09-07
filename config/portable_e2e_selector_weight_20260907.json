@@ -1,0 +1,29 @@
+{
+  "schema": "portable_e2e.selector_weight_campaign.v1",
+  "campaign_id": "hh260907-physical-v1-selector-weight-3seeds-v1",
+  "source_commit": "27ca6153fa4fdb88022d018ab478fe9eed916a25",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_config": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+  "seeds": [20260903, 20260904, 20260905],
+  "arms": {"D_selector_weight": 0.0001},
+  "candidate_score_weight": 0.5,
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "prerequisite_campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+  "prerequisite_timeout_seconds": 3600,
+  "baseline_campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+  "baseline_source_commit": "081a71f7fc014d2864b790b0b0cae7378ae18e4c",
+  "decision": {
+    "purpose": "Isolate candidate-score supervision weight 0.1 versus 0.5 after observing large selected-minus-oracle error; retain model, loss formula, dataset, seed and optimizer budget.",
+    "candidate_screen": "Selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall and speed MAE must not rise more than 5% in any pair.",
+    "absolute_limits_m": {"ade_1p0s": 0.5, "ade_3p0s": 1.0, "ade_6p4s": 2.0, "fde_6p4s": 4.0},
+    "diagnostic": "Measure oracle ADE and selection regret separately; changing a preferred candidate index does not prove better selection or safe driving.",
+    "test_policy": "Val development only. Never evaluate or select on held-out Town04 test during this campaign.",
+    "promotion": "No automatic promotion, actuation, or independent safety-gate weakening. Preserve every unsuccessful result."
+  }
+}

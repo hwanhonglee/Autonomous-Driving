@@ -145,6 +145,16 @@ def test_compare_requires_same_split_samples_and_device(tmp_path: Path) -> None:
     assert comparison["reports"][0]["training_sampling_plan_sha256"] == "d" * 64
     assert comparison["reports"][1]["training_sampling_plan_sha256"] == "e" * 64
     assert comparison["reports"][0]["per_domain_metrics"]["carla"]["sample_count"] == 12
+    assert comparison["reports"][0]["metrics"]["oracle_ade_m"] == pytest.approx(0.8)
+    assert comparison["reports"][0]["metrics"]["selection_regret_ade_m"] == pytest.approx(0.2)
+    assert comparison["metric_counts"]["selection_regret_ade_m"] == 20
+    carla_metrics = comparison["reports"][0]["per_domain_metrics"]["carla"]
+    real_metrics = comparison["reports"][0]["per_domain_metrics"]["real"]
+    assert carla_metrics["metrics"]["selection_regret_ade_m"] == pytest.approx(0.18)
+    assert real_metrics["metrics"]["selection_regret_ade_m"] == pytest.approx(0.23)
+    assert carla_metrics["metric_counts"]["selection_regret_ade_m"] == 12
+    assert real_metrics["metric_counts"]["selection_regret_ade_m"] == 8
+    assert "composite-loss" in comparison["derived_metric_definitions"]["selection_regret_ade_m"]
     assert "LATENCY IS REFERENCE-ONLY" in comparison["warning"]
     assert "NO SHARED-SYSTEM RESOURCE OR SCHEDULER RESERVATION" in comparison["warning"]
 
@@ -189,6 +199,9 @@ def test_compare_cli_writes_json_and_markdown_without_overwrite(tmp_path: Path) 
     assert "uniform_without_replacement" in markdown
     assert "domain_balanced_without_replacement" in markdown
     assert "## Per-domain metrics" in markdown
+    assert "oracle_ade_m" in markdown
+    assert "selection_regret_ade_m" in markdown
+    assert "does not measure geometric candidate diversity" in markdown
     assert "| first | carla | 12 |" in markdown
     output = json.loads(output_json.read_text(encoding="utf-8"))
     assert output["reports"][0]["training_domain_samples_seen"] == {
@@ -208,6 +221,52 @@ def test_compare_cli_writes_json_and_markdown_without_overwrite(tmp_path: Path) 
             str(output_markdown),
         ]
     ) == 2
+
+
+@pytest.mark.parametrize("scope", ("aggregate", "carla"))
+def test_compare_rejects_oracle_error_greater_than_selected(
+    tmp_path: Path, scope: str
+) -> None:
+    # HH_260906 - Neither aggregate averaging nor a healthy second domain may hide impossible regret.
+    first = _report(tmp_path / "first" / "metrics.json", checkpoint="a.pt", ade=1.0)
+    second = _report(tmp_path / "second" / "metrics.json", checkpoint="b.pt", ade=0.8)
+    report = json.loads(first.read_text(encoding="utf-8"))
+    if scope == "aggregate":
+        report["metrics"]["oracle_ade_m"] = 1.2
+    else:
+        report["per_domain_metrics"]["carla"]["metrics"]["oracle_ade_m"] = 1.0
+        report["per_domain_metrics"]["real"]["metrics"]["oracle_ade_m"] = 0.5
+        report["metrics"]["oracle_ade_m"] = 0.8
+    first.write_text(json.dumps(report), encoding="utf-8")
+
+    with pytest.raises(ContractError, match="oracle_ade_m exceeds selected_ade_m"):
+        compare_reports((first, second))
+
+
+@pytest.mark.parametrize("roundoff", (0.0, 1.0e-7))
+def test_compare_zero_regret_preserves_source_report(
+    tmp_path: Path, roundoff: float
+) -> None:
+    # HH_260906 - Equal predictions and float32 mean noise must not create negative regret or mutate evidence.
+    first = _report(tmp_path / "first" / "metrics.json", checkpoint="a.pt", ade=1.0)
+    second = _report(tmp_path / "second" / "metrics.json", checkpoint="b.pt", ade=0.8)
+    report = json.loads(first.read_text(encoding="utf-8"))
+    for metric_set in [report["metrics"], *[
+        domain["metrics"] for domain in report["per_domain_metrics"].values()
+    ]]:
+        metric_set["oracle_ade_m"] = metric_set["selected_ade_m"] + roundoff
+    first.write_text(json.dumps(report), encoding="utf-8")
+    original = first.read_bytes()
+
+    comparison = compare_reports((first, second))
+
+    assert comparison["reports"][0]["metrics"]["selection_regret_ade_m"] == 0.0
+    assert all(
+        domain["metrics"]["selection_regret_ade_m"] == 0.0
+        for domain in comparison["reports"][0]["per_domain_metrics"].values()
+    )
+    assert first.read_bytes() == original
+    assert "selection_regret_ade_m" not in report["metrics"]
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,485 @@
+{
+  "publication_notice": "Metadata view with machine-specific root placeholders. The original source digest is retained. This is not a standalone training dataset.",
+  "raw_source_path": "artifacts/training/2026-09-07/independent_common10_v1/transfer/remote_planning_validation.json",
+  "raw_source_sha256": "2b1e147a7d13a93a2c388d0ae6c39db980c26dcb421fea1e24b0f32f31f54ee5",
+  "record": {
+    "schema_id": "autoware-e2e.common10.validation-report.v1",
+    "schema_version": 1,
+    "status": "PASS",
+    "dataset_id": "carla-common10-30kph-five-episodes-20260907-v3",
+    "dataset_root": "${PERSONAL_DATASET_ROOT}/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+    "contract_id": "common_10hz_v1",
+    "contract_sha256": "eb8f44c98a5bee6e560f4983c6ecbc67122c4fe043d4d50fe2ea3737bda9c722",
+    "contract_file_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+    "resource_limits": {
+      "max_json_file_bytes": 268435456,
+      "max_jsonl_line_bytes": 8388608,
+      "max_jpeg_file_bytes": 16777216,
+      "max_source_manifest_frames": 500000
+    },
+    "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+    "mode": "planning",
+    "image_hashes_checked": true,
+    "dataset_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+    "episode_count": 5,
+    "sample_count": 1793,
+    "split_sample_counts": {
+      "test": 309,
+      "train": 1147,
+      "val": 337
+    },
+    "domain_sample_counts": {
+      "carla": 1793
+    },
+    "scenario_sample_counts": {
+      "lane_follow": 1793,
+      "left": 304,
+      "right": 871,
+      "straight": 618,
+      "turn": 1175
+    },
+    "qualification": {
+      "schema": "PASS",
+      "common_10hz_planning": "PASS",
+      "image_payload_sha256": "PASS",
+      "native_source_frame_identity": "PASS",
+      "native_source_manifest_binding": "PASS",
+      "camera_timestamp_equals_native_source": "PASS",
+      "raw_source_artifact_content": "NOT_RUN_REQUIRES_RAW_SOURCE_REVIEW",
+      "canonical_causal_route_reconstruction": "PASS",
+      "jpeg_scan_payload_reuse_diagnostic": "MEASURED_NOT_A_QUALIFICATION_GATE",
+      "image_pixel_decode": "NOT_RUN_REQUIRES_APPROVED_IMAGE_LIBRARY",
+      "offline_1ms_bundle_readiness": "PASS",
+      "runtime_execution_tested": false,
+      "trajectory_geometry_recomputed_from_source_state": false
+    },
+    "manual_release_review_required": true,
+    "episodes": [
+      {
+        "episode_id": "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a",
+        "domain": "carla",
+        "split": "train",
+        "source_dataset_id": "carla_basicagent_expert",
+        "source_dataset_version": "carla-0.9.15-native-expert-v1",
+        "license_id": "project-generated-carla-internal-review",
+        "sample_count": 309,
+        "duration_s": 30.800000459000003,
+        "effective_rate_hz": 9.999999850974028,
+        "median_period_ms": 100.000001,
+        "p99_gap_ms": 100.000002,
+        "maximum_gap_ms": 100.000002,
+        "native_source_camera_cadence": {
+          "CAM_FRONT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_LEFT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_LEFT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_RIGHT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_RIGHT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          }
+        },
+        "motion_distance_m": 208.44406659859345,
+        "maximum_pose_step_m": 0.8358893651109909,
+        "maximum_speed_consistency_error_mps": 2.3552517654374334,
+        "raw_anchor_count": 374,
+        "eligible_anchor_count": 309,
+        "selected_bundle_count": 309,
+        "dropped_incomplete_bundle_count": 0,
+        "ineligible_anchor_reasons": {
+          "stationary_tail_label_context_only": 65
+        },
+        "bundle_coverage_percent": 100.0,
+        "camera_count_imbalance_percent": 0.0,
+        "camera_unique_jpeg_scan_percent": {
+          "CAM_FRONT": 100.0,
+          "CAM_BACK": 100.0,
+          "CAM_FRONT_LEFT": 100.0,
+          "CAM_BACK_LEFT": 100.0,
+          "CAM_FRONT_RIGHT": 100.0,
+          "CAM_BACK_RIGHT": 100.0
+        },
+        "minimum_unique_jpeg_scan_percent": 100.0,
+        "maximum_consecutive_identical_jpeg_scans": 1,
+        "cross_camera_duplicate_bundle_count": 0,
+        "cross_camera_duplicate_bundle_percent": 0.0,
+        "valid_future_point_percent": 100.0,
+        "maximum_bundle_skew_ms": 0.0,
+        "runtime_bundle_coverage_percent": 100.0,
+        "maximum_state_delta_ms": 0.0,
+        "maximum_command_age_ms": 0.0,
+        "command_counts": {
+          "2": 44,
+          "3": 265
+        }
+      },
+      {
+        "episode_id": "carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7",
+        "domain": "carla",
+        "split": "train",
+        "source_dataset_id": "carla_basicagent_expert",
+        "source_dataset_version": "carla-0.9.15-native-expert-v1",
+        "license_id": "project-generated-carla-internal-review",
+        "sample_count": 304,
+        "duration_s": 30.300000452000003,
+        "effective_rate_hz": 9.999999850825084,
+        "median_period_ms": 100.000001,
+        "p99_gap_ms": 100.000002,
+        "maximum_gap_ms": 100.000002,
+        "native_source_camera_cadence": {
+          "CAM_FRONT": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_LEFT": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_LEFT": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_RIGHT": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_RIGHT": {
+            "effective_rate_hz": 9.999999850825084,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          }
+        },
+        "motion_distance_m": 204.55136423023174,
+        "maximum_pose_step_m": 0.8338673216080429,
+        "maximum_speed_consistency_error_mps": 3.4790038366699236,
+        "raw_anchor_count": 369,
+        "eligible_anchor_count": 304,
+        "selected_bundle_count": 304,
+        "dropped_incomplete_bundle_count": 0,
+        "ineligible_anchor_reasons": {
+          "stationary_tail_label_context_only": 65
+        },
+        "bundle_coverage_percent": 100.0,
+        "camera_count_imbalance_percent": 0.0,
+        "camera_unique_jpeg_scan_percent": {
+          "CAM_FRONT": 100.0,
+          "CAM_BACK": 100.0,
+          "CAM_FRONT_LEFT": 100.0,
+          "CAM_BACK_LEFT": 100.0,
+          "CAM_FRONT_RIGHT": 100.0,
+          "CAM_BACK_RIGHT": 100.0
+        },
+        "minimum_unique_jpeg_scan_percent": 100.0,
+        "maximum_consecutive_identical_jpeg_scans": 1,
+        "cross_camera_duplicate_bundle_count": 0,
+        "cross_camera_duplicate_bundle_percent": 0.0,
+        "valid_future_point_percent": 100.0,
+        "maximum_bundle_skew_ms": 0.0,
+        "runtime_bundle_coverage_percent": 100.0,
+        "maximum_state_delta_ms": 0.0,
+        "maximum_command_age_ms": 0.0,
+        "command_counts": {
+          "0": 24,
+          "3": 280
+        }
+      },
+      {
+        "episode_id": "carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9",
+        "domain": "carla",
+        "split": "val",
+        "source_dataset_id": "carla_basicagent_expert",
+        "source_dataset_version": "carla-0.9.15-native-expert-v1",
+        "license_id": "project-generated-carla-internal-review",
+        "sample_count": 337,
+        "duration_s": 33.600000501000004,
+        "effective_rate_hz": 9.999999850892857,
+        "median_period_ms": 100.000001,
+        "p99_gap_ms": 100.000002,
+        "maximum_gap_ms": 100.000002,
+        "native_source_camera_cadence": {
+          "CAM_FRONT": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_LEFT": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_LEFT": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_RIGHT": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_RIGHT": {
+            "effective_rate_hz": 9.999999850892857,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          }
+        },
+        "motion_distance_m": 206.6701247985963,
+        "maximum_pose_step_m": 0.8373650199979977,
+        "maximum_speed_consistency_error_mps": 3.1065676472348924,
+        "raw_anchor_count": 402,
+        "eligible_anchor_count": 337,
+        "selected_bundle_count": 337,
+        "dropped_incomplete_bundle_count": 0,
+        "ineligible_anchor_reasons": {
+          "stationary_tail_label_context_only": 65
+        },
+        "bundle_coverage_percent": 100.0,
+        "camera_count_imbalance_percent": 0.0,
+        "camera_unique_jpeg_scan_percent": {
+          "CAM_FRONT": 100.0,
+          "CAM_BACK": 100.0,
+          "CAM_FRONT_LEFT": 100.0,
+          "CAM_BACK_LEFT": 100.0,
+          "CAM_FRONT_RIGHT": 100.0,
+          "CAM_BACK_RIGHT": 90.20771513353115
+        },
+        "minimum_unique_jpeg_scan_percent": 90.20771513353115,
+        "maximum_consecutive_identical_jpeg_scans": 1,
+        "cross_camera_duplicate_bundle_count": 0,
+        "cross_camera_duplicate_bundle_percent": 0.0,
+        "valid_future_point_percent": 100.0,
+        "maximum_bundle_skew_ms": 0.0,
+        "runtime_bundle_coverage_percent": 100.0,
+        "maximum_state_delta_ms": 0.0,
+        "maximum_command_age_ms": 0.0,
+        "command_counts": {
+          "1": 21,
+          "3": 316
+        }
+      },
+      {
+        "episode_id": "carla_town01_town01_right_s0001_p00_ClearNoon_s0001_1af7c32f1f1f",
+        "domain": "carla",
+        "split": "train",
+        "source_dataset_id": "carla_basicagent_expert",
+        "source_dataset_version": "carla-0.9.15-native-expert-v1",
+        "license_id": "project-generated-carla-internal-review",
+        "sample_count": 534,
+        "duration_s": 53.300000794000006,
+        "effective_rate_hz": 9.999999851031896,
+        "median_period_ms": 100.000001,
+        "p99_gap_ms": 100.000002,
+        "maximum_gap_ms": 100.000002,
+        "native_source_camera_cadence": {
+          "CAM_FRONT": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_LEFT": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_LEFT": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_RIGHT": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_RIGHT": {
+            "effective_rate_hz": 9.999999851031896,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          }
+        },
+        "motion_distance_m": 225.8353375445201,
+        "maximum_pose_step_m": 0.8446080867100839,
+        "maximum_speed_consistency_error_mps": 3.1956966932348045,
+        "raw_anchor_count": 599,
+        "eligible_anchor_count": 534,
+        "selected_bundle_count": 534,
+        "dropped_incomplete_bundle_count": 0,
+        "ineligible_anchor_reasons": {
+          "stationary_tail_label_context_only": 65
+        },
+        "bundle_coverage_percent": 100.0,
+        "camera_count_imbalance_percent": 0.0,
+        "camera_unique_jpeg_scan_percent": {
+          "CAM_FRONT": 95.1310861423221,
+          "CAM_BACK": 93.63295880149813,
+          "CAM_FRONT_LEFT": 94.5692883895131,
+          "CAM_BACK_LEFT": 94.7565543071161,
+          "CAM_FRONT_RIGHT": 93.63295880149813,
+          "CAM_BACK_RIGHT": 93.82022471910112
+        },
+        "minimum_unique_jpeg_scan_percent": 93.63295880149813,
+        "maximum_consecutive_identical_jpeg_scans": 1,
+        "cross_camera_duplicate_bundle_count": 0,
+        "cross_camera_duplicate_bundle_percent": 0.0,
+        "valid_future_point_percent": 100.0,
+        "maximum_bundle_skew_ms": 0.0,
+        "runtime_bundle_coverage_percent": 100.0,
+        "maximum_state_delta_ms": 0.0,
+        "maximum_command_age_ms": 0.0,
+        "command_counts": {
+          "1": 18,
+          "3": 516
+        }
+      },
+      {
+        "episode_id": "carla_town04_town04_straight_s0000_p00_ClearNoon_s0001_efeae89ba297",
+        "domain": "carla",
+        "split": "test",
+        "source_dataset_id": "carla_basicagent_expert",
+        "source_dataset_version": "carla-0.9.15-native-expert-v1",
+        "license_id": "project-generated-carla-internal-review",
+        "sample_count": 309,
+        "duration_s": 30.800000459000003,
+        "effective_rate_hz": 9.999999850974028,
+        "median_period_ms": 100.000001,
+        "p99_gap_ms": 100.000002,
+        "maximum_gap_ms": 100.000002,
+        "native_source_camera_cadence": {
+          "CAM_FRONT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_LEFT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_LEFT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_FRONT_RIGHT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          },
+          "CAM_BACK_RIGHT": {
+            "effective_rate_hz": 9.999999850974028,
+            "median_period_ms": 100.000001,
+            "p99_gap_ms": 100.000002,
+            "maximum_gap_ms": 100.000002
+          }
+        },
+        "motion_distance_m": 208.42677604628145,
+        "maximum_pose_step_m": 0.8347003495881457,
+        "maximum_speed_consistency_error_mps": 2.355251906010163,
+        "raw_anchor_count": 374,
+        "eligible_anchor_count": 309,
+        "selected_bundle_count": 309,
+        "dropped_incomplete_bundle_count": 0,
+        "ineligible_anchor_reasons": {
+          "stationary_tail_label_context_only": 65
+        },
+        "bundle_coverage_percent": 100.0,
+        "camera_count_imbalance_percent": 0.0,
+        "camera_unique_jpeg_scan_percent": {
+          "CAM_FRONT": 100.0,
+          "CAM_BACK": 100.0,
+          "CAM_FRONT_LEFT": 100.0,
+          "CAM_BACK_LEFT": 100.0,
+          "CAM_FRONT_RIGHT": 100.0,
+          "CAM_BACK_RIGHT": 100.0
+        },
+        "minimum_unique_jpeg_scan_percent": 100.0,
+        "maximum_consecutive_identical_jpeg_scans": 1,
+        "cross_camera_duplicate_bundle_count": 0,
+        "cross_camera_duplicate_bundle_percent": 0.0,
+        "valid_future_point_percent": 100.0,
+        "maximum_bundle_skew_ms": 0.0,
+        "runtime_bundle_coverage_percent": 100.0,
+        "maximum_state_delta_ms": 0.0,
+        "maximum_command_age_ms": 0.0,
+        "command_counts": {
+          "2": 171,
+          "3": 138
+        }
+      }
+    ]
+  }
+}

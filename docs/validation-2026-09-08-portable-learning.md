@@ -49,3 +49,14 @@ v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월
 실제 시간 기준 카메라 묶음 처리량은 36.5/40.6 Hz였습니다. 전체 준비·GUI·Autoware·추론을
 측정한 것이 아니며, 단일 순차 비교로 렌더 품질의 일반적 성능 차이를 단정하지 않습니다.
 원본 6카메라·차량 중심 경로 PNG 13장·GIF 2개와 모든 tick 지연을 함께 공개했습니다.
+
+<!-- HH_260906 - Separate completed decoder-only numerical research from the failed native low-speed turn. -->
+[17 디코더 표현 가능성](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/17_decoder_representability/README.md)은
+GPU0에서 05:05:03–05:07:27 KST에 완료했습니다. 모델 가중치가 아닌 잠재 입력만 최적화했고,
+전체 8,022개 후보의 잔차·게이트를 재계산했습니다. 출력 실패 34개와 초기 목적함수
+재계산 불일치 22개를 보존했습니다. 평균 근사 오차를 학습 모델의 예측 성능으로 해석하지 않습니다.
+
+[18 C-track 저속 좌회전](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/18_c_track_low_speed_turn/README.md)은
+실제 최고 14.4086 km/h·목표 앞 0.9386m 정지와 2초 유지를 확인했지만, 20Hz 출발
+한 구간 +3.654933 m/s² 초과로 실패했습니다. 차량 중심 경로와 전체 6카메라 화면을
+PNG 7장·GIF 1개로 정리했습니다. 30km/h 검증·새 학습 데이터 승인·모델 제어 영상이 아닙니다.

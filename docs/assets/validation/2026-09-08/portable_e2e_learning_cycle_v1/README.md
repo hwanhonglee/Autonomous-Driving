@@ -24,13 +24,17 @@
 | [14 정상 브레이크 제거 A/B와 실제 화면](14_brake_free_goal_stop/README.md) | 기존 ACK 실패 2회 + 정상 brake=0 반복 2회, 실제 PNG 13장·GIF 2개 | V4 두 회 모두 스칼라·정지·제어 기록 충족; 데이터 미승인 |
 | [15 데이터 기준점과 남은 궤적 문제](15_data_reference_and_raw_geometry/README.md) | V4 JPEG 8,802장·미래 1,337개 전체 검사, 바퀴·virtual base 기준 대조 | 저속 곡률 실패 유지; 좌표 기록 재현과 물리 기준점 승인은 별개 |
 | [16 Low/Epic 주행 처리 시간과 실제 화면](16_wall_timing_quality/README.md) | 같은 Town07 경로 각 1회, 모든 tick·카메라·ACK, PNG 13장·GIF 2개 | 수집 묶음 벽시계 36.5/40.6 Hz; GUI FPS·추론 측정이나 전체 끊김 해결 주장은 아님 |
+| [17 디코더 표현 가능성과 정지 직전 출력](17_decoder_representability/README.md) | GPU0에서 고정 6초기값, 1,337개 시작점·8,022개 후보 수치 근사와 독립 검사 | 학습 모델 가중치 변경 없음; 34개 출력 실패·22개 초기 계산 불일치 유지 |
+| [18 C-track 저속 좌회전과 실제 화면](18_c_track_low_speed_turn/README.md) | 별도 목표 14.4 km/h, 1,907개 native 상태·5,724개 영상, PNG 7장·GIF 1개 | 목표 정차 완료; 출발 한 구간 +3.654933 m/s² 초과로 실패·미승인 |
 
 ## 두 환경에서 실제로 한 일
 
 - **원격 Pro6000:** 기존 개인 py312 venv와 GPU0만 사용해 선택기 전용 학습 9회를
   완료했습니다. 학습 시간은 01:29:13–01:32:00 KST입니다. 이는 전체 모델을 처음부터
-  9번 학습한 것이 아닙니다. 완료 후 GPU0가 비어 있음을 확인했으며, 새 작업을 시작하기
-  전까지 자동으로 계속 학습하는 프로세스는 없습니다. 시스템 설치·Conda 변경·GPU1
+  9번 학습한 것이 아닙니다. 이후 05:05:03–05:07:27 KST에 GPU0에서 고정 decoder의
+  잠재 입력만 수치 최적화했습니다. 이는 미래 정답을 사용하는 표현 가능성 진단이며
+  모델 가중치 학습·주행 성능이 아닙니다. 두 작업은 모두 종료됐고, 자동 반복 학습은 없습니다.
+  시스템 설치·Conda 변경·GPU1
   사용·다른 작업 종료·재부팅·CARLA/Autoware 빌드는 하지 않았습니다.
 - **로컬:** 원본 결과 검증, 계측 코드와 그래프·경로 PNG 정리, Town07 직진 BasicAgent
   수집 제어 보정을 진행합니다. 이 BasicAgent는 학습 정답을 만드는 expert입니다.
@@ -105,8 +109,18 @@ Town07 동일 학습 경로의 첫 두 보정 시험은 모두 실패 자료로 
 목표 정지를 충족했고, 기존 두 ACK 실패도 함께 보존했습니다. 그러나 [전체 원본 추가
 검사](15_data_reference_and_raw_geometry/README.md)에서 저속 XY 곡률 초과가 각각
 145/671개, 154/666개 미래 시작점에 남았습니다. 8,802장의 영상과 전체 85,568개 미래
-점을 포함했으며, 좋은 구간만 골라 데이터로 승인하지 않았습니다. 다음은 Epic 수집의
-실제 처리시간과 원본에 대한 디코더의 표현 오차를 각각 분리 계측하는 것입니다.
+점을 포함했으며, 좋은 구간만 골라 데이터로 승인하지 않았습니다. 이후 Epic 수집의
+실제 처리시간과 원본에 대한 디코더의 표현 오차를 [16](16_wall_timing_quality/README.md)·
+[17](17_decoder_representability/README.md)에서 분리 계측했습니다.
+
+<!-- HH_260906 - Distinguish the recorded low-speed failure from the prospective initialization-order experiment. -->
+[C-track 저속 좌회전](18_c_track_low_speed_turn/README.md)은 목표 정차·제어 정합성을
+충족했지만, 실제 20 Hz 출발 한 구간의 가속도 초과로 실패했습니다. 첫 조향 요청이
+−0.8에서 시작한 점과 BasicAgent가 최초 bootstrap tick 전에 생성되는 코드를 확인했습니다.
+다음 비교는 기존 tick 이후 제어기를 생성하고 실제 프레임·제어·PID 이력을 기록하는
+명시적 초기화 순서 실험입니다. PID 값을 강제로 초기화하거나 실패 구간을 제거하지 않습니다.
+생성자의 위치·조향 등 여러 초기 관측 시점이 함께 바뀌므로 조향 이력만의 인과 효과로
+해석하지 않습니다. 기존 기본 동작·물리 한계·학습 승인 상태는 유지합니다.
 
 [Warmup 감사](06_warmup_history_audit/README.md)에서는 v3 train 1,147개 중 105개,
 val 337개 중 35개가 warmup 앵커임을 확인했습니다. 출발 직후 첫 9개 주행 앵커가 warmup

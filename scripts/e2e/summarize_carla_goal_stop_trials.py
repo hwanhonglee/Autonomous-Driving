@@ -9,14 +9,24 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 PHASES = ("stationary_warmup", "driving", "stationary_tail")
 CAMERAS = ("CAM_FRONT", "CAM_BACK", "CAM_FRONT_LEFT", "CAM_BACK_LEFT", "CAM_FRONT_RIGHT", "CAM_BACK_RIGHT")
 TOLERANCE = 1.0e-4
+BOUNDS_SOURCE_PATHS = ("portable_e2e/model.py", "portable_e2e/runtime_contract.py")
+# HH_260906 - Only the reviewed initial trial without an owner plan may use this explicit historical reference.
+REVIEWED_LEGACY_BOUNDS_COMMIT = "e44cddeb986e5292981c2ee727d49c9aaae4ded6"
+REVIEWED_LEGACY_BOUNDS_SHA256 = {
+    BOUNDS_SOURCE_PATHS[0]: "6d21485cdce8728e5f3f2ae19d25a71d866a75e806a71a67623dbcca20fe28be",
+    BOUNDS_SOURCE_PATHS[1]: "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+}
+MAXIMUM_BOUNDS_SOURCE_BYTES = 2 * 1024 * 1024
 
 
 class EvidenceError(ValueError):
@@ -67,21 +77,142 @@ def read_file(root, relative, ledger, *, jsonl=False):
     return [_loads(line) for line in text.splitlines() if line.strip()] if jsonl else _loads(text)
 
 
-def source_bounds():
-    """HH_260906 - Read literal scalar limits from source AST; never import model weights or torch."""
-    model = ROOT / "portable_e2e/model.py"
-    runtime = ROOT / "portable_e2e/runtime_contract.py"
-    model_tree = ast.parse(model.read_text())
-    decoder = next(ast.literal_eval(node.value) for node in model_tree.body if isinstance(node, ast.Assign)
-        and any(isinstance(target, ast.Name) and target.id == "PHYSICAL_MAXIMUM_ACCELERATION_MPS2" for target in node.targets))
-    gate = next(node for node in ast.parse(runtime.read_text()).body if isinstance(node, ast.ClassDef) and node.name == "RuntimeGateConfig")
-    values = {node.target.id: ast.literal_eval(node.value) for node in gate.body if isinstance(node, ast.AnnAssign)
-              and isinstance(node.target, ast.Name) and node.target.id in ("maximum_acceleration_mps2", "maximum_deceleration_mps2")}
+def source_bounds(source_bytes=None):
+    """HH_260906 - Parse exact supplied source bytes, or current bytes, without executing either source."""
+    if source_bytes is None:
+        source_bytes = {name: (ROOT / name).read_bytes() for name in BOUNDS_SOURCE_PATHS}
+    require(isinstance(source_bytes, dict) and set(source_bytes) == set(BOUNDS_SOURCE_PATHS),
+            "bounds source paths must match the two fixed reviewed paths")
+    require(all(isinstance(raw, bytes) and 0 < len(raw) <= MAXIMUM_BOUNDS_SOURCE_BYTES
+                for raw in source_bytes.values()), "bounds sources require bounded nonempty bytes")
+    try:
+        model_tree = ast.parse(source_bytes[BOUNDS_SOURCE_PATHS[0]].decode("utf-8"))
+        definitions = [node.value for node in model_tree.body if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "PHYSICAL_MAXIMUM_ACCELERATION_MPS2"
+                    for target in node.targets)]
+        require(len(definitions) == 1, "bounds source has missing or duplicate decoder limit")
+        decoder = number(ast.literal_eval(definitions[0]))
+        gates = [node for node in ast.parse(source_bytes[BOUNDS_SOURCE_PATHS[1]].decode("utf-8")).body
+                 if isinstance(node, ast.ClassDef) and node.name == "RuntimeGateConfig"]
+        require(len(gates) == 1, "bounds source has missing or duplicate runtime gate")
+        definitions = [(node.target.id, number(ast.literal_eval(node.value))) for node in gates[0].body
+            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+            and node.target.id in ("maximum_acceleration_mps2", "maximum_deceleration_mps2")]
+        require(len(definitions) == 2 and len(dict(definitions)) == 2, "bounds source has missing or duplicate gate limit")
+        values = dict(definitions)
+    except (SyntaxError, UnicodeError, TypeError, ValueError) as error:
+        raise EvidenceError(f"invalid literal bounds source: {error}") from error
     require(decoder == 2.9 and values == {"maximum_acceleration_mps2": 3.0, "maximum_deceleration_mps2": 6.0},
             "reviewed scalar limits changed; this summary cannot silently relax them")
     return {"physical_decoder": {"maximum_acceleration_mps2": decoder, "maximum_deceleration_mps2": decoder},
             "runtime_speed_rate_gate": values,
-            "source_sha256": {"portable_e2e/model.py": sha(model), "portable_e2e/runtime_contract.py": sha(runtime)}}
+            "source_sha256": {name: hashlib.sha256(source_bytes[name]).hexdigest() for name in BOUNDS_SOURCE_PATHS}}
+
+
+def _bounds_file_bytes(root, relative):
+    """HH_260906 - Reject symlinks even inside the archive so a damaged archive never falls back to Git."""
+    path = root / relative
+    require(not root.is_symlink() and path.is_file() and path.resolve().is_relative_to(root.resolve())
+            and all(not (root / Path(*Path(relative).parts[:index])).is_symlink()
+                    for index in range(1, len(Path(relative).parts) + 1)),
+            f"bounds source archive is missing or unsafe: {relative}")
+    require(0 < path.stat().st_size <= MAXIMUM_BOUNDS_SOURCE_BYTES, "bounds source archive size is invalid")
+    return path.read_bytes()
+
+
+def _historical_bounds_bytes(commit):
+    """HH_260906 - Use only already available local Git objects, never fetch missing shallow history."""
+    require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit), "invalid bounds source_head_commit")
+    def git(*args):
+        try:
+            # HH_260906 - Also block promisor-repository lazy fetch and every transport protocol in child Git commands.
+            environment = dict(os.environ, GIT_NO_LAZY_FETCH="1", GIT_ALLOW_PROTOCOL="", GIT_TERMINAL_PROMPT="0")
+            process = subprocess.run(["git", "-c", "protocol.allow=never", *args], cwd=ROOT,
+                                     env=environment, capture_output=True, timeout=10, check=False)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise EvidenceError("historical bounds Git source unavailable; no fetch was attempted") from error
+        require(process.returncode == 0, "historical bounds Git source unavailable (possibly shallow history); no fetch was attempted")
+        return process.stdout
+    require(git("cat-file", "-t", commit).strip() == b"commit", "bounds source_head_commit is not a Git commit")
+    result = {name: git("cat-file", "blob", f"{commit}:{name}") for name in BOUNDS_SOURCE_PATHS}
+    require(all(0 < len(raw) <= MAXIMUM_BOUNDS_SOURCE_BYTES for raw in result.values()),
+            "historical bounds source size is invalid")
+    return result
+
+
+def resolve_bounds_source(root, recorded_bounds, owner_plan=None, *, allow_reviewed_legacy=False):
+    """HH_260906 - Bind each trial's scalar limits to exact recorded bytes, independently of measurement ledgers."""
+    root = Path(root)
+    require(isinstance(recorded_bounds, dict), "recorded bounds are missing")
+    hashes = recorded_bounds.get("source_sha256")
+    require(isinstance(hashes, dict) and set(hashes) == set(BOUNDS_SOURCE_PATHS)
+            and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) for value in hashes.values()),
+            "recorded bounds source SHA/path set is invalid")
+    require(owner_plan is None or isinstance(owner_plan, dict), "invalid bounds owner plan")
+    plan = owner_plan or {}
+    if "bounds_source_bytes_archived" in plan:
+        require(type(plan["bounds_source_bytes_archived"]) is bool, "bounds archive flag must be boolean")
+    archive_flag = plan.get("bounds_source_bytes_archived") is True
+    pins = plan.get("source_sha256", {})
+    require(isinstance(pins, dict), "invalid owner bounds source SHA mapping")
+    if any(name in pins for name in BOUNDS_SOURCE_PATHS):
+        require(all(pins.get(name) == hashes[name] for name in BOUNDS_SOURCE_PATHS),
+                "owner bounds source SHA differs from recorded bounds")
+    archive_paths = {name: "provenance/" + name for name in BOUNDS_SOURCE_PATHS}
+    archive_directory = root / "provenance/portable_e2e"
+    archive_present = (archive_directory.exists() or archive_directory.is_symlink()
+                       or any((root / path).exists() or (root / path).is_symlink() for path in archive_paths.values()))
+    commit = None
+    if archive_flag or archive_present:
+        # HH_260906 - Partial, stale or redirected archives are errors even when a valid historical blob exists.
+        raw = {name: _bounds_file_bytes(root, path) for name, path in archive_paths.items()}
+        require(isinstance(plan.get("source_sha256"), dict)
+                and all(plan["source_sha256"].get(name) == hashes[name] for name in BOUNDS_SOURCE_PATHS),
+                "archived bounds source SHA differs from owner plan or manifest")
+        kind = "recorded_source_archive"
+    else:
+        current = {name: (ROOT / name).read_bytes() for name in BOUNDS_SOURCE_PATHS}
+        if all(hashlib.sha256(current[name]).hexdigest() == hashes[name] for name in BOUNDS_SOURCE_PATHS):
+            raw, kind = current, "current_hash_match"
+        elif owner_plan is not None:
+            commit = plan.get("source_head_commit")
+            raw, kind = _historical_bounds_bytes(commit), "owner_plan_git_blob_hash_match"
+        else:
+            require(allow_reviewed_legacy is True and root.name == "run_001" and hashes == REVIEWED_LEGACY_BOUNDS_SHA256,
+                    "no reviewed bounds source history for trial without owner plan")
+            commit = REVIEWED_LEGACY_BOUNDS_COMMIT
+            raw, kind = _historical_bounds_bytes(commit), "reviewed_initial_trial_git_blob_hash_match"
+    require(all(hashlib.sha256(raw[name]).hexdigest() == hashes[name] for name in BOUNDS_SOURCE_PATHS),
+            "bounds source bytes do not match recorded SHA256")
+    bounds = source_bounds(raw)
+    require(all(recorded_bounds.get(name) == value for name, value in bounds.items()),
+            "recorded physical bound provenance mismatch")
+    sources = {}
+    for name in BOUNDS_SOURCE_PATHS:
+        item = {"sha256": hashes[name], "size_bytes": len(raw[name]), "proof_kind": kind}
+        if kind == "recorded_source_archive":
+            item["archive_path"] = archive_paths[name]
+            require(hashlib.sha256(_bounds_file_bytes(root, archive_paths[name])).hexdigest() == hashes[name],
+                    "bounds source archive changed during verification")
+        if commit is not None:
+            item["git_commit"] = commit
+        sources[name] = item
+    proof = {"schema": "portable_e2e.recorded_bounds_source_proof.v1", "sources": sources,
+        "strict_scalar_limits_verified": True, "recorded_sha256_matched": True,
+        "bounds_archive_available": kind == "recorded_source_archive", "git_fetch_attempted": False,
+        "historical_execution_proven_by_this_check": False,
+        "notice": "Exact source-byte identity establishes the recorded scalar limits, not independent proof that those bytes executed. Current hash matches do not establish historical execution provenance."}
+    return bounds, proof
+
+
+def recheck_bounds_source_archive(root, proof):
+    """HH_260906 - Recheck separate bounds archives after all measurement files have been analyzed."""
+    for name, item in proof["sources"].items():
+        if item["proof_kind"] == "recorded_source_archive":
+            require(name in BOUNDS_SOURCE_PATHS and item["archive_path"] == "provenance/" + name,
+                    "bounds source proof path changed")
+            require(hashlib.sha256(_bounds_file_bytes(Path(root), item["archive_path"])).hexdigest() == item["sha256"],
+                    "bounds source archive changed during analysis")
 
 
 def project_route(points, x, y, progress, step):
@@ -289,7 +420,8 @@ def summarize_trial(root, bounds):
         require(capture["physics_hz"] == 20 and capture["camera_hz"] == 10 and capture["camera_interval_ticks"] == 2,
                 "unsupported recorded capture cadence")
         require(capture.get("client_map_loading_allowed") is False, "capture allowed unowned map loading")
-        require(all(config["bounds"][name] == bounds[name] for name in bounds), "recorded physical bound provenance mismatch")
+        bounds, result["bounds_source_proof"] = resolve_bounds_source(
+            root, config["bounds"], plan, allow_reviewed_legacy=plan is None)
         if states:
             native, timeline = analyze_native(states, cameras, route, config, bounds)
         else:
@@ -324,6 +456,8 @@ def summarize_trial(root, bounds):
         require(exit_code != 0, "owner claims success without capture evidence")
     for item in ledger:
         require(sha(root / item["path"]) == item["sha256"], "finalized input changed during analysis")
+    if "bounds_source_proof" in result:
+        recheck_bounds_source_archive(root, result["bounds_source_proof"])
     return result, timeline
 
 
@@ -385,10 +519,20 @@ def summarize_trials(trials_root, output):
         trials.append(result)
         if timeline is not None:
             timelines[root.name] = timeline
+    # HH_260906 - Keep a shared historical source identity only when every captured trial proves the same bytes.
+    identities = [{name: item["sha256"] for name, item in trial["bounds_source_proof"]["sources"].items()}
+                  for trial in trials if "bounds_source_proof" in trial]
+    if identities and all(value == identities[0] for value in identities):
+        bounds["source_sha256"] = identities[0]
+    elif identities:
+        bounds.pop("source_sha256")
+        bounds["source_identity_scope"] = "Mixed source versions; exact recorded SHA256 proofs are per trial."
     # HH_260906 - Recheck every included trial after the whole batch has been read, not only per-trial.
     for root, trial in zip(roots, trials):
         for item in trial["source_manifest"]:
             require(sha(root / item["path"]) == item["sha256"], "trial source changed during batch analysis")
+        if "bounds_source_proof" in trial:
+            recheck_bounds_source_archive(root, trial["bounds_source_proof"])
     report = {"schema": "portable_e2e.goal_stop_trial_summary.v1", "status": "FINALIZED_TRIALS_REVIEWED_NOT_PROMOTED",
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "summarizer_source_sha256": sha(Path(__file__)),
         "total_discovered_and_included_trials": len(trials), "failed_trial_count": sum(not trial["raw_quality_candidate"] for trial in trials),

@@ -250,4 +250,6 @@ def test_actual_v1_summary_values_remain_identical_to_published_evidence(actual_
     for field in ("created_at_utc", "summarizer_source_sha256", "supporting_reader_source_sha256"):
         original.pop(field)
         current.pop(field)
+    # HH_260906 - The new source-byte proof must not alter any previously published numerical evidence.
+    current.pop("bounds_source_proof")
     assert current == original

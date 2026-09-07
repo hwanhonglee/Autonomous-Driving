@@ -213,15 +213,25 @@ def verify_trial(root):
     initial_manifest = base.read_file(root, "actuation/manifest.json", [])
     matrix_id = initial_manifest.get("matrix_id", "low_speed_v1")
     expected_matrix = matrix(matrix_id)
-    sources = SOURCES + (("scripts/e2e/carla_low_speed_response_matrix.py",) if matrix_id == "low_speed_v2" else ())
+    # HH_260906 - New wrappers archive both bounds sources plus the matrix helper, even for the original v1 matrix.
+    bounds_archived = plan.get("bounds_source_bytes_archived") is True
+    if "bounds_source_bytes_archived" in plan:
+        require(type(plan["bounds_source_bytes_archived"]) is bool, "bounds archive flag must be boolean")
+    sources = SOURCES + (("scripts/e2e/carla_low_speed_response_matrix.py",)
+                        if matrix_id == "low_speed_v2" or bounds_archived else ())
+    if bounds_archived:
+        sources += base.BOUNDS_SOURCE_PATHS
     require(owner.get("exit_code") == 0 and owner.get("capture_mode") == plan.get("capture_mode") == "actuation-response"
             and owner.get("learned_model_control") is False and owner.get("vehicle_control_approved") is False,
             "owned calibration did not finalize successfully in measurement-only mode")
     require(owner.get("source_bytes_unchanged_and_archived") is True and plan.get("source_bytes_archived") is True
             and set(plan["source_sha256"]) == set(sources) and set(owner["source_checks"]) == set(sources)
             and all(value is True for value in owner["source_checks"].values()), "source freeze/postcheck proof is incomplete")
+    require({path.relative_to(root / "provenance").as_posix() for path in (root / "provenance").rglob("*")
+             if path.is_file() or path.is_symlink()} == set(sources), "source archive contains unexpected or missing paths")
     for name in sources:
-        raw = read_bytes(root, "provenance/" + name, ledger)
+        # HH_260906 - Bounds source proof is separate from the unchanged physical measurement artifact ledger.
+        raw = read_bytes(root, "provenance/" + name, [] if name in base.BOUNDS_SOURCE_PATHS else ledger)
         require(hashlib.sha256(raw).hexdigest() == plan["source_sha256"][name], "archived executed source hash mismatch")
     pid = base.integer(started["server_pid"])
     require(pid > 1 and started["server_pgid"] == pid and started["map"] == plan["map"] == "Town07"
@@ -279,13 +289,12 @@ def verify_trial(root):
     route = read_bytes(root, "actuation/route.json", ledger)
     require(hashlib.sha256(route).hexdigest() == manifest["route_sha256"] == started["route_sha256"] == plan["route_sha256"], "route hash differs across owner and calibration")
     calibrator_sources = {"calibrate_carla_low_speed_response.py", "collect_carla_vad_expert.py", "carla_goal_stop_profile.py"}
-    if matrix_id == "low_speed_v2":
+    if matrix_id == "low_speed_v2" or bounds_archived:
         calibrator_sources.add("carla_low_speed_response_matrix.py")
     require(set(manifest["source_sha256"]) == calibrator_sources, "calibrator source denominator mismatch")
     for name, expected in manifest["source_sha256"].items():
         require(plan["source_sha256"].get("scripts/e2e/" + name) == expected, "calibrator source differs from frozen owner source")
-    bounds = base.source_bounds()
-    require(all(manifest["bounds"][key] == value for key, value in bounds.items()), "physical scalar bounds/source changed")
+    bounds, bounds_source_proof = base.resolve_bounds_source(root, manifest["bounds"], plan)
     cases, raw_cases, physics, prior_frame = [], {}, None, None
     for case, reference in zip(expected_matrix, manifest["completed_cases"]):
         case_id = case["case_id"]
@@ -305,12 +314,14 @@ def verify_trial(root):
     require(len({case["actor_id"] for case in cases}) == len(expected_matrix), "each case requires a distinct fresh vehicle actor")
     for item in ledger:
         require(base.sha(root / item["path"]) == item["sha256"], "input changed during batch review")
+    base.recheck_bounds_source_archive(root, bounds_source_proof)
     entry_kind = "brake" if matrix_id == "low_speed_v1" else "coast"
     entries = [case[entry_kind + "_entry_speed_mps"] for case in cases if case["kind"] == entry_kind]
     result = {"schema": "portable_e2e.pedal_response_summary.v1", "status": ("TWELVE" if matrix_id == "low_speed_v1" else "NINE") + "_MEASUREMENTS_VERIFIED_NOT_PROMOTED",
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "summarizer_source_sha256": base.sha(Path(__file__)),
         "supporting_reader_source_sha256": base.sha(Path(base.__file__)), "source_manifest": ledger,
         "planned_and_included_case_count": len(expected_matrix), "cases": cases, "scalar_bounds": bounds, "vehicle_physics": physics,
+        "bounds_source_proof": bounds_source_proof,
         "vehicle_physics_identical_across_all_cases": True,
         entry_kind + "_entry_speed_mps": {"minimum": min(entries), "maximum": max(entries), "observed_range": max(entries) - min(entries), "threshold_not_exact_target_mps": 3.0},
         "executed_sources": {"base_git_head": plan["source_head_commit"], "worktree_was_dirty": bool(plan["source_worktree_status"]),

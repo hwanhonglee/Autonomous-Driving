@@ -27,14 +27,14 @@ import yaml
 # HH_260906 - Keep goal-stop collection opt-in and independent of learned actuation.
 if __package__:
     from .carla_goal_stop_profile import (
-        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor,
+        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor, TurnLowDevelopmentGoalStopConfig,
         annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
         measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
     )
 else:
     from carla_goal_stop_profile import (
-        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor,
+        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor, TurnLowDevelopmentGoalStopConfig,
         annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
         measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
@@ -1793,6 +1793,9 @@ def collect_episode(
         }
         if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
             manifest["result"].update({"training_data_approved": False, "development_only": True})
+            if type(goal_stop_config) is TurnLowDevelopmentGoalStopConfig:
+                # HH_260906 - Final result replacement must retain the separate low-speed interpretation.
+                manifest["result"]["qualification_30_kph"] = "NOT_CLAIMED"
             # HH_260906 - A failed pilot still reports measured cruise and speed checks without requiring a tail.
             manifest["result"]["goal_stop_quality"] = measured_stop_quality(
                 state_records, [r["frame"] for r in camera_records], goal_stop_config,
@@ -1951,7 +1954,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     # HH_260906 - This experimental goal-stop governor is never enabled by an old command.
     # HH_260906 - comfortable_v4 isolates zero normal brake under acknowledged transport; default and emergency behavior are unchanged.
-    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4"), default="disabled",
+    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3", "comfortable_v4", "turn_low_v1"), default="disabled",
                         help="opt-in measured goal stop; requires 20/10 Hz, <=30 km/h, 1 m tolerance and >=6.5 s tail")
     parser.add_argument(
         "--basic-agent-base-min-distance-m",
@@ -2242,6 +2245,22 @@ def run(args: argparse.Namespace) -> Path:
                 "full_future_xy_admission": "Pending independent post-capture audit; scalar pilot completion is not dataset approval.",
             })
             manifest["result"] = {"training_data_approved": False, "development_only": True}
+        if type(goal_stop_config) is TurnLowDevelopmentGoalStopConfig:
+            # HH_260906 - CARLA pose/waypoints stay unshifted; downstream map alignment is metadata, never a native-state rewrite.
+            manifest["capture_contract"]["goal_stop_profile"].update({
+                "pilot_scope": "Exact C-track left low-speed diagnostic only; nominal 14.4 km/h, actual maximum 4.3 m/s.",
+                "cruise_interpretation": "Measured 3.8..4.2 m/s for 5 seconds is low-speed stability only.",
+                "qualification_30_kph": "NOT_CLAIMED",
+                "route_metadata_qualification_notice": "Any preflight/PASS fields copied inside the original route describe historical route-shape checks, not this new 14.4 km/h capture qualification.",
+                "route_input_frame": "Original CARLA route with ROS handedness; no downstream map translation applied.",
+                "downstream_map_alignment_metadata_only": {
+                    "carla_to_autoware_map_translation_m": [0.0, 0.0, -15.0],
+                    "applied_to_native_spawn_goal_state_or_sensor_tf": False,
+                    "notice": "Separate downstream Autoware map alignment, not a sensor extrinsic or learned-model TF change.",
+                },
+                "future_dataset_split_if_separately_admitted": "train",
+            })
+            manifest["result"]["qualification_30_kph"] = "NOT_CLAIMED"
     if getattr(args, "control_transport", "legacy_async") == "acknowledged_batch":
         manifest["capture_contract"]["control_transport"] = {
             "schema": "carla.acknowledged_control_transport.v1", "mode": "acknowledged_batch",

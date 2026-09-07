@@ -14,14 +14,17 @@ threshold_policy:
   interpretation: "These are project engineering gates, not regulatory or public-road approval criteria."
 
 scope_boundary:
-  current_checkpoint: "Previously deployed and shadow-validated CARLA-only physical-v1 remains unchanged: train 613 samples, ten epochs and 1540 optimizer steps, independent Town03 val 337; checkpoint SHA-256 df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09. Newly trained A/B/C/D checkpoints are separate research artifacts, not replacements."
+  current_checkpoint: "Previously deployed and shadow-validated CARLA-only physical-v1 remains unchanged: train 613 samples, ten epochs and 1540 optimizer steps, independent Town03 val 337; checkpoint SHA-256 df2a4b75a978f35c213894c56cf3a905f547734ee8099e8142133bdc9bd3ae09. Newly trained A/B/C/D/E checkpoints are separate research artifacts, not replacements."
   current_runtime: "Pinned non-executable runtime bundle bdd3daf605e269a8d90ea8e56ab1691e7e49db50e3f2100c7b66469813569d4e completed Town07 straight, C-track left turn, and Town03 left turn live CARLA shadow at 10 Hz; all three EVIDENCE_VALID and ESTABLISHED_FOR_SHADOW_ONLY. Six later 30 km/h control A/B arms also retained valid 10 Hz shadow. Autoware VAD owned vehicle control; learned closed-loop count remains zero."
   current_runtime_audit: "Historical physical-v1 offline geometry gate v6 selected PASS 326/337, any candidate PASS 326/337, all candidates PASS 325/337; selected index 2 was used for 337/337. Live runtime uses gate v8; historical v6 counts are not a v8 re-audit."
   physical_v1: "Trained and evaluated: selected val ADE/FDE 4.2615/10.9172 m, speed MAE 1.3933 m/s. Selected index remains fixed to c2; this does not prove that candidate geometries are identical. Quality/frozen-test requirements are unmet; no learned closed-loop or real-vehicle approval."
-  current_campaign: "All three 2026-09-07 campaigns are COMPLETE_NOT_PROMOTED: six LR A/B runs, three expanded-data C runs, and three selector-weight D runs, each followed by val337 and runtime gate v8 audit. A/B relative screen fails seed 20260905; C absolute quality fails all three seeds; D versus C relative screen fails seed 20260903 and the D absolute-quality screen fails all three seeds. Final D stage completed 2026-09-07T03:02:16.251393Z. No candidate replaces the deployed shadow checkpoint."
+  current_campaign: "All four 2026-09-07 campaigns are COMPLETE_NOT_PROMOTED: six LR A/B runs, three expanded-data C runs, three selector-weight D runs, and three candidate-aware scorer E runs, each followed by val337 and runtime gate v8 audit. These are fifteen distinct training runs; reused C baselines are not counted again. A/B relative screen fails seed 20260905; C absolute quality fails all three seeds; D/C and E/C relative screens fail seed 20260903. All D and E seeds fail absolute quality. Final E stage completed 2026-09-07T14:34:14Z. No candidate replaces the deployed shadow checkpoint."
   available_training_dataset: "The v3 corpus adds Town01 right-turn train534 and Town04 straight test309: train1147, val337, test309. Original train/val are preserved; the held-out test is not used for model evaluation or selection. Feature labels, scenario diversity, and learned closed-loop evidence remain incomplete."
   first_pair_selector_diagnosis: "Seed 20260903: A selects c2 for 337/337 and B selects c4 for 337/337. Mean pairwise path separation is 7.534858/7.545791 m, demonstrating distinct candidate geometries. Selected ADE improves 4.261500 to 4.150919 m while mean ADE selection regret rises 2.500854 to 2.515469 m; val-only development evidence, not promotion."
   first_pair_selector_weight_diagnosis: "Seed 20260903 on v3: C score weight 0.1 selects c2/c3 while D weight 0.5 selects c0/c1/c2/c3. ADE-oracle agreement falls from 232/337 to 175/337 and mean regret rises from 2.322154 to 2.714173 m; more selected indices do not establish better selection. CPU-only diagnostic, not live 10 Hz or closed-loop evidence."
+  # HH_260906 - Record completed candidate-aware scorer research without changing deployed runtime or feature approval.
+  candidate_rank_v1: "E changes the scorer architecture, not the physical decoder, loss, evaluator, or runtime gate: 1068249 parameters versus C 954590. Ordered seeds 20260903/20260904/20260905 have GPU val selected ADE C 3.874328/6.258545/4.789547 m versus E 4.735725/4.539105/4.228415 m, and FDE C 9.827706/12.897454/11.866288 m versus E 9.413042/9.709312/9.348654 m. All six C/E geometry audits accept 336/337 selected trajectories. E remains research-only: no E live 10 Hz, deployment, learned closed-loop, or vehicle-control claim."
+  objective_alignment_diagnosis: "Six C/D CPU reports keep train1147 and val337 separate. Higher score weight improves in-sample selector/composite-oracle agreement in all three seeds but validation changes are mixed; the loss-oracle versus ADE-oracle distinction alone does not explain the full selection gap. D seed20260904 CPU/GPU selected histograms differ, so diagnostic and original GPU metrics remain separate."
   excluded_claims:
     - "Historical Autoware VAD runtime media do not prove execution of the portable E2E checkpoint."
     - "Expert-agent success does not prove learned-model closed-loop success."
@@ -49,13 +52,28 @@ authoritative_evidence:
     meaning: "First paired seed CPU-only val337 selector/oracle/geometric diagnosis, two immutable reports and twelve predeclared ego-centered PNGs; no untouched test use or automatic model promotion."
   - id: EVIDENCE-20260907-LEARNING
     path: docs/validation-2026-09-07-portable-learning.md
-    meaning: "Completed LR A/B, expanded-data C, and selector-weight D campaigns: twelve train/evaluate/audit runs, rejected candidates, unchanged deployed model, and categorized evidence."
+    meaning: "Completed LR A/B, expanded-data C, selector-weight D, and candidate-aware scorer E campaigns: fifteen distinct train/evaluate/audit runs, rejected candidates, unchanged deployed model, and categorized evidence."
   - id: EVIDENCE-20260907-DATA-V3
     path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/05_dataset_transfer/README.md
     meaning: "Verified v3 transfer: Town01 right-turn train534 and Town04 straight test309 added while original train/val are preserved; total train1147/val337/test309."
   - id: EVIDENCE-20260907-SCORE-DIAG
     path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/08_selector_weight_diagnostics/README.md
     meaning: "First-seed C/D CPU selector diagnosis: broader selected-index distribution but worse ADE-oracle agreement and regret; no promotion."
+  - id: EVIDENCE-20260907-OBJECTIVE-ALIGNMENT
+    path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/10_objective_alignment/README.md
+    meaning: "All three C/D paired seeds: CPU training versus validation oracle-alignment diagnosis, aggregate-only publication, and explicit CPU/GPU differences."
+  - id: EVIDENCE-20260907-CANDIDATE-RANK
+    path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/11_candidate_rank_ab/README.md
+    meaning: "Three-seed C/E same-corpus GPU comparison, measured full and partial training epochs, unchanged loss/decoder/gate proof, relative and absolute FAIL, and no promotion."
+  - id: EVIDENCE-20260907-CANDIDATE-ROUTES
+    path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/12_candidate_rank_route_analysis/README.md
+    meaning: "Three E checkpoints: CPU val337 route analysis and eighteen predeclared ego-centered trajectory PNGs; not CARLA driving capture or live Autoware execution."
+  - id: EVIDENCE-20260907-CANDIDATE-CODE
+    path: docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/13_candidate_rank_code_validation/README.md
+    meaning: "Code regression: 2333 passed and six explicitly skipped tests; not learned-driving or deployment approval."
+  - id: CANDIDATE-RANK-DESIGN
+    path: docs/portable-e2e-candidate-ranking.md
+    meaning: "Candidate-aware scorer design and research-only comparison with the retained physical-v1 baseline."
   - id: LEARNING-LOOP-GUIDE
     path: docs/portable-e2e-learning-loop.md
     meaning: "Bounded training, evaluation, failure diagnosis, data expansion, and model adoption workflow."

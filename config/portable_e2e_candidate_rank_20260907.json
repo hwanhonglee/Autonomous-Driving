@@ -1,0 +1,31 @@
+{
+  "schema": "portable_e2e.candidate_rank_campaign.v1",
+  "campaign_id": "hh260907-candidate-rank-3seeds-v1",
+  "source_commit": "5c50353480a51f11b970c7d0b9ec8dcd91f7b056",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_config": "portable_e2e/config/perspective_trajectory_candidate_rank_v1.model.json",
+  "seeds": [20260903, 20260904, 20260905],
+  "arms": {"E_candidate_rank": 0.0001},
+  "candidate_score_weight": 0.1,
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "prerequisite_campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+  "prerequisite_timeout_seconds": 3600,
+  "baseline_campaign_id": "hh260907-physical-v1-data-expansion-3seeds-v1",
+  "baseline_source_commit": "081a71f7fc014d2864b790b0b0cae7378ae18e4c",
+  "decision": {
+    "comment": "HH_260906 - Freeze candidate-aware scoring before new model training or validation outputs are observed.",
+    "purpose": "Compare shared context-and-trajectory scoring against the frozen C context-only scorer, without modifying loss weights, physical decoding, data, or safety gates.",
+    "architecture": "E scores normalized detached predicted XY and speed with fused context using one shared MLP. It preserves seeded common initialization but has 1068249 parameters versus C 954590; equal optimizer steps do not imply equal compute or wall-clock time.",
+    "candidate_screen": "Selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall and speed MAE must not rise more than 5% in any pair.",
+    "absolute_limits_m": {"ade_1p0s": 0.5, "ade_3p0s": 1.0, "ade_6p4s": 2.0, "fde_6p4s": 4.0},
+    "budget": "1540 optimizer steps on train1147 with batch4 is approximately 5.37 epochs, not 10 epochs. All seeds start fresh; no checkpoint resume or best-validation-epoch selection.",
+    "test_policy": "Development validation only. Never evaluate or select on held-out Town04 test in this campaign.",
+    "promotion": "No automatic promotion, runtime-bundle allowlist change, vehicle actuation, safety-gate weakening, or failed-result deletion. Keep the existing live shadow checkpoint unchanged."
+  }
+}

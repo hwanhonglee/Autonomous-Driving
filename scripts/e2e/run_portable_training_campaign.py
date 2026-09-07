@@ -23,6 +23,8 @@ WORKSPACE = Path.home() / 'personal/hwanhong/portable_e2e'
 GPU_UUID = 'GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5'
 DATA_EXPANSION_SCHEMA = 'portable_e2e.data_expansion_campaign.v1'
 SELECTOR_WEIGHT_SCHEMA = 'portable_e2e.selector_weight_campaign.v1'
+CANDIDATE_RANK_SCHEMA = 'portable_e2e.candidate_rank_campaign.v1'
+SUCCESSOR_SCHEMAS = (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA, CANDIDATE_RANK_SCHEMA)
 EXPANDED_DATASET = 'datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3'
 EXPANDED_MANIFEST_SHA256 = '18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c'
 PREREQUISITE_CAMPAIGN = 'hh260907-physical-v1-lr-ab-3seeds-v1'
@@ -43,8 +45,8 @@ def digest(path):
 
 
 def validate_plan(plan):
-    # HH_260906 - Accept only the reviewed LR, data-expansion, and selector-weight experiments.
-    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA):
+    # HH_260906 - Accept only reviewed experiments; the new architecture never changes the physical safety gates.
+    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', *SUCCESSOR_SCHEMAS):
         raise ValueError('unsupported campaign schema')
     if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,100}', plan['campaign_id']):
         raise ValueError('unsafe campaign identifier')
@@ -52,7 +54,8 @@ def validate_plan(plan):
         raise ValueError('GPU or paired seeds differ from reviewed scope')
     expanded = plan['schema'] == DATA_EXPANSION_SCHEMA
     selector = plan['schema'] == SELECTOR_WEIGHT_SCHEMA
-    expected_arms = ({'D_selector_weight': 0.0001} if selector else
+    ranking = plan['schema'] == CANDIDATE_RANK_SCHEMA
+    expected_arms = ({'E_candidate_rank': 0.0001} if ranking else {'D_selector_weight': 0.0001} if selector else
         {'C_expanded_data': 0.0001} if expanded else {'A_baseline': 0.0001, 'B_lower_lr': 0.00003})
     if plan['arms'] != expected_arms:
         raise ValueError('unreviewed learning-rate arms')
@@ -64,30 +67,36 @@ def validate_plan(plan):
         value = Path(plan[name])
         if value.is_absolute() or '..' in value.parts:
             raise ValueError(f'{name} must be a contained relative path')
-    if expanded or selector:
+    if expanded or selector or ranking:
         expected = {
-            'campaign_id': 'hh260907-physical-v1-selector-weight-3seeds-v1' if selector else DATA_EXPANSION_CAMPAIGN,
+            'campaign_id': ('hh260907-candidate-rank-3seeds-v1' if ranking else
+                'hh260907-physical-v1-selector-weight-3seeds-v1' if selector else DATA_EXPANSION_CAMPAIGN),
             'dataset': EXPANDED_DATASET,
             'dataset_manifest_sha256': EXPANDED_MANIFEST_SHA256,
-            'model_config': 'portable_e2e/config/perspective_trajectory_physical_v1.model.json',
+            'model_config': ('portable_e2e/config/perspective_trajectory_candidate_rank_v1.model.json' if ranking else
+                'portable_e2e/config/perspective_trajectory_physical_v1.model.json'),
             'expected_train_samples': 1147, 'expected_val_samples': 337,
-            'prerequisite_campaign_id': DATA_EXPANSION_CAMPAIGN if selector else PREREQUISITE_CAMPAIGN,
+            'prerequisite_campaign_id': DATA_EXPANSION_CAMPAIGN if selector or ranking else PREREQUISITE_CAMPAIGN,
             'prerequisite_timeout_seconds': 3600,
         }
-        if selector:
+        if ranking:
+            expected.update(candidate_score_weight=0.1, baseline_campaign_id=DATA_EXPANSION_CAMPAIGN,
+                baseline_source_commit=HISTORICAL_SOURCE_COMMIT)
+        elif selector:
             expected['candidate_score_weight'] = 0.5
         else:
             expected['source_commit'] = HISTORICAL_SOURCE_COMMIT
         if any(plan.get(name) != value for name, value in expected.items()):
             raise ValueError('unreviewed successor dataset, source, counts, score weight or prerequisite')
-    return {'train_samples': 1147 if expanded or selector else 613, 'val_samples': 337,
-        'run_count': 3 if expanded or selector else 6, 'stage_count': 9 if expanded or selector else 18}
+    return {'train_samples': 1147 if expanded or selector or ranking else 613, 'val_samples': 337,
+        'run_count': 3 if expanded or selector or ranking else 6,
+        'stage_count': 9 if expanded or selector or ranking else 18}
 
 
 def verify_dataset_manifest(plan, dataset):
     # HH_260906 - Bind the new corpus manifest before and after every stage without opening held-out test samples.
     validate_plan(plan)
-    if plan['schema'] not in (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA):
+    if plan['schema'] not in SUCCESSOR_SCHEMAS:
         return None
     manifest = dataset / 'dataset.json'
     if manifest.is_symlink() or not manifest.is_file() or digest(manifest) != EXPANDED_MANIFEST_SHA256:
@@ -98,9 +107,9 @@ def verify_dataset_manifest(plan, dataset):
 def wait_for_prerequisite(plan, parent):
     # HH_260906 - Wait without a GPU or cooperative lease so the predecessor can finish normally.
     validate_plan(plan)
-    if plan['schema'] not in (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA):
+    if plan['schema'] not in SUCCESSOR_SCHEMAS:
         return None
-    selector = plan['schema'] == SELECTOR_WEIGHT_SCHEMA
+    selector = plan['schema'] in (SELECTOR_WEIGHT_SCHEMA, CANDIDATE_RANK_SCHEMA)
     predecessor_id = DATA_EXPANSION_CAMPAIGN if selector else PREREQUISITE_CAMPAIGN
     predecessor_source = HISTORICAL_SOURCE_COMMIT if selector else plan['source_commit']
     predecessor_arms = ('C_expanded_data',) if selector else ('A_baseline', 'B_lower_lr')
@@ -160,7 +169,7 @@ def acquire_campaign_lease(lease, plan):
             fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return
         except BlockingIOError:
-            if plan['schema'] not in (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA):
+            if plan['schema'] not in SUCCESSOR_SCHEMAS:
                 raise
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -341,6 +350,9 @@ def commands(plan, root, repo):
                 'uniform_without_replacement']
             if plan['schema'] == SELECTOR_WEIGHT_SCHEMA:
                 training_command += ['--candidate-score-weight', '0.5']
+            elif plan['schema'] == CANDIDATE_RANK_SCHEMA:
+                # HH_260906 - Record the unchanged score coefficient explicitly for architecture-only comparison.
+                training_command += ['--candidate-score-weight', '0.1']
             yield item, checkpoint, training_command, 'train'
             yield item, checkpoint, [python, '-m', 'portable_e2e.evaluate', dataset,
                 '--checkpoint', str(checkpoint), '--output-dir', str(item / 'evaluation'),

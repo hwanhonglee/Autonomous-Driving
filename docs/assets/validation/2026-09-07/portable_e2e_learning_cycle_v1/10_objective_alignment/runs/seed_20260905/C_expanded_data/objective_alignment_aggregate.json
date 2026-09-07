@@ -1,0 +1,458 @@
+{
+  "ade_oracle_definition": "Minimum mean Euclidean XY error over original valid expert points. First index wins exact ties for both oracles and selector.",
+  "checkpoint_id": "portable_e2e.pytorch_checkpoint.v1",
+  "checkpoint_sha256": "2be796dab237b7b4e15cbb4674ca2cfcfb589c056977a9124a4c7e9a51f26082",
+  "completed_at_utc": "2026-09-07T14:20:13.972209+00:00",
+  "composite_oracle_definition": "Unmodified trajectory_loss oracle_candidate_index with checkpoint loss_config and original XY/speed/yaw/valid tensors. Candidate score weight scales classification loss, not the composite regression oracle.",
+  "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+  "device": "cpu",
+  "diagnostic_script_sha256": "40adec43dbd8daa5c32d86ae1372ec8e5e43985dc1b2fd3df6788568cf90c858",
+  "diagnostic_source_commit": "71e77d4058b365e5af7bf46d5ee09a8c8bb26b09",
+  "diagnostic_wall_seconds": 43.88586127804592,
+  "evaluation_episode_count": 1,
+  "interpretation": "Read-only development diagnosis, not model promotion, held-out test evaluation, safety approval, or runtime latency evidence. Train and val are never pooled.",
+  "loss_config": {
+    "candidate_score_weight": 0.1,
+    "final_displacement_weight": 0.5,
+    "kinematic_speed_weight": 0.05,
+    "speed_weight": 0.2,
+    "xy_weight": 1.0,
+    "yaw_weight": 0.1
+  },
+  "manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+  "model_parameter_count": 954590,
+  "schema": "portable_e2e.objective_alignment_diagnostic.v1",
+  "source_sha256": {
+    "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+    "portable_e2e/audit_runtime.py": "fb96c4a75cf825e0490d413e075b0b9cb9808e4af96ac057ce706595a71a5bb1",
+    "portable_e2e/compare.py": "1be5ffb51e50d630433c5ff1ce85c84bd4257757ecd75fa4c6a0ef808ad2773b",
+    "portable_e2e/contract.py": "9a66674cfcdacfbb8a504bb10371238023bf2fd149eda048b42c4badffe1fa26",
+    "portable_e2e/control_flow_smoke.py": "33a58a2e5bdb28255adf23998dbecabad529b42652d141f02daa952f9af93b01",
+    "portable_e2e/dataset.py": "a1c7b4febd2006ec8de3b40e6c5525fc97a6db0cd2b0cea1131b0379206d2bba",
+    "portable_e2e/evaluate.py": "ce7f2326e7df1f3462dc2be495f1017b895c3ff142b07f0dbcdb09f4a861bc07",
+    "portable_e2e/losses.py": "23ca46a42155124dc29c08d26354761d1bc8233829c0c588292a0c607f608d85",
+    "portable_e2e/model.py": "8be1ff7a2c37ec935ddeba41bef9b2d9f20a0c42b7c9580bf6a3a06cac71e9ed",
+    "portable_e2e/runtime.py": "bd1f672efe5cf571744bd4c5ef7655435dc67dddadc41c23fddddb82d721a57b",
+    "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "portable_e2e/runtime_weight_bundle.py": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "5abc33d23a25b23bafab6283bfee3089bb49c9b62d8e618b2a1607ac4c4897a8",
+    "portable_e2e/validate.py": "f2e8ae57ab25fc049e6035c3565891d5afe98030fed9e11c392e1d2e1e78ed36",
+    "portable_e2e/visualize.py": "5bf0c16fd4e5fea0cc33402097642573ed2b9992bb5b3ce51cad88fc4be6ea2c",
+    "scripts/e2e/diagnose_portable_selector.py": "1524e18a92758a8dc95bf86a4d7c11524a139e5c027fd4e6d9ba0f17a7dfc022"
+  },
+  "splits": {
+    "train": {
+      "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+      "interpretation": "In-sample training diagnosis only; not validation or generalization evidence.",
+      "split": "train",
+      "summary": {
+        "sample_count": 1147,
+        "candidate_count": 6,
+        "predicted_points": 64,
+        "selected_histogram": [
+          913,
+          0,
+          234,
+          0,
+          0,
+          0
+        ],
+        "composite_oracle_histogram": [
+          643,
+          96,
+          188,
+          61,
+          94,
+          65
+        ],
+        "ade_oracle_histogram": [
+          692,
+          57,
+          214,
+          46,
+          86,
+          52
+        ],
+        "selected_composite_oracle_confusion_rows_left_columns_right": [
+          [
+            601,
+            78,
+            57,
+            52,
+            76,
+            49
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            42,
+            18,
+            131,
+            9,
+            18,
+            16
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "selected_composite_oracle_agreement_count": 732,
+        "selected_composite_oracle_agreement_rate": 0.6381865736704446,
+        "selected_ade_oracle_confusion_rows_left_columns_right": [
+          [
+            651,
+            38,
+            61,
+            45,
+            71,
+            47
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            41,
+            19,
+            153,
+            1,
+            15,
+            5
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "selected_ade_oracle_agreement_count": 804,
+        "selected_ade_oracle_agreement_rate": 0.7009590235396687,
+        "composite_oracle_ade_oracle_confusion_rows_left_columns_right": [
+          [
+            637,
+            6,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            42,
+            49,
+            0,
+            1,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            185,
+            0,
+            0,
+            3
+          ],
+          [
+            11,
+            0,
+            9,
+            41,
+            0,
+            0
+          ],
+          [
+            2,
+            2,
+            8,
+            0,
+            82,
+            0
+          ],
+          [
+            0,
+            0,
+            12,
+            4,
+            0,
+            49
+          ]
+        ],
+        "composite_oracle_ade_oracle_agreement_count": 1043,
+        "composite_oracle_ade_oracle_agreement_rate": 0.909328683522232,
+        "mean_selected_ade_m": 3.3015965339521736,
+        "mean_composite_oracle_ade_m": 1.0270810349728356,
+        "mean_ade_oracle_ade_m": 0.9901670056616361,
+        "mean_selected_minus_ade_oracle_m": 2.311429524003368,
+        "mean_composite_oracle_minus_ade_oracle_m": 0.036914029311199546,
+        "mean_selected_minus_composite_oracle_ade_m": 2.274515498979338
+      }
+    },
+    "val": {
+      "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+      "interpretation": "Development validation, not independent test.",
+      "split": "val",
+      "summary": {
+        "sample_count": 337,
+        "candidate_count": 6,
+        "predicted_points": 64,
+        "selected_histogram": [
+          333,
+          0,
+          4,
+          0,
+          0,
+          0
+        ],
+        "composite_oracle_histogram": [
+          167,
+          58,
+          18,
+          31,
+          33,
+          30
+        ],
+        "ade_oracle_histogram": [
+          178,
+          65,
+          32,
+          15,
+          17,
+          30
+        ],
+        "selected_composite_oracle_confusion_rows_left_columns_right": [
+          [
+            163,
+            58,
+            18,
+            31,
+            33,
+            30
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "selected_composite_oracle_agreement_count": 163,
+        "selected_composite_oracle_agreement_rate": 0.4836795252225519,
+        "selected_ade_oracle_confusion_rows_left_columns_right": [
+          [
+            174,
+            65,
+            32,
+            15,
+            17,
+            30
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "selected_ade_oracle_agreement_count": 174,
+        "selected_ade_oracle_agreement_rate": 0.516320474777448,
+        "composite_oracle_ade_oracle_confusion_rows_left_columns_right": [
+          [
+            163,
+            4,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            7,
+            51,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            18,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            14,
+            0,
+            13
+          ],
+          [
+            4,
+            10,
+            0,
+            0,
+            17,
+            2
+          ],
+          [
+            0,
+            0,
+            14,
+            1,
+            0,
+            15
+          ]
+        ],
+        "composite_oracle_ade_oracle_agreement_count": 278,
+        "composite_oracle_ade_oracle_agreement_rate": 0.8249258160237388,
+        "mean_selected_ade_m": 4.789546849620625,
+        "mean_composite_oracle_ade_m": 1.640401703954981,
+        "mean_ade_oracle_ade_m": 1.5501094625417131,
+        "mean_selected_minus_ade_oracle_m": 3.2394373797167657,
+        "mean_composite_oracle_minus_ade_oracle_m": 0.09029224141326786,
+        "mean_selected_minus_composite_oracle_ade_m": 3.1491451456656443
+      }
+    }
+  },
+  "started_at_utc": "2026-09-07T14:19:30.086355+00:00",
+  "status": "DIAGNOSIS_COMPLETE",
+  "torch_num_interop_threads": 4,
+  "torch_num_threads": 4,
+  "torch_version": "2.13.0+cu130",
+  "training_dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+  "training_domain_samples_seen": {
+    "carla": 6155
+  },
+  "training_episode_count": 3,
+  "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+  "training_sampling_policy": "uniform_without_replacement",
+  "vehicle_control_approved": false,
+  "publication_notice": "Aggregate-only redacted metadata view. Per-sample records are omitted; the private original is retained with raw_source_sha256. Train and val are never pooled.",
+  "raw_source_sha256": "c9ff2e5004692f951b7f1b42f0071e4b2cac7b33a5bd08a95fef64b204911515",
+  "omitted_per_sample_counts": {
+    "train": 1147,
+    "val": 337
+  }
+}

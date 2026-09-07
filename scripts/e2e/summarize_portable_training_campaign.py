@@ -127,11 +127,14 @@ def _validate_run(root: Path, relative: str, plan: dict[str, Any], config: dict[
     audit = _read(item / "gate_v8.json")
     # HH_260906 - Only the reviewed selector study changes score weight; historical studies remain frozen.
     selector = plan.get("schema") == "portable_e2e.selector_weight_campaign.v1"
-    expanded = selector or plan.get("schema") == "portable_e2e.data_expansion_campaign.v1"
+    # HH_260906 - Validate the candidate-aware architecture explicitly rather than relabeling it as an old arm.
+    ranking = plan.get("schema") == "portable_e2e.candidate_rank_campaign.v1"
+    expanded = selector or ranking or plan.get("schema") == "portable_e2e.data_expansion_campaign.v1"
     _require(plan.get("schema") in ("portable_e2e.lr_ab_campaign.v1", "portable_e2e.data_expansion_campaign.v1",
-                                    "portable_e2e.selector_weight_campaign.v1"),
+                                    "portable_e2e.selector_weight_campaign.v1", "portable_e2e.candidate_rank_campaign.v1"),
              f"{relative}: unsupported campaign schema")
-    allowed_arms = {"D_selector_weight": 0.0001} if selector else {"C_expanded_data": 0.0001} if expanded else ARMS
+    allowed_arms = ({"E_candidate_rank": 0.0001} if ranking else {"D_selector_weight": 0.0001} if selector
+                    else {"C_expanded_data": 0.0001} if expanded else ARMS)
     _require(arm in allowed_arms, f"{relative}: unreviewed campaign arm")
     train_samples, train_episode_count = (1147, 3) if expanded else (613, 2)
     _require(training.get("dataset_size") == train_samples,

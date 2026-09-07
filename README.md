@@ -19,8 +19,12 @@ CARLA·모델·맵 데이터가 필요하다. 이 대용량/라이선스 의존 
 대신 사전진단 자체는 깨끗한 클론에서도 다운로드나 시스템 변경 없이 실행되며,
 현재 단계와 누락 항목을 `PASS`, `WARN`, `BLOCK`으로 설명한다.
 
+<!-- HH_260906 - Link completed research separately from existing Autoware driving and shadow evidence. -->
+
 - 처음 설치하는 사람: [한국어 초보자 Quick Start](docs/BEGINNER_QUICKSTART_KO.md)
 - 모든 옵션과 설계 경계: [E2E 상세 가이드](E2E_SETUP.md)
+- 새 Portable 모델 반복 학습: [15회 학습·평가 결과](docs/validation-2026-09-07-portable-learning.md) · [두 PC의 역할과 실행 상태 조회](docs/portable-e2e-learning-loop.md)
+- 학습 곡선·차량 중심 예측 경로·정답 수집 영상: [분류된 학습 증거 폴더](docs/assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/README.md) — 새 후보 모델은 미채택이며 learned 차량 제어 증거가 아님
 - 최신 30 km/h 제어 A/B와 Town06 strict 10 Hz 60 km/h `NO-GO` 분석: [2026-09-07 검증 보고서](docs/validation-2026-09-07-control-ab.md)
 - Autoware + Portable E2E 10 Hz shadow 기준선: [2026-09-06 검증 보고서](docs/validation-2026-09-06.md)
 - 최신 차량 중심 전체 화면·경로·제어 A/B·60 km/h live 분석: [2026-09-07 통합 발행 증거](docs/assets/validation/2026-09-07/control_ab_30kph_and_60kph_readiness_v1/)

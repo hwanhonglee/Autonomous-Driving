@@ -39,6 +39,79 @@ def selector_plan(expansion_plan):
     return plan
 
 
+@pytest.fixture
+def ranking_plan(expansion_plan):
+    # HH_260906 - Use a synthetic source identity only in isolated unit fixtures before freezing the real commit.
+    plan = copy.deepcopy(expansion_plan)
+    plan.update(schema=MODULE.CANDIDATE_RANK_SCHEMA,
+        campaign_id='hh260907-candidate-rank-3seeds-v1', source_commit='c' * 40,
+        arms={'E_candidate_rank': 0.0001}, candidate_score_weight=0.1,
+        model_config='portable_e2e/config/perspective_trajectory_candidate_rank_v1.model.json',
+        prerequisite_campaign_id=MODULE.DATA_EXPANSION_CAMPAIGN,
+        baseline_campaign_id=MODULE.DATA_EXPANSION_CAMPAIGN,
+        baseline_source_commit=MODULE.HISTORICAL_SOURCE_COMMIT)
+    return plan
+
+
+def test_candidate_rank_is_three_fresh_val_only_runs_with_unchanged_loss(ranking_plan, tmp_path):
+    assert MODULE.validate_plan(ranking_plan) == {'train_samples': 1147, 'val_samples': 337,
+        'run_count': 3, 'stage_count': 9}
+    stages = list(MODULE.commands(ranking_plan, tmp_path, ROOT))
+    assert len(stages) == 9
+    for item, _, command, stage in stages:
+        assert item.name == 'E_candidate_rank'
+        assert command[command.index('--device') + 1] == 'cuda:0'
+        assert command[command.index('--split') + 1] == ('train' if stage == 'train' else 'val')
+        assert '--resume' not in command
+        if stage == 'train':
+            assert command.count('--candidate-score-weight') == 1
+            assert command[command.index('--candidate-score-weight') + 1] == '0.1'
+            assert command[command.index('--model-config') + 1] == str(ROOT / ranking_plan['model_config'])
+            assert command[command.index('--max-steps') + 1] == '1540'
+        else:
+            assert '--candidate-score-weight' not in command
+
+
+@pytest.mark.parametrize('field,value', [
+    ('candidate_score_weight', 0.5), ('arms', {'E_candidate_rank': 0.00003}),
+    ('source_commit', 'latest'), ('steps', 3080), ('split', 'test'), ('batch_size', 8),
+    ('model_config', 'portable_e2e/config/perspective_trajectory_physical_v1.model.json'),
+    ('expected_train_samples', 613), ('expected_val_samples', 336),
+    ('dataset_manifest_sha256', 'f' * 64), ('dataset', 'datasets/other'),
+    ('prerequisite_campaign_id', MODULE.PREREQUISITE_CAMPAIGN),
+    ('prerequisite_timeout_seconds', 1), ('baseline_source_commit', 'f' * 40),
+    ('baseline_campaign_id', 'another-campaign'), ('gpu_uuid', 'GPU-1'),
+])
+def test_candidate_rank_rejects_unreviewed_scope(ranking_plan, field, value):
+    ranking_plan[field] = value
+    with pytest.raises(ValueError):
+        MODULE.validate_plan(ranking_plan)
+
+
+def test_candidate_rank_requires_frozen_v3_manifest(ranking_plan, tmp_path, monkeypatch):
+    (tmp_path / 'dataset.json').write_text('{}')
+    monkeypatch.setattr(MODULE, 'digest', lambda _: MODULE.EXPANDED_MANIFEST_SHA256)
+    assert MODULE.verify_dataset_manifest(ranking_plan, tmp_path) == MODULE.EXPANDED_MANIFEST_SHA256
+    monkeypatch.setattr(MODULE, 'digest', lambda _: 'f' * 64)
+    with pytest.raises(RuntimeError, match='manifest'):
+        MODULE.verify_dataset_manifest(ranking_plan, tmp_path)
+
+
+def test_candidate_rank_requires_completed_c_baseline(ranking_plan, expansion_plan, tmp_path):
+    path = tmp_path / MODULE.DATA_EXPANSION_CAMPAIGN / 'status.json'
+    path.parent.mkdir()
+    state = _prerequisite_status(expansion_plan)
+    path.write_text(json.dumps(state))
+    proof = MODULE.wait_for_prerequisite(ranking_plan, tmp_path)
+    assert proof['source_commit'] == MODULE.HISTORICAL_SOURCE_COMMIT
+    assert proof['completed_stages'] == 9
+    assert proof['sha256'] == MODULE.digest(path)
+    state['stages'].pop()
+    path.write_text(json.dumps(state))
+    with pytest.raises(RuntimeError, match='prerequisite'):
+        MODULE.wait_for_prerequisite(ranking_plan, tmp_path)
+
+
 def test_expansion_scope_uses_same_step_budget_and_three_seeds(expansion_plan, tmp_path):
     contract = MODULE.validate_plan(expansion_plan)
     assert contract == {'train_samples': 1147, 'val_samples': 337, 'run_count': 3, 'stage_count': 9}

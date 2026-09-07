@@ -77,11 +77,26 @@ tail -n 1 runs/campaigns/hh260907-physical-v1-lr-ab-3seeds-v1/seed_20260903/A_ba
 
 - 데이터 확장: `hh260907-physical-v1-data-expansion-3seeds-v1`
 - 선택 손실 변경: `hh260907-physical-v1-selector-weight-3seeds-v1`
+- 후보 경로 인지 선택 구조: `hh260907-candidate-rank-3seeds-v1`
 
-총 12개 모델의 학습·평가·형상 검사를 완료했으며 **현재 이 캠페인의 GPU 학습은 끝났다.**
-학습률·선택 손실 변경 모두 세 seed 중 두 개만 상대 개선을 보였고, 절대 목표는 모두
+후보 경로 인지 구조는 23:23:04 KST에 시작해 23:34:14 KST에 세 모델의 9개 단계를
+완료했다. 총 **4개 캠페인 / 15개 모델 / 45개 단계**이며 이 캠페인들의 GPU 학습과
+후속 CPU 진단은 끝났다. 학습률·선택 손실·새 선택 구조 모두 세 seed 중 두 개만 상대 개선을 보였고, 절대 목표는 모두
 미달했다. 실험 완료와 성능 합격을 구분해 기존 주행용 checkpoint는 유지한다.
 자료는 [전체 실험 결과](validation-2026-09-07-portable-learning.md)에 있다.
+
+최신 E 상태와 마지막 seed의 실제 학습 기록은 원격 작업공간에서 아래처럼 확인한다.
+
+```bash
+venvs/py312/bin/python -m json.tool \
+  runs/campaigns/hh260907-candidate-rank-3seeds-v1/status.json
+tail -n 1 runs/campaigns/hh260907-candidate-rank-3seeds-v1/seed_20260905/E_candidate_rank/training/metrics.jsonl
+```
+
+이 실험의 [고정 계획](../config/portable_e2e_candidate_rank_20260907.json),
+[모델 설계·실행 결과](portable-e2e-candidate-ranking.md),
+[최신 코드 테스트](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/13_candidate_rank_code_validation/README.md)를 함께 확인한다.
+기존 campaign ID는 덮어쓰기 재실행용이 아니라 완료 기록 조회용이다.
 
 `TRAIN_EVAL_AUDIT_COMPLETE_NOT_PROMOTED`는 학습·평가·검사가 끝났다는 뜻이지 주행 승인이
 아니다. `STOPPED_FAILURE_NO_PROMOTION`이면 마지막 단계의 `train.log`, `evaluate.log`,
@@ -105,9 +120,16 @@ tail -n 1 runs/campaigns/hh260907-physical-v1-lr-ab-3seeds-v1/seed_20260903/A_ba
 후속 C/D는 같은 v3 corpus·seed·1,540 step·학습률을 유지하고 후보 선택 손실 가중치만
 바꿨다. 세 seed 모두의 FDE는 개선됐으나 첫 seed ADE는 3.8743 → 4.3049 m로 나빠져
 채택하지 않았다. 선택 index가 다양해지는 것과 좋은 경로를 고르는 것은 별개다.
-또한 여기서 진단한 ADE oracle은 XY·speed·yaw 등을 포함하는 학습의 복합 loss oracle과
-다르다. 다음에는 두 목표의 일치율을 계측하고 후보 경로 정보를 이용하는 선택 구조를
-검토한다. 이 구조 개선은 아직 구현·학습 완료한 것으로 표시하지 않는다.
+또한 ADE oracle은 XY·speed·yaw 등을 포함하는 학습의 복합 loss oracle과 다르다.
+후속 C/D 6개 모델 진단에서 이 차이를 train/val로 분리 계측했으며, val의 두 oracle
+ADE 차이보다 모델 선택 오차가 훨씬 컸다. 학습 목표 정의 차이가 유일한 원인이라는
+가설은 지지되지 않았다. CPU/GPU 진단 수치가 다른 경우 원본을 구분해 보존한다.
+
+이후 구현·학습한 E는 실제 예측 후보의 XY·속도와 공통 특징으로 점수를 계산한다.
+C → E의 ADE는 seed 순서대로 3.8743 → 4.7357 / 6.2585 → 4.5391 / 4.7895 →
+4.2284 m였다. 상대·절대 기준에 모두 미달해 채택하지 않았다. 새 ID는 runtime bundle
+허용 목록에도 추가하지 않았다. E의 10 Hz 성능이나 learned CARLA 주행 성공은 아직
+측정하지 않았다. 다음은 선택기 분리 통제 실험과 더 다양한 독립 회전·정지 episode다.
 
 `compare.py`의 `FAIR_OPEN_LOOP_COMPARISON_READY`는 보고서를 공정하게 비교할 조건이
 맞다는 뜻이지 모델 품질 PASS가 아니다. geometry PASS 역시 도로 이탈·충돌 안전을
@@ -118,12 +140,12 @@ tail -n 1 runs/campaigns/hh260907-physical-v1-lr-ab-3seeds-v1/seed_20260903/A_ba
 이번 로컬 수집은 6개 실제 CARLA 카메라 프레임과 ego 상태·경로·미래 궤적을 함께
 기록하는 BasicAgent expert 수집이다. 화면만 녹화해서 바로 학습하는 방식이 아니다.
 
-- Town01 새 우회전은 다음 데이터 확장의 **train**에 추가한다.
+- Town01 새 우회전은 v3 **train**에 추가했다.
 - Town04 새 직진은 독립 **test**로 고정한다. 현재 학습률 선택에 쓰지 않는다.
 - 기존 Town03 **val**은 유지한다. 한 주행의 앞뒤를 나누어 train/test로 위장하지 않는다.
 - 센서 시간·캘리브레이션·실제 이미지·정답 범위가 맞아야 Common10 변환을 통과한다.
 - 원격 전송은 새 staging 폴더에서 파일 수·크기·SHA-256을 비교하고, 검증 후 새 prepared
-  경로로 이동한다. 현재 학습 중인 v2 폴더는 변경하지 않는다.
+  경로로 이동한다. 기존 v2 폴더는 변경하지 않는다.
 
 test 데이터의 형식·센서·수집 품질 검사는 가능하다. 하지만 모델 결과를 계속 보며
 조건을 고르는 데 사용하면 더 이상 미사용 test가 아니다. 최종 후보를 고정한 뒤 평가한다.

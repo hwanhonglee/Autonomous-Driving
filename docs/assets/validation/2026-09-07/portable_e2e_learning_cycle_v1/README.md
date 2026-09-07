@@ -18,14 +18,21 @@ closed-loop 주행 성공 영상이 아니다. 기존 Autoware VAD 주행은
 | [07 후보 선택 손실 A/B](07_selector_weight_ab/README.md) | 같은 v3 데이터·seed·학습량, 선택 손실 0.1 → 0.5; 3개 seed 완료 |
 | [08 선택 손실 변경 경로 분석](08_selector_weight_diagnostics/README.md) | 첫 seed C/D 전체 val337 진단, 차량 중심의 후보·expert 경로 PNG |
 | [09 코드 검증](09_code_validation/README.md) | 전체 회귀 테스트 결과, 건너뛴 테스트의 환경 제약 |
+| [10 학습 목표·선택 오차 원인 분석](10_objective_alignment/README.md) | C/D 6개 모델, train/val 분리, 복합 loss와 위치 오차 oracle 비교 |
+| [11 후보 경로 인지 모델 C/E 비교](11_candidate_rank_ab/README.md) | 새 선택 구조 3개 seed 학습 완료, 실제 학습 곡선·고정 품질 판정 |
+| [12 새 모델 차량 중심 경로 분석](12_candidate_rank_route_analysis/README.md) | E의 전체 val337 진단, 고정 6시점 × 3개 seed 원본 PNG 18장 |
+| [13 최신 코드 검증](13_candidate_rank_code_validation/README.md) | 새 모델·진단·집계 포함 전체 2,333 passed / 6 skipped 원본 로그 |
 
 ## 두 환경의 역할
 
 - **Pro6000:** 개인 py312 venv, GPU0만 사용. 기존 데이터 A/B 6회, 새 데이터 학습 3회,
-  선택 손실 변경 3회를 순차 완료했다. 모델마다 학습 → val 평가 → 경로 형상 검사를
-  수행했다. test는 열지 않았다. 마지막 단계는 12:02:16 KST에 끝났으며 현재 실행 중인
-  캠페인 학습은 없다. 자동으로 모든 기능을 추가하는 무한 학습 작업은 아니다.
+  선택 손실 변경 3회, 후보 경로 인지 선택 구조 3회를 완료했다. **4개 캠페인 / 총 15회**다.
+  모델마다 학습 → val 평가 → 경로 형상 검사를 수행했다. test는 열지 않았다.
+  마지막 학습 캠페인 단계는 23:34:14 KST, 후속 CPU 경로 진단은 약 23:34:30 KST에
+  끝났다. 현재 이 캠페인들의 학습·진단은 실행 중이 아니다. 자동으로 모든 기능을
+  추가하는 무한 학습 작업은 아니다.
 - **로컬:** 새 Town01/Town04 expert 수집·Common10 변환, 원격 결과 수집·분석·발행.
+  후속 E 구조 실험에서는 추가 주행 촬영 없이 코드 검증과 분석 자료를 발행했다.
   이번에는 새 Portable 모델로 차량 제어를 실행하지 않았다.
 
 ## 현재까지 확정된 데이터 결과
@@ -64,14 +71,30 @@ closed-loop 주행 성공 영상이 아니다. 기존 Autoware VAD 주행은
 좋아졌지만 절대 목표에는 모두 미달했다. 이어 같은 v3에서 선택 손실 가중치를 높인 D는
 `4.3049 / 5.3370 / 3.8286 m`로, 두 seed는 좋아지고 첫 seed는 나빠졌다. D의 FDE는
 세 seed 모두 줄었지만 **세 seed 모두의 ADE/FDE 개선**이라는 고정 기준은 통과하지 못했다.
-따라서 세 실험 모두 완료하되 모델을 채택하지 않았다. checkpoint 12개와 실제 실행
+따라서 앞선 세 실험 모두 완료하되 모델을 채택하지 않았다. checkpoint 12개와 실제 실행
 runner의 원본 bytes는 private 자료로 보존·검증했고, 공개 metadata는 원본 SHA와
 계정 경로 치환 여부를 함께 표시했다.
 
-다음은 선택 목표와 경로 품질의 일치 여부를 먼저 계측하고 후보 경로 정보를 활용하는
-선택 구조를 검토하는 단계다. 현재 진단의 ADE oracle은 학습의 복합 loss oracle과
-다르므로, 이를 같은 목표라고 단정하지 않는다. 후보 index 빈도를 균등하게 만드는 것만으로
-개선 처리하지 않는다. 이후 기능별 데이터·label·판정을 추가하며 반복한다.
+이어 C/D 6개 모델에서 학습 목표와 위치 오차 oracle의 차이를 train/val로 분리 계측했다.
+val에서 두 oracle의 ADE 차이는 0.033–0.103 m인 반면, 모델 선택과 학습 oracle 사이
+차이는 2.036–4.742 m였다. 목표 정의 차이만으로 큰 선택 오차를 설명하기 어렵다.
+CPU/GPU의 선택 빈도 차이가 나타난 D seed04는 양쪽 수치를 분리 보존했으며 원인을
+확정하지 않았다.
+
+후보 XY·속도를 함께 보고 점수를 계산하는 E를 새로 구현·학습했다. E의 selected ADE는
+`4.7357 / 4.5391 / 4.2284 m`로 두 seed는 C보다 개선됐지만 첫 seed는 악화됐다.
+FDE·속도 오차는 모두 줄고 geometry는 336/337로 유지됐으나 **상대 선별 FAIL,
+절대 품질 FAIL**이다. 기존 운용 checkpoint는 유지했다. 새 모델은 parameter 수와
+선택 head 깊이도 다르므로 궤적 입력 하나만의 인과 효과라고 해석하지 않는다.
+[설계와 판단 근거](../../../../portable-e2e-candidate-ranking.md)를 함께 참고한다.
+
+새 E checkpoint는 원격과 로컬의 private 원본으로 보존했다. 원격 학습·평가·CPU 진단
+전후 checkpoint SHA와 로컬 checkpoint bytes를 검증했으며, 집계 JSON의 세 E 모델
+local byte verification은 모두 true다. 실제 실행 worker 원본 bytes도 로컬에 보관·검증했다.
+
+다음은 선택기를 분리한 통제 실험과 독립적인 회전·정지 episode 확장이다. 후보 index
+빈도를 균등하게 만드는 것만으로 개선 처리하지 않는다. 이후 기능별 데이터·label·판정을
+추가하며 반복한다.
 
 두 corpus의 fingerprint가 달라 v2↔v3 비교는 탐색적 데이터 확장 분석이다. 원래
 `compare.py`의 동일-corpus 비교 승인으로 대신 표시하지 않는다. geometry PASS도
@@ -85,9 +108,16 @@ hash·크기도 확인했다. PNG 28개를 디코딩했으며 GIF 2개는 앞서
 디코딩한 원본과 hash가 같다. 공개 metadata에서는 계정별 경로를 치환하고 원본 SHA를
 남겼다. 원본 checkpoint·데이터셋·runner는 공개 자료에 포함하지 않는다.
 
-전체 코드 회귀 결과와 원본 로그는 09에 별도로 보존했다. 테스트는 **2,155 passed /
-6 skipped**이며, 코드 검증과 모델 성능 판정을 구분한다. 임시의 미완료 집계와 초기
-수집 사전 점검 실패 자료는 private 원본에 남겨 최종 성공 기록과 섞지 않았다.
+추가한 10–12는 **57개 파일 / 4,845,588 bytes**다. 체크섬 54개, JSON 27개,
+JSONL 3개(4,620개 학습 기록), PNG 21개, 문서 링크 27개와 public/private 원본
+manifest 26쌍을 검증했다. C/E 집계를 원본에서 재계산해 공개 결과와 일치함을 확인했고,
+E의 세 checkpoint bytes와 실제 실행 worker SHA도 검증했다.
+
+앞선 코드 회귀 결과 **2,155 passed / 6 skipped**는 09에 보존했다. 최신 변경을 포함한
+전체 결과는 13의 **2,333 passed / 6 skipped**다. 코드 검증과 모델 성능 판정을 구분한다.
+10–12의 새 그래프·경로 PNG는 실제 수치와 예측을 그린 것이며 새 주행 녹화가 아니다.
+임시의 미완료 집계와 초기 수집 사전 점검 실패 자료는 private 원본에 남겨 최종 성공
+기록과 섞지 않았다.
 
 자세한 운용법은 [반복 학습 안내](../../../../portable-e2e-learning-loop.md), 기능별 다음
 조건은 [9개 상위·30개 하위 기능표](../../../../portable-e2e-feature-roadmap.md)를 참고한다.

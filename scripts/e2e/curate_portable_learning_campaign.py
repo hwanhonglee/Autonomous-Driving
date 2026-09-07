@@ -18,6 +18,7 @@ from portable_e2e.contract import _loads_json
 from scripts.e2e import summarize_portable_training_campaign as training_summary
 from scripts.e2e import summarize_portable_data_expansion as expansion_summary
 from scripts.e2e import summarize_portable_selector_weight as selector_summary
+from scripts.e2e import summarize_portable_candidate_rank as ranking_summary
 from scripts.e2e.curate_independent_common10_capture_20260907 import sanitize
 
 
@@ -99,14 +100,15 @@ def publish_file(source, destination):
 def recompute_summary(campaign, plan, baseline_campaign=None):
     # HH_260906 - Select the complete evidence validator by the frozen plan schema, never a supplied result label.
     schema = plan.get('schema')
-    if schema == 'portable_e2e.selector_weight_campaign.v1':
+    if schema in ('portable_e2e.selector_weight_campaign.v1', 'portable_e2e.candidate_rank_campaign.v1'):
         # HH_260906 - Revalidate both same-corpus campaigns instead of trusting a detached paired report.
         if baseline_campaign is None:
-            raise ValueError('selector publication requires its baseline campaign')
-        report = selector_summary.summarize_campaign(baseline_campaign, campaign)
-        return report, selector_summary.render_markdown(report)
+            raise ValueError('paired publication requires its baseline campaign')
+        summarizer = ranking_summary if schema == 'portable_e2e.candidate_rank_campaign.v1' else selector_summary
+        report = summarizer.summarize_campaign(baseline_campaign, campaign)
+        return report, summarizer.render_markdown(report)
     if baseline_campaign is not None:
-        raise ValueError('a baseline campaign is supported only for selector-weight publication')
+        raise ValueError('a baseline campaign is supported only for selector-weight or candidate-rank publication')
     if schema == 'portable_e2e.lr_ab_campaign.v1':
         summarizer = training_summary
     elif schema == 'portable_e2e.data_expansion_campaign.v1':
@@ -117,12 +119,24 @@ def recompute_summary(campaign, plan, baseline_campaign=None):
     return report, summarizer.render_markdown(report)
 
 
-def verify_plots(plots_dir, campaign, summary_path, state):
+def verify_plots(plots_dir, campaign, summary_path, state, baseline_campaign=None):
     # HH_260906 - Bind every curve input and the paired validation summary before publishing any plot.
     provenance = read_json(plots_dir / 'plot_inputs.json')
     if provenance.get('summary_sha256') != sha(summary_path):
         raise ValueError('plot summary SHA-256 does not match the supplied summary')
-    expected = {f'{stage["run"]}/training/metrics.jsonl' for stage in state['stages']}
+    roots = {'candidate': campaign}
+    if baseline_campaign is not None:
+        # HH_260906 - A paired plot must bind both original histories, including a different baseline directory.
+        if provenance.get('input_layout') != 'paired_campaign_roots_v1':
+            raise ValueError('paired plots require an explicit paired campaign root layout')
+        baseline_state = read_json(baseline_campaign / 'status.json')
+        roots['baseline'] = baseline_campaign
+        expected = {f'candidate/{stage["run"]}/training/metrics.jsonl' for stage in state['stages']}
+        expected |= {f'baseline/{stage["run"]}/training/metrics.jsonl' for stage in baseline_state['stages']}
+    else:
+        if provenance.get('input_layout') is not None:
+            raise ValueError('paired plot layout requires its baseline campaign')
+        expected = {f'{stage["run"]}/training/metrics.jsonl' for stage in state['stages']}
     inputs = provenance.get('inputs')
     if not isinstance(inputs, list) or len(inputs) != len(expected):
         raise ValueError('plot input list does not cover every campaign run')
@@ -134,7 +148,8 @@ def verify_plots(plots_dir, campaign, summary_path, state):
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts or name not in expected or name in observed:
             raise ValueError('plot input path is unsafe, duplicated, or outside the exact campaign runs')
-        path = campaign / relative
+        path = (roots[relative.parts[0]] / Path(*relative.parts[1:])
+                if baseline_campaign is not None else campaign / relative)
         if not path.is_file() or path.is_symlink() or item.get('sha256') != sha(path):
             raise ValueError('plot input SHA-256 does not match the campaign training history')
         observed.add(name)
@@ -164,7 +179,7 @@ def main(argv=None):
     if (args.summary_dir / 'README.md').read_text() != markdown:
         raise ValueError('supplied README differs from the verified summary rendering')
     if args.plots_dir:
-        verify_plots(args.plots_dir, args.campaign, summary_path, state)
+        verify_plots(args.plots_dir, args.campaign, summary_path, state, args.baseline_campaign)
     sources = [(args.summary_dir / name, Path(name)) for name in ('summary.json', 'README.md')]
     sources += [(args.campaign / name, Path('provenance') / name) for name in ('plan.json', 'status.json')]
     frozen = args.campaign / 'provenance/active_runner.py'

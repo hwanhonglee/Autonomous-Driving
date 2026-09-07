@@ -41,15 +41,19 @@ def setup_evidence(tmp_path, monkeypatch, schema='portable_e2e.lr_ab_campaign.v1
     return raw, summary, output
 
 
-def test_selector_recomputes_both_campaigns_and_requires_baseline(tmp_path, monkeypatch):
+@pytest.mark.parametrize('schema,summarizer', [
+    ('portable_e2e.selector_weight_campaign.v1', MODULE.selector_summary),
+    ('portable_e2e.candidate_rank_campaign.v1', MODULE.ranking_summary),
+])
+def test_selector_recomputes_both_campaigns_and_requires_baseline(tmp_path, monkeypatch, schema, summarizer):
     # HH_260906 - A paired summary must bind the baseline as well as the candidate campaign.
     candidate, baseline = tmp_path / 'candidate', tmp_path / 'baseline'
     seen = []
     report = {'status': 'COMPLETE_NOT_PROMOTED'}
-    monkeypatch.setattr(MODULE.selector_summary, 'summarize_campaign',
+    monkeypatch.setattr(summarizer, 'summarize_campaign',
         lambda before, after: seen.append((before, after)) or report)
-    monkeypatch.setattr(MODULE.selector_summary, 'render_markdown', lambda value: 'paired\n')
-    plan = {'schema': 'portable_e2e.selector_weight_campaign.v1'}
+    monkeypatch.setattr(summarizer, 'render_markdown', lambda value: 'paired\n')
+    plan = {'schema': schema}
     with pytest.raises(ValueError, match='baseline'):
         MODULE.recompute_summary(candidate, plan)
     assert MODULE.recompute_summary(candidate, plan, baseline) == (report, 'paired\n')
@@ -59,6 +63,43 @@ def test_selector_recomputes_both_campaigns_and_requires_baseline(tmp_path, monk
 def test_unrelated_baseline_is_not_silently_ignored(tmp_path):
     with pytest.raises(ValueError, match='only for selector'):
         MODULE.recompute_summary(tmp_path, {'schema': 'portable_e2e.lr_ab_campaign.v1'}, tmp_path / 'baseline')
+
+
+@pytest.mark.parametrize('mutation', [None, 'missing_baseline', 'wrong_hash', 'wrong_layout', 'escape', 'duplicate'])
+def test_paired_plot_inputs_bind_both_campaign_roots(tmp_path, mutation):
+    # HH_260906 - A paired architecture plot cannot silently omit or substitute the baseline histories.
+    candidate, baseline, plots = [tmp_path / name for name in ('candidate', 'baseline', 'plots')]
+    plots.mkdir()
+    state = {'stages': [{'run': 'seed_20260903/E_candidate_rank'}]}
+    before = {'stages': [{'run': 'seed_20260903/C_expanded_data'}]}
+    inputs = []
+    for name, root, entry in (('candidate', candidate, state), ('baseline', baseline, before)):
+        path = root / entry['stages'][0]['run'] / 'training/metrics.jsonl'
+        path.parent.mkdir(parents=True)
+        path.write_text('{}\n')
+        (root / 'status.json').write_text(json.dumps(entry))
+        inputs.append({'path': f'{name}/{path.relative_to(root)}', 'sha256': MODULE.sha(path)})
+    summary = tmp_path / 'summary.json'
+    summary.write_text('{}')
+    payload = {'input_layout': 'paired_campaign_roots_v1', 'summary_sha256': MODULE.sha(summary), 'inputs': inputs}
+    if mutation == 'missing_baseline':
+        inputs.pop()
+    elif mutation == 'wrong_hash':
+        inputs[-1]['sha256'] = 'f' * 64
+    elif mutation == 'wrong_layout':
+        payload.pop('input_layout')
+    elif mutation == 'escape':
+        inputs[-1]['path'] = 'baseline/../other/training/metrics.jsonl'
+    elif mutation == 'duplicate':
+        inputs[-1] = dict(inputs[0])
+    (plots / 'plot_inputs.json').write_text(json.dumps(payload))
+    if mutation is None:
+        MODULE.verify_plots(plots, candidate, summary, state, baseline)
+        with pytest.raises(ValueError, match='baseline'):
+            MODULE.verify_plots(plots, candidate, summary, state)
+    else:
+        with pytest.raises(ValueError):
+            MODULE.verify_plots(plots, candidate, summary, state, baseline)
 
 
 @pytest.mark.parametrize('schema', ['portable_e2e.lr_ab_campaign.v1', 'portable_e2e.data_expansion_campaign.v1'])

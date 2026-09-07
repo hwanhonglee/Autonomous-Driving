@@ -2,7 +2,7 @@
 
 > 기준일: 2026-09-07
 > 이 문서는 현재 저장소에 실제로 존재하는 기능과 앞으로 실행할 절차를 구분한다.
-> 기존 physical-v1 학습·val337·3장면 10 Hz shadow와 오늘의 12회 후속 학습·평가·감사는 완료됐다.
+> 기존 physical-v1 학습·val337·3장면 10 Hz shadow와 오늘의 15회 후속 학습·평가·감사는 완료됐다.
 > 후속 후보들은 채택되지 않아 기존 shadow 모델을 유지하며, learned closed-loop와 실차 제어 승인은 없다.
 
 <!-- HH_260906 - Distinguish completed physical-v1 experiments from historical v0 results and future training iterations. -->
@@ -22,7 +22,7 @@
 4. 아무 ML package도 설치하지 않고 실행하는 CPU control-flow smoke
 5. 여섯 JPEG, calibration, 최근 1초 ego history와 route를 읽는 PyTorch dataset
 6. 6개의 6.4초 `(x, y, speed)` 후보를 출력하는 baseline: v0 1,053,278개,
-   physical-v1 954,590개 parameter
+   physical-v1 954,590개 parameter; 별도 연구용 candidate-rank E는 1,068,249개
 7. best-of-K trajectory loss, 실제 backprop/optimizer, checkpoint와 exact resume
 8. `val`/`test` 전용 open-loop evaluator, 차량 중심 trajectory PNG, 공정성 검사가 있는
    report A/B comparison
@@ -61,9 +61,10 @@ shadow다. 세 장면 모두 `EVIDENCE_VALID`, 10 Hz `ESTABLISHED_FOR_SHADOW_ONL
 [후속 제어 A/B 보고서](validation-2026-09-07-control-ab.md)에 있다.
 
 <!-- HH_260906 - Keep completed research campaigns separate from the unchanged deployed shadow checkpoint. -->
-**오늘의 후속 학습도 완료**했다. LR A/B 6회, 확장 데이터 C 3회, selector 가중치 D 3회에
-대해 각각 학습·val337 평가·runtime gate v8 감사를 마쳤다. A/B는 seed `20260905`, D/C는
-seed `20260903`에서 상대 기준을 통과하지 못했고 절대 품질 판정도 각 캠페인의 후보
+**오늘의 후속 학습도 완료**했다. LR A/B 6회, 확장 데이터 C 3회, selector 가중치 D 3회,
+후보 경로 인지 점수 모델 E 3회로 네 캠페인의 총 15개 run에서 각각 학습·val337 평가·runtime
+gate v8 감사를 마쳤다. 재사용한 C baseline은 다시 세지 않는다. A/B는 seed `20260905`,
+D/C와 E/C는 seed `20260903`에서 상대 기준을 통과하지 못했고 절대 품질 판정도 각 캠페인의 후보
 seed에서 FAIL이었다. 새 checkpoint는 연구용으로 보존하며 기존 shadow 모델을 교체하지
 않았다. 데이터는 v3 `train 1,147 / val 337 / test 309`개로 확장했고 test는 모델 평가나
 선택에 사용하지 않았다. [오늘의 결과와 분류된 증거](validation-2026-09-07-portable-learning.md)를
@@ -948,10 +949,12 @@ benchmark를 대신하지 않으며, 이 표도 closed-loop 또는 차량 제어
 154 steps이므로 1,540 steps가 정확히 10 epochs다. dataset 또는 batch를 바꾸면 이 숫자를
 복사하지 말고 새 sampling plan의 `batches_per_epoch × 10`을 사용한다.
 
-오늘 확장한 **v3**의 train은 1,147개다. C/D 캠페인은 계산량 비교를 위해 동일한 1,540
+오늘 확장한 **v3**의 train은 1,147개다. C/D/E 캠페인은 optimizer budget 비교를 위해 동일한 1,540
 optimizer steps를 고정했으며, 이것을 v3의 10 epochs라고 부르면 안 된다. 아래 명령은
 기존 v2 재현용이고 새 캠페인의 데이터·step 계획은
 [학습·검증 반복 가이드](portable-e2e-learning-loop.md)에서 별도로 고정한다.
+v3 batch 4의 실제 기록은 5개 full epoch 각 1,147개와 6번째 partial epoch 420개로,
+총 6,155번의 sample exposure다. E는 구조가 달라 같은 step이 같은 학습 연산량을 뜻하지 않는다.
 
 ```bash
 physical_config="$REPO_ROOT/portable_e2e/config/perspective_trajectory_physical_v1.model.json"
@@ -1321,8 +1324,8 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 8. **완료 — v3 데이터 확장·검증·전송:** Town01 우회전 train 534개와 Town04 직진
    test 309개를 추가해 `train 1,147 / val 337 / test 309`개를 확보했다. 기존 train/val은
    보존했고 held-out test는 모델 평가·선택에 사용하지 않았다.
-9. **완료 — 후속 학습 12회, 새 모델 미채택:** 아래 세 캠페인이 모두 학습·val337·gate v8
-   감사를 끝냈다. 마지막 D stage 완료는 `2026-09-07T03:02:16.251393Z`(`12:02:16 KST`)다.
+9. **완료 — 후속 학습 15회, 새 모델 미채택:** 아래 네 캠페인이 모두 학습·val337·gate v8
+   감사를 끝냈다. 마지막 E stage 완료는 `2026-09-07T14:34:14Z`(`23:34:14 KST`)다.
 
 <!-- HH_260906 - Report all completed campaigns without treating completion as quality approval or runtime promotion. -->
 | 캠페인 | 완료한 학습 수 | 실제 판정 |
@@ -1330,6 +1333,27 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 | [LR A/B](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/01_learning_rate_ab/README.md) | 6 | seed 20260905 상대 기준 실패, 후보 3개 seed 모두 절대 품질 FAIL |
 | [확장 데이터 C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/06_data_expansion/README.md) | 3 | 3개 seed 모두 절대 품질 FAIL; 서로 다른 corpus 간 자동 승격 비교는 하지 않음 |
 | [selector 가중치 D/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/07_selector_weight_ab/README.md) | 3 | seed 20260903 상대 기준 실패, D 3개 seed 모두 절대 품질 FAIL |
+| [후보 경로 인지 점수 E/C](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/11_candidate_rank_ab/README.md) | 3 | seed 20260903 ADE 악화로 상대 기준 실패, E 3개 seed 모두 절대 품질 FAIL |
+
+<!-- HH_260906 - Separate the completed candidate-aware scorer experiment from existing deployment and live timing evidence. -->
+[후보 경로 인지 점수 모델 설계](portable-e2e-candidate-ranking.md)의 E는 기존 C와 동일
+v3·seed·1,540 step·score weight 0.1을 사용하지만 점수 모델의 구조와 parameter 수가 다르다.
+물리 decoder·loss·평가·안전 gate는 바꾸지 않았다. **원래 GPU 최종 val337 평가**는 다음과 같다.
+
+| Seed | C selected ADE / FDE (m) | E selected ADE / FDE (m) | E 상대 / 절대 판정 |
+|---|---:|---:|---|
+| 20260903 | 3.874328 / 9.827706 | 4.735725 / 9.413042 | FAIL / FAIL |
+| 20260904 | 6.258545 / 12.897454 | 4.539105 / 9.709312 | PASS / FAIL |
+| 20260905 | 4.789547 / 11.866288 | 4.228415 / 9.348654 | PASS / FAIL |
+
+selected geometry는 C/E 모두 `336/337`이다. 일부 seed의 개선으로 전체를 PASS 처리하지
+않으며 E checkpoint는 **연구용·미배포** 상태다.
+[E 3개 seed 경로 분석과 차량 중심 PNG 18장](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/12_candidate_rank_route_analysis/README.md)은
+CPU 검증 예측이며 CARLA/Autoware 주행 촬영이나 E의 live 10 Hz 증거가 아니다. 기존 운용
+checkpoint·bundle과 10 Hz shadow 이력은 그대로 유지하며 Portable learned closed-loop는 0회다.
+[전체 코드 검증](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/13_candidate_rank_code_validation/README.md)은
+`2,333 passed / 6 skipped`다. 5개는 구형 로컬 Torch의 secure loader 미지원, 1개는
+고정 Woraksan 자산 부재로 생략됐으며 설치나 우회로 통과시킨 결과가 아니다.
 
 첫 seed `20260903`의 A/B에 대해서는 [selector 진단 발행본](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/04_selection_diagnostics/README.md)도
 완료했다. 선택은 A의 c2에서 B의 c4로 바뀌었지만 각 337/337로 고정됐으며, 후보 geometry는
@@ -1341,11 +1365,18 @@ checksum dry-run report에 출력이 있으면 예시 자체가 승격 전에 �
 품질 개선을 주장하지 않는다. 두 진단은 기존 개인 venv의 CPU·4 threads로 val만 분석했고
 held-out test는 열지 않았다. 약 11~13초의 분석 소요 시간은 live 10 Hz 성능 증거가 아니다.
 
+[C/D 전체 3개 seed의 목표 일치 진단](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/10_objective_alignment/README.md)은
+train1147과 val337을 따로 분석했다. 가중치 증가로 train의 selector/composite-oracle 일치율은
+모두 좋아졌지만 val 변화는 섞여 있었고, 두 oracle의 차이만으로 큰 선택 오차를 설명할 수
+없었다. D seed `20260904`의 CPU selected ADE `5.355382 m`와 원래 GPU `5.336995 m`,
+선택 histogram 차이도 보존했다. CPU/GPU 수치를 합치거나 near-tie 원인을 확정하지 않는다.
+
 [오늘의 전체 결과](validation-2026-09-07-portable-learning.md)와
 [학습·검증 반복 가이드](portable-e2e-learning-loop.md)에 이어 **다음 실행 순서**는 다음과 같다.
-기존 shadow 모델은 그대로 유지하며, 12회 학습 완료를 30개 기능 완료로 해석하지 않는다.
+기존 shadow 모델은 그대로 유지하며, 15회 학습 완료를 30개 기능 완료로 해석하지 않는다.
 
-1. **다음 개발 A/B:** 완료된 LR·데이터 확장·selector 가중치 실험의 실패 분석을 바탕으로
+1. **다음 개발 A/B:** 완료된 LR·데이터 확장·selector 가중치·후보 경로 인지 점수 모델 실험과
+   학습/검증 목표 일치 진단을 바탕으로
    v3와 val337, seed/step budget을 고정한 새 계획을 먼저 선언한다. loss/ranking 설정은
    한 번에 하나씩 바꾸고 후보별 ADE/FDE와 geometry, oracle regret,
    speed·yaw·kinematic metric을 비교하며 미달·퇴행 후보도 함께 보존한다. 같은 val을 반복

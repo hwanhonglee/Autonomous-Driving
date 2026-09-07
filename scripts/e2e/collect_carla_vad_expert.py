@@ -1169,6 +1169,67 @@ def suppress_stopped_brake_steering(
     return False
 
 
+def agent_initialization_mode(args: argparse.Namespace) -> str:
+    """HH_260906 - Keep historical constructor timing unless the explicit acknowledged initialization experiment is selected."""
+    mode = getattr(args, "agent_initialization", "before_bootstrap")
+    if mode not in ("before_bootstrap", "after_bootstrap"):
+        raise CollectionError("unknown BasicAgent initialization mode")
+    if mode == "after_bootstrap" and getattr(args, "control_transport", "legacy_async") != "acknowledged_batch":
+        raise CollectionError("after_bootstrap agent initialization requires acknowledged_batch control transport")
+    return mode
+
+
+def checked_agent_initialization_observation(
+    world: Any, ego: Any, expected_frame: int, record: dict[str, Any], *, controller: Any = None,
+) -> dict[str, Any]:
+    """HH_260906 - Retain frame-bound constructor/engagement witnesses and reject unknown or nonzero PID history without overwriting it."""
+    record["status"] = "PENDING"
+    try:
+        checked_agent_initialization_frame(expected_frame)
+        snapshot = world.get_snapshot()
+        frame = checked_agent_initialization_frame(snapshot.frame)
+        if frame != expected_frame:
+            raise CollectionError("BasicAgent initialization observation frame differs from the verified brake frame")
+        actor = snapshot.find(ego.id)
+        if actor is None or getattr(actor, "id", ego.id) != ego.id:
+            raise CollectionError("BasicAgent initialization snapshot is missing the owned actor")
+        transform = _transform_dict(actor.get_transform())
+        if any(not math.isfinite(value) for value in transform.values()):
+            raise CollectionError("BasicAgent initialization snapshot pose is nonfinite")
+        observed = AcknowledgedControlTransport.checked_control(ego.get_control())
+        after_frame = checked_agent_initialization_frame(world.get_snapshot().frame)
+        timestamp = float(snapshot.timestamp.elapsed_seconds)
+        if not math.isfinite(timestamp):
+            raise CollectionError("BasicAgent initialization snapshot timestamp is nonfinite")
+        record.update(expected_frame=expected_frame, frame_before=frame, frame_after=after_frame,
+            timestamp=timestamp, actor_id=ego.id, actor_snapshot_transform_carla=transform,
+            current_control=observed, raw_state_reference="CARLA actor snapshot API reference point; physical COM identity is unverified.")
+        if after_frame != frame:
+            raise CollectionError("world advanced while observing BasicAgent initialization")
+        if (observed["steer"] != 0.0 or observed["throttle"] != 0.0 or observed["brake"] != 1.0
+                or any(observed[key] for key in ("hand_brake", "reverse", "manual_gear_shift"))):
+            raise CollectionError("BasicAgent initialization requires the verified zero-steering full-service-brake state")
+        if controller is not None:
+            past = getattr(controller, "past_steering", None)
+            if isinstance(past, bool) or not isinstance(past, (int, float)) or not math.isfinite(past):
+                raise CollectionError("BasicAgent PID past_steering is missing or nonfinite")
+            record["pid_past_steering"] = float(past)
+            if past != observed["steer"]:
+                raise CollectionError("BasicAgent PID history differs from frame-bound zero steering")
+        record["status"] = "PASS"
+        return record
+    except Exception as error:
+        record.update(status="FAIL", error_type=type(error).__name__)
+        raise
+
+
+def checked_agent_initialization_frame(value: Any) -> int:
+    """HH_260906 - Reject ambiguous frame identities in the opt-in initialization witness."""
+    if type(value) is not int or value < 0:
+        raise CollectionError("BasicAgent initialization frame must be a nonnegative integer")
+    return value
+
+
 def collect_episode(
     args: argparse.Namespace,
     route: Mapping[str, Any],
@@ -1183,6 +1244,20 @@ def collect_episode(
     from agents.navigation.basic_agent import BasicAgent
     from agents.navigation.global_route_planner import GlobalRoutePlanner
 
+    # HH_260906 - Validate the opt-in boundary before any client or simulator operation.
+    after_bootstrap_agent = agent_initialization_mode(args) == "after_bootstrap"
+    initialization_record = None
+    if after_bootstrap_agent:
+        initialization_record = {
+            "schema": "carla.basic_agent_initialization.v1", "mode": "after_bootstrap", "explicit_opt_in": True,
+            "required_control_transport": "acknowledged_batch", "existing_bootstrap_tick_reused": True,
+            "additional_world_ticks": 0, "constructor_requires_verified_bootstrap": True,
+            "pid_history_overwritten": False, "observed_zero_steering_required": True,
+            "first_proposed_steering_delta_limit": 0.1, "comparison_absolute_tolerance": 1e-6,
+            "physical_cause_proven": False, "training_data_approved": False,
+            "construction": {"status": "NOT_REACHED"}, "engagement": {"status": "NOT_REACHED"},
+        }
+        manifest.setdefault("capture_contract", {})["agent_initialization"] = initialization_record
     stationary_warmup_sec = float(getattr(args, "stationary_warmup_sec", 0.0))
     stationary_tail_sec = float(getattr(args, "stationary_tail_sec", 0.0))
     # HH_260906 - Resolve the fixed profile before changing any simulator state.
@@ -1361,24 +1436,27 @@ def collect_episode(
             )
             terminal_plan["global_route_planner_source"] = _python_class_source_provenance(planner)
             manifest["capture_contract"]["goal_stop_profile"]["terminal_plan"] = terminal_plan
-        agent = BasicAgent(
-            ego,
-            target_speed=args.target_speed_kmh,
-            opt_dict=basic_agent_options,
-            map_inst=carla_map,
-            grp_inst=planner,
-        )
-        agent.set_global_plan(plan)
-        local_planner = agent.get_local_planner()
-        if goal_stop_config:
-            # HH_260906 - Hazard braking remains BasicAgent's original emergency override.
-            goal_stop_control = (install_development_control(agent, goal_stop_governor)
-                                 if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
-                                 else install_normal_brake_cap(
-                                     local_planner, goal_stop_config.normal_brake_cap,
-                                     goal_stop_config.normal_throttle_cap))
-            goal_stop_control["unchanged_basic_agent_emergency_brake"] = float(agent._max_brake)
-            manifest["capture_contract"]["goal_stop_profile"]["effective_control"] = goal_stop_control
+        def construct_agent() -> tuple[Any, Any]:
+            # HH_260906 - Both modes use the identical constructor, route plan and normal/emergency hooks.
+            built = BasicAgent(
+                ego, target_speed=args.target_speed_kmh, opt_dict=basic_agent_options,
+                map_inst=carla_map, grp_inst=planner,
+            )
+            built.set_global_plan(plan)
+            built_planner = built.get_local_planner()
+            if goal_stop_config:
+                # HH_260906 - Hazard braking remains BasicAgent's original emergency override.
+                goal_stop_control = (install_development_control(built, goal_stop_governor)
+                                     if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
+                                     else install_normal_brake_cap(
+                                         built_planner, goal_stop_config.normal_brake_cap,
+                                         goal_stop_config.normal_throttle_cap))
+                goal_stop_control["unchanged_basic_agent_emergency_brake"] = float(built._max_brake)
+                manifest["capture_contract"]["goal_stop_profile"]["effective_control"] = goal_stop_control
+            return built, built_planner
+
+        if not after_bootstrap_agent:
+            agent, local_planner = construct_agent()
 
         # CARLA 0.9.15 can report the actor at the origin until its first world
         # tick.  Advance one disclosed, unrecorded setup tick under full brake so
@@ -1404,6 +1482,21 @@ def collect_episode(
                 "current_control": control_dict(observed_control), "alignment": bootstrap_alignment}
             if bootstrap_alignment["status"] != "PASS":
                 raise CollectionError("acknowledged bootstrap control/frame alignment failed")
+        if after_bootstrap_agent:
+            construction = initialization_record["construction"]
+            construction["status"] = "PENDING"
+            try:
+                checked_agent_initialization_observation(world, ego, bootstrap_frame, construction.setdefault("before", {}))
+                agent, local_planner = construct_agent()
+                checked_agent_initialization_observation(world, ego, bootstrap_frame, construction.setdefault("after", {}),
+                    controller=local_planner._vehicle_controller)
+                if any(construction["before"][key] != construction["after"][key] for key in
+                        ("frame_before", "frame_after", "timestamp", "actor_id", "actor_snapshot_transform_carla", "current_control")):
+                    raise CollectionError("BasicAgent constructor changed its frame-bound control or snapshot witness")
+                construction["status"] = "PASS"
+            except Exception as error:
+                construction.update(status="FAIL", error_type=type(error).__name__)
+                raise
         capture_origin_timestamp = float(
             bootstrap_snapshot.timestamp.elapsed_seconds
         )
@@ -1719,7 +1812,28 @@ def collect_episode(
                 send_control(_blank_brake_control(carla), "initial_governor_failure_abort")
                 raise CollectionError(goal_stop_governor.failure_reason)
             agent.set_target_speed(initial_goal_stop["target_speed_mps"] * 3.6)
-        initial_drive_control = agent.run_step()
+        try:
+            if after_bootstrap_agent:
+                engagement = initialization_record["engagement"]
+                engagement.update(status="PENDING", first_command_acknowledged=False)
+                checked_agent_initialization_observation(world, ego,
+                    state_records[-1]["frame"] if state_records else bootstrap_frame, engagement.setdefault("before", {}),
+                    controller=local_planner._vehicle_controller)
+            initial_drive_control = agent.run_step()
+            if after_bootstrap_agent:
+                proposed = AcknowledgedControlTransport.checked_control(initial_drive_control)
+                engagement["first_proposed_control"] = proposed
+                engagement["frame_after_agent_step"] = checked_agent_initialization_frame(world.get_snapshot().frame)
+                engagement["first_proposed_steering_delta"] = proposed["steer"] - engagement["before"]["pid_past_steering"]
+                if engagement["frame_after_agent_step"] != engagement["before"]["frame_before"]:
+                    raise CollectionError("world advanced during first BasicAgent step")
+                if abs(engagement["first_proposed_steering_delta"]) > 0.1 + 1e-6:
+                    raise CollectionError("first BasicAgent steering step exceeds the unchanged PID delta limit")
+                engagement["status"] = "VALIDATED_NOT_SENT"
+        except Exception as error:
+            if after_bootstrap_agent:
+                engagement.update(status="FAIL", error_type=type(error).__name__)
+            raise
         velocity = (state_records[-1]["world_velocity_carla"] if state_records else bootstrap_raw["world_velocity_carla"]
                     ) if acknowledged is not None else _vector_tuple(ego.get_velocity())
         if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
@@ -1731,6 +1845,11 @@ def collect_episode(
                 enabled=not args.allow_stopped_steering,
             )
         send_control(initial_drive_control, "initial_drive_control", state_records[-1]["frame"] if state_records else bootstrap_frame)
+        if after_bootstrap_agent:
+            # HH_260906 - Bind the final command after the existing emergency/stopped guard; acceptance is not physical actuation proof.
+            engagement["first_sent_control"] = control_dict(initial_drive_control)
+            engagement["first_command_receipt_sequence"] = acknowledged.receipts[-1]["sequence"]
+            engagement.update(status="PASS", first_command_acknowledged=True)
         if state_records and state_records[-1]["capture_phase"] == "stationary_warmup":
             state_records[-1]["next_control"] = control_dict(initial_drive_control)
             if acknowledged is not None:
@@ -1945,6 +2064,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     # HH_260906 - The transport experiment leaves all historical commands and output dictionaries unchanged by default.
     parser.add_argument("--control-transport", choices=("legacy_async", "acknowledged_batch"), default="legacy_async",
                         help="opt-in acknowledged no-tick batch commands with immutable snapshot and strict control/frame alignment")
+    # HH_260906 - The new initialization experiment is explicit; old commands retain the pre-bootstrap constructor.
+    parser.add_argument("--agent-initialization", choices=("before_bootstrap", "after_bootstrap"), default="before_bootstrap",
+                        help="opt-in construct BasicAgent after the existing verified ACK brake bootstrap; no added tick or PID state reset")
     # HH_260906 - Timing is an explicit diagnostic option, not a new default capture or performance claim.
     parser.add_argument("--wall-timing", action="store_true", help="record optional native-tick wall stages; not GUI FPS or learned inference timing")
     parser.add_argument("--wheelbase-m", type=float, default=WHEELBASE_M)
@@ -2024,6 +2146,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     if not math.isfinite(args.goal_tolerance_m) or args.goal_tolerance_m <= 0.0:
         parser.error("goal-tolerance-m must be positive and finite")
     try:
+        agent_initialization_mode(args)
         capture_interval(args.physics_hz, args.capture_hz)
         configuration_from_args(args)
         basic_agent_control_configuration(args, sampling_resolution_m=1.0)
@@ -2113,6 +2236,8 @@ def finalize_wall_timing(recorder: Any, partial: Path, state_records: Sequence[M
 
 
 def run(args: argparse.Namespace) -> Path:
+    # HH_260906 - Programmatic callers must respect the same explicit ACK-only initialization boundary as CLI callers.
+    agent_initialization_mode(args)
     output = args.output.expanduser().resolve()
     partial = Path(str(output) + ".partial")
     if output.exists():

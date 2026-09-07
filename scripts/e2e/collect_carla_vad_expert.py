@@ -790,6 +790,110 @@ def control_dict(control: Any) -> dict[str, Any]:
     }
 
 
+class AcknowledgedControlTransport:
+    """HH_260906 - Acknowledge server command acceptance without claiming physical actuator application."""
+
+    def __init__(self, client: Any, carla: Any, ego: Any, frame_reader: Any, persist_receipt: Any):
+        if type(ego.id) is not int or ego.id <= 0:
+            raise CollectionError("acknowledged transport requires one valid owned actor ID")
+        self.client, self.carla, self.ego = client, carla, ego
+        self.frame_reader, self.persist_receipt = frame_reader, persist_receipt
+        self.receipts: list[dict[str, Any]] = []
+        self.alignment_failures = 0
+
+    @staticmethod
+    def checked_control(control: Any) -> dict[str, Any]:
+        # HH_260906 - Reject malformed controls before a batch can send them to the owned actor.
+        for name in ("throttle", "brake", "steer"):
+            value = getattr(control, name, None)
+            if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value):
+                raise CollectionError("acknowledged control has a nonfinite or invalid numeric field")
+            if not (-1.0 <= value <= 1.0 if name == "steer" else 0.0 <= value <= 1.0):
+                raise CollectionError("acknowledged control is outside normalized limits")
+        if any(type(getattr(control, name, None)) is not bool for name in ("hand_brake", "reverse", "manual_gear_shift")):
+            raise CollectionError("acknowledged control requires strict boolean flags")
+        if type(getattr(control, "gear", None)) is not int:
+            raise CollectionError("acknowledged control requires an integer gear")
+        return control_dict(control)
+
+    def send(self, control: Any, reason: str, expected_before_frame: int | None = None) -> dict[str, Any]:
+        requested = self.checked_control(control)
+        receipt = {"sequence": len(self.receipts) + 1, "mode": "acknowledged_batch", "actor_id": self.ego.id,
+            "reason": reason, "requested_control": requested, "do_tick": False, "status": "FAILED",
+            "server_accepted": False, "physical_actuation_proven": False}
+        self.receipts.append(receipt)
+        try:
+            before = self.frame_reader()
+            if type(before) is not int or before < 0:
+                raise CollectionError("acknowledged command has an invalid before-frame")
+            receipt["before_frame"] = before
+            if expected_before_frame is not None:
+                receipt["expected_before_frame"] = expected_before_frame
+                if type(expected_before_frame) is not int or before != expected_before_frame:
+                    raise CollectionError("command source frame changed before acknowledgement")
+            responses = self.client.apply_batch_sync(
+                [self.carla.command.ApplyVehicleControl(self.ego.id, control)], False)
+            if not isinstance(responses, (list, tuple)) or len(responses) != 1:
+                raise CollectionError("acknowledged command requires exactly one response")
+            response = responses[0]
+            if response.has_error() is not False or response.error != "":
+                raise CollectionError("owned control batch failed: " + str(response.error))
+            if type(response.actor_id) is not int or response.actor_id != self.ego.id:
+                raise CollectionError("acknowledged command response actor ID mismatch")
+            receipt["response_actor_id"] = response.actor_id
+            receipt["server_accepted"] = True
+            after = self.frame_reader()
+            receipt["after_ack_frame"] = after
+            if type(after) is not int or after != before:
+                raise CollectionError("world frame changed during a no-tick acknowledged command")
+            receipt["status"] = "ACKNOWLEDGED"
+        except Exception as error:
+            receipt["error"] = f"{type(error).__name__}: {error}"
+            raise CollectionError("acknowledged control transport failed; no async fallback: " + str(error)) from error
+        finally:
+            # HH_260906 - Persist each success/failure receipt before the caller is allowed to advance a physics tick.
+            self.persist_receipt(receipt)
+        return receipt
+
+    def compare_observation(self, control: Any, expected: Mapping[str, Any], frame: int,
+                            before_control_frame: int, after_control_frame: int) -> dict[str, Any]:
+        observed = self.checked_control(control)
+        request = expected["requested_control"]
+        mismatches = [name for name in ("throttle", "brake", "steer")
+                      if abs(observed[name] - request[name]) > 1.0e-6]
+        mismatches += [name for name in ("hand_brake", "reverse", "manual_gear_shift") if observed[name] != request[name]]
+        if request["manual_gear_shift"] and observed["gear"] != request["gear"]:
+            mismatches.append("gear")
+        frame_bound = (type(frame) is int and type(before_control_frame) is int and type(after_control_frame) is int
+                       and before_control_frame == after_control_frame == frame
+                       and expected["status"] == "ACKNOWLEDGED" and expected["after_ack_frame"] == frame - 1)
+        passed = frame_bound and not mismatches
+        self.alignment_failures += int(not passed)
+        return {"status": "PASS" if passed else "FAIL", "expected_receipt_sequence": expected["sequence"],
+            "expected_command_before_frame": expected.get("before_frame"), "observed_frame": frame,
+            "control_read_frame_before": before_control_frame, "control_read_frame_after": after_control_frame,
+            "frame_binding_pass": frame_bound, "mismatched_fields": mismatches, "absolute_tolerance": 1.0e-6,
+            "automatic_gear_equality_required": False, "lookback_relabeling_allowed": False,
+            "physical_actuation_proven": False}
+
+
+def acknowledged_snapshot_state(snapshot: Any, ego: Any, wheelbase_m: float) -> tuple[dict[str, float], dict[str, Any]]:
+    """HH_260906 - Preserve one immutable actor snapshot's raw reference point without redefining legacy acceleration."""
+    actor = snapshot.find(ego.id)
+    if actor is None or actor.id != ego.id:
+        raise CollectionError("owned ego is missing from the immutable frame snapshot")
+    transform = _transform_dict(actor.get_transform())
+    velocity = _vector_tuple(actor.get_velocity())
+    acceleration = _vector_tuple(actor.get_acceleration())
+    angular = _vector_tuple(actor.get_angular_velocity())
+    if not all(math.isfinite(value) for value in (*transform.values(), *velocity, *acceleration, *angular)):
+        raise CollectionError("immutable actor snapshot contains nonfinite measurements")
+    raw = {"actor_snapshot_transform_carla": transform, "world_velocity_carla": velocity,
+        "world_acceleration_carla": acceleration, "world_angular_velocity_carla_deg_s": angular,
+        "raw_state_reference": "CARLA actor snapshot API reference point; physical COM/rear-axle identity is not independently verified."}
+    return base_link_state(transform, velocity, acceleration, angular[2], wheelbase_m), raw
+
+
 def measured_vehicle_fields(ego: Any, carla: Any) -> dict[str, float]:
     """Read physical steering and map speed-limit labels for the current tick."""
     steering = front_steering_measurement(
@@ -1135,6 +1239,19 @@ def collect_episode(
     queues = {name: SimpleQueue() for name in MODEL_CAMERA_ORDER}
     stop_requested = False
     previous_handlers: dict[int, Any] = {}
+    acknowledged = None
+
+    def persist_control_receipt(receipt: Mapping[str, Any]) -> None:
+        # HH_260906 - This append-only journal is closed before any subsequent physics tick.
+        with (partial / "control_receipts.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(receipt, sort_keys=True, allow_nan=False) + "\n")
+
+    def send_control(control: Any, reason: str, expected_frame: int | None = None) -> dict[str, Any] | None:
+        # HH_260906 - Every owned-ego command uses one selected transport, including bootstrap and abort commands.
+        if acknowledged is None:
+            ego.apply_control(control)
+            return None
+        return acknowledged.send(control, reason, expected_frame)
 
     def request_stop(signum: int, _frame: Any) -> None:
         nonlocal stop_requested
@@ -1178,6 +1295,9 @@ def collect_episode(
         if ego is None:
             raise CollectionError(f"failed to spawn {args.vehicle_type} at route start")
         actors.append(ego)
+        if getattr(args, "control_transport", "legacy_async") == "acknowledged_batch":
+            acknowledged = AcknowledgedControlTransport(
+                client, carla, ego, lambda: world.get_snapshot().frame, persist_control_receipt)
 
         for spec in specs:
             blueprint = blueprint_library.find(spec.carla_type)
@@ -1258,13 +1378,26 @@ def collect_episode(
         # tick.  Advance one disclosed, unrecorded setup tick under full brake so
         # every state labelled "driving" was produced by a BasicAgent control.
         bootstrap_control = _blank_brake_control(carla)
-        ego.apply_control(bootstrap_control)
+        send_control(bootstrap_control, "pre_capture_bootstrap")
         bootstrap_frame = int(world.tick(args.timeout))
         bootstrap_snapshot = world.get_snapshot()
         if int(bootstrap_snapshot.frame) != bootstrap_frame:
             raise CollectionError(
                 "world snapshot frame does not match pre-capture bootstrap tick"
             )
+        if acknowledged is not None:
+            bootstrap_state, bootstrap_raw = acknowledged_snapshot_state(bootstrap_snapshot, ego, args.wheelbase_m)
+            before_control = world.get_snapshot().frame
+            observed_control = ego.get_control()
+            after_control = world.get_snapshot().frame
+            bootstrap_alignment = acknowledged.compare_observation(
+                observed_control, acknowledged.receipts[-1], bootstrap_frame, before_control, after_control)
+            manifest["capture_contract"]["control_transport"]["bootstrap_observation"] = {
+                "frame": bootstrap_frame, "timestamp": float(bootstrap_snapshot.timestamp.elapsed_seconds),
+                "recorded_training_state": False, **bootstrap_state, **bootstrap_raw,
+                "current_control": control_dict(observed_control), "alignment": bootstrap_alignment}
+            if bootstrap_alignment["status"] != "PASS":
+                raise CollectionError("acknowledged bootstrap control/frame alignment failed")
         capture_origin_timestamp = float(
             bootstrap_snapshot.timestamp.elapsed_seconds
         )
@@ -1330,6 +1463,7 @@ def collect_episode(
                 raise CollectionError(
                     "capture reached the tick-exact maximum total duration"
                 )
+            expected_receipt = acknowledged.receipts[-1] if acknowledged is not None else None
             frame = int(world.tick(args.timeout))
             snapshot = world.get_snapshot()
             if int(snapshot.frame) != frame:
@@ -1338,14 +1472,18 @@ def collect_episode(
                 )
             timestamp = float(snapshot.timestamp.elapsed_seconds)
 
-            transform = ego.get_transform()
-            state = base_link_state(
-                _transform_dict(transform),
-                _vector_tuple(ego.get_velocity()),
-                _vector_tuple(ego.get_acceleration()),
-                float(ego.get_angular_velocity().z),
-                args.wheelbase_m,
-            )
+            raw_snapshot_fields = {}
+            if acknowledged is not None:
+                state, raw_snapshot_fields = acknowledged_snapshot_state(snapshot, ego, args.wheelbase_m)
+            else:
+                transform = ego.get_transform()
+                state = base_link_state(
+                    _transform_dict(transform),
+                    _vector_tuple(ego.get_velocity()),
+                    _vector_tuple(ego.get_acceleration()),
+                    float(ego.get_angular_velocity().z),
+                    args.wheelbase_m,
+                )
             vehicle_fields = measured_vehicle_fields(ego, carla)
             if goal_stop_config:
                 # HH_260906 - The legacy 80 m nearest-segment search can jump across close loops.
@@ -1359,7 +1497,12 @@ def collect_episode(
             command = projector.command_at(
                 progress_m, args.command_lookahead_m, args.command_exit_lookahead_m
             )
+            before_control = world.get_snapshot().frame if acknowledged is not None else None
             current_control = ego.get_control()
+            alignment = None
+            if acknowledged is not None:
+                alignment = acknowledged.compare_observation(
+                    current_control, expected_receipt, frame, before_control, world.get_snapshot().frame)
             goal_status = catalog_goal_status(
                 progress_m,
                 projector.length_m,
@@ -1450,6 +1593,15 @@ def collect_episode(
             )
             if goal_stop_record is not None:
                 state_records[-1]["goal_stop"] = goal_stop_record
+            if acknowledged is not None:
+                state_records[-1].update(raw_snapshot_fields)
+                state_records[-1]["control_transport"] = alignment
+                if alignment["status"] != "PASS":
+                    # HH_260906 - Retain the mismatched observation, never relabel it using an older command.
+                    alignment["unapplied_planned_next_control"] = state_records[-1]["next_control"]
+                    next_control = _blank_brake_control(carla)
+                    state_records[-1]["next_control"] = control_dict(next_control)
+                    alignment["abort_full_brake_requested"] = True
             observation = phase_observations[phase]
             observation["state_count"] += 1
             if observation["first_timestamp"] is None:
@@ -1482,8 +1634,15 @@ def collect_episode(
                 )
                 observation["camera_anchor_count"] += 1
 
-            ego.apply_control(next_control)
+            try:
+                send_control(next_control, "alignment_failure_abort" if alignment is not None and alignment["status"] != "PASS"
+                             else "next_" + phase + "_control", frame)
+            finally:
+                if acknowledged is not None and acknowledged.receipts:
+                    state_records[-1]["control_transport"]["next_command_receipt_sequence"] = acknowledged.receipts[-1]["sequence"]
             tick_index += 1
+            if alignment is not None and alignment["status"] != "PASS":
+                raise CollectionError("acknowledged control/frame alignment failed; mismatched row retained")
             if (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
                     and phase != "driving" and goal_stop_governor.failure_reason is not None):
                 # HH_260906 - Retain the offending setup/tail measurement and apply the stop command before aborting.
@@ -1491,17 +1650,18 @@ def collect_episode(
             return goal_status, basic_agent_done, stop_reason
 
         if int(phase_schedule["stationary_warmup"]["scheduled_ticks"]):
-            ego.apply_control(_blank_brake_control(carla))
+            send_control(_blank_brake_control(carla), "stationary_warmup_start", bootstrap_frame)
         for _ in range(int(phase_schedule["stationary_warmup"]["scheduled_ticks"])):
             tick_and_record("stationary_warmup")
 
         if goal_stop_governor:
             # HH_260906 - Ramp the initial command too; do not insert a full-speed first tick.
             goal_stop_governor.target_speed_mps = 0.0
-            initial_state = state_records[-1] if state_records else base_link_state(
-                _transform_dict(ego.get_transform()), _vector_tuple(ego.get_velocity()),
-                _vector_tuple(ego.get_acceleration()), float(ego.get_angular_velocity().z), args.wheelbase_m,
-            )
+            initial_state = state_records[-1] if state_records else (
+                bootstrap_state if acknowledged is not None else base_link_state(
+                    _transform_dict(ego.get_transform()), _vector_tuple(ego.get_velocity()),
+                    _vector_tuple(ego.get_acceleration()), float(ego.get_angular_velocity().z), args.wheelbase_m,
+                ))
             initial_goal_stop = goal_stop_governor.update(
                 max(0.0, projector.length_m - progress_m),
                 math.hypot(initial_state["x"] - float(final_route_point["x"]),
@@ -1514,11 +1674,12 @@ def collect_episode(
                    if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor) else {}),
             )
             if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor) and goal_stop_governor.failure_reason is not None:
-                ego.apply_control(_blank_brake_control(carla))
+                send_control(_blank_brake_control(carla), "initial_governor_failure_abort")
                 raise CollectionError(goal_stop_governor.failure_reason)
             agent.set_target_speed(initial_goal_stop["target_speed_mps"] * 3.6)
         initial_drive_control = agent.run_step()
-        velocity = _vector_tuple(ego.get_velocity())
+        velocity = (state_records[-1]["world_velocity_carla"] if state_records else bootstrap_raw["world_velocity_carla"]
+                    ) if acknowledged is not None else _vector_tuple(ego.get_velocity())
         if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
                 and goal_stop_governor.failure_reason == "comfortable_v3_emergency_override"):
             # HH_260906 - Initial engagement also preserves the exact emergency return before the following measured tick.
@@ -1527,9 +1688,11 @@ def collect_episode(
                 math.sqrt(sum(component * component for component in velocity)),
                 enabled=not args.allow_stopped_steering,
             )
-        ego.apply_control(initial_drive_control)
+        send_control(initial_drive_control, "initial_drive_control", state_records[-1]["frame"] if state_records else bootstrap_frame)
         if state_records and state_records[-1]["capture_phase"] == "stationary_warmup":
             state_records[-1]["next_control"] = control_dict(initial_drive_control)
+            if acknowledged is not None:
+                state_records[-1]["control_transport"]["next_command_receipt_sequence"] = acknowledged.receipts[-1]["sequence"]
             if goal_stop_governor:
                 # HH_260906 - The final warmup state's next command actually starts driving.
                 state_records[-1]["goal_stop"].update(initial_goal_stop)
@@ -1556,7 +1719,10 @@ def collect_episode(
             if stop_reason is not None:
                 break
 
-        ego.apply_control(_blank_brake_control(carla))
+        send_control(_blank_brake_control(carla), "driving_end_brake", state_records[-1]["frame"] if state_records else None)
+        if acknowledged is not None and state_records:
+            state_records[-1]["next_control"] = control_dict(_blank_brake_control(carla))
+            state_records[-1]["control_transport"]["next_command_receipt_sequence"] = acknowledged.receipts[-1]["sequence"]
         if goal_status is None:
             raise CollectionError("driving phase produced no state")
         termination_route_progress_m = progress_m
@@ -1610,6 +1776,12 @@ def collect_episode(
             if quality["status"] != "PASS":
                 raise CollectionError("comfortable goal-stop measured quality failed; preserve partial evidence")
     finally:
+        if acknowledged is not None and sys.exc_info()[0] is not None:
+            try:
+                send_control(_blank_brake_control(carla), "exception_cleanup_abort")
+            except Exception as error:
+                # HH_260906 - Failed emergency acceptance is disclosed and must not skip actor cleanup.
+                cleanup_errors.append(f"acknowledged abort command failed: {error}")
         server_available = _server_available_for_cleanup(
             client, min(args.timeout, 2.0), cleanup_errors
         )
@@ -1628,6 +1800,24 @@ def collect_episode(
             state["collision"] = collisions.get(state["frame"], [])
             state["lane_invasion"] = lane_invasions.get(state["frame"], [])
         result = manifest.setdefault("result", {})
+        if acknowledged is not None:
+            # HH_260906 - A missing receipt journal must fail evidence checks without skipping world or signal restoration.
+            receipt_journal_sha256 = None
+            receipt_journal_error = None
+            try:
+                receipt_journal_sha256 = sha256_file(partial / "control_receipts.jsonl")
+            except Exception as error:
+                receipt_journal_error = f"{type(error).__name__}: {error}"
+                cleanup_errors.append(f"control receipt journal verification failed: {receipt_journal_error}")
+            result["control_transport"] = {
+                "mode": "acknowledged_batch", "command_receipt_count": len(acknowledged.receipts),
+                "acknowledged_command_count": sum(receipt["status"] == "ACKNOWLEDGED" for receipt in acknowledged.receipts),
+                "failed_command_count": sum(receipt["status"] != "ACKNOWLEDGED" for receipt in acknowledged.receipts),
+                "control_alignment_failure_count": acknowledged.alignment_failures,
+                "receipt_journal_sha256": receipt_journal_sha256,
+                "receipt_journal_error": receipt_journal_error,
+                "physical_actuation_proven": False,
+            }
         result["collision_event_count"] = sum(map(len, collisions.values()))
         result["lane_invasion_event_count"] = sum(map(len, lane_invasions.values()))
         result["capture_phases"] = summarize_capture_phases(
@@ -1707,6 +1897,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--vehicle-type", default="vehicle.toyota.prius")
     parser.add_argument("--role-name", default="autoware_e2e_expert")
+    # HH_260906 - The transport experiment leaves all historical commands and output dictionaries unchanged by default.
+    parser.add_argument("--control-transport", choices=("legacy_async", "acknowledged_batch"), default="legacy_async",
+                        help="opt-in acknowledged no-tick batch commands with immutable snapshot and strict control/frame alignment")
     parser.add_argument("--wheelbase-m", type=float, default=WHEELBASE_M)
     parser.add_argument("--spawn-z-offset-m", type=float, default=0.0)
     parser.add_argument("--command-lookahead-m", type=float, default=2.0)
@@ -1930,6 +2123,21 @@ def run(args: argparse.Namespace) -> Path:
                 "full_future_xy_admission": "Pending independent post-capture audit; scalar pilot completion is not dataset approval.",
             })
             manifest["result"] = {"training_data_approved": False, "development_only": True}
+    if getattr(args, "control_transport", "legacy_async") == "acknowledged_batch":
+        manifest["capture_contract"]["control_transport"] = {
+            "schema": "carla.acknowledged_control_transport.v1", "mode": "acknowledged_batch",
+            "command_api": "Client.apply_batch_sync([ApplyVehicleControl(owned_actor_id, control)], False)",
+            "single_actor_single_response": True, "implicit_tick": False, "async_fallback_allowed": False,
+            "receipt_journal": "control_receipts.jsonl", "receipt_persisted_before_next_tick": True,
+            "kinematics_source": "tick-exact immutable WorldSnapshot.find(owned_actor_id)",
+            "control_source": "Vehicle.get_control cached observation bracketed by equal world snapshot frames",
+            "comparison_absolute_tolerance": 1.0e-6, "automatic_gear_equality_required": False,
+            "on_alignment_failure": "retain mismatched row, acknowledge full-brake abort without extra tick, fail capture",
+            "label_rewrite_or_lookback_pass_allowed": False, "physical_actuation_proven": False,
+            "native_acceleration_definition_changed": False,
+        }
+        manifest["files"]["control_receipts"] = "control_receipts.jsonl"
+        _write_jsonl(partial / "control_receipts.jsonl", [])
     _write_json(partial / "manifest.json", manifest)
     error: BaseException | None = None
     try:

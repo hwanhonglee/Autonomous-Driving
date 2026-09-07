@@ -9,7 +9,7 @@ source scripts/e2e/process_group_cleanup.sh
 source scripts/e2e/workspace_runtime_lock.sh
 
 usage() {
-  echo "Usage: run_owned_carla_expert_trial.sh OUTPUT_ROOT ROUTE_JSON [--port PORT] [--quality Low|Epic] [--wall-timeout-sec SEC] [--finish-before-utc YYYY-MM-DDTHH:MM:SSZ] [--capture-mode expert|actuation-response] [-- COLLECTOR_OPTIONS...]"
+  echo "Usage: run_owned_carla_expert_trial.sh OUTPUT_ROOT ROUTE_JSON [--port PORT] [--quality Low|Epic] [--wall-timeout-sec SEC] [--finish-before-utc YYYY-MM-DDTHH:MM:SSZ] [--capture-mode expert|actuation-response|stationary-camera] [-- COLLECTOR_OPTIONS...]"
 }
 if [[ $# -lt 2 ]]; then usage >&2; exit 2; fi
 output_root="$(realpath -m -- "$1")"
@@ -66,6 +66,11 @@ case "${capture_mode}" in
     worker_module=scripts.e2e.calibrate_carla_low_speed_response
     worker_path=scripts/e2e/calibrate_carla_low_speed_response.py
     worker_output_name=actuation ;;
+  stationary-camera)
+    # HH_260906 - Restrict material-quality checks to a named full-brake camera probe, never a driving worker.
+    worker_module=scripts.e2e.probe_carla_stationary_camera_quality
+    worker_path=scripts/e2e/probe_carla_stationary_camera_quality.py
+    worker_output_name=camera_audit ;;
   *) usage >&2; exit 2 ;;
 esac
 if [[ -e "${output_root}" || -L "${output_root}" ]]; then

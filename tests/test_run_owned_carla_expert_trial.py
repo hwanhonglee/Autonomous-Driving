@@ -67,6 +67,8 @@ def harness(tmp_path):
         " sys.exit(7 if a.seed==98 else 0)\n")
     # HH_260906 - The second named worker remains a harmless process in these ownership tests.
     shutil.copy2(scripts / "collect_carla_vad_expert.py", scripts / "calibrate_carla_low_speed_response.py")
+    # HH_260906 - The third named worker is also a harmless fake; no camera or vehicle is created by tests.
+    shutil.copy2(scripts / "collect_carla_vad_expert.py", scripts / "probe_carla_stationary_camera_quality.py")
     (scripts / "probe_carla_server.py").write_text(
         "# HH_260906 - Verify fixture process ownership only; no socket/RPC probe is performed.\n"
         "import argparse,json,os\n"
@@ -271,6 +273,18 @@ def test_named_actuation_worker_has_separate_output_and_exact_source_provenance(
     result = json.loads((harness["output"] / "owner_result.json").read_text())
     assert result["capture_mode"] == "actuation-response"
     assert result["source_bytes_unchanged_and_archived"] is True
+
+
+def test_named_stationary_camera_worker_has_an_independent_output_and_no_actuation_matrix(harness):
+    # HH_260906 - A visual-only probe must not be misidentified as a training episode or pedal response matrix.
+    result = _run(harness, "--capture-mode", "stationary-camera")
+    assert result.returncode == 0, result.stderr
+    plan = json.loads((harness["output"] / "owner_plan.json").read_text())
+    assert plan["worker_path"] == "scripts/e2e/probe_carla_stationary_camera_quality.py"
+    assert plan["collector_argv"][0] == str(harness["output"] / "camera_audit")
+    assert len(plan["source_sha256"]) == 11
+    assert "scripts/e2e/carla_low_speed_response_matrix.py" not in plan["source_sha256"]
+    assert plan["learned_model_control"] is False
 
 
 def test_source_change_during_capture_is_retained_and_rejected(harness):

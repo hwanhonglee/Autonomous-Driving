@@ -154,6 +154,31 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 재출발 보정은 하지 않습니다. 성공적으로 기록하더라도 `training_data_approved: false`이며,
 독립 수치·영상·미래 XY 품질 검사와 별도 데이터 채택이 필요합니다.
 
+## 명령 수신 확인과 프레임 정합성 비교
+
+<!-- HH_260906 - Distinguish acknowledged server acceptance and coherent observations from proven physical actuator timing. -->
+
+기존 수집의 기본 전송 방식은 `legacy_async`입니다. 실제 두 번의 v3 기록에서 직전
+제어 요청과 다음 상태의 API 제어값이 일치하지 않는 경우가 발견됐습니다. CARLA 후보
+소스는 비동기 제어 RPC를 사용하지만, 이 사실만으로 관측된 모든 차이를 실제 물리 지연으로
+확정하지 않습니다. 기록 시점과 actuator 내부 적용 시점은 별도 문제입니다.
+
+별도 전송·계측 비교에는 위 수집 명령의 마지막 `--` 뒤에
+`--control-transport acknowledged_batch`를 추가합니다. 매 명령을 한 차량에 대한
+동기 batch로 보내고 서버 응답을 확인하되, batch 자체는 world tick을 진행하지 않습니다.
+그다음 소유 수집기가 물리 tick을 정확히 한 번 진행합니다. bootstrap·warmup·주행·tail·
+실패 정지 모두 같은 전송 경로를 사용하고 기존 비동기 호출로 자동 전환하지 않습니다.
+
+이 모드에서는 pose·속도·가속도·각속도를 해당 frame의 immutable actor snapshot에서
+읽고, 제어 요청 순번·응답·보고된 제어값과 frame 관계를 추가 기록합니다. 현재 값이
+직전 수신 확인 명령과 맞지 않으면 해당 관측을 남기고 실패 종료합니다. 자동 변속기가
+정하는 실제 gear는 기록하되 요청 gear와 같도록 강제하지 않습니다. 서버 응답은 **명령
+수신 확인**이지 실제 토크가 같은 순간에 작용했다는 증명이 아닙니다.
+
+이 비교는 전송과 관측 일관성을 함께 개선하는 실험이며, 물리 설정·정답 라벨·모델·
+속도 및 가감속 한계는 바꾸지 않습니다. raw 3D 값 추가는 가속도 기준점을 보정한 것도
+아닙니다. 실제 비교 결과와 독립 감사가 끝나기 전에는 학습 데이터로 채택하지 않습니다.
+
 ## 작업 종료 시각을 넘기지 않도록 새 실행 제한
 
 <!-- HH_260906 - Explain the explicit UTC admission budget without promising hard real-time process termination. -->
@@ -174,6 +199,34 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 막는 하드 실시간 종료 보장은 아닙니다. 다른 프로세스를 종료하지 않습니다.
 
 ## 정답 데이터로 채택하기까지
+
+### 도로 표면·화질만 별도로 비교하기
+
+<!-- HH_260906 - Isolate stationary visual quality from moving control experiments and never export the probe as training data. -->
+
+도로가 체크무늬처럼 보이는 등 시각 자료에 문제가 있으면 주행 제어 시험과 분리해
+`stationary-camera`를 사용합니다. 정확한 Town07 경로의 시작점에 Prius를 만들고,
+스로틀·조향은 0, 브레이크는 1로 유지한 채 8초의 simulation 시간을 관찰합니다.
+저장 시점은 5·6·7·8초이며 각 시점의 실제 6개 카메라를 모두 저장합니다.
+이 진단은 **주행도 Common10 학습 데이터 수집도 아닙니다.**
+
+```bash
+# HH_260906 - Compare Low and Epic in separate new owned worlds; no shared package settings are edited.
+bash scripts/e2e/run_owned_carla_expert_trial.sh \
+  artifacts/training/2026-09-08/stationary_camera_quality/example_low \
+  docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json \
+  --quality Low --wall-timeout-sec 300 --capture-mode stationary-camera -- \
+  --mapping autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml \
+  --calibration src/launcher/autoware_launch/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml
+```
+
+Epic 비교는 출력 폴더를 새 이름으로 바꾸고 `--quality Epic`만 변경합니다. CARLA·
+Autoware가 이미 실행 중이면 helper가 거부합니다. 두 결과의 `camera_audit/manifest.json`,
+`camera_frames.jsonl`, `images/`에서 실제 상태·이미지·출처를 비교하며, 렌더링 품질을
+바꾼 결과를 제어 알고리즘의 개선으로 세지 않습니다. 카메라는 이 진단에서 물리 tick마다
+관찰하고 일부 시점만 저장하므로, 저장 이미지 수가 10 Hz 학습 수집률을 뜻하지 않습니다.
+
+### 주행 데이터 채택 검사
 
 <!-- HH_260906 - Render diagnostic evidence directly without turning a failed raw episode into validated training samples. -->
 
@@ -205,6 +258,14 @@ SHA, PNG/GIF에 사용한 frame index는 `visual_provenance.json`에서 확인�
 소스·route·센서 hash, camera coverage/cadence, 실제 가감속, 충돌·차선 침범을 확인하고
 Common10 변환·라벨의 속도 및 독립 XY 진단을 통과해야 새 데이터 후보가 됩니다.
 scalar 가감속 검사만으로 전체 decoder의 표현 가능성이나 주행 안전을 보장하지 않습니다.
+
+<!-- HH_260906 - Enforce an explicit native restriction without treating absent legacy markers as a formal approval proof. -->
+Common10 변환기는 이제 원본에 명시된 `training_data_approved: false` 또는
+`development_only: true`가 있으면 변환을 거부합니다. 수집 완료와 학습 데이터 승인은
+다르기 때문입니다. 이 값을 원본에서 지워 우회하지 않습니다. 과거에 해당 표시가 없던
+데이터는 기존 호환성을 유지하지만, 표시가 없다는 사실 자체를 새 승인 증거로 간주하지
+않습니다. 이미 변환된 데이터의 학습 단계에 외부 승인 기록을 연결하는 검사는 별도
+후속 과제이며, 이번 원본 변환기 검사만으로 전체 경로가 보호된다고 주장하지 않습니다.
 
 그 후에 회전·독립 episode를 늘리고 별도 버전으로 전송합니다. 기존 train/val/test를
 덮어쓰거나 같은 주행을 잘라 split하지 않습니다. 새 학습은 원격 개인 venv·GPU0에서

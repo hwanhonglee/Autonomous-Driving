@@ -212,3 +212,116 @@ def test_duplicate_trial_path_never_doubles_evidence_denominator(batch_fixture):
     duplicate = [trials[0], ("second_name", *trials[0][1:])]
     with pytest.raises(audit.scalar.EvidenceError, match="counted twice"):
         audit.run(duplicate, output, audit.scalar.sha(Path(audit.__file__)))
+
+
+def protocol_manifest(profile, mode=None):
+    capture = {"goal_stop_profile": {"profile_id": profile}}
+    if mode is not None:
+        capture["control_transport"] = {"mode": mode}
+    return {"capture_contract": capture, "coordinate_contract": {"wheelbase_m": 2.85}}
+
+
+@pytest.mark.parametrize("profile,mode,expected", [
+    ("comfortable_v3", None, "comfortable_v3_legacy_async"),
+    ("comfortable_v3", "acknowledged_batch", "comfortable_v3_acknowledged_batch"),
+    ("comfortable_v4", "acknowledged_batch", "comfortable_v4_acknowledged_batch")])
+def test_explicit_reviewed_protocol_dispatch_only(profile, mode, expected):
+    assert audit.protocol_kind(protocol_manifest(profile, mode)) == expected
+
+
+@pytest.mark.parametrize("profile,mode", [("comfortable_v4", None), ("comfortable_v5", "acknowledged_batch"),
+    ("disabled", None), ("comfortable_v3", "async_legacy"), ("comfortable_v3", "unknown")])
+def test_unreviewed_protocol_cannot_override_frozen_dispatch(profile, mode):
+    with pytest.raises(audit.scalar.EvidenceError, match="unreviewed"):
+        audit.protocol_kind(protocol_manifest(profile, mode))
+
+
+def test_malformed_transport_is_not_treated_as_legacy():
+    manifest = protocol_manifest("comfortable_v3")
+    manifest["capture_contract"]["control_transport"] = None
+    with pytest.raises(audit.scalar.EvidenceError, match="unreviewed"):
+        audit.protocol_kind(manifest)
+
+
+def snapshot_state(index, *, pitch=0., yaw=0.):
+    row = state(index)
+    row.update(actor_snapshot_transform_carla={"x": 20. + index * .1, "y": 30., "z": .5,
+        "roll": 2., "pitch": pitch, "yaw": yaw}, world_velocity_carla=[2., 0., 0.],
+        world_acceleration_carla=[0., 0., 0.], world_angular_velocity_carla_deg_s=[0., 0., 0.])
+    row.update(audit.ack_audit.recompute_snapshot_state(row, 2.85))
+    return row
+
+
+def test_full_snapshot_uses_pitch_and_actual_center_without_mutating_recorded_labels():
+    rows = [snapshot_state(i, pitch=10., yaw=90.) for i in range(3)]
+    before = copy.deepcopy(rows)
+    report = audit.snapshot_kinematics(rows, 2.85)
+    assert report["coordinate_conversion_status"] == "RECORDED_FORMULA_MATCH"
+    assert report["state_count"] == 3 and report["mismatched_state_count"] == 0
+    assert report["maximum_zero_pitch_proxy_planar_position_error_m"] == pytest.approx(1.425 * (1 - math.cos(math.radians(10))))
+    assert report["observations"][0]["actor_center_ros_xyz_m"] == [20., -30., .5]
+    assert report["observations"][0]["recorded_rear_ros_xyz_m"][2] == pytest.approx(.5 - 1.425 * math.sin(math.radians(10)))
+    assert rows == before
+
+
+def test_modified_rear_point_is_reported_as_failure_not_silently_reconstructed():
+    rows = [snapshot_state(0), snapshot_state(1)]
+    rows[1]["x"] += .1
+    report = audit.snapshot_kinematics(rows, 2.85)
+    assert report["coordinate_conversion_status"] == "FAIL" and report["mismatched_state_count"] == 1
+    assert report["maximum_absolute_residual_by_field"]["x"] == pytest.approx(.1)
+    assert report["observations"][1]["recorded_rear_ros_xyz_m"][0] == rows[1]["x"]
+
+
+def test_interval_endpoint_difference_is_not_mislabelled_a_coordinate_failure():
+    rows = [snapshot_state(0), snapshot_state(1)]
+    rows[1]["world_velocity_carla"] = [0., 0., 0.]
+    rows[1].update(audit.ack_audit.recompute_snapshot_state(rows[1], 2.85))
+    report = audit.snapshot_kinematics(rows, 2.85)
+    assert report["coordinate_conversion_status"] == "RECORDED_FORMULA_MATCH"
+    assert report["maximum_interval_mean_vs_endpoint_difference"]["center_velocity_mps"] == pytest.approx(2.)
+
+
+def test_noncontiguous_snapshot_interval_is_not_bridged():
+    report = audit.snapshot_kinematics([snapshot_state(0), snapshot_state(2)], 2.85)
+    assert report["observations"][1]["previous_interval_contiguous_20hz"] is False
+    assert "interval_mean_center_velocity_ros_mps" not in report["observations"][1]
+
+
+@pytest.mark.parametrize("mutation", [lambda r: r["actor_snapshot_transform_carla"].pop("pitch"),
+    lambda r: r.update(world_velocity_carla=[0., 0.]), lambda r: r["world_velocity_carla"].__setitem__(0, math.nan)])
+def test_missing_or_nonfinite_full_snapshot_cannot_use_zero_pitch_fallback(mutation):
+    row = snapshot_state(0)
+    mutation(row)
+    with pytest.raises(audit.scalar.EvidenceError):
+        audit.snapshot_kinematics([row], 2.85)
+
+
+@pytest.mark.parametrize("profile,module", [("comfortable_v3", "ack_audit"), ("comfortable_v4", "brake_free_audit")])
+def test_ack_dispatch_calls_its_exact_frozen_auditor_and_keeps_failures(tmp_path, monkeypatch, profile, module):
+    seen = []
+    result = {"source_manifest": [], "pilot_protocol": {"all_checks_pass": False}, "transport_protocol": {"status": "FAIL"}}
+    selected = getattr(audit, module)
+    monkeypatch.setattr(selected, "audit_trial", lambda root: (seen.append(root) or result, []))
+    other = audit.brake_free_audit if module == "ack_audit" else audit.ack_audit
+    monkeypatch.setattr(other, "audit_trial", lambda root: pytest.fail("wrong frozen auditor"))
+    protocol, report = audit.reviewed_protocol(tmp_path, protocol_manifest(profile, "acknowledged_batch"), [snapshot_state(0)], [], {})
+    assert seen == [tmp_path] and protocol["all_checks_pass"] is False
+    assert report["transport_protocol"]["status"] == "FAIL"
+    assert report["reviewed_protocol"] == profile + "_acknowledged_batch"
+
+
+def test_original_async_path_does_not_call_ack_or_change_original_protocol_result(tmp_path, monkeypatch):
+    expected = {"all_checks_pass": False, "original": True}
+    monkeypatch.setattr(audit.control_audit, "analyze_protocol", lambda *args: expected)
+    monkeypatch.setattr(audit.ack_audit, "audit_trial", lambda *args: pytest.fail("legacy path changed"))
+    monkeypatch.setattr(audit.brake_free_audit, "audit_trial", lambda *args: pytest.fail("legacy path changed"))
+    assert audit.reviewed_protocol(tmp_path, protocol_manifest("comfortable_v3"), [], [], {}) == (expected, {})
+
+
+def test_reviewed_transport_metadata_changed_before_diagnostic_fails(tmp_path, monkeypatch):
+    (tmp_path / "receipts.jsonl").write_text("changed")
+    result = {"source_manifest": [{"path": "receipts.jsonl", "sha256": "0" * 64}]}
+    monkeypatch.setattr(audit.ack_audit, "audit_trial", lambda root: (result, []))
+    with pytest.raises(audit.scalar.EvidenceError, match="metadata changed"):
+        audit.reviewed_protocol(tmp_path, protocol_manifest("comfortable_v3", "acknowledged_batch"), [snapshot_state(0)], [], {})

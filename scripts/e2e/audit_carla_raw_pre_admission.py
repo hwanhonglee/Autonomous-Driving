@@ -19,6 +19,8 @@ import warnings
 from PIL import Image, ImageFile
 
 from portable_e2e import contract
+from scripts.e2e import audit_carla_acknowledged_control as ack_audit
+from scripts.e2e import audit_carla_brake_free_goal_stop as brake_free_audit
 from scripts.e2e import audit_carla_comfortable_v3_trial as control_audit
 from scripts.e2e import audit_portable_target_feasibility as targets
 from scripts.e2e import prepare_carla_common10_dataset as adapter
@@ -30,7 +32,9 @@ PHASES = ("stationary_warmup", "driving", "stationary_tail")
 FUNCTIONS = (adapter._causal_state, adapter._interpolate_state, adapter._relative_xy_yaw,
     adapter._rig_document, contract._canonical_route_in_base, targets.audit_sample,
     targets.summarize_samples, scalar.summarize_trial, scalar.analyze_native,
-    control_audit.analyze_protocol)
+    control_audit.analyze_protocol, ack_audit.analyze_transport, ack_audit.analyze_camera_alignment,
+    ack_audit.recompute_snapshot_state, ack_audit.audit_trial,
+    brake_free_audit.verify_owner_sources, brake_free_audit.analyze_protocol, brake_free_audit.audit_trial)
 
 
 def require(condition, message):
@@ -70,6 +74,88 @@ def measured_timeline(states):
         previous_phase = phase
         result.append((stamp, state))
     return tuple(result)
+
+
+def protocol_kind(manifest):
+    # HH_260906 - Dispatch only three independently reviewed protocols, never arbitrary profile or source overrides.
+    capture = manifest.get("capture_contract", {})
+    profile = capture.get("goal_stop_profile", {}).get("profile_id")
+    if profile == "comfortable_v3" and "control_transport" not in capture:
+        return "comfortable_v3_legacy_async"
+    transport = capture.get("control_transport")
+    require(isinstance(transport, dict) and transport.get("mode") == "acknowledged_batch"
+        and profile in ("comfortable_v3", "comfortable_v4"), "unreviewed raw profile/control transport")
+    return profile + "_acknowledged_batch"
+
+
+def reviewed_protocol(root, manifest, states, native_rows, ledger):
+    kind = protocol_kind(manifest)
+    if kind == "comfortable_v3_legacy_async":
+        return control_audit.analyze_protocol(states, native_rows), {}
+    # HH_260906 - The selected auditor verifies its own literal source pins, archived commits, configuration and receipt journal.
+    auditor = ack_audit if kind == "comfortable_v3_acknowledged_batch" else brake_free_audit
+    result = auditor.audit_trial(root)[0]
+    for item in result["source_manifest"]:
+        raw = control_audit.checked_bytes(root, item["path"], ledger)
+        require(digest(raw) == item["sha256"], "reviewed transport metadata changed before diagnostic")
+    return result["pilot_protocol"], {"reviewed_protocol": kind,
+        "transport_protocol": result["transport_protocol"],
+        "reviewed_protocol_scope": "Per-trial frozen source, configuration and receipt proof. Campaign preregistration and before-second-attempt review are separate; this diagnostic does not replace them.",
+        "snapshot_kinematics": snapshot_kinematics(states, manifest["coordinate_contract"]["wheelbase_m"])}
+
+
+def snapshot_kinematics(states, wheelbase):
+    # HH_260906 - Reconstruct all original fields from actual full actor snapshots without replacing any recorded label.
+    require(states and wheelbase == 2.85, "snapshot diagnostic requires the reviewed nonempty 2.85 m rig")
+    fields = ("x", "y", "z", "yaw", "vx", "vy", "ax", "ay", "yaw_rate")
+    maxima = {key: 0.0 for key in fields}
+    mismatches, phase_counts, observations = [], Counter(), []
+    largest_pitch_effect, interval_maxima = 0.0, {"center_velocity_mps": 0.0, "body_yaw_rate_rad_s": 0.0}
+    for index, row in enumerate(states):
+        reconstructed = ack_audit.recompute_snapshot_state(row, wheelbase)
+        residuals = {key: abs(adapter._number(row.get(key), "recorded snapshot " + key) - reconstructed[key]) for key in fields}
+        for key, value in residuals.items():
+            maxima[key] = max(maxima[key], value)
+        if any(value > 1e-6 for value in residuals.values()):
+            mismatches.append({"frame": row["frame"], "absolute_residuals": residuals})
+        pose = row["actor_snapshot_transform_carla"]
+        yaw, pitch = math.radians(pose["yaw"]), math.radians(pose["pitch"])
+        center = [pose["x"], -pose["y"], pose["z"]]
+        pitch_effect = wheelbase / 2 * abs(1 - math.cos(pitch))
+        largest_pitch_effect = max(largest_pitch_effect, pitch_effect)
+        item = {"frame": row["frame"], "capture_phase": row["capture_phase"], "timestamp_ns":
+            adapter._timestamp_ns(row["timestamp"], "snapshot timestamp"), "actor_center_ros_xyz_m": center,
+            "recorded_rear_ros_xyz_m": [row[key] for key in ("x", "y", "z")],
+            "body_yaw_ros_rad": -yaw, "actor_pitch_carla_rad": pitch,
+            "actor_roll_carla_rad": math.radians(pose["roll"]),
+            "zero_pitch_proxy_planar_position_error_m": pitch_effect,
+            "endpoint_center_velocity_ros_mps": [row["world_velocity_carla"][0], -row["world_velocity_carla"][1], row["world_velocity_carla"][2]],
+            "endpoint_body_yaw_rate_ros_rad_s": reconstructed["yaw_rate"],
+            "maximum_conversion_absolute_residual": max(residuals.values())}
+        if index:
+            previous = observations[-1]
+            dt = (item["timestamp_ns"] - previous["timestamp_ns"]) / 1e9
+            require(dt > 0, "snapshot interval timestamp must increase")
+            contiguous = row["frame"] == previous["frame"] + 1 and abs(dt - .05) <= 5e-7
+            item["previous_interval_contiguous_20hz"] = contiguous
+            if contiguous:
+                mean_velocity = [(now - old) / dt for now, old in zip(center, previous["actor_center_ros_xyz_m"])]
+                delta_yaw = math.atan2(math.sin(item["body_yaw_ros_rad"] - previous["body_yaw_ros_rad"]),
+                    math.cos(item["body_yaw_ros_rad"] - previous["body_yaw_ros_rad"]))
+                item.update(interval_mean_center_velocity_ros_mps=mean_velocity, interval_mean_body_yaw_rate_ros_rad_s=delta_yaw / dt)
+                interval_maxima["center_velocity_mps"] = max(interval_maxima["center_velocity_mps"],
+                    math.dist(mean_velocity, item["endpoint_center_velocity_ros_mps"]))
+                interval_maxima["body_yaw_rate_rad_s"] = max(interval_maxima["body_yaw_rate_rad_s"],
+                    abs(delta_yaw / dt - item["endpoint_body_yaw_rate_ros_rad_s"]))
+        phase_counts[row["capture_phase"]] += 1
+        observations.append(item)
+    return {"state_count": len(states), "state_counts_by_phase": dict(phase_counts),
+        "coordinate_conversion_status": "FAIL" if mismatches else "RECORDED_FORMULA_MATCH",
+        "absolute_comparison_tolerance": 1e-6, "maximum_absolute_residual_by_field": maxima,
+        "mismatched_state_count": len(mismatches), "mismatches": mismatches,
+        "maximum_zero_pitch_proxy_planar_position_error_m": largest_pitch_effect,
+        "maximum_interval_mean_vs_endpoint_difference": interval_maxima, "observations": observations,
+        "interpretation": "Uses observed full actor XYZ/pitch/roll/yaw and world vectors, not the earlier zero-pitch center proxy. Formula agreement does not prove the declared rear-axle offset matches physical wheel geometry. Interval averages and endpoint velocities are different observables; their difference is not an error verdict or proof of actuator delay. No label or acceleration convention is changed."}
 
 
 def future_state(timeline, stamps, timestamp):
@@ -242,8 +328,7 @@ def audit_trial(root, expected_owner_sha):
     episode_name = next(name for name in ("episode", "episode.partial") if (root / name).is_dir())
     episode = root / episode_name
     manifest = read_metadata(root, f"{episode_name}/manifest.json", ledger)
-    require(manifest["capture_contract"]["goal_stop_profile"]["profile_id"] == "comfortable_v3",
-        "this diagnostic currently reviews comfortable_v3 raw protocol only")
+    protocol_kind(manifest)
     route = read_metadata(root, f"{episode_name}/route.json", ledger)
     states = read_metadata(root, f"{episode_name}/states.jsonl", ledger, lines=True)
     cameras = read_metadata(root, f"{episode_name}/camera_frames.jsonl", ledger, lines=True)
@@ -253,9 +338,9 @@ def audit_trial(root, expected_owner_sha):
         require(ledger[f"provenance/{path}"]["sha256"] == scalar.sha(ROOT / path),
             "diagnostic motion source differs from archived capture source; explicit reviewed mapping required")
     timeline = measured_timeline(states)
+    alignment, reviewed = reviewed_protocol(root, manifest, states, raw_timeline["native_states"], ledger)
     pixels, image_rows, anchor_rows = camera_audit(episode, manifest, cameras, timeline)
     future, future_rows = measured_future_audit(timeline, cameras, route, anchor_rows)
-    alignment = control_audit.analyze_protocol(states, raw_timeline["native_states"])
     for item in image_rows:
         require(scalar.sha(episode / item["path"]) == item["sha256"], "raw JPEG changed during diagnostic")
     for path, pin in ledger.items():
@@ -268,7 +353,7 @@ def audit_trial(root, expected_owner_sha):
         "raw_scalar_quality": original["independent_qa"], "raw_scalar_candidate_only": original["raw_quality_candidate"],
         "control_protocol": alignment, "camera_pixels": pixels, "measured_future": future,
         "training_data_approved": False, "status": "DIAGNOSED_NOT_ADMITTED",
-        "source_manifest": [{"path": p, **v} for p, v in sorted(ledger.items())]}, image_rows, future_rows
+        "source_manifest": [{"path": p, **v} for p, v in sorted(ledger.items())], **reviewed}, image_rows, future_rows
 
 
 def run(trials, output, expected_script_sha):

@@ -21,3 +21,10 @@ v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월
 
 사용자 요청에 따른 이번 작업 경계는 **2026-09-08 오전 10시 KST**입니다.
 실제 완료·실패·진행 상태와 다음 순서는 위 결과 폴더의 기록을 확인합니다.
+
+<!-- HH_260906 - Report completed raw driving evidence without interpreting scalar success as dataset or model approval. -->
+[Town07 전체 경로 재시험과 실제 화면](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/10_comfortable_v3_pilot/README.md)에
+2회 전체 결과와 PNG 12장·GIF 2개를 추가했습니다. 최고 속도 약 28.6 km/h·8.6초 이상
+순항·목표 앞 자연 정지는 확인했지만, 1회 급감속 초과와 두 실행의 제어 기록 시점 불일치가
+있어 모두 미승인입니다. 다음 비교는 서버의 명령 수신 확인과 동일 프레임 계측입니다.
+카메라 Low 설정의 체크무늬 도로도 별도 정지 상태 영상 검사로 분리합니다.

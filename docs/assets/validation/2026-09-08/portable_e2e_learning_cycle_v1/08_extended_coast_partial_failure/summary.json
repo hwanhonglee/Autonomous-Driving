@@ -1,0 +1,2084 @@
+{
+  "schema": "portable_e2e.low_speed_v3_partial_audit.v1",
+  "evidence_verification": "PASS",
+  "campaign_status": "FAILED_COLLISION",
+  "planned_case_count": 6,
+  "completed_case_count": 2,
+  "failed_case_count": 1,
+  "not_run_case_count": 3,
+  "case_ledger": [
+    {
+      "case_id": "01_coast_45s_repeat_01",
+      "status": "complete"
+    },
+    {
+      "case_id": "02_coast_45s_repeat_02",
+      "status": "complete"
+    },
+    {
+      "case_id": "03_handoff_0.5_ramp_0.05",
+      "status": "failed"
+    },
+    {
+      "case_id": "04_handoff_0.5_ramp_0.10",
+      "status": "not_run_after_failure"
+    },
+    {
+      "case_id": "05_handoff_1.0_ramp_0.05",
+      "status": "not_run_after_failure"
+    },
+    {
+      "case_id": "06_handoff_1.0_ramp_0.10",
+      "status": "not_run_after_failure"
+    }
+  ],
+  "raw_state_count": 2451,
+  "source_manifest": [
+    {
+      "path": "owner_plan.json",
+      "sha256": "837aa0b16147b0334ed6efdfde250633885360ea44cfdc777286bdada6bcc30e",
+      "size_bytes": 2607
+    },
+    {
+      "path": "owner_result.json",
+      "sha256": "5e57c1bed4ec58242a3079602bfcf97a7df97c355002042558b3379dcd1cca49",
+      "size_bytes": 768
+    },
+    {
+      "path": "owner_started.json",
+      "sha256": "2f594c51ab81b73b33c05f92536d9b8764e8c76abd41970b25f10715dff40e4d",
+      "size_bytes": 282
+    },
+    {
+      "path": "provenance/scripts/e2e/run_owned_carla_expert_trial.sh",
+      "sha256": "656ee0ae3606fa1a963a6b77449a9ad872e82fbaf2c56da11a0b6bcc6d9d4382",
+      "size_bytes": 12491
+    },
+    {
+      "path": "provenance/scripts/e2e/run_carla_map.sh",
+      "sha256": "b8ccb5d954e9d54b6dcf4c056acde3260a4d84f490986524dfdfc4f0f0a90ff4",
+      "size_bytes": 5601
+    },
+    {
+      "path": "provenance/scripts/e2e/process_group_cleanup.sh",
+      "sha256": "319752496808bf3013db68e4af39efeaf04d00027ecd6ec635ac7d5baa000c56",
+      "size_bytes": 2148
+    },
+    {
+      "path": "provenance/scripts/e2e/workspace_runtime_lock.sh",
+      "sha256": "ba92c9ecf5ca3d60c2cb5a09c9ee291d79e458925bdcce793940e6699381f236",
+      "size_bytes": 1324
+    },
+    {
+      "path": "provenance/scripts/e2e/probe_carla_server.py",
+      "sha256": "df28db8dadf36632066e74e690ef2cf1a7d2fbe34583179aba3a7166da4ca01c",
+      "size_bytes": 9420
+    },
+    {
+      "path": "provenance/scripts/e2e/env.sh",
+      "sha256": "e6638246911ed4806a22631a6c43887947556367aecac86869c6b80a7017ee08",
+      "size_bytes": 10762
+    },
+    {
+      "path": "provenance/scripts/e2e/collect_carla_vad_expert.py",
+      "sha256": "99107a76653584cb0cbbc5224c09242022bea7124e3de8c79166c6ab4c62dfc5",
+      "size_bytes": 79820
+    },
+    {
+      "path": "provenance/scripts/e2e/carla_goal_stop_profile.py",
+      "sha256": "840a15999b46c71d0561a024997900b0297d9b3ea30cab829a7b0e7a3c52b1f2",
+      "size_bytes": 20814
+    },
+    {
+      "path": "provenance/scripts/e2e/calibrate_carla_low_speed_response.py",
+      "sha256": "7fdc62cf1d8789e0e2bd3d479567056856435f0942acb5871d886fcf651e19f1",
+      "size_bytes": 39201
+    },
+    {
+      "path": "provenance/scripts/e2e/carla_low_speed_response_matrix.py",
+      "sha256": "4434d99289e1a6fad744fe82f784667dd1048710773de671bffa6ba3fcfbd907",
+      "size_bytes": 7388
+    },
+    {
+      "path": "server.log",
+      "sha256": "9cfd04700201beb07e647c13440deca76e4e708f2c61ee2669cbe116885dbf34",
+      "size_bytes": 596
+    },
+    {
+      "path": "lifecycle/ready.json",
+      "sha256": "d9672dc3ba5b1a37a9e036e9fc16f4802fa11158f57ca0f6c11763dbfefd093f",
+      "size_bytes": 902
+    },
+    {
+      "path": "lifecycle/after_capture.json",
+      "sha256": "9c335bb74d3f9682e985786891b6e35abfd130fb71a2336227b67a60bc15e059",
+      "size_bytes": 909
+    },
+    {
+      "path": "lifecycle/stopped.json",
+      "sha256": "b773abee584d97d9ac13efdc45719ea789122be47f5b19031496afecaed706f1",
+      "size_bytes": 714
+    },
+    {
+      "path": "actuation.partial/manifest.json",
+      "sha256": "a449c9bd264093c068147b7fc4fcc7a4180e776fe236d7b3761945b10bb41699",
+      "size_bytes": 10871
+    },
+    {
+      "path": "actuation.partial/route.json",
+      "sha256": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+      "size_bytes": 89741
+    },
+    {
+      "path": "actuation.partial/01_coast_45s_repeat_01/report.json",
+      "sha256": "b60c30491f17cee377956b259a806c6448676736699a48ccfaa39686345b38f4",
+      "size_bytes": 24241
+    },
+    {
+      "path": "actuation.partial/01_coast_45s_repeat_01/states.jsonl",
+      "sha256": "4337d2bb2e76c39dae9e7a83b7c1723ed357aa69b833c380a9fa0f2eec58648a",
+      "size_bytes": 1236447
+    },
+    {
+      "path": "actuation.partial/02_coast_45s_repeat_02/report.json",
+      "sha256": "7ffd5a64dc08cd6806d9a4064b7ed1d4fc3c26604adf2a18fba6b1a4dc6c4b71",
+      "size_bytes": 24240
+    },
+    {
+      "path": "actuation.partial/02_coast_45s_repeat_02/states.jsonl",
+      "sha256": "1e1b7c220d6c451d22392beb452db5100dcbc335e1edeb1b9fd6155e30d50ec2",
+      "size_bytes": 1236146
+    },
+    {
+      "path": "actuation.partial/03_handoff_0.5_ramp_0.05/report.json",
+      "sha256": "679f9bad2cd603a910049868bd1edc11a24e21c3fde444cd7c3a3b7e9fb73fec",
+      "size_bytes": 26428
+    },
+    {
+      "path": "actuation.partial/03_handoff_0.5_ramp_0.05/states.jsonl",
+      "sha256": "eafc8208df9f5ce3e29ee48e87a7fd842505fb45ff5e453cb7ab1bbcd3b93d04",
+      "size_bytes": 367355
+    }
+  ],
+  "base_source_commit": "cdf65a8d0effdc5075fad77d164d0f1305ebee28",
+  "archived_source_sha256": {
+    "scripts/e2e/run_owned_carla_expert_trial.sh": "656ee0ae3606fa1a963a6b77449a9ad872e82fbaf2c56da11a0b6bcc6d9d4382",
+    "scripts/e2e/run_carla_map.sh": "b8ccb5d954e9d54b6dcf4c056acde3260a4d84f490986524dfdfc4f0f0a90ff4",
+    "scripts/e2e/process_group_cleanup.sh": "319752496808bf3013db68e4af39efeaf04d00027ecd6ec635ac7d5baa000c56",
+    "scripts/e2e/workspace_runtime_lock.sh": "ba92c9ecf5ca3d60c2cb5a09c9ee291d79e458925bdcce793940e6699381f236",
+    "scripts/e2e/probe_carla_server.py": "df28db8dadf36632066e74e690ef2cf1a7d2fbe34583179aba3a7166da4ca01c",
+    "scripts/e2e/env.sh": "e6638246911ed4806a22631a6c43887947556367aecac86869c6b80a7017ee08",
+    "scripts/e2e/collect_carla_vad_expert.py": "99107a76653584cb0cbbc5224c09242022bea7124e3de8c79166c6ab4c62dfc5",
+    "scripts/e2e/carla_goal_stop_profile.py": "840a15999b46c71d0561a024997900b0297d9b3ea30cab829a7b0e7a3c52b1f2",
+    "scripts/e2e/calibrate_carla_low_speed_response.py": "7fdc62cf1d8789e0e2bd3d479567056856435f0942acb5871d886fcf651e19f1",
+    "scripts/e2e/carla_low_speed_response_matrix.py": "4434d99289e1a6fad744fe82f784667dd1048710773de671bffa6ba3fcfbd907"
+  },
+  "source_archive_matches_commit_and_owner_postcheck": true,
+  "owner_exit_code": 1,
+  "lifecycle": {
+    "ready": "PASS",
+    "after_capture": "PASS",
+    "stopped": "PASS"
+  },
+  "scalar_bounds": {
+    "physical_decoder": {
+      "maximum_acceleration_mps2": 2.9,
+      "maximum_deceleration_mps2": 2.9
+    },
+    "runtime_speed_rate_gate": {
+      "maximum_acceleration_mps2": 3.0,
+      "maximum_deceleration_mps2": 6.0
+    },
+    "source_sha256": {
+      "portable_e2e/model.py": "6d21485cdce8728e5f3f2ae19d25a71d866a75e806a71a67623dbcca20fe28be",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+    }
+  },
+  "bounds_source_proof": {
+    "schema": "portable_e2e.recorded_bounds_source_proof.v1",
+    "sources": {
+      "portable_e2e/model.py": {
+        "sha256": "6d21485cdce8728e5f3f2ae19d25a71d866a75e806a71a67623dbcca20fe28be",
+        "size_bytes": 25203,
+        "proof_kind": "owner_plan_git_blob_hash_match",
+        "git_commit": "cdf65a8d0effdc5075fad77d164d0f1305ebee28"
+      },
+      "portable_e2e/runtime_contract.py": {
+        "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+        "size_bytes": 34947,
+        "proof_kind": "owner_plan_git_blob_hash_match",
+        "git_commit": "cdf65a8d0effdc5075fad77d164d0f1305ebee28"
+      }
+    },
+    "strict_scalar_limits_verified": true,
+    "recorded_sha256_matched": true,
+    "bounds_archive_available": false,
+    "git_fetch_attempted": false,
+    "historical_execution_proven_by_this_check": false,
+    "notice": "Exact source-byte identity establishes the recorded scalar limits, not independent proof that those bytes executed. Current hash matches do not establish historical execution provenance."
+  },
+  "actual_runtime": {
+    "server_version": "0.9.15-dev-dirty",
+    "client_version": "0.9.15-dev-dirty",
+    "original_world_settings": {
+      "synchronous_mode": false,
+      "fixed_delta_seconds": null,
+      "no_rendering_mode": false,
+      "substepping": true,
+      "max_substep_delta_time": 0.01,
+      "max_substeps": 10
+    },
+    "capture_world_settings": {
+      "synchronous_mode": true,
+      "fixed_delta_seconds": 0.05,
+      "no_rendering_mode": false,
+      "substepping": true,
+      "max_substep_delta_time": 0.01,
+      "max_substeps": 10
+    }
+  },
+  "vehicle_physics": {
+    "schema": "carla.vehicle_physics_snapshot.v1",
+    "values": {
+      "center_of_mass": {
+        "x": 0.5,
+        "y": 0.0,
+        "z": -0.29999998211860657
+      },
+      "clutch_strength": 10.0,
+      "damping_rate_full_throttle": 0.15000000596046448,
+      "damping_rate_zero_throttle_clutch_disengaged": 0.3499999940395355,
+      "damping_rate_zero_throttle_clutch_engaged": 2.0,
+      "drag_coefficient": 0.30000001192092896,
+      "final_ratio": 4.170000076293945,
+      "forward_gears": [
+        {
+          "down_ratio": 0.0,
+          "ratio": 1.0,
+          "up_ratio": 0.0
+        }
+      ],
+      "gear_switch_time": 0.0,
+      "mass": 1375.0,
+      "max_rpm": 5000.0,
+      "moi": 1.0,
+      "steering_curve": [
+        {
+          "x": 0.0,
+          "y": 1.0
+        },
+        {
+          "x": 20.0,
+          "y": 0.8999999761581421
+        },
+        {
+          "x": 60.0,
+          "y": 0.800000011920929
+        },
+        {
+          "x": 120.0,
+          "y": 0.699999988079071
+        }
+      ],
+      "torque_curve": [
+        {
+          "x": -9.310943603515625,
+          "y": 450.0
+        },
+        {
+          "x": 3000.0,
+          "y": 450.0
+        },
+        {
+          "x": 3800.0,
+          "y": 366.0
+        },
+        {
+          "x": 5000.0,
+          "y": 304.0
+        }
+      ],
+      "use_gear_autobox": true,
+      "use_sweep_wheel_collision": false,
+      "wheels": [
+        {
+          "damping_rate": 0.25,
+          "lat_stiff_max_load": 3.0,
+          "lat_stiff_value": 20.0,
+          "long_stiff_value": 3000.0,
+          "max_brake_torque": 800.0,
+          "max_handbrake_torque": 0.0,
+          "max_steer_angle": 69.99999237060547,
+          "position": {
+            "x": -20027.841796875,
+            "y": 6572.06640625,
+            "z": 83.37267303466797
+          },
+          "radius": 37.0,
+          "tire_friction": 3.5
+        },
+        {
+          "damping_rate": 0.25,
+          "lat_stiff_max_load": 3.0,
+          "lat_stiff_value": 20.0,
+          "long_stiff_value": 3000.0,
+          "max_brake_torque": 800.0,
+          "max_handbrake_torque": 0.0,
+          "max_steer_angle": 69.99999237060547,
+          "position": {
+            "x": -19865.001953125,
+            "y": 6573.90576171875,
+            "z": 83.37267303466797
+          },
+          "radius": 37.0,
+          "tire_friction": 3.5
+        },
+        {
+          "damping_rate": 0.25,
+          "lat_stiff_max_load": 3.0,
+          "lat_stiff_value": 20.0,
+          "long_stiff_value": 3000.0,
+          "max_brake_torque": 800.0,
+          "max_handbrake_torque": 1600.0,
+          "max_steer_angle": 0.0,
+          "position": {
+            "x": -20026.080078125,
+            "y": 6854.02294921875,
+            "z": 83.37312316894531
+          },
+          "radius": 37.0,
+          "tire_friction": 3.5
+        },
+        {
+          "damping_rate": 0.25,
+          "lat_stiff_max_load": 3.0,
+          "lat_stiff_value": 20.0,
+          "long_stiff_value": 3000.0,
+          "max_brake_torque": 800.0,
+          "max_handbrake_torque": 1600.0,
+          "max_steer_angle": 0.0,
+          "position": {
+            "x": -19873.1328125,
+            "y": 6855.75048828125,
+            "z": 83.37312316894531
+          },
+          "radius": 37.0,
+          "tire_friction": 3.5
+        }
+      ]
+    },
+    "extra_vehicle_fields": [],
+    "notice": "Actual get_physics_control values; engine RPM, wheel RPM, filtered PhysX inputs and tire sticky state are not measured by this API."
+  },
+  "physics_identical_across_executed_cases_and_v1_v2": true,
+  "route_sha256": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+  "cases": [
+    {
+      "case": {
+        "case_id": "01_coast_45s_repeat_01",
+        "kind": "coast",
+        "level": 0.0,
+        "repeat": 1,
+        "hold_seconds": 45.0,
+        "ramp_rate_per_second": null
+      },
+      "execution_status": "complete",
+      "state_count": 1066,
+      "phase_counts": {
+        "settle": 70,
+        "prepare": 96,
+        "throttle_hold": 0,
+        "brake_hold": 0,
+        "coast_hold": 900
+      },
+      "first_frame": 2668,
+      "last_frame": 3733,
+      "final_speed_mps": 0.021451058287493427,
+      "maximum_speed_mps": 3.061773877711108,
+      "final_travel_m": 28.76129842853878,
+      "maximum_cte_m": 0.6383044987957791,
+      "measurements": {
+        "native_20hz": {
+          "sample_count": 1066,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 1065,
+              "minimum_speed_rate_mps2": -1.2179065368850575,
+              "maximum_speed_rate_mps2": 3.6542601876545446,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2737,
+                  "to_frame": 2738,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                },
+                {
+                  "from_frame": 2833,
+                  "to_frame": 2834,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -0.4406927459839084
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2752,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2752,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 69,
+              "minimum_speed_rate_mps2": -1.0118591528219602e-05,
+              "maximum_speed_rate_mps2": 2.0221670158673243e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 96,
+              "minimum_speed_rate_mps2": -0.946732850192483,
+              "maximum_speed_rate_mps2": 3.6542601876545446,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2737,
+                  "to_frame": 2738,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2752,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2752,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 900,
+              "minimum_speed_rate_mps2": -1.2179065368850575,
+              "maximum_speed_rate_mps2": 0.883240582650517,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2833,
+                  "to_frame": 2834,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -0.4406927459839084
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_0": {
+          "sample_count": 533,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 532,
+              "minimum_speed_rate_mps2": -0.41771489807565126,
+              "maximum_speed_rate_mps2": 2.533108307576493,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2736,
+                  "to_frame": 2738,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                },
+                {
+                  "from_frame": 2832,
+                  "to_frame": 2834,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 2.9618914906943243,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.5572035639589417
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -4.4165136748292565e-06,
+              "maximum_speed_rate_mps2": 5.0515393152268204e-06,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 48,
+              "minimum_speed_rate_mps2": -6.902382131379139e-07,
+              "maximum_speed_rate_mps2": 2.533108307576493,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2736,
+                  "to_frame": 2738,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 450,
+              "minimum_speed_rate_mps2": -0.41771489807565126,
+              "maximum_speed_rate_mps2": 0.5572035639589417,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2832,
+                  "to_frame": 2834,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 2.9618914906943243,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.5572035639589417
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_1": {
+          "sample_count": 533,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 532,
+              "minimum_speed_rate_mps2": -0.4179938759498704,
+              "maximum_speed_rate_mps2": 3.023382629150029,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2737,
+                  "to_frame": 2739,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                },
+                {
+                  "from_frame": 2833,
+                  "to_frame": 2835,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.061773877711108,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.2212739183333043
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2753,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2753,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -7.767944212989581e-06,
+              "maximum_speed_rate_mps2": 1.0110835079336622e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 48,
+              "minimum_speed_rate_mps2": -2.1584293931149454e-07,
+              "maximum_speed_rate_mps2": 3.023382629150029,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2737,
+                  "to_frame": 2739,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2753,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 2751,
+                    "to_frame": 2753,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 450,
+              "minimum_speed_rate_mps2": -0.4179938759498704,
+              "maximum_speed_rate_mps2": 0.2212739183333043,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 2833,
+                  "to_frame": 2835,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.061773877711108,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.2212739183333043
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        }
+      },
+      "collision_events": [],
+      "whole_case_training_quality_pass": false,
+      "coast_observations": {
+        "release_speed_mps": 3.0396464855480536,
+        "first_at_or_below_0p1": {
+          "frame": 3294,
+          "seconds_after_release": 23.050000343471766,
+          "travel_after_release_m": 20.74527680194236,
+          "route_arc_after_release_m": 20.71979291116439,
+          "speed_mps": 0.09855787522860453
+        },
+        "first_verified_continuous_2s_dwell": {
+          "frame": 3370,
+          "seconds_after_release": 26.850000400096178,
+          "travel_after_release_m": 21.071487767167646,
+          "route_arc_after_release_m": 21.04529128549288,
+          "speed_mps": 0.051831861969773026
+        },
+        "final_observation": {
+          "frame": 3733,
+          "seconds_after_release": 45.000000670552254,
+          "travel_after_release_m": 21.493584750733866,
+          "route_arc_after_release_m": 21.46413147242914,
+          "speed_mps": 0.021451058287493427
+        },
+        "longest_observed_dwell_seconds": 20.150000300258398,
+        "goal_position_tested": false,
+        "normal_brake_applied": false
+      },
+      "raw_sha256": "4337d2bb2e76c39dae9e7a83b7c1723ed357aa69b833c380a9fa0f2eec58648a",
+      "report_sha256": "b60c30491f17cee377956b259a806c6448676736699a48ccfaa39686345b38f4"
+    },
+    {
+      "case": {
+        "case_id": "02_coast_45s_repeat_02",
+        "kind": "coast",
+        "level": 0.0,
+        "repeat": 2,
+        "hold_seconds": 45.0,
+        "ramp_rate_per_second": null
+      },
+      "execution_status": "complete",
+      "state_count": 1066,
+      "phase_counts": {
+        "settle": 70,
+        "prepare": 96,
+        "throttle_hold": 0,
+        "brake_hold": 0,
+        "coast_hold": 900
+      },
+      "first_frame": 3735,
+      "last_frame": 4800,
+      "final_speed_mps": 0.021451058287493427,
+      "maximum_speed_mps": 3.061773877711108,
+      "final_travel_m": 28.76129842853878,
+      "maximum_cte_m": 0.6383044987957791,
+      "measurements": {
+        "native_20hz": {
+          "sample_count": 1066,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 1065,
+              "minimum_speed_rate_mps2": -1.2179065368850575,
+              "maximum_speed_rate_mps2": 3.6542601876545446,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3804,
+                  "to_frame": 3805,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                },
+                {
+                  "from_frame": 3900,
+                  "to_frame": 3901,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -0.4406927459839084
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3819,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3819,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 69,
+              "minimum_speed_rate_mps2": -1.0118591528219602e-05,
+              "maximum_speed_rate_mps2": 2.0221670158673243e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 96,
+              "minimum_speed_rate_mps2": -0.946732850192483,
+              "maximum_speed_rate_mps2": 3.6542601876545446,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3804,
+                  "to_frame": 3805,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3819,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3819,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.2533108397678537,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": 3.6542601876545446
+                  }
+                ]
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 900,
+              "minimum_speed_rate_mps2": -1.2179065368850575,
+              "maximum_speed_rate_mps2": 0.883240582650517,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3900,
+                  "to_frame": 3901,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -0.4406927459839084
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_0": {
+          "sample_count": 533,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 532,
+              "minimum_speed_rate_mps2": -0.41771489807565126,
+              "maximum_speed_rate_mps2": 2.533108307576493,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3803,
+                  "to_frame": 3805,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                },
+                {
+                  "from_frame": 3899,
+                  "to_frame": 3901,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 2.9618914906943243,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.5572035639589417
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -4.4165136748292565e-06,
+              "maximum_speed_rate_mps2": 5.0515393152268204e-06,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 48,
+              "minimum_speed_rate_mps2": -6.902382131379139e-07,
+              "maximum_speed_rate_mps2": 2.533108307576493,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3803,
+                  "to_frame": 3805,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 450,
+              "minimum_speed_rate_mps2": -0.41771489807565126,
+              "maximum_speed_rate_mps2": 0.5572035639589417,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3899,
+                  "to_frame": 3901,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 2.9618914906943243,
+                  "to_speed_mps": 3.0176118479205165,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.5572035639589417
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_1": {
+          "sample_count": 533,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 532,
+              "minimum_speed_rate_mps2": -0.4179938759498704,
+              "maximum_speed_rate_mps2": 3.023382629150029,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3804,
+                  "to_frame": 3806,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                },
+                {
+                  "from_frame": 3900,
+                  "to_frame": 3902,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.061773877711108,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.2212739183333043
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3820,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3820,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -7.767944212989581e-06,
+              "maximum_speed_rate_mps2": 1.0110835079336622e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 48,
+              "minimum_speed_rate_mps2": -2.1584293931149454e-07,
+              "maximum_speed_rate_mps2": 3.023382629150029,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3804,
+                  "to_frame": 3806,
+                  "from_phase": "settle",
+                  "to_phase": "prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3820,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 3818,
+                    "to_frame": 3820,
+                    "from_phase": "prepare",
+                    "to_phase": "prepare",
+                    "from_speed_mps": 0.07059782766249045,
+                    "to_speed_mps": 0.37293609508268455,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": 3.023382629150029
+                  }
+                ]
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "coast_hold": {
+              "interval_count": 450,
+              "minimum_speed_rate_mps2": -0.4179938759498704,
+              "maximum_speed_rate_mps2": 0.2212739183333043,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 3900,
+                  "to_frame": 3902,
+                  "from_phase": "prepare",
+                  "to_phase": "coast_hold",
+                  "from_speed_mps": 3.0396464855480536,
+                  "to_speed_mps": 3.061773877711108,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.2212739183333043
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        }
+      },
+      "collision_events": [],
+      "whole_case_training_quality_pass": false,
+      "coast_observations": {
+        "release_speed_mps": 3.0396464855480536,
+        "first_at_or_below_0p1": {
+          "frame": 4361,
+          "seconds_after_release": 23.050000343471766,
+          "travel_after_release_m": 20.74527680194236,
+          "route_arc_after_release_m": 20.71979291116439,
+          "speed_mps": 0.09855787522860453
+        },
+        "first_verified_continuous_2s_dwell": {
+          "frame": 4437,
+          "seconds_after_release": 26.850000400096178,
+          "travel_after_release_m": 21.071487767167646,
+          "route_arc_after_release_m": 21.04529128549288,
+          "speed_mps": 0.051831861969773026
+        },
+        "final_observation": {
+          "frame": 4800,
+          "seconds_after_release": 45.000000670552254,
+          "travel_after_release_m": 21.493584750733866,
+          "route_arc_after_release_m": 21.46413147242914,
+          "speed_mps": 0.021451058287493427
+        },
+        "longest_observed_dwell_seconds": 20.150000300258398,
+        "goal_position_tested": false,
+        "normal_brake_applied": false
+      },
+      "raw_sha256": "1e1b7c220d6c451d22392beb452db5100dcbc335e1edeb1b9fd6155e30d50ec2",
+      "report_sha256": "7ffd5a64dc08cd6806d9a4064b7ed1d4fc3c26604adf2a18fba6b1a4dc6c4b71"
+    },
+    {
+      "case": {
+        "case_id": "03_handoff_0.5_ramp_0.05",
+        "kind": "two_stage_ramp",
+        "level": 0.4,
+        "repeat": 1,
+        "hold_seconds": 12.0,
+        "ramp_rate_per_second": 0.05,
+        "handoff_speed_mps": 0.5,
+        "launch_throttle": 0.15,
+        "launch_maximum_seconds": 8.0,
+        "measured_speed_stop_mps": 8.333333333333334
+      },
+      "execution_status": "failed",
+      "state_count": 319,
+      "phase_counts": {
+        "settle": 70,
+        "prepare": 0,
+        "throttle_hold": 0,
+        "brake_hold": 0,
+        "launch_prepare": 36,
+        "post_handoff_ramp": 213
+      },
+      "first_frame": 4802,
+      "last_frame": 5120,
+      "final_speed_mps": 3.2072307305378365,
+      "maximum_speed_mps": 6.5833205524546825,
+      "final_travel_m": 37.55244677494277,
+      "maximum_cte_m": 1.6054640252167995,
+      "measurements": {
+        "native_20hz": {
+          "sample_count": 319,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 318,
+              "minimum_speed_rate_mps2": -67.52179543218377,
+              "maximum_speed_rate_mps2": 2.893275789685302,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4871,
+                  "to_frame": 4872,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                },
+                {
+                  "from_frame": 4907,
+                  "to_frame": 4908,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.5202635741176698,
+                  "to_speed_mps": 0.45429299660794686,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -1.3194115305336942
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5119,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.5833205524546825,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": -67.52179543218377
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5119,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.5833205524546825,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": -67.52179543218377
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 69,
+              "minimum_speed_rate_mps2": -1.0118591528219602e-05,
+              "maximum_speed_rate_mps2": 2.0221670158673243e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "launch_prepare": {
+              "interval_count": 36,
+              "minimum_speed_rate_mps2": -0.9621007087827104,
+              "maximum_speed_rate_mps2": 2.893275789685302,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4871,
+                  "to_frame": 4872,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": 1.8927648014530722e-06
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "post_handoff_ramp": {
+              "interval_count": 213,
+              "minimum_speed_rate_mps2": -67.52179543218377,
+              "maximum_speed_rate_mps2": 2.381008033364468,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4907,
+                  "to_frame": 4908,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.5202635741176698,
+                  "to_speed_mps": 0.45429299660794686,
+                  "dt_sec": 0.05000000074505806,
+                  "speed_rate_mps2": -1.3194115305336942
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5119,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.5833205524546825,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": -67.52179543218377
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5119,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.5833205524546825,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.05000000074505806,
+                    "speed_rate_mps2": -67.52179543218377
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_0": {
+          "sample_count": 160,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 159,
+              "minimum_speed_rate_mps2": -32.70112536506236,
+              "maximum_speed_rate_mps2": 2.428545019607721,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4870,
+                  "to_frame": 4872,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                },
+                {
+                  "from_frame": 4906,
+                  "to_frame": 4908,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.4277201517098116,
+                  "to_speed_mps": 0.45429299660794686,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.26572844502169035
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5118,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.477343315772546,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": -32.70112536506236
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5118,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.477343315772546,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": -32.70112536506236
+                  }
+                ]
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -4.4165136748292565e-06,
+              "maximum_speed_rate_mps2": 5.0515393152268204e-06,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "launch_prepare": {
+              "interval_count": 18,
+              "minimum_speed_rate_mps2": -6.902382131379139e-07,
+              "maximum_speed_rate_mps2": 2.428545019607721,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4870,
+                  "to_frame": 4872,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 9.463824148287328e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 9.463824007265361e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "post_handoff_ramp": {
+              "interval_count": 107,
+              "minimum_speed_rate_mps2": -32.70112536506236,
+              "maximum_speed_rate_mps2": 0.8535692386302736,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4906,
+                  "to_frame": 4908,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.4277201517098116,
+                  "to_speed_mps": 0.45429299660794686,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.26572844502169035
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5118,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.477343315772546,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": -32.70112536506236
+                  }
+                ]
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 1,
+                "violation_intervals": [
+                  {
+                    "from_frame": 5118,
+                    "to_frame": 5120,
+                    "from_phase": "post_handoff_ramp",
+                    "to_phase": "post_handoff_ramp",
+                    "from_speed_mps": 6.477343315772546,
+                    "to_speed_mps": 3.2072307305378365,
+                    "dt_sec": 0.10000000149011612,
+                    "speed_rate_mps2": -32.70112536506236
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "derived_10hz_offset_1": {
+          "sample_count": 159,
+          "cadence_violation_count": 0,
+          "frame_stride_violation_count": 0,
+          "phases": {
+            "all": {
+              "interval_count": 158,
+              "minimum_speed_rate_mps2": -7.767944212989581e-06,
+              "maximum_speed_rate_mps2": 2.2322402466411693,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4871,
+                  "to_frame": 4873,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                },
+                {
+                  "from_frame": 4907,
+                  "to_frame": 4909,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.5202635741176698,
+                  "to_speed_mps": 0.5544187523897893,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.3415517776316775
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "settle": {
+              "interval_count": 34,
+              "minimum_speed_rate_mps2": -7.767944212989581e-06,
+              "maximum_speed_rate_mps2": 1.0110835079336622e-05,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "prepare": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "throttle_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "brake_hold": {
+              "interval_count": 0,
+              "minimum_speed_rate_mps2": null,
+              "maximum_speed_rate_mps2": null,
+              "phase_boundary_intervals": [],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "launch_prepare": {
+              "interval_count": 18,
+              "minimum_speed_rate_mps2": -2.1584293931149454e-07,
+              "maximum_speed_rate_mps2": 2.2322402466411693,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4871,
+                  "to_frame": 4873,
+                  "from_phase": "settle",
+                  "to_phase": "launch_prepare",
+                  "from_speed_mps": 0.0,
+                  "to_speed_mps": 1.2590762643878028e-08,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 1.2590762456261046e-07
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            },
+            "post_handoff_ramp": {
+              "interval_count": 106,
+              "minimum_speed_rate_mps2": 0.046166507663234074,
+              "maximum_speed_rate_mps2": 0.8325179217028751,
+              "phase_boundary_intervals": [
+                {
+                  "from_frame": 4907,
+                  "to_frame": 4909,
+                  "from_phase": "launch_prepare",
+                  "to_phase": "post_handoff_ramp",
+                  "from_speed_mps": 0.5202635741176698,
+                  "to_speed_mps": 0.5544187523897893,
+                  "dt_sec": 0.10000000149011612,
+                  "speed_rate_mps2": 0.3415517776316775
+                }
+              ],
+              "physical_decoder": {
+                "violation_count": 0,
+                "violation_intervals": []
+              },
+              "runtime_speed_rate_gate": {
+                "violation_count": 0,
+                "violation_intervals": []
+              }
+            }
+          }
+        }
+      },
+      "collision_events": [
+        {
+          "frame": 5120,
+          "timestamp": 126.79339852288831,
+          "other_actor_id": 0,
+          "other_actor_type": "static.vegetation",
+          "other_actor_role": "",
+          "normal_impulse": {
+            "x": -5123.12060546875,
+            "y": 2524.22607421875,
+            "z": 90.88548278808594
+          },
+          "intensity": 5711.947319691063
+        }
+      ],
+      "whole_case_training_quality_pass": false,
+      "partial_handoff_notice": "The metadata counts successful ticks only (212); the raw phase has213 including the final collision tick. All213 are analyzed.",
+      "collision_observation": {
+        "frame": 5120,
+        "seconds_after_first_state": 15.900000236928463,
+        "travel_m": 37.55244677494277,
+        "cte_m": 1.6054640252167995,
+        "speed_before_mps": 6.5833205524546825,
+        "speed_after_mps": 3.2072307305378365,
+        "native_speed_rate_mps2": -67.52179543218377
+      },
+      "raw_sha256": "eafc8208df9f5ce3e29ee48e87a7fd842505fb45ff5e453cb7ab1bbcd3b93d04",
+      "report_sha256": "679f9bad2cd603a910049868bd1edc11a24e21c3fde444cd7c3a3b7e9fb73fec"
+    }
+  ],
+  "scope": {
+    "all_recorded_states_and_collisions_retained": true,
+    "both_derived10_offsets": true,
+    "cameras_collected": false,
+    "training_data": false,
+    "learned_model_control": false,
+    "automatic_promotion": false,
+    "goal_position_pass_claimed": false
+  },
+  "limitations": [
+    "Two completed coast measurements still retain preparation acceleration violations; phase-only success is not whole-case quality.",
+    "The handoff case collided with static vegetation under steer=0; its full collision impulse is included, not treated as a successful route or30kph cruise.",
+    "Three later planned cases were not run and have no invented metrics.",
+    "Continuous low-speed dwell and release distance are observed on one initial condition, not goal-position completion or independent-route evidence.",
+    "Speed finite differences are scalar checks, not full XY/decoder/runtime feasibility. First state has no preceding measured rate.",
+    "The failing case has319 raw states: derived10 offset0 includes final collision frame5120; offset1 ends at frame5119 by its fixed parity, not by sample filtering.",
+    "Plots show actual raw measurements, not simulator screenshots; no camera footage exists for this direct-pedal experiment."
+  ],
+  "publication_notice": "Independently recomputed aggregate view with raw-source digests; raw full states remain private. PNGs are actual-data plots, not CARLA/RViz screenshots."
+}

@@ -52,6 +52,59 @@ class Image:
         self.timestamp = timestamp
 
 
+def pilot_cli(output="unused-output", route="unused-route"):
+    # HH_260906 - A development pilot must never become enabled by an old collector command.
+    return [str(output), str(route), "--goal-stop-profile", "comfortable_v3", "--target-speed-kmh", "28.8",
+            "--goal-tolerance-m", "1.0", "--stationary-warmup-sec", "3.5", "--stationary-tail-sec", "6.5"]
+
+
+def test_v3_cli_is_explicit_and_rejects_abbreviated_new_profile_option():
+    args = parse_args(pilot_cli())
+    assert args.target_speed_kmh == 28.8 and args.goal_stop_profile == "comfortable_v3"
+    assert args.max_duration_sec == 180.0
+    flags = pilot_cli()
+    flags[flags.index("--goal-stop-profile")] = "--goal-stop-prof"
+    with pytest.raises(SystemExit):
+        parse_args(flags)
+
+
+def test_v3_wrong_route_fails_before_output_creation_or_carla_call(tmp_path, monkeypatch):
+    route = ROOT / "docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json"
+    changed = tmp_path / "changed_route.json"
+    changed.write_bytes(route.read_bytes() + b"\n")
+    output = tmp_path / "pilot"
+    def forbidden(*args, **kwargs):
+        raise AssertionError("CARLA collection must not be reached by unapproved route preflight")
+    monkeypatch.setattr(collector_module, "collect_episode", forbidden)
+    with pytest.raises(ValueError, match="exact approved Town07"):
+        collector_module.run(parse_args(pilot_cli(output, changed)))
+    assert not output.exists() and not Path(str(output) + ".partial").exists()
+
+
+def test_v3_failed_capture_preserves_frozen_profile_and_development_boundary(tmp_path, monkeypatch):
+    route = ROOT / "docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json"
+    output = tmp_path / "pilot"
+    def failed_capture(_args, _route, _specs, _partial, states, _cameras, manifest):
+        profile = manifest["capture_contract"]["goal_stop_profile"]
+        assert profile["coast_reference_seconds"] == 6.93
+        assert profile["route_sha256"] == collector_module.sha256_file(route)
+        assert profile["maximum_attempts_per_revision"] == 2
+        assert profile["development_only"] and not profile["training_data_approved"]
+        states.append({"frame": 42, "capture_phase": "driving", "vx": 8.4, "vy": 0.0,
+                       "goal_stop": {"pilot_failure_reason": "comfortable_v3_actual_speed_exceeded"}})
+        raise CollectionError("comfortable_v3_actual_speed_exceeded")
+    monkeypatch.setattr(collector_module, "collect_episode", failed_capture)
+    with pytest.raises(CollectionError, match="actual_speed_exceeded"):
+        collector_module.run(parse_args(pilot_cli(output, route)))
+    assert not output.exists()
+    partial = Path(str(output) + ".partial")
+    manifest = json.loads((partial / "manifest.json").read_text())
+    assert manifest["status"] == "failed" and not manifest["result"]["training_data_approved"]
+    assert manifest["provenance"]["goal_stop_helper_sha256"] == collector_module.sha256_file(
+        ROOT / "scripts/e2e/carla_goal_stop_profile.py")
+    assert json.loads((partial / "states.jsonl").read_text())["vx"] == 8.4
+
+
 def test_camera_specs_match_fixed_vad_model_and_carla_rig() -> None:
     specs = load_camera_specs(DEFAULT_MAPPING, DEFAULT_CALIBRATION)
 

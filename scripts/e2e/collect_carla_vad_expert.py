@@ -27,15 +27,17 @@ import yaml
 # HH_260906 - Keep goal-stop collection opt-in and independent of learned actuation.
 if __package__:
     from .carla_goal_stop_profile import (
-        GoalStopGovernor, bounded_route_projection, complete_terminal_plan, configuration_from_args,
+        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor,
+        annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
-        measured_stop_quality, source_motion_bounds, terminal_overshoot_m,
+        measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
     )
 else:
     from carla_goal_stop_profile import (
-        GoalStopGovernor, bounded_route_projection, complete_terminal_plan, configuration_from_args,
+        DevelopmentGoalStopConfig, DevelopmentGoalStopGovernor, GoalStopGovernor,
+        annotate_development_control, bounded_route_projection, complete_terminal_plan, configuration_from_args, install_development_control,
         goal_stop_termination_reason, install_normal_brake_cap, measured_goal_completion,
-        measured_stop_quality, source_motion_bounds, terminal_overshoot_m,
+        measured_stop_quality, source_motion_bounds, terminal_overshoot_m, validate_development_route,
     )
 
 
@@ -1077,7 +1079,8 @@ def collect_episode(
     goal_stop_config = configuration_from_args(args)
     goal_stop_bounds = source_motion_bounds() if goal_stop_config else None
     goal_stop_governor = (
-        GoalStopGovernor(goal_stop_config, args.target_speed_kmh / 3.6, args.physics_hz)
+        (DevelopmentGoalStopGovernor if isinstance(goal_stop_config, DevelopmentGoalStopConfig)
+         else GoalStopGovernor)(goal_stop_config, args.target_speed_kmh / 3.6, args.physics_hz)
         if goal_stop_config else None
     )
     phase_schedule = capture_phase_schedule(
@@ -1243,9 +1246,11 @@ def collect_episode(
         local_planner = agent.get_local_planner()
         if goal_stop_config:
             # HH_260906 - Hazard braking remains BasicAgent's original emergency override.
-            goal_stop_control = install_normal_brake_cap(
-                local_planner, goal_stop_config.normal_brake_cap, goal_stop_config.normal_throttle_cap,
-            )
+            goal_stop_control = (install_development_control(agent, goal_stop_governor)
+                                 if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
+                                 else install_normal_brake_cap(
+                                     local_planner, goal_stop_config.normal_brake_cap,
+                                     goal_stop_config.normal_throttle_cap))
             goal_stop_control["unchanged_basic_agent_emergency_brake"] = float(agent._max_brake)
             manifest["capture_contract"]["goal_stop_profile"]["effective_control"] = goal_stop_control
 
@@ -1376,11 +1381,15 @@ def collect_episode(
             )
             if goal_stop_governor:
                 # HH_260906 - A position-only goal at cruising speed must not trigger the full-brake tail.
+                pilot_measurement = ({"timestamp": timestamp, "longitudinal_speed_mps": state["vx"],
+                                      "driving": phase == "driving"}
+                                     if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor) else {})
                 goal_stop_record = goal_stop_governor.update(
                     goal_status.remaining_route_m, goal_status.planar_distance_m,
                     math.hypot(state["vx"], state["vy"]),
                     terminal_overshoot_m(projector.points, state["x"], state["y"]),
                     count_hold=phase == "driving",
+                    **pilot_measurement,
                 )
                 stop_reason = None
                 if phase == "driving":
@@ -1410,11 +1419,19 @@ def collect_episode(
                     else "full_brake_measured_stop_tail_or_setup" if phase != "driving" or goal_status.reached
                     else "full_brake_failed_capture_abort_not_comfortable_data"
                 )
-            suppress_stopped_brake_steering(
-                next_control,
-                math.hypot(state["vx"], state["vy"]),
-                enabled=not args.allow_stopped_steering,
-            )
+                if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor):
+                    # HH_260906 - A newly requested hazard brake is applied now and observed before next-tick failure.
+                    if phase == "driving" and stop_reason is None:
+                        goal_stop_record["control_source"] = "BasicAgent_lateral_and_emergency_with_development_v3_normal_longitudinal"
+                    annotate_development_control(goal_stop_record, goal_stop_governor, stop_reason)
+            if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
+                    and goal_stop_record["next_control_is_unchanged_emergency_override"]):
+                # HH_260906 - The development hazard hook promises the unchanged emergency control, including steering.
+                suppress_stopped_brake_steering(
+                    next_control,
+                    math.hypot(state["vx"], state["vy"]),
+                    enabled=not args.allow_stopped_steering,
+                )
             state_records.append(
                 {
                     "frame": frame,
@@ -1467,6 +1484,10 @@ def collect_episode(
 
             ego.apply_control(next_control)
             tick_index += 1
+            if (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
+                    and phase != "driving" and goal_stop_governor.failure_reason is not None):
+                # HH_260906 - Retain the offending setup/tail measurement and apply the stop command before aborting.
+                raise CollectionError(goal_stop_governor.failure_reason)
             return goal_status, basic_agent_done, stop_reason
 
         if int(phase_schedule["stationary_warmup"]["scheduled_ticks"]):
@@ -1488,15 +1509,24 @@ def collect_episode(
                 math.hypot(initial_state["vx"], initial_state["vy"]),
                 terminal_overshoot_m(projector.points, initial_state["x"], initial_state["y"]),
                 count_hold=False,
+                **({"timestamp": state_records[-1]["timestamp"],
+                    "longitudinal_speed_mps": initial_state["vx"], "driving": True}
+                   if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor) else {}),
             )
+            if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor) and goal_stop_governor.failure_reason is not None:
+                ego.apply_control(_blank_brake_control(carla))
+                raise CollectionError(goal_stop_governor.failure_reason)
             agent.set_target_speed(initial_goal_stop["target_speed_mps"] * 3.6)
         initial_drive_control = agent.run_step()
         velocity = _vector_tuple(ego.get_velocity())
-        suppress_stopped_brake_steering(
-            initial_drive_control,
-            math.sqrt(sum(component * component for component in velocity)),
-            enabled=not args.allow_stopped_steering,
-        )
+        if not (isinstance(goal_stop_governor, DevelopmentGoalStopGovernor)
+                and goal_stop_governor.failure_reason == "comfortable_v3_emergency_override"):
+            # HH_260906 - Initial engagement also preserves the exact emergency return before the following measured tick.
+            suppress_stopped_brake_steering(
+                initial_drive_control,
+                math.sqrt(sum(component * component for component in velocity)),
+                enabled=not args.allow_stopped_steering,
+            )
         ego.apply_control(initial_drive_control)
         if state_records and state_records[-1]["capture_phase"] == "stationary_warmup":
             state_records[-1]["next_control"] = control_dict(initial_drive_control)
@@ -1507,6 +1537,8 @@ def collect_episode(
                     "BasicAgent_initial_drive_command_with_route_arc_target_emergency_unchanged"
                 )
                 state_records[-1]["goal_stop"]["next_control_starts_driving"] = True
+                if isinstance(goal_stop_governor, DevelopmentGoalStopGovernor):
+                    annotate_development_control(state_records[-1]["goal_stop"], goal_stop_governor, None)
 
         goal_status: CatalogGoalStatus | None = None
         basic_agent_done = False
@@ -1551,7 +1583,16 @@ def collect_episode(
             "final_catalog_goal_distance_m": goal_status.planar_distance_m,
             "goal_tolerance_m": args.goal_tolerance_m,
         }
+        if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
+            manifest["result"].update({"training_data_approved": False, "development_only": True})
+            # HH_260906 - A failed pilot still reports measured cruise and speed checks without requiring a tail.
+            manifest["result"]["goal_stop_quality"] = measured_stop_quality(
+                state_records, [r["frame"] for r in camera_records], goal_stop_config,
+                goal_stop_bounds, goal_status.reached,
+            )
         if not goal_status.reached:
+            if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
+                raise CollectionError(f"comfortable_v3 development pilot failed: {stop_reason}")
             raise CollectionError(
                 "BasicAgent reported done before the catalog goal: "
                 f"remaining route {goal_status.remaining_route_m:.3f} m, "
@@ -1560,10 +1601,11 @@ def collect_episode(
             )
         if goal_stop_config:
             # HH_260906 - Reject measured violations instead of claiming the requested cap worked.
-            quality = measured_stop_quality(
-                state_records, [r["frame"] for r in camera_records], goal_stop_config,
-                goal_stop_bounds, goal_status.reached,
-            )
+            quality = (manifest["result"]["goal_stop_quality"]
+                       if isinstance(goal_stop_config, DevelopmentGoalStopConfig)
+                       else measured_stop_quality(
+                           state_records, [r["frame"] for r in camera_records], goal_stop_config,
+                           goal_stop_bounds, goal_status.reached))
             manifest["result"]["goal_stop_quality"] = quality
             if quality["status"] != "PASS":
                 raise CollectionError("comfortable goal-stop measured quality failed; preserve partial evidence")
@@ -1671,7 +1713,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--command-exit-lookahead-m", type=float, default=2.5)
     parser.add_argument("--goal-tolerance-m", type=float, default=2.5)
     # HH_260906 - This experimental goal-stop governor is never enabled by an old command.
-    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2"), default="disabled",
+    parser.add_argument("--goal-stop-profile", choices=("disabled", "comfortable_v1", "comfortable_v2", "comfortable_v3"), default="disabled",
                         help="opt-in measured goal stop; requires 20/10 Hz, <=30 km/h, 1 m tolerance and >=6.5 s tail")
     parser.add_argument(
         "--basic-agent-base-min-distance-m",
@@ -1766,6 +1808,8 @@ def run(args: argparse.Namespace) -> Path:
     mapping_path = args.mapping.expanduser().resolve()
     calibration_path = args.calibration.expanduser().resolve()
     route = load_route(route_path)
+    # HH_260906 - The new pilot cannot be redirected to a different route or weather before source-bound qualification.
+    validate_development_route(args, route, route_path)
     specs = load_camera_specs(mapping_path, calibration_path, args.wheelbase_m)
     phase_schedule = capture_phase_schedule(
         args.physics_hz,
@@ -1879,6 +1923,13 @@ def run(args: argparse.Namespace) -> Path:
             "bounds": source_motion_bounds(),
         }
         manifest["provenance"]["goal_stop_helper_sha256"] = sha256_file(helper_path)
+        if isinstance(goal_stop_config, DevelopmentGoalStopConfig):
+            manifest["capture_contract"]["goal_stop_profile"].update({
+                "pilot_scope": "Exact Town07 straight development only; 28.8 km/h nominal 30 km/h class.",
+                "attempt_ownership": "The owned execution ledger must allow at most two attempts per frozen revision; the collector never schedules a retry.",
+                "full_future_xy_admission": "Pending independent post-capture audit; scalar pilot completion is not dataset approval.",
+            })
+            manifest["result"] = {"training_data_approved": False, "development_only": True}
     _write_json(partial / "manifest.json", manifest)
     error: BaseException | None = None
     try:

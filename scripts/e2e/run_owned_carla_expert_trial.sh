@@ -138,7 +138,8 @@ path, route, town, port, quality, timeout, mode, worker, output_name, finish_bef
 sources = ('scripts/e2e/run_owned_carla_expert_trial.sh', 'scripts/e2e/run_carla_map.sh',
     'scripts/e2e/process_group_cleanup.sh', 'scripts/e2e/workspace_runtime_lock.sh',
     'scripts/e2e/probe_carla_server.py', 'scripts/e2e/env.sh',
-    'scripts/e2e/collect_carla_vad_expert.py', 'scripts/e2e/carla_goal_stop_profile.py', worker)
+    'scripts/e2e/collect_carla_vad_expert.py', 'scripts/e2e/carla_goal_stop_profile.py', worker,
+    'portable_e2e/model.py', 'portable_e2e/runtime_contract.py')
 if mode == 'actuation-response':
     # HH_260906 - Archive the prospective coast/ramp contract together with its importing worker.
     sources += ('scripts/e2e/carla_low_speed_response_matrix.py',)
@@ -159,7 +160,9 @@ with Path(path).open('x') as stream:
         'schema': 'portable_e2e.owned_expert_trial.v1',
         'source_head_commit': git('rev-parse', 'HEAD'),
         'source_worktree_status': git('status', '--porcelain', '--untracked-files=all'),
+        # HH_260906 - Preserve the exact bound definitions so later unrelated model edits cannot invalidate historical evidence.
         'source_sha256': source_hashes, 'source_bytes_archived': True,
+        'bounds_source_bytes_archived': True,
         'route_path': route, 'route_sha256': hashlib.sha256(Path(route).read_bytes()).hexdigest(),
         'map': town, 'host': '127.0.0.1', 'port': int(port), 'quality': quality,
         'capture_mode': mode, 'worker_path': worker,

@@ -62,6 +62,11 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 
 출력 폴더의 `owner_plan.json`은 실행 전 설정과 소스 hash, `provenance/`는 실행 소스의
 private 원본 사본, `owner_result.json`은 종료·소스 불변성 확인 결과입니다.
+<!-- HH_260906 - Distinguish newly archived bound bytes from older captures that retained only their hashes. -->
+새 실행은 물리 한계를 정의한 `portable_e2e/model.py`와 `runtime_contract.py`의 원본도
+보존하고 `bounds_source_bytes_archived: true`를 기록합니다. 과거 실행에는 이 사본이
+없을 수 있으므로, 현재 소스가 달라졌다는 이유만으로 과거 값을 무효화하거나, 반대로
+검증 없이 당시 소스가 보존됐다고 주장하지 않습니다.
 `lifecycle/ready.json`과 `stopped.json`은 시작·정리 증거입니다. `collector.log`에는 측정
 worker의 출력이 저장됩니다. 성공 시 측정 자료는 `actuation/`, 실패 시 `actuation.partial/`에
 남습니다. `.partial`을 성공 폴더로 이름만 바꾸지 않습니다.
@@ -109,6 +114,45 @@ bash scripts/e2e/run_owned_carla_expert_trial.sh \
 별도 계측하는 것입니다. 이것은 아직 새 주행 profile이나 학습 데이터의 승인이 아닙니다.
 물리 엔진 내부 원인은 이 API 기록만으로 확정하지 않으며, 차량 물리 설정·QA 기준을
 바꾸거나 출발·정지 표본을 잘라 통과시키지 않습니다.
+
+## Town07 개발용 세 번째 보정 시험
+
+<!-- HH_260906 - Predeclare a bounded empirical pilot and distinguish its nominal speed from measured cruise and dataset admission. -->
+
+`comfortable_v3`는 아래 **정확한 Town07 직진 경로·Prius·ClearNoon에만** 허용하는
+개발용 profile입니다. 목표는 28.8 km/h(8 m/s)이며, 30 km/h급 시험이지 명령 속도가
+30 km/h인 시험은 아닙니다. 실제 속도 30 km/h 초과는 실패로 기록합니다. 같은 revision은
+소유 실행 기록 기준 최대 두 번만 시도하며, 수집기가 자동으로 재시도하지 않습니다.
+
+출발은 throttle 0.15에서 측정 속도 0.5 m/s에 도달하면 기존 정상 PID로 넘기고,
+정상 throttle 상한을 초당 0.05씩 최대 0.40까지 높입니다. 정상 brake 상한은 0.10이며
+기존 조향과 비상 제동은 유지합니다. 접근 감속 뒤에는 약 3 m/s에서 두 pedal을 0으로
+유지하는 타력 정지를 시험합니다. 타력 거리는 단일 초기 조건의 계측에 근거한 값으로,
+다른 경사·노면·차량에서 보장되는 제동 거리라고 해석하지 않습니다.
+
+```bash
+# HH_260906 - Run one new local expert pilot; this does not start a learned controller or remote training.
+bash scripts/e2e/run_owned_carla_expert_trial.sh \
+  artifacts/training/2026-09-08/comfortable_goal_stop_v3/town07_straight_calibration/example_run_001 \
+  docs/assets/validation/2026-09-01/town07/autoware_vad/straight/autoware_vad_route.json \
+  --port 2100 --quality Low --wall-timeout-sec 900 \
+  --capture-mode expert -- \
+  --physics-hz 20 --capture-hz 10 --target-speed-kmh 28.8 --max-duration-sec 180 \
+  --stationary-warmup-sec 3.5 --stationary-tail-sec 6.5 --spawn-z-offset-m 0.5 \
+  --weather ClearNoon --seed 0 --goal-stop-profile comfortable_v3 --goal-tolerance-m 1.0 \
+  --mapping autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml \
+  --calibration src/launcher/autoware_launch/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml \
+  --basic-agent-base-min-distance-m 3.0 --basic-agent-distance-ratio 0.5 \
+  --basic-agent-lateral-kp 1.95 --basic-agent-lateral-ki 0.05 --basic-agent-lateral-kd 0.2 \
+  --basic-agent-max-steering 0.8 --basic-agent-lane-offset-m 0.0
+```
+
+합격 조건에는 실제 속도 7.8–8.2 m/s의 **5초 연속 순항**, 기존 가감속 한계,
+목표 앞 1 m 이내·0.1 m/s 이하 2초 정지 유지·정지 후 6.5초 기록이 모두 포함됩니다.
+출발 제한은 8초, 타력 제한은 45초입니다. 비상 제동은 그대로 적용하고 다음 물리 tick을
+기록한 뒤 해당 개발 시험을 실패로 끝냅니다. 정지 실패를 숨기기 위한 뒤늦은 정상 제동이나
+재출발 보정은 하지 않습니다. 성공적으로 기록하더라도 `training_data_approved: false`이며,
+독립 수치·영상·미래 XY 품질 검사와 별도 데이터 채택이 필요합니다.
 
 ## 작업 종료 시각을 넘기지 않도록 새 실행 제한
 

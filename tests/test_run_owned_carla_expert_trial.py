@@ -34,6 +34,10 @@ def harness(tmp_path):
         " [[ ${E2E_TRIAL_TEST_LOCKED:-0} == 0 ]]; }\n")
     (scripts / "carla_goal_stop_profile.py").write_text("# HH_260906 - Fixture-only hash placeholder, never vehicle control.\n")
     (scripts / "carla_low_speed_response_matrix.py").write_text("# HH_260906 - Fixture-only matrix source archive.\n")
+    # HH_260906 - Archive both bound sources without importing a model or requiring Torch in this ownership fixture.
+    (root / "portable_e2e").mkdir()
+    for name in ("model.py", "runtime_contract.py"):
+        (root / "portable_e2e" / name).write_text("# HH_260906 - Fixture-only scalar bound provenance.\n")
     (scripts / "run_carla_map.sh").write_text(
         "#!/usr/bin/env bash\n# HH_260906 - The fake process does not open a CARLA port.\n"
         'exec python3 scripts/e2e/fake_server.py "$@"\n')
@@ -225,7 +229,8 @@ def test_startup_failure_retains_prelaunch_contract_and_stopped_owner_evidence(h
     plan = json.loads((harness["output"] / "owner_plan.json").read_text())
     assert plan["schema"] == "portable_e2e.owned_expert_trial.v1"
     assert len(plan["source_head_commit"]) == 40
-    assert len(plan["source_sha256"]) == 8
+    assert len(plan["source_sha256"]) == 10
+    assert plan["bounds_source_bytes_archived"] is True
     for name, expected in plan["source_sha256"].items():
         assert hashlib.sha256((harness["root"] / name).read_bytes()).hexdigest() == expected
         assert hashlib.sha256((harness["output"] / "provenance" / name).read_bytes()).hexdigest() == expected
@@ -260,7 +265,8 @@ def test_named_actuation_worker_has_separate_output_and_exact_source_provenance(
     assert plan["capture_mode"] == "actuation-response"
     assert plan["worker_path"] == "scripts/e2e/calibrate_carla_low_speed_response.py"
     assert plan["collector_argv"][0] == str(harness["output"] / "actuation")
-    assert len(plan["source_sha256"]) == 10
+    assert len(plan["source_sha256"]) == 12
+    assert plan["bounds_source_bytes_archived"] is True
     assert plan["learned_model_control"] is False
     result = json.loads((harness["output"] / "owner_result.json").read_text())
     assert result["capture_mode"] == "actuation-response"

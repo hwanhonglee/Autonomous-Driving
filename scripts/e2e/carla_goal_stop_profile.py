@@ -28,18 +28,61 @@ class ComfortableGoalStopConfig:
     maximum_projection_error_m: float = 3.0
 
 
+@dataclass(frozen=True)
+class DevelopmentGoalStopConfig(ComfortableGoalStopConfig):
+    """HH_260906 - Freeze a Town07-only development pilot, not an admitted training profile."""
+
+    profile_id: str = "comfortable_v3"
+    desired_deceleration_mps2: float = 0.6
+    target_acceleration_limit_mps2: float = 1.0
+    normal_brake_cap: float = 0.10
+    normal_throttle_cap: float | None = 0.40
+    nominal_cruise_speed_mps: float = 8.0
+    maximum_actual_speed_mps: float = 8.333333333333334
+    launch_throttle: float = 0.15
+    launch_handoff_speed_mps: float = 0.5
+    maximum_launch_seconds: float = 8.0
+    post_handoff_throttle_ramp_per_second: float = 0.05
+    approach_reference_speed_mps: float = 3.0396464855480536
+    approach_reference_distance_m: float = 35.0
+    coast_reference_seconds: float = 6.93
+    minimum_coast_entry_speed_mps: float = 2.8
+    maximum_coast_entry_speed_mps: float = 3.2
+    maximum_coast_seconds: float = 45.0
+    cruise_minimum_speed_mps: float = 7.8
+    cruise_maximum_speed_mps: float = 8.2
+    minimum_cruise_seconds: float = 5.0
+    route_sha256: str = "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9"
+    route_length_m: float = 210.5975914062836
+    maximum_attempts_per_revision: int = 2
+    development_only: bool = True
+    training_data_approved: bool = False
+    empirical_reference_notice: str = "Single-condition coast reference; not a robust stopping-distance guarantee."
+
+
 def configuration_from_args(args: Any) -> ComfortableGoalStopConfig | None:
     """HH_260906 - Require explicit compatible settings without changing legacy defaults."""
     profile = getattr(args, "goal_stop_profile", "disabled")
     if profile == "disabled":
         return None
-    if profile not in ("comfortable_v1", "comfortable_v2"):
+    if profile not in ("comfortable_v1", "comfortable_v2", "comfortable_v3"):
         raise ValueError("unknown goal-stop profile")
     config = ComfortableGoalStopConfig()
     if profile == "comfortable_v2":
         # HH_260906 - Joint calibration responds to measured launch spikes and braking lag, not looser QA.
         config = replace(config, profile_id=profile, desired_deceleration_mps2=1.0,
                          normal_throttle_cap=0.20, normal_brake_cap=0.15)
+    if profile == "comfortable_v3":
+        config = DevelopmentGoalStopConfig()
+        if float(args.target_speed_kmh) != 28.8:
+            raise ValueError("comfortable_v3 requires target_speed_kmh=28.8 (8 m/s nominal 30 km/h class)")
+        if float(getattr(args, "stationary_warmup_sec", 0.0)) != 3.5:
+            raise ValueError("comfortable_v3 requires stationary_warmup_sec=3.5")
+        if getattr(args, "vehicle_type", "vehicle.toyota.prius") != "vehicle.toyota.prius":
+            raise ValueError("comfortable_v3 requires vehicle.toyota.prius")
+        duration = float(getattr(args, "max_duration_sec", 180.0))
+        if not math.isfinite(duration) or not 0.0 < duration <= 180.0:
+            raise ValueError("comfortable_v3 requires max_duration_sec in (0, 180]")
     expected = {"physics_hz": 20.0, "capture_hz": 10.0, "goal_tolerance_m": 1.0}
     for name, value in expected.items():
         if float(getattr(args, name)) != value:
@@ -51,6 +94,20 @@ def configuration_from_args(args: Any) -> ComfortableGoalStopConfig | None:
     if not math.isfinite(tail) or tail < config.minimum_tail_seconds:
         raise ValueError(f"{profile} requires at least 6.5 seconds of tail")
     return config
+
+
+def validate_development_route(args: Any, route: Mapping[str, Any], route_path: Path) -> None:
+    """HH_260906 - Reject unapproved pilot maps or route bytes before creating output or accessing CARLA."""
+    config = configuration_from_args(args)
+    if not isinstance(config, DevelopmentGoalStopConfig):
+        return
+    if (hashlib.sha256(route_path.read_bytes()).hexdigest() != config.route_sha256
+            or route.get("town") != "Town07" or route.get("scenario") != "straight"
+            or float(route.get("route_length_m", -1.0)) != config.route_length_m):
+        raise ValueError("comfortable_v3 is restricted to the exact approved Town07 straight route")
+    if (getattr(args, "weather", None) not in (None, "ClearNoon")
+            or route.get("weather") != "ClearNoon"):
+        raise ValueError("comfortable_v3 requires ClearNoon")
 
 
 def source_motion_bounds() -> dict[str, Any]:
@@ -168,10 +225,154 @@ class GoalStopGovernor:
         }
 
 
+class DevelopmentGoalStopGovernor(GoalStopGovernor):
+    """HH_260906 - Keep the empirical coast pilot latched and its elapsed clocks independent of warmup."""
+
+    def __init__(self, config: DevelopmentGoalStopConfig, cruise_speed_mps: float, physics_hz: float):
+        if config != DevelopmentGoalStopConfig() or cruise_speed_mps != 8.0 or physics_hz != 20.0:
+            raise ValueError("comfortable_v3 requires its exact frozen configuration and 20 Hz clock")
+        super().__init__(config, cruise_speed_mps, physics_hz)
+        self.driving_started_at: float | None = None
+        self.last_driving_timestamp: float | None = None
+        self.handoff_at: float | None = None
+        self.coast_started_at: float | None = None
+        self.last_timestamp: float | None = None
+        self.last_record: dict[str, Any] | None = None
+        self.failure_reason: str | None = None
+        self.emergency_override_count = 0
+
+    def fail(self, reason: str) -> None:
+        if self.failure_reason is None:
+            self.failure_reason = reason
+
+    def update(self, remaining_arc_m: float, planar_distance_m: float, speed_mps: float,
+               terminal_overshoot: float, *, count_hold: bool = True,
+               timestamp: float, longitudinal_speed_mps: float, driving: bool) -> dict[str, Any]:
+        cfg = self.config
+        if not math.isfinite(timestamp) or not math.isfinite(longitudinal_speed_mps):
+            raise ValueError("comfortable_v3 needs finite measured time and longitudinal speed")
+        if self.last_timestamp is not None:
+            elapsed = timestamp - self.last_timestamp
+            # HH_260906 - Initial engagement reuses the last warmup observation without adding an elapsed interval.
+            duplicate_engagement = elapsed == 0.0 and driving and not count_hold and self.driving_started_at is None
+            if not duplicate_engagement and abs(elapsed - self.dt) > 1.0e-4:
+                raise ValueError("comfortable_v3 measured clock must advance one 20 Hz tick")
+        self.last_timestamp = timestamp
+        record = super().update(remaining_arc_m, planar_distance_m, speed_mps,
+                                terminal_overshoot, count_hold=count_hold)
+        if speed_mps > cfg.maximum_actual_speed_mps or longitudinal_speed_mps > cfg.maximum_actual_speed_mps:
+            self.fail("comfortable_v3_actual_speed_exceeded")
+        if driving and self.driving_started_at is None:
+            self.driving_started_at = timestamp
+        if driving:
+            self.last_driving_timestamp = timestamp
+        # HH_260906 - Tail ticks remain measured but do not extend driving or zero-pedal coast duration fields.
+        timer_timestamp = timestamp if self.last_driving_timestamp is None else self.last_driving_timestamp
+        driving_elapsed = 0.0 if self.driving_started_at is None else timer_timestamp - self.driving_started_at
+        transition = None
+        if driving and self.handoff_at is None:
+            if speed_mps >= cfg.launch_handoff_speed_mps:
+                self.handoff_at = timestamp
+                transition = "launch_to_normal_pid"
+            elif driving_elapsed >= cfg.maximum_launch_seconds:
+                self.fail("comfortable_v3_launch_timeout")
+        release_distance = cfg.stop_buffer_m + cfg.coast_reference_seconds * speed_mps
+        if driving and self.handoff_at is not None and self.coast_started_at is None and remaining_arc_m <= release_distance:
+            if not cfg.minimum_coast_entry_speed_mps <= speed_mps <= cfg.maximum_coast_entry_speed_mps:
+                self.fail("comfortable_v3_coast_entry_speed_outside_band")
+            elif self.failure_reason is None:
+                self.coast_started_at = timestamp
+                transition = "normal_pid_to_zero_pedal_coast"
+        coast_elapsed = None if self.coast_started_at is None else timer_timestamp - self.coast_started_at
+        if driving and coast_elapsed is not None and coast_elapsed >= cfg.maximum_coast_seconds and not record["complete"]:
+            self.fail("comfortable_v3_coast_timeout")
+        envelope = min(cfg.nominal_cruise_speed_mps, math.sqrt(
+            cfg.approach_reference_speed_mps ** 2 + 2 * cfg.desired_deceleration_mps2
+            * max(remaining_arc_m - cfg.approach_reference_distance_m, 0.0)))
+        # HH_260906 - Superclass stop/dwell accounting is retained, but its constant-to-zero envelope is not used by this pilot.
+        previous_target = 0.0 if self.last_record is None else self.last_record["target_speed_mps"]
+        if not driving or self.coast_started_at is not None or record["complete"]:
+            self.target_speed_mps = 0.0
+        else:
+            self.target_speed_mps = min(envelope, previous_target + cfg.target_acceleration_limit_mps2 * self.dt)
+        handoff_elapsed = None if self.handoff_at is None else timer_timestamp - self.handoff_at
+        cap = cfg.launch_throttle if handoff_elapsed is None else min(
+            float(cfg.normal_throttle_cap), cfg.launch_throttle
+            + cfg.post_handoff_throttle_ramp_per_second * (handoff_elapsed + self.dt))
+        state = ("complete" if record["complete"] else "coast_low" if self.coast_started_at is not None
+                 else "launch_low" if self.handoff_at is None else "normal_pid") if driving else "setup_or_tail"
+        record.update({
+            "phase": state, "pilot_state": state, "pilot_transition": transition,
+            "measured_timestamp": timestamp, "measured_longitudinal_speed_mps": longitudinal_speed_mps,
+            "driving_elapsed_sec": driving_elapsed, "handoff_elapsed_sec": handoff_elapsed,
+            "coast_elapsed_sec": coast_elapsed, "coast_release_distance_m": release_distance,
+            "coast_entry_latched": self.coast_started_at is not None,
+            "distance_speed_envelope_mps": envelope, "target_speed_mps": self.target_speed_mps,
+            "normal_throttle_cap": cap, "normal_brake_cap": cfg.normal_brake_cap,
+            "pilot_failure_reason": self.failure_reason, "emergency_override_count": self.emergency_override_count,
+            "training_data_approved": False,
+        })
+        self.last_record = dict(record)
+        return record
+
+    def normal_control(self, control: Any) -> Any:
+        """HH_260906 - Change normal pedals only; retain the planner's steering and later emergency authority."""
+        if self.last_record is None:
+            raise ValueError("comfortable_v3 normal control requires a measured governor state")
+        if self.coast_started_at is not None:
+            control.throttle, control.brake = 0.0, 0.0
+        elif self.handoff_at is None:
+            control.throttle, control.brake = self.config.launch_throttle, 0.0
+        else:
+            control.throttle = min(float(control.throttle), self.last_record["normal_throttle_cap"])
+            control.brake = min(float(control.brake), self.config.normal_brake_cap)
+        return control
+
+
+def install_development_control(agent: Any, governor: DevelopmentGoalStopGovernor) -> dict[str, Any]:
+    """HH_260906 - Observe the real emergency method without delaying or changing its returned control."""
+    planner = agent.get_local_planner()
+    metadata = install_normal_brake_cap(planner, governor.config.normal_brake_cap,
+                                        governor.config.normal_throttle_cap)
+    original_step = planner.run_step
+    original_emergency = agent.add_emergency_stop
+
+    def normal_step(*args: Any, **kwargs: Any) -> Any:
+        return governor.normal_control(original_step(*args, **kwargs))
+
+    def emergency_step(*args: Any, **kwargs: Any) -> Any:
+        control = original_emergency(*args, **kwargs)
+        governor.emergency_override_count += 1
+        governor.fail("comfortable_v3_emergency_override")
+        return control
+
+    planner.run_step = normal_step
+    agent.add_emergency_stop = emergency_step
+    metadata.update({"normal_control_insertion": "LocalPlanner.run_step before BasicAgent.add_emergency_stop",
+                     "lateral_control_modified": False, "emergency_return_control_modified": False,
+                     "hazard_abort_policy": "Apply original emergency control, observe the following native tick, then retain a failed capture.",
+                     "training_data_approved": False})
+    return metadata
+
+
+def annotate_development_control(record: dict[str, Any], governor: DevelopmentGoalStopGovernor,
+                                 stop_reason: str | None) -> None:
+    """HH_260906 - Record a hook-triggered emergency after agent.run_step without claiming the next command is applied yet."""
+    pending = stop_reason is None and governor.failure_reason == "comfortable_v3_emergency_override"
+    record.update({"pilot_failure_reason": governor.failure_reason,
+                   "emergency_override_count": governor.emergency_override_count,
+                   "emergency_failure_pending_next_tick": pending,
+                   "next_control_is_unchanged_emergency_override": pending})
+    if pending:
+        record["control_source"] = "BasicAgent_unchanged_emergency_override_requested_observe_next_tick_then_abort"
+
+
 def goal_stop_termination_reason(record: Mapping[str, Any], basic_agent_done: bool,
                                  cross_track_error_m: float,
                                  config: ComfortableGoalStopConfig) -> str | None:
     """HH_260906 - Fail early on incomplete planner endpoints; permit only measured goal dwell."""
+    if record.get("pilot_failure_reason") is not None:
+        return str(record["pilot_failure_reason"])
     if cross_track_error_m > config.maximum_projection_error_m:
         return "comfortable_goal_route_projection_failure"
     if not record["upstream_of_endpoint"] or (record["goal_window"] and record["terminal_overshoot_m"] > 0.0):
@@ -325,7 +526,7 @@ def measured_stop_quality(records: Sequence[Mapping[str, Any]], camera_frames: S
                    for cadence in measurements)
     passed = bool(completed and stop.get("complete") and tail_ready and tail_still
                   and geometry_ok and rates_ok and camera_tail and coverage_ok and tail_goal_held)
-    return {
+    report = {
         "schema": "carla_expert.comfortable_goal_stop_quality.v1", "status": "PASS" if passed else "FAIL",
         "config": asdict(config), "bounds": dict(bounds), "completed_stop_before_tail": bool(completed and stop.get("complete")),
         "driving_final_stop": dict(stop), "tail_state_count": len(tail), "tail_camera_count": len(camera_tail),
@@ -344,3 +545,49 @@ def measured_stop_quality(records: Sequence[Mapping[str, Any]], camera_frames: S
         "interval_phase_policy": "Assign each interval to its destination phase, retaining the previous-phase prefix state.",
         "notice": "Measured scalar speed-rate QA only; no learned actuation, target clipping, full runtime validation, or decoder feasibility guarantee.",
     }
+    if isinstance(config, DevelopmentGoalStopConfig):
+        # HH_260906 - Recompute actual cruise and speed admission independently of governor-reported timer fields.
+        speed_violations = []
+        cruise_started_at = None
+        longest_cruise = 0.0
+        cruise_intervals = []
+        previous_timestamp = None
+        for record in records:
+            speed = math.hypot(float(record["vx"]), float(record["vy"]))
+            vx, timestamp = float(record["vx"]), float(record["timestamp"])
+            if not all(math.isfinite(v) for v in (speed, vx, timestamp)):
+                raise ValueError("comfortable_v3 quality requires finite actual speed and timestamp")
+            if speed > config.maximum_actual_speed_mps or vx > config.maximum_actual_speed_mps:
+                speed_violations.append({"frame": record["frame"], "timestamp": timestamp,
+                                         "planar_speed_mps": speed, "longitudinal_speed_mps": vx})
+            in_cruise = (record["capture_phase"] == "driving"
+                         and config.cruise_minimum_speed_mps <= speed <= config.cruise_maximum_speed_mps)
+            if previous_timestamp is not None and abs(timestamp - previous_timestamp - 0.05) > 1.0e-4:
+                cruise_started_at = None
+            previous_timestamp = timestamp
+            if in_cruise:
+                if cruise_started_at is None:
+                    cruise_started_at = timestamp
+                duration = timestamp - cruise_started_at
+                if duration > longest_cruise:
+                    longest_cruise = duration
+                    cruise_intervals = [{"start_timestamp": cruise_started_at, "end_timestamp": timestamp}]
+            else:
+                cruise_started_at = None
+        pilot_failures = sorted({str(r["goal_stop"]["pilot_failure_reason"]) for r in records
+                                 if r.get("goal_stop", {}).get("pilot_failure_reason") is not None})
+        cruise_pass = longest_cruise + 1.0e-9 >= config.minimum_cruise_seconds
+        report["development_pilot"] = {
+            "actual_speed_limit_mps": config.maximum_actual_speed_mps,
+            "actual_speed_violation_count": len(speed_violations), "actual_speed_violations": speed_violations,
+            "cruise_band_mps": [config.cruise_minimum_speed_mps, config.cruise_maximum_speed_mps],
+            "cruise_speed_definition": "Measured planar hypot(vx,vy) in driving phase; all native states remain in speed admission.",
+            "required_continuous_cruise_seconds": config.minimum_cruise_seconds,
+            "longest_continuous_cruise_seconds": longest_cruise, "longest_cruise_interval": cruise_intervals,
+            "cruise_requirement_met": cruise_pass, "pilot_failure_reasons": pilot_failures,
+            "training_data_approved": False,
+            "notice": "Development pilot only; full future XY feasibility and independent dataset admission remain separate.",
+        }
+        if speed_violations or not cruise_pass or pilot_failures:
+            report["status"] = "FAIL"
+    return report

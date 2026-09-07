@@ -308,6 +308,64 @@ def _args(module, source: Path, output: Path):
     )
 
 
+ADMISSION_PATHS = (
+    (), ("result",), ("capture_contract",), ("capture_contract", "goal_stop_profile"),
+    ("capture_contract", "goal_stop_profile", "effective_control"),
+    ("result", "goal_stop_quality"), ("result", "goal_stop_quality", "config"),
+    ("result", "goal_stop_quality", "driving_final_stop"),
+    ("result", "goal_stop_quality", "development_pilot"),
+)
+
+
+@pytest.mark.parametrize("path", ADMISSION_PATHS)
+@pytest.mark.parametrize("key,value", [("training_data_approved", False), ("development_only", True)])
+def test_explicit_native_development_restriction_is_not_overridden_by_complete_status(path, key, value):
+    # HH_260906 - Every reviewed restriction location denies conversion independently of optimistic status fields.
+    module = load_module()
+    manifest = {"status": "complete", "training_data_approved": True, "result": {"goal_reached": True}}
+    document = manifest
+    for component in path:
+        document = document.setdefault(component, {})
+    document[key] = value
+    with pytest.raises(module.AdapterError, match="explicitly prohibits training-data conversion"):
+        module._require_native_admission_not_denied(manifest)
+
+
+@pytest.mark.parametrize("key", ["training_data_approved", "development_only"])
+@pytest.mark.parametrize("value", [None, 0, 1, "false", "true", [], {}])
+def test_admission_markers_must_be_actual_booleans(key, value):
+    # HH_260906 - Missing legacy markers differ from present null, numeric or string-valued declarations.
+    module = load_module()
+    with pytest.raises(module.AdapterError, match="must be a Boolean"):
+        module._require_native_admission_not_denied({"result": {key: value}})
+
+
+def test_absent_legacy_markers_preserve_existing_behavior_and_do_not_mutate_metadata():
+    module = load_module()
+    legacy = {"status": "complete", "capture_contract": {"goal_stop_profile": None}, "result": {"goal_reached": True}}
+    before = json.dumps(legacy, sort_keys=True)
+    assert module._require_native_admission_not_denied(legacy) is None
+    assert json.dumps(legacy, sort_keys=True) == before
+    assert module._require_native_admission_not_denied({"training_data_approved": True, "development_only": False}) is None
+
+
+def test_denied_complete_native_source_stops_before_payload_access_and_any_output(tmp_path, monkeypatch):
+    module = load_module()
+    source, output = tmp_path / "native", tmp_path / "prepared"
+    source.mkdir()
+    manifest = {"status": "complete", "cleanup": {"completed": True},
+        "result": {"goal_reached": True, "training_data_approved": False, "goal_stop_quality": {"status": "PASS"}}}
+    _write_json(source / "manifest.json", manifest)
+    for name in ("route.json", "states.jsonl", "camera_frames.jsonl"):
+        (source / name).write_text("payload must not be interpreted\n")
+    before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.iterdir()}
+    monkeypatch.setattr(module, "_jsonl", lambda path: pytest.fail("denied source reached payload loading"))
+    with pytest.raises(module.AdapterError, match="explicitly prohibits training-data conversion"):
+        module.prepare_dataset(_args(module, source, output))
+    assert not output.exists() and not output.with_name(output.name + ".partial").exists()
+    assert before == {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.iterdir()}
+
+
 def test_optical_transform_uses_base_x_forward_y_left_axes() -> None:
     module = load_module()
 

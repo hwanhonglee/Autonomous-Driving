@@ -344,6 +344,35 @@ def _git_commit(explicit: str | None) -> str:
     return commit
 
 
+def _require_native_admission_not_denied(manifest: Mapping[str, Any]) -> None:
+    """HH_260906 - Reject explicit development restrictions without declaring legacy absence to be approval."""
+    paths = (
+        (), ("result",), ("capture_contract",),
+        ("capture_contract", "goal_stop_profile"),
+        ("capture_contract", "goal_stop_profile", "effective_control"),
+        ("result", "goal_stop_quality"), ("result", "goal_stop_quality", "config"),
+        ("result", "goal_stop_quality", "driving_final_stop"),
+        ("result", "goal_stop_quality", "development_pilot"),
+    )
+    for path in paths:
+        document: Any = manifest
+        for component in path:
+            document = document.get(component) if isinstance(document, Mapping) else None
+        if not isinstance(document, Mapping):
+            continue
+        for key, prohibited in (("training_data_approved", False), ("development_only", True)):
+            if key not in document:
+                continue
+            context = ".".join(("manifest", *path, key))
+            if not isinstance(document[key], bool):
+                raise AdapterError(f"{context} admission marker must be a Boolean")
+            if document[key] is prohibited:
+                raise AdapterError(
+                    f"{context} explicitly prohibits training-data conversion; "
+                    "retain the immutable native source and use a separate read-only diagnostic"
+                )
+
+
 def _load_native(spec: EpisodeInput) -> NativeEpisode:
     root = spec.path
     if root.is_symlink() or not root.is_dir():
@@ -355,6 +384,8 @@ def _load_native(spec: EpisodeInput) -> NativeEpisode:
     if any(path.is_symlink() or not path.is_file() for path in paths.values()):
         raise AdapterError(f"native episode is incomplete or contains symlinked metadata: {root}")
     manifest = _json(paths["manifest.json"])
+    # HH_260906 - Fail before loading payload rows or creating output, even when scalar capture status is complete.
+    _require_native_admission_not_denied(manifest)
     route = _json(paths["route.json"])
     states = _jsonl(paths["states.jsonl"])
     frames = _jsonl(paths["camera_frames.jsonl"])

@@ -15,6 +15,7 @@
 | [05 초기 코드 전체 회귀 검사](05_code_validation_initial/README.md) | 선택기·진단·수집 보정·고정 페달 계측 v1 포함 원본 로그 | 2,633 passed / 6 skipped |
 | [06 Warmup·과거 입력 감사](06_warmup_history_audit/README.md) | v3 train/val 앵커 phase·history와 원본 30개 해시 | warmup train105·val35 포함 확인; 과거 문서 정정, 정책 미채택 |
 | [07 타력 주행·출발 반복·점진 가속](07_coast_ramp_identification/README.md) | 고정한 9개 조건, 실제 상태 2,742개·그래프 3장 | 계측 완료; 타력 20초는 미정지, 움직인 ramp 3개 모두 가속 초과 |
+| [09 가속도 입력 기준점·연구용 모델](09_acceleration_input_contract/README.md) | 기존 입력 정의 감사·실제 수치 그래프·가속도 값 제외 코드 | 131 passed / 5 skipped; 새 ID 실제 학습·배포는 미실행 |
 
 ## 두 환경에서 실제로 한 일
 
@@ -76,6 +77,13 @@ val 337개 중 35개가 warmup 앵커임을 확인했습니다. 출발 직후 �
 상태를 과거 입력으로도 사용합니다. 과거 문서의 제외 설명만 정정했고, history-only 방안은
 새 인덱스·문맥 저장소 계약이 필요한 미채택 제안으로 남겼습니다.
 
+<!-- HH_260906 - Keep the untrained acceleration-value ablation separate from a physical input correction or deployed model. -->
+[가속도 입력 감사](09_acceleration_input_contract/README.md)에서는 기존 수집 가속도의
+기준점과 실시간 가속도 생성 방식도 비교했습니다. 수집기의 가속도만 수정하지 않고,
+가속도 두 입력값의 영향만 제외하는 별도 연구 모델 코드를 준비했습니다. 기존 데이터·
+모델 ID·배포 bundle은 유지하며, 새 ID는 현재 secure runtime bundle이 지원하지 않습니다.
+실제 비교 학습은 동일한 새 검증 corpus와 고정 seed 조건을 먼저 마련한 뒤 진행합니다.
+
 다음은 완료한 고정 페달 계측에 근거한 저속 응답 원인 추가 분리·수집 제어 개선 →
 30 km/h 직진의 자연스러운 정지 재검증 → 회전·독립 episode 확장 →
 새 데이터 버전 검증·전송 → 고정 조건 재학습·평가 순서입니다.
@@ -89,6 +97,7 @@ val 337개 중 35개가 warmup 앵커임을 확인했습니다. 출발 직후 �
 04·07의 PNG도 실제 상태 수치로 그린 그래프입니다. 두 계측의 10 Hz 표시는 20 Hz 상태열의
 짝수/홀수 간격 추출이며 카메라 cadence나 실시간 모델 성능을 뜻하지 않습니다.
 06은 메타데이터 감사이며 촬영·모델 추론 자료가 아닙니다.
+09의 PNG는 가속도 내부 일관성 감사 수치이며 모델 성능 개선이나 실제 주행 결과가 아닙니다.
 
 전체 corpus 형식·hash 무결성 검사는 test 파일도 읽을 수 있습니다. test를 모델 학습·
 성능 평가·선택에 사용하지 않았다는 것과 파일을 전혀 읽지 않았다는 것은 다릅니다.

@@ -1,0 +1,82 @@
+{
+  "schema": "portable_e2e.no_accel_research_design.v1",
+  "model_id": "portable_e2e.perspective_trajectory.physical_no_accel.v1",
+  "status": "IMPLEMENTED_SYNTHETIC_CPU_TESTED_NOT_TRAINED_NOT_DEPLOYABLE",
+  "reference_physical_model_id": "portable_e2e.perspective_trajectory.physical.v1",
+  "feature_policy": {
+    "input_features": 13,
+    "masked_indices": [
+      3,
+      4
+    ],
+    "masked_names": [
+      "acceleration_x_mps2",
+      "acceleration_y_mps2"
+    ],
+    "all_history_timesteps": true,
+    "location": "shared PerspectiveTrajectoryModel.forward after unchanged raw-input validation",
+    "input_tensor_mutated": false,
+    "nonfinite_inputs_accepted": false
+  },
+  "parameters": 954590,
+  "same_seed_initial_state_and_parameter_keys_as_reference": true,
+  "physical_decoder_changed": false,
+  "loss_or_runtime_gates_changed": false,
+  "secure_runtime_bundle_allowlist_extended": false,
+  "current_secure_bundle_export_supported": false,
+  "ROS_acceleration_topic_dependency_removed": false,
+  "new_model_actual_training_runs": 0,
+  "new_model_driving_trials": 0,
+  "automatic_promotion": false,
+  "tests": {
+    "new_research_tests_passed": 33,
+    "new_and_candidate_rank_passed": 55,
+    "broad_regression_passed": 131,
+    "broad_regression_skipped": 5,
+    "skip_reason": "Existing local PyTorch secure checkpoint loading capability restrictions",
+    "command": "CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q tests/test_portable_e2e_no_accel_model.py tests/test_portable_e2e_candidate_rank_model.py tests/test_portable_e2e_model.py tests/test_portable_e2e_runtime_weight_bundle.py tests/test_candidate_score_training_cli.py"
+  },
+  "source_files": [
+    {
+      "path": "portable_e2e/model.py",
+      "sha256": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+      "size_bytes": 25783
+    },
+    {
+      "path": "portable_e2e/config/perspective_trajectory_physical_no_accel_v1.model.json",
+      "sha256": "0f941332046854d239d676e83a4ccbc22e60436f3894dcbfe6871002899ed012",
+      "size_bytes": 575
+    },
+    {
+      "path": "tests/test_portable_e2e_no_accel_model.py",
+      "sha256": "279b7d8b4320a06e153fb4ca1bcde861f20a11e6fcf463f7d1b5d9f3eeaf04a2",
+      "size_bytes": 11298
+    },
+    {
+      "path": "tests/test_portable_e2e_candidate_rank_model.py",
+      "sha256": "1faa3d744aac8304b5de757cb0f080f7fccf520eb6409819e9cfe05fb5107807",
+      "size_bytes": 14358
+    },
+    {
+      "path": "portable_e2e/runtime_weight_bundle.py",
+      "sha256": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636",
+      "size_bytes": 51063
+    },
+    {
+      "path": "portable_e2e/losses.py",
+      "sha256": "23ca46a42155124dc29c08d26354761d1bc8233829c0c588292a0c607f608d85",
+      "size_bytes": 9776
+    },
+    {
+      "path": "portable_e2e/runtime_contract.py",
+      "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "size_bytes": 34947
+    },
+    {
+      "path": "docs/portable-e2e-no-acceleration-ablation.md",
+      "sha256": "d2e2fc49ed9c5a64c0635b4b92cf76a3add8971053849e06e79109e791342c37",
+      "size_bytes": 4529
+    }
+  ],
+  "prospective_training_notice": "Only after newly qualified data and a separately frozen same-corpus three-seed comparison; this document does not launch it."
+}

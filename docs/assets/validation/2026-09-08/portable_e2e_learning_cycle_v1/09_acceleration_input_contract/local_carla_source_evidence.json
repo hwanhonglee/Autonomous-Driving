@@ -1,0 +1,38 @@
+{
+  "schema": "portable_e2e.private_local_carla_source_evidence.v1",
+  "created_at_utc": "2026-09-07T17:44:09.534377+00:00",
+  "source_repository_label": "local_carla_checkout_candidate_source_not_server_build_proof",
+  "executed_server_build_match_verified": false,
+  "files": [
+    {
+      "source_relative_path": "LibCarla/source/carla/client/Actor.cpp",
+      "sha256": "96253f266fff02e6c550cd38e0dcf79ee107221427f1815d18f32c4d663cdc71",
+      "size_bytes": 3483
+    },
+    {
+      "source_relative_path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Sensor/WorldObserver.cpp",
+      "sha256": "5a5cd9279bfcd95ab7250a868f7bbd3ce9cfeb3ec1bc6dbc9d032ea4cedb8695",
+      "size_bytes": 14979
+    },
+    {
+      "source_relative_path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/CarlaWheeledVehicle.cpp",
+      "sha256": "1244cb0c6d64e619cb34898a4b8976bc2e28c8c6748efabb7ec5eac46c341c44",
+      "size_bytes": 39222
+    },
+    {
+      "source_relative_path": "Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Vehicle/MovementComponents/BaseCarlaMovementComponent.cpp",
+      "sha256": "2c165995d2eef973a7c2d41116d7fd54545e807adf7c04233fa250b57ef2f476",
+      "size_bytes": 2762
+    }
+  ],
+  "observations": [
+    "WorldObserver.cpp lines257-266 compute acceleration as (Velocity-PreviousVelocity)/DeltaSeconds.",
+    "WorldObserver.cpp lines340-342 serialize Actor.GetVelocity-derived world velocity and that finite-difference acceleration.",
+    "Actor.cpp exposes episode snapshot velocity/angular velocity/acceleration.",
+    "CarlaWheeledVehicle.cpp dispatches GetVelocity to its movement component; BaseCarlaMovementComponent.cpp invokes AWheeledVehicle.GetVelocity."
+  ],
+  "limitations": [
+    "No server executable-to-source build provenance is established.",
+    "Physics velocity reference point / center of mass is not determined by this observation alone."
+  ]
+}

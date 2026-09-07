@@ -24,7 +24,9 @@ MODEL_ID = "portable_e2e.perspective_trajectory.v0"
 PHYSICAL_MODEL_ID = "portable_e2e.perspective_trajectory.physical.v1"
 # HH_260906 - Keep candidate-aware scoring research separate from deployable model IDs.
 CANDIDATE_RANK_MODEL_ID = "portable_e2e.perspective_trajectory.candidate_rank.v1"
-SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID))
+# HH_260906 - This research ID removes supplied acceleration values, not their transport or physical-reference requirements.
+PHYSICAL_NO_ACCEL_MODEL_ID = "portable_e2e.perspective_trajectory.physical_no_accel.v1"
+SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID))
 IMAGE_ENCODER_DOWNSAMPLE_STAGES = 4
 # HH_260906 - Physical v1 predicts bounded 100 ms route-relative motion steps.
 PHYSICAL_TIME_STEP_S = 0.1
@@ -124,7 +126,7 @@ class ModelConfig:
                     f"model.{name} must be finite and in [{minimum}, {maximum}]"
                 )
         # HH_260906 - Pin the physical decoder's declared step safety envelope.
-        if self.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID) and not math.isclose(
+        if self.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID) and not math.isclose(
             float(self.maximum_step_m), 1.0, rel_tol=0.0, abs_tol=1.0e-12
         ):
             raise ContractError("physical v1 maximum_step_m must be exactly 1.0")
@@ -380,6 +382,11 @@ class PerspectiveTrajectoryModel(nn.Module):
         cfg = self.config
         batch = images.shape[0]
 
+        if cfg.model_id == PHYSICAL_NO_ACCEL_MODEL_ID:
+            # HH_260906 - Validate raw inputs first, then mask both acceleration channels at every history step without mutating the caller.
+            ego_history = ego_history.clone()
+            ego_history[..., 3:5] = 0.0
+
         flat_images = images.reshape(
             batch * cfg.camera_count,
             cfg.image_channels,
@@ -439,7 +446,7 @@ class PerspectiveTrajectoryModel(nn.Module):
         raw = self.trajectory_head(fused).reshape(
             batch, cfg.candidate_count, cfg.future_points, trajectory_channels
         )
-        if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID):
+        if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID):
             trajectory_xy, trajectory_speed = self._decode_physical_v1(
                 raw, ego_history, route_xy, route_mask
             )

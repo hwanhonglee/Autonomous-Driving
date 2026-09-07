@@ -81,7 +81,17 @@ def test_legacy_initialization_and_encoder_source_are_frozen() -> None:
     initializer = inspect.getsource(PerspectiveTrajectoryModel.__init__).split(
         "        # HH_260906 - Replace only the research scorer"
     )[0]
-    forward_prefix = inspect.getsource(PerspectiveTrajectoryModel.forward).split(
+    # HH_260906 - Remove only the explicitly gated later value ablation before checking the frozen legacy prefix.
+    forward_source = inspect.getsource(PerspectiveTrajectoryModel.forward).replace(
+        "\n        if cfg.model_id == PHYSICAL_NO_ACCEL_MODEL_ID:\n"
+        "            # HH_260906 - Validate raw inputs first, then mask both acceleration channels at every history step without mutating the caller.\n"
+        "            ego_history = ego_history.clone()\n"
+        "            ego_history[..., 3:5] = 0.0\n", ""
+    ).replace(
+        "if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID):",
+        "if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID):",
+    )
+    forward_prefix = forward_source.split(
         "        if cfg.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID):"
     )[0]
     assert _hash_source(initializer) == (

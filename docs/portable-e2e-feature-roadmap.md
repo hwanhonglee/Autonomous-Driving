@@ -10,13 +10,20 @@
 **9월 9일 추가 진행:** [가속도 입력 A/B](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/01_no_accel_development_ab/README.md)를
 원격 GPU 0에서 00:58:53 KST에 완료했습니다. 기존 모델과 가속도 입력 제외 모델을 각각 세 seed로
 새로 전체 학습한 6회·평가 6회·감사 6회입니다. B의 상대 기준은 FAIL/PASS/FAIL이고 절대 품질은
-모두 FAIL이라 미채택입니다. 아래 9월 7일 캠페인 15회와 합친 후속 전체 모델 학습은 21회이며,
-9월 8일 선택기 전용 9회는 별개로 셉니다. 이번 추가 설치나 실시간 차량 제어는 없습니다.
-신규 C-track 8회는 계속 데이터 미승인이고 learned closed-loop 기능 수는 0개 그대로입니다.
+모두 FAIL이라 미채택입니다. 이후 선택 손실·정지 후보 비교를 각각 새 초기화 6회씩 완료해
+9월 9일은 총 18회, 아래 9월 7일 캠페인 15회와 합친 후속 전체 모델 학습은 **33회**입니다.
+모두 미채택이며 [9월 9일 완료 기록](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/README.md)에 구분했습니다.
+
+<!-- HH_260906 - Keep continuation, head-only and short diagnostic counts distinct from fresh whole-model campaigns. -->
+04:30 KST 완료한 기존 모델의 10-epoch 이어학습 **6회**는 새 초기화 수에 더하지 않습니다.
+모든 6개 모델의 1초·3초 ADE가 악화하고 절대 조건에 미달해 그대로 미채택입니다.
+9월 8일 선택기 전용 9회, 16-step 계측 2회, 287-step DataLoader 비교 4회도 각각 별개입니다.
+이번 추가 설치나 실시간 차량 제어는 없습니다. 신규 C-track은 9월 8일 8회와
+9월 9일 물리 적분 비교 4회 모두 데이터 미승인이고 learned closed-loop 기능 수는 0개 그대로입니다.
 
 <!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
 목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 아래는 9월 8일까지의 근거이며,
-9월 9일 추가 완료 6회는 위에서 구분했다. 9월 8일까지 완료된 것은
+9월 9일 추가 완료 캠페인·이어학습·진단은 위에서 구분했다. 9월 8일까지 완료된 것은
 `common_10hz_v1` 데이터·학습 배선, CARLA-only physical-v1 학습·open-loop 평가,
 로컬 3장면의 10 Hz shadow 계측, **9월 7일 네 캠페인의 전체 모델 학습·평가·감사 15회**,
 **9월 8일 고정 C 생성기 위 선택기 전용 학습 9회**와 정답 데이터 감속 진단이다. 둘은 다른
@@ -34,7 +41,8 @@ checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 
 미래 창 7,216개의 XY 곡률 검사에서는 1,560개 창이 초과했고, 0.13도 각 반복의
 905개 창 중 161개가 초과했다. 서로 겹치는 창이며 독립 사건 수가 아니다. 따라서
 8회 모두 데이터 미승인이고, 이 결과로 기능 상태나 모델을 승격하지 않았다.
-최신 완료·진행 상태는 [당일 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에 구분한다.
+그날의 상세 근거는 [9월 8일 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md),
+이후 최신 완료·진행 상태는 [9월 9일 결과 폴더](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/README.md)에 구분한다.
 
 현재 판정의 근거는 다음과 같다.
 

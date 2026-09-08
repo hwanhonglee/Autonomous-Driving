@@ -74,6 +74,26 @@ checkpoint의 가중치·Adam·RNG·ABI 내용이 정확히 같습니다. 계측
 다음은 기존 6개 모델의 원본 checkpoint를 보존한 고정 10-epoch 이어학습 비교를 준비합니다.
 아직 시작 전이며 새 loss나 seed 선택 없이 학습량 부족 가설만 분리해 확인할 계획입니다.
 
+04:07 KST: [고정 10-epoch 이어학습](08_stopmix_ten_epoch_continuation/README.md)을 시작했습니다.
+04:23 KST에는 24단계 중 16단계 완료와 다섯 번째 모델의 실제 step 증가를 확인했습니다.
+원본 6개 checkpoint를 독립 복사해 학습량만 늘린 비교로, 새 초기화 6회나 새 데이터 수집으로
+세지 않습니다. 완료 후 모든 종점과 행동 지표를 함께 비교합니다.
+
+<!-- HH_260906 - Keep timestamped in-progress observations but add the actual completed endpoints without inflating fresh-fit counts. -->
+04:30:32 KST: 이어학습 24단계를 완료했습니다. 6개 모델에 각각 1,330 step을 추가했고
+기존 이력 1,540행은 모두 부모 원본과 같습니다. 자기 부모 대비 상대 조건은 3/6 통과했지만
+절대 조건은 0/6 통과, **1초·3초 ADE는 6개 모두 악화**했습니다. 모델은 미채택입니다.
+
+04:35:40 KST: 별도 DataLoader ABBA 4회도 완료했습니다. 각각 TRAIN 1,147개를
+287 step으로 한 번 순회한 진단입니다. 모든 metrics 원본과 선언한 두 필드 외 checkpoint
+내용이 일치했습니다. worker 2의 평균 학습 구간 시간은 약 33.8% 짧았지만 표본은 조건당
+2회이며 장기 학습·추론 성능이나 기본 설정 변경을 뜻하지 않습니다.
+
+04:41:33 KST: nuPlan의 앞서 보존한 32개 calibration BLOB을 별도 사전 계획으로
+로컬에서 해석했습니다. 실행형 역직렬화 없이 정확히 고정한 바이트 틀과 숫자 위치만 읽었고
+8카메라의 기본 수치 검사를 통과했습니다. 실제 영상 투영·TF·물리 센서 배치·학습 승인은
+여전히 확인되지 않았습니다. 원래 opcode-only 진단 결과는 변경하지 않았습니다.
+
 ## 결과를 찾는 곳
 
 <!-- HH_260906 - Keep actual training, expert collection and read-only data readiness in separate discoverable categories. -->
@@ -83,8 +103,11 @@ checkpoint의 가중치·Adam·RNG·ABI 내용이 정확히 같습니다. 계측
 | [01 물리 적분과 차량 중심 촬영](01_substeps/README.md) | C-track expert 수집 4회, 실제 PNG·GIF와 원본 품질 검사 | 4회 모두 데이터 미승인 |
 | [02 후보 선택 손실 비교 학습](02_cost_aware_learning/README.md) | GPU 0의 새 학습 6회, 고정 seed별 성능·경로 그림 | 미채택 |
 | [03 학습 처리 비용](03_training_cost/README.md) · [실제 학습 계측](03_training_cost/actual_training_profile/README.md) | 성분 80회 계측, 실제 16-step 학습 2회와 CPU/CUDA 추적 | 진단 완료·결과 동일성 통과; 속도 개선 판정 아님 |
+| [03 부록: DataLoader 고정 ABBA](03_training_cost/dataloader_abba/README.md) | 287-step 학습 4회·worker 0/2명·전체 원본 이력과 실측 그림 | 결과 동일·조건당 2회 평균 단축; 기본 설정 불변 |
 | [04 주행·정지 후보 비교 학습](04_stopmix_learning/README.md) | 새 학습 6회와 별도 행동 분석 6회, 고정 시점 PNG 72장 | 결과 게시·해시 검증 완료, 미채택 |
 | [05 실제 데이터의 준비 상태](05_real_data_readiness/README.md) | nuPlan 단일 DB의 native 센서·경로 메타데이터 검사 | 학습 승인 아님 |
 | [05 부록: 6카메라 시간차 하한](05_real_data_readiness/subset_interval_analysis/README.md) | 동일 매칭에 대한 28개 조합의 보수적 하한 | 현재 매칭으로는 기존 20 ms 조건 미달 |
+| [05 부록: 보정 메타데이터 구조](05_real_data_readiness/calibration_opcode_inventory/README.md) | 32개 BLOB의 실행 없는 opcode 구조 검사 | 완료; 원래 진단은 숫자 해석·투영 검증 아님 |
 | [06 Town07 저속 정지 원인 분석](06_town07_stop_conditioning/README.md) | 원본 1,337창 재구성, 고유 실패 119구간·실제 수치 PNG | 원본·실패 보존, 원인 단정·승인 없음 |
 | [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 5,607 통과 / 6 건너뜀 / 0 실패 |
+| [08 고정 10-epoch 이어학습](08_stopmix_ten_epoch_continuation/README.md) | 기존 6개 모델의 학습량만 늘리고 전체 종점·행동 비교 | 24/24단계 완료; 절대 조건 0/6 통과·미채택 |

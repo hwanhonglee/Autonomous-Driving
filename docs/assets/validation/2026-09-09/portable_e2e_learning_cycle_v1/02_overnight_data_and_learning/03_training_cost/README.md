@@ -35,3 +35,14 @@ NaN·Inf·복소수·정수·빈 구조 등 12개 판정 대조도 모두 일치
 
 현재는 이 결과만으로 학습 루프를 바꾸지 않습니다. 학습 속도 개선은 검사 항목을 제거하지 않고
 전체 입력·학습 경로에서 동일 결과와 시간을 비교한 후 별도로 판단합니다.
+
+## 이후 별도로 실행한 전체 경로 진단
+
+<!-- HH_260906 - Separate the earlier synthetic component timings from later native-trainer measurements. -->
+
+- [원본 trainer의 16-step 계측 비교](actual_training_profile/README.md): 계측 유무 2회,
+  모든 32개 학습 기록과 선언한 생성 시각 외 checkpoint 내용의 동일성을 확인했습니다.
+- [DataLoader worker 0→2→2→0 실제 비교](dataloader_abba/README.md): 각각 새 초기화에서
+  TRAIN 1,147개를 한 번 순회한 287-step 진단 4회입니다. 모든 학습 기록이 바이트 동일했고
+  조건당 두 번의 평균 학습 구간은 34.631→22.936초였습니다. 장기 캠페인·추론 FPS 개선
+  증거가 아니며 production 설정은 그대로입니다.

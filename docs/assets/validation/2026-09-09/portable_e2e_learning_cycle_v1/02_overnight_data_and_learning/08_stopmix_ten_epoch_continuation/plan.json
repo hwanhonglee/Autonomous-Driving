@@ -1,0 +1,116 @@
+{
+  "additional_samples_seen": 5315,
+  "additional_steps": 1330,
+  "automatic_promotion": false,
+  "automatic_retry": false,
+  "behavior_render_indices": [
+    0,
+    31,
+    61,
+    92,
+    122,
+    153,
+    183,
+    214,
+    244,
+    275,
+    305,
+    336
+  ],
+  "best_checkpoint_selection": false,
+  "campaign_id": "hh260909-stopmix-duration-10epochs-v1",
+  "checkpoint_interval": 154,
+  "cleanup_reserve_seconds": 300,
+  "declared_at_utc": "2026-09-08T19:05:50.078755+00:00",
+  "expected_stage_count": 24,
+  "finish_before_utc": "2026-09-09T01:00:00Z",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "initial_full_budget_seconds": 6120,
+  "integrity_overhead_reserve_seconds": 600,
+  "interpretation": "Six continuation lineages, not six fresh initializations or new independent episodes. Compare both fixed endpoints; no repeat-until-pass.",
+  "model_config_paths": {
+    "A_physical_drive": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+    "B_drive_stop_mix": "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json"
+  },
+  "num_workers": 0,
+  "only_train_config_change": "max_steps:1540->2870",
+  "owner_sha256": "db7fd6764cfc28162400f6e86dc38fd5c99bfacb57b4c4bf0cd28eeebbf074a4",
+  "parent_behavior_manifest_sha256": "bd8a698f03fb953d7ebe152fb7283d7ba0580a2d1805d2ae02c599b602c1fe0e",
+  "parent_behavior_status_sha256": "92f46b8030900f64f81a646f5efdef02e71c8bc62989e755ff8e69396a599871",
+  "parent_campaign_id": "hh260909-stopmix-development-ab-3seeds-v1",
+  "parent_plan_sha256": "f06c68ce47aaee6941a3ca42559460ac5837b53f669bf195fa15b5d5e80a05d9",
+  "parent_samples_seen": 6155,
+  "parent_status_sha256": "9f40946bde5395c61e68a5ac5fa476a210569a7fe8f6f6d58d4588037e4ff2bc",
+  "parent_steps": 1540,
+  "parent_training_file_sha256": {
+    "seed_20260903/A_physical_drive": {
+      "checkpoints/latest.pt": "3fbde7873de6f5af72b9e301916b36006b0ae84478e906fcfa1f51c065739b9d",
+      "metrics.jsonl": "f35cdbb0c6d577a89e3660294aab867c1ad86310e81746d0af87d88f721bb7a0",
+      "run.json": "8b6fd178ba890087ceb5221af804f48f944640b0f78f155662cf2b35576bb354"
+    },
+    "seed_20260903/B_drive_stop_mix": {
+      "checkpoints/latest.pt": "9b949b17b3708bed5ba25eb5721187a56f4f77c11c8461e685cbbd995259f8bf",
+      "metrics.jsonl": "a008586ca82264148c2eee5a4589ddb8c4abf7a716ec1966c3152b7bec4eedb4",
+      "run.json": "c40bdf1879ee1c796e16bf623ce0939a9a616d714d4ffa68f67aaad99ef2ce38"
+    },
+    "seed_20260904/A_physical_drive": {
+      "checkpoints/latest.pt": "343b2cf6b256f57c37f7d21fe4297775fbc921ad8350fc946510df2505c33d81",
+      "metrics.jsonl": "be1c37b4c27f0f9883b7f746b1d44a0cc70a8821e012c24260e831adcfcd69ea",
+      "run.json": "697c4f94e1efd52fb4a7bb68c9926b3b49becbccc7145cb8b25788512b62b050"
+    },
+    "seed_20260904/B_drive_stop_mix": {
+      "checkpoints/latest.pt": "2789a33c313923ee6084ddaa6dc1a3937ebedd22d5e52db360c0e45fc841e851",
+      "metrics.jsonl": "83144380d7fd5aab6cf81159212c9978565da94b3566f766c167eebcf6b5347e",
+      "run.json": "f32ada2843717469a7e240ec2f2b0f48a081944948196b8ce7b91b0f220a1db3"
+    },
+    "seed_20260905/A_physical_drive": {
+      "checkpoints/latest.pt": "fe7ada85cefc9d6eff07bb7ba42855f675aa5c92fe0156508759e20924b1863d",
+      "metrics.jsonl": "22c67848d733d622bf58a30c2228b044e04579f847e991df6ce02ace41f5dacf",
+      "run.json": "c6735f85e8aa18154ecac81f70034a44caf46b015cf86bc8383541a9b92cf7f1"
+    },
+    "seed_20260905/B_drive_stop_mix": {
+      "checkpoints/latest.pt": "ce6ffa0bbd80db39d0c9952d1a1e8d67543ff1c69ccc9a7e76d110ffefd5d9df",
+      "metrics.jsonl": "60ccde49e10424fc3406bd13eeb4d44d6e5770add1bc1cd197c30411c97a0bfe",
+      "run.json": "a424eb3af486d62ac73f63dd51ea15a64cc6e6198a1bc8e38f5c6e0cdb2161a6"
+    }
+  },
+  "runs": [
+    "seed_20260903/A_physical_drive",
+    "seed_20260903/B_drive_stop_mix",
+    "seed_20260904/A_physical_drive",
+    "seed_20260904/B_drive_stop_mix",
+    "seed_20260905/A_physical_drive",
+    "seed_20260905/B_drive_stop_mix"
+  ],
+  "schema": "portable_e2e.stopmix_duration_campaign.v1",
+  "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+  "stage_order": [
+    "train",
+    "evaluate",
+    "audit",
+    "behavior"
+  ],
+  "stage_timeout_seconds": {
+    "audit": 120,
+    "behavior": 180,
+    "evaluate": 120,
+    "train": 450
+  },
+  "test_integrity_scope": "The unchanged full-corpus validator may read test contract/JSON/JPEG bytes only for integrity.",
+  "test_nn_inference_or_training_or_selection": false,
+  "total_complete_epochs": 10,
+  "total_samples_seen": 11470,
+  "total_steps": 2870,
+  "train_samples": 1147,
+  "training_data_approved": false,
+  "unchanged_loss_config": {
+    "candidate_score_weight": 0.1,
+    "final_displacement_weight": 0.5,
+    "kinematic_speed_weight": 0.05,
+    "speed_weight": 0.2,
+    "xy_weight": 1.0,
+    "yaw_weight": 0.1
+  },
+  "validation_samples": 337,
+  "worker_sha256": "e51d2c4e02ba15a24a376944c08a387d616b8d749585562732ee483b913958e3"
+}

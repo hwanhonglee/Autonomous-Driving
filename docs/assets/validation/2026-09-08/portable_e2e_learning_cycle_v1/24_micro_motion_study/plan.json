@@ -1,0 +1,105 @@
+{
+  "schema": "portable_e2e.micro_motion_study_plan.v1",
+  "note": "HH_260906 - Declare a new CPU-only diagnostic before executing its measurements, after the earlier raw failures are already known.",
+  "declared_utc": "2026-09-08 06:14:33 UTC",
+  "status": "DECLARED_NOT_EXECUTED",
+  "study_id": "micro_motion_study_v1",
+  "repository_base_commit": "bd27f33d7a265f1d83f1d6bdb77a5862cf2ea0f2",
+  "prior_results_known": true,
+  "not_blinded_or_independent_validation_set": true,
+  "input_root": "artifacts/training/2026-09-08/turn_launch_raw_geometry_v1",
+  "input_sha256": {
+    "summary.json": "7f1ed0bd40c7b1ec531e3402f3b90ad21eccc4e45ac513fb6d69b5fd953bce33",
+    "future_geometry_audit.jsonl": "bbf894187bd129146da4515e513341b97795ed470fccce49ab25fbe5819353f9",
+    "native_snapshot_audit.jsonl": "0f4ff705919ed25db8bc2bba615506a497ab05c66a77a3928307ddfe7112124e",
+    "jpeg_audit.jsonl": "417d7f4c205bf0de8d0870961d178ca86b2425d2ae52128c4d0626daf9d4ba18",
+    "SHA256SUMS": "1df3034160cd3a9d3b4d686cb57415aba130dbd37f9d63649d388e5168fcc738"
+  },
+  "case_order": [
+    "01_turn_launch_015_v1_r1",
+    "02_turn_launch_013_v1_r1",
+    "03_turn_launch_014_v1_r1",
+    "04_turn_launch_012_v1_r1",
+    "05_turn_launch_012_v1_r2",
+    "06_turn_launch_014_v1_r2",
+    "07_turn_launch_013_v1_r2",
+    "08_turn_launch_015_v1_r2"
+  ],
+  "denominators": {
+    "native_states": 15466,
+    "camera_anchors": 7736,
+    "complete_future_anchors": 7216,
+    "points_per_complete_future": 64,
+    "known_original_curvature_violating_anchors": 1560
+  },
+  "command": "PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' python3 -m scripts.e2e.analyze_carla_micro_motion --input-root artifacts/training/2026-09-08/turn_launch_raw_geometry_v1 --output-dir artifacts/training/2026-09-08/micro_motion_study_v1/results",
+  "execution_source_binding": "Before launch, record exact new script/test SHA and Git worktree state in separate execution record; tool snapshots executed script and rejects input hash changes.",
+  "measurements": {
+    "native": {
+      "durations_seconds": [
+        0.05,
+        0.1
+      ],
+      "hundred_ms_start_offsets": "both parity offsets of the per-case native sequence",
+      "integration": "left, right and trapezoid sums over every intervening 20Hz velocity sample",
+      "references": [
+        "ActorSnapshot API reference XY/world velocity, physical COM identity unknown",
+        "original rear XY / legacy planar vx,vy rotated using recorded yaw; not full3D rigid-body truth"
+      ],
+      "residuals": "observed displacement minus velocity integral, in meters and divided by actual dt; errors are descriptive residuals, not admission verdicts",
+      "separate_vertical_settling": true,
+      "offset_identity": "delta(rear XY) - delta(API XY) equals delta(rear-minus-API offset); algebraic consistency is not physical-reference validation"
+    },
+    "future": {
+      "all_indices_retained": true,
+      "backward_durations_seconds": [
+        0.1,
+        0.2,
+        0.5
+      ],
+      "common_endpoint": true,
+      "history": "within each fixed64-point window and its recorded origin only",
+      "short_prefix": "explicit unavailable, no pre-anchor lookup or padding",
+      "minimum_heading_displacement_m": 0.0001,
+      "minimum_heading_displacement_unchanged": true,
+      "original_hundred_ms_curvature_recomputed_and_retained": true,
+      "coarse_direction_comparison_not_a_new_curvature_gate": true,
+      "overlapping_point_rows_and_unique_case_target_timestamps_reported_separately": true
+    },
+    "grouping": {
+      "phases": [
+        "stationary_warmup",
+        "driving",
+        "stationary_tail"
+      ],
+      "crossings_retained": true,
+      "xy_interval_speed_bins_mps": [
+        0,
+        0.1,
+        0.5,
+        1
+      ],
+      "speed_bins_are_descriptive_not_acceptance_thresholds": true
+    }
+  },
+  "scope": {
+    "cpu_only": true,
+    "new_carla_capture": false,
+    "new_gpu_job": false,
+    "package_install": false,
+    "remote_changes": false,
+    "new_training": false,
+    "dataset_conversion": false,
+    "training_admission": false,
+    "nominal_trajectory_fit": false,
+    "model_or_vehicle_tf_change": false,
+    "gate_or_label_change": false
+  },
+  "interpretation_limits": [
+    "No result can retroactively admit any of the eight captures.",
+    "Coarse intervals must not erase original100ms curvature failures.",
+    "Position and velocity are distinct recorded observables; disagreement alone is not proof of noise, timing delay, physical COM or controller error.",
+    "First-index-only repair and dropping warmup/tail are excluded.",
+    "A future residual/uncertainty representation requires separate design and independent calibration; no tolerance is fitted to these known failures."
+  ]
+}

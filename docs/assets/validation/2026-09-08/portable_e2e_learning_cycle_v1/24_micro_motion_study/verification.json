@@ -1,0 +1,46 @@
+{
+  "note": "HH_260906 - Bind actual CPU regression and independent raw-motion checks without claiming model, dataset or vehicle qualification.",
+  "source_commit": "78fb168cdab307dd1ebb63b0bb00336c421089f3",
+  "source_files_unchanged_during_regression": 477,
+  "main": {
+    "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs tests",
+    "exit_code": 0,
+    "passed": 4204,
+    "skipped": 6,
+    "elapsed_seconds": 204.46,
+    "log": "tests/main.log"
+  },
+  "launch": {
+    "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs autoware_e2e_vad_launch/test",
+    "exit_code": 0,
+    "passed": 373,
+    "skipped": 0,
+    "elapsed_seconds": 13.48,
+    "log": "tests/launch.log"
+  },
+  "total": {
+    "passed": 4577,
+    "skipped": 6
+  },
+  "independent_review": {
+    "raw_native_intervals_recomputed": 72,
+    "phase_crossing_intervals_included": 48,
+    "future_anchors_recomputed": 11,
+    "future_indices_recomputed": 704,
+    "trailing_direction_requests_recomputed": 2112,
+    "published_statistic_groups_recomputed": 158,
+    "all_pooled_statistics_exact_match": true,
+    "final_plots_visually_checked": 3,
+    "edited_document_local_links_checked": 97,
+    "missing_links": 0
+  },
+  "scope": {
+    "new_model_training": false,
+    "remote_server_access": false,
+    "package_install": false,
+    "new_carla_run": false,
+    "model_replacement": false,
+    "training_data_approved": false,
+    "physical_limits_changed": false
+  }
+}

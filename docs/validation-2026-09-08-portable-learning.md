@@ -5,6 +5,19 @@
 [최신 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에
 정답 데이터 진단, 생성기를 고정한 선택기 9회 학습, 로컬 자연 정지 수집 개선을 분리해 기록합니다.
 
+<!-- HH_260906 - Distinguish the independent Portable model from existing and proposed external baselines. -->
+자체 **Portable E2E 모델을 설계·학습하는 프로젝트**이며 VAD 재학습과는 다릅니다.
+VAD는 기존 연결된 비교 기준, VisionPilot은 아직 실행하지 않은 외부 비교 후보입니다.
+[역할·센서 차이·공정한 비교 계획](portable-e2e-visionpilot-comparison.md)을 추가했습니다.
+
+<!-- HH_260906 - Link the completed read-only motion study without claiming fresh training or raw-data admission. -->
+**15:28 KST 후속 완료:** [24 미세 이동 분석](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/24_micro_motion_study/README.md)에서
+원본 구간 30,908개와 미래 지점 461,824개를 처리했습니다. 원본 해시와 기존 곡률 실패
+1,560개 창은 유지됐습니다. 위치–속도 적분 잔차와 100/200/500 ms 방향 차이를 수치·그래프로
+기록했으며, 원인 확정·라벨 수정·새 학습이나 모델 교체를 하지 않았습니다.
+해당 분석과 표시 보완을 포함한 최신 코드 회귀는 **4,577 passed / 6 skipped**이며,
+원본 로그와 소스 해시는 24 폴더에 있습니다. 아래 23의 4,518개 결과는 앞선 시점의 기록입니다.
+
 <!-- HH_260906 - Show the latest bounded execution outcome separately from the overnight history. -->
 오후 재개한 C-track 출발 페달 비교는 **14:11 KST에 8회 모두 종료**했습니다.
 목표 정차는 8/8, 20 Hz 가감속 기준은 2/8 충족이며 통과한 조건은 페달 0.13의 두 반복입니다.

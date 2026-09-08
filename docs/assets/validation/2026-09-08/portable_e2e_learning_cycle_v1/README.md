@@ -24,10 +24,16 @@
 원격 GPU0은 14:08 KST 확인 시 비어 있었으며 새 학습 작업은 시작하지 않았습니다.
 
 <!-- HH_260906 - Separate final unit-regression evidence from expert driving and model qualification. -->
-최종 코드 회귀 검사는 일반 테스트 **4,145 passed / 6 skipped**, Autoware 런치 패키지
+앞선 코드 회귀 검사는 일반 테스트 **4,145 passed / 6 skipped**, Autoware 런치 패키지
 **373 passed / 0 skipped**로 종료했습니다. 합계 **4,518 passed / 6 skipped**이며,
 초기 실행 실패·수정 근거·건너뛴 이유·검사한 소스 해시는 [23 검증 기록](23_code_validation_final/README.md)에 보존합니다.
 이는 코드 검사 결과이며 실제 Autoware 주행 성공이나 새 모델 학습 완료를 뜻하지 않습니다.
+
+<!-- HH_260906 - Distinguish the completed later diagnostic and final-source regression from the earlier preserved code-validation snapshot. -->
+**후속 완료:** [24 미세 이동 분석](24_micro_motion_study/README.md)은 15:28 KST에
+원본 구간 30,908개·미래 지점 461,824개를 처리했습니다. 표시를 보완한 PNG 3장과
+최종 코드 검사 **4,577 passed / 6 skipped**를 추가했습니다. 기존 곡률 실패 1,560개 창은
+그대로이며 새 라벨·모델 학습·VisionPilot 실행은 하지 않았습니다.
 
 | 카테고리 | 내용 | 현재 판정 |
 |---|---|---|
@@ -53,9 +59,17 @@
 | [20 두 CPU의 최종 디코더 계산 대조](20_decoder_forward_verification/README.md) | 각 환경 1,540,224개 저장 출력 비교, 원격 초기 검사 부분 실패도 보존 | 최종 출력 허용량 내 일치; 초기 목적함수 22개 미확인·기존 게이트 실패 유지 |
 | [21 C-track 출발 페달 8회와 실제 화면](21_turn_launch_matrix/README.md) | 15,466개 상태·46,416장 영상, 실제 6카메라·차량 중심 PNG 26장·출발 GIF 8개 | 정차·ACK·초기화 8/8, native 가감속 2/8 충족; 학습 미승인 |
 | [22 C-track 전체 미래와 미세 변위 분석](22_turn_launch_raw_geometry/README.md) | 전체 7,216개 미래 창·8회 실제 궤적·저변위 곡률 그래프 3장 | 곡률 초과 1,560개 창 유지; 0.13도 미승인, 원본 수정 없음 |
-| [23 최신 코드 회귀와 실패 원인](23_code_validation_final/README.md) | 일반·런치 검사 원본 로그, 초기 실패 보존, 부동소수점 비교 보완과 소스 해시 | 합계 4,518 passed / 6 skipped; 실제 차량·학습 모델 승인 아님 |
+| [23 앞선 코드 회귀와 실패 원인](23_code_validation_final/README.md) | 일반·런치 검사 원본 로그, 초기 실패 보존, 부동소수점 비교 보완과 소스 해시 | 당시 합계 4,518 passed / 6 skipped; 실제 차량·학습 모델 승인 아님 |
+| [24 미세 이동의 위치·속도·방향 분석](24_micro_motion_study/README.md) | 원본 구간 30,908개·미래 지점 461,824개 전체 분석과 실제 수치 그래프 | 계산 완료; 기존 초과 창 1,560개 유지, 라벨 보정·학습 미실행 |
 
 ## 두 환경에서 실제로 한 일
+
+<!-- HH_260906 - Explain model ownership and distinguish researching an external baseline from replacing the independent planner. -->
+현재 학습 연구는 VAD 재학습이 아닌 **자체 Portable E2E 모델 개발**입니다.
+VAD는 기존 Autoware/CARLA 기준선이며, VisionPilot은 공통 기능에서 비교할 외부 후보입니다.
+[세 모델의 역할과 공정한 비교 순서](../../../../portable-e2e-visionpilot-comparison.md)에
+공식 소스·센서/출력 차이·설치 제한을 정리했습니다. VisionPilot 다운로드·추론·학습·주행
+실행이나 기존 모델 교체는 아직 하지 않았습니다.
 
 - **원격 Pro6000:** 기존 개인 py312 venv와 GPU0만 사용해 선택기 전용 학습 9회를
   완료했습니다. 학습 시간은 01:29:13–01:32:00 KST입니다. 이는 전체 모델을 처음부터
@@ -174,14 +188,15 @@ target tick은 64개입니다. 최대 곡률 사례는 warmup의 약 0.125 mm �
 미승인 표시를 지워 학습에 넣지 않습니다. 이후 독립 경로 수집·데이터 버전 검증·전송을
 거쳐 고정 조건으로 다시 학습합니다. GPU가 비어 있다는 이유만으로 새 학습이 실행되지는 않습니다.
 
-<!-- HH_260906 - Specify the next CPU-only discriminating study without authorizing label replacement or a new capture retry. -->
-바로 다음 계측은 기존 8회 원본을 읽어 20 Hz 위치 차이와 기록 속도의 적분을 비교하고,
-전체 미래 인덱스에서 0.1·0.2·0.5초 변위 방향의 민감도를 확인하는 CPU 전용 분석입니다.
+<!-- HH_260906 - Record the completed CPU-only study without authorizing label replacement or a new capture retry. -->
+[후속 CPU 분석](24_micro_motion_study/README.md)은 **15:28 KST에 완료**했습니다.
+기존 8회 원본의 20 Hz 위치 차이와 기록 속도의 적분을 비교하고,
+전체 미래 인덱스에서 0.1·0.2·0.5초 변위 방향의 민감도를 확인했습니다.
 API 기준점과 변환된 후륜 기준을 구분하며 어느 쪽도 물리 무게중심이라고 가정하지 않습니다.
 긴 시간 간격에서 지표가 안정되더라도 기존 0.1초 곡률 실패를 지우지 않습니다.
 추후 제한을 지키는 명목 궤적과 원본의 잔차를 별도 표현으로 연구하되, 이번 실패에 맞춰
 오차 허용폭을 정하거나 실제 미속 이동을 정지로 숨기지 않는 검증이 먼저입니다.
-이 분석·표현 변경은 아직 실행·채택하지 않았습니다.
+계산은 완료됐지만 표현 변경은 아직 채택하지 않았으며, 새 모델 학습도 시작하지 않았습니다.
 
 <!-- HH_260906 - Keep the failed visual-only publication attempt recoverable and separate from the eight driving cases. -->
 21 화면의 첫 생성은 상대경로/절대경로 바인딩 오류로 첫 시도의 PNG 3장·GIF 1개 생성 후

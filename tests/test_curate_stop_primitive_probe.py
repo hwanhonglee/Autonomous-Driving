@@ -296,8 +296,21 @@ def test_mutation_during_plot_has_no_completion_marker(fixture_factory, tmp_path
     assert not (output / "SHA256SUMS").exists()
 
 
-def test_actual_renderer_small_synthetic_fixture(fixture_factory, tmp_path):
+def test_actual_renderer_small_synthetic_fixture(fixture_factory, tmp_path, monkeypatch):
     pytest.importorskip("matplotlib")
+    from matplotlib.figure import Figure
+    original_savefig = Figure.savefig
+
+    def savefig_with_readability_check(figure, *args, **kwargs):
+        # HH_260906 - Check the actual layout rather than accepting a PNG with overlapping axis and scope labels.
+        figure.canvas.draw()
+        renderer = figure.canvas.get_renderer()
+        footer_top = figure.texts[-1].get_window_extent(renderer).y1
+        for axis in figure.axes:
+            assert axis.xaxis.label.get_window_extent(renderer).y0 > footer_top + 3
+        return original_savefig(figure, *args, **kwargs)
+
+    monkeypatch.setattr(Figure, "savefig", savefig_with_readability_check)
     _, _, rows, _ = fixture_factory(full_plot_grid=True)
     output = tmp_path / "fixture_charts"
     output.mkdir()

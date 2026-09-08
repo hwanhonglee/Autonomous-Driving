@@ -357,7 +357,8 @@ def render(rows, output):
     fig.suptitle("SYNTHETIC STOP — all 6 candidate XY traces; ego-centered axes", fontsize=15)
     fig.text(.5, .015, "Discrete endpoint-speed integration, not continuous v0*T/2. No scene, learned model, road or actuation evaluation.",
         ha="center", fontsize=9)
-    fig.tight_layout(rect=(0, .045, 1, .95))
+    # HH_260906 - Reserve footer space after equal-aspect axes layout so the X labels remain readable.
+    fig.tight_layout(rect=(0, .10, 1, .95))
     with (output / "synthetic_stop_xy.png").open("xb") as stream:
         fig.savefig(stream, format="png", dpi=150)
     plt.close(fig)

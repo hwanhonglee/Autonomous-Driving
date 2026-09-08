@@ -52,6 +52,52 @@ class ContractError(ValueError):
     """Raised when a portable dataset fails closed against the contract."""
 
 
+def _require_admission_not_denied(
+    document: Mapping[str, Any], context: str, *, include_native_metadata: bool = False,
+) -> None:
+    """HH_260906 - Reject explicit denial, not legacy absence, at finite admission-bearing paths.
+
+    HH_260906 - Dataset, episode and source-manifest roots are checked directly.
+    Collection configurations additionally preserve native capture/result metadata,
+    either under the converter's native_* aliases or their original field names.
+    Only the two Boolean markers below have admission meaning here: opaque nested
+    diagnostics (including dataset_admission) are not recursively interpreted.
+    Missing markers and the opposite Boolean values do not constitute approval.
+    """
+    paths: list[tuple[str, ...]] = [()]
+    if include_native_metadata:
+        # HH_260906 - These are the native converter's nine containers plus explicit capture initialization.
+        for capture, result in (("native_capture_contract", "native_result"),
+                                ("capture_contract", "result")):
+            paths.extend((
+                (capture,), (capture, "goal_stop_profile"),
+                (capture, "goal_stop_profile", "effective_control"),
+                (capture, "agent_initialization"),
+                (result,), (result, "goal_stop_quality"),
+                (result, "goal_stop_quality", "config"),
+                (result, "goal_stop_quality", "driving_final_stop"),
+                (result, "goal_stop_quality", "development_pilot"),
+            ))
+    for path in paths:
+        value: Any = document
+        for component in path:
+            value = value.get(component) if isinstance(value, Mapping) else None
+        if not isinstance(value, Mapping):
+            continue
+        for key, prohibited in (("training_data_approved", False), ("development_only", True)):
+            if key not in value:
+                continue
+            field = ".".join((context, *path, key))
+            if not isinstance(value[key], bool):
+                raise ContractError(f"{field} admission marker must be a Boolean")
+            if value[key] is prohibited:
+                raise ContractError(
+                    f"{field} explicitly prohibits Common10 planning-data use; "
+                    "all validator and loader modes reject this denial, including read-only "
+                    "Common10 evaluation; retain the source for separate raw diagnostics"
+                )
+
+
 def _resource_limits_report() -> dict[str, int]:
     return {
         "max_json_file_bytes": MAX_JSON_FILE_BYTES,
@@ -1672,6 +1718,10 @@ def validate_dataset(
     ``planning`` enforces the offline 10 Hz training-data gates. ``runtime``
     additionally requires 1 ms offline bundle readiness. The explicit
     ``schema`` mode is only for tiny fixtures and adapter development.
+
+    HH_260906 - Every mode rejects explicit admission denial, including readers
+    used only for Common10 evaluation. Raw diagnostic readers are separate.
+    Legacy absence of admission markers is compatible, not dataset approval.
     """
     if mode not in ("planning", "runtime", "schema"):
         raise ContractError("mode must be 'planning', 'runtime', or 'schema'")
@@ -1685,6 +1735,7 @@ def validate_dataset(
         raise ContractError(f"dataset root is not a directory: {dataset_root}")
     manifest_path = dataset_root / "dataset.json"
     manifest, manifest_hash = _read_json_and_sha256(manifest_path)
+    _require_admission_not_denied(manifest, "dataset")
     if manifest.get("schema_id") != DATASET_SCHEMA_ID:
         raise ContractError(f"dataset.schema_id must be {DATASET_SCHEMA_ID}")
     if manifest.get("contract_id") != CONTRACT_ID:
@@ -1744,6 +1795,7 @@ def validate_dataset(
         episode_path, episode, episode_manifest_hash = _validate_file_reference(
             dataset_root, reference, reference_context
         )
+        _require_admission_not_denied(episode, str(episode_path))
         episode_root = episode_path.parent
         if episode.get("schema_id") != EPISODE_SCHEMA_ID:
             raise ContractError(f"{episode_path}.schema_id must be {EPISODE_SCHEMA_ID}")
@@ -1814,6 +1866,17 @@ def validate_dataset(
             provenance_files[prefix] = (source_path, source_hash)
             dataset_fingerprint.update(source_hash.encode("ascii"))
 
+        # HH_260906 - Hash binding alone cannot enforce explicit denial carried by converted native metadata.
+        collection_config_path, collection_config_hash = provenance_files["collection_config"]
+        collection_config, actual_collection_hash = _read_json_and_sha256(collection_config_path)
+        if actual_collection_hash != collection_config_hash:
+            raise ContractError(
+                f"{episode_path}.source_provenance.collection_config_sha256 mismatch"
+            )
+        _require_admission_not_denied(
+            collection_config, str(collection_config_path), include_native_metadata=True,
+        )
+
         route_geometry_path = _safe_file(
             episode_root,
             episode.get("route_geometry_file"),
@@ -1839,6 +1902,7 @@ def validate_dataset(
             raise ContractError(
                 f"{episode_path}.source_provenance.source_manifest_sha256 mismatch"
             )
+        _require_admission_not_denied(source_manifest_document, str(provenance_files["source_manifest"][0]))
         source_manifest = _validate_source_manifest(
             source_manifest_document,
             episode=episode,

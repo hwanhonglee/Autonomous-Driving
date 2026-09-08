@@ -19,6 +19,24 @@
 데이터 폴더를 가리키는 링크다. 프로젝트용 패키지는 개인 venv에만 설치하며, 이번 실험은
 기존 패키지만 사용한다.
 
+### 명시적으로 미승인된 데이터는 학습에 넣지 않는다
+
+<!-- HH_260906 - Preserve explicit denial through converted Common10 metadata without treating legacy absence as approval. -->
+
+Common10의 dataset·episode·source manifest 루트와 해시로 연결된 collection config를 검사한다.
+collection config에 보존된 native capture/result의 정해진 경로에서
+`training_data_approved: false` 또는 `development_only: true`가 발견되면 거부한다.
+두 표시가 Boolean이 아닌 경우도 오류다. 선택한 split을 로드할 때 collection config의
+해시와 표시를 다시 확인하므로, 최초 검증 뒤 파일을 바꿔도 통과하지 않는다.
+
+표시가 없는 기존 자료는 호환성을 위해 계속 읽을 수 있지만 **미기재는 승인이라는 뜻이 아니다**.
+이 호환성은 정상적인 JSON 객체 형식의 메타데이터에 대한 것이다. 해시만 맞는 임의의
+바이너리·잘못된 JSON·중복 키·NaN 표기는 collection config로 허용하지 않는다.
+원본 JSON의 표시를 지우거나 `true`로 바꿔 우회하면 안 된다. 별도 데이터 승인 절차가 필요하다.
+현재 이 제한은 `planning`·`runtime`·`schema` 모두에 적용되어, 같은 Common10 로더를 쓰는
+읽기 전용 평가도 미승인 자료를 거부한다. 실패 원인 분석은 원본 CARLA 진단 도구로 수행한다.
+임의의 중첩 진단 객체나 `dataset_admission: false`를 재귀적으로 승인/거절로 추정하지 않는다.
+
 ## 2026-09-07에 시작한 학습
 
 설정은 [고정 실험 계획](../config/portable_e2e_lr_ab_20260907.json)에 있다.

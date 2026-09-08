@@ -12,6 +12,7 @@ from .contract import ContractError
 from .contract import _iter_jsonl
 from .contract import _mapping
 from .contract import _read_json_and_sha256
+from .contract import _require_admission_not_denied
 from .contract import _safe_file
 from .contract import _sequence
 from .contract import _sha256
@@ -320,7 +321,11 @@ def load_training_examples(
     mode: str = "planning",
     check_image_hashes: bool = True,
 ) -> LoadedDataset:
-    """Validate a dataset, then load one whole-episode split in file order."""
+    """HH_260906 - Validate and load one split; explicit denial also blocks read-only evaluation.
+
+    HH_260906 - Missing admission markers remain legacy-compatible, not approval.
+    Selected collection metadata is rechecked before producing training examples.
+    """
     report = validate_dataset(
         root,
         contract_path=contract_path,
@@ -332,6 +337,7 @@ def load_training_examples(
     manifest, manifest_hash = _read_json_and_sha256(root_path / "dataset.json")
     if manifest_hash != report["dataset_manifest_sha256"]:
         raise ContractError("dataset manifest changed after validation")
+    _require_admission_not_denied(manifest, "dataset")
     rigs: dict[str, Mapping[str, Any]] = {}
     for reference_index, raw_reference in enumerate(manifest["rigs"]):
         reference = _mapping(raw_reference, f"dataset.rigs[{reference_index}]")
@@ -361,6 +367,7 @@ def load_training_examples(
             raise ContractError(f"{episode_path} changed after validation")
         if episode["split"] != split:
             continue
+        _require_admission_not_denied(episode, str(episode_path))
         rig_id = str(episode.get("rig_id", ""))
         if rig_id not in rigs:
             raise ContractError(f"{episode_path} references an unavailable rig")
@@ -381,6 +388,22 @@ def load_training_examples(
         )
         if source_manifest_hash != expected_source_manifest_hash:
             raise ContractError(f"{source_manifest_path} changed after validation")
+        _require_admission_not_denied(source_manifest, str(source_manifest_path))
+        # HH_260906 - Recheck the selected admission bytes after validation instead of dropping their provenance.
+        collection_config_path = _safe_file(
+            episode_path.parent,
+            provenance.get("collection_config_file"),
+            f"{episode_path}.source_provenance.collection_config_file",
+        )
+        collection_config, collection_config_hash = _read_json_and_sha256(collection_config_path)
+        if collection_config_hash != _sha256(
+            provenance.get("collection_config_sha256"),
+            f"{episode_path}.source_provenance.collection_config_sha256",
+        ):
+            raise ContractError(f"{collection_config_path} changed after validation")
+        _require_admission_not_denied(
+            collection_config, str(collection_config_path), include_native_metadata=True,
+        )
         episode_metadata = _episode_metadata(
             episode,
             source_manifest,

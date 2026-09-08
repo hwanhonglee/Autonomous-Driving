@@ -61,6 +61,32 @@ def timestamp(value):
         raise ContractError('invalid evidence timestamp') from error
 
 
+def verify_behavior_aggregates(recorded, reconstructed):
+    # HH_260906 - Only derived entropy permits 1e-15 cross-platform roundoff; every count, gate and metric remains exact.
+    entropy_paths = {('all_samples', 'geometry', 'selector', 'normalized_selection_entropy')}
+    entropy_paths.update(('target_motion_groups', group, 'geometry', 'selector', 'normalized_selection_entropy')
+        for group in reconstructed['target_motion_groups'])
+    differences = []
+    def compare(a, b, path=()):
+        if path in entropy_paths:
+            require(type(a) in (int, float) and type(b) in (int, float) and math.isfinite(a) and math.isfinite(b)
+                and 0 <= a <= 1 and 0 <= b <= 1 and math.isclose(a, b, rel_tol=1e-15, abs_tol=1e-15),
+                'behavior selector entropy exceeds numerical reconstruction tolerance')
+            if a != b:
+                differences.append(dict(field='/'.join(path), recorded=a, reconstructed=b, absolute_difference=abs(a-b)))
+        elif isinstance(a, dict) and isinstance(b, dict):
+            require(set(a) == set(b), 'behavior aggregate keys differ from all saved rows')
+            for key in a: compare(a[key], b[key], (*path, key))
+        elif isinstance(a, list) and isinstance(b, list):
+            require(len(a) == len(b), 'behavior aggregate list differs from all saved rows')
+            for index, (left, right) in enumerate(zip(a, b)): compare(left, right, (*path, str(index)))
+        else:
+            require(canonical(a) == canonical(b), 'behavior aggregate differs from all saved rows')
+    compare(recorded, reconstructed)
+    return dict(status='VERIFIED', entropy_absolute_tolerance=1e-15, entropy_relative_tolerance=1e-15,
+        all_other_fields_exact=True, original_recorded_aggregates_retained=True, entropy_roundoff_differences=differences)
+
+
 def validate_plan(plan, state, payload, expected_source_commit, expected_plan_sha256):
     # HH_260906 - Explicit caller pins bind this reader to one externally declared campaign, not any self-consistent future plan.
     require(re.fullmatch('[0-9a-f]{40}', expected_source_commit or '') and re.fullmatch('[0-9a-f]{64}', expected_plan_sha256 or ''),
@@ -289,8 +315,9 @@ def behavior_evidence(root, run, state, expected_commit, pins):
         oracle = min(c['ade_m'] for c in candidates)
         require(row.get('oracle_ade_m') == oracle and row.get('ade_selection_regret_m') == row['selected_ade_m'] - oracle
             and row.get('selected_stop_candidate') is (selected >= 6 if run['candidate_count'] == 12 else None), 'behavior oracle/family aggregate mismatch')
-    aggregates = behavior.summarize_rows(rows, run['candidate_count'])
-    require(all(canonical(report.get(k)) == canonical(v) for k, v in aggregates.items()), 'behavior aggregate differs from all saved rows')
+    reconstructed = behavior.summarize_rows(rows, run['candidate_count'])
+    aggregates = {key: report.get(key) for key in reconstructed}
+    aggregate_comparison = verify_behavior_aggregates(aggregates, reconstructed)
     renders = report.get('renders', [])
     require([r.get('index') for r in renders] == list(RENDER_INDICES) and report.get('fixed_render_indices') == list(RENDER_INDICES), 'behavior fixed render selection differs')
     for render in renders:
@@ -303,7 +330,7 @@ def behavior_evidence(root, run, state, expected_commit, pins):
         'source_manifest_sha256', 'raw_current_vx_mps', 'valid_future_points', 'target_motion_group')} for r in rows]
     return {'run': prefix, 'status': 'COMPLETE_NOT_PROMOTED', 'report_sha256': manifest['summary.json'],
         'sample_count': 337, 'sample_identity_sha256': base._sha(canonical(identities).encode()), **aggregates,
-        'source_sha256': expected_sources, 'checkpoint_sha256': run['checkpoint_sha256']}
+        'source_sha256': expected_sources, 'checkpoint_sha256': run['checkpoint_sha256'], 'aggregate_comparison': aggregate_comparison}
 
 
 def summarize_campaign(root, *, expected_source_commit, expected_plan_sha256, behavior_root=None):

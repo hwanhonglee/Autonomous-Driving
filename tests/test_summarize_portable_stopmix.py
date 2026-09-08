@@ -247,3 +247,58 @@ def test_cli_explicit_actual_plan_bindings_and_new_output_only(stopmix,tmp_path)
         checksum,name=line.split('  ');assert module.sha_file(output/name)==checksum
     # HH_260906 - The real prospective file is independently pinned, not replaced by the fixture's JSON formatting.
     assert module.sha_file(module.ROOT/'config/portable_e2e_stopmix_20260909.json')=='f06c68ce47aaee6941a3ca42559460ac5837b53f669bf195fa15b5d5e80a05d9'
+
+
+def entropy_aggregate(value):
+    return {'all_samples': {'sample_count': 208, 'metrics': {'selected_ade_m': 1.},
+        'geometry': {'selected_result': {'geometry_pass_count': 207}, 'selector': {
+            'selection_counts': {'0': 4, '1': 196, '6': 4, '8': 4}, 'normalized_selection_entropy': value}}},
+        'target_motion_groups': {}}
+
+
+def test_derived_entropy_roundoff_preserves_recorded_value_and_discloses_delta():
+    # HH_260906 - Reproduce the actual remote/local one-ULP entropy difference without changing source evidence.
+    recorded=entropy_aggregate(0.1142704956811126); fresh=entropy_aggregate(0.11427049568111258)
+    before=json.dumps(recorded,sort_keys=True)
+    proof=module.verify_behavior_aggregates(recorded,fresh)
+    assert json.dumps(recorded,sort_keys=True)==before
+    assert proof['all_other_fields_exact'] is True and proof['original_recorded_aggregates_retained'] is True
+    assert proof['entropy_roundoff_differences']==[dict(field='all_samples/geometry/selector/normalized_selection_entropy',
+        recorded=0.1142704956811126,reconstructed=0.11427049568111258,absolute_difference=1.3877787807814457e-17)]
+
+
+@pytest.mark.parametrize('value',[float('nan'),float('inf'),True,-1e-17,1.01])
+def test_entropy_nonfinite_invalid_type_or_range_never_tolerated(value):
+    with pytest.raises(ContractError):module.verify_behavior_aggregates(entropy_aggregate(value),entropy_aggregate(.1))
+
+
+def test_entropy_just_outside_fixed_numerical_tolerance_fails():
+    import math
+    outside=math.nextafter(1e-15,math.inf)
+    with pytest.raises(ContractError):module.verify_behavior_aggregates(entropy_aggregate(outside),entropy_aggregate(0.))
+
+
+@pytest.mark.parametrize('fault',['metric','count','gate','histogram','unknown_entropy_field'])
+def test_entropy_tolerance_never_relaxes_other_aggregate_fields(fault):
+    import math
+    recorded=entropy_aggregate(.1);fresh=entropy_aggregate(.1)
+    if fault=='metric':recorded['all_samples']['metrics']['selected_ade_m']=math.nextafter(1.,math.inf)
+    elif fault=='count':recorded['all_samples']['sample_count']=209
+    elif fault=='gate':recorded['all_samples']['geometry']['selected_result']['geometry_pass_count']=208
+    elif fault=='histogram':recorded['all_samples']['geometry']['selector']['selection_counts']['0']=5
+    else:
+        recorded['all_samples']['metrics']['normalized_selection_entropy']=1e-17
+        fresh['all_samples']['metrics']['normalized_selection_entropy']=0.
+    with pytest.raises(ContractError):module.verify_behavior_aggregates(recorded,fresh)
+
+
+def test_resealed_group_entropy_roundoff_only_is_verified_end_to_end(stopmix,behavior_root):
+    item=behavior_root/'seed_20260903/B_drive_stop_mix';report=module.read(item/'summary.json')
+    selector=report['target_motion_groups']['continuing_motion']['geometry']['selector']
+    selector['normalized_selection_entropy']+=1e-17
+    recorded=selector['normalized_selection_entropy']
+    old.first._write(item/'summary.json',report);seal_behavior(item)
+    result=summarize(stopmix,behavior_root=behavior_root)
+    evidence=next(r for r in result['behaviors'] if r['run']=='seed_20260903/B_drive_stop_mix')
+    assert evidence['target_motion_groups']['continuing_motion']['geometry']['selector']['normalized_selection_entropy']==recorded
+    assert len(evidence['aggregate_comparison']['entropy_roundoff_differences'])==1

@@ -5,6 +5,20 @@
 [최신 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에
 정답 데이터 진단, 생성기를 고정한 선택기 9회 학습, 로컬 자연 정지 수집 개선을 분리해 기록합니다.
 
+<!-- HH_260906 - Show the latest bounded execution outcome separately from the overnight history. -->
+오후 재개한 C-track 출발 페달 비교는 **14:11 KST에 8회 모두 종료**했습니다.
+목표 정차는 8/8, 20 Hz 가감속 기준은 2/8 충족이며 통과한 조건은 페달 0.13의 두 반복입니다.
+전체 영상 46,416장과 6.4초 미래 창 7,216개 검사를 완료했으며, XY 곡률 초과는
+1,560개 창에 남았습니다. 가감속을 통과한 0.13도 각 반복 905개 중 161개 창이
+곡률 초과로 **8회 모두 학습 데이터 미승인**입니다. 겹치는 창을 독립 사건 수로 세거나,
+실패 자료를 제외하거나 데이터·모델을 승격하지 않았습니다.
+
+<!-- HH_260906 - Report the final two-directory regression independently of driving and training status. -->
+[23 최신 코드 회귀 검사](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/23_code_validation_final/README.md)는
+일반 테스트 4,145개와 Autoware 런치 테스트 373개를 통과했습니다. 합계 **4,518 passed /
+6 skipped**이며, 초기 환경 미설정 실행과 부동소수점 완전 동일성 비교 실패도 보존했습니다.
+테스트의 수치 비교만 보완했으며 모델 계산·물리 한계·데이터 승인 기준을 완화하지 않았습니다.
+
 <!-- HH_260906 - Add completed pedal measurements and corrected warmup accounting without promoting data or models. -->
 로컬의 [고정 페달 12개 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/04_pedal_response_calibration/README.md)은
 완료됐습니다. 일정한 페달에서도 출발 가속과 저속 급정지가 남아 기존 제어기 전환만을 원인으로
@@ -19,7 +33,9 @@ v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월
 새 선택기들은 세 seed 전체 기준을 통과하지 못해 승격하지 않았습니다. 학습 모델의
 폐루프 주행·실차 제어 승인은 없으며 기존 shadow 모델을 유지합니다.
 
-사용자 요청에 따른 이번 작업 경계는 **2026-09-08 오전 10시 KST**입니다.
+원래 사용자 요청에 따른 작업 경계는 **2026-09-08 오전 10시 KST**였습니다.
+야간 작업은 마지막 시험이 05:56 KST에 종료된 뒤 중단됐고, 오전 10시까지 연속 수행하지
+못했습니다. 사용자 요청으로 13:53 KST 이후 재개했으며 원래 결과와 별도 재개 기록을 구분합니다.
 실제 완료·실패·진행 상태와 다음 순서는 위 결과 폴더의 기록을 확인합니다.
 
 <!-- HH_260906 - Report completed raw driving evidence without interpreting scalar success as dataset or model approval. -->
@@ -39,9 +55,9 @@ v3의 warmup 앵커 train105/1,147·val35/337 포함을 확인했습니다. 9월
 
 따라서 현재 결과는 **정답 생성용 expert 수집 개선**이며, 새 모델의 자율주행 성공이
 아닙니다. 새 원본을 학습 데이터로 채택하거나 모델·안전 한계·차량 TF를 바꾸지 않았습니다.
-다음 작업은 같은 수집기의 Low/Epic 실제 시간 계측, 현재 decoder의 표현 가능성 진단,
-별도로 선언한 낮은 속도의 C-track 회전 개발 시험입니다. 실험 시작과 완료·통과는
-각 결과 폴더의 실행 기록을 기준으로 구분합니다.
+이후 같은 수집기의 Low/Epic 실제 시간 계측, 현재 decoder의 표현 가능성 진단,
+별도로 선언한 낮은 속도의 C-track 회전 개발 시험을 아래 순서로 진행했습니다.
+실험 완료와 품질 통과는 각 결과 폴더의 실행 기록을 기준으로 구분합니다.
 
 <!-- HH_260906 - Record the completed prospective quality/timing pair without attributing unmeasured GUI or inference latency. -->
 [16 Low/Epic 동일 경로 실제 계측](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/16_wall_timing_quality/README.md)은
@@ -60,3 +76,23 @@ GPU0에서 05:05:03–05:07:27 KST에 완료했습니다. 모델 가중치가 �
 실제 최고 14.4086 km/h·목표 앞 0.9386m 정지와 2초 유지를 확인했지만, 20Hz 출발
 한 구간 +3.654933 m/s² 초과로 실패했습니다. 차량 중심 경로와 전체 6카메라 화면을
 PNG 7장·GIF 1개로 정리했습니다. 30km/h 검증·새 학습 데이터 승인·모델 제어 영상이 아닙니다.
+
+<!-- HH_260906 - Link completed initialization and decoder verification without hiding retained failures or the interrupted session. -->
+[19 최초 프레임 이후 초기화](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/19_agent_initialization_comparison/README.md)는
+첫 조향을 거의 0으로 정상화했지만, 출발 최대 +3.467811 m/s² 초과는 유지됐습니다.
+[20 두 CPU 최종 전방계산](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/20_decoder_forward_verification/README.md)은
+각 1,540,224개 수치가 원래 허용량 내에서 일치했습니다. 초기 목적함수 22개 미확인과
+원격 그래프 생성의 패키지 부재 실패도 보존했으며, 추가 설치·모델 학습으로 표시하지 않습니다.
+
+<!-- HH_260906 - Link the completed resumed matrix and all-future diagnosis without calling expert data research learned driving. -->
+[21 출발 페달 8회 비교](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/21_turn_launch_matrix/README.md)는
+차량 중심 경로·전체 6카메라 PNG 26장, 출발 0–8초 구간의 2배속 GIF 8개, 전체 주행
+계측을 함께 제공합니다. 정차·제어 기록·초기화는 8/8 충족이고 native 가감속은 2/8
+충족입니다. 카메라 10 Hz 차분에서는 가려지는 출발 초과가 20 Hz 원본에 남아 있습니다.
+첫 화면 생성의 경로 오류는 수정했고, 당시 부분 출력은 원본 그대로 별도 보존했습니다.
+
+[22 전체 미래·미세 변위 분석](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/22_turn_launch_raw_geometry/README.md)은
+미래 창 7,216개를 모두 검사하고 실제 계측 그래프 3장을 추가했습니다. 곡률 위반은 XY
+위치 차분 평균속도 1 m/s 미만에 있으며, 극소 변위의 방향 계산과 실제 회전 제어를
+구분해야 합니다. 노이즈나 물리 기준점의 원인을 확정한 것은 아닙니다. 스칼라를 통과한
+0.13도 두 번 모두 곡률 초과가 있어 미승인이고, 학습 데이터·기존 모델·판정 기준은 유지합니다.

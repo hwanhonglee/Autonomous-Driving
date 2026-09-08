@@ -1,0 +1,288 @@
+{
+  "schema": "portable_e2e.selector_roundoff_independent_diagnostic.v1",
+  "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 artifacts/training/2026-09-08/final_code_validation_v1/selector_roundoff_diagnostic.py",
+  "script_sha256": "4605ab7ae8ae71f10fd06e73b1ae5897db38759ab42411c996999e0433cb96cd",
+  "head_observed": "92bd7de47aa7c1cedca69f173b6fa4c2b37caa1e",
+  "source_sha256_before": {
+    "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+    "tests/test_portable_e2e_frozen_selector.py": "998bb6a22b4d57fc4ed407d4faab3d0e60e7452017c471b915e21c6acab9ff44",
+    "scripts/e2e/env.sh": "e6638246911ed4806a22631a6c43887947556367aecac86869c6b80a7017ee08"
+  },
+  "source_sha256_after": {
+    "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+    "tests/test_portable_e2e_frozen_selector.py": "998bb6a22b4d57fc4ed407d4faab3d0e60e7452017c471b915e21c6acab9ff44",
+    "scripts/e2e/env.sh": "e6638246911ed4806a22631a6c43887947556367aecac86869c6b80a7017ee08"
+  },
+  "source_unchanged_during_diagnostic": true,
+  "torch_version": "1.8.0a0",
+  "torch_num_threads": 1,
+  "torch_num_interop_threads": 12,
+  "mkldnn_enabled": true,
+  "records": [
+    {
+      "dtype": "torch.float32",
+      "order": [
+        2,
+        5,
+        1,
+        3,
+        4,
+        0
+      ],
+      "normalized_inputs_exact_permutation": true,
+      "same_input_normalization": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 7,
+        "max_abs": 8.940696716308594e-08,
+        "max_relative": 3.4647737834347936e-07,
+        "max_ulp": 3,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "first_linear_layer_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 1618,
+        "max_abs": 4.76837158203125e-07,
+        "max_relative": 0.010718113742768764,
+        "max_ulp": 163840,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "one_candidate_reference_permutation": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_versus_one_candidate_reference": {
+        "bitwise_equal": false,
+        "unequal_count": 10,
+        "max_abs": 8.940696716308594e-08,
+        "max_relative": 3.68791887694897e-07,
+        "max_ulp": 5,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "selected_candidate_original_index_unchanged": true,
+      "corrupted_logit_rejected": true
+    },
+    {
+      "dtype": "torch.float32",
+      "order": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      "normalized_inputs_exact_permutation": true,
+      "same_input_normalization": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 7,
+        "max_abs": 8.940696716308594e-08,
+        "max_relative": 4.3916836034441076e-07,
+        "max_ulp": 6,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "first_linear_layer_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 1628,
+        "max_abs": 4.76837158203125e-07,
+        "max_relative": 0.010718113742768764,
+        "max_ulp": 163840,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "one_candidate_reference_permutation": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_versus_one_candidate_reference": {
+        "bitwise_equal": false,
+        "unequal_count": 10,
+        "max_abs": 8.940696716308594e-08,
+        "max_relative": 3.68791887694897e-07,
+        "max_ulp": 5,
+        "dtype_epsilon": 1.1920928955078125e-07,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "selected_candidate_original_index_unchanged": true,
+      "corrupted_logit_rejected": true
+    },
+    {
+      "dtype": "torch.float64",
+      "order": [
+        2,
+        5,
+        1,
+        3,
+        4,
+        0
+      ],
+      "normalized_inputs_exact_permutation": true,
+      "same_input_normalization": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 6,
+        "max_abs": 1.6653345369377348e-16,
+        "max_relative": 6.86817112238785e-16,
+        "max_ulp": 5,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "first_linear_layer_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 1590,
+        "max_abs": 6.661338147750939e-16,
+        "max_relative": 8.018356878963663e-12,
+        "max_ulp": 65536,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": false
+      },
+      "one_candidate_reference_permutation": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_versus_one_candidate_reference": {
+        "bitwise_equal": false,
+        "unequal_count": 11,
+        "max_abs": 5.551115123125783e-17,
+        "max_relative": 8.316249774856317e-16,
+        "max_ulp": 6,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "selected_candidate_original_index_unchanged": true,
+      "corrupted_logit_rejected": true
+    },
+    {
+      "dtype": "torch.float64",
+      "order": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      "normalized_inputs_exact_permutation": true,
+      "same_input_normalization": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 7,
+        "max_abs": 1.6653345369377348e-16,
+        "max_relative": 6.930208145713603e-16,
+        "max_ulp": 5,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "first_linear_layer_permutation": {
+        "bitwise_equal": false,
+        "unequal_count": 1594,
+        "max_abs": 6.661338147750939e-16,
+        "max_relative": 8.018356878963663e-12,
+        "max_ulp": 65536,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": false
+      },
+      "one_candidate_reference_permutation": {
+        "bitwise_equal": true,
+        "unequal_count": 0,
+        "max_abs": 0.0,
+        "max_relative": 0.0,
+        "max_ulp": 0,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "batched_versus_one_candidate_reference": {
+        "bitwise_equal": false,
+        "unequal_count": 11,
+        "max_abs": 5.551115123125783e-17,
+        "max_relative": 8.316249774856317e-16,
+        "max_ulp": 6,
+        "dtype_epsilon": 2.220446049250313e-16,
+        "same_sign_all_pairs": true,
+        "within_proposed_dtype_tolerance": true
+      },
+      "selected_candidate_original_index_unchanged": true,
+      "corrupted_logit_rejected": true
+    }
+  ],
+  "conclusion": "Normalized inputs are exact permutations; batched shared Linear kernels can differ by floating-point roundoff, while evaluating each candidate separately is bitwise permutation-equivariant. No candidate-index input or cross-candidate computation exists in score_head. The precise BLAS dispatch or instruction cause was not established.",
+  "scope": {
+    "cpu_only": true,
+    "model_production_source_modified": false,
+    "test_source_modified_by_this_diagnostic": false,
+    "training_run": false,
+    "physical_or_runtime_gate_modified": false,
+    "original_data_modified": false
+  }
+}

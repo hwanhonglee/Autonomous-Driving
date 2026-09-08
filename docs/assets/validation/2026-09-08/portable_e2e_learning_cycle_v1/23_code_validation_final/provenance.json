@@ -1,0 +1,145 @@
+{
+  "schema": "portable_e2e.final_code_validation_publication.v1",
+  "note": "HH_260906 - Preserve exact original logs and arithmetic diagnostics, and count only the two final explicit pytest directories.",
+  "publication_method": "Verified UTF-8 originals copied byte-for-byte using apply_patch; no standalone curator execution or invented source commit.",
+  "main_final": {
+    "path": "tests",
+    "passed": 4145,
+    "failed": 0,
+    "skipped": 6,
+    "pytest_elapsed_seconds": 204.16,
+    "exit_code": 0,
+    "source_head_commit": "2c71adf86eea0c94aab8a1733ad293b149d7887f",
+    "started_at_utc": "2026-09-08T05:47:40.534798+00:00",
+    "completion_observed_at_utc": "2026-09-08T05:54:52+00:00",
+    "exact_process_finish_time_known": false,
+    "log": "main_tests_final.log",
+    "snapshot": "main_source_snapshot.json"
+  },
+  "launch_final": {
+    "path": "autoware_e2e_vad_launch/test",
+    "passed": 373,
+    "failed": 0,
+    "skipped": 0,
+    "pytest_elapsed_seconds": 13.47,
+    "exit_code": 0,
+    "source_head_commit": "92bd7de47aa7c1cedca69f173b6fa4c2b37caa1e",
+    "source_files_unchanged_after_main_final": true,
+    "log": "launch_tests.log",
+    "snapshot": "launch_source_snapshot.json"
+  },
+  "final_two_directory_union": {
+    "passed": 4518,
+    "failed": 0,
+    "skipped": 6,
+    "earlier_attempts_counted_again": false,
+    "single_combined_process_claimed": false
+  },
+  "retained_earlier_attempts": [
+    {
+      "log": "attempt_01_unsourced_environment.log",
+      "exit_code": 5,
+      "passed": 0,
+      "skipped": 1,
+      "pytest_elapsed_seconds": 1.48,
+      "status": "ENVIRONMENT_NOT_READY_NOT_PASS"
+    },
+    {
+      "log": "attempt_02_sourced_regression_failure.log",
+      "exit_code": 1,
+      "passed": 4141,
+      "failed": 1,
+      "skipped": 6,
+      "pytest_elapsed_seconds": 204.71,
+      "status": "FAILED_RETAINED"
+    }
+  ],
+  "exit_code_provenance": "Observed process return codes reported by the executing root agent; pytest counts/time are preserved in exact stdout logs.",
+  "test_only_fix": {
+    "commit": "2c71adf86eea0c94aab8a1733ad293b149d7887f",
+    "changed_files": [
+      "tests/test_portable_e2e_frozen_selector.py"
+    ],
+    "dtype_orders": 4,
+    "production_model_source_changed": false,
+    "decoder_changed": false,
+    "trained_weights_changed": false,
+    "dataset_labels_changed": false,
+    "physical_bounds_changed": false,
+    "runtime_gates_changed": false,
+    "intermediate_fp64_first_linear_tolerance_failures_retained": 2
+  },
+  "before_snapshot_private_source": {
+    "relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/main_source_snapshot_before.json",
+    "sha256": "dc869210ee5cf39b0096defbfbf5d97e3d185eea6b71c3a3c40a30776d6099ed",
+    "published_as_separate_duplicate": false,
+    "complete_source_hashes_retained_in": "main_source_snapshot.json"
+  },
+  "original_inputs": [
+    {
+      "published_path": "main_tests_final.log",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/main_tests_final.log",
+      "sha256": "016d8b54c5ea4825c314c9e7c73c06df218800c04c7aa25bbc66704feb1af8d9",
+      "size_bytes": 5433,
+      "byte_identical": true
+    },
+    {
+      "published_path": "launch_tests.log",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/launch_tests.log",
+      "sha256": "88afc3645fb5127ee4cfaf3f2357b1cac4176b5d0343e667b25716fb261800a1",
+      "size_bytes": 501,
+      "byte_identical": true
+    },
+    {
+      "published_path": "attempt_01_unsourced_environment.log",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/attempt_01_unsourced_environment.log",
+      "sha256": "38b5e191cf3a76efb9b304707057e50df21906e9532b6c0d7478be7e9494328a",
+      "size_bytes": 268,
+      "byte_identical": true
+    },
+    {
+      "published_path": "attempt_02_sourced_regression_failure.log",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/attempt_02_sourced_regression_failure.log",
+      "sha256": "65068fd24b377849b143096af2d84b9f232dabb24b9fc388006c8bb92f987c71",
+      "size_bytes": 7007,
+      "byte_identical": true
+    },
+    {
+      "published_path": "main_source_snapshot.json",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/main_source_snapshot.json",
+      "sha256": "dddb2f284a298f2a4a46e5d5ab2e956cea51ab458c1ba1b9ad1f63f288947a28",
+      "size_bytes": 40256,
+      "byte_identical": true
+    },
+    {
+      "published_path": "launch_source_snapshot.json",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/launch_source_snapshot.json",
+      "sha256": "6a3c4029178c7a59cd7be2002958e72dc2dd6334d0ba34bc6d36e53f32e8a62b",
+      "size_bytes": 7635,
+      "byte_identical": true
+    },
+    {
+      "published_path": "selector_roundoff_diagnostic.json",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/selector_roundoff_diagnostic.json",
+      "sha256": "6f2013b7373e39dbf6c2db1c15815c8a8ce953b3c19dec67ecfeb13f2d031c6d",
+      "size_bytes": 9912,
+      "byte_identical": true
+    },
+    {
+      "published_path": "selector_roundoff_diagnostic.py",
+      "private_source_relative_path": "artifacts/training/2026-09-08/final_code_validation_v1/selector_roundoff_diagnostic.py",
+      "sha256": "4605ab7ae8ae71f10fd06e73b1ae5897db38759ab42411c996999e0433cb96cd",
+      "size_bytes": 5523,
+      "byte_identical": true
+    }
+  ],
+  "scope": {
+    "code_regression_only": true,
+    "learned_closed_loop_validation": false,
+    "live_vehicle_validation": false,
+    "model_training_campaign": false,
+    "training_data_admission": false,
+    "vehicle_control_approved": false,
+    "thirty_kph_qualification": false
+  }
+}

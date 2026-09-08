@@ -16,6 +16,17 @@
 checkpoint가 Autoware 또는 CARLA를 폐루프로 주행한 적은 없으며, 30개 중
 `CLOSED_LOOP_PASS`인 기능은 **0개**다.
 
+<!-- HH_260906 - Distinguish the latest expert-quality improvement from learned-feature milestones. -->
+9월 8일 오후에는 **학습 정답을 만드는 주행의 품질 개선**을 계속했다. C-track 출발
+페달 비교 8회는 14:11 KST에 종료됐고, 전체 15,466개 상태·46,416장 원본 영상과
+제어 수신·초기화·목표 정차 기록을 검증했다. 페달 0.13의 두 반복만 20 Hz 가감속
+기준을 충족했으며 다른 6회는 출발 초과로 실패했다. 목표 14.4 km/h의 같은 경로·seed
+반복으로, 30 km/h·여러 환경·learned closed-loop 검증을 대신하지 않는다. 후속 전체
+미래 창 7,216개의 XY 곡률 검사에서는 1,560개 창이 초과했고, 0.13도 각 반복의
+905개 창 중 161개가 초과했다. 서로 겹치는 창이며 독립 사건 수가 아니다. 따라서
+8회 모두 데이터 미승인이고, 이 결과로 기능 상태나 모델을 승격하지 않았다.
+최신 완료·진행 상태는 [당일 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에 구분한다.
+
 현재 판정의 근거는 다음과 같다.
 
 - Town07 직진 309개와 CTrack 좌회전 304개를 학습하고 Town03 우회전 337개를

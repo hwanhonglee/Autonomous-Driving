@@ -129,6 +129,7 @@ def _accumulate_batch_metrics(
     target_valid: Tensor,
     target_yaw: Tensor,
     loss_config: TrajectoryLossConfig,
+    auxiliary_loss_sums: dict[str, float] | None = None,
 ) -> None:
     losses = trajectory_loss(
         candidate_xy,
@@ -146,6 +147,13 @@ def _accumulate_batch_metrics(
             losses[key].detach().cpu().item()
         ) * current_batch
         metric_counts[key] = metric_counts.get(key, 0) + current_batch
+
+    if loss_config.candidate_regret_weight > 0.0 and auxiliary_loss_sums is not None:
+        # HH_260906 - Keep objective-specific diagnostics outside the fixed comparison metric namespace.
+        key = "candidate_regret_loss"
+        auxiliary_loss_sums[key] = auxiliary_loss_sums.get(key, 0.0) + float(
+            losses[key].cpu().item()
+        ) * current_batch
 
     selected_indices = candidate_logits.argmax(dim=1)
     selected_xy = _selected(candidate_xy, selected_indices)
@@ -538,14 +546,8 @@ def evaluate_model(
     loss_value = payload.get("loss_config")
     if not isinstance(loss_value, dict):
         raise ContractError("checkpoint loss config is missing")
-    expected_loss_fields = set(TrajectoryLossConfig().to_dict())
-    if set(loss_value) != expected_loss_fields:
-        raise ContractError("checkpoint loss config fields do not match")
-    try:
-        loss_config = TrajectoryLossConfig(**loss_value)
-    except TypeError as error:
-        raise ContractError(f"checkpoint loss config is invalid: {error}") from error
-    loss_config.validate()
+    # HH_260906 - Parse the strict six-field legacy or seven-field opt-in research loss contract.
+    loss_config = TrajectoryLossConfig.from_mapping(loss_value)
     model = PerspectiveTrajectoryModel(model_config).to(device)
     try:
         model.load_state_dict(payload["model_state_dict"], strict=True)
@@ -580,6 +582,7 @@ def evaluate_model(
     )
     metric_sums: dict[str, float] = {}
     metric_counts: dict[str, int] = {}
+    auxiliary_loss_sums: dict[str, float] = {}
     per_domain_sums: dict[str, dict[str, float]] = {
         domain: {} for domain in expected_domain_sample_counts
     }
@@ -624,6 +627,7 @@ def evaluate_model(
                 target_valid=tensor_batch["target_valid"],
                 target_yaw=tensor_batch["target_yaw_rad"],
                 loss_config=loss_config,
+                auxiliary_loss_sums=auxiliary_loss_sums,
             )
             current_batch = int(candidate_xy.shape[0])
             sample_count += current_batch
@@ -745,6 +749,20 @@ def evaluate_model(
         "metric_counts": metric_counts,
         "vehicle_control_approved": False,
     }
+    if loss_config.candidate_regret_weight > 0.0:
+        # HH_260906 - Preserve old report keys while binding enabled research diagnostics to their exact loss contract.
+        auxiliary_metrics = {
+            key: total / sample_count for key, total in auxiliary_loss_sums.items()
+        }
+        if set(auxiliary_metrics) != {"candidate_regret_loss"} or any(
+            not math.isfinite(value) for value in auxiliary_metrics.values()
+        ):
+            raise FloatingPointError("evaluation auxiliary loss metrics are missing or nonfinite")
+        report["auxiliary_loss_metrics"] = auxiliary_metrics
+        report["auxiliary_loss_metric_counts"] = {
+            key: sample_count for key in auxiliary_metrics
+        }
+        report["loss_config"] = loss_config.to_dict()
     _atomic_json(output_dir / "metrics.json", report)
     return report
 

@@ -1232,6 +1232,18 @@ def checked_agent_initialization_frame(value: Any) -> int:
     return value
 
 
+def physics_substep_module(args: argparse.Namespace) -> Any:
+    # HH_260906 - Historical collection never imports the optional numerical experiment helper.
+    if getattr(args, "physics_substep_profile", "inherited") == "inherited":
+        return None
+    if __package__:
+        from . import carla_physics_substeps as module
+    else:
+        import carla_physics_substeps as module
+    module.validate_arguments(args)
+    return module
+
+
 def collect_episode(
     args: argparse.Namespace,
     route: Mapping[str, Any],
@@ -1247,6 +1259,9 @@ def collect_episode(
     from agents.navigation.global_route_planner import GlobalRoutePlanner
 
     # HH_260906 - Validate the opt-in boundary before any client or simulator operation.
+    substeps = physics_substep_module(args)
+    if substeps is not None:
+        validate_development_route(args, route, args.route_file)
     after_bootstrap_agent = agent_initialization_mode(args) == "after_bootstrap"
     initialization_record = None
     if after_bootstrap_agent:
@@ -1346,10 +1361,16 @@ def collect_episode(
         signal.signal(signum, request_stop)
 
     try:
-        settings = world.get_settings()
-        settings.synchronous_mode = True
-        settings.fixed_delta_seconds = 1.0 / args.physics_hz
-        world.apply_settings(settings)
+        if substeps is None:
+            settings = world.get_settings()
+            settings.synchronous_mode = True
+            settings.fixed_delta_seconds = 1.0 / args.physics_hz
+            world.apply_settings(settings)
+        else:
+            # HH_260906 - Fail a mismatched numerical setting before weather changes or actor creation.
+            record = manifest.setdefault("capture_contract", {}).setdefault(
+                "physics_substeps", substeps.new_record(args.physics_substep_profile))
+            substeps.configure_world(world, original_settings, args, record)
         weather_name = args.weather or str(route.get("weather", "ClearNoon"))
         try:
             weather = getattr(carla.WeatherParameters, weather_name)
@@ -2071,6 +2092,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="opt-in construct BasicAgent after the existing verified ACK brake bootstrap; no added tick or PID state reset")
     # HH_260906 - Timing is an explicit diagnostic option, not a new default capture or performance claim.
     parser.add_argument("--wall-timing", action="store_true", help="record optional native-tick wall stages; not GUI FPS or learned inference timing")
+    # HH_260906 - Only the explicit two-arm numerical comparison overrides inherited CARLA substeps.
+    parser.add_argument("--physics-substep-profile", choices=("inherited", "reference_10ms", "fine_5ms"), default="inherited",
+                        help="development-only numerical experiment; requires exact turn_launch_013_v1 route, ACK, after_bootstrap and 20/10 Hz")
     parser.add_argument("--wheelbase-m", type=float, default=WHEELBASE_M)
     parser.add_argument("--spawn-z-offset-m", type=float, default=0.0)
     parser.add_argument("--command-lookahead-m", type=float, default=2.0)
@@ -2151,6 +2175,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         agent_initialization_mode(args)
         capture_interval(args.physics_hz, args.capture_hz)
         configuration_from_args(args)
+        if physics_substep_module(args) is not None:
+            # HH_260906 - The owned wrapper calls this parser before launching a simulator.
+            validate_development_route(args, load_route(args.route_file), args.route_file)
         basic_agent_control_configuration(args, sampling_resolution_m=1.0)
         args.capture_phase_schedule = capture_phase_schedule(
             args.physics_hz,
@@ -2240,6 +2267,7 @@ def finalize_wall_timing(recorder: Any, partial: Path, state_records: Sequence[M
 def run(args: argparse.Namespace) -> Path:
     # HH_260906 - Programmatic callers must respect the same explicit ACK-only initialization boundary as CLI callers.
     agent_initialization_mode(args)
+    substeps = physics_substep_module(args)
     output = args.output.expanduser().resolve()
     partial = Path(str(output) + ".partial")
     if output.exists():
@@ -2403,6 +2431,10 @@ def run(args: argparse.Namespace) -> Path:
         }
         manifest["files"]["control_receipts"] = "control_receipts.jsonl"
         _write_jsonl(partial / "control_receipts.jsonl", [])
+    if substeps is not None:
+        # HH_260906 - Preserve NOT_REACHED metadata even if CARLA connection or actor-free preflight fails.
+        manifest["capture_contract"]["physics_substeps"] = substeps.new_record(args.physics_substep_profile)
+        manifest["provenance"]["physics_substeps_helper_sha256"] = sha256_file(Path(substeps.__file__))
     wall_timing = prepare_wall_timing(args, partial, manifest)
     _write_json(partial / "manifest.json", manifest)
     error: BaseException | None = None

@@ -1192,6 +1192,11 @@ def train_model(
                 ),
                 "gradient_norm": float(gradient_norm.detach().cpu().item()),
             }
+            if loss_config.candidate_regret_weight > 0.0:
+                # HH_260906 - Preserve legacy history keys and record the enabled auxiliary's unweighted batch mean.
+                last_metrics["candidate_regret_loss"] = float(
+                    losses["candidate_regret_loss"].cpu().item()
+                )
             _append_jsonl_no_follow(metrics_path, last_metrics)
             if (
                 state.global_step % train_config.checkpoint_interval == 0
@@ -1287,6 +1292,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="nonnegative candidate-score loss coefficient; exact resume requires its original value",
     )
     parser.add_argument("--max-steps", type=int, default=1000)
+    # HH_260906 - This optional detached composite-regret auxiliary leaves the historical objective unchanged at zero.
+    parser.add_argument(
+        "--candidate-regret-weight",
+        type=float,
+        default=TrajectoryLossConfig().candidate_regret_weight,
+        help="nonnegative detached composite-regret coefficient; exact resume requires its original value",
+    )
     parser.add_argument("--checkpoint-interval", type=int, default=100)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--maximum-gradient-norm", type=float, default=5.0)
@@ -1315,7 +1327,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         # HH_260906 - Reject invalid score coefficients before dataset access or run-directory creation.
-        loss_config = TrajectoryLossConfig(candidate_score_weight=args.candidate_score_weight)
+        loss_config = TrajectoryLossConfig(
+            candidate_score_weight=args.candidate_score_weight,
+            candidate_regret_weight=args.candidate_regret_weight,
+        )
         loss_config.validate()
         model_config = _load_model_config(args.model_config.expanduser().resolve())
         loaded = load_training_examples(

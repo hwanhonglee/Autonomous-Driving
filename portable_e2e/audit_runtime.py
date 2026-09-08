@@ -703,14 +703,8 @@ def _read_checkpoint_for_audit(
     if payload.get("model_config_sha256") != model_config_sha256:
         raise ContractError("runtime audit model config fingerprint does not match")
     loss_value = payload.get("loss_config")
-    if not isinstance(loss_value, Mapping) or set(loss_value) != set(
-        TrajectoryLossConfig().to_dict()
-    ):
-        raise ContractError("runtime audit loss config fields do not match")
-    try:
-        TrajectoryLossConfig(**dict(loss_value)).validate()
-    except (ContractError, TypeError) as error:
-        raise ContractError(f"runtime audit loss config is invalid: {error}") from error
+    # HH_260906 - Recognize the strict research loss contract without changing any runtime geometry gate.
+    TrajectoryLossConfig.from_mapping(loss_value)
     train_value = payload.get("train_config")
     state = payload.get("state")
     if not isinstance(train_value, Mapping) or not isinstance(state, Mapping):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import math
-from typing import Any
+from typing import Any, Mapping
 
 import torch
 from torch import Tensor
@@ -21,6 +21,7 @@ class TrajectoryLossConfig:
     kinematic_speed_weight: float = 0.05
     final_displacement_weight: float = 0.5
     candidate_score_weight: float = 0.1
+    candidate_regret_weight: float = 0.0
 
     def validate(self) -> None:
         for name, value in asdict(self).items():
@@ -36,7 +37,24 @@ class TrajectoryLossConfig:
 
     def to_dict(self) -> dict[str, Any]:
         self.validate()
-        return asdict(self)
+        value = asdict(self)
+        # HH_260906 - Keep historical six-field checkpoints byte-compatible when the research auxiliary is disabled.
+        if self.candidate_regret_weight == 0.0:
+            del value["candidate_regret_weight"]
+        return value
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "TrajectoryLossConfig":
+        """HH_260906 - Accept only canonical legacy or explicitly enabled research loss contracts."""
+        legacy_fields = set(cls().to_dict())
+        research_fields = legacy_fields | {"candidate_regret_weight"}
+        if not isinstance(value, Mapping) or set(value) not in (legacy_fields, research_fields):
+            raise ContractError("checkpoint loss config fields do not match")
+        config = cls(**dict(value))
+        config.validate()
+        if set(value) != set(config.to_dict()):
+            raise ContractError("checkpoint loss config has a noncanonical disabled auxiliary")
+        return config
 
 
 def _validate_shapes(
@@ -189,6 +207,17 @@ def trajectory_loss(
     score_loss = F.cross_entropy(candidate_logits, oracle_candidate)
     total_loss = regression_loss + float(cfg.candidate_score_weight) * score_loss
 
+    candidate_regret_loss: Tensor | None = None
+    if cfg.candidate_regret_weight > 0.0:
+        # HH_260906 - Detach the unchanged composite costs; this adds direct logit gradients only, not direct trajectory gradients.
+        # HH_260906 - Shared model context can still change candidate generation indirectly during joint optimization.
+        detached_cost = per_candidate.detach()
+        regret = detached_cost - detached_cost.min(dim=1, keepdim=True).values
+        candidate_regret_loss = (candidate_logits.softmax(dim=1) * regret).sum(dim=1).mean()
+        if not bool(torch.isfinite(candidate_regret_loss).item()):
+            raise FloatingPointError("candidate regret loss overflowed to NaN or Inf")
+        total_loss = total_loss + float(cfg.candidate_regret_weight) * candidate_regret_loss
+
     displacement = torch.linalg.norm(candidate_xy - target_xy.unsqueeze(1), dim=-1)
     candidate_ade = (displacement * point_mask).sum(dim=2) / valid_count
     selected_candidate = candidate_logits.detach().argmax(dim=1)
@@ -234,4 +263,7 @@ def trajectory_loss(
         result["selected_yaw_mae_rad"] = yaw_error.mul(yaw_point_mask).sum(dim=2).div(
             yaw_valid_count
         ).gather(1, selected_candidate.unsqueeze(1)).mean().detach()
+    if candidate_regret_loss is not None:
+        # HH_260906 - Report the unweighted batch mean only for the enabled research contract.
+        result["candidate_regret_loss"] = candidate_regret_loss.detach()
     return result

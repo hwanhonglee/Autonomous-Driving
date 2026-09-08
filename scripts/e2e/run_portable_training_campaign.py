@@ -25,6 +25,12 @@ DATA_EXPANSION_SCHEMA = 'portable_e2e.data_expansion_campaign.v1'
 SELECTOR_WEIGHT_SCHEMA = 'portable_e2e.selector_weight_campaign.v1'
 CANDIDATE_RANK_SCHEMA = 'portable_e2e.candidate_rank_campaign.v1'
 NO_ACCEL_DEVELOPMENT_SCHEMA = 'portable_e2e.no_accel_development_campaign.v1'
+# HH_260906 - Add one prospective cost-aware selector experiment without changing historical campaign contracts.
+CANDIDATE_REGRET_SCHEMA = 'portable_e2e.candidate_regret_campaign.v1'
+CANDIDATE_REGRET_ARMS = {'A_original_loss': 0.0001, 'B_cost_aware_selector': 0.0001}
+CANDIDATE_REGRET_WEIGHTS = {'A_original_loss': 0.0, 'B_cost_aware_selector': 0.1}
+CANDIDATE_REGRET_STAGE_TIMEOUTS = {'train': 600, 'evaluate': 120, 'audit': 120}
+CANDIDATE_REGRET_DEADLINE = '2026-09-09T01:00:00Z'
 SUCCESSOR_SCHEMAS = (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA, CANDIDATE_RANK_SCHEMA)
 NO_ACCEL_MODELS = {
     'A_physical_input': 'portable_e2e/config/perspective_trajectory_physical_v1.model.json',
@@ -55,7 +61,7 @@ def digest(path):
 
 def validate_plan(plan):
     # HH_260906 - Accept only reviewed experiments; the new architecture never changes the physical safety gates.
-    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', *SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA):
+    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', *SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA, CANDIDATE_REGRET_SCHEMA):
         raise ValueError('unsupported campaign schema')
     if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,100}', plan['campaign_id']):
         raise ValueError('unsafe campaign identifier')
@@ -65,7 +71,9 @@ def validate_plan(plan):
     selector = plan['schema'] == SELECTOR_WEIGHT_SCHEMA
     ranking = plan['schema'] == CANDIDATE_RANK_SCHEMA
     no_accel = plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA
-    expected_arms = ({'A_physical_input': 0.0001, 'B_no_accel_input': 0.0001} if no_accel else
+    regret = plan['schema'] == CANDIDATE_REGRET_SCHEMA
+    expected_arms = (CANDIDATE_REGRET_ARMS if regret else
+        {'A_physical_input': 0.0001, 'B_no_accel_input': 0.0001} if no_accel else
         {'E_candidate_rank': 0.0001} if ranking else {'D_selector_weight': 0.0001} if selector else
         {'C_expanded_data': 0.0001} if expanded else {'A_baseline': 0.0001, 'B_lower_lr': 0.00003})
     if plan['arms'] != expected_arms:
@@ -90,6 +98,24 @@ def validate_plan(plan):
                 or list(plan['arms']) != list(NO_ACCEL_MODELS)
                 or plan.get('candidate_score_weight', 0.1) != 0.1):
             raise ValueError('unreviewed no-accel development dataset, paired models, arm order or fresh-start scope')
+    if regret:
+        # HH_260906 - Fix all seeds, both fresh arms, the auxiliary weights and the overnight finish budget before dispatch.
+        expected = {'campaign_id': 'hh260909-candidate-regret-ab-3seeds-v1',
+            'dataset': EXPANDED_DATASET, 'dataset_manifest_sha256': EXPANDED_MANIFEST_SHA256,
+            'model_config': NO_ACCEL_MODELS['A_physical_input'],
+            'model_config_sha256': NO_ACCEL_MODEL_SHA256['A_physical_input'],
+            'candidate_score_weight': 0.1, 'candidate_regret_weights': CANDIDATE_REGRET_WEIGHTS,
+            'expected_train_samples': 1147, 'expected_val_samples': 337,
+            'finish_before_utc': CANDIDATE_REGRET_DEADLINE,
+            'stage_timeout_seconds': CANDIDATE_REGRET_STAGE_TIMEOUTS,
+            'finish_reserve_seconds': 300}
+        forbidden = ('model_configs', 'prerequisite_campaign_id', 'baseline_campaign_id', 'baseline_source_commit',
+            'prerequisite_timeout_seconds', 'resume', 'checkpoint')
+        if (any(json.dumps(plan.get(name), sort_keys=True) != json.dumps(value, sort_keys=True)
+                for name, value in expected.items())
+                or any(name in plan for name in forbidden)
+                or list(plan['arms']) != list(CANDIDATE_REGRET_ARMS)):
+            raise ValueError('unreviewed candidate-regret dataset, loss, fresh-arm order or deadline')
     if expanded or selector or ranking:
         expected = {
             'campaign_id': ('hh260907-candidate-rank-3seeds-v1' if ranking else
@@ -111,7 +137,7 @@ def validate_plan(plan):
             expected['source_commit'] = HISTORICAL_SOURCE_COMMIT
         if any(plan.get(name) != value for name, value in expected.items()):
             raise ValueError('unreviewed successor dataset, source, counts, score weight or prerequisite')
-    return {'train_samples': 1147 if expanded or selector or ranking or no_accel else 613, 'val_samples': 337,
+    return {'train_samples': 1147 if expanded or selector or ranking or no_accel or regret else 613, 'val_samples': 337,
         'run_count': 3 if expanded or selector or ranking else 6,
         'stage_count': 9 if expanded or selector or ranking else 18}
 
@@ -119,7 +145,7 @@ def validate_plan(plan):
 def verify_dataset_manifest(plan, dataset):
     # HH_260906 - Bind the new corpus manifest before and after every stage without opening held-out test samples.
     validate_plan(plan)
-    if plan['schema'] not in (*SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA):
+    if plan['schema'] not in (*SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA, CANDIDATE_REGRET_SCHEMA):
         return None
     manifest = dataset / 'dataset.json'
     if manifest.is_symlink() or not manifest.is_file() or digest(manifest) != EXPANDED_MANIFEST_SHA256:
@@ -250,6 +276,9 @@ def campaign_model_configs(plan, repo):
         if not path.is_relative_to(repo):
             raise RuntimeError('model config escapes repository')
         file_sha = digest(path)
+        if plan['schema'] == CANDIDATE_REGRET_SCHEMA and (
+                (repo / name).is_symlink() or file_sha != plan['model_config_sha256']):
+            raise RuntimeError('candidate-regret model differs from the reviewed physical-v1 config')
         record = {'path': name, 'sha256': file_sha}
         if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA:
             if (repo / name).is_symlink() or file_sha != NO_ACCEL_MODEL_SHA256[arm]:
@@ -339,6 +368,25 @@ def verify_stage_report(stage, item, checkpoint, state, plan):
     report = json.loads(report_path.read_text())
     if report.get('status') != statuses[stage]:
         raise RuntimeError('stage report does not declare completed work')
+    if plan['schema'] == CANDIDATE_REGRET_SCHEMA:
+        # HH_260906 - Verify actual per-arm source, parameters and training exposure, not just a successful process exit.
+        config = state.get('model_config')
+        if not isinstance(config, dict) or config.get('model_id') != 'portable_e2e.perspective_trajectory.physical.v1':
+            raise RuntimeError('candidate-regret stage has no pinned physical model config')
+        if report.get('model_parameter_count') != 954590:
+            raise RuntimeError('candidate-regret stage parameter count differs')
+        if stage == 'train':
+            if report.get('model_config') != config:
+                raise RuntimeError('candidate-regret training model config differs')
+            if report.get('state', {}).get('domain_samples_seen') != {'carla': 6155}:
+                raise RuntimeError('candidate-regret training exposures differ')
+            expected_seed = int(item.parent.name.removeprefix('seed_'))
+            if (report.get('train_config', {}).get('seed') != expected_seed
+                    or report.get('train_config', {}).get('learning_rate') != 0.0001
+                    or report.get('train_config', {}).get('batch_size') != 4):
+                raise RuntimeError('candidate-regret training seed, learning rate or batch differs')
+        elif report.get('model_config_sha256') != state.get('model_config_canonical_sha256'):
+            raise RuntimeError('candidate-regret evaluation model config differs')
     if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA:
         arm = item.name
         if arm not in NO_ACCEL_MODELS:
@@ -378,6 +426,12 @@ def verify_stage_report(stage, item, checkpoint, state, plan):
         expected_loss = {'xy_weight': 1.0, 'speed_weight': 0.2, 'yaw_weight': 0.1,
             'kinematic_speed_weight': 0.05, 'final_displacement_weight': 0.5,
             'candidate_score_weight': 0.5 if plan['schema'] == SELECTOR_WEIGHT_SCHEMA else 0.1}
+        if plan['schema'] == CANDIDATE_REGRET_SCHEMA:
+            if item.name not in CANDIDATE_REGRET_WEIGHTS:
+                raise RuntimeError('unreviewed candidate-regret training arm')
+            weight = CANDIDATE_REGRET_WEIGHTS[item.name]
+            if weight:
+                expected_loss['candidate_regret_weight'] = weight
         if report.get('loss_config') != expected_loss:
             raise RuntimeError('training loss config differs from the frozen campaign weights')
     else:
@@ -421,6 +475,10 @@ def commands(plan, root, repo):
             elif plan['schema'] == CANDIDATE_RANK_SCHEMA:
                 # HH_260906 - Record the unchanged score coefficient explicitly for architecture-only comparison.
                 training_command += ['--candidate-score-weight', '0.1']
+            elif plan['schema'] == CANDIDATE_REGRET_SCHEMA:
+                # HH_260906 - Explicit zero keeps the original objective; nonzero uses detached composite regret only.
+                training_command += ['--candidate-score-weight', '0.1', '--candidate-regret-weight',
+                    str(CANDIDATE_REGRET_WEIGHTS[arm])]
             yield item, checkpoint, training_command, 'train'
             yield item, checkpoint, [python, '-m', 'portable_e2e.evaluate', dataset,
                 '--checkpoint', str(checkpoint), '--output-dir', str(item / 'evaluation'),
@@ -429,6 +487,22 @@ def commands(plan, root, repo):
             yield item, checkpoint, [python, '-m', 'portable_e2e.audit_runtime', dataset,
                 '--checkpoint', str(checkpoint), '--output-json', str(item / 'gate_v8.json'),
                 '--split', plan['split'], *shared], 'audit'
+
+
+def verify_finish_budget(plan, remaining_stages, *, observed_at=None):
+    # HH_260906 - Reserve every remaining stage timeout and owned cleanup before the explicit user deadline.
+    if plan['schema'] != CANDIDATE_REGRET_SCHEMA:
+        return
+    validate_plan(plan)
+    deadline = datetime.fromisoformat(plan['finish_before_utc'].replace('Z', '+00:00'))
+    observed = datetime.now(timezone.utc) if observed_at is None else observed_at
+    if observed.tzinfo is None or observed.utcoffset() is None:
+        raise ValueError('finish-budget observation must be timezone aware')
+    if any(stage not in CANDIDATE_REGRET_STAGE_TIMEOUTS for stage in remaining_stages):
+        raise ValueError('unreviewed remaining stage in finish budget')
+    needed = sum(CANDIDATE_REGRET_STAGE_TIMEOUTS[stage] for stage in remaining_stages) + plan['finish_reserve_seconds']
+    if (deadline - observed).total_seconds() < needed:
+        raise TimeoutError(f'insufficient time for remaining campaign and cleanup: {needed}s reserved')
 
 
 def main(argv=None):
@@ -442,6 +516,9 @@ def main(argv=None):
     if args.validate_only:
         print('PLAN_VALID; no training started')
         return 0
+    remaining_stages = [stage for _seed in plan['seeds'] for _arm in plan['arms']
+        for stage in ('train', 'evaluate', 'audit')]
+    verify_finish_budget(plan, remaining_stages)
     repo = WORKSPACE / 'autoware_e2e'
     expected_python = WORKSPACE / 'venvs/py312/bin/python'
     if Path(sys.prefix).absolute() != expected_python.parent.parent:
@@ -470,12 +547,17 @@ def main(argv=None):
         state['model_configs'] = models
     else:
         state['model_config_sha256'] = models['shared']['sha256']
+        if plan['schema'] == CANDIDATE_REGRET_SCHEMA:
+            state['model_config'] = json.loads((repo / plan['model_config']).read_text())
+            state['model_config_canonical_sha256'] = hashlib.sha256(json.dumps(
+                state['model_config'], sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
     # HH_260906 - A cooperative lock prevents duplicate campaigns without touching other jobs.
     with termination_guard(), (parent / '.gpu0_training.lock').open('a') as lease:
         acquire_campaign_lease(lease, plan)
         verify_campaign_models(plan, repo, models)
         verify_dataset_manifest(plan, dataset)
         assert_gpu_idle(repo)
+        verify_finish_budget(plan, remaining_stages)
         root.mkdir(exist_ok=False)
         (root / 'plan.json').write_bytes(plan_bytes)
 
@@ -490,6 +572,7 @@ def main(argv=None):
                 verify_campaign_models(plan, repo, models)
                 verify_dataset_manifest(plan, dataset)
                 assert_gpu_idle(repo)
+                verify_finish_budget(plan, remaining_stages)
                 item.mkdir(parents=True, exist_ok=True)
                 if stage == 'audit':
                     command += ['--checkpoint-sha256', digest(checkpoint)]
@@ -500,7 +583,11 @@ def main(argv=None):
                 save()
                 print(json.dumps(record), flush=True)
                 with (item / f'{stage}.log').open('x') as log:
-                    returncode = run_owned_stage(command, repo, env, log)
+                    if plan['schema'] == CANDIDATE_REGRET_SCHEMA:
+                        returncode = run_owned_stage(command, repo, env, log,
+                            timeout=CANDIDATE_REGRET_STAGE_TIMEOUTS[stage])
+                    else:
+                        returncode = run_owned_stage(command, repo, env, log)
                 record['returncode'] = returncode
                 verify_campaign_models(plan, repo, models)
                 verify_dataset_manifest(plan, dataset)
@@ -508,6 +595,7 @@ def main(argv=None):
                     raise RuntimeError(f'{record["run"]} {stage} failed; inspect preserved log')
                 record['report'] = verify_stage_report(stage, item, checkpoint, state, plan)
                 record.update(finished_at_utc=now(), status='COMPLETE')
+                remaining_stages.pop(0)
                 save()
             if len(state['stages']) != contract['stage_count']:
                 raise RuntimeError('completed stage count differs from the reviewed campaign')

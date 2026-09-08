@@ -155,6 +155,13 @@ if mode == 'actuation-response':
 wall_timing = mode == 'expert' and '--wall-timing' in options
 if wall_timing:
     sources += ('scripts/e2e/carla_wall_timing.py',)
+# HH_260906 - Parse the exact expert argv again so both flag syntaxes archive only an explicitly selected helper.
+substep_profile = 'inherited'
+if mode == 'expert' and any(option == '--physics-substep-profile' or option.startswith('--physics-substep-profile=') for option in options):
+    from scripts.e2e.collect_carla_vad_expert import parse_args
+    substep_profile = parse_args([str(Path(path).parent / output_name), route, '--host', '127.0.0.1', '--port', port, *options]).physics_substep_profile
+if substep_profile != 'inherited':
+    sources += ('scripts/e2e/carla_physics_substeps.py',)
 def git(*args):
     return subprocess.run(['git', *args], check=True, capture_output=True,
         text=True, timeout=15).stdout.strip()
@@ -177,6 +184,8 @@ with Path(path).open('x') as stream:
         'bounds_source_bytes_archived': True,
         **({'wall_timing_enabled': True, 'wall_timing_source_bytes_archived': True,
             'wall_timing_schema': 'carla.expert_wall_timing.v1'} if wall_timing else {}),
+        **({'physics_substeps_source_bytes_archived': True, 'physics_substep_profile': substep_profile,
+            'physics_substeps_schema': 'carla.physics_substep_experiment.v1'} if substep_profile != 'inherited' else {}),
         'route_path': route, 'route_sha256': hashlib.sha256(Path(route).read_bytes()).hexdigest(),
         'map': town, 'host': '127.0.0.1', 'port': int(port), 'quality': quality,
         'capture_mode': mode, 'worker_path': worker,

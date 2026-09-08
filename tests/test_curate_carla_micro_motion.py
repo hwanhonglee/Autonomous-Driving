@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -71,7 +72,7 @@ def test_output_must_be_new_outside_inputs(tmp_path,kind):
     with pytest.raises(ValueError): module.publish(root,output,digest,module.analysis.sha(root/"SHA256SUMS"))
 
 
-def test_draw_synthetic_fixture_only(tmp_path):
+def test_draw_synthetic_fixture_only(tmp_path,monkeypatch):
     # HH_260906 - These fabricated unit fixtures test chart rendering, never stand in for actual published driving evidence.
     pytest.importorskip("matplotlib")
     image=pytest.importorskip("PIL.Image")
@@ -88,11 +89,34 @@ def test_draw_synthetic_fixture_only(tmp_path):
                 compact["direction_difference_pooled_radians"]["/".join((str(count),bucket,subset))]={"count":4,"p95":.05}
     # HH_260906 - Exercise unassessed rendering instead of turning an empty subset into a zero-valued success.
     compact["direction_difference_pooled_radians"].pop("5/ge1/original_failed")
+    compact["direction_difference_pooled_radians"]["2/lt0p1/all_assessed"]["p95"]=math.radians(.03)
+    compact["direction_difference_pooled_radians"]["5/ge1/all_assessed"]["p95"]=math.radians(3.4)
     traces={case:[{"first_timestamp_ns":i*50_000_000,"target_timestamp_ns":(i+1)*50_000_000,
         "native_phases":["stationary_tail" if i>12 else "driving"],
         "references":{ref:{"residual_norm_m":{"trapezoid":i*.00001}} for ref in module.REFERENCES}}
         for i in range(20)] for case in (cases[1],cases[6])}
+    # HH_260906 - Inspect the real plotted axes before closing; a readable scale must not mutate measured inputs.
+    from matplotlib.figure import Figure
+    original_savefig=Figure.savefig
+    observed=[]
+    original_compact=json.dumps(compact,sort_keys=True)
+    def capture_savefig(figure,path,**kwargs):
+        if Path(path).name=="02_direction_interval_sensitivity.png":
+            observed.extend(figure.axes)
+        return original_savefig(figure,path,**kwargs)
+    monkeypatch.setattr(Figure,"savefig",capture_savefig)
     module.draw(compact,traces,tmp_path)
+    assert json.dumps(compact,sort_keys=True)==original_compact
+    assert len(observed)==2
+    for axis in observed:
+        assert axis.get_ylim()==pytest.approx((0.,1.4*3.4))
+        assert axis.get_xlim()==pytest.approx((-.6,3.6))
+    assert any(t.get_text()=="P95=0.03°\nn=4" for t in observed[0].texts)
+    assert any(t.get_text()=="P95=3.4°\nn=4" for t in observed[1].texts)
+    unavailable=[t for t in observed[1].texts if t.get_text()=="unavailable\nn=0"]
+    assert len(unavailable)==1
+    assert unavailable[0].get_transform()==observed[1].get_xaxis_transform()
+    assert unavailable[0].get_position()[1]==.02
     files=list(tmp_path.glob("*.png")); assert len(files)==3
     for p in files:
         with image.open(p) as frame:

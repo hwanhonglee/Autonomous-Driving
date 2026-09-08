@@ -161,6 +161,10 @@ def draw(compact, traces, output):
 
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
     pretty_bins = ("<0.1", "0.1-0.5", "0.5-1", ">=1")
+    # HH_260906 - Share a display-only scale from measured P95 values; retain all original statistics and unavailable rows.
+    p95_degrees = [math.degrees(stat["p95"])
+        for stat in compact["direction_difference_pooled_radians"].values() if stat["count"]]
+    direction_display_top = max(.1, 1.4 * max(p95_degrees, default=0.))
     for ax, count in zip(axes, (2,5)):
         for j, subset in enumerate(("all_assessed", "original_failed")):
             for b, bucket in enumerate(BINS):
@@ -169,12 +173,15 @@ def draw(compact, traces, output):
                 if stat["count"]:
                     value = math.degrees(stat["p95"])
                     ax.bar(x, value, .32, color=("tab:blue", "tab:orange")[j], label=subset if b == 0 else None)
-                    ax.annotate(f"n={stat['count']}", (x,value), xytext=(0,4), textcoords="offset points", ha="center", fontsize=8, rotation=90)
+                    ax.annotate(f"P95={value:.3g}°\nn={stat['count']}", (x,value),
+                        xytext=(0,4), textcoords="offset points", ha="center", fontsize=7)
                 else:
-                    ax.text(x, 2, "unavailable\nn=0", ha="center", va="bottom", fontsize=8, rotation=90)
+                    ax.text(x, .02, "unavailable\nn=0", transform=ax.get_xaxis_transform(),
+                        ha="center", va="bottom", fontsize=7)
         ax.set_title(f"Same endpoint: {count}00 ms vs 100 ms direction")
         ax.set_xticks(range(4), pretty_bins); ax.set_xlabel("100 ms XY interval-average speed [m/s]")
-        ax.set_ylabel("P95 wrapped absolute direction difference [deg]"); ax.set_ylim(0,215)
+        ax.set_ylabel("P95 wrapped absolute direction difference [deg]")
+        ax.set_ylim(0,direction_display_top); ax.set_xlim(-.6,3.6)
         ax.grid(axis="y",alpha=.25); ax.legend()
     fig.suptitle("All 64 indices: interval sensitivity, not a replacement curvature gate", fontsize=16)
     fig.text(.5,.012,"Short-prefix and tiny-displacement comparisons remain unavailable. Counts overlap in time; original FAIL flags are retained.",ha="center",fontsize=10)

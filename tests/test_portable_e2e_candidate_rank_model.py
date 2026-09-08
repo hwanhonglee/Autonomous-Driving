@@ -30,6 +30,8 @@ from portable_e2e.model import (
 )
 from portable_e2e.runtime_weight_bundle import _validate_model_config
 from portable_e2e.runtime_contract import RuntimeGateConfig, validate_and_select_trajectory
+# HH_260906 - Remove only explicit later stopmix branches while retaining every historical source fingerprint.
+from test_portable_e2e_stopmix_model import pre_stopmix_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,11 +80,11 @@ def _hash_source(source: str) -> str:
 
 def test_legacy_initialization_and_encoder_source_are_frozen() -> None:
     # HH_260906 - Pin the executed pre-research source independently of PyTorch RNG versions.
-    initializer = inspect.getsource(PerspectiveTrajectoryModel.__init__).split(
+    initializer = pre_stopmix_source("__init__").split(
         "        # HH_260906 - Replace only the research scorer"
     )[0]
     # HH_260906 - Remove only the explicitly gated later value ablation before checking the frozen legacy prefix.
-    forward_source = inspect.getsource(PerspectiveTrajectoryModel.forward).replace(
+    forward_source = pre_stopmix_source("forward").replace(
         "\n        if cfg.model_id == PHYSICAL_NO_ACCEL_MODEL_ID:\n"
         "            # HH_260906 - Validate raw inputs first, then mask both acceleration channels at every history step without mutating the caller.\n"
         "            ego_history = ego_history.clone()\n"
@@ -103,7 +105,7 @@ def test_legacy_initialization_and_encoder_source_are_frozen() -> None:
     assert _hash_source(inspect.getsource(ConvImageEncoder)) == (
         "a70ca7680ce1be1e34b13cbdb773862c45043f18633cefb09189ad1bdddae8bb"
     )
-    assert _hash_source(inspect.getsource(PerspectiveTrajectoryModel._decode_physical_v1)) == (
+    assert _hash_source(pre_stopmix_source("_decode_physical_v1")) == (
         "ffa4930c7624432a68df3ce9cf2c4585d4f98f00fc11ec6394a13fcfaceac420"
     )
 

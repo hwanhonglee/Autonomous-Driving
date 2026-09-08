@@ -18,6 +18,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 from .contract import ContractError
 from .dataset import CALIBRATION_FEATURE_NAMES, FEATURE_NAMES
+from . import stop_primitive_research
 
 
 MODEL_ID = "portable_e2e.perspective_trajectory.v0"
@@ -26,7 +27,10 @@ PHYSICAL_MODEL_ID = "portable_e2e.perspective_trajectory.physical.v1"
 CANDIDATE_RANK_MODEL_ID = "portable_e2e.perspective_trajectory.candidate_rank.v1"
 # HH_260906 - This research ID removes supplied acceleration values, not their transport or physical-reference requirements.
 PHYSICAL_NO_ACCEL_MODEL_ID = "portable_e2e.perspective_trajectory.physical_no_accel.v1"
-SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID))
+# HH_260906 - This research-only identity adds stop-shaped candidates, not supervised traffic-stop intent or control approval.
+PHYSICAL_STOPMIX_MODEL_ID = "portable_e2e.perspective_trajectory.physical_stopmix.v1"
+STOPMIX_DRIVE_CANDIDATES = 6
+SUPPORTED_MODEL_IDS = frozenset((MODEL_ID, PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID, PHYSICAL_STOPMIX_MODEL_ID))
 IMAGE_ENCODER_DOWNSAMPLE_STAGES = 4
 # HH_260906 - Physical v1 predicts bounded 100 ms route-relative motion steps.
 PHYSICAL_TIME_STEP_S = 0.1
@@ -111,6 +115,9 @@ class ModelConfig:
             raise ContractError("model.ego_features does not match the dataset ABI")
         if self.future_points != 64:
             raise ContractError("model.future_points must preserve the 64-point ABI")
+        if self.model_id == PHYSICAL_STOPMIX_MODEL_ID and self.candidate_count != 12:
+            # HH_260906 - Preserve all six DRIVE candidates and the unchanged six-candidate STOP primitive.
+            raise ContractError("physical stopmix v1 candidate_count must be exactly 12 (6 DRIVE + 6 STOP)")
         numeric_limits = {
             "maximum_step_m": (self.maximum_step_m, 0.1, 10.0),
             "route_scale_m": (self.route_scale_m, 1.0, 10_000.0),
@@ -126,7 +133,7 @@ class ModelConfig:
                     f"model.{name} must be finite and in [{minimum}, {maximum}]"
                 )
         # HH_260906 - Pin the physical decoder's declared step safety envelope.
-        if self.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID) and not math.isclose(
+        if self.model_id in (PHYSICAL_MODEL_ID, CANDIDATE_RANK_MODEL_ID, PHYSICAL_NO_ACCEL_MODEL_ID, PHYSICAL_STOPMIX_MODEL_ID) and not math.isclose(
             float(self.maximum_step_m), 1.0, rel_tol=0.0, abs_tol=1.0e-12
         ):
             raise ContractError("physical v1 maximum_step_m must be exactly 1.0")
@@ -270,11 +277,15 @@ class PerspectiveTrajectoryModel(nn.Module):
         )
         # HH_260906 - Preserve the v0 state ABI while versioning the v1 decoder.
         trajectory_channels = 3 if cfg.model_id == MODEL_ID else 2
+        drive_candidates = cfg.candidate_count
+        if cfg.model_id == PHYSICAL_STOPMIX_MODEL_ID:
+            # HH_260906 - Initialize the original six-candidate network first so shared DRIVE weights retain same-seed physical-v1 values.
+            drive_candidates = STOPMIX_DRIVE_CANDIDATES
         self.trajectory_head = nn.Linear(
             cfg.hidden_width,
-            cfg.candidate_count * cfg.future_points * trajectory_channels,
+            drive_candidates * cfg.future_points * trajectory_channels,
         )
-        self.candidate_head = nn.Linear(cfg.hidden_width, cfg.candidate_count)
+        self.candidate_head = nn.Linear(cfg.hidden_width, drive_candidates)
         self.reset_parameters()
         # HH_260906 - Replace only the research scorer after legacy initialization so
         # HH_260906 - identical seeds retain identical shared encoder and decoder weights.
@@ -285,6 +296,12 @@ class PerspectiveTrajectoryModel(nn.Module):
                 nn.Linear(cfg.hidden_width, 1),
             )
             nn.init.zeros_(self.candidate_head[-1].bias)
+        if cfg.model_id == PHYSICAL_STOPMIX_MODEL_ID:
+            # HH_260906 - Add duration, per-step curvature and STOP scores only after the historical initialization sequence.
+            self.stop_head = nn.Linear(cfg.hidden_width, stop_primitive_research.CANDIDATE_COUNT * (1 + cfg.future_points))
+            self.stop_candidate_head = nn.Linear(cfg.hidden_width, stop_primitive_research.CANDIDATE_COUNT)
+            nn.init.zeros_(self.stop_head.bias)
+            nn.init.zeros_(self.stop_candidate_head.bias)
 
     def reset_parameters(self) -> None:
         nn.init.normal_(self.camera_embedding, mean=0.0, std=0.02)
@@ -442,6 +459,19 @@ class PerspectiveTrajectoryModel(nn.Module):
         route_features = route_hidden[-1]
 
         fused = self.fusion(torch.cat((camera_features, ego_features, route_features), dim=1))
+        if cfg.model_id == PHYSICAL_STOPMIX_MODEL_ID:
+            # HH_260906 - Fixed output order is DRIVE[0:6] then STOP[6:12]; all inputs are present/past sensor and route features.
+            raw_drive = self.trajectory_head(fused).reshape(batch, STOPMIX_DRIVE_CANDIDATES, cfg.future_points, 2)
+            drive_xy, drive_speed = self._decode_physical_v1(raw_drive, ego_history, route_xy, route_mask)
+            raw_stop = self.stop_head(fused).reshape(batch, stop_primitive_research.CANDIDATE_COUNT, 1 + cfg.future_points)
+            # HH_260906 - Match the existing physical decoder's observed-vx normalization; the independent runtime gate still sees the raw speed.
+            current_speed = ego_history[:, -1, FEATURE_NAMES.index("velocity_x_mps")].clamp(0.0, PHYSICAL_MAXIMUM_SPEED_MPS)
+            stop = stop_primitive_research.decode_stop_primitive(current_speed, raw_stop[..., 0], raw_stop[..., 1:])
+            return (
+                torch.cat((drive_xy, stop.xy_base_m), dim=1),
+                torch.cat((drive_speed, stop.speed_mps), dim=1),
+                torch.cat((self.candidate_head(fused), self.stop_candidate_head(fused)), dim=1),
+            )
         trajectory_channels = 3 if cfg.model_id == MODEL_ID else 2
         raw = self.trajectory_head(fused).reshape(
             batch, cfg.candidate_count, cfg.future_points, trajectory_channels
@@ -485,6 +515,11 @@ class PerspectiveTrajectoryModel(nn.Module):
         route_mask: Tensor,
     ) -> tuple[Tensor, Tensor]:
         cfg = self.config
+        # HH_260906 - Bind the decoded DRIVE axis explicitly; stopmix owns six DRIVE latents, never twelve with discarded outputs.
+        expected_candidates = STOPMIX_DRIVE_CANDIDATES if cfg.model_id == PHYSICAL_STOPMIX_MODEL_ID else cfg.candidate_count
+        if raw.ndim != 4 or tuple(raw.shape) != (ego_history.shape[0], expected_candidates, cfg.future_points, 2):
+            raise ValueError("physical DRIVE latents do not match the declared candidate/point ABI")
+        candidate_count = raw.shape[1]
         acceleration = (
             torch.tanh(raw[..., 0]) * PHYSICAL_MAXIMUM_ACCELERATION_MPS2
         )
@@ -493,7 +528,7 @@ class PerspectiveTrajectoryModel(nn.Module):
             :, -1, FEATURE_NAMES.index("velocity_x_mps")
         ].clamp(0.0, PHYSICAL_MAXIMUM_SPEED_MPS)
         speed_steps: list[Tensor] = []
-        previous_speed = current_speed.unsqueeze(1).expand(-1, cfg.candidate_count)
+        previous_speed = current_speed.unsqueeze(1).expand(-1, candidate_count)
         for point_index in range(cfg.future_points):
             previous_speed = (
                 previous_speed
@@ -529,7 +564,7 @@ class PerspectiveTrajectoryModel(nn.Module):
             segment_index, final_segment_index[:, None, None]
         )
         expanded_tangent = route_tangent[:, None, None, :, :].expand(
-            -1, cfg.candidate_count, cfg.future_points, -1, -1
+            -1, candidate_count, cfg.future_points, -1, -1
         )
         tangent = expanded_tangent.gather(
             3,
@@ -545,7 +580,7 @@ class PerspectiveTrajectoryModel(nn.Module):
         segment_entry_speed = torch.cat(
             (
                 current_speed[:, None, None].expand(
-                    -1, cfg.candidate_count, 1
+                    -1, candidate_count, 1
                 ),
                 trajectory_speed[:, :, :-1],
             ),

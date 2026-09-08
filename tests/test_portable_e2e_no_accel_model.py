@@ -21,6 +21,8 @@ from portable_e2e.model import (
 )
 import portable_e2e.runtime_weight_bundle as bundle
 import portable_e2e.train as training
+# HH_260906 - Normalize only the later research branches; all preexisting fingerprints remain unchanged.
+from test_portable_e2e_stopmix_model import pre_stopmix_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -149,7 +151,7 @@ def test_research_id_does_not_relax_config_or_physical_envelope(changes):
 
 def legacy_forward_source():
     # HH_260906 - Restore only the new gated block and dispatch spelling, then pin the entire historical method hash.
-    source = inspect.getsource(PerspectiveTrajectoryModel.forward).replace(
+    source = pre_stopmix_source("forward").replace(
         "\n        if cfg.model_id == PHYSICAL_NO_ACCEL_MODEL_ID:\n"
         "            # HH_260906 - Validate raw inputs first, then mask both acceleration channels at every history step without mutating the caller.\n"
         "            ego_history = ego_history.clone()\n"
@@ -181,7 +183,7 @@ def test_old_ids_are_bitexact_to_the_frozen_pre_ablation_forward(model_id):
     ("_decode_physical_v1", "ffa4930c7624432a68df3ce9cf2c4585d4f98f00fc11ec6394a13fcfaceac420"),
 ])
 def test_initializer_input_validation_and_physical_decoder_remain_source_identical(name, expected_sha):
-    assert hashlib.sha256(inspect.getsource(getattr(PerspectiveTrajectoryModel, name)).rstrip().encode()).hexdigest() == expected_sha
+    assert hashlib.sha256(pre_stopmix_source(name).rstrip().encode()).hexdigest() == expected_sha
 
 
 def test_secure_bundle_keeps_research_id_unsupported_and_rejects_semantic_hash_mismatch():

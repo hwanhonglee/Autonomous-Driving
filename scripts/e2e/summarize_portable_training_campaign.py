@@ -120,7 +120,7 @@ def _geometry(audit: dict[str, Any], count: int) -> dict[str, Any]:
 
 
 def _validate_run(root: Path, relative: str, plan: dict[str, Any], config: dict[str, Any],
-                  seed: int, arm: str) -> dict[str, Any]:
+                  seed: int, arm: str, *, source_bytes: dict[str, bytes] | None = None) -> dict[str, Any]:
     item = root / relative
     training = _read(item / "training/run.json")
     evaluation = _read(item / "evaluation/metrics.json")
@@ -131,12 +131,15 @@ def _validate_run(root: Path, relative: str, plan: dict[str, Any], config: dict[
     ranking = plan.get("schema") == "portable_e2e.candidate_rank_campaign.v1"
     # HH_260906 - The explicit fresh input-ablation schema shares the full v3 corpus, never a historical arm alias.
     no_accel = plan.get("schema") == "portable_e2e.no_accel_development_campaign.v1"
-    expanded = selector or ranking or no_accel or plan.get("schema") == "portable_e2e.data_expansion_campaign.v1"
+    # HH_260906 - The new loss study uses two fresh physical-v1 arms and an optional seventh loss coefficient.
+    regret = plan.get("schema") == "portable_e2e.candidate_regret_campaign.v1"
+    expanded = selector or ranking or no_accel or regret or plan.get("schema") == "portable_e2e.data_expansion_campaign.v1"
     _require(plan.get("schema") in ("portable_e2e.lr_ab_campaign.v1", "portable_e2e.data_expansion_campaign.v1",
                                     "portable_e2e.selector_weight_campaign.v1", "portable_e2e.candidate_rank_campaign.v1",
-                                    "portable_e2e.no_accel_development_campaign.v1"),
+                                    "portable_e2e.no_accel_development_campaign.v1", "portable_e2e.candidate_regret_campaign.v1"),
              f"{relative}: unsupported campaign schema")
-    allowed_arms = ({"A_physical_input": 0.0001, "B_no_accel_input": 0.0001} if no_accel else
+    allowed_arms = ({"A_original_loss": 0.0001, "B_cost_aware_selector": 0.0001} if regret else
+                    {"A_physical_input": 0.0001, "B_no_accel_input": 0.0001} if no_accel else
                     {"E_candidate_rank": 0.0001} if ranking else {"D_selector_weight": 0.0001} if selector
                     else {"C_expanded_data": 0.0001} if expanded else ARMS)
     _require(arm in allowed_arms, f"{relative}: unreviewed campaign arm")
@@ -163,11 +166,14 @@ def _validate_run(root: Path, relative: str, plan: dict[str, Any], config: dict[
     _require(training.get("training_split") == "train", f"{relative}: not a train-only run")
     _require(training.get("state", {}).get("global_step") == plan["steps"], f"{relative}: step mismatch")
     _require(training.get("model_config") == config, f"{relative}: model config mismatch")
-    _require(training.get("loss_config") == {
+    expected_loss = {
         "xy_weight": 1.0, "speed_weight": 0.2, "yaw_weight": 0.1,
         "kinematic_speed_weight": 0.05, "final_displacement_weight": 0.5,
         "candidate_score_weight": 0.5 if selector else 0.1,
-    }, f"{relative}: loss config mismatch")
+    }
+    if regret and arm == "B_cost_aware_selector":
+        expected_loss["candidate_regret_weight"] = 0.1
+    _require(training.get("loss_config") == expected_loss, f"{relative}: loss config mismatch")
     _require(training.get("model_parameter_count") == evaluation.get("model_parameter_count"),
              f"{relative}: model parameter count mismatch")
     canonical_config_sha = _sha(json.dumps(config, sort_keys=True, separators=(",", ":"), allow_nan=False).encode())
@@ -197,7 +203,8 @@ def _validate_run(root: Path, relative: str, plan: dict[str, Any], config: dict[
              f"{relative}: control approval is forbidden")
     for name in ("audit_runtime", "runtime_contract"):
         _require(audit.get("implementation", {}).get(f"{name}_sha256") ==
-                 _sha(_git_bytes(plan["source_commit"], f"portable_e2e/{name}.py")),
+                 _sha(source_bytes[f"portable_e2e/{name}.py"] if source_bytes is not None else
+                      _git_bytes(plan["source_commit"], f"portable_e2e/{name}.py")),
                  f"{relative}: audit implementation differs from pinned source")
     checkpoint = item / "training/checkpoints/latest.pt"
     checkpoint_present = checkpoint.is_file()

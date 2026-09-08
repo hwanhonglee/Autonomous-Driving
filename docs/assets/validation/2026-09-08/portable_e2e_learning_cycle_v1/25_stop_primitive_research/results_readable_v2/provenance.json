@@ -1,0 +1,175 @@
+{
+  "expected_checksums_sha256": "91c3d6ec4749fc6b3fcf13e69c6144219624a0e9fe0900cabe46f5eb7ce43a36",
+  "expected_summary_sha256": "959974861f8308f2904ec41a54ae077db1f6005eeb291fe61be1385802995fee",
+  "full_ledger_recount": {
+    "compared_scalar_count": 154200,
+    "numerical_invariant_counts": {
+      "PASS": 600
+    },
+    "numerical_reference_counts": {
+      "MATCH": 600
+    },
+    "reported_candidate_count": 600,
+    "reported_case_count": 100,
+    "reported_future_point_count": 38400,
+    "runtime_failure_reasons": {},
+    "runtime_failures": [],
+    "runtime_gate_counts": {
+      "PASS": 600
+    }
+  },
+  "input_and_publisher_postcheck_pass": true,
+  "limits": [
+    "The publisher authenticates and recounts archived results; it does not rerun the primitive or runtime gate.",
+    "Runtime PASS and numeric MATCH are archived executed judgments, not model/data/control/road approval.",
+    "All 600 candidate records remain in rows.jsonl, including any failures; plotted cases follow fixed requested inputs.",
+    "Float32 arithmetic may fall slightly below mathematical -2.9 m/s^2 within declared diagnostic epsilon; runtime tolerances were not changed.",
+    "Discrete endpoint-speed integration is not the continuous v0*T/2 braking-distance reference.",
+    "STOP is supplied by the caller. No learned STOP decision, inference latency, road following or collision avoidance was tested."
+  ],
+  "numeric_notes": {
+    "float32": {
+      "candidate_count": 300,
+      "maximum_continuous_reference_minus_endpoint_integral_m": 0.41666728506483963,
+      "maximum_recorded_reference_error": {
+        "heading_rad": 1.814171883829374e-07,
+        "speed_mps": 7.591715345256489e-07,
+        "stop_duration_s": 2.0286132507152388e-07,
+        "xy_base_m": 1.6008902576913897e-06
+      },
+      "minimum_recorded_speed_rate_mps2": -2.9000043869018555
+    },
+    "float64": {
+      "candidate_count": 300,
+      "maximum_continuous_reference_minus_endpoint_integral_m": 0.41666666619345705,
+      "maximum_recorded_reference_error": {
+        "heading_rad": 2.220446049250313e-16,
+        "speed_mps": 0.0,
+        "stop_duration_s": 0.0,
+        "xy_base_m": 1.7763568394002505e-15
+      },
+      "minimum_recorded_speed_rate_mps2": -2.8999999926646147
+    }
+  },
+  "original_inputs_modified": false,
+  "plots": {
+    "matplotlib_hash_scope": "Installed package initializer only; not a complete rendering dependency archive.",
+    "matplotlib_init_sha256": "1d09036dbd2d233ac69cf1cc6ae99aad3f592bc887af8ae60ce913eac6804eb9",
+    "matplotlib_version": "3.5.1",
+    "selection_rule": "Fixed requested inputs; no outcome-based selection.",
+    "speed_plot_candidate_index": 0,
+    "speed_plot_case_indices": [
+      30,
+      31,
+      32,
+      33,
+      34,
+      40,
+      41,
+      42,
+      43,
+      44,
+      80,
+      81,
+      82,
+      83,
+      84,
+      90,
+      91,
+      92,
+      93,
+      94
+    ],
+    "xy_plot_candidate_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "xy_plot_case_indices": [
+      42,
+      92
+    ]
+  },
+  "publisher_source_sha256": "92821a03a39eaecf2a9d976d0e8835c11388060118d1398e97964640802ae418",
+  "schema": "portable_e2e.synthetic_stop_primitive_publication.v1",
+  "scope": {
+    "live_control": false,
+    "model_parameters": false,
+    "model_training": false,
+    "optimizer": false,
+    "raw_data_read": false,
+    "road_or_collision_approval": false,
+    "runtime_changed": false,
+    "stop_decision_assumed_by_caller": true,
+    "synthetic_only": true,
+    "training_data_approved": false
+  },
+  "source_inputs": {
+    "SHA256SUMS": {
+      "sha256": "91c3d6ec4749fc6b3fcf13e69c6144219624a0e9fe0900cabe46f5eb7ce43a36",
+      "size_bytes": 883
+    },
+    "plan.json": {
+      "sha256": "3ab3729b0162e1ef564bfe3e8b84752f33fc8bebb5e36c4f5e46a39a101bc528",
+      "size_bytes": 10878
+    },
+    "rows.jsonl": {
+      "sha256": "205dfead013b96f57c82184e226d6ecd7bed2c6c191893fe0b488f58783dc4b1",
+      "size_bytes": 3398115
+    },
+    "source_archive/portable_e2e/contract.py": {
+      "sha256": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+      "size_bytes": 109508
+    },
+    "source_archive/portable_e2e/dataset.py": {
+      "sha256": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+      "size_bytes": 18845
+    },
+    "source_archive/portable_e2e/runtime_contract.py": {
+      "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "size_bytes": 34947
+    },
+    "source_archive/portable_e2e/stop_primitive_research.py": {
+      "sha256": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+      "size_bytes": 5079
+    },
+    "source_archive/scripts/e2e/probe_portable_stop_primitive.py": {
+      "sha256": "792f9fe501bd39165d6f5c55177ddab3efe811e225ac6da82b333ebc0f6a68ea",
+      "size_bytes": 19599
+    },
+    "started.json": {
+      "sha256": "7b202e75b0a4db0a865c749a586702fbbcad7ae71964fbd546b7cf650fcda939",
+      "size_bytes": 1669
+    },
+    "summary.json": {
+      "sha256": "959974861f8308f2904ec41a54ae077db1f6005eeb291fe61be1385802995fee",
+      "size_bytes": 2277
+    }
+  },
+  "source_pins": {
+    "portable_e2e/contract.py": {
+      "sha256": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+      "size_bytes": 109508
+    },
+    "portable_e2e/dataset.py": {
+      "sha256": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+      "size_bytes": 18845
+    },
+    "portable_e2e/runtime_contract.py": {
+      "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "size_bytes": 34947
+    },
+    "portable_e2e/stop_primitive_research.py": {
+      "sha256": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+      "size_bytes": 5079
+    },
+    "scripts/e2e/probe_portable_stop_primitive.py": {
+      "sha256": "792f9fe501bd39165d6f5c55177ddab3efe811e225ac6da82b333ebc0f6a68ea",
+      "size_bytes": 19599
+    }
+  },
+  "status": "PUBLISHED_SYNTHETIC_NOT_ADMITTED"
+}

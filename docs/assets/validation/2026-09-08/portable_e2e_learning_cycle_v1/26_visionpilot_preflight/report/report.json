@@ -1,0 +1,169 @@
+{
+  "assessment": {
+    "execution_status": "NOT_RUN",
+    "findings": [
+      "REQUIRES_EXPLICIT_FRONT_VIEW_SELECTION",
+      "REQUIRES_SENSOR_ADAPTER_OR_QUALIFIED_SENSOR_PROFILE",
+      "REQUIRES_OUTPUT_ADAPTER",
+      "REQUESTED_TASK_EXCEEDS_REVIEWED_IN_LANE_SCOPE",
+      "SIMULATOR_BRIDGE_VERSION_DIFFERENCE_UNVERIFIED",
+      "PYTHON_ONNX_RUNTIME_DISCOVERY_INCOMPLETE",
+      "NATIVE_ONNX_RUNTIME_SDK_UNVERIFIED",
+      "CAMERA_CALIBRATION_AND_PREPROCESSING_UNVERIFIED",
+      "OFFICIAL_WEIGHT_BYTES_NOT_VERIFIED",
+      "NATIVE_HEADERS_AND_ABI_UNVERIFIED",
+      "RUNTIME_INFERENCE_NOT_RUN",
+      "TEN_HZ_DEADLINE_NOT_MEASURED",
+      "NONACTUATING_ADAPTER_AND_FAILSAFE_NOT_VERIFIED"
+    ],
+    "important_distinctions": [
+      "Python ONNX Runtime is not the C++ SDK required by the official native stack.",
+      "A missing module/cache entry does not prove absence from private SDKs or other virtual environments.",
+      "A discovered spec, version or SONAME is not an import, ABI, provider, inference or performance test.",
+      "Resize/crop cannot recreate missing scene detail; calibration and original sensor conditions require validation.",
+      "One-camera in-lane L2 output is not the full route-conditioned multi-camera feature roadmap.",
+      "Declared 10 Hz and official design cadence do not establish actual throughput, latency or GUI FPS."
+    ],
+    "reviewed_capability_contract": {
+      "autoware_timed_trajectory_output_implemented_in_reviewed_interface": false,
+      "design_camera_hz": 10,
+      "documented_nominal_resolution_megapixels": [
+        1,
+        2
+      ],
+      "front_horizontal_fov_deg": [
+        50,
+        55
+      ],
+      "model_outputs": {
+        "auto_drive": "CIPO distance/presence and road curvature from two frames",
+        "auto_speed": "in-path/cutting-in-or-out/out-of-path object detections",
+        "auto_steer": "image-coordinate in-lane spatial path"
+      },
+      "official_simulator_reference": [
+        0,
+        9,
+        16
+      ],
+      "resolution_check_policy": "Conservative literal pixel-count band; the official exact supported-grid list was not established. Nominal 2 MP formats just above 2000000 pixels need profile review, not an assertion of incompatibility.",
+      "reviewed_ros2_vehicle_outputs": [
+        "std_msgs/Float64 steering",
+        "std_msgs/Float64 acceleration"
+      ],
+      "task": "single_front_camera_in_lane_L2_ADAS"
+    },
+    "status": "NOT_READY",
+    "unknowns": [
+      "usable official model files",
+      "native SDK headers and runtime ABI",
+      "camera calibration",
+      "preprocessing parity",
+      "end-to-end latency distribution",
+      "vehicle command authority isolation",
+      "closed-loop quality",
+      "real-vehicle fitness"
+    ]
+  },
+  "completion_proof_required": "The directory is complete only with matching final SHA256SUMS for declared_inputs.json and report.json; a partial report without this marker is not completed evidence.",
+  "input_contract_sha256": "08d4e7933e5a4be57eefe3d0155ddd9c9abe2605e5bf10454dddd9d08d0e0537",
+  "model_execution_status": "NOT_RUN",
+  "next_step": "Review the declared sensor/task/output contract and missing prerequisites before authorizing an isolated offline baseline; no installation is authorized by this report.",
+  "observations": {
+    "native_loader_cache": {
+      "candidate_library_loaded": false,
+      "command": "ldconfig -p",
+      "matched_sonames": [
+        "libopencv_core.so",
+        "libopencv_core.so.4.5d"
+      ],
+      "search_scope": "System dynamic-loader cache only; private SDKs, headers and other environments are not enumerated.",
+      "status": "CACHE_READ"
+    },
+    "python": {
+      "candidate_modules_imported": false,
+      "method": "Top-level importlib.util.find_spec and importlib.metadata.version; no module origins retained.",
+      "modules": {
+        "cv2": {
+          "distribution_metadata": {
+            "opencv-python": {
+              "status": "DISTRIBUTION_METADATA_NOT_FOUND"
+            },
+            "opencv-python-headless": {
+              "status": "DISTRIBUTION_METADATA_NOT_FOUND"
+            }
+          },
+          "module_spec_status": "FOUND"
+        },
+        "onnx": {
+          "distribution_metadata": {
+            "onnx": {
+              "dev": null,
+              "local_build_suffix_present_but_not_retained": false,
+              "post": null,
+              "prerelease": null,
+              "release": [
+                1,
+                18,
+                0
+              ],
+              "status": "OBSERVED"
+            }
+          },
+          "module_spec_status": "FOUND"
+        },
+        "onnxruntime": {
+          "distribution_metadata": {
+            "onnxruntime": {
+              "status": "DISTRIBUTION_METADATA_NOT_FOUND"
+            },
+            "onnxruntime-gpu": {
+              "status": "DISTRIBUTION_METADATA_NOT_FOUND"
+            }
+          },
+          "module_spec_status": "NOT_FOUND_IN_INTERPRETER_SEARCH_PATH"
+        }
+      },
+      "python_release": [
+        3,
+        10,
+        12
+      ],
+      "runtime_providers_queried": false
+    }
+  },
+  "preflight_status": "COMPLETE",
+  "reviewed_official_sources": {
+    "models": {
+      "auto_drive": "83cf0fa1a8e8ee760dd854e60ecee8a03ab9072d",
+      "auto_speed": "b62e55b93ba728787cb1152347463030443634c4",
+      "auto_steer": "727c8ae62b3e729913bd28596af768697a99c874"
+    },
+    "references": {
+      "native_build": "https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/VisionPilot/CMakeLists.txt",
+      "output": "https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/VisionPilot/modules/middleware_interfaces/ros2_interface/vehicle_ros2_interface/src/vehicle_ros2_interface.cpp",
+      "safety": "https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/Functional_Safety/SAFETY_ELEMENT_OUT_OF_CONTEXT.md",
+      "scope": "https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/README.md",
+      "sensor": "https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/github-io/hardware.md"
+    },
+    "vision_pilot": "f9fb99799e779ac602fde06175f2ec3ea3df3f6f"
+  },
+  "schema": "portable_e2e.visionpilot_preflight.v1",
+  "scope": {
+    "config_modified": false,
+    "gpu_access": false,
+    "installation": false,
+    "live_simulator_access": false,
+    "model_download": false,
+    "model_inference": false,
+    "native_build": false,
+    "network_access": false,
+    "read_only_discovery": true,
+    "readiness_inferred_from_module_presence": false,
+    "remote_access": false,
+    "repository_clone": false,
+    "training": false,
+    "training_data_approved": false,
+    "vehicle_control_approved": false
+  },
+  "source_sha256": "d356a8294db0ab74ebfb69166962aabe8544ed0d0baeb9890446985f1b0d20d6"
+}

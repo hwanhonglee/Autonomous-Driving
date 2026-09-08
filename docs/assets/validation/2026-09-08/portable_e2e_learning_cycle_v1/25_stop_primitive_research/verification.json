@@ -1,0 +1,61 @@
+{
+  "note": "HH_260906 - Report actual final local CPU code regressions separately from synthetic geometry, model training or driving qualification.",
+  "source_commit": "15127c4e32bd11256e561bbd38c54f136187a6b9",
+  "status": "CODE_REGRESSIONS_COMPLETE",
+  "runs": {
+    "main": {
+      "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs -p no:cacheprovider tests",
+      "requested_at_utc": "2026-09-08 09:47:19 UTC",
+      "completion_observed_at_utc": "2026-09-08 09:50:57 UTC",
+      "exit_code": 0,
+      "passed": 4422,
+      "skipped": 6,
+      "pytest_reported_duration_s": 204.7,
+      "log": "tests/main.log"
+    },
+    "launch": {
+      "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs -p no:cacheprovider autoware_e2e_vad_launch/test",
+      "requested_at_utc": "2026-09-08 09:47:19 UTC",
+      "completion_observed_at_utc": "2026-09-08 09:48:16 UTC",
+      "exit_code": 0,
+      "passed": 373,
+      "skipped": 0,
+      "pytest_reported_duration_s": 13.59,
+      "log": "tests/launch.log"
+    }
+  },
+  "combined": {
+    "passed": 4795,
+    "skipped": 6,
+    "failed": 0
+  },
+  "source_snapshot": "tests/source_sha256.json",
+  "source_files_verified": 488,
+  "source_postcheck_pass": true,
+  "skip_reasons": [
+    {
+      "count": 5,
+      "reason": "Existing local Torch lacks secure torch.load(weights_only=...) support required for these tests."
+    },
+    {
+      "count": 1,
+      "reason": "Pinned Woraksan route/map bundle is absent."
+    }
+  ],
+  "scope": {
+    "local_cpu_only": true,
+    "new_installations": 0,
+    "remote_server_access": false,
+    "remote_gpu_jobs_started": 0,
+    "live_carla_or_autoware_launched": false,
+    "new_dataset_training": false,
+    "production_model_changed": false,
+    "raw_data_admitted": false
+  },
+  "limits": [
+    "Code tests include synthetic tensor exercises, mocked ROS nodes and fake command-line executables, not actual driving or a new dataset training campaign.",
+    "Separate focused 53-case publisher and 49-case preflight checks are included in the final main suite and are not added again.",
+    "Completion observation timestamps are not precise process-exit timestamps; use pytest-reported durations.",
+    "No dependency installation or safety-gate bypass was used for skipped tests."
+  ]
+}

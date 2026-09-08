@@ -5,6 +5,17 @@
 [최신 결과 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/README.md)에
 정답 데이터 진단, 생성기를 고정한 선택기 9회 학습, 로컬 자연 정지 수집 개선을 분리해 기록합니다.
 
+<!-- HH_260906 - Add completed synthetic research and preflight work while keeping remote training status unchanged. -->
+**18:27 KST 추가 완료:** [25 정지 출력 구조](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/25_stop_primitive_research/README.md)를
+별도 연구 모듈로 구현하고 합성 후보 600개 모두 기존 출력 검증·독립 수식 대조를 통과했습니다.
+실제 주행·학습한 정지 판단이 아니며 기존 모델과 데이터는 바꾸지 않았습니다.
+[26 VisionPilot 사전 검사](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/26_visionpilot_preflight/README.md)도
+완료했지만 현재 로컬 추론 환경·센서·출력 어댑터가 미준비라 모델 실행은 하지 않았습니다.
+원격 접근·설치·새 GPU 학습 없이 로컬 CPU만 사용했습니다.
+최종 그래프 보완을 포함한 전체 코드 검사는 **4,795 passed / 6 skipped**입니다.
+[25 폴더](assets/validation/2026-09-08/portable_e2e_learning_cycle_v1/25_stop_primitive_research/README.md)에
+실제 수치 PNG 2장·모든 후보 원본·재실행 명령·검사 로그·소스 해시를 모았습니다.
+
 <!-- HH_260906 - Distinguish the independent Portable model from existing and proposed external baselines. -->
 자체 **Portable E2E 모델을 설계·학습하는 프로젝트**이며 VAD 재학습과는 다릅니다.
 VAD는 기존 연결된 비교 기준, VisionPilot은 아직 실행하지 않은 외부 비교 후보입니다.
@@ -15,7 +26,7 @@ VAD는 기존 연결된 비교 기준, VisionPilot은 아직 실행하지 않은
 원본 구간 30,908개와 미래 지점 461,824개를 처리했습니다. 원본 해시와 기존 곡률 실패
 1,560개 창은 유지됐습니다. 위치–속도 적분 잔차와 100/200/500 ms 방향 차이를 수치·그래프로
 기록했으며, 원인 확정·라벨 수정·새 학습이나 모델 교체를 하지 않았습니다.
-해당 분석과 표시 보완을 포함한 최신 코드 회귀는 **4,577 passed / 6 skipped**이며,
+해당 분석과 표시 보완 당시의 코드 회귀는 **4,577 passed / 6 skipped**이며,
 원본 로그와 소스 해시는 24 폴더에 있습니다. 아래 23의 4,518개 결과는 앞선 시점의 기록입니다.
 
 <!-- HH_260906 - Show the latest bounded execution outcome separately from the overnight history. -->

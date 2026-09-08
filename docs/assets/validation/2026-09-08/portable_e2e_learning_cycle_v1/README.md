@@ -35,6 +35,18 @@
 최종 코드 검사 **4,577 passed / 6 skipped**를 추가했습니다. 기존 곡률 실패 1,560개 창은
 그대로이며 새 라벨·모델 학습·VisionPilot 실행은 하지 않았습니다.
 
+<!-- HH_260906 - Separate the later synthetic stop representation and local prerequisite discovery from real driving and training. -->
+**18:27 KST 후속 완료:** [25 정지 출력 구조](25_stop_primitive_research/README.md)의
+고정 합성 후보 **600/600**이 기존 출력 검증과 독립 수식 대조를 통과했습니다.
+정지 판단을 학습한 모델이나 실제 주행은 아니며 원본 데이터 미승인은 유지합니다.
+[26 VisionPilot 사전 검사](26_visionpilot_preflight/README.md)도 실행했으며, 현재 로컬
+ONNX Runtime 미발견·센서/출력 차이 등으로 모델 추론은 아직 준비되지 않았습니다.
+이번 두 작업에서 원격 서버·GPU 작업·설치·기존 모델 교체는 하지 않았습니다.
+차량 기준점 중심의 합성 궤적·감속 PNG 2장과 모든 후보의 수치를 25 폴더에 게시했습니다.
+그림 표시 보완까지 반영한 최종 전체 코드는 **4,795 passed / 6 skipped**이며,
+[실제 명령·로그·소스 해시](25_stop_primitive_research/verification.json)를 보존합니다.
+앞선 23·24 검사 횟수와 합산하지 않으며 이번에도 실제 주행·모델 학습 완료는 아닙니다.
+
 | 카테고리 | 내용 | 현재 판정 |
 |---|---|---|
 | [01 정답 데이터의 감속 한계 분석](01_target_feasibility/README.md) | 기존 train/val의 실제 속도·XY를 모델의 그대로인 한계와 대조 | 진단 완료; 원본 라벨 유지 |
@@ -61,6 +73,8 @@
 | [22 C-track 전체 미래와 미세 변위 분석](22_turn_launch_raw_geometry/README.md) | 전체 7,216개 미래 창·8회 실제 궤적·저변위 곡률 그래프 3장 | 곡률 초과 1,560개 창 유지; 0.13도 미승인, 원본 수정 없음 |
 | [23 앞선 코드 회귀와 실패 원인](23_code_validation_final/README.md) | 일반·런치 검사 원본 로그, 초기 실패 보존, 부동소수점 비교 보완과 소스 해시 | 당시 합계 4,518 passed / 6 skipped; 실제 차량·학습 모델 승인 아님 |
 | [24 미세 이동의 위치·속도·방향 분석](24_micro_motion_study/README.md) | 원본 구간 30,908개·미래 지점 461,824개 전체 분석과 실제 수치 그래프 | 계산 완료; 기존 초과 창 1,560개 유지, 라벨 보정·학습 미실행 |
+| [25 재가속 없는 정지 출력 연구](25_stop_primitive_research/README.md) | 별도 연구용 구조, 고정 합성 100조건·600후보·독립 수식 대조 | 합성 출력 검사 600/600; 정지 의도 학습·실제 주행 아님 |
+| [26 VisionPilot 환경·입출력 사전 검사](26_visionpilot_preflight/README.md) | 설치 없는 로컬 모듈·라이브러리 발견과 선언한 센서/과제/출력 차이 | 사전 검사 완료, 모델 추론·10 Hz·연동은 미검증 |
 
 ## 두 환경에서 실제로 한 일
 

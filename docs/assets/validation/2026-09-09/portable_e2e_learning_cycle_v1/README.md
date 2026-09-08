@@ -32,6 +32,12 @@ worker 0→2→2→0의 학습 기록은 모두 바이트 동일했고, 원격 c
 생성 시각·worker 설정 외 일치했습니다. 두 worker의 학습 구간 평균은 약 33.8%, 전체 fit
 프로세스 평균은 약 25.8% 짧았으나 각 조건 2회 진단일 뿐이며 기본 설정은 변경하지 않았습니다.
 
+05:04–05:06 KST에는 [전체 TRAIN oracle 진단](02_overnight_data_and_learning/09_train_oracle_diagnosis/README.md)을
+완료했고, 05:34–05:40 KST에는 [생성기 고정 선택기 A/B 6회](02_overnight_data_and_learning/10_frozen_stopmix_selector/README.md)를
+별도 완료했습니다. 전자는 forward 진단, 후자는 선택기 전용 학습이며 아래 전체 모델 학습 33회에
+더하지 않습니다. 동일 입력·다른 미래 정답의 11쌍을 원본 그대로 분석했고 라벨을 수정하지 않았습니다.
+선택기의 전체 평균 오차는 개선됐지만 정지 유지 그룹은 퇴행해 채택하지 않았습니다.
+
 이전 [2026-09-08 결과](../../2026-09-08/portable_e2e_learning_cycle_v1/README.md)는 그대로 보존합니다.
 원격은 학습·평가, 로컬은 코드 검증·CARLA expert 수집·결과 분석을 담당합니다.
 01의 학습 캠페인은 CARLA를 실행하지 않았고, 02의 로컬 수집은 별도 expert 제어입니다.
@@ -47,6 +53,10 @@ worker 0→2→2→0의 학습 기록은 모두 바이트 동일했고, 원격 c
 그 이후 02에서 추가한 코드의 부분 검사는 각 범주에 별도 기록하며, 위 수치를 새 전체 검사라고 표시하지 않습니다.
 03:52 KST 새 전체 검사는 [07 코드 검증](02_overnight_data_and_learning/07_code_verification/README.md)에
 **5,607 passed / 6 skipped / 0 failed**, 고정 commit `99902f3` 기준으로 기록했습니다.
+04:59 KST의 [후속 전체 검사](02_overnight_data_and_learning/07_code_verification/frozen_7f1141/README.md)는
+고정 commit `7f1141b`에서 **5,960 passed / 6 skipped / 0 failed**였습니다.
+05:40 KST의 [cf3bfc2 후속 전체 검사](02_overnight_data_and_learning/07_code_verification/frozen_cf3bfc2/README.md)는
+**6,095 passed / 6 skipped / 0 failed**이며, 위의 과거 검사 수와 합산하지 않습니다.
 이전 실패 로그도 보존하며, 이 테스트 통과가 차량 주행이나 모델 성능 통과를 의미하지 않습니다.
 9월 7일 캠페인 전체 학습 15회와 오늘 완료한 18회를 합친 후속 캠페인 실적은 33회이며,
 9월 8일 선택기 전용 9회와 이번 이어학습 6회, 짧은 계측 학습 2회·로딩 비교 4회는

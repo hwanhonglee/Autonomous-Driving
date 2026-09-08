@@ -1,0 +1,112 @@
+{
+  "batch_size": 4,
+  "candidate_count": 12,
+  "capture_phase_definition": "Inclusive [round(first_timestamp*1e9),round(last_timestamp*1e9)] from hash-bound TRAIN collection_config native phases; unmatched explicit, never retimed.",
+  "checkpoint_sha256": {
+    "20260903": {
+      "continued2870": "bb8844dd77559480bf6c2f1c897c296fb9871731e2cb089d2143fb79d02bb908",
+      "parent1540": "9b949b17b3708bed5ba25eb5721187a56f4f77c11c8461e685cbbd995259f8bf"
+    },
+    "20260904": {
+      "continued2870": "3ef0acba3ae3ad4ccf7a0c124722f68365cd4a0fbc800266b729de00708cf90b",
+      "parent1540": "2789a33c313923ee6084ddaa6dc1a3937ebedd22d5e52db360c0e45fc841e851"
+    },
+    "20260905": {
+      "continued2870": "bb75905bf083fd7d02fd2c63004dcbd1912c00909290afc1b6a4b8f039057de7",
+      "parent1540": "ce6ffa0bbd80db39d0c9952d1a1e8d67543ff1c69ccc9a7e76d110ffefd5d9df"
+    }
+  },
+  "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "declared_at_utc": "2026-09-08T20:03:33.081577+00:00",
+  "diagnostic_id": "hh260909-stopmix-train-oracle-six-pass-v1",
+  "endpoints": [
+    "parent1540",
+    "continued2870"
+  ],
+  "evaluation_split": "train",
+  "expected_pass_count": 6,
+  "expected_samples_per_pass": 1147,
+  "expected_training_episodes": 3,
+  "external_wall_timeout_seconds": 1080,
+  "finish_before_utc": "2026-09-09T01:00:00Z",
+  "frozen_helper_sha256": "a995722f1a60f192a059433afb44e6297937d97166877c5cc4de23220d15b436",
+  "future_points": 64,
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "group_definition": "Full64 masks: stationary_hold iff abs(raw vx)<=0.1 and every target speed<=0.1; moving_to_stop iff raw vx>0.1 and final10 speeds<=0.1; continuing_motion iff all64 speeds>=0.5; otherwise other_motion. Incomplete masks separate.",
+  "inference_pass_wall_timeout_seconds": 120,
+  "internal_wall_timeout_seconds": 1020,
+  "loss_config": {
+    "candidate_score_weight": 0.1,
+    "final_displacement_weight": 0.5,
+    "kinematic_speed_weight": 0.05,
+    "speed_weight": 0.2,
+    "xy_weight": 1.0,
+    "yaw_weight": 0.1
+  },
+  "loss_projection": {
+    "derived_ast_sha256": "b0e474a1103553b0452f40df4309bb1f59c9ebdaf01b73dcef4843c9ccaf6501",
+    "modification": "Return per_candidate immediately before the unchanged detached argmin; all prior statements and signature unchanged.",
+    "original_function_ast_sha256": "7a75e78ac4354145c9328df5e59f371406dd391ad94ac6b53668d9eea1b53f43",
+    "original_loss_sha256": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "prefix_first_line": 121,
+    "prefix_last_line": 204,
+    "prefix_source_sha256": "68189656a1202ed03bdaa2468893b3f4d28ae1f12f930e2ef5384ab0846eacda"
+  },
+  "model_config": "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+  "model_config_sha256": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602",
+  "model_id": "portable_e2e.perspective_trajectory.physical_stopmix.v1",
+  "model_parameter_count": 1056362,
+  "model_promotion": false,
+  "model_training": false,
+  "near_tie_tolerance_used": false,
+  "num_workers": 0,
+  "optimizer_created": false,
+  "original_receipt_sha256": {
+    "runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/plan.json": "f06c68ce47aaee6941a3ca42559460ac5837b53f669bf195fa15b5d5e80a05d9",
+    "runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/status.json": "9f40946bde5395c61e68a5ac5fa476a210569a7fe8f6f6d58d4588037e4ff2bc",
+    "runs/campaigns/hh260909-stopmix-duration-10epochs-v1/WORKFLOW_SHA256SUMS": "a16779b84b44621398eb4865559d0bffcbbb4117d2a3aea550dd9556c7b9fa5d",
+    "runs/campaigns/hh260909-stopmix-duration-10epochs-v1/plan.json": "bcdf31f09838750cd24fcabf063a9baeac8fb317ed045e6a41d734fff2e6233b",
+    "runs/campaigns/hh260909-stopmix-duration-10epochs-v1/status.json": "52a0452f707285acc46f29d6972049c3ef3e4cbd4d606fb038088becd6d7477f"
+  },
+  "publication_notice": "Metadata view; only account paths redacted. No model/data approval.",
+  "raw_nonpositive_definition": "raw current vx<=0.0, no clamp; independent of the future-derived group.",
+  "raw_source_sha256": "a2f4ac813a99155026ee23cb9f1002bdcdb0d810a0b901238e65c1c5e7e097a4",
+  "safety_reserve_seconds": 90,
+  "schema": "portable_e2e.stopmix_training_oracle_plan.v1",
+  "seeds": [
+    "20260903",
+    "20260904",
+    "20260905"
+  ],
+  "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+  "source_or_label_changes": false,
+  "source_sha256": {
+    "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+    "portable_e2e/audit_runtime.py": "c4c68e888fb89bb4e78052e3167f4167d89c7e7da952e3a0da627d677a776647",
+    "portable_e2e/config/common_10hz_v1.contract.json": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+    "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602",
+    "portable_e2e/config/perspective_trajectory_physical_v1.model.json": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+    "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+    "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+    "portable_e2e/evaluate.py": "1d1455b76d1bc044e83fe45b637690b5bd93c88d6ac8242af589bfe7162df376",
+    "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "portable_e2e/runtime.py": "bd1f672efe5cf571744bd4c5ef7655435dc67dddadc41c23fddddb82d721a57b",
+    "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "7ab83343bb15cf9233c2208d1b405498c66340706b8562b272f242152f4d3882"
+  },
+  "test_integrity_scope": "The unchanged full-corpus validator may read test metadata/JSON/JPEG for integrity only; no val/test model forward.",
+  "test_neural_inference": false,
+  "test_used_for_selection": false,
+  "tie_definition": "Exact equality to minimum composite tensor cost, no near-tie tolerance.",
+  "timing_scope": "Per-inference-pass timer includes ordered CPU loading, transfer, forward, loss projection and row persistence. Checkpoint loading and source/integrity checks use the separate whole-study timer.",
+  "train_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+  "training_data_approved": false,
+  "validation_neural_inference": false,
+  "vehicle_control_approved": false,
+  "worker_source_sha256": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37"
+}

@@ -1,0 +1,15 @@
+{
+  "command": "cd ${USER_HOME}/personal/hwanhong/portable_e2e/autoware_e2e && env -u PYTHONPATH -u PYTHONHOME -u PYTHONSTARTUP -u PYTHONUSERBASE CUDA_VISIBLE_DEVICES=GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5 CUBLAS_WORKSPACE_CONFIG=:4096:8 PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=16 MKL_NUM_THREADS=16 timeout --signal=TERM --kill-after=5s 1080s ${USER_HOME}/personal/hwanhong/portable_e2e/venvs/py312/bin/python -c 'import hashlib,pathlib,runpy,sys; worker=pathlib.Path(sys.argv[1]); plan=pathlib.Path(sys.argv[2]); output=sys.argv[3]; assert worker.is_file() and not any(p.is_symlink() for p in (worker,*worker.parents)); assert hashlib.sha256(worker.read_bytes()).hexdigest()=='\"'\"'35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37'\"'\"'; assert hashlib.sha256(plan.read_bytes()).hexdigest()=='\"'\"'a2f4ac813a99155026ee23cb9f1002bdcdb0d810a0b901238e65c1c5e7e097a4'\"'\"'; sys.path[0]=str(pathlib.Path.cwd()); sys.argv=[str(worker),\"--plan\",str(plan),\"--output-dir\",output]; runpy.run_path(str(worker),run_name=\"__main__\")' ${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/stopmix_training_oracles_v1/diagnose_stopmix_training_oracles.py ${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/stopmix_training_oracles_v1/stopmix_training_oracles_plan_v2.json ${USER_HOME}/personal/hwanhong/portable_e2e/runs/diagnostics/stopmix_training_oracles_v1",
+  "comment": "HH_260906 - Six frozen TRAIN-only checkpoint passes; no fitting, optimizer, data admission, promotion or vehicle control.",
+  "plan_sha256": "a2f4ac813a99155026ee23cb9f1002bdcdb0d810a0b901238e65c1c5e7e097a4",
+  "preflight": {
+    "destination_created": "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/stopmix_training_oracles_v1",
+    "duration_status": "COMPLETE_NOT_PROMOTED",
+    "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8"
+  },
+  "publication_notice": "Metadata view; only account paths redacted. No model/data approval.",
+  "raw_source_sha256": "f45efde6ca00efe5368369695c799694be42fcd697fcd3803088ae38654a5db0",
+  "remote_output": "${USER_HOME}/personal/hwanhong/portable_e2e/runs/diagnostics/stopmix_training_oracles_v1",
+  "source_sha256": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37",
+  "started_at_utc": "2026-09-08T20:04:10.241940+00:00"
+}

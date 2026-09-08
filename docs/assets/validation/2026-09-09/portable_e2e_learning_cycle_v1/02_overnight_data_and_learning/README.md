@@ -94,6 +94,32 @@ checkpoint의 가중치·Adam·RNG·ABI 내용이 정확히 같습니다. 계측
 8카메라의 기본 수치 검사를 통과했습니다. 실제 영상 투영·TF·물리 센서 배치·학습 승인은
 여전히 확인되지 않았습니다. 원래 opcode-only 진단 결과는 변경하지 않았습니다.
 
+<!-- HH_260906 - Append actual follow-up observations without relabeling earlier runs or the rejected pre-GPU launch. -->
+04:59:48 KST: commit `7f1141b`의 새 전체 코드 회귀를 완료했습니다.
+[5,960 통과 / 6 건너뜀 / 0 실패](07_code_verification/frozen_7f1141/README.md)이며,
+소스·설정 567개 전후 동일입니다. 이후 추가한 oracle·선택기 코드를 포함한 수치는 아닙니다.
+
+05:04:10–05:06:40 KST: [TRAIN oracle 진단](09_train_oracle_diagnosis/README.md)을
+GPU 0에서 완료했습니다. 3개 seed의 부모/이어학습 체크포인트를 TRAIN 1,147개씩 진단한
+6회 forward pass이며 새 학습은 아닙니다. 저장된 6,882행·82,584 cost를 로컬에서 다시
+계산했습니다. 최소 cost 동률은 모두 이미 올바른 STOP 후보를 선택해 regret 0이므로,
+현재 오차를 동률 문제로만 설명하지 않습니다. 동일 입력·다른 미래 정답의 11쌍도 보존했습니다.
+
+05:34:23 KST: [고정 생성기 위 선택기 A/B 6회](10_frozen_stopmix_selector/README.md)의
+실제 실행을 시작했습니다. 05:35 KST에는 첫 선택기의 1,540 step·6,155회 표본 노출을
+확인했습니다. 앞선 05:33 실행 요청은 출력 경로 검사에서 GPU 사용 전에 거절됐고,
+허용된 개인 진단 폴더로 경로만 수정했습니다. 실패 기록은 남겼으며 학습 조건·소스·계획은
+바꾸지 않았습니다. 전체 6회 완료나 모델 채택을 아직 의미하지 않습니다.
+
+05:40:53 KST: 고정 생성기 위 선택기 6회와 전체 진단을 정상 종료했습니다.
+학습 기록 9,240행·36,930회 표본 노출이며 부모 생성기·캐시·원래 후보 비용이 유지됐습니다.
+평균 경로 오차 개선과 정지 유지 그룹의 퇴행이 함께 나타나 모델은 미채택입니다.
+모든 seed의 원본·그림을 수집하고 상세 비교를 게시하는 중입니다.
+
+05:40:56 KST: commit `cf3bfc2`의 [추가 전체 코드 검사](07_code_verification/frozen_cf3bfc2/README.md)를
+완료했습니다. **6,095 통과 / 6 건너뜀 / 0 실패**, 소스·설정 573개 전후 동일입니다.
+최신 oracle·선택기·실행기 테스트를 포함하지만 이후 작성한 결과 게시·후속 연구 코드는 포함하지 않습니다.
+
 ## 결과를 찾는 곳
 
 <!-- HH_260906 - Keep actual training, expert collection and read-only data readiness in separate discoverable categories. -->
@@ -108,6 +134,9 @@ checkpoint의 가중치·Adam·RNG·ABI 내용이 정확히 같습니다. 계측
 | [05 실제 데이터의 준비 상태](05_real_data_readiness/README.md) | nuPlan 단일 DB의 native 센서·경로 메타데이터 검사 | 학습 승인 아님 |
 | [05 부록: 6카메라 시간차 하한](05_real_data_readiness/subset_interval_analysis/README.md) | 동일 매칭에 대한 28개 조합의 보수적 하한 | 현재 매칭으로는 기존 20 ms 조건 미달 |
 | [05 부록: 보정 메타데이터 구조](05_real_data_readiness/calibration_opcode_inventory/README.md) | 32개 BLOB의 실행 없는 opcode 구조 검사 | 완료; 원래 진단은 숫자 해석·투영 검증 아님 |
+| [05 부록: 실행 없는 보정 숫자 진단](05_real_data_readiness/calibration_literal_diagnostic/README.md) | 별도 계획으로 고정 바이트 틀의 32개 값 해석, 8카메라 기본 수치 검사 | 수치 진단 완료; 투영·TF·학습 승인 아님 |
 | [06 Town07 저속 정지 원인 분석](06_town07_stop_conditioning/README.md) | 원본 1,337창 재구성, 고유 실패 119구간·실제 수치 PNG | 원본·실패 보존, 원인 단정·승인 없음 |
-| [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 5,607 통과 / 6 건너뜀 / 0 실패 |
+| [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) · [cf3bfc2 후속 검사](07_code_verification/frozen_cf3bfc2/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 후속 6,095 통과 / 6 건너뜀 / 0 실패 |
 | [08 고정 10-epoch 이어학습](08_stopmix_ten_epoch_continuation/README.md) | 기존 6개 모델의 학습량만 늘리고 전체 종점·행동 비교 | 24/24단계 완료; 절대 조건 0/6 통과·미채택 |
+| [09 TRAIN의 정답 후보와 선택 오차 진단](09_train_oracle_diagnosis/README.md) | 6개 체크포인트의 전체 6,882행 cost·동률·그룹·11개 동일 입력 쌍 | 진단 완료; 새 학습·원인 단정·모델 승격 없음 |
+| [10 생성기 고정 선택기 A/B 학습](10_frozen_stopmix_selector/README.md) | 기존 3개 생성기 위 두 선택기를 각각 새로 학습 | 05:40 6회 완료; 전체 평균 개선과 정지 유지 퇴행, 미채택 |

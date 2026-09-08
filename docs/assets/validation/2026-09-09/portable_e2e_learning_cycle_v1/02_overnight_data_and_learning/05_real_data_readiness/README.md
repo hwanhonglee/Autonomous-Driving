@@ -3,6 +3,9 @@
 <!-- HH_260906 - Separate native metadata availability from legal approval, calibrated six-camera inputs and model training. -->
 
 결론은 **메타데이터를 읽을 수 있지만, 현재 common10 학습 데이터로는 준비되지 않았다**입니다.
+아래 본문은 최초 단일 DB 검사 범위입니다. 후속으로 [보정값의 바이트 구조](calibration_opcode_inventory/README.md)와
+[실행 없는 숫자 진단](calibration_literal_diagnostic/README.md)을 별도 계획으로 완료했습니다.
+숫자를 읽었다는 사실은 실제 영상 투영·TF·센서 배치·데이터 이용조건 또는 학습 승인 검증이 아닙니다.
 2026-09-09 03:09 KST에 기존 archive 안의 DB 한 개만 메모리에서 읽었습니다.
 디스크로 압축 해제·설치·GPU 사용·이미지/지도 payload 읽기·pickle 실행·변환·학습·이용조건 동의는 하지 않았습니다.
 선정한 DB 한 개는 압축된 내용을 메모리에서 풀어 CRC·SHA와 SQLite 메타데이터를 검사했습니다.

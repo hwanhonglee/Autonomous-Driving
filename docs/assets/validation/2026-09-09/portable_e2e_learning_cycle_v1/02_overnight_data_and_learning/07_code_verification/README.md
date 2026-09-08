@@ -2,6 +2,12 @@
 
 <!-- HH_260906 - Report only the frozen tested revision and keep skipped security/runtime checks explicit. -->
 
+후속 전체 검사는 [commit 7f1141b 결과](frozen_7f1141/README.md)와
+[commit cf3bfc2 결과](frozen_cf3bfc2/README.md)에 각각 보존했습니다.
+최신 cf3bfc2 검사는 **6,095 passed / 6 skipped / 0 failed**, 소스·설정 573개 전후 동일이며
+TRAIN oracle·K12 고정 선택기·원격 실행기 테스트가 포함됩니다. 앞선 7f1141b의
+5,960개 또는 아래 99902f3 결과를 더해 하나의 검사 수로 세지 않습니다.
+
 로컬에서 **2026-09-09 03:48–03:52 KST**, commit `99902f3d604543b62e56facb3b32303a3a89aa77`의
 소스·설정 553개를 검사 전후 대조했습니다. 변경된 파일 0개이며, GPU는 사용하지 않았습니다.
 

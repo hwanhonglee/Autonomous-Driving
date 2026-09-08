@@ -21,6 +21,12 @@
 이번 추가 설치나 실시간 차량 제어는 없습니다. 신규 C-track은 9월 8일 8회와
 9월 9일 물리 적분 비교 4회 모두 데이터 미승인이고 learned closed-loop 기능 수는 0개 그대로입니다.
 
+<!-- HH_260906 - Retain the stationary-hold regression when reporting the later frozen STOPMIX selector comparison. -->
+05:40 KST에는 고정 STOPMIX 생성기 위 [선택기 전용 A/B 6회](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/02_overnight_data_and_learning/10_frozen_stopmix_selector/README.md)를
+추가 완료했습니다. 후보 인지 선택기는 세 seed의 VAL 평균 오차를 줄였지만 TRAIN 정지 유지
+118개에서 STOP 선택이 모두 0개로 퇴행했습니다. VAL의 정지 유지 표본은 0개라 평균 개선이
+해당 기능의 증거가 되지 않으며 채택하지 않았습니다. 원래 모델·데이터·안전 기준은 그대로입니다.
+
 <!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
 목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 아래는 9월 8일까지의 근거이며,
 9월 9일 추가 완료 캠페인·이어학습·진단은 위에서 구분했다. 9월 8일까지 완료된 것은

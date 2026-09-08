@@ -223,6 +223,21 @@ def test_missing_behavior_preserves_five_completed_plus_normal18(stopmix,behavio
     assert result['behaviors'][-1]['status']=='INCOMPLETE'
 
 
+@pytest.mark.parametrize('field,value',[('terminal_exact_zero',True),('terminal_speed_mps',-1.),
+    ('terminal_at_or_below_0p1_mps',True),('nonincreasing_speed_exact',1),
+    ('first_exact_zero_future_index',True),('first_exact_zero_future_index',64),
+    ('first_exact_zero_future_index',63),('reacceleration_after_exact_future_zero',True)])
+def test_contradictory_speed_facts_rejected_even_with_rebuilt_aggregates(stopmix,behavior_root,field,value):
+    from scripts.e2e import audit_portable_stopmix_behavior as behavior
+    item=behavior_root/'seed_20260903/B_drive_stop_mix';report=module.read(item/'summary.json')
+    rows=[json.loads(line) for line in (item/'samples.jsonl').read_text().splitlines()]
+    row=rows[0];row['candidates'][row['selected_candidate_index']][field]=value;row['selected_speed_behavior'][field]=value
+    report.update(behavior.summarize_rows(rows,12))
+    (item/'samples.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows));report['samples_sha256']=module.sha_file(item/'samples.jsonl')
+    old.first._write(item/'summary.json',report);seal_behavior(item)
+    with pytest.raises(ContractError,match='candidate.*speed|candidate terminal'):summarize(stopmix,behavior_root=behavior_root)
+
+
 def test_cli_explicit_actual_plan_bindings_and_new_output_only(stopmix,tmp_path):
     output=tmp_path/'summary';args=[str(stopmix),'--expected-source-commit','b478f02e42b94bf04bffec5c8170e05edc33b0f8',
         '--expected-plan-sha256',module.sha_file(stopmix/'plan.json'),'--output-dir',str(output)]

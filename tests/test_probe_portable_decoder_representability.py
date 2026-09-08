@@ -20,13 +20,65 @@ def sample(index=0, trial="run_001"):
         "target_yaw": [0.] * 64, "valid_mask": [True] * 64, "original_raw_violating_step_counts": {"xy_curvature": 1}}
 
 
+FROZEN_MODEL_SHA = "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4"
+FROZEN_RUNTIME_SHA = "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+
+
+def mock_historical_guard_hashes(monkeypatch, model_sha=FROZEN_MODEL_SHA, runtime_sha=FROZEN_RUNTIME_SHA):
+    """HH_260906 - Simulate guard inputs only; this does not replay the historical decoder."""
+    actual_sha = probe.raw.scalar.sha
+    hashes = {probe.ROOT / "portable_e2e/model.py": model_sha,
+        probe.ROOT / "portable_e2e/runtime_contract.py": runtime_sha}
+
+    def fixture_sha(path):
+        return hashes[path] if path in hashes else actual_sha(path)
+
+    monkeypatch.setattr(probe.raw.scalar, "sha", fixture_sha)
+
+
 def test_frozen_model_and_gate_sources_and_full_configuration():
-    identity = probe.source_identity()
-    assert identity["files"]["portable_e2e/model.py"] == probe.MODEL_SHA
-    assert identity["files"]["portable_e2e/runtime_contract.py"] == probe.RUNTIME_SHA
-    assert identity["model_config"] == probe.CONFIG.to_dict()
+    # HH_260906 - New research models must not silently update the historical source allowlist.
+    assert probe.MODEL_SHA == FROZEN_MODEL_SHA
+    assert probe.RUNTIME_SHA == FROZEN_RUNTIME_SHA
+    assert probe.CONFIG.to_dict() == {
+        "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+        "camera_count": 6, "calibration_features": 16, "ego_features": 13,
+        "route_points": 128, "future_points": 64, "candidate_count": 6,
+        "image_width": 320, "image_height": 180, "image_channels": 3,
+        "image_grid_width": 5, "image_grid_height": 3, "image_embedding": 96,
+        "camera_fusion_width": 192, "ego_embedding": 64, "route_embedding": 96,
+        "hidden_width": 256, "encoder_base_channels": 24, "ego_history_frames": 10,
+        "maximum_step_m": 1.0, "route_scale_m": 120.0,
+    }
     assert probe.PLAN["iterations"] == 512 and probe.PLAN["batch_size"] == 256
     assert probe.PLAN["candidate_count"] == 6 and probe.PLAN["learning_rate"] == .05
+
+
+def test_historical_guard_rejects_actual_current_stopmix_model_source():
+    # HH_260906 - Current source has a legitimate new model; historical replay still requires its frozen commit.
+    assert probe.raw.scalar.sha(probe.ROOT / "portable_e2e/model.py") != FROZEN_MODEL_SHA
+    with pytest.raises(ValueError, match="unreviewed physical decoder source"):
+        probe.source_identity()
+
+
+def test_historical_guard_positive_plumbing_with_explicit_mock_hashes_only(monkeypatch):
+    mock_historical_guard_hashes(monkeypatch)
+    identity = probe.source_identity()
+    assert identity["files"]["portable_e2e/model.py"] == FROZEN_MODEL_SHA
+    assert identity["files"]["portable_e2e/runtime_contract.py"] == FROZEN_RUNTIME_SHA
+    assert identity["model_config"] == probe.CONFIG.to_dict()
+    assert identity["model_config_sha256"] == probe.raw.digest(probe.encoded(probe.CONFIG.to_dict()))
+
+
+@pytest.mark.parametrize("model_sha,runtime_sha,error", [
+    ("0" * 64, FROZEN_RUNTIME_SHA, "unreviewed physical decoder source"),
+    (FROZEN_MODEL_SHA, "0" * 64, "unreviewed runtime gate source"),
+    ("0" * 64, "0" * 64, "unreviewed physical decoder source"),
+])
+def test_historical_guard_rejects_changed_sources_with_controlled_hashes(monkeypatch, model_sha, runtime_sha, error):
+    mock_historical_guard_hashes(monkeypatch, model_sha, runtime_sha)
+    with pytest.raises(ValueError, match=error):
+        probe.source_identity()
 
 
 def test_decoder_calls_existing_unbound_implementation_without_model_construction(monkeypatch):

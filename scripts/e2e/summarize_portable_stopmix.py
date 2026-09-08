@@ -258,6 +258,19 @@ def behavior_evidence(root, run, state, expected_commit, pins):
             require(candidate.get('family') == ('STOP' if run['candidate_count'] == 12 and index >= 6 else 'DRIVE'), 'candidate family mismatch')
             for name in ('ade_m', 'fde_m', 'speed_mae_mps'):
                 value = candidate.get(name); require(type(value) in (int, float) and math.isfinite(value) and value >= 0, 'invalid behavior candidate metric')
+            terminal, first_zero = candidate.get('terminal_speed_mps'), candidate.get('first_exact_zero_future_index')
+            require(type(terminal) in (int, float) and math.isfinite(terminal) and terminal >= 0
+                and all(type(candidate.get(k)) is bool for k in ('terminal_exact_zero', 'terminal_at_or_below_0p1_mps',
+                    'reacceleration_after_exact_future_zero', 'nonincreasing_speed_exact')), 'invalid candidate speed behavior types')
+            require((first_zero is None or type(first_zero) is int and 0 <= first_zero < 64)
+                and candidate['terminal_exact_zero'] == (terminal == 0.0)
+                and candidate['terminal_at_or_below_0p1_mps'] == (terminal <= .1)
+                and (not candidate['terminal_exact_zero'] or first_zero is not None)
+                and (not candidate['reacceleration_after_exact_future_zero'] or first_zero is not None and first_zero < 63)
+                and (first_zero != 63 or terminal == 0.0)
+                and (not candidate['nonincreasing_speed_exact'] or not candidate['reacceleration_after_exact_future_zero'])
+                and (first_zero is None or terminal == 0.0 or candidate['reacceleration_after_exact_future_zero']),
+                'candidate terminal speed/first-zero/reacceleration facts contradict')
         raw_gate = row['runtime_geometry']; gates = raw_gate.get('candidates', [])
         require([g.get('candidate_index') for g in gates] == list(range(run['candidate_count'])), 'behavior gate candidate inventory mismatch')
         for g in gates:
@@ -388,7 +401,10 @@ def summarize_campaign(root, *, expected_source_commit, expected_plan_sha256, be
 def render_markdown(report):
     lines = ['# 주행 6개 후보와 주행+정지 12개 후보 · 개발용 새 학습 비교', '',
         f"상태: `{report['status']}` · 기본18단계: `{report['normal_stage_completion']}` · 별도행동6회: `{report['behavior_completion']}`", '',
-        '기존 v3 train1147 / val337, seed 3개 × 모델 2개를 각각 1540 step·6155회 샘플 노출로 새로 학습했습니다. 미완료 기록은 완료로 간주하지 않습니다.', '',
+        ('기존 v3 train1147 / val337, seed 3개 × 모델 2개를 각각 1540 step·6155회 샘플 노출로 새로 학습했습니다.'
+         if report['normal_stage_completion'] == 'COMPLETE' else
+         '계획은 기존 v3 train1147 / val337, seed 3개 × 모델 2개의 새 학습이며, 아직 전체 학습 완료가 확인되지 않았습니다.')
+        + ' 미완료 기록은 완료로 간주하지 않습니다.', '',
         '| Seed | 모델 | 후보/파라미터 | ADE m | FDE m | 속도 MAE m/s | Geometry | 상대/절대 |',
         '| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |']
     for pair in report['pairs']:

@@ -24,7 +24,16 @@ GPU_UUID = 'GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5'
 DATA_EXPANSION_SCHEMA = 'portable_e2e.data_expansion_campaign.v1'
 SELECTOR_WEIGHT_SCHEMA = 'portable_e2e.selector_weight_campaign.v1'
 CANDIDATE_RANK_SCHEMA = 'portable_e2e.candidate_rank_campaign.v1'
+NO_ACCEL_DEVELOPMENT_SCHEMA = 'portable_e2e.no_accel_development_campaign.v1'
 SUCCESSOR_SCHEMAS = (DATA_EXPANSION_SCHEMA, SELECTOR_WEIGHT_SCHEMA, CANDIDATE_RANK_SCHEMA)
+NO_ACCEL_MODELS = {
+    'A_physical_input': 'portable_e2e/config/perspective_trajectory_physical_v1.model.json',
+    'B_no_accel_input': 'portable_e2e/config/perspective_trajectory_physical_no_accel_v1.model.json',
+}
+NO_ACCEL_MODEL_SHA256 = {
+    'A_physical_input': 'e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d',
+    'B_no_accel_input': '0f941332046854d239d676e83a4ccbc22e60436f3894dcbfe6871002899ed012',
+}
 EXPANDED_DATASET = 'datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3'
 EXPANDED_MANIFEST_SHA256 = '18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c'
 PREREQUISITE_CAMPAIGN = 'hh260907-physical-v1-lr-ab-3seeds-v1'
@@ -46,7 +55,7 @@ def digest(path):
 
 def validate_plan(plan):
     # HH_260906 - Accept only reviewed experiments; the new architecture never changes the physical safety gates.
-    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', *SUCCESSOR_SCHEMAS):
+    if plan['schema'] not in ('portable_e2e.lr_ab_campaign.v1', *SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA):
         raise ValueError('unsupported campaign schema')
     if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,100}', plan['campaign_id']):
         raise ValueError('unsafe campaign identifier')
@@ -55,7 +64,9 @@ def validate_plan(plan):
     expanded = plan['schema'] == DATA_EXPANSION_SCHEMA
     selector = plan['schema'] == SELECTOR_WEIGHT_SCHEMA
     ranking = plan['schema'] == CANDIDATE_RANK_SCHEMA
-    expected_arms = ({'E_candidate_rank': 0.0001} if ranking else {'D_selector_weight': 0.0001} if selector else
+    no_accel = plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA
+    expected_arms = ({'A_physical_input': 0.0001, 'B_no_accel_input': 0.0001} if no_accel else
+        {'E_candidate_rank': 0.0001} if ranking else {'D_selector_weight': 0.0001} if selector else
         {'C_expanded_data': 0.0001} if expanded else {'A_baseline': 0.0001, 'B_lower_lr': 0.00003})
     if plan['arms'] != expected_arms:
         raise ValueError('unreviewed learning-rate arms')
@@ -63,10 +74,22 @@ def validate_plan(plan):
         raise ValueError('unreviewed duration, batch size or evaluation split')
     if not re.fullmatch(r'[0-9a-f]{40}', plan['source_commit']):
         raise ValueError('source commit must be pinned')
-    for name in ('dataset', 'model_config'):
+    for name in (('dataset',) if no_accel else ('dataset', 'model_config')):
         value = Path(plan[name])
         if value.is_absolute() or '..' in value.parts:
             raise ValueError(f'{name} must be a contained relative path')
+    if no_accel:
+        # HH_260906 - This exploratory v3 ablation trains both arms from scratch; it does not reuse a historical baseline.
+        expected = {'campaign_id': 'hh260909-no-accel-development-ab-3seeds-v1',
+            'dataset': EXPANDED_DATASET, 'dataset_manifest_sha256': EXPANDED_MANIFEST_SHA256,
+            'model_configs': NO_ACCEL_MODELS, 'expected_train_samples': 1147, 'expected_val_samples': 337}
+        forbidden = ('model_config', 'prerequisite_campaign_id', 'baseline_campaign_id', 'baseline_source_commit',
+            'prerequisite_timeout_seconds', 'resume', 'checkpoint')
+        if (any(plan.get(name) != value for name, value in expected.items())
+                or any(name in plan for name in forbidden)
+                or list(plan['arms']) != list(NO_ACCEL_MODELS)
+                or plan.get('candidate_score_weight', 0.1) != 0.1):
+            raise ValueError('unreviewed no-accel development dataset, paired models, arm order or fresh-start scope')
     if expanded or selector or ranking:
         expected = {
             'campaign_id': ('hh260907-candidate-rank-3seeds-v1' if ranking else
@@ -88,7 +111,7 @@ def validate_plan(plan):
             expected['source_commit'] = HISTORICAL_SOURCE_COMMIT
         if any(plan.get(name) != value for name, value in expected.items()):
             raise ValueError('unreviewed successor dataset, source, counts, score weight or prerequisite')
-    return {'train_samples': 1147 if expanded or selector or ranking else 613, 'val_samples': 337,
+    return {'train_samples': 1147 if expanded or selector or ranking or no_accel else 613, 'val_samples': 337,
         'run_count': 3 if expanded or selector or ranking else 6,
         'stage_count': 9 if expanded or selector or ranking else 18}
 
@@ -96,7 +119,7 @@ def validate_plan(plan):
 def verify_dataset_manifest(plan, dataset):
     # HH_260906 - Bind the new corpus manifest before and after every stage without opening held-out test samples.
     validate_plan(plan)
-    if plan['schema'] not in SUCCESSOR_SCHEMAS:
+    if plan['schema'] not in (*SUCCESSOR_SCHEMAS, NO_ACCEL_DEVELOPMENT_SCHEMA):
         return None
     manifest = dataset / 'dataset.json'
     if manifest.is_symlink() or not manifest.is_file() or digest(manifest) != EXPANDED_MANIFEST_SHA256:
@@ -185,11 +208,11 @@ def run_inventory(command, repo):
 
 def assert_gpu_idle(repo):
     # HH_260906 - Pin physical GPU0 by UUID and never stop another user's process.
-    rows = run_inventory(['nvidia-smi', '--query-gpu=index,uuid', '--format=csv,noheader'], repo)
+    rows = run_inventory(['nvidia-smi', '-i', '0', '--query-gpu=index,uuid', '--format=csv,noheader'], repo)
     if f'0, {GPU_UUID}' not in rows.splitlines():
         raise RuntimeError('physical GPU0 UUID changed; manual review required')
     processes = run_inventory(
-        ['nvidia-smi', '--query-compute-apps=gpu_uuid,pid', '--format=csv,noheader'], repo)
+        ['nvidia-smi', '-i', '0', '--query-compute-apps=gpu_uuid,pid', '--format=csv,noheader'], repo)
     if any(row.split(',')[0].strip() == GPU_UUID for row in processes.splitlines()):
         raise RuntimeError('GPU0 is occupied; leave other jobs untouched')
 
@@ -216,6 +239,32 @@ def verify_source(plan, repo, model_config, expected_model_sha256):
         raise RuntimeError('remote source has tracked or untracked changes')
     if digest(model_config) != expected_model_sha256:
         raise RuntimeError('model config changed during campaign')
+
+
+def campaign_model_configs(plan, repo):
+    # HH_260906 - Bind both arm-specific source files before any training; legacy single-config plans keep their original fields.
+    names = plan['model_configs'] if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA else {'shared': plan['model_config']}
+    models = {}
+    for arm, name in names.items():
+        path = (repo / name).resolve(strict=True)
+        if not path.is_relative_to(repo):
+            raise RuntimeError('model config escapes repository')
+        file_sha = digest(path)
+        record = {'path': name, 'sha256': file_sha}
+        if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA:
+            if (repo / name).is_symlink() or file_sha != NO_ACCEL_MODEL_SHA256[arm]:
+                raise RuntimeError('paired model config differs from the reviewed source SHA')
+            config = json.loads(path.read_text())
+            record.update(model_config=config, canonical_sha256=hashlib.sha256(json.dumps(
+                config, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest())
+        models[arm] = record
+    return models
+
+
+def verify_campaign_models(plan, repo, models):
+    # HH_260906 - Recheck every paired config around every stage, including the arm not currently training.
+    for record in models.values():
+        verify_source(plan, repo, repo / record['path'], record['sha256'])
 
 
 @contextmanager
@@ -290,6 +339,24 @@ def verify_stage_report(stage, item, checkpoint, state, plan):
     report = json.loads(report_path.read_text())
     if report.get('status') != statuses[stage]:
         raise RuntimeError('stage report does not declare completed work')
+    if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA:
+        arm = item.name
+        if arm not in NO_ACCEL_MODELS:
+            raise RuntimeError('stage report belongs to an unreviewed model arm')
+        model = state.get('model_configs', {}).get(arm, {})
+        expected_id = ('portable_e2e.perspective_trajectory.physical.v1' if arm == 'A_physical_input'
+            else 'portable_e2e.perspective_trajectory.physical_no_accel.v1')
+        if (model.get('sha256') != NO_ACCEL_MODEL_SHA256[arm]
+                or model.get('path') != NO_ACCEL_MODELS[arm]
+                or not isinstance(model.get('model_config'), dict)
+                or model['model_config'].get('model_id') != expected_id
+                or not re.fullmatch('[0-9a-f]{64}', model.get('canonical_sha256', ''))):
+            raise RuntimeError('stage lacks pinned per-arm model provenance')
+        if stage == 'train':
+            if report.get('model_config') != model.get('model_config'):
+                raise RuntimeError('training report model config or model ID differs from its arm')
+        elif report.get('model_config_sha256') != model.get('canonical_sha256'):
+            raise RuntimeError('evaluation model config fingerprint differs from its arm')
     corpus = report.get('corpus_fingerprint_sha256', '')
     fingerprint = report.get('dataset_fingerprint_sha256', '')
     if not isinstance(corpus, str) or not re.fullmatch('[0-9a-f]{64}', corpus):
@@ -342,7 +409,8 @@ def commands(plan, root, repo):
             shared = ['--device', 'cuda:0', '--batch-size', str(plan['batch_size'])]
             training_command = [python, '-m', 'portable_e2e.train', dataset,
                 '--run-dir', str(item / 'training'), '--model-config',
-                str(repo / plan['model_config']), '--split', 'train', *shared,
+                str(repo / (plan['model_configs'][arm] if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA
+                    else plan['model_config'])), '--split', 'train', *shared,
                 '--seed', str(seed), '--learning-rate', str(learning_rate),
                 '--weight-decay', '0.0001', '--max-steps', str(plan['steps']),
                 '--checkpoint-interval', '154', '--num-workers', '0',
@@ -382,11 +450,8 @@ def main(argv=None):
     if not dataset.is_relative_to(WORKSPACE.parent / 'dataset'):
         raise RuntimeError('dataset must be inside the personal dataset folder')
     manifest_sha256 = verify_dataset_manifest(plan, dataset)
-    model_config = (repo / plan['model_config']).resolve(strict=True)
-    if not model_config.is_relative_to(repo):
-        raise RuntimeError('model config escapes repository')
-    model_sha256 = digest(model_config)
-    verify_source(plan, repo, model_config, model_sha256)
+    models = campaign_model_configs(plan, repo)
+    verify_campaign_models(plan, repo, models)
     parent = WORKSPACE / 'runs/campaigns'
     parent.mkdir(parents=True, exist_ok=True)
     if parent.resolve() != parent:
@@ -397,14 +462,18 @@ def main(argv=None):
     env = stage_environment()
     state = {'status': 'PREFLIGHT', 'created_at_utc': now(), 'plan': plan,
         'plan_sha256': hashlib.sha256(plan_bytes).hexdigest(), 'runner_sha256': digest(Path(__file__)),
-        'model_config_sha256': model_sha256, 'source_commit': plan['source_commit'],
+        'source_commit': plan['source_commit'],
         'dataset_manifest_sha256': manifest_sha256, 'reviewed_contract': contract,
         'prerequisite': prerequisite,
         'vehicle_control_approved': False, 'stages': []}
+    if plan['schema'] == NO_ACCEL_DEVELOPMENT_SCHEMA:
+        state['model_configs'] = models
+    else:
+        state['model_config_sha256'] = models['shared']['sha256']
     # HH_260906 - A cooperative lock prevents duplicate campaigns without touching other jobs.
     with termination_guard(), (parent / '.gpu0_training.lock').open('a') as lease:
         acquire_campaign_lease(lease, plan)
-        verify_source(plan, repo, model_config, model_sha256)
+        verify_campaign_models(plan, repo, models)
         verify_dataset_manifest(plan, dataset)
         assert_gpu_idle(repo)
         root.mkdir(exist_ok=False)
@@ -418,7 +487,7 @@ def main(argv=None):
         save()
         try:
             for item, checkpoint, command, stage in commands(plan, root, repo):
-                verify_source(plan, repo, model_config, model_sha256)
+                verify_campaign_models(plan, repo, models)
                 verify_dataset_manifest(plan, dataset)
                 assert_gpu_idle(repo)
                 item.mkdir(parents=True, exist_ok=True)
@@ -433,7 +502,7 @@ def main(argv=None):
                 with (item / f'{stage}.log').open('x') as log:
                     returncode = run_owned_stage(command, repo, env, log)
                 record['returncode'] = returncode
-                verify_source(plan, repo, model_config, model_sha256)
+                verify_campaign_models(plan, repo, models)
                 verify_dataset_manifest(plan, dataset)
                 if returncode:
                     raise RuntimeError(f'{record["run"]} {stage} failed; inspect preserved log')

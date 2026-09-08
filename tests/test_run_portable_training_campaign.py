@@ -53,6 +53,124 @@ def ranking_plan(expansion_plan):
     return plan
 
 
+@pytest.fixture
+def no_accel_plan(expansion_plan):
+    # HH_260906 - Declare a test-only source pin for six fresh development fits, not a reused historical C baseline.
+    plan = copy.deepcopy(expansion_plan)
+    for field in ('model_config', 'prerequisite_campaign_id', 'prerequisite_timeout_seconds'):
+        plan.pop(field)
+    plan.update(schema=MODULE.NO_ACCEL_DEVELOPMENT_SCHEMA,
+        campaign_id='hh260909-no-accel-development-ab-3seeds-v1', source_commit='d' * 40,
+        arms={'A_physical_input': 0.0001, 'B_no_accel_input': 0.0001},
+        model_configs=dict(MODULE.NO_ACCEL_MODELS))
+    return plan
+
+
+def test_no_accel_is_six_fresh_same_budget_paired_fits(no_accel_plan, tmp_path):
+    assert MODULE.validate_plan(no_accel_plan) == {'train_samples': 1147, 'val_samples': 337,
+        'run_count': 6, 'stage_count': 18}
+    stages = list(MODULE.commands(no_accel_plan, tmp_path, ROOT))
+    assert len(stages) == 18
+    assert [stage for _, _, _, stage in stages] == ['train', 'evaluate', 'audit'] * 6
+    assert [item.name for item, _, _, stage in stages if stage == 'train'] == list(MODULE.NO_ACCEL_MODELS) * 3
+    for item, checkpoint, command, stage in stages:
+        assert '--resume' not in command
+        assert command[command.index('--device') + 1] == 'cuda:0'
+        assert command[command.index('--split') + 1] == ('train' if stage == 'train' else 'val')
+        assert command[command.index('--batch-size') + 1] == '4'
+        if stage == 'train':
+            assert command[command.index('--model-config') + 1] == str(ROOT / MODULE.NO_ACCEL_MODELS[item.name])
+            assert command[command.index('--max-steps') + 1] == '1540'
+            assert command[command.index('--learning-rate') + 1] == '0.0001'
+            assert '--checkpoint' not in command
+            assert '--candidate-score-weight' not in command
+        else:
+            assert command[command.index('--checkpoint') + 1] == str(checkpoint)
+    assert MODULE.wait_for_prerequisite(no_accel_plan, tmp_path) is None
+
+
+@pytest.mark.parametrize('field,value', [
+    ('campaign_id', 'another-campaign'), ('source_commit', 'main'), ('gpu_uuid', 'GPU-other'),
+    ('seeds', [20260903]), ('steps', 3080), ('batch_size', 8), ('split', 'test'),
+    ('expected_train_samples', 613), ('expected_val_samples', 336),
+    ('dataset_manifest_sha256', 'f' * 64), ('dataset', 'datasets/other'),
+    ('arms', {'A_physical_input': 0.0001, 'B_no_accel_input': 0.00003}),
+    ('arms', {'B_no_accel_input': 0.0001, 'A_physical_input': 0.0001}),
+    ('model_configs', {'A_physical_input': 'other.json', 'B_no_accel_input': 'other.json'}),
+    ('model_config', 'legacy.json'), ('baseline_campaign_id', MODULE.DATA_EXPANSION_CAMPAIGN),
+    ('prerequisite_campaign_id', MODULE.DATA_EXPANSION_CAMPAIGN), ('resume', 'old.pt'),
+    ('checkpoint', 'old.pt'), ('candidate_score_weight', 0.5),
+])
+def test_no_accel_rejects_unreviewed_scope(no_accel_plan, field, value):
+    no_accel_plan[field] = value
+    with pytest.raises(ValueError):
+        MODULE.validate_plan(no_accel_plan)
+
+
+def test_no_accel_manifest_is_required(no_accel_plan, tmp_path, monkeypatch):
+    (tmp_path / 'dataset.json').write_text('{}')
+    monkeypatch.setattr(MODULE, 'digest', lambda _: MODULE.EXPANDED_MANIFEST_SHA256)
+    assert MODULE.verify_dataset_manifest(no_accel_plan, tmp_path) == MODULE.EXPANDED_MANIFEST_SHA256
+    monkeypatch.setattr(MODULE, 'digest', lambda _: 'f' * 64)
+    with pytest.raises(RuntimeError, match='manifest'):
+        MODULE.verify_dataset_manifest(no_accel_plan, tmp_path)
+
+
+def test_no_accel_pins_both_configs_and_rechecks_inactive_arm(no_accel_plan, tmp_path, monkeypatch):
+    for name in MODULE.NO_ACCEL_MODELS.values():
+        path = tmp_path / name; path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((ROOT / name).read_bytes())
+    models = MODULE.campaign_model_configs(no_accel_plan, tmp_path)
+    assert {arm: item['sha256'] for arm, item in models.items()} == MODULE.NO_ACCEL_MODEL_SHA256
+    assert models['A_physical_input']['model_config']['model_id'] == 'portable_e2e.perspective_trajectory.physical.v1'
+    assert models['B_no_accel_input']['model_config']['model_id'] == 'portable_e2e.perspective_trajectory.physical_no_accel.v1'
+    monkeypatch.setattr(MODULE, 'run_inventory',
+        lambda command, _: no_accel_plan['source_commit'] if command[1] == 'rev-parse' else '')
+    MODULE.verify_campaign_models(no_accel_plan, tmp_path, models)
+    (tmp_path / MODULE.NO_ACCEL_MODELS['B_no_accel_input']).write_text('{}')
+    with pytest.raises(RuntimeError, match='model config changed'):
+        MODULE.verify_campaign_models(no_accel_plan, tmp_path, models)
+    with pytest.raises(RuntimeError, match='reviewed source SHA'):
+        MODULE.campaign_model_configs(no_accel_plan, tmp_path)
+
+
+@pytest.mark.parametrize('arm', ['A_physical_input', 'B_no_accel_input'])
+def test_no_accel_reports_bind_model_id_and_canonical_eval_hash(no_accel_plan, stage_reports, arm):
+    item, checkpoint, reports, paths = stage_reports
+    renamed = item.with_name(arm); item.rename(renamed)
+    checkpoint = renamed / checkpoint.relative_to(item)
+    paths = {stage: renamed / path.relative_to(item) for stage, path in paths.items()}
+    models = MODULE.campaign_model_configs(no_accel_plan, ROOT)
+    state = {'model_configs': models}
+    reports['train'].update(dataset_size=1147, model_config=models[arm]['model_config'])
+    for stage in ('evaluate', 'audit'):
+        reports[stage]['model_config_sha256'] = models[arm]['canonical_sha256']
+    for stage in ('train', 'evaluate', 'audit'):
+        paths[stage].write_text(json.dumps(reports[stage]))
+        MODULE.verify_stage_report(stage, renamed, checkpoint, state, no_accel_plan)
+    wrong = next(name for name in models if name != arm)
+    reports['train']['model_config'] = models[wrong]['model_config']
+    paths['train'].write_text(json.dumps(reports['train']))
+    with pytest.raises(RuntimeError, match='model config or model ID'):
+        MODULE.verify_stage_report('train', renamed, checkpoint, state, no_accel_plan)
+    for stage in ('evaluate', 'audit'):
+        reports[stage]['model_config_sha256'] = models[wrong]['canonical_sha256']
+        paths[stage].write_text(json.dumps(reports[stage]))
+        with pytest.raises(RuntimeError, match='fingerprint differs from its arm'):
+            MODULE.verify_stage_report(stage, renamed, checkpoint, state, no_accel_plan)
+
+
+def test_gpu_inventory_queries_only_physical_zero(monkeypatch):
+    calls = []
+    def inventory(command, _):
+        calls.append(command)
+        return f'0, {MODULE.GPU_UUID}' if '--query-gpu=index,uuid' in command else ''
+    monkeypatch.setattr(MODULE, 'run_inventory', inventory)
+    MODULE.assert_gpu_idle(ROOT)
+    assert len(calls) == 2
+    assert all(command[:3] == ['nvidia-smi', '-i', '0'] for command in calls)
+
+
 def test_candidate_rank_is_three_fresh_val_only_runs_with_unchanged_loss(ranking_plan, tmp_path):
     assert MODULE.validate_plan(ranking_plan) == {'train_samples': 1147, 'val_samples': 337,
         'run_count': 3, 'stage_count': 9}

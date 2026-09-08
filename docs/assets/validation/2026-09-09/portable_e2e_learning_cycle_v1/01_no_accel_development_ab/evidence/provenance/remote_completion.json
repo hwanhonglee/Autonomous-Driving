@@ -1,0 +1,1005 @@
+{
+  "schema": "portable_e2e.no_accel_completion_remote_audit.v1",
+  "comment": "HH_260906 - Independently verify completed remote research fits and released GPU0 resources without loading checkpoints or changing remote state.",
+  "status": "VERIFIED_COMPLETE_NOT_PROMOTED",
+  "observed_started_utc": "2026-09-08T16:05:55.516854+00:00",
+  "observed_finished_utc": "2026-09-08T16:05:55.813881+00:00",
+  "campaign_relative_root": "runs/campaigns/hh260909-no-accel-development-ab-3seeds-v1",
+  "source_commit": "213cfc69e3551b315dc3a2f618387027ff5948f6",
+  "source_worktree_clean_before_and_after": true,
+  "plan_sha256": "b2cbc661aff39369255a2ba5c81d30322389a52748fad1badf321b24e7ef92d9",
+  "campaign_status_sha256": "dca0c6df4ffd4b0b12d4ddc30f36cd22050ca4df6784d0e0d00a8d34f6c46ea4",
+  "campaign_completed_utc": "2026-09-08T15:58:53.045651+00:00",
+  "stage_count": 18,
+  "runs": [
+    {
+      "run": "seed_20260903/A_physical_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260903,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.051654644310474396,
+      "loss_max": 22.38283920288086,
+      "final_loss": 0.9784711003303528,
+      "run_json_sha256": "e528eb89acd4b73b65d16052d23633baf9d75b435db8ace3726fbe7dda5d8679",
+      "metrics_jsonl_sha256": "f35cdbb0c6d577a89e3660294aab867c1ad86310e81746d0af87d88f721bb7a0",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "c30fc39908aa0b2a6b0585cec28ef551cc7feda51075111d08e95c417e8d4dad",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    },
+    {
+      "run": "seed_20260903/B_no_accel_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical_no_accel.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260903,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.03269939869642258,
+      "loss_max": 22.36362075805664,
+      "final_loss": 1.097906231880188,
+      "run_json_sha256": "f74d208965461eae56c60bcec5b1a7fb83c59de79909282982609d8ec6658f62",
+      "metrics_jsonl_sha256": "3325a26f6d0c223b707c9b48c8a9238129e400dfbaffc00abec0f01f3ef71c76",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "f9807b705c6846c7a93e6d52c71655871ddfa14e1614671e1565622d4f88246a",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    },
+    {
+      "run": "seed_20260904/A_physical_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260904,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.04475965350866318,
+      "loss_max": 23.588302612304688,
+      "final_loss": 2.2188239097595215,
+      "run_json_sha256": "d546e690cc8c150e1b0005489ad4e9660b0ed48a45e8acd13ac62f7fab20b3d6",
+      "metrics_jsonl_sha256": "be1c37b4c27f0f9883b7f746b1d44a0cc70a8821e012c24260e831adcfcd69ea",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "c5e399a7f4866d7c1f981ffb91f7fb599b3e84c03dd42509b9ee14de73e0b446",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    },
+    {
+      "run": "seed_20260904/B_no_accel_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical_no_accel.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260904,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.04295302554965019,
+      "loss_max": 23.5406494140625,
+      "final_loss": 2.388780117034912,
+      "run_json_sha256": "1921fcdeff5ada29f6b0256e5936b5f31a2e8b945951ae90464769af0de543dd",
+      "metrics_jsonl_sha256": "e70b387dc5a9e303a85077b44a3acf3bb076243a8baeb9a14a11a020916e16e0",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "570781bf1ff676b38f456f7190f71bcfddc87048c8fce31aad3d4bdfadb1cede",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    },
+    {
+      "run": "seed_20260905/A_physical_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260905,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.047104813158512115,
+      "loss_max": 19.73849105834961,
+      "final_loss": 3.6678247451782227,
+      "run_json_sha256": "ecf126ba91a22072940a61f7c9817f3d3ce61f73d791e448646bf8ac34b50e85",
+      "metrics_jsonl_sha256": "22c67848d733d622bf58a30c2228b044e04579f847e991df6ce02ace41f5dacf",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "ba9efbaa06da6068175b4a30585273399252cdd234039b210763234b2065cecf",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    },
+    {
+      "run": "seed_20260905/B_no_accel_input",
+      "status": "TRAINING_TARGET_REACHED",
+      "model_id": "portable_e2e.perspective_trajectory.physical_no_accel.v1",
+      "model_parameter_count": 954590,
+      "seed": 20260905,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "steps": 1540,
+      "sample_exposures": 6155,
+      "all_metric_numeric_values_finite": true,
+      "global_step_sequence_contiguous": true,
+      "epoch_batch_exposure_accounting_matches": true,
+      "loss_min": 0.04889541119337082,
+      "loss_max": 19.68007469177246,
+      "final_loss": 3.6193125247955322,
+      "run_json_sha256": "871bbd5799ab9677163df5fc9c99e62129ccab090d362828b7dc9a55b7f9af52",
+      "metrics_jsonl_sha256": "864e44741dbf30f6e5f80d3096a0e4b266e921827c02d012b82e59d9d82e34c2",
+      "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "checkpoint_sha256": "6b7dc16e44db65dc6f917598ce924378730dbd4aef5721ef439d9b3b71d00bf1",
+      "evaluation_and_audit_checkpoint_sha_match": true
+    }
+  ],
+  "stages": [
+    {
+      "run": "seed_20260903/A_physical_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:36:22.848810+00:00",
+      "finished_at_utc": "2026-09-08T15:39:43.548494+00:00",
+      "report_path": "seed_20260903/A_physical_input/training/run.json",
+      "report_sha256": "e528eb89acd4b73b65d16052d23633baf9d75b435db8ace3726fbe7dda5d8679"
+    },
+    {
+      "run": "seed_20260903/A_physical_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:39:43.608778+00:00",
+      "finished_at_utc": "2026-09-08T15:39:56.217426+00:00",
+      "report_path": "seed_20260903/A_physical_input/evaluation/metrics.json",
+      "report_sha256": "b0e2124b235245239564fd825f77ff7fdba7efd30cf6184948d44e0ae3339aee"
+    },
+    {
+      "run": "seed_20260903/A_physical_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:39:56.303849+00:00",
+      "finished_at_utc": "2026-09-08T15:40:09.780712+00:00",
+      "report_path": "seed_20260903/A_physical_input/gate_v8.json",
+      "report_sha256": "2061563e09abcbc19ab7d329668eade897cccfb7061ae77dab9bf92f0034a0c6"
+    },
+    {
+      "run": "seed_20260903/B_no_accel_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:40:09.902100+00:00",
+      "finished_at_utc": "2026-09-08T15:43:28.454101+00:00",
+      "report_path": "seed_20260903/B_no_accel_input/training/run.json",
+      "report_sha256": "f74d208965461eae56c60bcec5b1a7fb83c59de79909282982609d8ec6658f62"
+    },
+    {
+      "run": "seed_20260903/B_no_accel_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:43:28.516634+00:00",
+      "finished_at_utc": "2026-09-08T15:43:41.178120+00:00",
+      "report_path": "seed_20260903/B_no_accel_input/evaluation/metrics.json",
+      "report_sha256": "46234f635c9821b8bb2a174b93f5480c25d67eafd08799b2ebca993c61bc42ec"
+    },
+    {
+      "run": "seed_20260903/B_no_accel_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:43:41.320511+00:00",
+      "finished_at_utc": "2026-09-08T15:43:54.798000+00:00",
+      "report_path": "seed_20260903/B_no_accel_input/gate_v8.json",
+      "report_sha256": "2ddc603eda9d9a90bb976ebb72870b08aa23eb6712487853997a015ca7df4e4b"
+    },
+    {
+      "run": "seed_20260904/A_physical_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:43:54.861433+00:00",
+      "finished_at_utc": "2026-09-08T15:47:13.140617+00:00",
+      "report_path": "seed_20260904/A_physical_input/training/run.json",
+      "report_sha256": "d546e690cc8c150e1b0005489ad4e9660b0ed48a45e8acd13ac62f7fab20b3d6"
+    },
+    {
+      "run": "seed_20260904/A_physical_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:47:13.202951+00:00",
+      "finished_at_utc": "2026-09-08T15:47:25.663624+00:00",
+      "report_path": "seed_20260904/A_physical_input/evaluation/metrics.json",
+      "report_sha256": "856fcd5362416cbc06905e335125f2e4931f71466f04d7b79f02c4286637c033"
+    },
+    {
+      "run": "seed_20260904/A_physical_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:47:25.745735+00:00",
+      "finished_at_utc": "2026-09-08T15:47:39.373351+00:00",
+      "report_path": "seed_20260904/A_physical_input/gate_v8.json",
+      "report_sha256": "5ba7e7eac3c0dd4734deb9b7a5562077ddba7e7009d4d4ba5ee8628579fc2748"
+    },
+    {
+      "run": "seed_20260904/B_no_accel_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:47:39.438524+00:00",
+      "finished_at_utc": "2026-09-08T15:50:57.789292+00:00",
+      "report_path": "seed_20260904/B_no_accel_input/training/run.json",
+      "report_sha256": "1921fcdeff5ada29f6b0256e5936b5f31a2e8b945951ae90464769af0de543dd"
+    },
+    {
+      "run": "seed_20260904/B_no_accel_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:50:57.852434+00:00",
+      "finished_at_utc": "2026-09-08T15:51:10.490834+00:00",
+      "report_path": "seed_20260904/B_no_accel_input/evaluation/metrics.json",
+      "report_sha256": "5fc382a0763aac47f3fb9a49a8f060b456f73d9633620c384944d44d0a5e6a34"
+    },
+    {
+      "run": "seed_20260904/B_no_accel_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:51:10.566763+00:00",
+      "finished_at_utc": "2026-09-08T15:51:23.953030+00:00",
+      "report_path": "seed_20260904/B_no_accel_input/gate_v8.json",
+      "report_sha256": "43c085f77c3fe736228e75db6fbc4a2f962940776b15debec51292b80ab3fa36"
+    },
+    {
+      "run": "seed_20260905/A_physical_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:51:24.012532+00:00",
+      "finished_at_utc": "2026-09-08T15:54:43.446612+00:00",
+      "report_path": "seed_20260905/A_physical_input/training/run.json",
+      "report_sha256": "ecf126ba91a22072940a61f7c9817f3d3ce61f73d791e448646bf8ac34b50e85"
+    },
+    {
+      "run": "seed_20260905/A_physical_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:54:43.508753+00:00",
+      "finished_at_utc": "2026-09-08T15:54:56.181205+00:00",
+      "report_path": "seed_20260905/A_physical_input/evaluation/metrics.json",
+      "report_sha256": "20a42f0cce014989e60bd84381eb7c0647dba91c986dbc8c842f764418223c20"
+    },
+    {
+      "run": "seed_20260905/A_physical_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:54:56.268653+00:00",
+      "finished_at_utc": "2026-09-08T15:55:09.733021+00:00",
+      "report_path": "seed_20260905/A_physical_input/gate_v8.json",
+      "report_sha256": "efbd1967f9c4820272ef6ea8dc690428991e4a6d75f39b82fd1c9cd126c18cea"
+    },
+    {
+      "run": "seed_20260905/B_no_accel_input",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:55:09.791991+00:00",
+      "finished_at_utc": "2026-09-08T15:58:26.993305+00:00",
+      "report_path": "seed_20260905/B_no_accel_input/training/run.json",
+      "report_sha256": "871bbd5799ab9677163df5fc9c99e62129ccab090d362828b7dc9a55b7f9af52"
+    },
+    {
+      "run": "seed_20260905/B_no_accel_input",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:58:27.053303+00:00",
+      "finished_at_utc": "2026-09-08T15:58:39.562951+00:00",
+      "report_path": "seed_20260905/B_no_accel_input/evaluation/metrics.json",
+      "report_sha256": "a4bdf7d25f58d4251cdcfefb3f0574ecdd13e043e13958032a10575b77034f46"
+    },
+    {
+      "run": "seed_20260905/B_no_accel_input",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "started_at_utc": "2026-09-08T15:58:39.632847+00:00",
+      "finished_at_utc": "2026-09-08T15:58:53.045113+00:00",
+      "report_path": "seed_20260905/B_no_accel_input/gate_v8.json",
+      "report_sha256": "59ead9631cc8fe60ea4542ed127ae7bed5d03a9dddf3d9727c9d4f3105f1e658"
+    }
+  ],
+  "checkpoint_inventory": [
+    {
+      "path": "seed_20260903/A_physical_input/training/checkpoints/latest.pt",
+      "sha256": "c30fc39908aa0b2a6b0585cec28ef551cc7feda51075111d08e95c417e8d4dad",
+      "size_bytes": 11519247
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/training/checkpoints/latest.pt",
+      "sha256": "f9807b705c6846c7a93e6d52c71655871ddfa14e1614671e1565622d4f88246a",
+      "size_bytes": 11519247
+    },
+    {
+      "path": "seed_20260904/A_physical_input/training/checkpoints/latest.pt",
+      "sha256": "c5e399a7f4866d7c1f981ffb91f7fb599b3e84c03dd42509b9ee14de73e0b446",
+      "size_bytes": 11519247
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/training/checkpoints/latest.pt",
+      "sha256": "570781bf1ff676b38f456f7190f71bcfddc87048c8fce31aad3d4bdfadb1cede",
+      "size_bytes": 11519247
+    },
+    {
+      "path": "seed_20260905/A_physical_input/training/checkpoints/latest.pt",
+      "sha256": "ba9efbaa06da6068175b4a30585273399252cdd234039b210763234b2065cecf",
+      "size_bytes": 11519247
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/training/checkpoints/latest.pt",
+      "sha256": "6b7dc16e44db65dc6f917598ce924378730dbd4aef5721ef439d9b3b71d00bf1",
+      "size_bytes": 11519247
+    }
+  ],
+  "regular_file_inventory": [
+    {
+      "path": "plan.json",
+      "sha256": "b2cbc661aff39369255a2ba5c81d30322389a52748fad1badf321b24e7ef92d9",
+      "size_bytes": 2885
+    },
+    {
+      "path": "seed_20260903/A_physical_input/audit.log",
+      "sha256": "2061563e09abcbc19ab7d329668eade897cccfb7061ae77dab9bf92f0034a0c6",
+      "size_bytes": 5929
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluate.log",
+      "sha256": "b0e2124b235245239564fd825f77ff7fdba7efd30cf6184948d44e0ae3339aee",
+      "size_bytes": 5375
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/metrics.json",
+      "sha256": "b0e2124b235245239564fd825f77ff7fdba7efd30cf6184948d44e0ae3339aee",
+      "size_bytes": 5375
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "a28a0e0a8027270096d82b92dd8815f216563a8b10899183555a6fab915a362a",
+      "size_bytes": 11900
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "77aed6bb70c4e96a991f3f0b99834368b672aa726b5a7f7e35cf8cc1b8576a8d",
+      "size_bytes": 11912
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "7caa0f1f47eea987b05e4465143cdceb3f91702be254cc13022a769d9ed1dce6",
+      "size_bytes": 12030
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "f6b066dc9cd638010fa489a8a98c4776733f16a52582517c954c88643b9875a9",
+      "size_bytes": 11932
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "b39de0e3c05ce18cbc4e90c3da939a9b0d53712eef9e00dd8bc26e52eb015ac4",
+      "size_bytes": 12024
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "75119b63e5f8357a4ca63582b41b18567695335c2760f46c2a46dbcbcd82cef4",
+      "size_bytes": 12084
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "ad668bd92eb7b493ce5a925887964a3711d2dca63372d408038c602e79b70b5d",
+      "size_bytes": 11947
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "ebfdf42f370152639282fbe5d5fc60b32c36050e82ff07fe07262b85b2994bac",
+      "size_bytes": 11945
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "470a5e0afb355f6309346f96c120030a0b541b685f817305b2b5825c356eb8b1",
+      "size_bytes": 12068
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "85c1f927fa3169b7bc402a54650bd94b78bb6f92419774eabfe257f0e7b2d470",
+      "size_bytes": 11969
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "d250eb611e2b8e30e1841690d63050dececf4276df9679277b27b7b48cbd5e31",
+      "size_bytes": 11969
+    },
+    {
+      "path": "seed_20260903/A_physical_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "d7cc67524afb8db6aa711d135d8b05782a11e0674248dfbee43adf276208f7de",
+      "size_bytes": 11961
+    },
+    {
+      "path": "seed_20260903/A_physical_input/gate_v8.json",
+      "sha256": "2061563e09abcbc19ab7d329668eade897cccfb7061ae77dab9bf92f0034a0c6",
+      "size_bytes": 5929
+    },
+    {
+      "path": "seed_20260903/A_physical_input/train.log",
+      "sha256": "750ee3b71e35e241704541ca2929a512198d10e2b5e4bcdf5390735ea038f871",
+      "size_bytes": 1207
+    },
+    {
+      "path": "seed_20260903/A_physical_input/training/metrics.jsonl",
+      "sha256": "f35cdbb0c6d577a89e3660294aab867c1ad86310e81746d0af87d88f721bb7a0",
+      "size_bytes": 742150
+    },
+    {
+      "path": "seed_20260903/A_physical_input/training/run.json",
+      "sha256": "e528eb89acd4b73b65d16052d23633baf9d75b435db8ace3726fbe7dda5d8679",
+      "size_bytes": 4259
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/audit.log",
+      "sha256": "2ddc603eda9d9a90bb976ebb72870b08aa23eb6712487853997a015ca7df4e4b",
+      "size_bytes": 5928
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluate.log",
+      "sha256": "46234f635c9821b8bb2a174b93f5480c25d67eafd08799b2ebca993c61bc42ec",
+      "size_bytes": 5373
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/metrics.json",
+      "sha256": "46234f635c9821b8bb2a174b93f5480c25d67eafd08799b2ebca993c61bc42ec",
+      "size_bytes": 5373
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "2556b930a9228bb191b3b824debd23747e8d4881faa1ff49741021145c95f30e",
+      "size_bytes": 11919
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "84c368b126fc402b52c3a6fd3b12d6c59b2df27f0a8ddc0c9664ab9bd62cec0b",
+      "size_bytes": 11930
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "5353991696c1f10c67e574893849eb4b2153e6baa4623634935a9641e9bb3f18",
+      "size_bytes": 12049
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "8f91f35003a298a83cabed2a27ceebe2009c81ac7f4ca4c25d466c1956397d98",
+      "size_bytes": 11931
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "62e6aee7ede9df9b8f4926af4441fa3458f4734b3891c16f1d6100e8bc9390b3",
+      "size_bytes": 12023
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "5343a1225b7ccc2091a837a68e71225d4806fb69dcecdf9929933d4728cc2e7a",
+      "size_bytes": 12056
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "d930004874b77af639e1ced2a8f08afeaf6fa32cca1c1f214cadde980011aba7",
+      "size_bytes": 11940
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "52d90a735ed297f85df23812ff00708cabda488c6f79d4f24d13b1a730369a05",
+      "size_bytes": 11940
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "f1b75d74943f31fe56a8c91b92b520df6e503746a4c20588241f552941ed9db5",
+      "size_bytes": 12067
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "b149d6c8b0fbc092d3413a696946349a7347c8a42b718d39b795156ff0674e95",
+      "size_bytes": 11939
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "fa95a8dd6486eed61ccfba7cf2f3840f43cae194f37b720f6f5aeecc153897dd",
+      "size_bytes": 11941
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "d4e1bbc5538cac2cca69d798faf1f8b6f6ac84b2653751748fde1b61b32790c5",
+      "size_bytes": 11933
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/gate_v8.json",
+      "sha256": "2ddc603eda9d9a90bb976ebb72870b08aa23eb6712487853997a015ca7df4e4b",
+      "size_bytes": 5928
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/train.log",
+      "sha256": "7a963b21ce68548c7ce6297e83a9a1a9ab0bd853eb6a05e5cbebbcc3d644b864",
+      "size_bytes": 1204
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/training/metrics.jsonl",
+      "sha256": "3325a26f6d0c223b707c9b48c8a9238129e400dfbaffc00abec0f01f3ef71c76",
+      "size_bytes": 742222
+    },
+    {
+      "path": "seed_20260903/B_no_accel_input/training/run.json",
+      "sha256": "f74d208965461eae56c60bcec5b1a7fb83c59de79909282982609d8ec6658f62",
+      "size_bytes": 4265
+    },
+    {
+      "path": "seed_20260904/A_physical_input/audit.log",
+      "sha256": "5ba7e7eac3c0dd4734deb9b7a5562077ddba7e7009d4d4ba5ee8628579fc2748",
+      "size_bytes": 5885
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluate.log",
+      "sha256": "856fcd5362416cbc06905e335125f2e4931f71466f04d7b79f02c4286637c033",
+      "size_bytes": 5363
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/metrics.json",
+      "sha256": "856fcd5362416cbc06905e335125f2e4931f71466f04d7b79f02c4286637c033",
+      "size_bytes": 5363
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "4ae2add2a1936323ffbf6395b51742fceaed13140ca92fd2c2f6332ae090b44b",
+      "size_bytes": 12045
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "d872ca7886244a3c2a8cdbb0a5e7fb82ca02ceaed63a4bb1ba10b1dc6eb5622c",
+      "size_bytes": 12060
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "caf4b0d699c6182c2b06e1d61fc247ef86bc3985dbe2707b1d33aa222826803f",
+      "size_bytes": 12192
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "80636fd0dffa1cdb35ccbecf1864cb87d2e7a9c34d48e72781e03e1acffa0e43",
+      "size_bytes": 12069
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "c583a11f043f5233df1bbce146cd889eff961511ead438275418b882a4eeca41",
+      "size_bytes": 12130
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "ed4307f69aa8eab928b10fc15bb14004281d969f4db3cd52870ae8d35a83adac",
+      "size_bytes": 12189
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "7af50464f199fc8ffd676ccf9cd07c743f8055c6a18110e51fa835f3c32a0aca",
+      "size_bytes": 12061
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "4a8aff0e82c690201923342af8fc4a00761d8da3a447d0848c4907f590bd3c34",
+      "size_bytes": 12063
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "79cbe9c316839c206f3e884a34c7e5a7c8371d3ba1dc4d4e032c188fc2ada98e",
+      "size_bytes": 12190
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "b411216ee88b39e5928e00adae731787e1ab2fbe8f50246de64339c61b2ccc1e",
+      "size_bytes": 12061
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "f9986a1a6096c647a991a3c6cda5ff9db98b24519abbd56d09554a3ff4f230e1",
+      "size_bytes": 12063
+    },
+    {
+      "path": "seed_20260904/A_physical_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "cf399c2e7fe4b2545164c4a508700036de68efc77ecb893c65db059997538026",
+      "size_bytes": 12054
+    },
+    {
+      "path": "seed_20260904/A_physical_input/gate_v8.json",
+      "sha256": "5ba7e7eac3c0dd4734deb9b7a5562077ddba7e7009d4d4ba5ee8628579fc2748",
+      "size_bytes": 5885
+    },
+    {
+      "path": "seed_20260904/A_physical_input/train.log",
+      "sha256": "00ef94b6bf244b80bff1cda62d630b070b048a0a84fcb9fcb38adf495b28449f",
+      "size_bytes": 1205
+    },
+    {
+      "path": "seed_20260904/A_physical_input/training/metrics.jsonl",
+      "sha256": "be1c37b4c27f0f9883b7f746b1d44a0cc70a8821e012c24260e831adcfcd69ea",
+      "size_bytes": 742452
+    },
+    {
+      "path": "seed_20260904/A_physical_input/training/run.json",
+      "sha256": "d546e690cc8c150e1b0005489ad4e9660b0ed48a45e8acd13ac62f7fab20b3d6",
+      "size_bytes": 4257
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/audit.log",
+      "sha256": "43c085f77c3fe736228e75db6fbc4a2f962940776b15debec51292b80ab3fa36",
+      "size_bytes": 5906
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluate.log",
+      "sha256": "5fc382a0763aac47f3fb9a49a8f060b456f73d9633620c384944d44d0a5e6a34",
+      "size_bytes": 5374
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/metrics.json",
+      "sha256": "5fc382a0763aac47f3fb9a49a8f060b456f73d9633620c384944d44d0a5e6a34",
+      "size_bytes": 5374
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "3b0b9a33d9e0d9e3e3968961a5944ced9dd634903affb8cb8b26715897d3e8ea",
+      "size_bytes": 11847
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "18dac3cc26e930e686896beb03de2e28f33bc216e18fe78e9d9e7d5c97ea2b60",
+      "size_bytes": 11857
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "a9fef56d2f4341b97b580bed34e7e87132f0f8248c5f2b17158e62fa4a3c3a79",
+      "size_bytes": 11976
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "f3a14b7c881908dfb342eeb1b51d25c940f14ae963bd130ace37738855df0cfb",
+      "size_bytes": 11860
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "67892b12c454f3f68ba9bb5ed81811c2c27efb1a76af89918d1e051e53448085",
+      "size_bytes": 11950
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "4444f4d667e3e71824def2d028111cbc21c88932ae0d9aad4aabbaca07072111",
+      "size_bytes": 11984
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "1b14ac597385b66d21f1dd6b87dc8e5c62cd857857eee4b6107e99bba149fa75",
+      "size_bytes": 11870
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "960f594ebc9f7983a3b705f64f7735c34c61a13d596bf44674145b6a6b3a788b",
+      "size_bytes": 11868
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "b5342e61e3ff96b6a8afd5f7274be8a20422e5b5b85c3063eafd46d566ddd7ea",
+      "size_bytes": 11999
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "2f26b319de5432a95d88bb08bd9a4346eef57601fada303c8532920a10bdb3b7",
+      "size_bytes": 11868
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "2a07199557c15bda5b84e49972e9481e2d69a8162038490f4d496bc60d697f9b",
+      "size_bytes": 11871
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "c494a24adbccc2a22be914ad4519e1101236da8a74d2cec926023a304685b0f0",
+      "size_bytes": 11863
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/gate_v8.json",
+      "sha256": "43c085f77c3fe736228e75db6fbc4a2f962940776b15debec51292b80ab3fa36",
+      "size_bytes": 5906
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/train.log",
+      "sha256": "766f871bc5967e9f29843cbe6287f094b13e8be375cb801832de755179f22fb9",
+      "size_bytes": 1205
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/training/metrics.jsonl",
+      "sha256": "e70b387dc5a9e303a85077b44a3acf3bb076243a8baeb9a14a11a020916e16e0",
+      "size_bytes": 742412
+    },
+    {
+      "path": "seed_20260904/B_no_accel_input/training/run.json",
+      "sha256": "1921fcdeff5ada29f6b0256e5936b5f31a2e8b945951ae90464769af0de543dd",
+      "size_bytes": 4266
+    },
+    {
+      "path": "seed_20260905/A_physical_input/audit.log",
+      "sha256": "efbd1967f9c4820272ef6ea8dc690428991e4a6d75f39b82fd1c9cd126c18cea",
+      "size_bytes": 5883
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluate.log",
+      "sha256": "20a42f0cce014989e60bd84381eb7c0647dba91c986dbc8c842f764418223c20",
+      "size_bytes": 5365
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/metrics.json",
+      "sha256": "20a42f0cce014989e60bd84381eb7c0647dba91c986dbc8c842f764418223c20",
+      "size_bytes": 5365
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "960e47ee9e75f18f6075e7d8a6134a143118a135a93f1c04d978f336d9b6ac94",
+      "size_bytes": 11974
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "6e6f3d19d3e12380e0511c14b5a965c799f34c25b18a4c38209535f6e858a276",
+      "size_bytes": 11974
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "a018e1e67d32bf2a6554604fee07ca5f48c3f3f97053d1e8b320356ffa46fd92",
+      "size_bytes": 12096
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "4c5c3c626891e700fc8310fb03f9c6c2a11c5463fbc99bcfe70a17a864475ef2",
+      "size_bytes": 11975
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "510fc1ec206b38871df3af9204ccc4601f92acc9b625ab66fdae037f9fdc97f2",
+      "size_bytes": 12067
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "7c17ce3b472e0a1b0041dccd222201e4e4c88f4bf1d638e27348704f03f29f9d",
+      "size_bytes": 12102
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "b356b8d30cdd7ec1992e27c470395647413b1904167d9fdd4f261b541d0e9764",
+      "size_bytes": 11985
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "53e4b3ea9db90b948d6d75f73ab42cc6d1b921e2ab1073f5f42d44902165a5dc",
+      "size_bytes": 11985
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "84e320f1bf60436dc9df1e1c65cbf1bcbdd26e30dc5b13558ce394da7aa81dc6",
+      "size_bytes": 12113
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "5e36cafe25b05ac2f9e1cf338ebe144e4db8c68ddc8e284724284f6d1574f713",
+      "size_bytes": 11985
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "7bf4773a50c01fe91b67fe73287a92440c2cb0e04fe2a5daab63d88a352eaf9e",
+      "size_bytes": 11986
+    },
+    {
+      "path": "seed_20260905/A_physical_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "01e610e4fc501e3117aff2b13c3c71eef5625f42a25b37520912a9765ff2ecd4",
+      "size_bytes": 11978
+    },
+    {
+      "path": "seed_20260905/A_physical_input/gate_v8.json",
+      "sha256": "efbd1967f9c4820272ef6ea8dc690428991e4a6d75f39b82fd1c9cd126c18cea",
+      "size_bytes": 5883
+    },
+    {
+      "path": "seed_20260905/A_physical_input/train.log",
+      "sha256": "5c78bc05a1ade8c19a555dfa490e845af673d53b61180964d5faee33f97bbd24",
+      "size_bytes": 1205
+    },
+    {
+      "path": "seed_20260905/A_physical_input/training/metrics.jsonl",
+      "sha256": "22c67848d733d622bf58a30c2228b044e04579f847e991df6ce02ace41f5dacf",
+      "size_bytes": 742038
+    },
+    {
+      "path": "seed_20260905/A_physical_input/training/run.json",
+      "sha256": "ecf126ba91a22072940a61f7c9817f3d3ce61f73d791e448646bf8ac34b50e85",
+      "size_bytes": 4257
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/audit.log",
+      "sha256": "59ead9631cc8fe60ea4542ed127ae7bed5d03a9dddf3d9727c9d4f3105f1e658",
+      "size_bytes": 5883
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluate.log",
+      "sha256": "a4bdf7d25f58d4251cdcfefb3f0574ecdd13e043e13958032a10575b77034f46",
+      "size_bytes": 5372
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/metrics.json",
+      "sha256": "a4bdf7d25f58d4251cdcfefb3f0574ecdd13e043e13958032a10575b77034f46",
+      "size_bytes": 5372
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0000_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000000.png",
+      "sha256": "5df4351d6cfc68df0c1dbf8fe669246053de33f402d629aa233c125ffa2c176a",
+      "size_bytes": 11900
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0001_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000001.png",
+      "sha256": "4b58b4297d4224c226de320c294da75eeacd4d8698e69bc155f6f0983b17c6ac",
+      "size_bytes": 11910
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0002_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000002.png",
+      "sha256": "623371bd7f039e4dfb901d8ac263dae7a368c0910e4673e0bc06112e4cae9d7a",
+      "size_bytes": 12030
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0003_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000003.png",
+      "sha256": "37d95dd27a719de1c86bddf0d93a8e89d572e63cb0efcf8657211f13ae7bdb91",
+      "size_bytes": 11928
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0004_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000004.png",
+      "sha256": "fe9d9052d035826ad0695849771c8c23519f480e52cbadbc1cf17eb5091e3119",
+      "size_bytes": 12017
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0005_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000005.png",
+      "sha256": "40ccf4bc0f16b02931697ee2dba1f2bf1dfef078f6193cb9e47859b01f9a99e3",
+      "size_bytes": 12046
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0006_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000006.png",
+      "sha256": "25049e36ff69a7208a922b66d71219381ebe08af919ad66adbb7c0f8dbd68354",
+      "size_bytes": 11934
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0007_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000007.png",
+      "sha256": "2ea6c8cb969278e2ccd3117ca1a63f823ebe98e752776d5578fa5d0fcd8e0b9c",
+      "size_bytes": 11942
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0008_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000008.png",
+      "sha256": "f48ca9166df2e8dc1030f1dbb0036af390eb3f8cb17ecd746a6f8cecd6586151",
+      "size_bytes": 12055
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0009_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000009.png",
+      "sha256": "4f28bd887548ec1c5cbf0f86b3493d7eb0b233313c9fa37fac35a518bfcf418d",
+      "size_bytes": 11932
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0010_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000010.png",
+      "sha256": "fe42ceb14ce5cdf899d8b948265ebffd46fde47007b3847c888a9b086fdc0181",
+      "size_bytes": 11935
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/evaluation/trajectories/0011_carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9_000011.png",
+      "sha256": "c29f37e210b9107d712f2d212a3625b071f322c420c3fc24850d31ce4307a32f",
+      "size_bytes": 11927
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/gate_v8.json",
+      "sha256": "59ead9631cc8fe60ea4542ed127ae7bed5d03a9dddf3d9727c9d4f3105f1e658",
+      "size_bytes": 5883
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/train.log",
+      "sha256": "067e51d4674d851b7523bc1c1a4c819c7bf19ca64461a46c420863d109c06381",
+      "size_bytes": 1205
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/training/metrics.jsonl",
+      "sha256": "864e44741dbf30f6e5f80d3096a0e4b266e921827c02d012b82e59d9d82e34c2",
+      "size_bytes": 742162
+    },
+    {
+      "path": "seed_20260905/B_no_accel_input/training/run.json",
+      "sha256": "871bbd5799ab9677163df5fc9c99e62129ccab090d362828b7dc9a55b7f9af52",
+      "size_bytes": 4266
+    },
+    {
+      "path": "status.json",
+      "sha256": "dca0c6df4ffd4b0b12d4ddc30f36cd22050ca4df6784d0e0d00a8d34f6c46ea4",
+      "size_bytes": 34014
+    }
+  ],
+  "inventory_summary": {
+    "file_count": 116,
+    "total_size_bytes": 5521583,
+    "suffix_counts": {
+      ".json": 20,
+      ".log": 18,
+      ".png": 72,
+      ".jsonl": 6
+    },
+    "includes": [
+      ".json",
+      ".jsonl",
+      ".log",
+      ".png"
+    ],
+    "excludes": "Checkpoint payloads except final latest.pt hash/size per fit; paths are campaign-relative."
+  },
+  "gpu0_observation": {
+    "index": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "utilization_percent": 0,
+    "memory_used_mib": 0,
+    "memory_total_mib": 97887,
+    "compute_process_count": 0,
+    "queried_gpu1": false,
+    "snapshot_only_not_future_reservation": true
+  },
+  "lifecycle": {
+    "original_runner_pid": 2262846,
+    "original_runner_pid_absent": true,
+    "matching_campaign_worker_count": 0,
+    "lease_path": "runs/campaigns/.gpu0_training.lock",
+    "lease_observation_method": "Read /proc/locks and match the existing lock file device/inode; no flock acquisition or remote file write.",
+    "matching_advisory_lock_count": 0
+  },
+  "data": {
+    "dataset_id": "carla-common10-30kph-five-episodes-20260907-v3",
+    "manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+    "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+    "train_tensor_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+    "val_tensor_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+    "train_samples": 1147,
+    "val_samples": 337,
+    "legacy_data_quality_limitations_preserved": true,
+    "denied_new_c_track_episodes_used": false,
+    "test_policy": "Full-corpus contract/hash validation may read held-out test JSON and JPEG bytes. Test samples are excluded from model training loss, model inference, evaluation metrics and model selection."
+  },
+  "scope": {
+    "remote_reads_only": true,
+    "checkpoint_deserialization": false,
+    "checkpoint_sha_reads": true,
+    "model_forward": false,
+    "optimizer_executed_by_auditor": false,
+    "installation": false,
+    "remote_file_changes": false,
+    "gpu1_access": false,
+    "new_campaign_started": false,
+    "data_admission": false,
+    "vehicle_control_approved": false
+  },
+  "all_inventory_and_checkpoint_hashes_rechecked": true
+}

@@ -1,13 +1,22 @@
 # Portable E2E 자율주행 기능 요구사항·로드맵
 
-> 기준일: 2026-09-08
+> 기준일: 2026-09-09
 >
 > 기계 판독 원본: [`config/portable_e2e_feature_matrix.yaml`](../config/portable_e2e_feature_matrix.yaml)
 
 ## 현재 결론
 
+<!-- HH_260906 - Count completed full-model input-ablation runs separately from historical selector-only fits and driving milestones. -->
+**9월 9일 추가 진행:** [가속도 입력 A/B](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/01_no_accel_development_ab/README.md)를
+원격 GPU 0에서 00:58:53 KST에 완료했습니다. 기존 모델과 가속도 입력 제외 모델을 각각 세 seed로
+새로 전체 학습한 6회·평가 6회·감사 6회입니다. B의 상대 기준은 FAIL/PASS/FAIL이고 절대 품질은
+모두 FAIL이라 미채택입니다. 아래 9월 7일 캠페인 15회와 합친 후속 전체 모델 학습은 21회이며,
+9월 8일 선택기 전용 9회는 별개로 셉니다. 이번 추가 설치나 실시간 차량 제어는 없습니다.
+신규 C-track 8회는 계속 데이터 미승인이고 learned closed-loop 기능 수는 0개 그대로입니다.
+
 <!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
-목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 현재 완료된 것은
+목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 아래는 9월 8일까지의 근거이며,
+9월 9일 추가 완료 6회는 위에서 구분했다. 9월 8일까지 완료된 것은
 `common_10hz_v1` 데이터·학습 배선, CARLA-only physical-v1 학습·open-loop 평가,
 로컬 3장면의 10 Hz shadow 계측, **9월 7일 네 캠페인의 전체 모델 학습·평가·감사 15회**,
 **9월 8일 고정 C 생성기 위 선택기 전용 학습 9회**와 정답 데이터 감속 진단이다. 둘은 다른

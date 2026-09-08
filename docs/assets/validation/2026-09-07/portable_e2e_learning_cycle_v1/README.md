@@ -3,7 +3,9 @@
 <!-- HH_260906 - Keep learned-model validation, expert demonstrations, and transfer proofs in separate categories. -->
 
 2026-09-07 실행 자료. **새 Portable 모델의 실차·차량 제어 승인은 없다.**
-후속 9월 8일 작업은 [최신 학습·수집 개선 자료](../../2026-09-08/portable_e2e_learning_cycle_v1/README.md)에 이어서 기록한다.
+후속 9월 8일 작업은 [학습·수집 개선 자료](../../2026-09-08/portable_e2e_learning_cycle_v1/README.md)에 이어서 기록한다.
+<!-- HH_260906 - Add dated navigation to the next completed campaign while preserving this historical execution record. -->
+최신 9월 9일은 [GPU 0 새 모델 6회 학습·평가·실제 곡선](../../2026-09-09/portable_e2e_learning_cycle_v1/README.md)에서 확인한다.
 이 폴더의 CARLA 카메라 영상은 학습 정답을 수집한 BasicAgent 주행이며, 학습 모델의
 closed-loop 주행 성공 영상이 아니다. 기존 Autoware VAD 주행은
 [별도 제어·shadow 검증](../control_ab_30kph_and_60kph_readiness_v1/README.md)에서 확인한다.

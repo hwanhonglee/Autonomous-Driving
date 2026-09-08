@@ -1,0 +1,53 @@
+{
+  "note": "HH_260906 - Keep local code-regression evidence separate from remote model learning and vehicle qualification.",
+  "local_test_source_commit": "6a1b56f4abe0655ca514808a202a7266e4e9551d",
+  "remote_training_source_commit": "213cfc69e3551b315dc3a2f618387027ff5948f6",
+  "status": "LOCAL_CODE_REGRESSIONS_COMPLETE",
+  "runs": {
+    "main": {
+      "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs -p no:cacheprovider tests",
+      "requested_at_utc": "2026-09-08 15:49:27 UTC",
+      "completion_observed_at_utc": "2026-09-08 15:53:52 UTC",
+      "exit_code": 0,
+      "passed": 4511,
+      "skipped": 6,
+      "pytest_reported_duration_s": 206.94,
+      "log": "tests/main.log"
+    },
+    "launch": {
+      "command": "source scripts/e2e/env.sh && PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 python3 -m pytest -q -rs -p no:cacheprovider autoware_e2e_vad_launch/test",
+      "requested_at_utc": "2026-09-08 15:49:27 UTC",
+      "completion_observed_at_utc": "2026-09-08 15:50:34 UTC",
+      "exit_code": 0,
+      "passed": 373,
+      "skipped": 0,
+      "pytest_reported_duration_s": 13.5,
+      "log": "tests/launch.log"
+    }
+  },
+  "combined": {
+    "passed": 4884,
+    "skipped": 6,
+    "failed": 0
+  },
+  "source_snapshot": "tests/source_sha256.json",
+  "source_files_verified": 493,
+  "source_postcheck_pass": true,
+  "skip_reasons": [
+    {
+      "count": 5,
+      "reason": "Existing local Torch lacks secure torch.load(weights_only=...) required by the tests."
+    },
+    {
+      "count": 1,
+      "reason": "Pinned Woraksan route/map bundle is not available."
+    }
+  ],
+  "limits": [
+    "These are local CPU code checks, not remote training completion or actual Autoware/CARLA driving.",
+    "Focused runner, model, summary and renderer checks are included in the full main suite, not additional independent test counts.",
+    "The remote worker remains on its distinct fixed training commit; local summary and plot development does not edit the active remote source.",
+    "External packages, weights and the entire dataset are not covered by the declared repository source snapshot.",
+    "Observation timestamps are not exact process-exit timestamps; use pytest-reported durations."
+  ]
+}

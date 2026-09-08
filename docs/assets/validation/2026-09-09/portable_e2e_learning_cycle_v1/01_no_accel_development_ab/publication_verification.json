@@ -1,0 +1,42 @@
+{
+  "comment": "HH_260906 - Record measured post-publication integrity checks separately from local regression counts and model quality decisions.",
+  "status": "PUBLISHED_EVIDENCE_VERIFIED_NOT_PROMOTED",
+  "observed_at_utc": "2026-09-08T16:08:17Z",
+  "source_commit_for_local_code": "6a1b56f4abe0655ca514808a202a7266e4e9551d",
+  "source_commit_for_remote_training": "213cfc69e3551b315dc3a2f618387027ff5948f6",
+  "remote_mirror": {
+    "files_verified": 116,
+    "bytes_verified": 5521583,
+    "all_relative_paths_sizes_and_sha256_match": true,
+    "inventory": "evidence/provenance/remote_completion.json"
+  },
+  "validation": {
+    "summary_recomputed_from_all_18_stages": true,
+    "all_9240_history_rows_verified": true,
+    "plots_bound_to_summary_and_original_inputs": true,
+    "public_evidence_sha256_manifest_pass": true,
+    "source_snapshot_files_still_unchanged": 493,
+    "json_files_parsed_before_this_record": 27,
+    "png_files_decoded": 74,
+    "prediction_png_count": 72,
+    "learning_plot_count": 2,
+    "markdown_target_existence_checks": 92,
+    "missing_markdown_targets": 0,
+    "personal_host_or_home_paths_in_json_jsonl_logs": 0,
+    "checkpoint_files_downloaded": 0
+  },
+  "quality": {
+    "candidate_screen": "FAIL",
+    "absolute_quality": "FAIL",
+    "paired_relative_results": ["FAIL", "PASS", "FAIL"],
+    "automatic_promotion": false,
+    "vehicle_control_approved": false
+  },
+  "limits": [
+    "Counts describe checks at publication, not additional independent pytest test cases.",
+    "Markdown checks verify target existence, not every remote page or Markdown anchor.",
+    "The 72 predictions are fixed first-twelve validation anchors per fit, not representative live driving footage.",
+    "Runtime checkpoint payloads remain remote and were hashed there without deserialization.",
+    "Public run and campaign JSON views are labeled redacted derivatives; other artifacts retain original bytes as listed in the publication manifest."
+  ]
+}

@@ -1,0 +1,1072 @@
+{
+  "schema": "portable_e2e.finite_check_benchmark.v1",
+  "status": "COMPLETE",
+  "started_at_utc": "2026-09-08T17:45:22.709864+00:00",
+  "source_sha256": {
+    "portable_e2e/train.py": "7ab83343bb15cf9233c2208d1b405498c66340706b8562b272f242152f4d3882",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "portable_e2e/config/perspective_trajectory_physical_v1.model.json": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+    "scripts/e2e/run_portable_training_campaign.py": "b0c4f587e2fbe029f7b8180fd67cc982e3ef7db67bfca47d52e921ea5ca06eb1",
+    "benchmark_worker.py": "4fcdbaffccaaa9552cd17cf818ef993e00199baf4d2ca083474095798f45b461"
+  },
+  "expected_source_commit": "05c5847b5ad6c31ac46a713e35ba7fdc2edd10a0",
+  "torch_version": "2.13.0+cu130",
+  "synthetic_only": true,
+  "model_training": false,
+  "model_or_checkpoint_loaded": false,
+  "dataset_read": false,
+  "production_guard_changed": false,
+  "overall_training_speedup_established": false,
+  "plan": {
+    "tensor_count": 47,
+    "parameter_shapes": [
+      [
+        6,
+        96
+      ],
+      [
+        24,
+        3,
+        3,
+        3
+      ],
+      [
+        24
+      ],
+      [
+        24
+      ],
+      [
+        48,
+        24,
+        3,
+        3
+      ],
+      [
+        48
+      ],
+      [
+        48
+      ],
+      [
+        96,
+        48,
+        3,
+        3
+      ],
+      [
+        96
+      ],
+      [
+        96
+      ],
+      [
+        144,
+        96,
+        3,
+        3
+      ],
+      [
+        144
+      ],
+      [
+        144
+      ],
+      [
+        96,
+        2160
+      ],
+      [
+        96
+      ],
+      [
+        96,
+        16
+      ],
+      [
+        96
+      ],
+      [
+        96,
+        96
+      ],
+      [
+        96
+      ],
+      [
+        192,
+        576
+      ],
+      [
+        192
+      ],
+      [
+        192
+      ],
+      [
+        192
+      ],
+      [
+        64,
+        13
+      ],
+      [
+        64
+      ],
+      [
+        192,
+        64
+      ],
+      [
+        192,
+        64
+      ],
+      [
+        192
+      ],
+      [
+        192
+      ],
+      [
+        96,
+        2
+      ],
+      [
+        96
+      ],
+      [
+        96,
+        96
+      ],
+      [
+        96
+      ],
+      [
+        288,
+        96
+      ],
+      [
+        288,
+        96
+      ],
+      [
+        288
+      ],
+      [
+        288
+      ],
+      [
+        256,
+        352
+      ],
+      [
+        256
+      ],
+      [
+        256
+      ],
+      [
+        256
+      ],
+      [
+        256,
+        256
+      ],
+      [
+        256
+      ],
+      [
+        768,
+        256
+      ],
+      [
+        768
+      ],
+      [
+        6,
+        256
+      ],
+      [
+        6
+      ]
+    ],
+    "synthetic_parameter_elements": 954590,
+    "moment_tensors_per_parameter": 2,
+    "cpu_step_scalars_per_parameter": 1,
+    "warmup_per_method": 5,
+    "repeated_abba_blocks": 20,
+    "timing_order": [
+      "recursive",
+      "grouped",
+      "grouped",
+      "recursive"
+    ],
+    "max_wall_seconds": 300.0,
+    "threads": 4,
+    "finish_before_utc": "2026-09-09T01:00:00Z"
+  },
+  "measurements": [
+    {
+      "block": 0,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.166813,
+      "drained_wall_ms": 4.179162,
+      "cuda_event_elapsed_ms": 4.17519998550415
+    },
+    {
+      "block": 0,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.056246,
+      "drained_wall_ms": 3.070737,
+      "cuda_event_elapsed_ms": 3.0665600299835205
+    },
+    {
+      "block": 0,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.035755,
+      "drained_wall_ms": 3.048454,
+      "cuda_event_elapsed_ms": 3.044095993041992
+    },
+    {
+      "block": 0,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.037803,
+      "drained_wall_ms": 4.04933,
+      "cuda_event_elapsed_ms": 4.045184135437012
+    },
+    {
+      "block": 1,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.144781,
+      "drained_wall_ms": 4.155937,
+      "cuda_event_elapsed_ms": 4.15180778503418
+    },
+    {
+      "block": 1,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.043126,
+      "drained_wall_ms": 3.056446,
+      "cuda_event_elapsed_ms": 3.052288055419922
+    },
+    {
+      "block": 1,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.028805,
+      "drained_wall_ms": 3.041724,
+      "cuda_event_elapsed_ms": 3.0374720096588135
+    },
+    {
+      "block": 1,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.121206,
+      "drained_wall_ms": 4.132262,
+      "cuda_event_elapsed_ms": 4.128064155578613
+    },
+    {
+      "block": 2,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.066065,
+      "drained_wall_ms": 4.077121,
+      "cuda_event_elapsed_ms": 4.072959899902344
+    },
+    {
+      "block": 2,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.034634,
+      "drained_wall_ms": 3.047753,
+      "cuda_event_elapsed_ms": 3.0436160564422607
+    },
+    {
+      "block": 2,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.016056,
+      "drained_wall_ms": 3.028965,
+      "cuda_event_elapsed_ms": 3.024768114089966
+    },
+    {
+      "block": 2,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.112734,
+      "drained_wall_ms": 4.1236,
+      "cuda_event_elapsed_ms": 4.119423866271973
+    },
+    {
+      "block": 3,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.148275,
+      "drained_wall_ms": 4.159752,
+      "cuda_event_elapsed_ms": 4.155648231506348
+    },
+    {
+      "block": 3,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.027704,
+      "drained_wall_ms": 3.040713,
+      "cuda_event_elapsed_ms": 3.03654408454895
+    },
+    {
+      "block": 3,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.026242,
+      "drained_wall_ms": 3.039361,
+      "cuda_event_elapsed_ms": 3.034976005554199
+    },
+    {
+      "block": 3,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.119693,
+      "drained_wall_ms": 4.130579,
+      "cuda_event_elapsed_ms": 4.126431941986084
+    },
+    {
+      "block": 4,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.107015,
+      "drained_wall_ms": 4.117591,
+      "cuda_event_elapsed_ms": 4.113471984863281
+    },
+    {
+      "block": 4,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.043026,
+      "drained_wall_ms": 3.055905,
+      "cuda_event_elapsed_ms": 3.0517120361328125
+    },
+    {
+      "block": 4,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.026401,
+      "drained_wall_ms": 3.039701,
+      "cuda_event_elapsed_ms": 3.0355520248413086
+    },
+    {
+      "block": 4,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 3.960048,
+      "drained_wall_ms": 3.969763,
+      "cuda_event_elapsed_ms": 3.9660160541534424
+    },
+    {
+      "block": 5,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.03591,
+      "drained_wall_ms": 4.046596,
+      "cuda_event_elapsed_ms": 4.043360233306885
+    },
+    {
+      "block": 5,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.033011,
+      "drained_wall_ms": 3.046261,
+      "cuda_event_elapsed_ms": 3.0420479774475098
+    },
+    {
+      "block": 5,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.014494,
+      "drained_wall_ms": 3.027343,
+      "cuda_event_elapsed_ms": 3.023200035095215
+    },
+    {
+      "block": 5,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.129628,
+      "drained_wall_ms": 4.140394,
+      "cuda_event_elapsed_ms": 4.136096000671387
+    },
+    {
+      "block": 6,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.123439,
+      "drained_wall_ms": 4.133895,
+      "cuda_event_elapsed_ms": 4.129727840423584
+    },
+    {
+      "block": 6,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.056907,
+      "drained_wall_ms": 3.069686,
+      "cuda_event_elapsed_ms": 3.065471887588501
+    },
+    {
+      "block": 6,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.031399,
+      "drained_wall_ms": 3.043978,
+      "cuda_event_elapsed_ms": 3.03983998298645
+    },
+    {
+      "block": 6,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.140264,
+      "drained_wall_ms": 4.15128,
+      "cuda_event_elapsed_ms": 4.147071838378906
+    },
+    {
+      "block": 7,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.142347,
+      "drained_wall_ms": 4.153032,
+      "cuda_event_elapsed_ms": 4.148896217346191
+    },
+    {
+      "block": 7,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.033903,
+      "drained_wall_ms": 3.046571,
+      "cuda_event_elapsed_ms": 3.0423998832702637
+    },
+    {
+      "block": 7,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.02516,
+      "drained_wall_ms": 3.037728,
+      "cuda_event_elapsed_ms": 3.0334720611572266
+    },
+    {
+      "block": 7,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.073635,
+      "drained_wall_ms": 4.084722,
+      "cuda_event_elapsed_ms": 4.080639839172363
+    },
+    {
+      "block": 8,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.128456,
+      "drained_wall_ms": 4.139172,
+      "cuda_event_elapsed_ms": 4.134975910186768
+    },
+    {
+      "block": 8,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.039351,
+      "drained_wall_ms": 3.05214,
+      "cuda_event_elapsed_ms": 3.047935962677002
+    },
+    {
+      "block": 8,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.02541,
+      "drained_wall_ms": 3.038579,
+      "cuda_event_elapsed_ms": 3.0344319343566895
+    },
+    {
+      "block": 8,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.114666,
+      "drained_wall_ms": 4.125692,
+      "cuda_event_elapsed_ms": 4.121568202972412
+    },
+    {
+      "block": 9,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.050352,
+      "drained_wall_ms": 4.061138,
+      "cuda_event_elapsed_ms": 4.056960105895996
+    },
+    {
+      "block": 9,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.03148,
+      "drained_wall_ms": 3.044178,
+      "cuda_event_elapsed_ms": 3.0400640964508057
+    },
+    {
+      "block": 9,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.019661,
+      "drained_wall_ms": 3.03222,
+      "cuda_event_elapsed_ms": 3.0280959606170654
+    },
+    {
+      "block": 9,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.127976,
+      "drained_wall_ms": 4.138972,
+      "cuda_event_elapsed_ms": 4.13478422164917
+    },
+    {
+      "block": 10,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.132673,
+      "drained_wall_ms": 4.143459,
+      "cuda_event_elapsed_ms": 4.139296054840088
+    },
+    {
+      "block": 10,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.036106,
+      "drained_wall_ms": 3.048705,
+      "cuda_event_elapsed_ms": 3.0445120334625244
+    },
+    {
+      "block": 10,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.02515,
+      "drained_wall_ms": 3.037888,
+      "cuda_event_elapsed_ms": 3.033695936203003
+    },
+    {
+      "block": 10,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.129137,
+      "drained_wall_ms": 4.140234,
+      "cuda_event_elapsed_ms": 4.136064052581787
+    },
+    {
+      "block": 11,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.124941,
+      "drained_wall_ms": 4.135777,
+      "cuda_event_elapsed_ms": 4.131616115570068
+    },
+    {
+      "block": 11,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.023327,
+      "drained_wall_ms": 3.035886,
+      "cuda_event_elapsed_ms": 3.0315840244293213
+    },
+    {
+      "block": 11,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.021074,
+      "drained_wall_ms": 3.03222,
+      "cuda_event_elapsed_ms": 3.0285120010375977
+    },
+    {
+      "block": 11,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 3.936744,
+      "drained_wall_ms": 3.94765,
+      "cuda_event_elapsed_ms": 3.9444479942321777
+    },
+    {
+      "block": 12,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.114726,
+      "drained_wall_ms": 4.125482,
+      "cuda_event_elapsed_ms": 4.121344089508057
+    },
+    {
+      "block": 12,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.029266,
+      "drained_wall_ms": 3.041904,
+      "cuda_event_elapsed_ms": 3.03769588470459
+    },
+    {
+      "block": 12,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.020883,
+      "drained_wall_ms": 3.033332,
+      "cuda_event_elapsed_ms": 3.0291199684143066
+    },
+    {
+      "block": 12,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.126093,
+      "drained_wall_ms": 4.137039,
+      "cuda_event_elapsed_ms": 4.1328959465026855
+    },
+    {
+      "block": 13,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.126453,
+      "drained_wall_ms": 4.137109,
+      "cuda_event_elapsed_ms": 4.132991790771484
+    },
+    {
+      "block": 13,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.030838,
+      "drained_wall_ms": 3.044759,
+      "cuda_event_elapsed_ms": 3.040544033050537
+    },
+    {
+      "block": 13,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.032751,
+      "drained_wall_ms": 3.0453,
+      "cuda_event_elapsed_ms": 3.0409600734710693
+    },
+    {
+      "block": 13,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.112452,
+      "drained_wall_ms": 4.123369,
+      "cuda_event_elapsed_ms": 4.119200229644775
+    },
+    {
+      "block": 14,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.1172,
+      "drained_wall_ms": 4.127885,
+      "cuda_event_elapsed_ms": 4.123775959014893
+    },
+    {
+      "block": 14,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.026752,
+      "drained_wall_ms": 3.039231,
+      "cuda_event_elapsed_ms": 3.0350399017333984
+    },
+    {
+      "block": 14,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.029035,
+      "drained_wall_ms": 3.041574,
+      "cuda_event_elapsed_ms": 3.0374081134796143
+    },
+    {
+      "block": 14,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.048509,
+      "drained_wall_ms": 4.059275,
+      "cuda_event_elapsed_ms": 4.055168151855469
+    },
+    {
+      "block": 15,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.11783,
+      "drained_wall_ms": 4.128406,
+      "cuda_event_elapsed_ms": 4.124288082122803
+    },
+    {
+      "block": 15,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.020232,
+      "drained_wall_ms": 3.032811,
+      "cuda_event_elapsed_ms": 3.028640031814575
+    },
+    {
+      "block": 15,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.015866,
+      "drained_wall_ms": 3.028154,
+      "cuda_event_elapsed_ms": 3.0239999294281006
+    },
+    {
+      "block": 15,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.130019,
+      "drained_wall_ms": 4.140745,
+      "cuda_event_elapsed_ms": 4.136608123779297
+    },
+    {
+      "block": 16,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.041488,
+      "drained_wall_ms": 4.052164,
+      "cuda_event_elapsed_ms": 4.048064231872559
+    },
+    {
+      "block": 16,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.028244,
+      "drained_wall_ms": 3.040512,
+      "cuda_event_elapsed_ms": 3.0364160537719727
+    },
+    {
+      "block": 16,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.02475,
+      "drained_wall_ms": 3.036998,
+      "cuda_event_elapsed_ms": 3.0328640937805176
+    },
+    {
+      "block": 16,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.120815,
+      "drained_wall_ms": 4.131671,
+      "cuda_event_elapsed_ms": 4.127488136291504
+    },
+    {
+      "block": 17,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.136137,
+      "drained_wall_ms": 4.146703,
+      "cuda_event_elapsed_ms": 4.142528057098389
+    },
+    {
+      "block": 17,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.062726,
+      "drained_wall_ms": 3.075605,
+      "cuda_event_elapsed_ms": 3.071455955505371
+    },
+    {
+      "block": 17,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.028164,
+      "drained_wall_ms": 3.040693,
+      "cuda_event_elapsed_ms": 3.0373759269714355
+    },
+    {
+      "block": 17,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.141005,
+      "drained_wall_ms": 4.15179,
+      "cuda_event_elapsed_ms": 4.147679805755615
+    },
+    {
+      "block": 18,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.136258,
+      "drained_wall_ms": 4.148055,
+      "cuda_event_elapsed_ms": 4.142975807189941
+    },
+    {
+      "block": 18,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.040793,
+      "drained_wall_ms": 3.053582,
+      "cuda_event_elapsed_ms": 3.049344062805176
+    },
+    {
+      "block": 18,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.017889,
+      "drained_wall_ms": 3.029516,
+      "cuda_event_elapsed_ms": 3.025343894958496
+    },
+    {
+      "block": 18,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 3.994589,
+      "drained_wall_ms": 4.005736,
+      "cuda_event_elapsed_ms": 4.001535892486572
+    },
+    {
+      "block": 19,
+      "position": 0,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.106354,
+      "drained_wall_ms": 4.11696,
+      "cuda_event_elapsed_ms": 4.112832069396973
+    },
+    {
+      "block": 19,
+      "position": 1,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.042135,
+      "drained_wall_ms": 3.054463,
+      "cuda_event_elapsed_ms": 3.0503039360046387
+    },
+    {
+      "block": 19,
+      "position": 2,
+      "method": "grouped",
+      "result": true,
+      "function_host_ms": 3.022285,
+      "drained_wall_ms": 3.034813,
+      "cuda_event_elapsed_ms": 3.030656099319458
+    },
+    {
+      "block": 19,
+      "position": 3,
+      "method": "recursive",
+      "result": true,
+      "function_host_ms": 4.133915,
+      "drained_wall_ms": 4.144721,
+      "cuda_event_elapsed_ms": 4.140448093414307
+    }
+  ],
+  "parity": [
+    {
+      "case": "nested_finite",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "nan_tensor",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    },
+    {
+      "case": "positive_inf",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    },
+    {
+      "case": "negative_inf",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    },
+    {
+      "case": "complex_finite",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "complex_nan",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    },
+    {
+      "case": "complex_inf",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    },
+    {
+      "case": "integer_boolean",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "empty_nested",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "python_nonfinite_ignored",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "mixed_device_finite",
+      "recursive": true,
+      "grouped": true,
+      "equal": true
+    },
+    {
+      "case": "mixed_device_nonfinite",
+      "recursive": false,
+      "grouped": false,
+      "equal": true
+    }
+  ],
+  "shape_reference": {
+    "source_commit": "05c5847b5ad6c31ac46a713e35ba7fdc2edd10a0",
+    "model_source_sha256": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "model_config_sha256": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+    "learned_values_copied": false,
+    "offline_git_source_sha256": {
+      "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+      "portable_e2e/config/perspective_trajectory_physical_v1.model.json": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d"
+    },
+    "optimizer_layout": "Synthetic noncapturable/nonfused Adam-style two device moments and one CPU float step per parameter."
+  },
+  "limitations": [
+    "Synthetic values matching reviewed parameter shapes; not actual model/optimizer state, data loading, forward/backward or end-to-end training timing.",
+    "Both methods return the same boolean on supported noncyclic pure containers; grouped checks do not reproduce early-exit traversal timing.",
+    "Python scalar NaN/Inf and non-Mapping/list/tuple containers remain ignored, exactly as production does.",
+    "CUDA event elapsed time includes device-timeline host-dispatch gaps; it is not summed kernel execution time.",
+    "Wall budget is cooperative between bounded checks; the owner must also use an external 360-second process timeout for GPU execution."
+  ],
+  "hardware": {
+    "device": "cuda:0",
+    "physical_gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "physical_gpu_index": 0,
+    "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "cooperative_lease": "runs/campaigns/.gpu0_training.lock"
+  },
+  "input_sha256_before": "ce0f1f10d82655ff1e26ccd32cf745696f2791384170f02c7d10287cf9eb355e",
+  "all_finite_workload_scalar_reductions": {
+    "recursive_item_calls": 188,
+    "recursive_item_calls_by_device": {
+      "cuda:0": 141,
+      "cpu": 47
+    },
+    "grouped_item_calls": 3,
+    "preserved_call_boundaries": [
+      "model",
+      "optimizer_like"
+    ],
+    "every_floating_or_complex_tensor_checked": true,
+    "notice": "Code-path scalar-read counts, not independently measured CUDA fence or kernel counts; CPU reads are not GPU synchronizations."
+  },
+  "input_sha256_after": "ce0f1f10d82655ff1e26ccd32cf745696f2791384170f02c7d10287cf9eb355e",
+  "source_sha256_after": {
+    "portable_e2e/train.py": "7ab83343bb15cf9233c2208d1b405498c66340706b8562b272f242152f4d3882",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "portable_e2e/config/perspective_trajectory_physical_v1.model.json": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+    "scripts/e2e/run_portable_training_campaign.py": "b0c4f587e2fbe029f7b8180fd67cc982e3ef7db67bfca47d52e921ea5ca06eb1",
+    "benchmark_worker.py": "4fcdbaffccaaa9552cd17cf818ef993e00199baf4d2ca083474095798f45b461"
+  },
+  "method_statistics": {
+    "recursive": {
+      "count": 40,
+      "mean_function_host_ms": 4.1019611,
+      "median_function_host_ms": 4.121010500000001,
+      "p95_nearest_rank_function_host_ms": 4.144781
+    },
+    "grouped": {
+      "count": 40,
+      "mean_function_host_ms": 3.030675925,
+      "median_function_host_ms": 3.0285245,
+      "p95_nearest_rank_function_host_ms": 3.056246
+    }
+  },
+  "finished_at_utc": "2026-09-08T17:45:23.395650+00:00",
+  "wall_seconds": 0.46456811483949423,
+  "completed_measurement_count": 80,
+  "expected_measurement_count": 80
+}

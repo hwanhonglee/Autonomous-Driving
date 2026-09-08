@@ -1,0 +1,1723 @@
+{
+  "schema": "portable_e2e.candidate_regret_summary.v1",
+  "status": "COMPLETE_NOT_PROMOTED",
+  "candidate_screen": "FAIL",
+  "absolute_quality": "FAIL",
+  "automatic_promotion": false,
+  "vehicle_control_approved": false,
+  "training_data_approved_by_this_report": false,
+  "test_evaluated": false,
+  "test_used_for_training_or_selection": false,
+  "pairs": [
+    {
+      "seed": 20260903,
+      "baseline": {
+        "run": "seed_20260903/A_original_loss",
+        "seed": 20260903,
+        "arm": "A_original_loss",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "c2bcaca289ad435792f826dd949c63a44b3ee1c8cb002b27a7aa6ca8c6eb163b",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 0,
+            "1": 0,
+            "2": 294,
+            "3": 43,
+            "4": 0,
+            "5": 0
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 3.8743276063695506,
+          "oracle_ade_m": 1.5521757663711242,
+          "selected_fde_m": 9.827706007911473,
+          "selected_speed_mae_mps": 1.4599277082642745,
+          "selected_yaw_mae_rad": 0.0842406953676695,
+          "selected_kinematic_speed_mae_mps": 4.157707325213254e-06,
+          "ade_1p0s_m": 0.21641185888550757,
+          "fde_1p0s_m": 0.5282404654457591,
+          "ade_3p0s_m": 1.2099366798245235,
+          "fde_3p0s_m": 2.908454127057016,
+          "ade_6p4s_m": 3.8743276063695506,
+          "fde_6p4s_m": 9.827706007911473,
+          "selection_regret_ade_m": 2.3221518399984262
+        },
+        "auxiliary_diagnostics": {
+          "enabled": false,
+          "weight": 0.0
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "candidate": {
+        "run": "seed_20260903/B_cost_aware_selector",
+        "seed": 20260903,
+        "arm": "B_cost_aware_selector",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "060c2184a5a67b7155bdc69c95c455c68aec2ec95444e1402dcbdae07b59ae3e",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 0,
+            "1": 30,
+            "2": 17,
+            "3": 51,
+            "4": 239,
+            "5": 0
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 4.213251161601848,
+          "oracle_ade_m": 1.5125057629643985,
+          "selected_fde_m": 9.758419515205773,
+          "selected_speed_mae_mps": 1.432665774040477,
+          "selected_yaw_mae_rad": 0.08722297024832988,
+          "selected_kinematic_speed_mae_mps": 3.531626458500874e-06,
+          "ade_1p0s_m": 0.2528253164949332,
+          "fde_1p0s_m": 0.6107892051825538,
+          "ade_3p0s_m": 1.4236240351147043,
+          "fde_3p0s_m": 3.4993290628806775,
+          "ade_6p4s_m": 4.213251161601848,
+          "fde_6p4s_m": 9.758419515205773,
+          "selection_regret_ade_m": 2.7007453986374497
+        },
+        "auxiliary_diagnostics": {
+          "enabled": true,
+          "weight": 0.1,
+          "evaluation_mean": 6.3783914616624395,
+          "evaluation_sample_count": 337,
+          "last_training_batch_mean": 3.8153886795043945,
+          "definition": "Mean softmax-weighted detached composite-cost regret; not ADE selection regret."
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "relative_checks": {
+        "selected_ade_improves": false,
+        "selected_fde_improves": true,
+        "geometry_does_not_regress": true,
+        "speed_mae_within_5_percent": true
+      },
+      "absolute_checks": {
+        "ade_1p0s_m": true,
+        "ade_3p0s_m": false,
+        "ade_6p4s_m": false,
+        "fde_6p4s_m": false
+      },
+      "candidate_screen": "FAIL",
+      "absolute_quality": "FAIL"
+    },
+    {
+      "seed": 20260904,
+      "baseline": {
+        "run": "seed_20260904/A_original_loss",
+        "seed": 20260904,
+        "arm": "A_original_loss",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "7f9ba288d569b9d28576b050e973ee47be8dba6b4c26a8fb81c9d80cd47e5041",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 150,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 100,
+            "5": 87
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 6.258545364930297,
+          "oracle_ade_m": 1.4836731538928227,
+          "selected_fde_m": 12.8974538234115,
+          "selected_speed_mae_mps": 1.9997945141367812,
+          "selected_yaw_mae_rad": 0.05924796040006844,
+          "selected_kinematic_speed_mae_mps": 3.665774363154913e-06,
+          "ade_1p0s_m": 0.30478753591680385,
+          "fde_1p0s_m": 0.7520539605829766,
+          "ade_3p0s_m": 2.1355925097133004,
+          "fde_3p0s_m": 5.642531347513553,
+          "ade_6p4s_m": 6.258545364930297,
+          "fde_6p4s_m": 12.8974538234115,
+          "selection_regret_ade_m": 4.774872211037475
+        },
+        "auxiliary_diagnostics": {
+          "enabled": false,
+          "weight": 0.0
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "candidate": {
+        "run": "seed_20260904/B_cost_aware_selector",
+        "seed": 20260904,
+        "arm": "B_cost_aware_selector",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "f1a4c8fa4c43a8b43050913f561a41c89547b09dce527c77a07e6a527bfd4489",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 12,
+            "1": 195,
+            "2": 0,
+            "3": 0,
+            "4": 55,
+            "5": 75
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 5.421815742282556,
+          "oracle_ade_m": 1.61793039814301,
+          "selected_fde_m": 12.480045103664214,
+          "selected_speed_mae_mps": 2.0564028197120137,
+          "selected_yaw_mae_rad": 0.05907667929013688,
+          "selected_kinematic_speed_mae_mps": 2.8886583357083352e-06,
+          "ade_1p0s_m": 0.2574248545380304,
+          "fde_1p0s_m": 0.5983757062453102,
+          "ade_3p0s_m": 1.6613508548244877,
+          "fde_3p0s_m": 4.415131995249927,
+          "ade_6p4s_m": 5.421815742282556,
+          "fde_6p4s_m": 12.480045103664214,
+          "selection_regret_ade_m": 3.803885344139546
+        },
+        "auxiliary_diagnostics": {
+          "enabled": true,
+          "weight": 0.1,
+          "evaluation_mean": 9.05740968710591,
+          "evaluation_sample_count": 337,
+          "last_training_batch_mean": 2.230910539627075,
+          "definition": "Mean softmax-weighted detached composite-cost regret; not ADE selection regret."
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "relative_checks": {
+        "selected_ade_improves": true,
+        "selected_fde_improves": true,
+        "geometry_does_not_regress": true,
+        "speed_mae_within_5_percent": true
+      },
+      "absolute_checks": {
+        "ade_1p0s_m": true,
+        "ade_3p0s_m": false,
+        "ade_6p4s_m": false,
+        "fde_6p4s_m": false
+      },
+      "candidate_screen": "PASS",
+      "absolute_quality": "FAIL"
+    },
+    {
+      "seed": 20260905,
+      "baseline": {
+        "run": "seed_20260905/A_original_loss",
+        "seed": 20260905,
+        "arm": "A_original_loss",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "1a37875a4950f8d6d70291dd8ed8f4af86b3415d31c1639f9a5b0a96cf3662b1",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 333,
+            "1": 0,
+            "2": 4,
+            "3": 0,
+            "4": 0,
+            "5": 0
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 4.789547056490306,
+          "oracle_ade_m": 1.5501094522391299,
+          "selected_fde_m": 11.866287520138728,
+          "selected_speed_mae_mps": 1.613772894402286,
+          "selected_yaw_mae_rad": 0.07546929378360952,
+          "selected_kinematic_speed_mae_mps": 4.733548028455378e-06,
+          "ade_1p0s_m": 0.22506507903956519,
+          "fde_1p0s_m": 0.455656262153334,
+          "ade_3p0s_m": 1.37410756185076,
+          "fde_3p0s_m": 3.7190669131208245,
+          "ade_6p4s_m": 4.789547056490306,
+          "fde_6p4s_m": 11.866287520138728,
+          "selection_regret_ade_m": 3.2394376042511768
+        },
+        "auxiliary_diagnostics": {
+          "enabled": false,
+          "weight": 0.0
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "candidate": {
+        "run": "seed_20260905/B_cost_aware_selector",
+        "seed": 20260905,
+        "arm": "B_cost_aware_selector",
+        "training_dataset_size": 1147,
+        "training_episode_count": 3,
+        "validation_sample_count": 337,
+        "validation_episode_count": 1,
+        "checkpoint_sha256": "23eae23596fa3d343a68336696199cc3de7b8fdb973374c3ba909d5c5da753bc",
+        "checkpoint_bytes_locally_verified": false,
+        "geometry": {
+          "selected_pass_count": 336,
+          "sample_count": 337,
+          "selection_histogram": {
+            "0": 209,
+            "1": 68,
+            "2": 50,
+            "3": 0,
+            "4": 0,
+            "5": 10
+          },
+          "selected_failure_counts": {
+            "speed": 1
+          }
+        },
+        "metrics": {
+          "selected_ade_m": 3.4569497471039656,
+          "oracle_ade_m": 1.719041504783871,
+          "selected_fde_m": 7.5884334697921485,
+          "selected_speed_mae_mps": 0.9694986009986889,
+          "selected_yaw_mae_rad": 0.0836248072334054,
+          "selected_kinematic_speed_mae_mps": 3.5906371087781e-06,
+          "ade_1p0s_m": 0.22572403339716088,
+          "fde_1p0s_m": 0.4717816606506661,
+          "ade_3p0s_m": 1.1614062786102295,
+          "fde_3p0s_m": 2.921676229475514,
+          "ade_6p4s_m": 3.4569497471039656,
+          "fde_6p4s_m": 7.5884334697921485,
+          "selection_regret_ade_m": 1.7379082423200947
+        },
+        "auxiliary_diagnostics": {
+          "enabled": true,
+          "weight": 0.1,
+          "evaluation_mean": 4.921812851634153,
+          "evaluation_sample_count": 337,
+          "last_training_batch_mean": 3.614896297454834,
+          "definition": "Mean softmax-weighted detached composite-cost regret; not ADE selection regret."
+        },
+        "absolute_checks": {
+          "ade_1p0s_m": true,
+          "ade_3p0s_m": false,
+          "ade_6p4s_m": false,
+          "fde_6p4s_m": false
+        },
+        "absolute_quality": "FAIL"
+      },
+      "relative_checks": {
+        "selected_ade_improves": true,
+        "selected_fde_improves": true,
+        "geometry_does_not_regress": true,
+        "speed_mae_within_5_percent": true
+      },
+      "absolute_checks": {
+        "ade_1p0s_m": true,
+        "ade_3p0s_m": false,
+        "ade_6p4s_m": false,
+        "fde_6p4s_m": false
+      },
+      "candidate_screen": "PASS",
+      "absolute_quality": "FAIL"
+    }
+  ],
+  "stages": [
+    {
+      "run": "seed_20260903/A_original_loss",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/A_original_loss/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260903",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.0"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "c1067995a5760a576061438aba90eaebedc041bbe0c68f74d039882374058566",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "eb80a7d5f83fc48b24263bc542a70f58f709d6a64c6be5fd566abde5787746bb",
+      "started_at_utc": "2026-09-08T17:21:35.880346+00:00",
+      "finished_at_utc": "2026-09-08T17:24:55.297844+00:00"
+    },
+    {
+      "run": "seed_20260903/A_original_loss",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/A_original_loss/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/A_original_loss/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "fa4e7d28a05c8cf0301c07f150ae2972be83dd8e4d746cf673aae2ffc0276727",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "f87097c6dbfe7a47e5e12be0ac56cc36a78a74539a2187a7a3acaa4cca51a5a8",
+      "started_at_utc": "2026-09-08T17:24:55.353976+00:00",
+      "finished_at_utc": "2026-09-08T17:25:08.119015+00:00"
+    },
+    {
+      "run": "seed_20260903/A_original_loss",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/A_original_loss/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/A_original_loss/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "c2bcaca289ad435792f826dd949c63a44b3ee1c8cb002b27a7aa6ca8c6eb163b"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "05e80e92da00764dbe0da9e83bb1f1b8fb2855b20bf4abe11a8891981847d140",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "e6a465cefa313d336da2919b06b7abf7abd2244bf891d951822ced37f8763912",
+      "started_at_utc": "2026-09-08T17:25:08.199694+00:00",
+      "finished_at_utc": "2026-09-08T17:25:21.615077+00:00"
+    },
+    {
+      "run": "seed_20260903/B_cost_aware_selector",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/B_cost_aware_selector/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260903",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "80f23db51e77fbc3096226896afbc6f3303616f6885f0b80d315ed14e8a3573d",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "264fd2e5467e357fe9fd570a3a563e00080f8207100cec732cd1a8960f807f22",
+      "started_at_utc": "2026-09-08T17:25:21.670959+00:00",
+      "finished_at_utc": "2026-09-08T17:28:38.077688+00:00"
+    },
+    {
+      "run": "seed_20260903/B_cost_aware_selector",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/B_cost_aware_selector/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "a9186b2e62037802f0d388814a74ebcae69c39c038b60a2852c139a9d7ed8518",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "b08bcedc232edc9e1d46c6cdc3c63dbf492d5b60596a37669261bc5a8ce79b23",
+      "started_at_utc": "2026-09-08T17:28:38.132424+00:00",
+      "finished_at_utc": "2026-09-08T17:28:50.807574+00:00"
+    },
+    {
+      "run": "seed_20260903/B_cost_aware_selector",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260903/B_cost_aware_selector/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "060c2184a5a67b7155bdc69c95c455c68aec2ec95444e1402dcbdae07b59ae3e"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "afa5714214fee110fef44d2bd3f4fc614c20cff608f889d8fbbf96f5426b5228",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "ab94b854f816b003e39ba6fecf18274482c479da70427e62ab95c03a99cc00c0",
+      "started_at_utc": "2026-09-08T17:28:50.877367+00:00",
+      "finished_at_utc": "2026-09-08T17:29:04.507712+00:00"
+    },
+    {
+      "run": "seed_20260904/A_original_loss",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/A_original_loss/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260904",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.0"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "c56a9d48abba1b97d0993a1ab94333c4dcf96e751f5fca8b92c53b712e93e624",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "6e06500d87664b301fa8b28e76fb85086b8761b51d1a489a328b74a36d9819ed",
+      "started_at_utc": "2026-09-08T17:29:04.563402+00:00",
+      "finished_at_utc": "2026-09-08T17:32:22.546096+00:00"
+    },
+    {
+      "run": "seed_20260904/A_original_loss",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/A_original_loss/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/A_original_loss/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "67e43f084469cfb455b9b919fb16711a029861250181448cd1791d84392b318b",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "783619c8bf86302578cdbfb919adf4cb07f7739819c2db856a986ee9863e510a",
+      "started_at_utc": "2026-09-08T17:32:22.601634+00:00",
+      "finished_at_utc": "2026-09-08T17:32:35.267577+00:00"
+    },
+    {
+      "run": "seed_20260904/A_original_loss",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/A_original_loss/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/A_original_loss/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "7f9ba288d569b9d28576b050e973ee47be8dba6b4c26a8fb81c9d80cd47e5041"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "98674eb81f0ac7a358bfd65619c581b98f784f33eccf180c55c35aa065bb8ed1",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "4213b400096de0916c13605a27809a58b034fc54e59dc9090d2d739172d13649",
+      "started_at_utc": "2026-09-08T17:32:35.334802+00:00",
+      "finished_at_utc": "2026-09-08T17:32:48.998764+00:00"
+    },
+    {
+      "run": "seed_20260904/B_cost_aware_selector",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/B_cost_aware_selector/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260904",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "d0eb10029eb18a819c1d3b67a158b76971b69e4c2b017dc11dff9cbd6fa45526",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "be636842cb060ae04523822f99e07e1c5151520f8b06de508895da2e05d59076",
+      "started_at_utc": "2026-09-08T17:32:49.054848+00:00",
+      "finished_at_utc": "2026-09-08T17:36:09.145814+00:00"
+    },
+    {
+      "run": "seed_20260904/B_cost_aware_selector",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/B_cost_aware_selector/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "857c0fc7a0ab508c6b132de4130ae267c49565fd6b13177aa588645dd33af840",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "8202767f69a715a4b273f94f92d5c66ea58a5142b5f894190da10da7878ec730",
+      "started_at_utc": "2026-09-08T17:36:09.201679+00:00",
+      "finished_at_utc": "2026-09-08T17:36:21.916566+00:00"
+    },
+    {
+      "run": "seed_20260904/B_cost_aware_selector",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260904/B_cost_aware_selector/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "f1a4c8fa4c43a8b43050913f561a41c89547b09dce527c77a07e6a527bfd4489"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "7ec8249b903cfa9b98f7340702f7d5fe33e879a783dab8ec9050956a263f9676",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "93f1b5fe8a0dd1fc7e5e6bc7e8ce50dd892cf77efaf7f3fab79a2f9c54b208be",
+      "started_at_utc": "2026-09-08T17:36:21.997070+00:00",
+      "finished_at_utc": "2026-09-08T17:36:35.864072+00:00"
+    },
+    {
+      "run": "seed_20260905/A_original_loss",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/A_original_loss/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260905",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.0"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "5ab902077bea9d802990981e25053a1503b1e8b30c41cc9372bde07450eb2abf",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "95c5bf545df8e46a02ad206b7f7a6b6436ba9029975f4e71a80aa104a32ea598",
+      "started_at_utc": "2026-09-08T17:36:35.920123+00:00",
+      "finished_at_utc": "2026-09-08T17:39:56.361790+00:00"
+    },
+    {
+      "run": "seed_20260905/A_original_loss",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/A_original_loss/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/A_original_loss/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "9f625d95c702596ff7550ca8894fcad0192e55581cbdef77e7077cc058cf1a8f",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "3eb9bf09e31fe6afde15b0be3dc15309cdeb4ae6d08a02699316d34e7bc0d2fd",
+      "started_at_utc": "2026-09-08T17:39:56.416788+00:00",
+      "finished_at_utc": "2026-09-08T17:40:09.167424+00:00"
+    },
+    {
+      "run": "seed_20260905/A_original_loss",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/A_original_loss/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/A_original_loss/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "1a37875a4950f8d6d70291dd8ed8f4af86b3415d31c1639f9a5b0a96cf3662b1"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "0ce54fba28db0632fbf7c7ef334278646ecb1ad5a351c51e38df409e489ff3ad",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "ce8be06383255009f82c1317dc803bb9ad7087486d691787b9352f20aed42a84",
+      "started_at_utc": "2026-09-08T17:40:09.245628+00:00",
+      "finished_at_utc": "2026-09-08T17:40:22.899694+00:00"
+    },
+    {
+      "run": "seed_20260905/B_cost_aware_selector",
+      "stage": "train",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/B_cost_aware_selector/training",
+        "--model-config",
+        "<PERSONAL_WORKSPACE>/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260905",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1"
+      ],
+      "report": {
+        "path": "training/run.json",
+        "sha256": "d3b7d99af6f157f719e3ccee2ab57d83e8faeda7ce7ac4f770037627f96a825b",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928"
+      },
+      "recorded_command_sha256": "f71a095e98aa7b612ae4f738648fa153511d2abb3c87d9e9b435f1b64a4ce685",
+      "started_at_utc": "2026-09-08T17:40:22.950973+00:00",
+      "finished_at_utc": "2026-09-08T17:43:41.930110+00:00"
+    },
+    {
+      "run": "seed_20260905/B_cost_aware_selector",
+      "stage": "evaluate",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-dir",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/B_cost_aware_selector/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "report": {
+        "path": "evaluation/metrics.json",
+        "sha256": "51ffc1ad077054a843acd129a897bf781884c6a967d030c55aee3cfaaf9e2f09",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "a75cdca6dd6d5be74fdf509675c075be94c22740c32946ea6e07e7b2b363b74f",
+      "started_at_utc": "2026-09-08T17:43:41.985678+00:00",
+      "finished_at_utc": "2026-09-08T17:43:54.699906+00:00"
+    },
+    {
+      "run": "seed_20260905/B_cost_aware_selector",
+      "stage": "audit",
+      "status": "COMPLETE",
+      "returncode": 0,
+      "command": [
+        "<PERSONAL_WORKSPACE>/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "<PERSONAL_WORKSPACE>/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "--output-json",
+        "<PERSONAL_WORKSPACE>/runs/campaigns/hh260909-candidate-regret-ab-3seeds-v1/seed_20260905/B_cost_aware_selector/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "23eae23596fa3d343a68336696199cc3de7b8fdb973374c3ba909d5c5da753bc"
+      ],
+      "report": {
+        "path": "gate_v8.json",
+        "sha256": "a2162aeea21f800f26b87b363538cb6f931e634e5ee037618f32e488a2688a40",
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285"
+      },
+      "recorded_command_sha256": "0be1646e92505458a2f57807b99a73b9a4d2c48ee7338952c7f7fb8ef5f28a3e",
+      "started_at_utc": "2026-09-08T17:43:54.780230+00:00",
+      "finished_at_utc": "2026-09-08T17:44:08.397734+00:00"
+    }
+  ],
+  "expected_stage_count": 18,
+  "limitations": [
+    "Six fresh development fits on unchanged historical v3 data; no new dataset admission or learned closed-loop evidence.",
+    "Train1147 and val337 only for optimization/predictions/selection; whole-corpus integrity checks may read held-out test files.",
+    "Composite-cost auxiliary regret is not ADE selection regret; only original ADE/FDE/speed/geometry criteria decide the screen.",
+    "B total loss includes the new auxiliary term while A does not; raw total losses are not the same objective and cannot establish improvement.",
+    "No model/checkpoint tensors are loaded here. Optional local checkpoint bytes are hashed, not decoded.",
+    "Frozen plan hash/source bindings are verified; independent preregistration chronology is not established by this result-only reader."
+  ],
+  "missing_artifacts": [],
+  "campaign_id": "hh260909-candidate-regret-ab-3seeds-v1",
+  "source_commit": "05c5847b5ad6c31ac46a713e35ba7fdc2edd10a0",
+  "plan_sha256": "10ee27de090d86a9eafa836b9d0fb8c16c7c621f4f5ae56dad38d9dfe3336c35",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+  "budget": {
+    "steps": 1540,
+    "batch_size": 4,
+    "train_samples": 1147,
+    "val_samples": 337,
+    "samples_seen_per_run": 6155,
+    "batches_per_epoch": 287,
+    "full_epochs": 5,
+    "partial_epoch_batches": 105,
+    "partial_epoch_samples": 420,
+    "fresh_run_count": 6
+  },
+  "source_proof": {
+    "source_commit": "05c5847b5ad6c31ac46a713e35ba7fdc2edd10a0",
+    "files": {
+      "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+      "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+      "portable_e2e/train.py": "7ab83343bb15cf9233c2208d1b405498c66340706b8562b272f242152f4d3882",
+      "portable_e2e/evaluate.py": "1d1455b76d1bc044e83fe45b637690b5bd93c88d6ac8242af589bfe7162df376",
+      "portable_e2e/audit_runtime.py": "c4c68e888fb89bb4e78052e3167f4167d89c7e7da952e3a0da627d677a776647",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+      "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+      "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+      "portable_e2e/runtime_weight_bundle.py": "3cbc897d2ff36d3faaba8cdeaa8f537fd2dd281850406214438ffb03d1e8a636",
+      "scripts/e2e/run_portable_training_campaign.py": "b0c4f587e2fbe029f7b8180fd67cc982e3ef7db67bfca47d52e921ea5ca06eb1",
+      "portable_e2e/config/perspective_trajectory_physical_v1.model.json": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d"
+    },
+    "shared_model_config": {
+      "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+      "camera_count": 6,
+      "calibration_features": 16,
+      "ego_features": 13,
+      "route_points": 128,
+      "future_points": 64,
+      "candidate_count": 6,
+      "image_width": 320,
+      "image_height": 180,
+      "image_channels": 3,
+      "image_grid_width": 5,
+      "image_grid_height": 3,
+      "image_embedding": 96,
+      "camera_fusion_width": 192,
+      "ego_embedding": 64,
+      "route_embedding": 96,
+      "hidden_width": 256,
+      "encoder_base_channels": 24,
+      "ego_history_frames": 10,
+      "maximum_step_m": 1.0,
+      "route_scale_m": 120.0
+    },
+    "initial_tensor_hashes_available": false
+  },
+  "runner_status": "TRAIN_EVAL_AUDIT_COMPLETE_NOT_PROMOTED",
+  "completed_stage_count": 18,
+  "not_started_stages": [],
+  "absolute_limits_m": {
+    "ade_1p0s_m": 0.5,
+    "ade_3p0s_m": 1.0,
+    "ade_6p4s_m": 2.0,
+    "fde_6p4s_m": 4.0
+  },
+  "comparison": {
+    "comparison_id": "portable_e2e.open_loop_comparison.v1",
+    "status": "FAIR_OPEN_LOOP_COMPARISON_READY",
+    "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+    "training_dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+    "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+    "sample_count": 337,
+    "domain_sample_counts": {
+      "carla": 337
+    },
+    "device": "cuda:0",
+    "evaluation_split": "val",
+    "batch_size": 4,
+    "warmup_batches": 1,
+    "warmup_samples": 4,
+    "runtime": {
+      "cublas_workspace_config": ":4096:8",
+      "cuda_matmul_allow_tf32": false,
+      "cudnn": 92000,
+      "cudnn_allow_tf32": true,
+      "cudnn_benchmark": false,
+      "cudnn_deterministic": true,
+      "deterministic_algorithms": true,
+      "mkl_num_threads": "16",
+      "numpy": "2.5.2",
+      "omp_num_threads": "16",
+      "pillow": "12.3.0",
+      "python": "3.12.3",
+      "torch": "2.13.0+cu130",
+      "torch_cuda": "13.0",
+      "torch_num_interop_threads": 64,
+      "torch_num_threads": 16
+    },
+    "hardware": {
+      "compute_capability": [
+        12,
+        0
+      ],
+      "device": "cuda:0",
+      "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "device_type": "cuda",
+      "device_uuid": "59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+      "total_memory_bytes": 101973819392
+    },
+    "metric_counts": {
+      "ade_1p0s_m": 337,
+      "ade_3p0s_m": 337,
+      "ade_6p4s_m": 337,
+      "candidate_score_loss": 337,
+      "fde_1p0s_m": 337,
+      "fde_3p0s_m": 337,
+      "fde_6p4s_m": 337,
+      "loss": 337,
+      "oracle_ade_m": 337,
+      "regression_loss": 337,
+      "selected_ade_m": 337,
+      "selected_fde_m": 337,
+      "selected_kinematic_speed_mae_mps": 337,
+      "selected_speed_mae_mps": 337,
+      "selected_yaw_mae_rad": 337,
+      "speed_mae_1p0s_mps": 337,
+      "speed_mae_3p0s_mps": 337,
+      "speed_mae_6p4s_mps": 337,
+      "selection_regret_ade_m": 337
+    },
+    "derived_metric_definitions": {
+      "selection_regret_ade_m": "selected_ade_m - oracle_ade_m on the same samples and valid future points; oracle is the per-sample minimum ADE over candidates, not the composite-loss training winner; float32 roundoff below zero is clamped to zero; this target-informed diagnostic does not measure geometric candidate diversity"
+    },
+    "reports": [
+      {
+        "label": "seed_20260903/A_original_loss",
+        "report": "seed_20260903/A_original_loss/evaluation/metrics.json",
+        "checkpoint": "seed_20260903/A_original_loss/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "c2bcaca289ad435792f826dd949c63a44b3ee1c8cb002b27a7aa6ca8c6eb163b",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.3480306064450245,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 3.8743276063695506,
+          "oracle_ade_m": 1.5521757663711242,
+          "selected_fde_m": 9.827706007911473,
+          "selected_speed_mae_mps": 1.4599277082642745,
+          "selected_yaw_mae_rad": 0.0842406953676695,
+          "selected_kinematic_speed_mae_mps": 4.157707325213254e-06,
+          "ade_1p0s_m": 0.21641185888550757,
+          "fde_1p0s_m": 0.5282404654457591,
+          "ade_3p0s_m": 1.2099366798245235,
+          "fde_3p0s_m": 2.908454127057016,
+          "ade_6p4s_m": 3.8743276063695506,
+          "fde_6p4s_m": 9.827706007911473,
+          "selection_regret_ade_m": 2.3221518399984262
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 3.8743276063695506,
+              "oracle_ade_m": 1.5521757663711242,
+              "selected_fde_m": 9.827706007911473,
+              "selected_speed_mae_mps": 1.4599277082642745,
+              "selected_yaw_mae_rad": 0.0842406953676695,
+              "selected_kinematic_speed_mae_mps": 4.157707325213254e-06,
+              "ade_1p0s_m": 0.21641185888550757,
+              "fde_1p0s_m": 0.5282404654457591,
+              "ade_3p0s_m": 1.2099366798245235,
+              "fde_3p0s_m": 2.908454127057016,
+              "ade_6p4s_m": 3.8743276063695506,
+              "fde_6p4s_m": 9.827706007911473,
+              "selection_regret_ade_m": 2.3221518399984262
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      },
+      {
+        "label": "seed_20260903/B_cost_aware_selector",
+        "report": "seed_20260903/B_cost_aware_selector/evaluation/metrics.json",
+        "checkpoint": "seed_20260903/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "060c2184a5a67b7155bdc69c95c455c68aec2ec95444e1402dcbdae07b59ae3e",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.3471508216588184,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 4.213251161601848,
+          "oracle_ade_m": 1.5125057629643985,
+          "selected_fde_m": 9.758419515205773,
+          "selected_speed_mae_mps": 1.432665774040477,
+          "selected_yaw_mae_rad": 0.08722297024832988,
+          "selected_kinematic_speed_mae_mps": 3.531626458500874e-06,
+          "ade_1p0s_m": 0.2528253164949332,
+          "fde_1p0s_m": 0.6107892051825538,
+          "ade_3p0s_m": 1.4236240351147043,
+          "fde_3p0s_m": 3.4993290628806775,
+          "ade_6p4s_m": 4.213251161601848,
+          "fde_6p4s_m": 9.758419515205773,
+          "selection_regret_ade_m": 2.7007453986374497
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 4.213251161601848,
+              "oracle_ade_m": 1.5125057629643985,
+              "selected_fde_m": 9.758419515205773,
+              "selected_speed_mae_mps": 1.432665774040477,
+              "selected_yaw_mae_rad": 0.08722297024832988,
+              "selected_kinematic_speed_mae_mps": 3.531626458500874e-06,
+              "ade_1p0s_m": 0.2528253164949332,
+              "fde_1p0s_m": 0.6107892051825538,
+              "ade_3p0s_m": 1.4236240351147043,
+              "fde_3p0s_m": 3.4993290628806775,
+              "ade_6p4s_m": 4.213251161601848,
+              "fde_6p4s_m": 9.758419515205773,
+              "selection_regret_ade_m": 2.7007453986374497
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      },
+      {
+        "label": "seed_20260904/A_original_loss",
+        "report": "seed_20260904/A_original_loss/evaluation/metrics.json",
+        "checkpoint": "seed_20260904/A_original_loss/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "7f9ba288d569b9d28576b050e973ee47be8dba6b4c26a8fb81c9d80cd47e5041",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.33434904947081,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 6.258545364930297,
+          "oracle_ade_m": 1.4836731538928227,
+          "selected_fde_m": 12.8974538234115,
+          "selected_speed_mae_mps": 1.9997945141367812,
+          "selected_yaw_mae_rad": 0.05924796040006844,
+          "selected_kinematic_speed_mae_mps": 3.665774363154913e-06,
+          "ade_1p0s_m": 0.30478753591680385,
+          "fde_1p0s_m": 0.7520539605829766,
+          "ade_3p0s_m": 2.1355925097133004,
+          "fde_3p0s_m": 5.642531347513553,
+          "ade_6p4s_m": 6.258545364930297,
+          "fde_6p4s_m": 12.8974538234115,
+          "selection_regret_ade_m": 4.774872211037475
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 6.258545364930297,
+              "oracle_ade_m": 1.4836731538928227,
+              "selected_fde_m": 12.8974538234115,
+              "selected_speed_mae_mps": 1.9997945141367812,
+              "selected_yaw_mae_rad": 0.05924796040006844,
+              "selected_kinematic_speed_mae_mps": 3.665774363154913e-06,
+              "ade_1p0s_m": 0.30478753591680385,
+              "fde_1p0s_m": 0.7520539605829766,
+              "ade_3p0s_m": 2.1355925097133004,
+              "fde_3p0s_m": 5.642531347513553,
+              "ade_6p4s_m": 6.258545364930297,
+              "fde_6p4s_m": 12.8974538234115,
+              "selection_regret_ade_m": 4.774872211037475
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      },
+      {
+        "label": "seed_20260904/B_cost_aware_selector",
+        "report": "seed_20260904/B_cost_aware_selector/evaluation/metrics.json",
+        "checkpoint": "seed_20260904/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "f1a4c8fa4c43a8b43050913f561a41c89547b09dce527c77a07e6a527bfd4489",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.3503643350029026,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 5.421815742282556,
+          "oracle_ade_m": 1.61793039814301,
+          "selected_fde_m": 12.480045103664214,
+          "selected_speed_mae_mps": 2.0564028197120137,
+          "selected_yaw_mae_rad": 0.05907667929013688,
+          "selected_kinematic_speed_mae_mps": 2.8886583357083352e-06,
+          "ade_1p0s_m": 0.2574248545380304,
+          "fde_1p0s_m": 0.5983757062453102,
+          "ade_3p0s_m": 1.6613508548244877,
+          "fde_3p0s_m": 4.415131995249927,
+          "ade_6p4s_m": 5.421815742282556,
+          "fde_6p4s_m": 12.480045103664214,
+          "selection_regret_ade_m": 3.803885344139546
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 5.421815742282556,
+              "oracle_ade_m": 1.61793039814301,
+              "selected_fde_m": 12.480045103664214,
+              "selected_speed_mae_mps": 2.0564028197120137,
+              "selected_yaw_mae_rad": 0.05907667929013688,
+              "selected_kinematic_speed_mae_mps": 2.8886583357083352e-06,
+              "ade_1p0s_m": 0.2574248545380304,
+              "fde_1p0s_m": 0.5983757062453102,
+              "ade_3p0s_m": 1.6613508548244877,
+              "fde_3p0s_m": 4.415131995249927,
+              "ade_6p4s_m": 5.421815742282556,
+              "fde_6p4s_m": 12.480045103664214,
+              "selection_regret_ade_m": 3.803885344139546
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      },
+      {
+        "label": "seed_20260905/A_original_loss",
+        "report": "seed_20260905/A_original_loss/evaluation/metrics.json",
+        "checkpoint": "seed_20260905/A_original_loss/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "1a37875a4950f8d6d70291dd8ed8f4af86b3415d31c1639f9a5b0a96cf3662b1",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.3357646169489144,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 4.789547056490306,
+          "oracle_ade_m": 1.5501094522391299,
+          "selected_fde_m": 11.866287520138728,
+          "selected_speed_mae_mps": 1.613772894402286,
+          "selected_yaw_mae_rad": 0.07546929378360952,
+          "selected_kinematic_speed_mae_mps": 4.733548028455378e-06,
+          "ade_1p0s_m": 0.22506507903956519,
+          "fde_1p0s_m": 0.455656262153334,
+          "ade_3p0s_m": 1.37410756185076,
+          "fde_3p0s_m": 3.7190669131208245,
+          "ade_6p4s_m": 4.789547056490306,
+          "fde_6p4s_m": 11.866287520138728,
+          "selection_regret_ade_m": 3.2394376042511768
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 4.789547056490306,
+              "oracle_ade_m": 1.5501094522391299,
+              "selected_fde_m": 11.866287520138728,
+              "selected_speed_mae_mps": 1.613772894402286,
+              "selected_yaw_mae_rad": 0.07546929378360952,
+              "selected_kinematic_speed_mae_mps": 4.733548028455378e-06,
+              "ade_1p0s_m": 0.22506507903956519,
+              "fde_1p0s_m": 0.455656262153334,
+              "ade_3p0s_m": 1.37410756185076,
+              "fde_3p0s_m": 3.7190669131208245,
+              "ade_6p4s_m": 4.789547056490306,
+              "fde_6p4s_m": 11.866287520138728,
+              "selection_regret_ade_m": 3.2394376042511768
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      },
+      {
+        "label": "seed_20260905/B_cost_aware_selector",
+        "report": "seed_20260905/B_cost_aware_selector/evaluation/metrics.json",
+        "checkpoint": "seed_20260905/B_cost_aware_selector/training/checkpoints/latest.pt",
+        "checkpoint_sha256": "23eae23596fa3d343a68336696199cc3de7b8fdb973374c3ba909d5c5da753bc",
+        "model_config_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+        "model_parameter_count": 954590,
+        "model_forward_ms_per_sample": 2.348404941466866,
+        "training_sampling_plan_sha256": "2182fef13f3fd89d10f6f065a286bb0cc0a48c8f39da83e0f99714779ea2ce8c",
+        "training_sampling_policy": "uniform_without_replacement",
+        "training_domain_samples_seen": {
+          "carla": 6155
+        },
+        "metrics": {
+          "selected_ade_m": 3.4569497471039656,
+          "oracle_ade_m": 1.719041504783871,
+          "selected_fde_m": 7.5884334697921485,
+          "selected_speed_mae_mps": 0.9694986009986889,
+          "selected_yaw_mae_rad": 0.0836248072334054,
+          "selected_kinematic_speed_mae_mps": 3.5906371087781e-06,
+          "ade_1p0s_m": 0.22572403339716088,
+          "fde_1p0s_m": 0.4717816606506661,
+          "ade_3p0s_m": 1.1614062786102295,
+          "fde_3p0s_m": 2.921676229475514,
+          "ade_6p4s_m": 3.4569497471039656,
+          "fde_6p4s_m": 7.5884334697921485,
+          "selection_regret_ade_m": 1.7379082423200947
+        },
+        "per_domain_metrics": {
+          "carla": {
+            "sample_count": 337,
+            "metrics": {
+              "selected_ade_m": 3.4569497471039656,
+              "oracle_ade_m": 1.719041504783871,
+              "selected_fde_m": 7.5884334697921485,
+              "selected_speed_mae_mps": 0.9694986009986889,
+              "selected_yaw_mae_rad": 0.0836248072334054,
+              "selected_kinematic_speed_mae_mps": 3.5906371087781e-06,
+              "ade_1p0s_m": 0.22572403339716088,
+              "fde_1p0s_m": 0.4717816606506661,
+              "ade_3p0s_m": 1.1614062786102295,
+              "fde_3p0s_m": 2.921676229475514,
+              "ade_6p4s_m": 3.4569497471039656,
+              "fde_6p4s_m": 7.5884334697921485,
+              "selection_regret_ade_m": 1.7379082423200947
+            },
+            "metric_counts": {
+              "selected_ade_m": 337,
+              "oracle_ade_m": 337,
+              "selected_fde_m": 337,
+              "selected_speed_mae_mps": 337,
+              "selected_yaw_mae_rad": 337,
+              "selected_kinematic_speed_mae_mps": 337,
+              "ade_1p0s_m": 337,
+              "fde_1p0s_m": 337,
+              "ade_3p0s_m": 337,
+              "fde_3p0s_m": 337,
+              "ade_6p4s_m": 337,
+              "fde_6p4s_m": 337,
+              "selection_regret_ade_m": 337
+            }
+          }
+        }
+      }
+    ],
+    "warning": "OPEN-LOOP COMPARISON ONLY \u2014 LATENCY IS REFERENCE-ONLY BECAUSE NO SHARED-SYSTEM RESOURCE OR SCHEDULER RESERVATION WAS ENFORCED; CLOSED-LOOP AND SAFETY GATES STILL REQUIRED"
+  },
+  "input_manifest": [
+    {
+      "path": "plan.json",
+      "sha256": "10ee27de090d86a9eafa836b9d0fb8c16c7c621f4f5ae56dad38d9dfe3336c35"
+    },
+    {
+      "path": "provenance/active_runner.py",
+      "sha256": "b0c4f587e2fbe029f7b8180fd67cc982e3ef7db67bfca47d52e921ea5ca06eb1"
+    },
+    {
+      "path": "seed_20260903/A_original_loss/evaluation/metrics.json",
+      "sha256": "fa4e7d28a05c8cf0301c07f150ae2972be83dd8e4d746cf673aae2ffc0276727"
+    },
+    {
+      "path": "seed_20260903/A_original_loss/gate_v8.json",
+      "sha256": "05e80e92da00764dbe0da9e83bb1f1b8fb2855b20bf4abe11a8891981847d140"
+    },
+    {
+      "path": "seed_20260903/A_original_loss/training/run.json",
+      "sha256": "c1067995a5760a576061438aba90eaebedc041bbe0c68f74d039882374058566"
+    },
+    {
+      "path": "seed_20260903/B_cost_aware_selector/evaluation/metrics.json",
+      "sha256": "a9186b2e62037802f0d388814a74ebcae69c39c038b60a2852c139a9d7ed8518"
+    },
+    {
+      "path": "seed_20260903/B_cost_aware_selector/gate_v8.json",
+      "sha256": "afa5714214fee110fef44d2bd3f4fc614c20cff608f889d8fbbf96f5426b5228"
+    },
+    {
+      "path": "seed_20260903/B_cost_aware_selector/training/run.json",
+      "sha256": "80f23db51e77fbc3096226896afbc6f3303616f6885f0b80d315ed14e8a3573d"
+    },
+    {
+      "path": "seed_20260904/A_original_loss/evaluation/metrics.json",
+      "sha256": "67e43f084469cfb455b9b919fb16711a029861250181448cd1791d84392b318b"
+    },
+    {
+      "path": "seed_20260904/A_original_loss/gate_v8.json",
+      "sha256": "98674eb81f0ac7a358bfd65619c581b98f784f33eccf180c55c35aa065bb8ed1"
+    },
+    {
+      "path": "seed_20260904/A_original_loss/training/run.json",
+      "sha256": "c56a9d48abba1b97d0993a1ab94333c4dcf96e751f5fca8b92c53b712e93e624"
+    },
+    {
+      "path": "seed_20260904/B_cost_aware_selector/evaluation/metrics.json",
+      "sha256": "857c0fc7a0ab508c6b132de4130ae267c49565fd6b13177aa588645dd33af840"
+    },
+    {
+      "path": "seed_20260904/B_cost_aware_selector/gate_v8.json",
+      "sha256": "7ec8249b903cfa9b98f7340702f7d5fe33e879a783dab8ec9050956a263f9676"
+    },
+    {
+      "path": "seed_20260904/B_cost_aware_selector/training/run.json",
+      "sha256": "d0eb10029eb18a819c1d3b67a158b76971b69e4c2b017dc11dff9cbd6fa45526"
+    },
+    {
+      "path": "seed_20260905/A_original_loss/evaluation/metrics.json",
+      "sha256": "9f625d95c702596ff7550ca8894fcad0192e55581cbdef77e7077cc058cf1a8f"
+    },
+    {
+      "path": "seed_20260905/A_original_loss/gate_v8.json",
+      "sha256": "0ce54fba28db0632fbf7c7ef334278646ecb1ad5a351c51e38df409e489ff3ad"
+    },
+    {
+      "path": "seed_20260905/A_original_loss/training/run.json",
+      "sha256": "5ab902077bea9d802990981e25053a1503b1e8b30c41cc9372bde07450eb2abf"
+    },
+    {
+      "path": "seed_20260905/B_cost_aware_selector/evaluation/metrics.json",
+      "sha256": "51ffc1ad077054a843acd129a897bf781884c6a967d030c55aee3cfaaf9e2f09"
+    },
+    {
+      "path": "seed_20260905/B_cost_aware_selector/gate_v8.json",
+      "sha256": "a2162aeea21f800f26b87b363538cb6f931e634e5ee037618f32e488a2688a40"
+    },
+    {
+      "path": "seed_20260905/B_cost_aware_selector/training/run.json",
+      "sha256": "d3b7d99af6f157f719e3ccee2ab57d83e8faeda7ce7ac4f770037627f96a825b"
+    },
+    {
+      "path": "status.json",
+      "sha256": "21b18185c7f317d1d7fa357055f0d926974c45596e3f50c6880a11ca8deaea07"
+    }
+  ]
+}

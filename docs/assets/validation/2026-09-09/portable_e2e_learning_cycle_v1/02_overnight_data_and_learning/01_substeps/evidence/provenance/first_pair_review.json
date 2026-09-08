@@ -1,0 +1,18 @@
+{
+  "schema": "carla_expert.substep_first_pair_review.v1",
+  "reviewed_at_utc": "2026-09-08T17:28:23.205867+00:00",
+  "plan_sha256": "28e6c891c74b3e33de5714a11510c51e2230874bd1335cfcfb44caf6b6d5a83e",
+  "first_pair_owner_sha256": {
+    "A_reference_10ms/run_001": "bd5fec5ae58f6bf59d74d56854cc6d9059005c73adf359074f0c508ad78de8b7",
+    "B_fine_5ms/run_001": "00cc1a96c431f4fffa8e954f59b1693d948a034c6a096fd8404b6ec1d7eac3e7"
+  },
+  "interim_audit": {
+    "path": "artifacts/training/2026-09-09/substep_ab_audit_first_pair_v1/audit.json",
+    "sha256": "64cd9ba5ba374bfae8d5f29b5d5d84357b616057d405f154bd0fcc5d752e5e24"
+  },
+  "proceed": true,
+  "training_data_approved": false,
+  "rationale": "HH_260906 - Proceed only with the previously declared second A/B repetition because ownership, twelve source archives, all requested/readback settings, ACK, agent initialization and prescribed failure/abort protocol are independently clear; no established continuation stop condition. B1 remains a FAILED capture: it stopped 2.15139 m before the goal, hit the 45 s coast timeout and has no tail; native acceleration/deceleration bounds regressed, while raw curvature counts fell and one lateral-acceleration tick newly failed. Reduced curvature counts with different denominators and changed stopping behavior are not an overall improvement. A1 retains 161/905 overlapping curvature-window failures. Preserve both original outcomes and all partial prefixes, do not tune controller or gates between repeats, do not admit either dataset, and stop after four total attempts.",
+  "publication_notice": "Redacted metadata view; replay requires the private original identified by raw_source_sha256.",
+  "raw_source_sha256": "76c3cb459aa12bfbfd95c0ab0710d5c88fb7b32b40f2e44ead9186315a7c736b"
+}

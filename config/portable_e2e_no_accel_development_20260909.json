@@ -1,0 +1,51 @@
+{
+  "schema": "portable_e2e.no_accel_development_campaign.v1",
+  "campaign_id": "hh260909-no-accel-development-ab-3seeds-v1",
+  "source_commit": "213cfc69e3551b315dc3a2f618387027ff5948f6",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_configs": {
+    "A_physical_input": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+    "B_no_accel_input": "portable_e2e/config/perspective_trajectory_physical_no_accel_v1.model.json"
+  },
+  "seeds": [
+    20260903,
+    20260904,
+    20260905
+  ],
+  "arms": {
+    "A_physical_input": 0.0001,
+    "B_no_accel_input": 0.0001
+  },
+  "candidate_score_weight": 0.1,
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "decision": {
+    "comment": "HH_260906 - Freeze a fresh paired legacy-data development ablation before any new training outputs, without redefining data admission.",
+    "purpose": "Train all model parameters with and without supplied acceleration values. This is not STOP-decision or stop-primitive training.",
+    "schedule_change": "Run exploratory learning now on the unchanged legacy v3 corpus while independent qualified-data collection remains unresolved; do not present it as the previously proposed fresh-qualified-corpus comparison.",
+    "known_data_limits": "Preserve all warmup anchors, target deceleration violations and labels. Legacy absence of denial markers is not new quality approval. Exclude every denied 2026-09-08 C-track collection.",
+    "budget": "Six fresh fits, 1540 steps and batch4 each. Five complete train1147 epochs plus 105 batches (6155 sample exposures per fit), not ten epochs. No resumed or reused baseline, validation-epoch selection or failed-seed removal.",
+    "candidate_screen": "Both selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall, and selected speed MAE must not rise more than 5 percent in any pair.",
+    "absolute_limits_m": {
+      "ade_1p0s": 0.5,
+      "ade_3p0s": 1,
+      "ade_6p4s": 2,
+      "fde_6p4s": 4
+    },
+    "diagnostic": [
+      "oracle_ade_m",
+      "selection_regret_ade_m",
+      "geometry_v8",
+      "selected_speed_mae_mps",
+      "selected_candidate_histogram"
+    ],
+    "test_policy": "Full-corpus contract/hash validation may read held-out test JSON and JPEG bytes. Test samples are excluded from model training loss, model inference, evaluation metrics and model selection.",
+    "prior_results_known": true,
+    "promotion": "Never automatically promote, change runtime-bundle allowlists, relax physical/runtime gates or actuate a vehicle. Existing shadow checkpoint and every failed result remain intact."
+  }
+}

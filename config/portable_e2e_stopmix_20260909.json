@@ -1,0 +1,110 @@
+{
+  "schema": "portable_e2e.stopmix_development_campaign.v1",
+  "campaign_id": "hh260909-stopmix-development-ab-3seeds-v1",
+  "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_configs": {
+    "A_physical_drive": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+    "B_drive_stop_mix": "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json"
+  },
+  "model_config_sha256": {
+    "A_physical_drive": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+    "B_drive_stop_mix": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602"
+  },
+  "stop_primitive_sha256": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+  "seeds": [
+    20260903,
+    20260904,
+    20260905
+  ],
+  "arms": {
+    "A_physical_drive": 0.0001,
+    "B_drive_stop_mix": 0.0001
+  },
+  "candidate_score_weight": 0.1,
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "finish_before_utc": "2026-09-09T01:00:00Z",
+  "stage_timeout_seconds": {
+    "train": 600,
+    "evaluate": 120,
+    "audit": 120
+  },
+  "finish_reserve_seconds": 300,
+  "behavior_analysis_count": 6,
+  "behavior_analysis_timeout_seconds": 180,
+  "behavior_analysis": {
+    "source_sha256": "afa65f9b060c8a8ba1ce72118987050900d68dd9e2971901be78dca82bfa6844",
+    "model_source_sha256": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "script": "scripts/e2e/audit_portable_stopmix_behavior.py",
+    "expected_pass_count": 6,
+    "expected_samples_per_pass": 337,
+    "batch_size": 4,
+    "split": "val",
+    "render_indices": [
+      0,
+      31,
+      61,
+      92,
+      122,
+      153,
+      183,
+      214,
+      244,
+      275,
+      305,
+      336
+    ],
+    "groups_in_priority_order": [
+      {
+        "name": "unavailable_masks",
+        "rule": "Not all 64 future points valid; at least one valid prefix point required."
+      },
+      {
+        "name": "stationary_hold",
+        "rule": "abs(raw current vx)<=0.1 and all 64 canonical target speeds<=0.1 m/s."
+      },
+      {
+        "name": "moving_to_stop",
+        "rule": "raw current vx>0.1 and all last 10 canonical target speeds<=0.1 m/s."
+      },
+      {
+        "name": "continuing_motion",
+        "rule": "All 64 canonical target speeds>=0.5 m/s."
+      },
+      {
+        "name": "other_motion",
+        "rule": "Remaining fully valid windows."
+      }
+    ],
+    "provenance": "Analyze the final checkpoint of each of all six fits; required SHA externally bound to campaign stage reports. Live audit source and training source use the same frozen commit. No embedded checkpoint source-commit claim.",
+    "metrics": "Selected ADE/FDE/speed MAE, all candidates, raw runtime-v8 gate counts, STOP selection indices 6-11 only for B; exact terminal zero and <=0.1 m/s separately; reacceleration only after first exact-zero future point, excluding anchor.",
+    "limitations": "Target-derived groups are diagnostic only, never forward inputs or traffic-rule STOP intent. Zero-count groups supply no evidence; overlapping windows are not independent events. Twelve render indices were fixed before any of these six fits.",
+    "scope": "Six behavior passes are separate from eighteen normal stages; normal completion alone does not mean behavior completion."
+  },
+  "decision": {
+    "comment": "HH_260906 - Freeze six DRIVE versus six DRIVE plus six STOP candidate development fits before actual training, preserving all legacy limitations and admission gates.",
+    "purpose": "Test whether an explicit physically decoded STOP family improves existing open-loop validation, not whether a safe traffic-aware stop policy has been learned.",
+    "architecture": "A has six DRIVE candidates and 954590 parameters. B preserves the original six DRIVE outputs and adds six STOP outputs for twelve candidates and 1056362 parameters. Existing shared and DRIVE initialization is bit-exact for the same seed; extra heads increase parameter capacity, so the comparison is not capacity-matched.",
+    "objective": "Both use the original best-of-K composite regression and 0.1 hard-oracle cross entropy, with the original six-key serialized loss config. No candidate-regret auxiliary is enabled.",
+    "stop_limitations": "STOP trajectories use the unchanged frozen primitive. At zero current speed the duration/curvature gradients can be zero and tied STOP candidates do not demonstrate traffic-intent learning. Decoder speed clamping does not waive the raw 30 kph input gate.",
+    "budget": "Six fresh whole-model fits, 1540 optimizer steps and 6155 training sample exposures each, batch 4. Final checkpoint only; no resume, best-epoch selection, repeat-until-pass or historical baseline substitution.",
+    "candidate_screen": "Selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall and selected speed MAE must not exceed 1.05 times baseline in any pair.",
+    "absolute_limits_m": {
+      "ade_1p0s": 0.5,
+      "ade_3p0s": 1,
+      "ade_6p4s": 2,
+      "fde_6p4s": 4
+    },
+    "known_data_limits": "Unchanged legacy v3 train1147/val337 includes warmup anchors and infeasible deceleration labels. All denied new captures, including the four completed substep trials, remain excluded. Previous exploratory findings informed this declared research comparison.",
+    "test_policy": "Whole-corpus integrity checks may read test JSON/JPEG bytes. Test data is not used in training loss, neural-network inference, reported performance, diagnostics or model selection.",
+    "promotion": "No automatic model promotion, secure runtime export allowlist changes, vehicle actuation or data-admission/gate weakening. New STOPMIX model remains research-only and rejected by the existing secure runtime bundle boundary.",
+    "finish_policy": "Reserve every remaining stage timeout, six 180-second behavior slots and 300-second cleanup before 10:00 KST. Use only the assigned physical GPU0 and existing personal py312 venv; no installations, GPU1 queries, foreign process termination, reboot or real vehicle operation."
+  },
+  "declared_at_utc": "2026-09-08T18:07:41Z"
+}

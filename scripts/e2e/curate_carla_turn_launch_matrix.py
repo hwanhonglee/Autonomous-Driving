@@ -157,10 +157,7 @@ def render_case(item, destination):
         for index in range(gif.n_frames):
             gif.seek(index); durations.append(gif.info.get("duration"))
         require(all(value == 100 for value in durations), "launch GIF is not the declared 10 fps")
-    ledger = {e["path"]: e["sha256"] for e in item["images"]}
-    for name, digest in data["displayed_image_sha256"].items():
-        relative = str((data["episode"] / name).relative_to(item["root"]))
-        require(ledger.get(relative) == digest, "displayed camera differs from independently audited JPEG")
+    verify_displayed_images(data, item)
     provenance = {"schema": "carla.turn_launch_matrix_visual.v1", "case_id": item["case"]["case_id"],
         "selection": selection, "snapshots": records, "displayed_image_sha256": data["displayed_image_sha256"],
         "source_metadata_sha256": data["source_metadata_sha256"], "episode_directory": data["episode"].name,
@@ -170,6 +167,15 @@ def render_case(item, destination):
         "learned_model_control": False, "autoware_closed_loop": False, "training_data_approved": False}
     (destination / "visual_provenance.json").write_bytes(encode(provenance))
     return provenance
+
+
+def verify_displayed_images(data, item):
+    # HH_260906 - The existing renderer resolves absolute paths even when the publication CLI receives relative roots.
+    ledger = {e["path"]: e["sha256"] for e in item["images"]}
+    root = item["root"].resolve()
+    for name, digest in data["displayed_image_sha256"].items():
+        relative = str((data["episode"] / name).resolve().relative_to(root))
+        require(ledger.get(relative) == digest, "displayed camera differs from independently audited JPEG")
 
 
 def render_plots(contexts, output):

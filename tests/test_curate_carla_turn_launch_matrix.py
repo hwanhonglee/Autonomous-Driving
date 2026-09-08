@@ -183,5 +183,16 @@ def test_path_escape_or_duplicate_ledger_rejected(tmp_path):
     with pytest.raises(ValueError, match="duplicate"): c.verify_entries(tmp_path, [entry, entry])
 
 
+def test_displayed_images_bind_absolute_renderer_to_relative_cli(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    image = tmp_path / "campaign/run/episode/images/front.jpg"
+    image.parent.mkdir(parents=True); image.write_bytes(b"real camera")
+    item = {"root": Path("campaign/run"), "images": [pin(image, tmp_path / "campaign/run")]}
+    data = {"episode": image.parent.parent, "displayed_image_sha256": {"images/front.jpg": c.sha(image)}}
+    c.verify_displayed_images(data, item)
+    data["displayed_image_sha256"]["images/front.jpg"] = "0" * 64
+    with pytest.raises(ValueError, match="displayed camera"): c.verify_displayed_images(data, item)
+
+
 def test_cli_abbreviation_disabled():
     with pytest.raises(SystemExit): c.main(["--campaign", "example"])

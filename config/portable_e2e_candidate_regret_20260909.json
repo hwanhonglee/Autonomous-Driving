@@ -1,0 +1,56 @@
+{
+  "schema": "portable_e2e.candidate_regret_campaign.v1",
+  "campaign_id": "hh260909-candidate-regret-ab-3seeds-v1",
+  "source_commit": "05c5847b5ad6c31ac46a713e35ba7fdc2edd10a0",
+  "gpu_uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+  "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_config": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+  "model_config_sha256": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+  "seeds": [
+    20260903,
+    20260904,
+    20260905
+  ],
+  "arms": {
+    "A_original_loss": 0.0001,
+    "B_cost_aware_selector": 0.0001
+  },
+  "candidate_score_weight": 0.1,
+  "candidate_regret_weights": {
+    "A_original_loss": 0.0,
+    "B_cost_aware_selector": 0.1
+  },
+  "steps": 1540,
+  "batch_size": 4,
+  "split": "val",
+  "expected_train_samples": 1147,
+  "expected_val_samples": 337,
+  "finish_before_utc": "2026-09-09T01:00:00Z",
+  "stage_timeout_seconds": {
+    "train": 600,
+    "evaluate": 120,
+    "audit": 120
+  },
+  "finish_reserve_seconds": 300,
+  "decision": {
+    "comment": "HH_260906 - Freeze the cost-aware selection auxiliary before new measured training, while retaining every legacy data limitation and failed seed.",
+    "purpose": "Compare the original full-model objective with an added expected detached composite-cost regret. This is not another acceleration ablation, frozen-head-only fit, new-data admission or learned STOP-intent experiment.",
+    "formula": "Original best-of-K composite regression + 0.1 hard-oracle cross entropy + lambda * mean(sum(softmax(candidate_logits) * detach(composite_cost - minimum_composite_cost))). Lambda A=0, B=0.1. The same original composite costs define regression, hard labels and regret; no ADE-only relabeling.",
+    "gradient": "The auxiliary has direct logit gradients only; shared encoder/context parameters can still indirectly change generated trajectories during joint optimization.",
+    "architecture": "Same physical.v1, six candidates, 954590 parameters, supplied acceleration, decoder constants and runtime gate v8. Fresh paired seeded initialization, no historical baseline reuse or resume.",
+    "budget": "Six fits of 1540 optimizer steps, batch4, train1147: 6155 sample exposures each, five complete epochs plus 105 batches of a sixth. Final checkpoint only; no best-epoch or failed-seed selection.",
+    "candidate_screen": "Both selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall and selected speed MAE must not exceed 1.05 times baseline in any pair.",
+    "absolute_limits_m": {
+      "ade_1p0s": 0.5,
+      "ade_3p0s": 1,
+      "ade_6p4s": 2,
+      "fde_6p4s": 4
+    },
+    "known_data_limits": "Unchanged legacy v3 train1147/val337 includes warmup anchors and infeasible deceleration targets. All denied 2026-09-08 new C-track captures and the new substep experiments stay excluded. Prior results informed this exploratory plan.",
+    "test_policy": "Full-corpus contract/hash checks may read test JSON and JPEG bytes. Test data is not used for training loss, model inference, reported performance or model selection.",
+    "promotion": "No automatic promotion, runtime bundle allowlist modification, vehicle actuation or gate weakening. New nonzero research loss metadata remains rejected by the existing secure weight-bundle export boundary.",
+    "finish_policy": "Before dispatch and each stage, reserve every remaining per-stage timeout plus 300 seconds before 2026-09-09 10:00 KST. Only stop owned stage process groups. No GPU1 access, foreign-job termination, reboot or installation."
+  },
+  "declared_at_utc": "2026-09-08 17:15:36 UTC"
+}

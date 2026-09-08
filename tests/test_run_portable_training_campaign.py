@@ -9,6 +9,7 @@ import select
 import signal
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -64,6 +65,167 @@ def no_accel_plan(expansion_plan):
         arms={'A_physical_input': 0.0001, 'B_no_accel_input': 0.0001},
         model_configs=dict(MODULE.NO_ACCEL_MODELS))
     return plan
+
+
+@pytest.fixture
+def stopmix_plan(no_accel_plan):
+    # HH_260906 - The test-only future commit is replaced by the owner's frozen real source before any GPU dispatch.
+    plan = copy.deepcopy(no_accel_plan)
+    plan.update(schema=MODULE.STOPMIX_SCHEMA, campaign_id='hh260909-stopmix-development-ab-3seeds-v1',
+        arms=dict(MODULE.STOPMIX_ARMS), model_configs=dict(MODULE.STOPMIX_MODELS),
+        model_config_sha256=dict(MODULE.STOPMIX_MODEL_SHA256), candidate_score_weight=0.1,
+        stop_primitive_sha256=MODULE.STOPMIX_PRIMITIVE_SHA256,
+        finish_before_utc=MODULE.CANDIDATE_REGRET_DEADLINE,
+        stage_timeout_seconds=dict(MODULE.CANDIDATE_REGRET_STAGE_TIMEOUTS), finish_reserve_seconds=300,
+        behavior_analysis_count=6, behavior_analysis_timeout_seconds=180)
+    return plan
+
+
+def test_stopmix_six_fresh_models_original_loss_and_separate_behavior_budget(stopmix_plan, tmp_path):
+    assert MODULE.validate_plan(stopmix_plan) == dict(train_samples=1147, val_samples=337, run_count=6, stage_count=18)
+    stages = list(MODULE.commands(stopmix_plan, tmp_path, ROOT))
+    assert len(stages) == 18 and [s for *_, s in stages] == ['train', 'evaluate', 'audit'] * 6
+    assert [item.name for item, _, _, stage in stages if stage == 'train'] == list(MODULE.STOPMIX_ARMS) * 3
+    for item, _, command, stage in stages:
+        assert command[command.index('--split') + 1] == ('train' if stage == 'train' else 'val')
+        assert '--resume' not in command and '--candidate-regret-weight' not in command
+        assert '--candidate-score-weight' not in command
+        if stage == 'train':
+            assert command[command.index('--model-config') + 1] == str(ROOT / MODULE.STOPMIX_MODELS[item.name])
+            assert command[command.index('--max-steps') + 1] == '1540'
+            assert command[command.index('--batch-size') + 1] == '4'
+            assert command[command.index('--learning-rate') + 1] == '0.0001'
+    deadline = datetime(2026, 9, 9, 1, tzinfo=timezone.utc)
+    needed = 6 * 840 + 6 * 180 + 300
+    MODULE.verify_finish_budget(stopmix_plan, [s for *_, s in stages], observed_at=deadline - timedelta(seconds=needed))
+    with pytest.raises(TimeoutError):
+        MODULE.verify_finish_budget(stopmix_plan, [s for *_, s in stages], observed_at=deadline - timedelta(seconds=needed - .01))
+    MODULE.verify_finish_budget(stopmix_plan, [], observed_at=deadline - timedelta(seconds=1380))
+    with pytest.raises(TimeoutError):
+        MODULE.verify_finish_budget(stopmix_plan, [], observed_at=deadline - timedelta(seconds=1379))
+    assert MODULE.wait_for_prerequisite(stopmix_plan, tmp_path) is None
+
+
+@pytest.mark.parametrize('field,value', [
+    ('campaign_id', 'other'), ('arms', {'B_drive_stop_mix': .0001, 'A_physical_drive': .0001}),
+    ('model_configs', MODULE.NO_ACCEL_MODELS), ('model_config_sha256', {}), ('candidate_score_weight', .5),
+    ('candidate_regret_weights', {}), ('candidate_regret_weight', .1), ('model_config', 'other.json'),
+    ('stop_primitive_sha256', 'f' * 64), ('expected_train_samples', 1147.0), ('expected_val_samples', 338),
+    ('steps', 1540.0), ('batch_size', 4.0), ('source_commit', 'HEAD'), ('split', 'test'),
+    ('behavior_analysis_count', 0), ('behavior_analysis_timeout_seconds', 0), ('finish_reserve_seconds', 0),
+    ('finish_before_utc', '2026-09-10T01:00:00Z'), ('stage_timeout_seconds', {}),
+    ('resume', 'old.pt'), ('checkpoint', 'old.pt'), ('baseline_campaign_id', 'old'),
+    ('dataset_manifest_sha256', 'f' * 64), ('dataset', 'datasets/other'),
+])
+def test_stopmix_strict_scope_rejects_drift(stopmix_plan, field, value):
+    stopmix_plan[field] = value
+    with pytest.raises(ValueError): MODULE.validate_plan(stopmix_plan)
+
+
+@pytest.fixture
+def stopmix_repo(tmp_path):
+    repo = tmp_path / 'repo'
+    for name in MODULE.STOPMIX_SOURCE_PATHS:
+        path = repo / name; path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((ROOT / name).read_bytes())
+    return repo
+
+
+def test_stopmix_archives_and_rechecks_primitive_pipeline_both_configs(stopmix_plan, stopmix_repo, tmp_path):
+    models = MODULE.campaign_model_configs(stopmix_plan, stopmix_repo)
+    assert [m['model_config']['candidate_count'] for m in models.values()] == [6, 12]
+    files = MODULE.campaign_source_files(stopmix_plan, stopmix_repo)
+    assert len(files) == 11 and set(files) == set(MODULE.STOPMIX_SOURCE_PATHS)
+    output = tmp_path / 'campaign'; output.mkdir()
+    MODULE.archive_pipeline_sources(stopmix_plan, stopmix_repo, files, output)
+    MODULE.verify_pipeline_sources(stopmix_plan, stopmix_repo, files, output)
+    assert (output / 'provenance/active_runner.py').read_bytes() == (stopmix_repo / 'scripts/e2e/run_portable_training_campaign.py').read_bytes()
+    with pytest.raises(FileExistsError): MODULE.archive_pipeline_sources(stopmix_plan, stopmix_repo, files, output)
+    archived = output / 'provenance/portable_e2e/stop_primitive_research.py'; archived.write_text('changed')
+    with pytest.raises(RuntimeError, match='archived source'): MODULE.verify_pipeline_sources(stopmix_plan, stopmix_repo, files, output)
+    primitive = stopmix_repo / 'portable_e2e/stop_primitive_research.py'; primitive.write_text('changed')
+    with pytest.raises(RuntimeError, match='primitive'): MODULE.campaign_source_files(stopmix_plan, stopmix_repo)
+
+
+@pytest.mark.parametrize('name', ['portable_e2e/model.py', 'portable_e2e/train.py',
+    MODULE.STOPMIX_MODELS['B_drive_stop_mix']])
+def test_stopmix_inactive_pipeline_source_change_rejected(stopmix_plan, stopmix_repo, name):
+    files = MODULE.campaign_source_files(stopmix_plan, stopmix_repo)
+    (stopmix_repo / name).write_text('changed')
+    with pytest.raises(RuntimeError, match='pipeline source changed'):
+        MODULE.verify_pipeline_sources(stopmix_plan, stopmix_repo, files)
+
+
+@pytest.mark.parametrize('arm', list(MODULE.STOPMIX_ARMS))
+def test_stopmix_reports_pin_arm_parameters_config_k_and_original_loss(stopmix_plan, stage_reports, arm):
+    item, checkpoint, reports, paths = stage_reports
+    moved = item.with_name(arm); item.rename(moved)
+    checkpoint = moved / checkpoint.relative_to(item)
+    paths = {stage: moved / path.relative_to(item) for stage, path in paths.items()}
+    models = MODULE.campaign_model_configs(stopmix_plan, ROOT); model = models[arm]
+    count, parameters = (6, 954590) if arm == 'A_physical_drive' else (12, 1056362)
+    reports['train'].update(dataset_size=1147, model_config=model['model_config'],
+        state={'global_step': 1540, 'domain_samples_seen': {'carla': 6155}},
+        train_config={'seed': 20260903, 'learning_rate': .0001, 'batch_size': 4})
+    for stage in reports:
+        reports[stage]['model_parameter_count'] = parameters
+        if stage != 'train': reports[stage]['model_config_sha256'] = model['canonical_sha256']
+    reports['audit']['gate'].update(thresholds={'candidate_count': count}, threshold_overrides=False)
+    state = {'model_configs': models}
+    for stage in reports:
+        paths[stage].write_text(json.dumps(reports[stage]))
+        MODULE.verify_stage_report(stage, moved, checkpoint, state, stopmix_plan)
+    for stage, field, value in [('train', 'model_parameter_count', 1),
+        ('train', 'state', {'global_step': 1540, 'domain_samples_seen': {'carla': 6160}}),
+        ('train', 'loss_config', dict(reports['train']['loss_config'], candidate_regret_weight=0.0)),
+        ('evaluate', 'model_config_sha256', 'f' * 64), ('evaluate', 'auxiliary_loss_metrics', {}),
+        ('audit', 'gate', {'source': 'portable_e2e.runtime_geometry_gate.v8', 'thresholds': {'candidate_count': 99}, 'threshold_overrides': False})]:
+        altered = dict(reports[stage], **{field: value}); paths[stage].write_text(json.dumps(altered))
+        with pytest.raises(RuntimeError): MODULE.verify_stage_report(stage, moved, checkpoint, state, stopmix_plan)
+
+
+@pytest.mark.parametrize('archive_failure', [False, True])
+def test_stopmix_dispatch_wires_timeouts_source_archive_and_separate_analysis(stopmix_plan, stopmix_repo, tmp_path, monkeypatch, archive_failure):
+    # HH_260906 - Exercise the real dispatcher with opaque mock stages, never launch Python training or a CUDA process.
+    workspace = tmp_path / 'personal/portable_e2e'; workspace.mkdir(parents=True)
+    repo = workspace / 'autoware_e2e'; stopmix_repo.rename(repo)
+    dataset_parent = workspace.parent / 'dataset'
+    (dataset_parent / Path(stopmix_plan['dataset']).relative_to('datasets')).mkdir(parents=True)
+    (workspace / 'datasets').symlink_to(dataset_parent, target_is_directory=True)
+    monkeypatch.setattr(MODULE, 'WORKSPACE', workspace)
+    monkeypatch.setattr(MODULE.sys, 'prefix', str(workspace / 'venvs/py312'))
+    monkeypatch.setattr(MODULE, 'run_inventory', lambda command, _: stopmix_plan['source_commit'] if command[1] == 'rev-parse' else '')
+    monkeypatch.setattr(MODULE, 'assert_gpu_idle', lambda _: None)
+    monkeypatch.setattr(MODULE, 'verify_dataset_manifest', lambda *_: MODULE.EXPANDED_MANIFEST_SHA256)
+    monkeypatch.setattr(MODULE, 'verify_finish_budget', lambda *_: None)
+    monkeypatch.setattr(MODULE, 'verify_stage_report', lambda *_: {'fixture': 'report validation covered separately'})
+    calls = []
+    def stage(command, _repo, _env, _log, timeout):
+        calls.append((command, timeout))
+        if '--run-dir' in command:
+            checkpoint = Path(command[command.index('--run-dir') + 1]) / 'checkpoints/latest.pt'
+            checkpoint.parent.mkdir(parents=True); checkpoint.write_bytes(b'opaque fixture checkpoint')
+        return 0
+    monkeypatch.setattr(MODULE, 'run_owned_stage', stage)
+    if archive_failure:
+        def failed(*_): raise RuntimeError('test archive failure before launch')
+        monkeypatch.setattr(MODULE, 'archive_pipeline_sources', failed)
+    path = tmp_path / 'stopmix.json'; path.write_text(json.dumps(stopmix_plan))
+    if archive_failure:
+        with pytest.raises(RuntimeError, match='archive failure'): MODULE.main([str(path)])
+    else:
+        assert MODULE.main([str(path)]) == 0
+    root = workspace / 'runs/campaigns' / stopmix_plan['campaign_id']
+    state = json.loads((root / 'status.json').read_text())
+    assert state['behavior_analysis'] == {'status': 'NOT_RUN_SEPARATE_WORKFLOW', 'expected_count': 6,
+        'per_analysis_timeout_seconds': 180, 'included_in_completed_stage_count': False}
+    assert state['vehicle_control_approved'] is False and len(state['source_files']) == 11
+    if archive_failure:
+        assert state['status'] == 'STOPPED_FAILURE_NO_PROMOTION' and not calls and not state['stages']
+    else:
+        assert state['status'] == 'TRAIN_EVAL_AUDIT_COMPLETE_NOT_PROMOTED' and len(state['stages']) == 18
+        assert [timeout for _, timeout in calls] == [600, 120, 120] * 6
+        MODULE.verify_pipeline_sources(stopmix_plan, repo, state['source_files'], root)
 
 
 def test_no_accel_is_six_fresh_same_budget_paired_fits(no_accel_plan, tmp_path):

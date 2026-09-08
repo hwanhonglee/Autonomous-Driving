@@ -126,18 +126,26 @@ def test_only_new_head_gets_gradients(arm):
     assert all(parameter.grad is not None for parameter in head.parameters())
 
 
-def test_candidate_head_matches_e_normalization_and_is_permutation_equivariant():
+@pytest.mark.parametrize('dtype', [torch.float32, torch.float64])
+@pytest.mark.parametrize('order', [[2, 5, 1, 3, 4, 0], [5, 4, 3, 2, 1, 0]])
+def test_candidate_head_matches_e_normalization_and_is_permutation_equivariant(dtype, order):
     data = cache(count=2)
-    head = module.make_head(original_head(), 'candidate_reset', 123)
-    geometry = torch.cat((data.candidate_xy.flatten(2) / 120.0,
-        data.candidate_speed / module.PHYSICAL_MAXIMUM_SPEED_MPS), dim=2)
-    expected = head(torch.cat((data.fused[:, None].expand(-1, 6, -1), geometry), dim=2)).squeeze(-1)
-    actual = module.score_head(head, 'candidate_reset', data.fused, data.candidate_xy, data.candidate_speed)
+    # HH_260906 - Float64 is a test-only arithmetic reference, not a change to the float32 training ABI.
+    head = module.make_head(original_head(), 'candidate_reset', 123).to(dtype)
+    fused, xy, speed = data.fused.to(dtype), data.candidate_xy.to(dtype), data.candidate_speed.to(dtype)
+    geometry = torch.cat((xy.flatten(2) / 120.0,
+        speed / module.PHYSICAL_MAXIMUM_SPEED_MPS), dim=2)
+    expected = head(torch.cat((fused[:, None].expand(-1, 6, -1), geometry), dim=2)).squeeze(-1)
+    actual = module.score_head(head, 'candidate_reset', fused, xy, speed)
     assert torch.equal(actual, expected)
-    order = [2, 5, 1, 3, 4, 0]
-    permuted = module.score_head(head, 'candidate_reset', data.fused,
-        data.candidate_xy[:, order], data.candidate_speed[:, order])
-    assert torch.equal(permuted, actual[:, order])
+    permuted = module.score_head(head, 'candidate_reset', fused, xy[:, order], speed[:, order])
+    # HH_260906 - Reordered GEMM rows can round differently; test equivariance at dtype precision, not bit identity.
+    # HH_260906 - This arithmetic assertion does not alter any model, physical, dataset or runtime acceptance bound.
+    epsilon = torch.finfo(dtype).eps
+    assert torch.allclose(permuted, actual[:, order], atol=epsilon, rtol=4 * epsilon)
+    corrupted = permuted.detach().clone()
+    corrupted[0, 0] += 1e-3
+    assert not torch.allclose(corrupted, actual[:, order], atol=epsilon, rtol=4 * epsilon)
 
 
 def test_targets_use_actual_composite_loss_not_ade_and_keep_yaw_mask(monkeypatch):

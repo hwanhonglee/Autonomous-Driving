@@ -50,3 +50,41 @@
 A의 저속 곡률과 B의 목표 정차·가감속 문제 때문에 모두 데이터 미승인입니다.
 현재 모델·데이터를 승격하지 않고, 결과 게시·학습 처리 비용 계측·정지 후보를 추가하는
 다음 별도 모델 비교 준비를 이어갑니다.
+
+03:09 KST: [정지 후보 추가 모델 비교](04_stopmix_learning/README.md)의 실제 6회 학습을
+GPU 0에서 시작했습니다. 첫 A 모델의 176 step을 확인했으며 나머지는 아직 완료로 세지 않습니다.
+별도 [학습 처리 비용 계측](03_training_cost/README.md)은 80회 측정을 완료했지만
+실제 전체 학습 처리량 개선이나 production 코드 변경으로 해석하지 않습니다.
+
+03:41 KST: 정지 후보 비교의 학습·평가·감사 18개와 별도 행동 분석 6개가 모두 끝났습니다.
+상대 비교는 FAIL/PASS/FAIL, 절대 기준은 세 seed 모두 FAIL로 모델은 미채택입니다.
+행동 분석의 전체 원본을 가져와 각 파일·checkpoint 해시를 대조하고 있습니다.
+
+03:44 KST: GPU 0에서 원본 trainer를 사용하는 16-step × 2회 계측 학습을 시작했습니다.
+두 실행은 전체 캠페인 학습 횟수에 포함하지 않는 진단입니다. 기존 유한값 검사·데이터·손실·
+loader를 바꾸지 않고 계측 비용과 결과 동일성을 확인합니다. 로컬 CARLA는 현재 종료 상태입니다.
+
+03:45 KST: 16-step 계측 2회를 완료했습니다. 모든 32개 학습 기록과 creation timestamp만 제외한
+checkpoint의 가중치·Adam·RNG·ABI 내용이 정확히 같습니다. 계측기는 원본 trainer와
+데이터 준비·다수의 작은 CUDA 연산 호출 비용을 드러냈으며, 아직 속도 개선을 적용한 결과는 아닙니다.
+
+03:52 KST: [새 전체 코드 검사](07_code_verification/README.md)는 고정 commit `99902f3`에서
+**5,607 passed / 6 skipped / 0 failed**, 소스·설정 553개 전후 동일입니다.
+이전 b478 검사 1건 실패와 테스트만 수정한 경위도 함께 보존했습니다.
+다음은 기존 6개 모델의 원본 checkpoint를 보존한 고정 10-epoch 이어학습 비교를 준비합니다.
+아직 시작 전이며 새 loss나 seed 선택 없이 학습량 부족 가설만 분리해 확인할 계획입니다.
+
+## 결과를 찾는 곳
+
+<!-- HH_260906 - Keep actual training, expert collection and read-only data readiness in separate discoverable categories. -->
+
+| 폴더 | 내용 | 현재 판단 |
+|---|---|---|
+| [01 물리 적분과 차량 중심 촬영](01_substeps/README.md) | C-track expert 수집 4회, 실제 PNG·GIF와 원본 품질 검사 | 4회 모두 데이터 미승인 |
+| [02 후보 선택 손실 비교 학습](02_cost_aware_learning/README.md) | GPU 0의 새 학습 6회, 고정 seed별 성능·경로 그림 | 미채택 |
+| [03 학습 처리 비용](03_training_cost/README.md) · [실제 학습 계측](03_training_cost/actual_training_profile/README.md) | 성분 80회 계측, 실제 16-step 학습 2회와 CPU/CUDA 추적 | 진단 완료·결과 동일성 통과; 속도 개선 판정 아님 |
+| [04 주행·정지 후보 비교 학습](04_stopmix_learning/README.md) | 새 학습 6회와 별도 행동 분석 6회, 고정 시점 PNG 72장 | 결과 게시·해시 검증 완료, 미채택 |
+| [05 실제 데이터의 준비 상태](05_real_data_readiness/README.md) | nuPlan 단일 DB의 native 센서·경로 메타데이터 검사 | 학습 승인 아님 |
+| [05 부록: 6카메라 시간차 하한](05_real_data_readiness/subset_interval_analysis/README.md) | 동일 매칭에 대한 28개 조합의 보수적 하한 | 현재 매칭으로는 기존 20 ms 조건 미달 |
+| [06 Town07 저속 정지 원인 분석](06_town07_stop_conditioning/README.md) | 원본 1,337창 재구성, 고유 실패 119구간·실제 수치 PNG | 원본·실패 보존, 원인 단정·승인 없음 |
+| [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 5,607 통과 / 6 건너뜀 / 0 실패 |

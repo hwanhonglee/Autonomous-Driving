@@ -1,0 +1,1964 @@
+{
+  "analyzer": {
+    "commit_identity_claimed": false,
+    "path": "scripts/e2e/audit_town07_goal_stop_conditioning.py",
+    "same_bytes_before_after": true,
+    "sha256": "32f8d6a6f0ee09b5ee044045a5c636d6e500334b7112c8bd9534193e1d65acc6"
+  },
+  "created_at_utc": "2026-09-08T18:25:06.868697+00:00",
+  "input_sha256": {
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/episode/manifest.json": "4a6bb9a25fe0277ab501daa8c0fc374f7ef49c86f1bba828f41404b97d3fed9b",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/episode/states.jsonl": "8df19ac93f4399c86bcd6d46ffb18c78630d1618177b7457db73b70e5edb56c1",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/scripts/e2e/collect_carla_vad_expert.py": "53d213bdef56895a27969cc6dd4eac638ba4fa6697badeaaa3367bd5741f01d0",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/episode/manifest.json": "c8900fa623769f02b5b4788cbf6dd97885494ad965fd1e7c3f7aa55831a1ee8e",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/episode/states.jsonl": "0021f6d7dad86f0bf56160a8f14d9b4432ac165a37c31a1c60ba748be25d05ca",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/scripts/e2e/collect_carla_vad_expert.py": "53d213bdef56895a27969cc6dd4eac638ba4fa6697badeaaa3367bd5741f01d0",
+    "artifacts/training/2026-09-08/raw_pre_admission_v4_diagnostic_v1/future_anchor_audit.jsonl": "1d856532424155f04ed479931e068d2cadfacd737d703a126b17847d60dd0dc6",
+    "artifacts/training/2026-09-08/raw_pre_admission_v4_diagnostic_v1/summary.json": "c85a95bafe277b15ba1c2b56d258832bef6d9dd31660c8a63b4225167a8b8a68"
+  },
+  "limitations": [
+    "Unique ticks are not independent stopping events; the two trials share the same route and conditions.",
+    "All 64 future points are independently reconstructed. The joined unique-tick witness is the largest-curvature occurrence, not a selected passing example.",
+    "Nearest native state association is at most 74 ns; original future timestamps/interpolation and state rows are not retimed.",
+    "Body endpoint velocity, 100 ms displacement direction and body yaw are distinct observables; discrepancies alone do not establish control delay or physical sensor error.",
+    "Binary32 spacing is inferred from exactly representable stored actor-pose numbers, not independently verified server arithmetic or physical precision.",
+    "The conditional rounding bound assumes one nearest-rounded binary32 error per actor pose component and the recorded 1.425 m shift; it is not a measured error, noise estimate or cause verdict.",
+    "Comparison with the observed-distance heading allowance is descriptive, not a new gate or a complete interval-arithmetic feasibility proof. Some observed heading changes exceed even that allowance plus the conditional rounding bound.",
+    "A bound larger than the allowed heading step shows poor numerical conditioning only; it does not excuse any curvature violation or permit label smoothing, sample deletion or admission.",
+    "API-reported steering and wheel angle do not prove realized tire force or actuator timing. Snapshot reference point is not independently proven physical COM/rear axle."
+  ],
+  "original_diagnostic_source_identity": {
+    "files": {
+      "portable_e2e/config/common_10hz_v1.contract.json": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+      "portable_e2e/contract.py": "9a66674cfcdacfbb8a504bb10371238023bf2fd149eda048b42c4badffe1fa26",
+      "portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "scripts/e2e/audit_carla_acknowledged_control.py": "9d6fccb6874a5cdfc85e8bf5d9229435e4ba6fe6850eb63a9e83488f39bcc5bd",
+      "scripts/e2e/audit_carla_brake_free_goal_stop.py": "8386c0bce5c64250cb33de8c686369d36f5cbde141c1a9cd0a03911a1980cceb",
+      "scripts/e2e/audit_carla_comfortable_v3_trial.py": "ba0c81cb0faf9d1c7f178cdea25f31861c73f416578b935a8240dcf25d53efed",
+      "scripts/e2e/audit_carla_raw_pre_admission.py": "0a7983857aea0e2b6588bb27712865ce1f70c27aa06a187fca4d0fc1a72dbc00",
+      "scripts/e2e/audit_portable_target_feasibility.py": "8b56a4990f51639ec5ff9bca12f7453051772d1984e4db768613384b25f00894",
+      "scripts/e2e/prepare_carla_common10_dataset.py": "c63c7e5b7e0c06336c885f2d6120e3e8a8a74daf372ddf5df167eac2b4b4b666",
+      "scripts/e2e/summarize_carla_goal_stop_trials.py": "623fe185cfb823392629d62e10fa45ed5da893572ceb901c2e33f3b4f4802771"
+    },
+    "functions": {
+      "portable_e2e.contract._canonical_route_in_base": "982ae8664f397767d7cb2aba21bfbb8ca80e6ee398b2d3a62e87a8e56f06b32e",
+      "scripts.e2e.audit_carla_acknowledged_control.analyze_camera_alignment": "6800df497a146c205153e98eb6cd0f5c0802202c59599164936ecbd18f8baafa",
+      "scripts.e2e.audit_carla_acknowledged_control.analyze_transport": "5a9cd83a4288ea6b93e23f758748ba5a5f647db466c41e97dac1eace3ed01278",
+      "scripts.e2e.audit_carla_acknowledged_control.audit_trial": "b55e5d85dad574dd7d7353e2cc48f60dd19916b58be0c5e1df4bb3e6c854e3d8",
+      "scripts.e2e.audit_carla_acknowledged_control.recompute_snapshot_state": "57cce8ce35fab8bcb37f1131a003fba78784a9a13478691b2f9c74d5b7db1040",
+      "scripts.e2e.audit_carla_brake_free_goal_stop.analyze_protocol": "95dd1c3a7e4b07c4fa0fa648d239b10745e0bd9263e46b69db00fa3d20dca6f6",
+      "scripts.e2e.audit_carla_brake_free_goal_stop.audit_trial": "c36fba60d4fdc14651a310f036ce57870109160413611a347b5d91e6379de842",
+      "scripts.e2e.audit_carla_brake_free_goal_stop.verify_owner_sources": "7305c259e452e8ede386e076c0a34cb699b77a333b1b43592031d7a400a4de46",
+      "scripts.e2e.audit_carla_comfortable_v3_trial.analyze_protocol": "75ddddfe4d9b6d59b8785b9970c1463c3748c879376335ff4f89ed2c15f6869b",
+      "scripts.e2e.audit_portable_target_feasibility.audit_sample": "65472f7c0fe0ab3cc821d801a50a3c4b4a02f5c44b9425033ebc61844f3c41dd",
+      "scripts.e2e.audit_portable_target_feasibility.summarize_samples": "b14be3295c6863a0231fa1661128f8eac023c2f13c4c5f9c9fa9ac521f089ece",
+      "scripts.e2e.prepare_carla_common10_dataset._causal_state": "4ad6704476abc04c470ed7548dc972470a95ceab297c67dbceb8c52ba0c8696c",
+      "scripts.e2e.prepare_carla_common10_dataset._interpolate_state": "99542d12e597300470e3c807bdae439e1dbda52fb95224339dafa42901ad4700",
+      "scripts.e2e.prepare_carla_common10_dataset._relative_xy_yaw": "0b12090933e15e9cf8283b3e4c507cf999cfbc09f77225c95127155c15bf14f4",
+      "scripts.e2e.prepare_carla_common10_dataset._rig_document": "a5911c863b979f654eecd1135a642e13768adce60844d52ff37d2b66bea6a9e8",
+      "scripts.e2e.summarize_carla_goal_stop_trials.analyze_native": "283fa089d268d4276daa3d48af515e90b4e4257e775c16da23aa19278b234f29",
+      "scripts.e2e.summarize_carla_goal_stop_trials.summarize_trial": "abd0c65c9c39c77c392df39253c3312a896b69e8d9d329a5452b1d7ed571b79e"
+    }
+  },
+  "schema": "carla_expert.town07_goal_stop_conditioning.v1",
+  "scope": {
+    "all_full_64point_windows_reconstructed": true,
+    "all_original_curvature_flags_preserved": true,
+    "gate_modified": false,
+    "live_simulator_access": false,
+    "model_loaded": false,
+    "source_data_or_labels_modified": false,
+    "test_payload_read": false,
+    "training_data_approved": false
+  },
+  "status": "DIAGNOSED_NOT_ADMITTED",
+  "trials": [
+    {
+      "all_native_state_count": 1472,
+      "anchor_disposition_counts": {
+        "full_64_point_anchor": 671,
+        "tail_label_context_only": 65,
+        "violating_anchor_count": 145
+      },
+      "first_future_point_violation_count": 57,
+      "later_future_point_violation_count": 519,
+      "maximum_nearest_native_timestamp_offset_ns": 74,
+      "original_scalar_quality_pass": true,
+      "trial": "run_001",
+      "unique_100ms_tick_count": 60,
+      "unique_tick_groups": {
+        "driving/coast_low": {
+          "api_steer_endpoint": {
+            "maximum": 0.0031982436776161194,
+            "minimum": 0.0
+          },
+          "body_yaw_change_rad": {
+            "maximum": 5.326322181087306e-07,
+            "minimum": -1.3981595722967198e-05
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 0.015039147394759474,
+            "minimum": 0.014604074257613795
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 30,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 2.9212220868936303,
+            "minimum": 0.3374691270519965
+          },
+          "constant_api_steering_interval_count": 16,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.17967169224701335,
+            "minimum": 0.071109762956573
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              -3.0517578125e-05,
+              0.0087127685546875
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": -0.00018441509746480733,
+                "roll": 2.46215518018289e-06,
+                "x": -198.34036254882812,
+                "y": -141.98284912109375,
+                "yaw": -89.8872299194336,
+                "z": 0.03611278533935547
+              },
+              {
+                "pitch": -0.00018441509746480733,
+                "roll": 0.0,
+                "x": -198.34043884277344,
+                "y": -141.9872283935547,
+                "yaw": -89.8781967163086,
+                "z": 0.036112669855356216
+              },
+              {
+                "pitch": -0.00018441509746480733,
+                "roll": 1.7725546967994887e-06,
+                "x": -198.34039306640625,
+                "y": -141.99156188964844,
+                "yaw": -89.88646697998047,
+                "z": 0.03611263260245323
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0017425892846375903,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 3537,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.003068532794713974,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0039855120703577995,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0031982436776161194,
+                "throttle": 0.0
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": -1.3315805450275775e-05,
+            "body_yaw_interval_average_rate_radps": -0.00013315805183959672,
+            "body_yaw_rate_endpoint_radps": 0.014853379425158837,
+            "conditional_bound_over_allowed_heading_change": 1.4338019447356982,
+            "conditional_rounding_heading_change_bound_rad": 0.0024985279051889663,
+            "endpoint_velocity_vs_interval_direction_delta_rad": -0.2502479976842922,
+            "future_index": 0,
+            "native_from_frame": 3537,
+            "native_interval_average_xy_speed_mps": 0.08712946422184659,
+            "native_interval_seconds": 0.100000002,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "coast_low",
+            "native_to_frame": 3539,
+            "native_xy_displacement_m": 0.008712946596443588,
+            "nearest_native_minus_target_ns": 2,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 1.4551915228366852e-11,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 1.1368683772161603e-13,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 1.0884468513582864e-05
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.09046469466762794,
+              0.08980034735406271,
+              0.08924074883537468
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.0866277802396728,
+              -0.021436859458544386
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.32622870709945,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              -4.949256390318624e-05,
+              0.008712806027830311
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              -1.8974985778186237e-05,
+              3.747314281099534e-08
+            ],
+            "remaining_route_m": 0.9771540372625509,
+            "repeated_violating_window_point_count": 64,
+            "target_endpoint_planar_speed_mps": 0.08924074844793696,
+            "target_timestamp_ns": 69579580910,
+            "tick": 653,
+            "trial": "run_001",
+            "wheel_steering_tire_angle_endpoint_rad": -0.0038969007686219716,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                0.0005635916022583842,
+                0.01226469874382019,
+                -1.049041748046875e-05
+              ],
+              [
+                -0.0006305571878328919,
+                0.013165324926376343,
+                -3.8146970382513246e-06
+              ],
+              [
+                0.0007133325561881065,
+                0.01207590103149414,
+                3.890991138177924e-05
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -5.9397145378170535e-05,
+                -0.0003824670275207609,
+                -0.8509747385978699
+              ],
+              [
+                -1.2165329280833248e-05,
+                0.0003286893479526043,
+                0.8663313388824463
+              ],
+              [
+                -4.66736892121844e-05,
+                -0.0003627449623309076,
+                -0.8510359525680542
+              ]
+            ],
+            "world_displacement_heading_rad": 1.5764767047837422,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.00043830947834067047,
+                -0.08788913488388062,
+                -6.675720101156912e-07
+              ],
+              [
+                0.00040678161894902587,
+                -0.0872308686375618,
+                -8.583068620282575e-07
+              ],
+              [
+                0.0004424482467584312,
+                -0.08662707358598709,
+                1.0871887070607045e-06
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.8778417872325939,
+            "xy_displacement_m": 0.008712946423187951,
+            "xy_heading_change_rad": 0.007648588460193147,
+            "xy_interval_speed_mps": 0.0871294642318795
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 9,
+          "unique_100ms_tick_count": 55,
+          "xy_displacement_m": {
+            "maximum": 0.017959679626489224,
+            "minimum": 0.0068206787109375
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.007648588460193147,
+            "minimum": 0.00189243400921511
+          },
+          "zero_api_steering_interval_count": 16
+        },
+        "driving/launch_low": {
+          "api_steer_endpoint": {
+            "maximum": -7.200460913736606e-06,
+            "minimum": -0.0009228478302247822
+          },
+          "body_yaw_change_rad": {
+            "maximum": -2.1971078993043847e-05,
+            "minimum": -5.219795736555177e-05
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 0.013495141261785906,
+            "minimum": 0.00012050612127793716
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 1,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 1.067708567474815,
+            "minimum": 0.3558879854477786
+          },
+          "constant_api_steering_interval_count": 0,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.41544560738498765,
+            "minimum": 0.20518110234971423
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              6.103515625e-05,
+              0.0089874267578125
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": 0.00010245283192489296,
+                "roll": 0.0,
+                "x": -199.4798583984375,
+                "y": 67.14971160888672,
+                "yaw": -89.35287475585938,
+                "z": 0.03610954061150551
+              },
+              {
+                "pitch": 0.0021105282939970493,
+                "roll": 1.9231792975915596e-06,
+                "x": -199.47984313964844,
+                "y": 67.14871215820312,
+                "yaw": -89.35293579101562,
+                "z": 0.036095619201660156
+              },
+              {
+                "pitch": 0.012471924535930157,
+                "roll": 0.0002317857724847272,
+                "x": -199.47979736328125,
+                "y": 67.1407241821289,
+                "yaw": -89.35161590576172,
+                "z": 0.036019325256347656
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0017975703619388375,
+            "anchor_capture_phase": "stationary_warmup",
+            "anchor_frame": 2233,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 0,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -6.322475655906601e-06,
+                "throttle": 0.15000000596046448
+              },
+              {
+                "brake": 0.0,
+                "gear": 0,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -6.322475655906601e-06,
+                "throttle": 0.15000000596046448
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -7.200460913736606e-06,
+                "throttle": 0.15000000596046448
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": -2.1971078993043847e-05,
+            "body_yaw_interval_average_rate_radps": -0.00021971078773333057,
+            "body_yaw_rate_endpoint_radps": 0.013495141261785906,
+            "conditional_bound_over_allowed_heading_change": 1.067708567474815,
+            "conditional_rounding_heading_change_bound_rad": 0.001919281276080901,
+            "endpoint_velocity_vs_interval_direction_delta_rad": -0.09037843603499174,
+            "future_index": 49,
+            "native_from_frame": 2331,
+            "native_interval_average_xy_speed_mps": 0.08987863542620082,
+            "native_interval_seconds": 0.100000001,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "launch_low",
+            "native_to_frame": 2333,
+            "native_xy_displacement_m": 0.008987863632498719,
+            "nearest_native_minus_target_ns": 74,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 9.313225746154785e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 1.4551915228366852e-11,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 8.624809094788939e-06
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              3.4974973333199538e-09,
+              0.09819071199865044,
+              0.20518110234971423
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.20448544345168773,
+              -0.016881592869469473
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.4771102297919598,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              2.9728751513857787e-05,
+              0.008987814466138389
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              -3.130640473614221e-05,
+              3.87708325888525e-07
+            ],
+            "remaining_route_m": 210.27050393743488,
+            "repeated_violating_window_point_count": 50,
+            "target_endpoint_planar_speed_mps": 0.20518094351917002,
+            "target_timestamp_ns": 9279579939,
+            "tick": 50,
+            "trial": "run_001",
+            "wheel_steering_tire_angle_endpoint_rad": 8.766612783658416e-06,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                7.7497492867451e-09,
+                1.6336411334805234e-08,
+                7.24792471373803e-06
+              ],
+              [
+                0.022242657840251923,
+                -1.9636878967285156,
+                8.010865713004023e-06
+              ],
+              [
+                -0.02293940633535385,
+                -2.126290798187256,
+                -2.536773718020413e-05
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -3.488277116048266e-06,
+                6.037840194039745e-06,
+                -1.9874215120840866e-11
+              ],
+              [
+                -0.20606550574302673,
+                -0.002332529053092003,
+                -0.0025015429127961397
+              ],
+              [
+                -0.19908836483955383,
+                0.018418313935399055,
+                -0.7732146382331848
+              ]
+            ],
+            "world_displacement_heading_rad": 1.5674886658269516,
+            "world_velocity_start_middle_end_carla": [
+              [
+                1.6243790756931276e-09,
+                3.0971341047347778e-09,
+                1.3732909565078444e-06
+              ],
+              [
+                0.001112134545110166,
+                -0.09818439185619354,
+                1.7738342421580455e-06
+              ],
+              [
+                -3.4835720725823194e-05,
+                -0.20449893176555634,
+                5.054473604104714e-07
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.8886220160911663,
+            "xy_displacement_m": 0.008987851809694187,
+            "xy_heading_change_rad": 0.007986802995459086,
+            "xy_interval_speed_mps": 0.08987851809694186
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 1,
+          "unique_100ms_tick_count": 2,
+          "xy_displacement_m": {
+            "maximum": 0.034075709819434745,
+            "minimum": 0.008987863632498719
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.007986802995459086,
+            "minimum": 0.0070480127951878324
+          },
+          "zero_api_steering_interval_count": 0
+        },
+        "driving/normal_pid": {
+          "api_steer_endpoint": {
+            "maximum": -0.00038160939584486187,
+            "minimum": -0.0011002544779330492
+          },
+          "body_yaw_change_rad": {
+            "maximum": 9.214537371660114e-05,
+            "minimum": -0.00021571604829628832
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 0.005212953701207865,
+            "minimum": -0.013761638382524172
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 0,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 0.07819578142547859,
+            "minimum": 0.06814127752909244
+          },
+          "constant_api_steering_interval_count": 0,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.4798123531618275,
+            "minimum": 0.47464631057301343
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              0.0006103515625,
+              0.0509796142578125
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": 0.019821207970380783,
+                "roll": 0.00033034037915058434,
+                "x": -199.47853088378906,
+                "y": 67.01517486572266,
+                "yaw": -89.34219360351562,
+                "z": 0.035965003073215485
+              },
+              {
+                "pitch": 0.016433434560894966,
+                "roll": 7.637272210558876e-05,
+                "x": -199.478271484375,
+                "y": 66.9896011352539,
+                "yaw": -89.34072875976562,
+                "z": 0.035990141332149506
+              },
+              {
+                "pitch": 0.012068944051861763,
+                "roll": -9.155346197076142e-05,
+                "x": -199.47792053222656,
+                "y": 66.96419525146484,
+                "yaw": -89.34747314453125,
+                "z": 0.03602222353219986
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.010196690648640564,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 2337,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -0.0011002544779330492,
+                "throttle": 0.1525000035762787
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -0.00019891267584171146,
+                "throttle": 0.1550000011920929
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -0.00038160939584486187,
+                "throttle": 0.1574999988079071
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": 9.214537371660114e-05,
+            "body_yaw_interval_average_rate_radps": 0.0009214537279514741,
+            "body_yaw_rate_endpoint_radps": 0.005212953701207865,
+            "conditional_bound_over_allowed_heading_change": 0.06814127752909244,
+            "conditional_rounding_heading_change_bound_rad": 0.0006948155273673183,
+            "endpoint_velocity_vs_interval_direction_delta_rad": -0.012190479624232475,
+            "future_index": 1,
+            "native_from_frame": 2339,
+            "native_interval_average_xy_speed_mps": 0.5098345327825548,
+            "native_interval_seconds": 0.100000001,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "normal_pid",
+            "native_to_frame": 2341,
+            "native_xy_displacement_m": 0.05098345378809001,
+            "nearest_native_minus_target_ns": 3,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 9.313225746154785e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 7.275957614183426e-12,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 8.624809094788939e-06
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.47464631057301343,
+              0.5516678410144482,
+              0.4798123531618275
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.4797558334776338,
+              -0.007364407027809008
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.544058467169253,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              0.0007416495166410186,
+              0.05097805916427944
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              0.00013129795414101864,
+              -1.5550935330566062e-06
+            ],
+            "remaining_route_m": 210.09396507246188,
+            "repeated_violating_window_point_count": 53,
+            "target_endpoint_planar_speed_mps": 0.47981235746608103,
+            "target_timestamp_ns": 9679580016,
+            "tick": 54,
+            "trial": "run_001",
+            "wheel_steering_tire_angle_endpoint_rad": 0.0004614389033221782,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                0.007346076890826225,
+                0.5889236927032471,
+                -2.9945371352368966e-05
+              ],
+              [
+                0.0361514538526535,
+                -1.5491735935211182,
+                1.9645689462777227e-05
+              ],
+              [
+                -0.011131875216960907,
+                1.4380508661270142,
+                4.272460864740424e-05
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                0.14364682137966156,
+                0.002810626057907939,
+                0.7884837985038757
+              ],
+              [
+                -0.023645367473363876,
+                -0.0038468067068606615,
+                0.10245118290185928
+              ],
+              [
+                0.15993836522102356,
+                0.0006180349737405777,
+                -0.29868024587631226
+              ]
+            ],
+            "world_displacement_heading_rad": 1.5562489467934855,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.004148670472204685,
+                -0.4741693139076233,
+                -1.9168853668816155e-06
+              ],
+              [
+                0.005956243257969618,
+                -0.5516279935836792,
+                -9.346007914246002e-07
+              ],
+              [
+                0.0053996494971215725,
+                -0.4797254502773285,
+                1.201629629576928e-06
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.24911700487025962,
+            "xy_displacement_m": 0.05098345324320282,
+            "xy_heading_change_rad": 0.01270084516988961,
+            "xy_interval_speed_mps": 0.5098345324320281
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 2,
+          "unique_100ms_tick_count": 2,
+          "xy_displacement_m": {
+            "maximum": 0.05098345378809001,
+            "minimum": 0.04838911775081925
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.01270084516988961,
+            "minimum": 0.01184355996500472
+          },
+          "zero_api_steering_interval_count": 0
+        },
+        "stationary_tail/setup_or_tail": {
+          "api_steer_endpoint": {
+            "maximum": 0.0,
+            "minimum": 0.0
+          },
+          "body_yaw_change_rad": {
+            "maximum": 0.0003046656287049032,
+            "minimum": 0.0003046656287049032
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 3.953358578015088e-06,
+            "minimum": 3.953358578015088e-06
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 1,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 10.564416334678388,
+            "minimum": 10.564416334678388
+          },
+          "constant_api_steering_interval_count": 1,
+          "endpoint_planar_speed_mps": {
+            "maximum": 6.055617293718895e-05,
+            "minimum": 6.055617293718895e-05
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              0.0001373291015625,
+              0.0040130615234375
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": -0.00012294339830987155,
+                "roll": 0.0,
+                "x": -198.34039306640625,
+                "y": -142.12205505371094,
+                "yaw": -89.88646697998047,
+                "z": 0.036112211644649506
+              },
+              {
+                "pitch": -0.00012294339830987155,
+                "roll": 1.928592155309161e-06,
+                "x": -198.34043884277344,
+                "y": -142.1254119873047,
+                "yaw": -89.87786865234375,
+                "z": 0.03611224889755249
+              },
+              {
+                "pitch": -0.004214226268231869,
+                "roll": 2.2226044166018255e-05,
+                "x": -198.3402557373047,
+                "y": -142.12606811523438,
+                "yaw": -89.90392303466797,
+                "z": 0.03614238649606705
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0008105530577033348,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 3571,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              },
+              {
+                "brake": 1.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              }
+            ],
+            "api_steering_constant_across_interval": true,
+            "api_steering_zero_across_interval": true,
+            "body_yaw_change_over_interval_rad": 0.0003046656287049032,
+            "body_yaw_interval_average_rate_radps": 0.0030466562261159073,
+            "body_yaw_rate_endpoint_radps": 3.953358578015088e-06,
+            "conditional_bound_over_allowed_heading_change": 10.564416334678388,
+            "conditional_rounding_heading_change_bound_rad": 0.008563019962924624,
+            "endpoint_velocity_vs_interval_direction_delta_rad": 0.05477474201999799,
+            "future_index": 1,
+            "native_from_frame": 3573,
+            "native_interval_average_xy_speed_mps": 0.04052765185314263,
+            "native_interval_seconds": 0.100000002,
+            "native_target_phase": "stationary_tail",
+            "native_target_pilot_state": "setup_or_tail",
+            "native_to_frame": 3575,
+            "native_xy_displacement_m": 0.004052765266369567,
+            "nearest_native_minus_target_ns": 3,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 4.656612873077393e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 1.8189894035458565e-12,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 1.0884474123340343e-05
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.071109762956573,
+              0.0706320948451077,
+              6.055617293718895e-05
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              6.033739605096711e-05,
+              -5.142831767370384e-06
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.484090414065111,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              0.0005714769009159681,
+              0.004012271234103082
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              0.00043414779935346814,
+              -7.902893344180484e-07
+            ],
+            "remaining_route_m": 0.8426483909946114,
+            "repeated_violating_window_point_count": 64,
+            "target_endpoint_planar_speed_mps": 6.056008240996948e-05,
+            "target_timestamp_ns": 71379580936,
+            "tick": 671,
+            "trial": "run_001",
+            "wheel_steering_tire_angle_endpoint_rad": -0.0,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                0.001773511292412877,
+                0.009521842002868652,
+                -8.583067938161548e-06
+              ],
+              [
+                -0.0018117913277819753,
+                0.010039061307907104,
+                3.0517571758537088e-06
+              ],
+              [
+                -0.0018768013687804341,
+                1.3445056676864624,
+                -1.144409225162235e-06
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -6.284834671532735e-05,
+                -0.00046026811469346285,
+                -0.8616796731948853
+              ],
+              [
+                5.955186566097836e-07,
+                0.0005212497198954225,
+                0.8617815971374512
+              ],
+              [
+                0.0683242604136467,
+                -0.0007048851111903787,
+                -0.00022651076142210513
+              ]
+            ],
+            "world_displacement_heading_rad": 1.429315672045113,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.00018404010916128755,
+                -0.06778757274150848,
+                -7.629394076502649e-07
+              ],
+              [
+                9.34505442273803e-05,
+                -0.06728561967611313,
+                -6.103515488575795e-07
+              ],
+              [
+                -3.895262352671125e-07,
+                -6.0338134062476456e-05,
+                -6.675720101156912e-07
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 34.90965637691969,
+            "xy_displacement_m": 0.004052765288516674,
+            "xy_heading_change_rad": 0.14148064359842488,
+            "xy_interval_speed_mps": 0.040527652885166736
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 1,
+          "unique_100ms_tick_count": 1,
+          "xy_displacement_m": {
+            "maximum": 0.004052765266369567,
+            "minimum": 0.004052765266369567
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.14148064359842488,
+            "minimum": 0.14148064359842488
+          },
+          "zero_api_steering_interval_count": 1
+        }
+      },
+      "violating_future_endpoint_planar_speed_mps": {
+        "maximum": 0.47981246794192084,
+        "minimum": 6.0558779247526015e-05
+      },
+      "violating_window_point_count": 576,
+      "violating_window_point_xy_speed_mps": {
+        "maximum": 0.5098345324320281,
+        "minimum": 0.04052765235737549
+      }
+    },
+    {
+      "all_native_state_count": 1462,
+      "anchor_disposition_counts": {
+        "full_64_point_anchor": 666,
+        "tail_label_context_only": 65,
+        "violating_anchor_count": 154
+      },
+      "first_future_point_violation_count": 56,
+      "later_future_point_violation_count": 639,
+      "maximum_nearest_native_timestamp_offset_ns": 74,
+      "original_scalar_quality_pass": true,
+      "trial": "run_002",
+      "unique_100ms_tick_count": 59,
+      "unique_tick_groups": {
+        "driving/coast_low": {
+          "api_steer_endpoint": {
+            "maximum": 0.003995806444436312,
+            "minimum": 0.0
+          },
+          "body_yaw_change_rad": {
+            "maximum": 0.0,
+            "minimum": -1.5046860158962616e-05
+          },
+          "body_yaw_rate_radps": {
+            "maximum": -0.014890023897579947,
+            "minimum": -0.015107725873423615
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 24,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 1.9956612342390536,
+            "minimum": 0.38496509176543064
+          },
+          "constant_api_steering_interval_count": 17,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.16849968376812977,
+            "minimum": 0.07646140323004146
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              -3.0517578125e-05,
+              0.01043701171875
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": -0.0002458867966197431,
+                "roll": 1.3027551259980896e-11,
+                "x": -198.34036254882812,
+                "y": -141.9210205078125,
+                "yaw": -89.88448333740234,
+                "z": 0.03611309081315994
+              },
+              {
+                "pitch": -0.0002458867966197431,
+                "roll": 1.6816093193483539e-06,
+                "x": -198.34030151367188,
+                "y": -141.92625427246094,
+                "yaw": -89.89266204833984,
+                "z": 0.03611304983496666
+              },
+              {
+                "pitch": -0.0002458867966197431,
+                "roll": -1.3027551259980896e-11,
+                "x": -198.34039306640625,
+                "y": -141.93145751953125,
+                "yaw": -89.88362884521484,
+                "z": 0.03611309081315994
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0020874365816582023,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 3973,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.003634929656982422,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0027301388327032328,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0036736298352479935,
+                "throttle": 0.0
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": -1.4913702104379922e-05,
+            "body_yaw_interval_average_rate_radps": -0.00014913701806105887,
+            "body_yaw_rate_endpoint_radps": -0.015079080246948451,
+            "conditional_bound_over_allowed_heading_change": 0.9992055181391755,
+            "conditional_rounding_heading_change_bound_rad": 0.0020857781511584533,
+            "endpoint_velocity_vs_interval_direction_delta_rad": 0.1949147411618133,
+            "future_index": 0,
+            "native_from_frame": 3973,
+            "native_interval_average_xy_speed_mps": 0.10437182907768126,
+            "native_interval_seconds": 0.100000002,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "coast_low",
+            "native_to_frame": 3975,
+            "native_xy_displacement_m": 0.010437183116511786,
+            "nearest_native_minus_target_ns": 2,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 2.9103830456733704e-11,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 8.673617379884035e-19,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 1.0884468694542783e-05
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.10740139785488871,
+              0.10670494369957526,
+              0.10592148177311027
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.10376980849030924,
+              0.021241166326166634
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.7706711967403883,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              -5.1769560116099456e-05,
+              0.010437054724405925
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              -2.1251981991099456e-05,
+              4.3005655925298925e-08
+            ],
+            "remaining_route_m": 1.0372582885616737,
+            "repeated_violating_window_point_count": 64,
+            "target_endpoint_planar_speed_mps": 0.10592148146188304,
+            "target_timestamp_ns": 68348320530,
+            "tick": 641,
+            "trial": "run_002",
+            "wheel_steering_tire_angle_endpoint_rad": -0.004473999130678191,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                -0.0003089546225965023,
+                0.015749484300613403,
+                3.0517571758537088e-06
+              ],
+              [
+                0.00029180606361478567,
+                0.014694780111312866,
+                -1.3732907973462716e-05
+              ],
+              [
+                -0.00034318945836275816,
+                0.015536248683929443,
+                -3.6621091567212716e-05
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -4.19145762862172e-05,
+                0.00036501415888778865,
+                0.8637349009513855
+              ],
+              [
+                -8.187680214177817e-05,
+                -0.0003627422556746751,
+                -0.8473511934280396
+              ],
+              [
+                -1.657811299082823e-05,
+                0.000374229799490422,
+                0.8639676570892334
+              ]
+            ],
+            "world_displacement_heading_rad": 1.575756455578575,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.00045985422912053764,
+                -0.10528064519166946,
+                1.3923644246460753e-06
+              ],
+              [
+                0.0004744445323012769,
+                -0.10454590618610382,
+                7.05719003235572e-07
+              ],
+              [
+                0.000457285059383139,
+                -0.10376909375190735,
+                -1.1253356433371664e-06
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.6684058174866775,
+            "xy_displacement_m": 0.010437182908291012,
+            "xy_heading_change_rad": 0.006976273774074232,
+            "xy_interval_speed_mps": 0.10437182908291011
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 11,
+          "unique_100ms_tick_count": 52,
+          "xy_displacement_m": {
+            "maximum": 0.01681528292545074,
+            "minimum": 0.007385253904175215
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.006976273774074232,
+            "minimum": 0.0021258671614983278
+          },
+          "zero_api_steering_interval_count": 17
+        },
+        "driving/launch_low": {
+          "api_steer_endpoint": {
+            "maximum": -7.200460913736606e-06,
+            "minimum": -0.0005879421951249242
+          },
+          "body_yaw_change_rad": {
+            "maximum": 0.00011957593294442681,
+            "minimum": -0.00013915016695653648
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 0.013649941661335964,
+            "minimum": -0.003935582268290595
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 1,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 1.0677114164137924,
+            "minimum": 0.07543322266603662
+          },
+          "constant_api_steering_interval_count": 0,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.4814763128445844,
+            "minimum": 0.20547862574758716
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              6.103515625e-05,
+              0.0089874267578125
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": 0.00010245283192489296,
+                "roll": 0.0,
+                "x": -199.4798583984375,
+                "y": 67.14971160888672,
+                "yaw": -89.35287475585938,
+                "z": 0.0361105352640152
+              },
+              {
+                "pitch": 0.0021105282939970493,
+                "roll": 1.9172387055732543e-06,
+                "x": -199.47984313964844,
+                "y": 67.14871215820312,
+                "yaw": -89.35293579101562,
+                "z": 0.036095619201660156
+              },
+              {
+                "pitch": 0.012478754855692387,
+                "roll": 0.00022967052063904703,
+                "x": -199.47979736328125,
+                "y": 67.1407241821289,
+                "yaw": -89.35167694091797,
+                "z": 0.03601909428834915
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0017975679636984096,
+            "anchor_capture_phase": "stationary_warmup",
+            "anchor_frame": 2693,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 0,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -6.322475655906601e-06,
+                "throttle": 0.15000000596046448
+              },
+              {
+                "brake": 0.0,
+                "gear": 0,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -6.322475655906601e-06,
+                "throttle": 0.15000000596046448
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -7.200460913736606e-06,
+                "throttle": 0.15000000596046448
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": -2.090581455704843e-05,
+            "body_yaw_interval_average_rate_radps": -0.00020905814347990285,
+            "body_yaw_rate_endpoint_radps": 0.013649941661335964,
+            "conditional_bound_over_allowed_heading_change": 1.0677114164137924,
+            "conditional_rounding_heading_change_bound_rad": 0.0019192838366204857,
+            "endpoint_velocity_vs_interval_direction_delta_rad": -0.09129401627910606,
+            "future_index": 49,
+            "native_from_frame": 2791,
+            "native_interval_average_xy_speed_mps": 0.08987851551393909,
+            "native_interval_seconds": 0.100000001,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "launch_low",
+            "native_to_frame": 2793,
+            "native_xy_displacement_m": 0.008987851641272426,
+            "nearest_native_minus_target_ns": 74,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 9.313225746154785e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 1.4551915228366852e-11,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 8.624809094788939e-06
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              3.4974975969140444e-09,
+              0.09819070459252505,
+              0.20547862574758716
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.20476348532262262,
+              -0.01712836003968573
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.4760257600870768,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              3.124665653331249e-05,
+              0.008987797325929137
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              -2.978849971668751e-05,
+              3.7056811663660483e-07
+            ],
+            "remaining_route_m": 210.27050393741146,
+            "repeated_violating_window_point_count": 50,
+            "target_endpoint_planar_speed_mps": 0.20547846646373819,
+            "target_timestamp_ns": 9248319577,
+            "tick": 50,
+            "trial": "run_002",
+            "wheel_steering_tire_angle_endpoint_rad": 8.766616847319748e-06,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                7.7497492867451e-09,
+                1.6336416663875752e-08,
+                7.24792471373803e-06
+              ],
+              [
+                0.022242730483412743,
+                -1.9636876583099365,
+                8.392335075768642e-06
+              ],
+              [
+                -0.022357413545250893,
+                -2.131845474243164,
+                -6.103516625444172e-06
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -3.488277116048266e-06,
+                6.037840194039745e-06,
+                -1.988425916976677e-11
+              ],
+              [
+                -0.2060658484697342,
+                -0.002331407740712166,
+                -0.0025015887804329395
+              ],
+              [
+                -0.19968655705451965,
+                0.01813456416130066,
+                -0.782084047794342
+              ]
+            ],
+            "world_displacement_heading_rad": 1.5673197763661828,
+            "world_velocity_start_middle_end_carla": [
+              [
+                1.624378964670825e-09,
+                3.0971343267793827e-09,
+                1.3732909565078444e-06
+              ],
+              [
+                0.0011121381539851427,
+                -0.09818438440561295,
+                1.7929077102962765e-06
+              ],
+              [
+                -5.732561021432048e-06,
+                -0.20477665960788727,
+                1.4877318790240679e-06
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.8698323201385822,
+            "xy_displacement_m": 0.008987839818492048,
+            "xy_heading_change_rad": 0.007817913562352872,
+            "xy_interval_speed_mps": 0.08987839818492047
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 3,
+          "unique_100ms_tick_count": 3,
+          "xy_displacement_m": {
+            "maximum": 0.0431716683710326,
+            "minimum": 0.008987851641272426
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.015119624708463411,
+            "minimum": 0.007817913562352872
+          },
+          "zero_api_steering_interval_count": 0
+        },
+        "driving/normal_pid": {
+          "api_steer_endpoint": {
+            "maximum": 0.0006698049255646765,
+            "minimum": -0.0003235761832911521
+          },
+          "body_yaw_change_rad": {
+            "maximum": 0.0003553988474711556,
+            "minimum": -6.764429168804043e-05
+          },
+          "body_yaw_rate_radps": {
+            "maximum": 0.005133080714748805,
+            "minimum": -0.0022688426399901777
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 0,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 0.08118181663323401,
+            "minimum": 0.05294310793714533
+          },
+          "constant_api_steering_interval_count": 0,
+          "endpoint_planar_speed_mps": {
+            "maximum": 0.6342234787032583,
+            "minimum": 0.5006503133687605
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              0.0008697509765625,
+              0.05560302734375
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": 0.01423411350697279,
+                "roll": -0.0003356935631018132,
+                "x": -199.4779510498047,
+                "y": 66.96471405029297,
+                "yaw": -89.3320541381836,
+                "z": 0.03600623831152916
+              },
+              {
+                "pitch": 0.011741094291210175,
+                "roll": -0.00024414047948084772,
+                "x": -199.4774932861328,
+                "y": 66.93753814697266,
+                "yaw": -89.34661865234375,
+                "z": 0.03602462634444237
+              },
+              {
+                "pitch": 0.010859999805688858,
+                "roll": -0.00012207002873765305,
+                "x": -199.47708129882812,
+                "y": 66.90911102294922,
+                "yaw": -89.3524169921875,
+                "z": 0.03603118658065796
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.011122844573660105,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 2799,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -0.00025006759096868336,
+                "throttle": 0.1550000011920929
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": -0.0015440230490639806,
+                "throttle": 0.1574999988079071
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0006698049255646765,
+                "throttle": 0.1599999964237213
+              }
+            ],
+            "api_steering_constant_across_interval": false,
+            "api_steering_zero_across_interval": false,
+            "body_yaw_change_over_interval_rad": 0.0003553988474711556,
+            "body_yaw_interval_average_rate_radps": 0.0035539884036317874,
+            "body_yaw_rate_endpoint_radps": -0.0022688426399901777,
+            "conditional_bound_over_allowed_heading_change": 0.05777112869550549,
+            "conditional_rounding_heading_change_bound_rad": 0.0006425792853250228,
+            "endpoint_velocity_vs_interval_direction_delta_rad": 0.017968602182883764,
+            "future_index": 1,
+            "native_from_frame": 2801,
+            "native_interval_average_xy_speed_mps": 0.5561422292744663,
+            "native_interval_seconds": 0.100000002,
+            "native_target_phase": "driving",
+            "native_target_pilot_state": "normal_pid",
+            "native_to_frame": 2803,
+            "native_xy_displacement_m": 0.0556142240397311,
+            "nearest_native_minus_target_ns": 3,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 9.313225746154785e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 7.275957614183426e-12,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 8.624809094788939e-06
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.563903526067305,
+              0.5017119441676078,
+              0.6120705001505788
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              0.6120642373044758,
+              0.002768856708125629
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.5640176411050044,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              0.001376160735475196,
+              0.05559719504769589
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              0.0005064097589126959,
+              -5.832296054109065e-06
+            ],
+            "remaining_route_m": 210.03887488837626,
+            "repeated_violating_window_point_count": 55,
+            "target_endpoint_planar_speed_mps": 0.6120704935275025,
+            "target_timestamp_ns": 9748319656,
+            "tick": 55,
+            "trial": "run_002",
+            "wheel_steering_tire_angle_endpoint_rad": -0.0008104832735323398,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                0.024449694901704788,
+                -1.4293020963668823,
+                3.719329833984375e-05
+              ],
+              [
+                -0.01645473763346672,
+                1.2416315078735352,
+                -1.201629675051663e-05
+              ],
+              [
+                0.02263627015054226,
+                -2.2070932388305664,
+                -8.39233416627394e-06
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -0.022112803533673286,
+                0.0018219061894342303,
+                0.47314122319221497
+              ],
+              [
+                0.16990971565246582,
+                0.0069432747550308704,
+                -0.09304801374673843
+              ],
+              [
+                -0.0754762813448906,
+                0.0035900846123695374,
+                0.12999510765075684
+              ]
+            ],
+            "world_displacement_heading_rad": 1.5460490389221206,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.007072819396853447,
+                -0.5637468099594116,
+                4.863738922722405e-07
+              ],
+              [
+                0.006250082515180111,
+                -0.5016652345657349,
+                -1.1444091541079615e-07
+              ],
+              [
+                0.007381896022707224,
+                -0.6120198965072632,
+                -5.340576194612368e-07
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 0.3753857449010727,
+            "xy_displacement_m": 0.05561422286830053,
+            "xy_heading_change_rad": 0.020876786478511263,
+            "xy_interval_speed_mps": 0.5561422286830052
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 3,
+          "unique_100ms_tick_count": 3,
+          "xy_displacement_m": {
+            "maximum": 0.05758312422243294,
+            "minimum": 0.04714420176996498
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.020876786478511263,
+            "minimum": 0.010360373413097153
+          },
+          "zero_api_steering_interval_count": 0
+        },
+        "stationary_tail/setup_or_tail": {
+          "api_steer_endpoint": {
+            "maximum": 0.0,
+            "minimum": 0.0
+          },
+          "body_yaw_change_rad": {
+            "maximum": -0.00030146983539691696,
+            "minimum": -0.00030146983539691696
+          },
+          "body_yaw_rate_radps": {
+            "maximum": -3.470955245884745e-06,
+            "minimum": -3.470955245884745e-06
+          },
+          "conditional_rounding_bound_exceeds_allowed_heading_step_count": 1,
+          "conditional_rounding_bound_over_allowed_heading_change": {
+            "maximum": 5.666749014141176,
+            "minimum": 5.666749014141176
+          },
+          "constant_api_steering_interval_count": 1,
+          "endpoint_planar_speed_mps": {
+            "maximum": 6.604415953006003e-05,
+            "minimum": 6.604415953006003e-05
+          },
+          "maximum_curvature_witness": {
+            "actor_reference_displacement_ros_xy_m": [
+              -0.0001068115234375,
+              0.0043487548828125
+            ],
+            "actor_transform_start_middle_end": [
+              {
+                "pitch": -0.00012294339830987155,
+                "roll": 2.569313210187829e-06,
+                "x": -198.34042358398438,
+                "y": -142.14181518554688,
+                "yaw": -89.87816619873047,
+                "z": 0.03611240163445473
+              },
+              {
+                "pitch": -0.00012294339830987155,
+                "roll": 0.0,
+                "x": -198.34036254882812,
+                "y": -142.14547729492188,
+                "yaw": -89.88677215576172,
+                "z": 0.03611236438155174
+              },
+              {
+                "pitch": -0.004576226696372032,
+                "roll": -3.0517610866809264e-05,
+                "x": -198.3405303955078,
+                "y": -142.1461639404297,
+                "yaw": -89.86089324951172,
+                "z": 0.036145057529211044
+              }
+            ],
+            "allowed_heading_change_at_observed_distance_rad": 0.0008765374579990295,
+            "anchor_capture_phase": "driving",
+            "anchor_frame": 4023,
+            "api_controls_start_middle_end": [
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              },
+              {
+                "brake": 0.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              },
+              {
+                "brake": 1.0,
+                "gear": 1,
+                "hand_brake": false,
+                "manual_gear_shift": false,
+                "reverse": false,
+                "steer": 0.0,
+                "throttle": 0.0
+              }
+            ],
+            "api_steering_constant_across_interval": true,
+            "api_steering_zero_across_interval": true,
+            "body_yaw_change_over_interval_rad": -0.00030146983539691696,
+            "body_yaw_interval_average_rate_radps": -0.003014698323822186,
+            "body_yaw_rate_endpoint_radps": -3.470955245884745e-06,
+            "conditional_bound_over_allowed_heading_change": 5.666749014141176,
+            "conditional_rounding_heading_change_bound_rad": 0.004967117775973812,
+            "endpoint_velocity_vs_interval_direction_delta_rad": -0.05595177398646234,
+            "future_index": 0,
+            "native_from_frame": 4023,
+            "native_interval_average_xy_speed_mps": 0.04382687261807233,
+            "native_interval_seconds": 0.100000001,
+            "native_target_phase": "stationary_tail",
+            "native_target_pilot_state": "setup_or_tail",
+            "native_to_frame": 4025,
+            "native_xy_displacement_m": 0.004382687305634106,
+            "nearest_native_minus_target_ns": 1,
+            "pose_resolution": {
+              "body_yaw_error_bound_rad": 6.657902725198096e-08,
+              "components": {
+                "pitch": {
+                  "float32_spacing_upper_bound": 4.656612873077393e-10,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "roll": {
+                  "float32_spacing_upper_bound": 3.637978807091713e-12,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "x": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "y": {
+                  "float32_spacing_upper_bound": 1.52587890625e-05,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "yaw": {
+                  "float32_spacing_upper_bound": 7.62939453125e-06,
+                  "observed_value_exactly_float32_representable": true
+                },
+                "z": {
+                  "float32_spacing_upper_bound": 3.725290298461914e-09,
+                  "observed_value_exactly_float32_representable": true
+                }
+              },
+              "rear_planar_position_error_bound_m": 1.0884474123340343e-05
+            },
+            "raw_body_planar_endpoint_speeds_mps": [
+              0.07646140323004146,
+              0.07597005795666556,
+              6.604415953006003e-05
+            ],
+            "raw_body_velocity_endpoint_mps": [
+              6.588620352210573e-05,
+              4.564996547170729e-06
+            ],
+            "raw_endpoint_velocity_world_heading_rad": 1.6375439802216711,
+            "recomputed_original_violation": true,
+            "recorded_rear_displacement_ros_xy_m": [
+              -0.0005364049124239045,
+              0.004349737668974285
+            ],
+            "recorded_reference_shift_displacement_contribution_xy_m": [
+              -0.00042959338898640453,
+              9.82786161785043e-07
+            ],
+            "remaining_route_m": 0.8225508903517493,
+            "repeated_violating_window_point_count": 64,
+            "target_endpoint_planar_speed_mps": 6.604558262351108e-05,
+            "target_timestamp_ns": 70848320568,
+            "tick": 666,
+            "trial": "run_002",
+            "wheel_steering_tire_angle_endpoint_rad": -0.0,
+            "world_acceleration_start_middle_end_carla": [
+              [
+                -0.0018027883488684893,
+                0.010922551155090332,
+                -4.558562795864418e-05
+              ],
+              [
+                0.0017562317661941051,
+                0.010262280702590942,
+                7.629394076502649e-06
+              ],
+              [
+                -0.0038657961413264275,
+                1.4562338590621948,
+                1.3160704838810489e-05
+              ]
+            ],
+            "world_angular_velocity_start_middle_end_carla_deg_s": [
+              [
+                -1.618028363736812e-05,
+                0.0005414118058979511,
+                0.860478937625885
+              ],
+              [
+                -5.041746044298634e-05,
+                -0.00045863373088650405,
+                -0.8606094717979431
+              ],
+              [
+                0.07412049174308777,
+                0.0009519928134977818,
+                0.0001988710864679888
+              ]
+            ],
+            "world_displacement_heading_rad": 1.6934957542081335,
+            "world_velocity_start_middle_end_carla": [
+              [
+                0.00010601928079267964,
+                -0.07339069247245789,
+                -1.6212462696785224e-06
+              ],
+              [
+                0.00019383087055757642,
+                -0.07287757843732834,
+                -1.23977656585339e-06
+              ],
+              [
+                5.410765879787505e-07,
+                -6.588508404092863e-05,
+                -5.81741346650233e-07
+              ]
+            ],
+            "xy_curvature_limit_rad_per_m": 0.2,
+            "xy_curvature_rad_per_m": 28.481572340245886,
+            "xy_displacement_m": 0.004382687289995147,
+            "xy_heading_change_rad": 0.12482582509467299,
+            "xy_interval_speed_mps": 0.04382687289995147
+          },
+          "observed_heading_exceeds_conditional_bound_plus_fixed_distance_allowance_count": 1,
+          "unique_100ms_tick_count": 1,
+          "xy_displacement_m": {
+            "maximum": 0.004382687305634106,
+            "minimum": 0.004382687305634106
+          },
+          "xy_heading_change_rad": {
+            "maximum": 0.12482582509467299,
+            "minimum": 0.12482582509467299
+          },
+          "zero_api_steering_interval_count": 1
+        }
+      },
+      "violating_future_endpoint_planar_speed_mps": {
+        "maximum": 0.6342234721356246,
+        "minimum": 6.604558262351108e-05
+      },
+      "violating_window_point_count": 695,
+      "violating_window_point_xy_speed_mps": {
+        "maximum": 0.575831235801594,
+        "minimum": 0.04382687289995147
+      }
+    }
+  ]
+}

@@ -1,0 +1,783 @@
+{
+  "analyzer": {
+    "commit_identity_claimed": false,
+    "path": "scripts/e2e/audit_town07_goal_stop_conditioning.py",
+    "same_bytes_before_after": true,
+    "sha256": "32f8d6a6f0ee09b5ee044045a5c636d6e500334b7112c8bd9534193e1d65acc6"
+  },
+  "exact_byte_copies": [
+    "summary.json",
+    "unique_ticks.jsonl",
+    "original_SHA256SUMS"
+  ],
+  "historical_execution_commit_inferred": false,
+  "historical_input_sha256": {
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/episode/manifest.json": "4a6bb9a25fe0277ab501daa8c0fc374f7ef49c86f1bba828f41404b97d3fed9b",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/episode/states.jsonl": "8df19ac93f4399c86bcd6d46ffb18c78630d1618177b7457db73b70e5edb56c1",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_001/provenance/scripts/e2e/collect_carla_vad_expert.py": "53d213bdef56895a27969cc6dd4eac638ba4fa6697badeaaa3367bd5741f01d0",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/episode/manifest.json": "c8900fa623769f02b5b4788cbf6dd97885494ad965fd1e7c3f7aa55831a1ee8e",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/episode/states.jsonl": "0021f6d7dad86f0bf56160a8f14d9b4432ac165a37c31a1c60ba748be25d05ca",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/portable_e2e/model.py": "b72c0fcbaf558254a3e7b02aa90406ed157724a07f63d0ef9f46d0d444f92fc4",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "artifacts/training/2026-09-08/brake_free_goal_stop_v4/town07_straight_calibration/run_002/provenance/scripts/e2e/collect_carla_vad_expert.py": "53d213bdef56895a27969cc6dd4eac638ba4fa6697badeaaa3367bd5741f01d0",
+    "artifacts/training/2026-09-08/raw_pre_admission_v4_diagnostic_v1/future_anchor_audit.jsonl": "1d856532424155f04ed479931e068d2cadfacd737d703a126b17847d60dd0dc6",
+    "artifacts/training/2026-09-08/raw_pre_admission_v4_diagnostic_v1/summary.json": "c85a95bafe277b15ba1c2b56d258832bef6d9dd31660c8a63b4225167a8b8a68"
+  },
+  "limitations": [
+    "Unique ticks are not independent stopping events; the two trials share the same route and conditions.",
+    "All 64 future points are independently reconstructed. The joined unique-tick witness is the largest-curvature occurrence, not a selected passing example.",
+    "Nearest native state association is at most 74 ns; original future timestamps/interpolation and state rows are not retimed.",
+    "Body endpoint velocity, 100 ms displacement direction and body yaw are distinct observables; discrepancies alone do not establish control delay or physical sensor error.",
+    "Binary32 spacing is inferred from exactly representable stored actor-pose numbers, not independently verified server arithmetic or physical precision.",
+    "The conditional rounding bound assumes one nearest-rounded binary32 error per actor pose component and the recorded 1.425 m shift; it is not a measured error, noise estimate or cause verdict.",
+    "Comparison with the observed-distance heading allowance is descriptive, not a new gate or a complete interval-arithmetic feasibility proof. Some observed heading changes exceed even that allowance plus the conditional rounding bound.",
+    "A bound larger than the allowed heading step shows poor numerical conditioning only; it does not excuse any curvature violation or permit label smoothing, sample deletion or admission.",
+    "API-reported steering and wheel angle do not prove realized tire force or actuator timing. Snapshot reference point is not independently proven physical COM/rear axle."
+  ],
+  "model_loaded": false,
+  "new_capture": false,
+  "original_data_or_labels_modified": false,
+  "pre_post_input_and_source_checks": true,
+  "publication_source_sha256": {
+    "README.md": "cd5dd0558914fe6523528bcd48809b64afa22f41bbe4f5907400d0eb7fe24a6e",
+    "render_conditioning.py": "eab26f401dbcffda837f1f67f07bbc762e7f4419c4433a7cc07ea16f37490f59"
+  },
+  "rendering": {
+    "axis_rank_is_continuous_time": false,
+    "matplotlib_version": "3.5.1",
+    "per_plot_unique_interval_count": 119,
+    "plot_order": {
+      "run_001": [
+        {
+          "native_to_frame": 2333,
+          "phase": "driving/launch_low",
+          "rank": 0,
+          "tick": 50
+        },
+        {
+          "native_to_frame": 2335,
+          "phase": "driving/launch_low",
+          "rank": 1,
+          "tick": 51
+        },
+        {
+          "native_to_frame": 2339,
+          "phase": "driving/normal_pid",
+          "rank": 2,
+          "tick": 53
+        },
+        {
+          "native_to_frame": 2341,
+          "phase": "driving/normal_pid",
+          "rank": 3,
+          "tick": 54
+        },
+        {
+          "native_to_frame": 3439,
+          "phase": "driving/coast_low",
+          "rank": 4,
+          "tick": 603
+        },
+        {
+          "native_to_frame": 3455,
+          "phase": "driving/coast_low",
+          "rank": 5,
+          "tick": 611
+        },
+        {
+          "native_to_frame": 3463,
+          "phase": "driving/coast_low",
+          "rank": 6,
+          "tick": 615
+        },
+        {
+          "native_to_frame": 3469,
+          "phase": "driving/coast_low",
+          "rank": 7,
+          "tick": 618
+        },
+        {
+          "native_to_frame": 3473,
+          "phase": "driving/coast_low",
+          "rank": 8,
+          "tick": 620
+        },
+        {
+          "native_to_frame": 3475,
+          "phase": "driving/coast_low",
+          "rank": 9,
+          "tick": 621
+        },
+        {
+          "native_to_frame": 3477,
+          "phase": "driving/coast_low",
+          "rank": 10,
+          "tick": 622
+        },
+        {
+          "native_to_frame": 3479,
+          "phase": "driving/coast_low",
+          "rank": 11,
+          "tick": 623
+        },
+        {
+          "native_to_frame": 3481,
+          "phase": "driving/coast_low",
+          "rank": 12,
+          "tick": 624
+        },
+        {
+          "native_to_frame": 3483,
+          "phase": "driving/coast_low",
+          "rank": 13,
+          "tick": 625
+        },
+        {
+          "native_to_frame": 3485,
+          "phase": "driving/coast_low",
+          "rank": 14,
+          "tick": 626
+        },
+        {
+          "native_to_frame": 3487,
+          "phase": "driving/coast_low",
+          "rank": 15,
+          "tick": 627
+        },
+        {
+          "native_to_frame": 3489,
+          "phase": "driving/coast_low",
+          "rank": 16,
+          "tick": 628
+        },
+        {
+          "native_to_frame": 3491,
+          "phase": "driving/coast_low",
+          "rank": 17,
+          "tick": 629
+        },
+        {
+          "native_to_frame": 3493,
+          "phase": "driving/coast_low",
+          "rank": 18,
+          "tick": 630
+        },
+        {
+          "native_to_frame": 3495,
+          "phase": "driving/coast_low",
+          "rank": 19,
+          "tick": 631
+        },
+        {
+          "native_to_frame": 3497,
+          "phase": "driving/coast_low",
+          "rank": 20,
+          "tick": 632
+        },
+        {
+          "native_to_frame": 3499,
+          "phase": "driving/coast_low",
+          "rank": 21,
+          "tick": 633
+        },
+        {
+          "native_to_frame": 3501,
+          "phase": "driving/coast_low",
+          "rank": 22,
+          "tick": 634
+        },
+        {
+          "native_to_frame": 3503,
+          "phase": "driving/coast_low",
+          "rank": 23,
+          "tick": 635
+        },
+        {
+          "native_to_frame": 3505,
+          "phase": "driving/coast_low",
+          "rank": 24,
+          "tick": 636
+        },
+        {
+          "native_to_frame": 3507,
+          "phase": "driving/coast_low",
+          "rank": 25,
+          "tick": 637
+        },
+        {
+          "native_to_frame": 3509,
+          "phase": "driving/coast_low",
+          "rank": 26,
+          "tick": 638
+        },
+        {
+          "native_to_frame": 3511,
+          "phase": "driving/coast_low",
+          "rank": 27,
+          "tick": 639
+        },
+        {
+          "native_to_frame": 3513,
+          "phase": "driving/coast_low",
+          "rank": 28,
+          "tick": 640
+        },
+        {
+          "native_to_frame": 3515,
+          "phase": "driving/coast_low",
+          "rank": 29,
+          "tick": 641
+        },
+        {
+          "native_to_frame": 3517,
+          "phase": "driving/coast_low",
+          "rank": 30,
+          "tick": 642
+        },
+        {
+          "native_to_frame": 3519,
+          "phase": "driving/coast_low",
+          "rank": 31,
+          "tick": 643
+        },
+        {
+          "native_to_frame": 3521,
+          "phase": "driving/coast_low",
+          "rank": 32,
+          "tick": 644
+        },
+        {
+          "native_to_frame": 3523,
+          "phase": "driving/coast_low",
+          "rank": 33,
+          "tick": 645
+        },
+        {
+          "native_to_frame": 3525,
+          "phase": "driving/coast_low",
+          "rank": 34,
+          "tick": 646
+        },
+        {
+          "native_to_frame": 3527,
+          "phase": "driving/coast_low",
+          "rank": 35,
+          "tick": 647
+        },
+        {
+          "native_to_frame": 3529,
+          "phase": "driving/coast_low",
+          "rank": 36,
+          "tick": 648
+        },
+        {
+          "native_to_frame": 3531,
+          "phase": "driving/coast_low",
+          "rank": 37,
+          "tick": 649
+        },
+        {
+          "native_to_frame": 3533,
+          "phase": "driving/coast_low",
+          "rank": 38,
+          "tick": 650
+        },
+        {
+          "native_to_frame": 3535,
+          "phase": "driving/coast_low",
+          "rank": 39,
+          "tick": 651
+        },
+        {
+          "native_to_frame": 3537,
+          "phase": "driving/coast_low",
+          "rank": 40,
+          "tick": 652
+        },
+        {
+          "native_to_frame": 3539,
+          "phase": "driving/coast_low",
+          "rank": 41,
+          "tick": 653
+        },
+        {
+          "native_to_frame": 3541,
+          "phase": "driving/coast_low",
+          "rank": 42,
+          "tick": 654
+        },
+        {
+          "native_to_frame": 3543,
+          "phase": "driving/coast_low",
+          "rank": 43,
+          "tick": 655
+        },
+        {
+          "native_to_frame": 3545,
+          "phase": "driving/coast_low",
+          "rank": 44,
+          "tick": 656
+        },
+        {
+          "native_to_frame": 3547,
+          "phase": "driving/coast_low",
+          "rank": 45,
+          "tick": 657
+        },
+        {
+          "native_to_frame": 3549,
+          "phase": "driving/coast_low",
+          "rank": 46,
+          "tick": 658
+        },
+        {
+          "native_to_frame": 3551,
+          "phase": "driving/coast_low",
+          "rank": 47,
+          "tick": 659
+        },
+        {
+          "native_to_frame": 3553,
+          "phase": "driving/coast_low",
+          "rank": 48,
+          "tick": 660
+        },
+        {
+          "native_to_frame": 3555,
+          "phase": "driving/coast_low",
+          "rank": 49,
+          "tick": 661
+        },
+        {
+          "native_to_frame": 3557,
+          "phase": "driving/coast_low",
+          "rank": 50,
+          "tick": 662
+        },
+        {
+          "native_to_frame": 3559,
+          "phase": "driving/coast_low",
+          "rank": 51,
+          "tick": 663
+        },
+        {
+          "native_to_frame": 3561,
+          "phase": "driving/coast_low",
+          "rank": 52,
+          "tick": 664
+        },
+        {
+          "native_to_frame": 3563,
+          "phase": "driving/coast_low",
+          "rank": 53,
+          "tick": 665
+        },
+        {
+          "native_to_frame": 3565,
+          "phase": "driving/coast_low",
+          "rank": 54,
+          "tick": 666
+        },
+        {
+          "native_to_frame": 3567,
+          "phase": "driving/coast_low",
+          "rank": 55,
+          "tick": 667
+        },
+        {
+          "native_to_frame": 3569,
+          "phase": "driving/coast_low",
+          "rank": 56,
+          "tick": 668
+        },
+        {
+          "native_to_frame": 3571,
+          "phase": "driving/coast_low",
+          "rank": 57,
+          "tick": 669
+        },
+        {
+          "native_to_frame": 3573,
+          "phase": "driving/coast_low",
+          "rank": 58,
+          "tick": 670
+        },
+        {
+          "native_to_frame": 3575,
+          "phase": "stationary_tail/setup_or_tail",
+          "rank": 59,
+          "tick": 671
+        }
+      ],
+      "run_002": [
+        {
+          "native_to_frame": 2793,
+          "phase": "driving/launch_low",
+          "rank": 0,
+          "tick": 50
+        },
+        {
+          "native_to_frame": 2795,
+          "phase": "driving/launch_low",
+          "rank": 1,
+          "tick": 51
+        },
+        {
+          "native_to_frame": 2797,
+          "phase": "driving/launch_low",
+          "rank": 2,
+          "tick": 52
+        },
+        {
+          "native_to_frame": 2799,
+          "phase": "driving/normal_pid",
+          "rank": 3,
+          "tick": 53
+        },
+        {
+          "native_to_frame": 2803,
+          "phase": "driving/normal_pid",
+          "rank": 4,
+          "tick": 55
+        },
+        {
+          "native_to_frame": 2805,
+          "phase": "driving/normal_pid",
+          "rank": 5,
+          "tick": 56
+        },
+        {
+          "native_to_frame": 3909,
+          "phase": "driving/coast_low",
+          "rank": 6,
+          "tick": 608
+        },
+        {
+          "native_to_frame": 3915,
+          "phase": "driving/coast_low",
+          "rank": 7,
+          "tick": 611
+        },
+        {
+          "native_to_frame": 3923,
+          "phase": "driving/coast_low",
+          "rank": 8,
+          "tick": 615
+        },
+        {
+          "native_to_frame": 3927,
+          "phase": "driving/coast_low",
+          "rank": 9,
+          "tick": 617
+        },
+        {
+          "native_to_frame": 3929,
+          "phase": "driving/coast_low",
+          "rank": 10,
+          "tick": 618
+        },
+        {
+          "native_to_frame": 3931,
+          "phase": "driving/coast_low",
+          "rank": 11,
+          "tick": 619
+        },
+        {
+          "native_to_frame": 3933,
+          "phase": "driving/coast_low",
+          "rank": 12,
+          "tick": 620
+        },
+        {
+          "native_to_frame": 3935,
+          "phase": "driving/coast_low",
+          "rank": 13,
+          "tick": 621
+        },
+        {
+          "native_to_frame": 3937,
+          "phase": "driving/coast_low",
+          "rank": 14,
+          "tick": 622
+        },
+        {
+          "native_to_frame": 3939,
+          "phase": "driving/coast_low",
+          "rank": 15,
+          "tick": 623
+        },
+        {
+          "native_to_frame": 3941,
+          "phase": "driving/coast_low",
+          "rank": 16,
+          "tick": 624
+        },
+        {
+          "native_to_frame": 3943,
+          "phase": "driving/coast_low",
+          "rank": 17,
+          "tick": 625
+        },
+        {
+          "native_to_frame": 3945,
+          "phase": "driving/coast_low",
+          "rank": 18,
+          "tick": 626
+        },
+        {
+          "native_to_frame": 3947,
+          "phase": "driving/coast_low",
+          "rank": 19,
+          "tick": 627
+        },
+        {
+          "native_to_frame": 3949,
+          "phase": "driving/coast_low",
+          "rank": 20,
+          "tick": 628
+        },
+        {
+          "native_to_frame": 3951,
+          "phase": "driving/coast_low",
+          "rank": 21,
+          "tick": 629
+        },
+        {
+          "native_to_frame": 3953,
+          "phase": "driving/coast_low",
+          "rank": 22,
+          "tick": 630
+        },
+        {
+          "native_to_frame": 3955,
+          "phase": "driving/coast_low",
+          "rank": 23,
+          "tick": 631
+        },
+        {
+          "native_to_frame": 3957,
+          "phase": "driving/coast_low",
+          "rank": 24,
+          "tick": 632
+        },
+        {
+          "native_to_frame": 3959,
+          "phase": "driving/coast_low",
+          "rank": 25,
+          "tick": 633
+        },
+        {
+          "native_to_frame": 3961,
+          "phase": "driving/coast_low",
+          "rank": 26,
+          "tick": 634
+        },
+        {
+          "native_to_frame": 3963,
+          "phase": "driving/coast_low",
+          "rank": 27,
+          "tick": 635
+        },
+        {
+          "native_to_frame": 3965,
+          "phase": "driving/coast_low",
+          "rank": 28,
+          "tick": 636
+        },
+        {
+          "native_to_frame": 3967,
+          "phase": "driving/coast_low",
+          "rank": 29,
+          "tick": 637
+        },
+        {
+          "native_to_frame": 3969,
+          "phase": "driving/coast_low",
+          "rank": 30,
+          "tick": 638
+        },
+        {
+          "native_to_frame": 3971,
+          "phase": "driving/coast_low",
+          "rank": 31,
+          "tick": 639
+        },
+        {
+          "native_to_frame": 3973,
+          "phase": "driving/coast_low",
+          "rank": 32,
+          "tick": 640
+        },
+        {
+          "native_to_frame": 3975,
+          "phase": "driving/coast_low",
+          "rank": 33,
+          "tick": 641
+        },
+        {
+          "native_to_frame": 3977,
+          "phase": "driving/coast_low",
+          "rank": 34,
+          "tick": 642
+        },
+        {
+          "native_to_frame": 3979,
+          "phase": "driving/coast_low",
+          "rank": 35,
+          "tick": 643
+        },
+        {
+          "native_to_frame": 3981,
+          "phase": "driving/coast_low",
+          "rank": 36,
+          "tick": 644
+        },
+        {
+          "native_to_frame": 3983,
+          "phase": "driving/coast_low",
+          "rank": 37,
+          "tick": 645
+        },
+        {
+          "native_to_frame": 3985,
+          "phase": "driving/coast_low",
+          "rank": 38,
+          "tick": 646
+        },
+        {
+          "native_to_frame": 3987,
+          "phase": "driving/coast_low",
+          "rank": 39,
+          "tick": 647
+        },
+        {
+          "native_to_frame": 3989,
+          "phase": "driving/coast_low",
+          "rank": 40,
+          "tick": 648
+        },
+        {
+          "native_to_frame": 3991,
+          "phase": "driving/coast_low",
+          "rank": 41,
+          "tick": 649
+        },
+        {
+          "native_to_frame": 3993,
+          "phase": "driving/coast_low",
+          "rank": 42,
+          "tick": 650
+        },
+        {
+          "native_to_frame": 3995,
+          "phase": "driving/coast_low",
+          "rank": 43,
+          "tick": 651
+        },
+        {
+          "native_to_frame": 3997,
+          "phase": "driving/coast_low",
+          "rank": 44,
+          "tick": 652
+        },
+        {
+          "native_to_frame": 3999,
+          "phase": "driving/coast_low",
+          "rank": 45,
+          "tick": 653
+        },
+        {
+          "native_to_frame": 4001,
+          "phase": "driving/coast_low",
+          "rank": 46,
+          "tick": 654
+        },
+        {
+          "native_to_frame": 4003,
+          "phase": "driving/coast_low",
+          "rank": 47,
+          "tick": 655
+        },
+        {
+          "native_to_frame": 4005,
+          "phase": "driving/coast_low",
+          "rank": 48,
+          "tick": 656
+        },
+        {
+          "native_to_frame": 4007,
+          "phase": "driving/coast_low",
+          "rank": 49,
+          "tick": 657
+        },
+        {
+          "native_to_frame": 4009,
+          "phase": "driving/coast_low",
+          "rank": 50,
+          "tick": 658
+        },
+        {
+          "native_to_frame": 4011,
+          "phase": "driving/coast_low",
+          "rank": 51,
+          "tick": 659
+        },
+        {
+          "native_to_frame": 4013,
+          "phase": "driving/coast_low",
+          "rank": 52,
+          "tick": 660
+        },
+        {
+          "native_to_frame": 4015,
+          "phase": "driving/coast_low",
+          "rank": 53,
+          "tick": 661
+        },
+        {
+          "native_to_frame": 4017,
+          "phase": "driving/coast_low",
+          "rank": 54,
+          "tick": 662
+        },
+        {
+          "native_to_frame": 4019,
+          "phase": "driving/coast_low",
+          "rank": 55,
+          "tick": 663
+        },
+        {
+          "native_to_frame": 4021,
+          "phase": "driving/coast_low",
+          "rank": 56,
+          "tick": 664
+        },
+        {
+          "native_to_frame": 4023,
+          "phase": "driving/coast_low",
+          "rank": 57,
+          "tick": 665
+        },
+        {
+          "native_to_frame": 4025,
+          "phase": "stationary_tail/setup_or_tail",
+          "rank": 58,
+          "tick": 666
+        }
+      ]
+    },
+    "python_version": "3.10.12",
+    "zero_substitution": false
+  },
+  "runtime_gates_modified": false,
+  "schema": "carla_expert.town07_conditioning_publication.v1",
+  "source_artifacts": {
+    "artifacts/training/2026-09-09/town07_goal_stop_conditioning_v2/SHA256SUMS": "d395fa34728ed9607bb94a937d9f36407b9d4569934eba55bf45054151d5f505",
+    "artifacts/training/2026-09-09/town07_goal_stop_conditioning_v2/summary.json": "6835bb5bb22a786253b8395b8635ba713e77383339ee00903d2e4e0e5e08e399",
+    "artifacts/training/2026-09-09/town07_goal_stop_conditioning_v2/unique_ticks.jsonl": "2dc549f48efa4c0e674721ce5324e0c516808b9f6826b7d093611d1983090014"
+  },
+  "status": "PUBLISHED_NOT_ADMITTED",
+  "training_data_approved": false
+}

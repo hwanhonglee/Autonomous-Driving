@@ -1,0 +1,916 @@
+{
+  "behavior_analysis": {
+    "expected_count": 6,
+    "included_in_completed_stage_count": false,
+    "per_analysis_timeout_seconds": 180,
+    "status": "NOT_RUN_SEPARATE_WORKFLOW"
+  },
+  "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+  "created_at_utc": "2026-09-08T18:09:29.437738+00:00",
+  "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+  "model_configs": {
+    "A_physical_drive": {
+      "canonical_sha256": "cbf591196084509fa96eda35a197c0bc7eb2c8a251cd812d71a109441710d65d",
+      "model_config": {
+        "calibration_features": 16,
+        "camera_count": 6,
+        "camera_fusion_width": 192,
+        "candidate_count": 6,
+        "ego_embedding": 64,
+        "ego_features": 13,
+        "ego_history_frames": 10,
+        "encoder_base_channels": 24,
+        "future_points": 64,
+        "hidden_width": 256,
+        "image_channels": 3,
+        "image_embedding": 96,
+        "image_grid_height": 3,
+        "image_grid_width": 5,
+        "image_height": 180,
+        "image_width": 320,
+        "maximum_step_m": 1.0,
+        "model_id": "portable_e2e.perspective_trajectory.physical.v1",
+        "route_embedding": 96,
+        "route_points": 128,
+        "route_scale_m": 120.0
+      },
+      "path": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+      "sha256": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d"
+    },
+    "B_drive_stop_mix": {
+      "canonical_sha256": "c17b49ea680b5cae0d9fc35dc6c457af8cc32d1b7171863534f70e9b158cfb7a",
+      "model_config": {
+        "calibration_features": 16,
+        "camera_count": 6,
+        "camera_fusion_width": 192,
+        "candidate_count": 12,
+        "ego_embedding": 64,
+        "ego_features": 13,
+        "ego_history_frames": 10,
+        "encoder_base_channels": 24,
+        "future_points": 64,
+        "hidden_width": 256,
+        "image_channels": 3,
+        "image_embedding": 96,
+        "image_grid_height": 3,
+        "image_grid_width": 5,
+        "image_height": 180,
+        "image_width": 320,
+        "maximum_step_m": 1.0,
+        "model_id": "portable_e2e.perspective_trajectory.physical_stopmix.v1",
+        "route_embedding": 96,
+        "route_points": 128,
+        "route_scale_m": 120.0
+      },
+      "path": "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+      "sha256": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602"
+    }
+  },
+  "plan": {
+    "arms": {
+      "A_physical_drive": 0.0001,
+      "B_drive_stop_mix": 0.0001
+    },
+    "batch_size": 4,
+    "behavior_analysis": {
+      "batch_size": 4,
+      "expected_pass_count": 6,
+      "expected_samples_per_pass": 337,
+      "groups_in_priority_order": [
+        {
+          "name": "unavailable_masks",
+          "rule": "Not all 64 future points valid; at least one valid prefix point required."
+        },
+        {
+          "name": "stationary_hold",
+          "rule": "abs(raw current vx)<=0.1 and all 64 canonical target speeds<=0.1 m/s."
+        },
+        {
+          "name": "moving_to_stop",
+          "rule": "raw current vx>0.1 and all last 10 canonical target speeds<=0.1 m/s."
+        },
+        {
+          "name": "continuing_motion",
+          "rule": "All 64 canonical target speeds>=0.5 m/s."
+        },
+        {
+          "name": "other_motion",
+          "rule": "Remaining fully valid windows."
+        }
+      ],
+      "limitations": "Target-derived groups are diagnostic only, never forward inputs or traffic-rule STOP intent. Zero-count groups supply no evidence; overlapping windows are not independent events. Twelve render indices were fixed before any of these six fits.",
+      "metrics": "Selected ADE/FDE/speed MAE, all candidates, raw runtime-v8 gate counts, STOP selection indices 6-11 only for B; exact terminal zero and <=0.1 m/s separately; reacceleration only after first exact-zero future point, excluding anchor.",
+      "model_source_sha256": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+      "provenance": "Analyze the final checkpoint of each of all six fits; required SHA externally bound to campaign stage reports. Live audit source and training source use the same frozen commit. No embedded checkpoint source-commit claim.",
+      "render_indices": [
+        0,
+        31,
+        61,
+        92,
+        122,
+        153,
+        183,
+        214,
+        244,
+        275,
+        305,
+        336
+      ],
+      "scope": "Six behavior passes are separate from eighteen normal stages; normal completion alone does not mean behavior completion.",
+      "script": "scripts/e2e/audit_portable_stopmix_behavior.py",
+      "source_sha256": "afa65f9b060c8a8ba1ce72118987050900d68dd9e2971901be78dca82bfa6844",
+      "split": "val"
+    },
+    "behavior_analysis_count": 6,
+    "behavior_analysis_timeout_seconds": 180,
+    "campaign_id": "hh260909-stopmix-development-ab-3seeds-v1",
+    "candidate_score_weight": 0.1,
+    "dataset": "datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+    "dataset_manifest_sha256": "18262e5aa4abbb3e03e35e379b5da1e5ce7fd339a9a8942e02b58ca737f7242c",
+    "decision": {
+      "absolute_limits_m": {
+        "ade_1p0s": 0.5,
+        "ade_3p0s": 1,
+        "ade_6p4s": 2,
+        "fde_6p4s": 4
+      },
+      "architecture": "A has six DRIVE candidates and 954590 parameters. B preserves the original six DRIVE outputs and adds six STOP outputs for twelve candidates and 1056362 parameters. Existing shared and DRIVE initialization is bit-exact for the same seed; extra heads increase parameter capacity, so the comparison is not capacity-matched.",
+      "budget": "Six fresh whole-model fits, 1540 optimizer steps and 6155 training sample exposures each, batch 4. Final checkpoint only; no resume, best-epoch selection, repeat-until-pass or historical baseline substitution.",
+      "candidate_screen": "Selected ADE and FDE must improve in all three paired seeds; selected geometry pass count must not fall and selected speed MAE must not exceed 1.05 times baseline in any pair.",
+      "comment": "HH_260906 - Freeze six DRIVE versus six DRIVE plus six STOP candidate development fits before actual training, preserving all legacy limitations and admission gates.",
+      "finish_policy": "Reserve every remaining stage timeout, six 180-second behavior slots and 300-second cleanup before 10:00 KST. Use only the assigned physical GPU0 and existing personal py312 venv; no installations, GPU1 queries, foreign process termination, reboot or real vehicle operation.",
+      "known_data_limits": "Unchanged legacy v3 train1147/val337 includes warmup anchors and infeasible deceleration labels. All denied new captures, including the four completed substep trials, remain excluded. Previous exploratory findings informed this declared research comparison.",
+      "objective": "Both use the original best-of-K composite regression and 0.1 hard-oracle cross entropy, with the original six-key serialized loss config. No candidate-regret auxiliary is enabled.",
+      "promotion": "No automatic model promotion, secure runtime export allowlist changes, vehicle actuation or data-admission/gate weakening. New STOPMIX model remains research-only and rejected by the existing secure runtime bundle boundary.",
+      "purpose": "Test whether an explicit physically decoded STOP family improves existing open-loop validation, not whether a safe traffic-aware stop policy has been learned.",
+      "stop_limitations": "STOP trajectories use the unchanged frozen primitive. At zero current speed the duration/curvature gradients can be zero and tied STOP candidates do not demonstrate traffic-intent learning. Decoder speed clamping does not waive the raw 30 kph input gate.",
+      "test_policy": "Whole-corpus integrity checks may read test JSON/JPEG bytes. Test data is not used in training loss, neural-network inference, reported performance, diagnostics or model selection."
+    },
+    "declared_at_utc": "2026-09-08T18:07:41Z",
+    "expected_train_samples": 1147,
+    "expected_val_samples": 337,
+    "finish_before_utc": "2026-09-09T01:00:00Z",
+    "finish_reserve_seconds": 300,
+    "gpu_uuid": "${GPU0_UUID}",
+    "model_config_sha256": {
+      "A_physical_drive": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d",
+      "B_drive_stop_mix": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602"
+    },
+    "model_configs": {
+      "A_physical_drive": "portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+      "B_drive_stop_mix": "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json"
+    },
+    "schema": "portable_e2e.stopmix_development_campaign.v1",
+    "seeds": [
+      20260903,
+      20260904,
+      20260905
+    ],
+    "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+    "split": "val",
+    "stage_timeout_seconds": {
+      "audit": 120,
+      "evaluate": 120,
+      "train": 600
+    },
+    "steps": 1540,
+    "stop_primitive_sha256": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c"
+  },
+  "plan_sha256": "f06c68ce47aaee6941a3ca42559460ac5837b53f669bf195fa15b5d5e80a05d9",
+  "prerequisite": null,
+  "publication_notice": "Public metadata view: machine-specific paths/GPU UUIDs are redacted; raw_source_sha256 identifies the unchanged private original. Raw inventory entries and original hashes do not describe this derivative file tree.",
+  "raw_source_sha256": "9f40946bde5395c61e68a5ac5fa476a210569a7fe8f6f6d58d4588037e4ff2bc",
+  "reviewed_contract": {
+    "run_count": 6,
+    "stage_count": 18,
+    "train_samples": 1147,
+    "val_samples": 337
+  },
+  "runner_sha256": "f6fb2905875ff60d6fee721ae3f789e8dd90b316280f7626a56a98c55b620228",
+  "source_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+  "source_files": {
+    "portable_e2e/audit_runtime.py": {
+      "archive_path": "provenance/portable_e2e/audit_runtime.py",
+      "sha256": "c4c68e888fb89bb4e78052e3167f4167d89c7e7da952e3a0da627d677a776647"
+    },
+    "portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json": {
+      "archive_path": "provenance/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+      "sha256": "29e537e8b216cff0216772624f670ece0f0849f0f2ec55c0b726f11c1d74b602"
+    },
+    "portable_e2e/config/perspective_trajectory_physical_v1.model.json": {
+      "archive_path": "provenance/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+      "sha256": "e96e31c96cafa41b57b67b9531ae9fff6bf21fd7e418ea78f9062fcb1dcfe74d"
+    },
+    "portable_e2e/evaluate.py": {
+      "archive_path": "provenance/portable_e2e/evaluate.py",
+      "sha256": "1d1455b76d1bc044e83fe45b637690b5bd93c88d6ac8242af589bfe7162df376"
+    },
+    "portable_e2e/losses.py": {
+      "archive_path": "provenance/portable_e2e/losses.py",
+      "sha256": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973"
+    },
+    "portable_e2e/model.py": {
+      "archive_path": "provenance/portable_e2e/model.py",
+      "sha256": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e"
+    },
+    "portable_e2e/runtime_contract.py": {
+      "archive_path": "provenance/portable_e2e/runtime_contract.py",
+      "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+    },
+    "portable_e2e/stop_primitive_research.py": {
+      "archive_path": "provenance/portable_e2e/stop_primitive_research.py",
+      "sha256": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c"
+    },
+    "portable_e2e/torch_dataset.py": {
+      "archive_path": "provenance/portable_e2e/torch_dataset.py",
+      "sha256": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9"
+    },
+    "portable_e2e/train.py": {
+      "archive_path": "provenance/portable_e2e/train.py",
+      "sha256": "7ab83343bb15cf9233c2208d1b405498c66340706b8562b272f242152f4d3882"
+    },
+    "scripts/e2e/run_portable_training_campaign.py": {
+      "archive_path": "provenance/active_runner.py",
+      "sha256": "f6fb2905875ff60d6fee721ae3f789e8dd90b316280f7626a56a98c55b620228"
+    }
+  },
+  "stages": [
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/A_physical_drive/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260903",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:12:49.626395+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "8b6fd178ba890087ceb5221af804f48f944640b0f78f155662cf2b35576bb354"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/A_physical_drive",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:09:29.570196+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/A_physical_drive/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:13:02.411527+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "fc3dda7a7e8f45013604b05ad34f79715038e051471b9196d468dbe0e5186753"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/A_physical_drive",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:12:49.696879+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/A_physical_drive/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "3fbde7873de6f5af72b9e301916b36006b0ae84478e906fcfa1f51c065739b9d"
+      ],
+      "finished_at_utc": "2026-09-08T18:13:16.191495+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "ffc716e980d284778120dc18adce2148a57091d621396be3953b0f71b544e8c0"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/A_physical_drive",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:13:02.561382+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/B_drive_stop_mix/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260903",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:16:33.240826+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "c40bdf1879ee1c796e16bf623ce0939a9a616d714d4ffa68f67aaad99ef2ce38"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/B_drive_stop_mix",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:13:16.260243+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/B_drive_stop_mix/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:16:46.136959+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "8279279e029da63a010e1fd9310bc24b41de755b5c29413f38664f4504565c43"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/B_drive_stop_mix",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:16:33.308386+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260903/B_drive_stop_mix/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "9b949b17b3708bed5ba25eb5721187a56f4f77c11c8461e685cbbd995259f8bf"
+      ],
+      "finished_at_utc": "2026-09-08T18:17:03.850510+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "e0aee37a3baab51a2cc280d51ffa25ddb47b4c49a2cae65922ac60701682f75a"
+      },
+      "returncode": 0,
+      "run": "seed_20260903/B_drive_stop_mix",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:16:46.231130+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/A_physical_drive/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260904",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:20:18.063800+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "697c4f94e1efd52fb4a7bb68c9926b3b49becbccc7145cb8b25788512b62b050"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/A_physical_drive",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:17:03.914962+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/A_physical_drive/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:20:30.865243+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "a2acc23798a5f6bb6da251d6cef2ab229f6b4cf6840aa8ee85ee22e308fc695a"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/A_physical_drive",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:20:18.132339+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/A_physical_drive/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "343b2cf6b256f57c37f7d21fe4297775fbc921ad8350fc946510df2505c33d81"
+      ],
+      "finished_at_utc": "2026-09-08T18:20:44.642302+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "f065505720eb6bd7efe6a5ee79c7388eabd13858f202b7fe9446b270d907e110"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/A_physical_drive",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:20:30.959598+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/B_drive_stop_mix/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260904",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:24:02.265786+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "f32ada2843717469a7e240ec2f2b0f48a081944948196b8ce7b91b0f220a1db3"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/B_drive_stop_mix",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:20:44.751051+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/B_drive_stop_mix/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:24:15.079882+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "1cf4a35c5e47ef8fe55bb1f45ed07c3fc728c633e74e35b926e6a9b7e7bd764f"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/B_drive_stop_mix",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:24:02.334398+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260904/B_drive_stop_mix/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "2789a33c313923ee6084ddaa6dc1a3937ebedd22d5e52db360c0e45fc841e851"
+      ],
+      "finished_at_utc": "2026-09-08T18:24:32.850611+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "ec52d3eb267b37c5b9d4561163bd8b2fba40b91b2cd1b655c511368c60b9e492"
+      },
+      "returncode": 0,
+      "run": "seed_20260904/B_drive_stop_mix",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:24:15.161925+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/A_physical_drive/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260905",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:27:49.303069+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "c6735f85e8aa18154ecac81f70034a44caf46b015cf86bc8383541a9b92cf7f1"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/A_physical_drive",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:24:32.918149+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/A_physical_drive/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:28:02.149299+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "32991804756348db9ccbda91c1655df4b4aef96077d633ce7a3c424a9bf3cba7"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/A_physical_drive",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:27:49.369141+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/A_physical_drive/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/A_physical_drive/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "fe7ada85cefc9d6eff07bb7ba42855f675aa5c92fe0156508759e20924b1863d"
+      ],
+      "finished_at_utc": "2026-09-08T18:28:15.924246+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "05e96272ca597f40747e45eb4dd8dea549774c47322062c2063267440e1efc0c"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/A_physical_drive",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:28:02.243035+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--run-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/B_drive_stop_mix/training",
+        "--model-config",
+        "${PORTABLE_E2E_ROOT}/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260905",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--max-steps",
+        "1540",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "finished_at_utc": "2026-09-08T18:31:36.203515+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+        "path": "training/run.json",
+        "sha256": "a424eb3af486d62ac73f63dd51ea15a64cc6e6198a1bc8e38f5c6e0cdb2161a6"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/B_drive_stop_mix",
+      "stage": "train",
+      "started_at_utc": "2026-09-08T18:28:15.991941+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-dir",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/B_drive_stop_mix/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "finished_at_utc": "2026-09-08T18:31:49.088313+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "evaluation/metrics.json",
+        "sha256": "7fbdcb326b74e5e5d2dee0c7a7234ff1f644c36ba061386a8af929b11ff506d7"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/B_drive_stop_mix",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-08T18:31:36.272654+00:00",
+      "status": "COMPLETE"
+    },
+    {
+      "command": [
+        "${PORTABLE_E2E_ROOT}/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "${PORTABLE_E2E_ROOT}/datasets/prepared/carla-common10-30kph-five-episodes-20260907-v3",
+        "--checkpoint",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/B_drive_stop_mix/training/checkpoints/latest.pt",
+        "--output-json",
+        "${PORTABLE_E2E_ROOT}/runs/campaigns/hh260909-stopmix-development-ab-3seeds-v1/seed_20260905/B_drive_stop_mix/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--checkpoint-sha256",
+        "ce6ffa0bbd80db39d0c9952d1a1e8d67543ff1c69ccc9a7e76d110ffefd5d9df"
+      ],
+      "finished_at_utc": "2026-09-08T18:32:06.771124+00:00",
+      "report": {
+        "corpus_fingerprint_sha256": "56d9ff663612a090cd61698b53cf0cf39b0a7ae0de6b42d096957a94b6c92047",
+        "dataset_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+        "path": "gate_v8.json",
+        "sha256": "c86553591b33eba15aadd13ec3942773b03325da46bee8ac694fc4a98cf6afae"
+      },
+      "returncode": 0,
+      "run": "seed_20260905/B_drive_stop_mix",
+      "stage": "audit",
+      "started_at_utc": "2026-09-08T18:31:49.180767+00:00",
+      "status": "COMPLETE"
+    }
+  ],
+  "status": "TRAIN_EVAL_AUDIT_COMPLETE_NOT_PROMOTED",
+  "train_fingerprint_sha256": "d957e72c1eea755fed5b4ac682e775983861c16104fe083b7cfb6cbb4fed1928",
+  "updated_at_utc": "2026-09-08T18:32:06.772017+00:00",
+  "val_fingerprint_sha256": "631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285",
+  "vehicle_control_approved": false
+}

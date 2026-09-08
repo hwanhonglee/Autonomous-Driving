@@ -1,0 +1,43 @@
+{
+  "schema": "nuplan.single_db_metadata_execution_and_hardening.v1",
+  "comment": "HH_260906 - Preserve the sole actual DB execution and distinguish later failure-path hardening without another payload read.",
+  "original_execution": {
+    "source_sha256": "8285ac1b1bdf9f1f78ee01fbbbaa265a1c341d8662c7c605beeddbe886a72b50",
+    "selection_plan_sha256": "cabf374a3eb5c73fe46a01cb306358e3f8ca7a16aec2dbc5bf2bb23090e0fd22",
+    "report_sha256": "0b9a2a3de73c5e96af869307873a235c8279b4eaeaf6f328950973c3c97ef83e",
+    "member_sha256": "deb9a23c2aee75228f112932df30f34b9214c4cb7c050cee8191ac9d4552390c",
+    "started_at_utc": "2026-09-08T18:09:14.243810+00:00",
+    "completed_at_utc": "2026-09-08T18:09:15.100332+00:00",
+    "remote_exit_code": 0,
+    "remote_output_relative_to_personal_root": "portable_e2e/runs/diagnostics/nuplan_single_db_v1",
+    "source_stdin_sha_verified_before_exec": true,
+    "source_transferred_without_remote_source_file": true,
+    "personal_venv": "portable_e2e/venvs/py312",
+    "external_timeout_seconds": 90,
+    "cpu_limit_seconds": 60,
+    "address_space_limit_bytes": 2147483648,
+    "unit_tests_passed_before_execution": 36
+  },
+  "transfer": {
+    "mechanism": "Read-only SSH of report.json, selection_plan.json and SHA256SUMS; exact local byte hashes verified.",
+    "report_sha256": "0b9a2a3de73c5e96af869307873a235c8279b4eaeaf6f328950973c3c97ef83e",
+    "original_remote_checksum_payloads_passed": 2
+  },
+  "subsequent_hardening": {
+    "current_source_sha256": "d5735b2d8c297f70c5045e0aac1550775afcc34f48578dca8ccb55971d81e1d6",
+    "tests_sha256": "623146df2dfc3c40ab686f585323cb26cad93ed00a9aad88638ab5be9fcddf01",
+    "unit_test_command": "python3 -m pytest -q tests/test_inspect_nuplan_single_db.py",
+    "passed": 43,
+    "skipped": 0,
+    "reported_seconds": 0.05,
+    "changes": [
+      "Retain failure reports when source archive or earlier verification metadata disappears or changes during finalization.",
+      "Reject virtual-table declarations containing alternate whitespace or SQL comments."
+    ],
+    "actual_db_payload_rerun": false
+  },
+  "dataset_admission": false,
+  "terms_consent_provided": false,
+  "training_started": false,
+  "raw_data_modified": false
+}

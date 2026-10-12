@@ -2,6 +2,10 @@
 
 <!-- HH_261012 - Separate annotated source reproduction and preparatory lifecycle checks from training and vehicle approval. -->
 
+<!-- HH_261012 - Record successful publication separately from the still-blocked training and unfinished vehicle integration. -->
+
+**18:37 KST 게시 완료:** 상세 공통 커밋 `691c38c`, 플랫폼 `522f94a`, 스캐폴드 `2eb9583`을 GitHub에 atomic push했고 원격 해시 일치까지 확인했습니다. 이전 미게시 커밋 3개도 포함되며 force push는 하지 않았습니다. 플랫폼·스캐폴드는 공통 기준선에서 목적 문서와 README만 변경한 준비 브랜치입니다. **18:39 재조회에서도 학습은 미시작:** 로드된 NVIDIA 580.173.02, 설치 모듈과 NVML 580.178.04의 불일치로 물리 GPU 0 조회가 여전히 종료값 18에 실패했습니다. [게시 성공·경고·첫 검사 오류와 후속 확인](publication_verified_v1.json)을 보존합니다. 아래는 구현·검사의 상세 범위입니다.
+
 현재 프로젝트의 `autonomy/src`와 `autonomy/install`을 기준으로 영어 주석과 소스 재현 패치를 정리했습니다. 별도 PC4/VILS Autoware는 변경하지 않았습니다. 정확한 원본 커밋과 4개 composite patch를 보존했고, 격리된 로컬 체크아웃에서 수정 파일 **68/68개**의 바이트와 Git 실행비트를 재현했습니다. 이는 소스 복원 검증이며 전체 빌드나 실차 주행 검증이 아닙니다.
 
 ## Autoware 주석과 재현 결과

@@ -1,5 +1,9 @@
 # 10월 12일 — 주행·지도 모델 현황과 다음 작업
 
+<!-- HH_261012 - Clarify fixmoving as a future platform name while preserving earlier publication and model-test records. -->
+
+**브랜치 용어 정정:** `fixmoving`은 차량이 아니라 앞으로 개발할 플랫폼 이름입니다. 차량 모델·CAN/DBW 사양을 브랜치의 전제로 요구하지 않으며 플랫폼 구성과 외부 인터페이스는 후속 설계에서 정합니다. [현재 브랜치 안내](../../../autoware-three-branch-guide.md)가 기준이고 아래의 게시·학습·검사 결과는 이전 시점 기록입니다. 이번 변경은 문서 정정이며 모델·가중치·실행 환경을 변경하지 않습니다.
+
 <!-- HH_261012 - Index the completed source restoration and new nonnumeric training boundary before older GPU status. -->
 
 **후속 작업:** 현재 Autoware 소스의 영어 주석·32개 exact 의존 커밋·4개 전체 patch를 정리했고, 격리된 실제 복원에서 변경 파일 **68/68개**가 일치했습니다. launch 회귀 **373개**, 새 snapshot 검사 **33개**, 새 8배치 처리 경계의 모의 검사 **25개**가 통과했습니다. 실차 플랫폼·CARLA E2E·스캐폴드 브랜치의 용도를 분리했습니다. 다만 **17:36 KST 서버 재조회에서도 GPU 0은 드라이버 불일치로 실패해 새 학습은 시작하지 않았습니다.** [이번 결과와 학습의 남은 부분](03_autoware_publication_and_training_handoff/README.md), [세 브랜치 안내](../../../autoware-three-branch-guide.md)를 먼저 보세요. 아래는 앞선 시점의 완료 기록입니다.

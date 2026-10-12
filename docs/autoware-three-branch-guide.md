@@ -1,16 +1,18 @@
 # Autoware 세 브랜치의 용도와 재현 방법
 
-<!-- HH_261012 - Separate vehicle integration, CARLA research and architecture work without claiming a validated vehicle deployment. -->
+<!-- HH_261012 - Treat fixmoving as a future platform name rather than a vehicle model while preserving separate research and architecture branches. -->
 
 이 저장소는 `hwanhonglee/Autonomous-Driving`입니다. 현재 작업공간의 Autoware 소스와 수정 패치를 공통 기준선으로 보존하고, 아래 세 목적을 별도 브랜치로 관리합니다. 브랜치를 만드는 것은 차량 구동 승인이나 자체 E2E 모델의 성능 승인을 뜻하지 않습니다.
 
 | 브랜치 | 용도 | 현재 제한 |
 | --- | --- | --- |
-| `autoware-platform/v1.9.0-fixmoving` | Fix moving 플랫폼의 차량 인터페이스와 센서 통합 준비 | 정확한 플랫폼 모델·CAN/DBW 사양·센서 구성·비상정지 조건 미확인. 실차 구동 미승인 |
+| `autoware-platform/v1.9.0-fixmoving` | 앞으로 개발할 fixmoving 플랫폼에 Autoware를 연계·확장하는 기준선 | fixmoving은 차량 모델명이 아님. 플랫폼 구성·외부 인터페이스는 후속 설계에서 정의 |
 | `autoware-e2e/v1.9.0-vad-carla` | CARLA 수집·Autoware/VAD 실험·자체 주행 및 지도 모델 연구 | 학습 모델과 teacher를 구분하고 원래 평가 기준과 실패를 보존. 실차 보정값으로 사용하지 않음 |
 | `autoware-architecture/v1.9.0-scaffold` | 후속 코드 아키텍처와 인터페이스 스캐폴드 변경 | 기준선에서 시작하는 개발 브랜치. 아직 별도 아키텍처 변환이나 실차 기능을 구현한 것은 아님 |
 
 각 브랜치의 루트 `BRANCH_PURPOSE.md`를 먼저 읽으세요. 공통 코드가 같더라도 해당 브랜치의 목적과 검증 범위는 다릅니다. 기존 PC4/VILS 브랜치와 별도 작업공간의 소스는 이번 E2E Autoware 게시 범위에 포함하지 않습니다.
+
+`fixmoving`은 사용자가 앞으로 진행할 플랫폼의 이름입니다. 특정 차량 모델·제조사나 CAN/DBW 구동 방식을 뜻하지 않으며, 플랫폼 브랜치의 용도를 정하기 위해 차량 모델명을 요구하지 않습니다.
 
 ## 실제 사용하는 소스와 설치 환경
 
@@ -72,11 +74,11 @@ git -C autonomy/src/universe/autoware_universe apply ../../../source_snapshots/2
 
 이는 패치 적용 단계이며 빌드·설치·주행을 실행하지 않습니다. 기존 개별 패치 자동 적용 도구는 일부 겹치는 hunk가 있어, snapshot 적용 뒤 전체 재빌드를 바로 실행하기 전 패치 진입점의 중복 적용 여부를 확인해야 합니다.
 
-## 실차 플랫폼 브랜치에서 먼저 해야 할 일
+## fixmoving 플랫폼에서 먼저 정할 내용
 
-플랫폼 모델과 기존 vehicle interface 패키지를 확인하고, CAN/DBW의 조향·가속·제동·기어·차량 상태 및 단위·주기를 명시해야 합니다. 실차 카메라·IMU·GNSS 등의 위치와 보정, 타임스탬프·동기화, 차량 치수와 actuator 특성은 CARLA 값으로 대체하지 않습니다.
+먼저 fixmoving에서 Autoware가 맡을 역할과 필요한 입력·출력, 다른 구성 요소와의 연결 범위, 검증 기준을 정합니다. 구체적인 하드웨어와 기존 vehicle interface의 존재를 이름만으로 가정하지 않습니다. 현재 브랜치는 이 후속 개발의 기준선이며 플랫폼 전체 구현이 완료된 것은 아닙니다.
 
-비구동 메시지 연결과 기록 재생, 명령 차단·통신 중단·비상정지 검증을 먼저 수행합니다. 구동 시험은 별도의 명시적 승인과 안전 조건 아래 진행해야 합니다. 시뮬레이션용 launch를 실차에서 실행하거나, 연구 모델을 차량의 명령 발행자로 자동 승격하지 않습니다.
+향후 실제 차량과 연결할 경우에는 그때 차량 인터페이스·CAN/DBW 사양·센서 보정·차량 치수·actuator 특성을 별도로 확인하고, 비구동 메시지·통신 중단·명령 차단·비상정지부터 검증합니다. 실차 구동은 별도의 명시적 승인과 안전 조건이 필요하며 CARLA 보정값이나 연구 모델을 그대로 실차에 적용하지 않습니다.
 
 ## 학습과 모델 검증 상태
 

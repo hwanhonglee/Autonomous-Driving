@@ -1,8 +1,8 @@
-# Autonomous-Driving: Fix moving 플랫폼 Autoware 통합 준비
+# Autonomous-Driving: fixmoving 플랫폼 개발
 
-<!-- HH_261012 - Distinguish the shared Autoware snapshot from the vehicle, simulation and architecture branch purposes. -->
-[이 브랜치의 목적](BRANCH_PURPOSE.md) · [실차 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
-실차 플랫폼 브랜치는 통합 준비용이며 차량 구동 승인이 아닙니다. 현재 사용하는 중첩 Autoware 소스는 정확한 원본 커밋과 새 변경 패치로 별도 보존합니다.
+<!-- HH_261012 - Distinguish the future fixmoving platform from a vehicle model and retain separate simulation and architecture purposes. -->
+[이 브랜치의 목적](BRANCH_PURPOSE.md) · [fixmoving 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
+`fixmoving`은 차량 모델명이 아니라 앞으로 개발할 플랫폼 이름입니다. 플랫폼 브랜치는 그 개발 기준선이며 구체적인 구성·외부 인터페이스는 후속 설계에서 정합니다. 현재 사용하는 중첩 Autoware 소스는 정확한 원본 커밋과 새 변경 패치로 별도 보존합니다.
 
 <!-- HH_260906 - Use the canonical layout after verified removal of every root compatibility alias. -->
 **새 실제 구조:** `autonomy/` · `learning/` · `tools/` · `storage/` · `docs/`.
@@ -28,11 +28,11 @@ Python import 호환 처리는 명시적 실행 진입점에 남아 있으며 �
 [주행 모델 200m 전진·미완주 원인·전체 GIF](docs/assets/validation/2026-10-01/warmup_supervision_ab/README.md).
 지도 모델 개선은 확인했지만, 자체 주행 모델은 아직 기본 주행 복구 단계이며 실차·전체 기능 승인이 아닙니다.
 
-<!-- HH_261012 - Identify platform commissioning separately from the inherited CARLA research history. -->
-이 브랜치는 Fix moving 플랫폼의 차량 인터페이스·센서·안전 통합을 준비합니다.
-실차 구동 설정이나 승인된 vehicle interface가 아직 구현된 것은 아닙니다.
-이하 CARLA·모델 연구 자료는 공통 개발 이력이며 실차 launch로 사용하지 않습니다.
-아래 clone 명령은 이 플랫폼 준비 브랜치를 선택하고, 사전진단은 구동하지 않습니다.
+<!-- HH_261012 - Identify fixmoving as a future platform and defer its concrete interfaces to later design. -->
+이 브랜치는 앞으로 개발할 fixmoving 플랫폼에 Autoware를 연계·확장하기 위한 기준선입니다.
+fixmoving은 차량 모델명이 아니며 플랫폼 구성과 입력·출력 인터페이스는 후속 설계에서 정합니다.
+이하 CARLA·모델 연구 자료는 공통 개발 이력이며 플랫폼 전체 구현이 완료된 것은 아닙니다.
+아래 clone 명령은 이 플랫폼 개발 브랜치를 선택하고, 사전진단은 구동하지 않습니다.
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \

@@ -1,0 +1,785 @@
+{
+  "schema": "carla.low_speed_start_event_diagnosis.v1",
+  "phase_counts": {
+    "stationary_warmup": {
+      "full_windows": 35,
+      "all_nine_clear": 0,
+      "violating_anchors": {
+        "speed_limit": 0,
+        "speed_acceleration": 0,
+        "speed_deceleration": 0,
+        "xy_speed_limit": 0,
+        "xy_acceleration": 0,
+        "xy_deceleration": 0,
+        "xy_curvature": 35,
+        "xy_lateral_acceleration": 0,
+        "yaw_label_heading_envelope": 0
+      }
+    },
+    "driving": {
+      "full_windows": 931,
+      "all_nine_clear": 832,
+      "violating_anchors": {
+        "speed_limit": 0,
+        "speed_acceleration": 0,
+        "speed_deceleration": 78,
+        "xy_speed_limit": 0,
+        "xy_acceleration": 0,
+        "xy_deceleration": 78,
+        "xy_curvature": 92,
+        "xy_lateral_acceleration": 0,
+        "yaw_label_heading_envelope": 0
+      }
+    }
+  },
+  "initial_start_definition": "driving anchor with collector progress <2m and abs(vx)<=0.5",
+  "initial_start_anchors": 21,
+  "initial_start_curvature_witnesses": [
+    {
+      "anchor_frame": 1345,
+      "future_index": 20,
+      "target_timestamp_ns": 8902935301,
+      "curvature_rad_per_m": 0.2448768263542013,
+      "speed_mps": 0.5377998881645668,
+      "xy_interval_speed_mps": 0.46908525886744573,
+      "body_yaw_change_rad": 0.00018429073278602992
+    },
+    {
+      "anchor_frame": 1347,
+      "future_index": 19,
+      "target_timestamp_ns": 8902935303,
+      "curvature_rad_per_m": 0.24487682779167796,
+      "speed_mps": 0.5377998924545061,
+      "xy_interval_speed_mps": 0.46908525996320855,
+      "body_yaw_change_rad": 0.0001842907336435662
+    },
+    {
+      "anchor_frame": 1349,
+      "future_index": 18,
+      "target_timestamp_ns": 8902935304,
+      "curvature_rad_per_m": 0.24487682851603568,
+      "speed_mps": 0.5377998945994756,
+      "xy_interval_speed_mps": 0.4690852605110185,
+      "body_yaw_change_rad": 0.00018429073407233432
+    },
+    {
+      "anchor_frame": 1351,
+      "future_index": 17,
+      "target_timestamp_ns": 8902935306,
+      "curvature_rad_per_m": 0.24487682993891824,
+      "speed_mps": 0.5377998988894148,
+      "xy_interval_speed_mps": 0.46908526160663916,
+      "body_yaw_change_rad": 0.00018429073492987058
+    },
+    {
+      "anchor_frame": 1353,
+      "future_index": 16,
+      "target_timestamp_ns": 8902935307,
+      "curvature_rad_per_m": 0.24487683065039412,
+      "speed_mps": 0.5377999010343845,
+      "xy_interval_speed_mps": 0.46908526215459145,
+      "body_yaw_change_rad": 0.0001842907353586387
+    },
+    {
+      "anchor_frame": 1355,
+      "future_index": 15,
+      "target_timestamp_ns": 8902935309,
+      "curvature_rad_per_m": 0.24487683210075273,
+      "speed_mps": 0.5377999053243236,
+      "xy_interval_speed_mps": 0.46908526325021194,
+      "body_yaw_change_rad": 0.00018429073621617498
+    },
+    {
+      "anchor_frame": 1357,
+      "future_index": 14,
+      "target_timestamp_ns": 8902935310,
+      "curvature_rad_per_m": 0.24487683281213196,
+      "speed_mps": 0.5377999074692933,
+      "xy_interval_speed_mps": 0.46908526379816423,
+      "body_yaw_change_rad": 0.0001842907366449431
+    },
+    {
+      "anchor_frame": 1359,
+      "future_index": 13,
+      "target_timestamp_ns": 8902935312,
+      "curvature_rad_per_m": 0.2448768342351108,
+      "speed_mps": 0.5377999117592326,
+      "xy_interval_speed_mps": 0.46908526489378494,
+      "body_yaw_change_rad": 0.00018429073750270142
+    },
+    {
+      "anchor_frame": 1361,
+      "future_index": 12,
+      "target_timestamp_ns": 8902935313,
+      "curvature_rad_per_m": 0.2448768349595036,
+      "speed_mps": 0.5377999139042021,
+      "xy_interval_speed_mps": 0.4690852654417366,
+      "body_yaw_change_rad": 0.0001842907379312475
+    },
+    {
+      "anchor_frame": 1363,
+      "future_index": 11,
+      "target_timestamp_ns": 8902935315,
+      "curvature_rad_per_m": 0.24487683638238572,
+      "speed_mps": 0.5377999181941413,
+      "xy_interval_speed_mps": 0.46908526653735744,
+      "body_yaw_change_rad": 0.00018429073878878377
+    },
+    {
+      "anchor_frame": 1365,
+      "future_index": 10,
+      "target_timestamp_ns": 8902935316,
+      "curvature_rad_per_m": 0.2448768371213035,
+      "speed_mps": 0.537799920339111,
+      "xy_interval_speed_mps": 0.4690852670851673,
+      "body_yaw_change_rad": 0.0001842907392175519
+    },
+    {
+      "anchor_frame": 1367,
+      "future_index": 9,
+      "target_timestamp_ns": 8902935318,
+      "curvature_rad_per_m": 0.24487683854422018,
+      "speed_mps": 0.5377999246290501,
+      "xy_interval_speed_mps": 0.46908526818093005,
+      "body_yaw_change_rad": 0.00018429074007508817
+    },
+    {
+      "anchor_frame": 1369,
+      "future_index": 8,
+      "target_timestamp_ns": 8902935319,
+      "curvature_rad_per_m": 0.24487683925566106,
+      "speed_mps": 0.5377999267740198,
+      "xy_interval_speed_mps": 0.46908526872874057,
+      "body_yaw_change_rad": 0.0001842907405038563
+    },
+    {
+      "anchor_frame": 1371,
+      "future_index": 7,
+      "target_timestamp_ns": 8902935321,
+      "curvature_rad_per_m": 0.24487684067857796,
+      "speed_mps": 0.537799931063959,
+      "xy_interval_speed_mps": 0.4690852698245033,
+      "body_yaw_change_rad": 0.00018429074136139254
+    },
+    {
+      "anchor_frame": 1373,
+      "future_index": 6,
+      "target_timestamp_ns": 8902935322,
+      "curvature_rad_per_m": 0.24487684140299795,
+      "speed_mps": 0.5377999332089286,
+      "xy_interval_speed_mps": 0.469085270372171,
+      "body_yaw_change_rad": 0.00018429074179016072
+    },
+    {
+      "anchor_frame": 1375,
+      "future_index": 5,
+      "target_timestamp_ns": 8902935324,
+      "curvature_rad_per_m": 0.244876842840378,
+      "speed_mps": 0.5377999374988678,
+      "xy_interval_speed_mps": 0.4690852714679337,
+      "body_yaw_change_rad": 0.00018429074264769696
+    },
+    {
+      "anchor_frame": 1377,
+      "future_index": 4,
+      "target_timestamp_ns": 8902935325,
+      "curvature_rad_per_m": 0.24487684356473546,
+      "speed_mps": 0.5377999396438374,
+      "xy_interval_speed_mps": 0.4690852720157438,
+      "body_yaw_change_rad": 0.00018429074307668716
+    },
+    {
+      "anchor_frame": 1379,
+      "future_index": 3,
+      "target_timestamp_ns": 8902935327,
+      "curvature_rad_per_m": 0.24487684498774903,
+      "speed_mps": 0.5377999439337767,
+      "xy_interval_speed_mps": 0.46908527311150644,
+      "body_yaw_change_rad": 0.00018429074393400136
+    },
+    {
+      "anchor_frame": 1381,
+      "future_index": 2,
+      "target_timestamp_ns": 8902935328,
+      "curvature_rad_per_m": 0.24487684569909363,
+      "speed_mps": 0.5377999460787463,
+      "xy_interval_speed_mps": 0.4690852736593166,
+      "body_yaw_change_rad": 0.0001842907443627695
+    },
+    {
+      "anchor_frame": 1383,
+      "future_index": 1,
+      "target_timestamp_ns": 8902935330,
+      "curvature_rad_per_m": 0.24487684712207228,
+      "speed_mps": 0.5377999503686854,
+      "xy_interval_speed_mps": 0.4690852747549374,
+      "body_yaw_change_rad": 0.0001842907452203057
+    },
+    {
+      "anchor_frame": 1385,
+      "future_index": 0,
+      "target_timestamp_ns": 8902935331,
+      "curvature_rad_per_m": 0.20117925235002881,
+      "speed_mps": 0.537799952513655,
+      "xy_interval_speed_mps": 0.46908527530288935,
+      "body_yaw_change_rad": 0.00018429074564907388
+    }
+  ],
+  "native_deceleration_failures": [
+    {
+      "from_frame": 3137,
+      "to_frame": 3138,
+      "from_speed": 1.6060657803265765,
+      "to_speed": 1.2443164416073373,
+      "rate_mps2": -7.2349866665750815,
+      "from_goal_stop": {
+        "profile_id": "town07_low_speed_start_20261001_v1",
+        "phase": "approach",
+        "remaining_route_arc_m": 1.8594788004978682,
+        "planar_goal_distance_m": 1.859478850520838,
+        "terminal_overshoot_m": -1.859478809453739,
+        "measured_speed_mps": 1.6060657803265765,
+        "distance_speed_envelope_mps": 1.4896165953008635,
+        "target_speed_mps": 1.4896165953008635,
+        "goal_window": false,
+        "upstream_of_endpoint": true,
+        "hold_ticks": 0,
+        "required_hold_ticks": 40,
+        "hold_duration_sec": 0,
+        "complete": false,
+        "basic_agent_done": false,
+        "termination_reason": null,
+        "control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+      },
+      "source_control": {
+        "throttle": 0,
+        "steer": 0.0002552668156567961,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 0,
+        "manual_gear_shift": false
+      },
+      "observed_current_control": {
+        "throttle": 0,
+        "steer": 0.0002552668156567961,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 1,
+        "manual_gear_shift": false
+      },
+      "alignment": {
+        "status": "PASS",
+        "expected_receipt_sequence": 1866,
+        "expected_command_before_frame": 3137,
+        "observed_frame": 3138,
+        "control_read_frame_before": 3138,
+        "control_read_frame_after": 3138,
+        "frame_binding_pass": true,
+        "mismatched_fields": [],
+        "absolute_tolerance": 0.000001,
+        "automatic_gear_equality_required": false,
+        "lookback_relabeling_allowed": false,
+        "physical_actuation_proven": false,
+        "next_command_receipt_sequence": 1867
+      },
+      "proposal_provenance": {
+        "schema": "carla.low_speed_start_ack.v1",
+        "command_reason": "next_driving_control",
+        "source_frame": 3137,
+        "normal_policy": {
+          "schema": "carla.low_speed_start_normal_control.v1",
+          "source_frame": 3137,
+          "source_timestamp": 96.40293663647026,
+          "measured_planar_speed_mps": 1.6060657976954198,
+          "handoff_latched": true,
+          "launch_started_at": 6.752935300581157,
+          "handoff_at": 8.902935332618654,
+          "normal_throttle_cap": 0.2,
+          "raw_normal_planner_proposal": {
+            "throttle": 0,
+            "steer": 0.0002552668156567961,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "comfortable_v2_capped_proposal": {
+            "throttle": 0,
+            "steer": 0.0002552668156567961,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "profile_normal_control": {
+            "throttle": 0,
+            "steer": 0.0002552668156567961,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "insertion": "LocalPlanner normal request before unchanged BasicAgent emergency override",
+          "training_data_approved": false,
+          "learned_control": false
+        },
+        "final_basic_agent_proposal": {
+          "throttle": 0,
+          "steer": 0.0002552668156567961,
+          "brake": 0.15000000596046448,
+          "hand_brake": false,
+          "reverse": false,
+          "gear": 0,
+          "manual_gear_shift": false
+        },
+        "ack_receipt": {
+          "sequence": 1866,
+          "mode": "acknowledged_batch",
+          "actor_id": 114,
+          "reason": "next_driving_control",
+          "requested_control": {
+            "throttle": 0,
+            "steer": 0.0002552668156567961,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "do_tick": false,
+          "status": "ACKNOWLEDGED",
+          "server_accepted": true,
+          "physical_actuation_proven": false,
+          "before_frame": 3137,
+          "expected_before_frame": 3137,
+          "response_actor_id": 114,
+          "after_ack_frame": 3137
+        },
+        "learned_control": false,
+        "training_data_approved": false
+      }
+    },
+    {
+      "from_frame": 3138,
+      "to_frame": 3139,
+      "from_speed": 1.2443164416073373,
+      "to_speed": 1.0426076347915365,
+      "rate_mps2": -4.034176076202109,
+      "from_goal_stop": {
+        "profile_id": "town07_low_speed_start_20261001_v1",
+        "phase": "approach",
+        "remaining_route_arc_m": 1.7866332692918263,
+        "planar_goal_distance_m": 1.7866333236007277,
+        "terminal_overshoot_m": -1.7866332721329619,
+        "measured_speed_mps": 1.2443164416073373,
+        "distance_speed_envelope_mps": 1.4398842101306801,
+        "target_speed_mps": 1.4398842101306801,
+        "goal_window": false,
+        "upstream_of_endpoint": true,
+        "hold_ticks": 0,
+        "required_hold_ticks": 40,
+        "hold_duration_sec": 0,
+        "complete": false,
+        "basic_agent_done": false,
+        "termination_reason": null,
+        "control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+      },
+      "source_control": {
+        "throttle": 0.20000000298023224,
+        "steer": 0.00027874839724972844,
+        "brake": 0,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 0,
+        "manual_gear_shift": false
+      },
+      "observed_current_control": {
+        "throttle": 0.20000000298023224,
+        "steer": 0.00027874839724972844,
+        "brake": 0,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 1,
+        "manual_gear_shift": false
+      },
+      "alignment": {
+        "status": "PASS",
+        "expected_receipt_sequence": 1867,
+        "expected_command_before_frame": 3138,
+        "observed_frame": 3139,
+        "control_read_frame_before": 3139,
+        "control_read_frame_after": 3139,
+        "frame_binding_pass": true,
+        "mismatched_fields": [],
+        "absolute_tolerance": 0.000001,
+        "automatic_gear_equality_required": false,
+        "lookback_relabeling_allowed": false,
+        "physical_actuation_proven": false,
+        "next_command_receipt_sequence": 1868
+      },
+      "proposal_provenance": {
+        "schema": "carla.low_speed_start_ack.v1",
+        "command_reason": "next_driving_control",
+        "source_frame": 3138,
+        "normal_policy": {
+          "schema": "carla.low_speed_start_normal_control.v1",
+          "source_frame": 3138,
+          "source_timestamp": 96.45293663721532,
+          "measured_planar_speed_mps": 1.2443164561656188,
+          "handoff_latched": true,
+          "launch_started_at": 6.752935300581157,
+          "handoff_at": 8.902935332618654,
+          "normal_throttle_cap": 0.2,
+          "raw_normal_planner_proposal": {
+            "throttle": 0.20000000298023224,
+            "steer": 0.00027874839724972844,
+            "brake": 0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "comfortable_v2_capped_proposal": {
+            "throttle": 0.20000000298023224,
+            "steer": 0.00027874839724972844,
+            "brake": 0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "profile_normal_control": {
+            "throttle": 0.20000000298023224,
+            "steer": 0.00027874839724972844,
+            "brake": 0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "insertion": "LocalPlanner normal request before unchanged BasicAgent emergency override",
+          "training_data_approved": false,
+          "learned_control": false
+        },
+        "final_basic_agent_proposal": {
+          "throttle": 0.20000000298023224,
+          "steer": 0.00027874839724972844,
+          "brake": 0,
+          "hand_brake": false,
+          "reverse": false,
+          "gear": 0,
+          "manual_gear_shift": false
+        },
+        "ack_receipt": {
+          "sequence": 1867,
+          "mode": "acknowledged_batch",
+          "actor_id": 114,
+          "reason": "next_driving_control",
+          "requested_control": {
+            "throttle": 0.20000000298023224,
+            "steer": 0.00027874839724972844,
+            "brake": 0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "do_tick": false,
+          "status": "ACKNOWLEDGED",
+          "server_accepted": true,
+          "physical_actuation_proven": false,
+          "before_frame": 3138,
+          "expected_before_frame": 3138,
+          "response_actor_id": 114,
+          "after_ack_frame": 3138
+        },
+        "learned_control": false,
+        "training_data_approved": false
+      }
+    },
+    {
+      "from_frame": 3147,
+      "to_frame": 3148,
+      "from_speed": 1.1667475111672536,
+      "to_speed": 0.24348019020177344,
+      "rate_mps2": -18.465346144154502,
+      "from_goal_stop": {
+        "profile_id": "town07_low_speed_start_20261001_v1",
+        "phase": "approach",
+        "remaining_route_arc_m": 1.3090028541913057,
+        "planar_goal_distance_m": 1.3090030490611397,
+        "terminal_overshoot_m": -1.309002854191316,
+        "measured_speed_mps": 1.1667475111672536,
+        "distance_speed_envelope_mps": 1.0573578903959677,
+        "target_speed_mps": 1.0573578903959677,
+        "goal_window": false,
+        "upstream_of_endpoint": true,
+        "hold_ticks": 0,
+        "required_hold_ticks": 40,
+        "hold_duration_sec": 0,
+        "complete": false,
+        "basic_agent_done": false,
+        "termination_reason": null,
+        "control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+      },
+      "source_control": {
+        "throttle": 0,
+        "steer": 0.0006093881092965603,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 0,
+        "manual_gear_shift": false
+      },
+      "observed_current_control": {
+        "throttle": 0,
+        "steer": 0.0006093881092965603,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 1,
+        "manual_gear_shift": false
+      },
+      "alignment": {
+        "status": "PASS",
+        "expected_receipt_sequence": 1876,
+        "expected_command_before_frame": 3147,
+        "observed_frame": 3148,
+        "control_read_frame_before": 3148,
+        "control_read_frame_after": 3148,
+        "frame_binding_pass": true,
+        "mismatched_fields": [],
+        "absolute_tolerance": 0.000001,
+        "automatic_gear_equality_required": false,
+        "lookback_relabeling_allowed": false,
+        "physical_actuation_proven": false,
+        "next_command_receipt_sequence": 1877
+      },
+      "proposal_provenance": {
+        "schema": "carla.low_speed_start_ack.v1",
+        "command_reason": "next_driving_control",
+        "source_frame": 3147,
+        "normal_policy": {
+          "schema": "carla.low_speed_start_normal_control.v1",
+          "source_frame": 3147,
+          "source_timestamp": 96.90293664392084,
+          "measured_planar_speed_mps": 1.166747173809129,
+          "handoff_latched": true,
+          "launch_started_at": 6.752935300581157,
+          "handoff_at": 8.902935332618654,
+          "normal_throttle_cap": 0.2,
+          "raw_normal_planner_proposal": {
+            "throttle": 0,
+            "steer": 0.0006093881092965603,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "comfortable_v2_capped_proposal": {
+            "throttle": 0,
+            "steer": 0.0006093881092965603,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "profile_normal_control": {
+            "throttle": 0,
+            "steer": 0.0006093881092965603,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "insertion": "LocalPlanner normal request before unchanged BasicAgent emergency override",
+          "training_data_approved": false,
+          "learned_control": false
+        },
+        "final_basic_agent_proposal": {
+          "throttle": 0,
+          "steer": 0.0006093881092965603,
+          "brake": 0.15000000596046448,
+          "hand_brake": false,
+          "reverse": false,
+          "gear": 0,
+          "manual_gear_shift": false
+        },
+        "ack_receipt": {
+          "sequence": 1876,
+          "mode": "acknowledged_batch",
+          "actor_id": 114,
+          "reason": "next_driving_control",
+          "requested_control": {
+            "throttle": 0,
+            "steer": 0.0006093881092965603,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "do_tick": false,
+          "status": "ACKNOWLEDGED",
+          "server_accepted": true,
+          "physical_actuation_proven": false,
+          "before_frame": 3147,
+          "expected_before_frame": 3147,
+          "response_actor_id": 114,
+          "after_ack_frame": 3147
+        },
+        "learned_control": false,
+        "training_data_approved": false
+      }
+    },
+    {
+      "from_frame": 3165,
+      "to_frame": 3166,
+      "from_speed": 0.6097626946579653,
+      "to_speed": 0.0005430286715261049,
+      "rate_mps2": -12.184393138167177,
+      "from_goal_stop": {
+        "profile_id": "town07_low_speed_start_20261001_v1",
+        "phase": "approach",
+        "remaining_route_arc_m": 0.959148992426833,
+        "planar_goal_distance_m": 0.9591508990989739,
+        "terminal_overshoot_m": -0.9591489924268435,
+        "measured_speed_mps": 0.6097626946579653,
+        "distance_speed_envelope_mps": 0.6467596036037394,
+        "target_speed_mps": 0.6467596036037394,
+        "goal_window": true,
+        "upstream_of_endpoint": true,
+        "hold_ticks": 0,
+        "required_hold_ticks": 40,
+        "hold_duration_sec": 0,
+        "complete": false,
+        "basic_agent_done": false,
+        "termination_reason": null,
+        "control_source": "BasicAgent_with_route_arc_target_and_normal_PID_cap_emergency_unchanged"
+      },
+      "source_control": {
+        "throttle": 0,
+        "steer": 0,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 0,
+        "manual_gear_shift": false
+      },
+      "observed_current_control": {
+        "throttle": 0,
+        "steer": 0,
+        "brake": 0.15000000596046448,
+        "hand_brake": false,
+        "reverse": false,
+        "gear": 1,
+        "manual_gear_shift": false
+      },
+      "alignment": {
+        "status": "PASS",
+        "expected_receipt_sequence": 1894,
+        "expected_command_before_frame": 3165,
+        "observed_frame": 3166,
+        "control_read_frame_before": 3166,
+        "control_read_frame_after": 3166,
+        "frame_binding_pass": true,
+        "mismatched_fields": [],
+        "absolute_tolerance": 0.000001,
+        "automatic_gear_equality_required": false,
+        "lookback_relabeling_allowed": false,
+        "physical_actuation_proven": false,
+        "next_command_receipt_sequence": 1895
+      },
+      "proposal_provenance": {
+        "schema": "carla.low_speed_start_ack.v1",
+        "command_reason": "next_driving_control",
+        "source_frame": 3165,
+        "normal_policy": {
+          "schema": "carla.low_speed_start_normal_control.v1",
+          "source_frame": 3165,
+          "source_timestamp": 97.80293665733188,
+          "measured_planar_speed_mps": 0.6097625935350031,
+          "handoff_latched": true,
+          "launch_started_at": 6.752935300581157,
+          "handoff_at": 8.902935332618654,
+          "normal_throttle_cap": 0.2,
+          "raw_normal_planner_proposal": {
+            "throttle": 0,
+            "steer": 0,
+            "brake": 1,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "comfortable_v2_capped_proposal": {
+            "throttle": 0,
+            "steer": 0,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "profile_normal_control": {
+            "throttle": 0,
+            "steer": 0,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "insertion": "LocalPlanner normal request before unchanged BasicAgent emergency override",
+          "training_data_approved": false,
+          "learned_control": false
+        },
+        "final_basic_agent_proposal": {
+          "throttle": 0,
+          "steer": 0,
+          "brake": 0.15000000596046448,
+          "hand_brake": false,
+          "reverse": false,
+          "gear": 0,
+          "manual_gear_shift": false
+        },
+        "ack_receipt": {
+          "sequence": 1894,
+          "mode": "acknowledged_batch",
+          "actor_id": 114,
+          "reason": "next_driving_control",
+          "requested_control": {
+            "throttle": 0,
+            "steer": 0,
+            "brake": 0.15000000596046448,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 0,
+            "manual_gear_shift": false
+          },
+          "do_tick": false,
+          "status": "ACKNOWLEDGED",
+          "server_accepted": true,
+          "physical_actuation_proven": false,
+          "before_frame": 3165,
+          "expected_before_frame": 3165,
+          "response_actor_id": 114,
+          "after_ack_frame": 3165
+        },
+        "learned_control": false,
+        "training_data_approved": false
+      }
+    }
+  ],
+  "control_stage_conclusion": "Worst deceleration follows ACK-aligned normal brake 0.15, not full hold or a changed downstream BasicAgent emergency command. This does not prove the simulator internal physical cause.",
+  "full_episode_status": "FAIL_RETAINED",
+  "training_data_approved": false
+}

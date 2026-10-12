@@ -68,7 +68,7 @@ oracle ADE는 약 1.529m → 1.526m였습니다. 좋은 후보를 고르는 문�
 
 **시작 당시 확인:** 개인 venv·GPU 0에서 첫 A 모델의 optimizer step 339→340→341 증가와
 유한한 loss를 확인했습니다. 이후 여섯 실행의 완료 기록을 확인한 최종 결과는 위에 정리했습니다.
-[고정 계획](../../../../../../config/portable_e2e_no_accel_development_20260909.json)은 실행 전
+[고정 계획](../../../../../../learning/config/portable_e2e_no_accel_development_20260909.json)은 실행 전
 커밋 `3147718`, 실제 서버 코드는 `213cfc6`으로 고정했습니다. [실행 연결 기록](execution_binding.json)에
 시작 시각과 계획 해시를 남겼습니다. 계획은 저장소 밖 개인 plans 폴더에 두고, 실행 중인
 서버 소스는 바꾸지 않았습니다. 학습은 SSH 세션과 분리해 접속 종료에도 유지되도록 실행했습니다.

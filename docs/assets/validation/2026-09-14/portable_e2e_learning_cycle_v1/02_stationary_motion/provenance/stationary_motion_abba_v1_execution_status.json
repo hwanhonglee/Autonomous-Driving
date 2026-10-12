@@ -1,0 +1,44 @@
+{
+  "schema": "carla.stationary_motion_campaign_execution.v1",
+  "campaign_id": "hh260914-c-track-stationary-motion-abba-v1",
+  "status": "STOPPED_PRESPAWN_IMPLEMENTATION_FAILURE",
+  "completed_at_utc": "2026-09-14T03:19:14.934517+00:00",
+  "cases": [
+    {
+      "id": "01_service_A1",
+      "status": "FAILED_BEFORE_VEHICLE_SPAWN",
+      "state_count": 0,
+      "camera_anchor_count": 0,
+      "control_ack_count": 0,
+      "owned_actor_count": 0
+    },
+    {
+      "id": "02_parking_B1",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "03_parking_B2",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "04_service_A2",
+      "status": "NOT_RUN"
+    }
+  ],
+  "cause": "Generic physics serializer recursively traversed WeatherParameters preset objects; depth bound rejected the pre-spawn weather read. No physical brake comparison occurred.",
+  "source_sha256": {
+    "plan.json": "309afc3e570daf693dd9e905203cf30495748d41a3b1004537ec555b615fecea",
+    "01_service_A1/owner_plan.json": "6ca9ef19147677d54705f2d98539e7df159150d2cf6f3c2d92a1414ccc537835",
+    "01_service_A1/owner_result.json": "20cecda44d3f67de532243f9d8500b5644be7c04bc87f9488d5e57241d0a1894",
+    "01_service_A1/collector.log": "ca287e100346d897f9ceacbeeb134cf7ef97580709880c541d2b9404e5ab746f",
+    "01_service_A1/lifecycle/stopped.json": "9cee6ae9b08605a185ba2bd51520fc6b206dbb46d7accb96da4c4625f5549f10",
+    "01_service_A1/motion_probe.partial/manifest.json": "6be8a133133e3072b188a6f0397acdd6364e6088f0fb5cede76b35ef8b68e9b4"
+  },
+  "world_settings_restored_equal_before": true,
+  "weather_restoration_verification": "FAILED_SAME_SERIALIZER_ERROR",
+  "owner_process_stopped": true,
+  "owner_ports_released": true,
+  "training_data_approved": false,
+  "vehicle_control_approved": false,
+  "correction_policy": "HH_260906 - Preserve the failed v1 plan and all artifacts; a reviewed weather-only fix requires a separately declared v2 campaign. No automatic retry or old result replacement."
+}

@@ -16,8 +16,8 @@
 throttle, brake, steering을 직접 출력하지 않는다.
 
 기존 v0 model의 parameter 수는 **1,053,278개**다. 이 값은
-[`perspective_trajectory_v0.model.json`](../portable_e2e/config/perspective_trajectory_v0.model.json)의
-현재 기본 설정과 [`parameter_count`](../portable_e2e/model.py) 결과다. config나 layer를
+[`perspective_trajectory_v0.model.json`](../learning/portable_e2e/config/perspective_trajectory_v0.model.json)의
+현재 기본 설정과 [`parameter_count`](../learning/portable_e2e/model.py) 결과다. config나 layer를
 바꾸면 다시 측정해야 한다. 별도 physical-v1 설정의 parameter 수는 **954,590개**다.
 두 decoder의 설정과 checkpoint는 서로 바꿔 사용할 수 없다.
 
@@ -40,19 +40,19 @@ shadow 실행 절차는 [10 Hz shadow runtime 가이드](portable-e2e-shadow-run
 
 | 역할 | 파일 |
 |---|---|
-| 모델 | [`portable_e2e/model.py`](../portable_e2e/model.py) |
-| tensor dataset | [`portable_e2e/torch_dataset.py`](../portable_e2e/torch_dataset.py) |
-| loss | [`portable_e2e/losses.py`](../portable_e2e/losses.py) |
-| trainer/checkpoint | [`portable_e2e/train.py`](../portable_e2e/train.py) |
-| open-loop evaluator | [`portable_e2e/evaluate.py`](../portable_e2e/evaluate.py) |
-| trajectory PNG | [`portable_e2e/visualize.py`](../portable_e2e/visualize.py) |
-| A/B report 검사 | [`portable_e2e/compare.py`](../portable_e2e/compare.py) |
-| shadow 입력·출력 gate | [`portable_e2e/runtime_contract.py`](../portable_e2e/runtime_contract.py) |
-| non-executable bundle inference | [`portable_e2e/runtime.py`](../portable_e2e/runtime.py) |
-| safe runtime bundle export/load | [`portable_e2e/runtime_weight_bundle.py`](../portable_e2e/runtime_weight_bundle.py) |
-| full-split runtime 감사 | [`portable_e2e/audit_runtime.py`](../portable_e2e/audit_runtime.py) |
-| Autoware shadow node | [`portable_e2e_shadow_node.py`](../autoware_e2e_vad_launch/scripts/portable_e2e_shadow_node.py) |
-| 10 Hz CARLA sensor profile | [`sensor_mapping_portable_e2e_10hz.yaml`](../autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml) |
+| 모델 | [`portable_e2e/model.py`](../learning/portable_e2e/model.py) |
+| tensor dataset | [`portable_e2e/torch_dataset.py`](../learning/portable_e2e/torch_dataset.py) |
+| loss | [`portable_e2e/losses.py`](../learning/portable_e2e/losses.py) |
+| trainer/checkpoint | [`portable_e2e/train.py`](../learning/portable_e2e/train.py) |
+| open-loop evaluator | [`portable_e2e/evaluate.py`](../learning/portable_e2e/evaluate.py) |
+| trajectory PNG | [`portable_e2e/visualize.py`](../learning/portable_e2e/visualize.py) |
+| A/B report 검사 | [`portable_e2e/compare.py`](../learning/portable_e2e/compare.py) |
+| shadow 입력·출력 gate | [`portable_e2e/runtime_contract.py`](../learning/portable_e2e/runtime_contract.py) |
+| non-executable bundle inference | [`portable_e2e/runtime.py`](../learning/portable_e2e/runtime.py) |
+| safe runtime bundle export/load | [`portable_e2e/runtime_weight_bundle.py`](../learning/portable_e2e/runtime_weight_bundle.py) |
+| full-split runtime 감사 | [`portable_e2e/audit_runtime.py`](../learning/portable_e2e/audit_runtime.py) |
+| Autoware shadow node | [`portable_e2e_shadow_node.py`](../autonomy/autoware_e2e_vad_launch/scripts/portable_e2e_shadow_node.py) |
+| 10 Hz CARLA sensor profile | [`sensor_mapping_portable_e2e_10hz.yaml`](../autonomy/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml) |
 
 이 baseline의 목적은 첫 대규모 모델이 아니라 실제 image decode → forward → loss →
 backward → checkpoint → 고정 split 평가가 정확히 연결되는지 검증하는 것이다.

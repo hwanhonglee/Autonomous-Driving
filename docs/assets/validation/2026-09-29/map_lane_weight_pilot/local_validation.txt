@@ -1,0 +1,46 @@
+HH_260929 - Local source and TRAIN-only contract verification before remote optimization.
+
+Command:
+python3 tools/workspace_python.py -m pytest -- -vv learning/tests/test_train_map_lane_weight_route_cv.py learning/tests/test_audit_map_lane_train.py
+
+Result:
+learning/tests/test_train_map_lane_weight_route_cv.py::test_nine_pair_order_and_whole_route_isolation PASSED
+learning/tests/test_train_map_lane_weight_route_cv.py::test_lane_coefficient_is_the_only_changed_weight PASSED
+learning/tests/test_train_map_lane_weight_route_cv.py::test_gate_uses_preregistered_lane_and_road_thresholds PASSED
+learning/tests/test_train_map_lane_weight_route_cv.py::test_failed_prior_pair_prevents_next_pair PASSED
+learning/tests/test_train_map_lane_weight_route_cv.py::test_confusion_iou_reports_absent_class PASSED
+learning/tests/test_audit_map_lane_train.py::test_unknown_semantic_tags_remain_other_and_depth_is_bgra PASSED
+learning/tests/test_audit_map_lane_train.py::test_totals_preserve_pixel_and_region_denominators PASSED
+learning/tests/test_audit_map_lane_train.py::test_raw_pair_rejects_semantic_misalignment PASSED
+8 passed in 0.34s
+
+python3 -m py_compile tools/e2e/train_map_lane_weight_2x.py
+exit 0
+
+Frozen remote source SHA-256:
+train_map_lane_weight_2x.py ea9ae2dd025db9801055f9f9d4c10d07c3a1e3555a624020c19b22b53ea92ee7
+map_perception.py 1b0076c8f9d34192ab5aedf6cdf96ce2c14458e2bb49986685a6811376b0750b
+map_learning_balance.py 57c9392d8b700f5cf628865042b66ae630961f35fb8858a5d0ead77fe5a7c73b
+dual_recovery_objectives.py d10bcad9060c1f4bde40b20773fd4c18f1d4b6ba3861dd7cef55cd36cff4ad15
+parent_manifest.json e9805574a252e72f8e81fcd434156da7782b25e8e965b8078f976cf4f234892c
+audit.md 9dd002dee9ae4829724a2b073163b22c35cb97c25453652d384374f56a065375
+plan.md 247e239777eb1159ad97aa5fb643585c8c71b32808dc91e307e594963c9abcdf
+
+CPU preflight: PASS; see cpu_preflight_pair00.json.
+Physical GPU0 query before training: index 0, GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5, 0 MiB, 0%.
+Shared personal GPU0 lease nonblocking probe: exit 0; the runner reacquires it for training.
+
+After first pair:
+python3 docs/assets/validation/2026-09-29/map_lane_weight_pilot/verify_pair.py
+INDEPENDENT_TRAIN_HOLDOUT_PIXEL_REPLAY_PASS; B/W2 initial state SHA identical;
+heldout 114-frame confusion/IoU and checkpoint/prediction SHA all matched.
+
+sha256sum -c docs/assets/validation/2026-09-29/map_lane_weight_pilot/SHA256SUMS
+17 files OK; all 17 local and remote SHA-256 lines were identical.
+
+Remote --pair-index 1 --validate-only after first gate failure:
+exit 1; ValueError: prior pair failed or source contract changed.
+No second pair output directory was created.
+
+Physical GPU0 after training: index 0, approved UUID, 0 MiB, 0%;
+shared lease nonblocking probe exit 0 after run.

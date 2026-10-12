@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "<string>", line 10, in <module>
+  File "<frozen runpy>", line 286, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/frozen_stopmix_selector_v1/run_frozen_stopmix_selector.py", line 466, in <module>
+    if __name__ == '__main__': raise SystemExit(main())
+                                                ^^^^^^
+  File "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/frozen_stopmix_selector_v1/run_frozen_stopmix_selector.py", line 463, in main
+    return run(args, base, oracle)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/frozen_stopmix_selector_v1/run_frozen_stopmix_selector.py", line 318, in run
+    output = base.checked_output(args.output_dir, dataset_root, WORKSPACE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/training_profile_v1/profile_portable_training.py", line 152, in checked_output
+    require(output.is_relative_to(workspace / "runs/diagnostics") and output != workspace / "runs/diagnostics",
+  File "${USER_HOME}/personal/hwanhong/portable_e2e/benchmarks/training_profile_v1/profile_portable_training.py", line 52, in require
+    raise ValueError(message)
+ValueError: fresh output must be inside personal runs/diagnostics

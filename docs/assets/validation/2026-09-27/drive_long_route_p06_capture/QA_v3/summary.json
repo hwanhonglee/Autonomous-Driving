@@ -1,0 +1,971 @@
+{
+  "schema": "carla.town01_long_right_9kph_raw_qa.v1",
+  "status": "FAIL_CLOSED",
+  "dataset_admitted": false,
+  "training_started": false,
+  "learned_control": false,
+  "one_owned_attempt": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1",
+  "preregistered_plan_sha256": "03482e12a8fea09c416b086ac3efbb18f353a187d1c391096a247d1c1166547a",
+  "checks": {
+    "nonempty_fixed_selection": true,
+    "first_over_120_closes_selection": true,
+    "selected_span_at_least_30s": true,
+    "selected_camera_10hz_continuous": true,
+    "selected_native_20hz_continuous": true,
+    "selected_native_speed_all_over_0p5_mps": true,
+    "selected_native_progress_monotone": true,
+    "selected_turn_entry_exit": true,
+    "selected_right_command_present": true,
+    "observed_clockwise_turn_at_least_45deg": true,
+    "all_selected_have_64_actual_future_points": true,
+    "all_selected_64_points_before_brake_tail": true,
+    "all_original_nine_motion_bounds_clear": false,
+    "six_rgb_pixels_and_camera_state_aligned": true,
+    "acknowledged_native_state_alignment": true,
+    "collision_and_lane_sensor_clear": true,
+    "full_body_in_intended_lane": false
+  },
+  "failed_checks": [
+    "all_original_nine_motion_bounds_clear",
+    "full_body_in_intended_lane"
+  ],
+  "unsupported_checks": {
+    "full_body_in_intended_lane": "Current raw state lacks a measured vehicle footprint and an offline CARLA OpenDRIVE intended-lane polygon bound to this exact capture. The older Prius measurement does not prove current actor-asset identity; Lanelet2 IDs cannot certify the route's OpenDRIVE lane identity. No CARLA map API/server was used, so full-body containment is unverified and fails closed."
+  },
+  "window": {
+    "flags": {
+      "nonempty_fixed_selection": true,
+      "first_over_120_closes_selection": true,
+      "selected_span_at_least_30s": true,
+      "selected_camera_10hz_continuous": true,
+      "selected_native_20hz_continuous": true,
+      "selected_native_speed_all_over_0p5_mps": true,
+      "selected_native_progress_monotone": true,
+      "selected_turn_entry_exit": true,
+      "selected_right_command_present": true,
+      "observed_clockwise_turn_at_least_45deg": true
+    },
+    "selected_anchor_count": 360,
+    "selected_span_ns": 35900000535,
+    "first_selected": {
+      "frame": 2637,
+      "timestamp_ns": 49037008709,
+      "capture_phase": "driving",
+      "progress_m": 30.121331925998888,
+      "cross_track_m": 0.0038568494178667216,
+      "segment_index": 30,
+      "recorded_progress_m": 30.121331925998888,
+      "speed_mps": 2.4777310714567387,
+      "command": 3
+    },
+    "last_selected": {
+      "frame": 3355,
+      "timestamp_ns": 84937009244,
+      "capture_phase": "driving",
+      "progress_m": 119.92744624444815,
+      "cross_track_m": 0.002773242992519182,
+      "segment_index": 123,
+      "recorded_progress_m": 119.92744624444815,
+      "speed_mps": 2.4777418436285177,
+      "command": 3
+    },
+    "first_progress_over_120_m": {
+      "frame": 3356,
+      "timestamp_ns": 84987009245,
+      "progress_m": 120.05061537306835
+    },
+    "minimum_selected_native_speed_mps": 2.28996639941717,
+    "turn_start_arc_m": 39.98000067472458,
+    "turn_end_arc_m": 55.6720255613327,
+    "turn_native_state_count": 116,
+    "turn_command_1_state_count": 95,
+    "turn_signed_yaw_change_rad": -1.3540242019682072,
+    "selected_native_progress_drops": [],
+    "full_driving_progress_drop_count": 1,
+    "full_driving_progress_drop_examples": [
+      {
+        "from_frame": 2014,
+        "to_frame": 2015,
+        "drop_m": 0.00010579490335160813
+      }
+    ],
+    "selection_rule": "all driving camera anchors at independently projected 30\u2013120 m until first native >120 m; no post hoc exclusions"
+  },
+  "future": {
+    "flags": {
+      "all_selected_have_64_actual_future_points": true,
+      "all_selected_64_points_before_brake_tail": true,
+      "all_original_nine_motion_bounds_clear": false
+    },
+    "selected_anchor_count": 360,
+    "incomplete_anchor_frames": [],
+    "future_reaches_brake_tail_frames": [],
+    "original_nine_violating_anchor_counts": {
+      "speed_limit": 0,
+      "speed_acceleration": 0,
+      "speed_deceleration": 0,
+      "xy_speed_limit": 0,
+      "xy_acceleration": 0,
+      "xy_deceleration": 0,
+      "xy_curvature": 63,
+      "xy_lateral_acceleration": 0,
+      "yaw_label_heading_envelope": 0
+    },
+    "original_nine_metrics": {
+      "sample_count": 360,
+      "horizon_s": 6.4,
+      "horizon_eligible_anchor_count": 360,
+      "valid_step_count": 23040,
+      "invalid_step_count": 0,
+      "metrics": {
+        "speed_limit": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2777",
+            "point_index": 0,
+            "target_timestamp_ns": 56137008814,
+            "value": 2.2899663997242867
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2699",
+            "point_index": 0,
+            "target_timestamp_ns": 52237008755,
+            "value": 2.4790846241018536
+          }
+        },
+        "speed_acceleration": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2775",
+            "point_index": 1,
+            "target_timestamp_ns": 56137008812,
+            "value": -1.0597265043009152
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2779",
+            "point_index": 0,
+            "target_timestamp_ns": 56237008815,
+            "value": 0.8116481456775881
+          }
+        },
+        "speed_deceleration": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2775",
+            "point_index": 1,
+            "target_timestamp_ns": 56137008812,
+            "value": -1.0597265043009152
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2779",
+            "point_index": 0,
+            "target_timestamp_ns": 56237008815,
+            "value": 0.8116481456775881
+          }
+        },
+        "xy_speed_limit": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2777",
+            "point_index": 0,
+            "target_timestamp_ns": 56137008814,
+            "value": 2.311993504483928
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2843",
+            "point_index": 0,
+            "target_timestamp_ns": 59437008863,
+            "value": 2.466421922197679
+          }
+        },
+        "xy_acceleration": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2775",
+            "point_index": 1,
+            "target_timestamp_ns": 56137008812,
+            "value": -0.9442764673915871
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2779",
+            "point_index": 1,
+            "target_timestamp_ns": 56337008815,
+            "value": 0.7338385696708105
+          }
+        },
+        "xy_deceleration": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:2775",
+            "point_index": 1,
+            "target_timestamp_ns": 56137008812,
+            "value": -0.9442764673915871
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2779",
+            "point_index": 1,
+            "target_timestamp_ns": 56337008815,
+            "value": 0.7338385696708105
+          }
+        },
+        "xy_curvature": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 63,
+          "violating_anchor_count": 63,
+          "horizon_eligible_violating_anchor_count": 63,
+          "unique_episode_relative_100ms_violation_tick_count": 1,
+          "violating_steps_by_capture_phase": {
+            "pre_tail": 63
+          },
+          "violating_steps_by_future_goal_proximity": {
+            "interior": 63
+          },
+          "violating_anchors_by_capture_phase": {
+            "pre_tail": 63
+          },
+          "minimum": {
+            "sample_id": "raw-frame:3221",
+            "point_index": 1,
+            "target_timestamp_ns": 78437009144,
+            "value": 6.721110093056517e-11
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2777",
+            "point_index": 1,
+            "target_timestamp_ns": 56237008814,
+            "value": 0.22988931336413704
+          }
+        },
+        "xy_lateral_acceleration": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:3221",
+            "point_index": 1,
+            "target_timestamp_ns": 78437009144,
+            "value": 4.0856048716736946e-10
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2777",
+            "point_index": 1,
+            "target_timestamp_ns": 56237008814,
+            "value": 1.2348477796120658
+          }
+        },
+        "yaw_label_heading_envelope": {
+          "assessed_step_count": 23040,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "raw-frame:3037",
+            "point_index": 60,
+            "target_timestamp_ns": 75137009007,
+            "value": 1.0658032616184254e-14
+          },
+          "maximum": {
+            "sample_id": "raw-frame:2777",
+            "point_index": 0,
+            "target_timestamp_ns": 56137008814,
+            "value": 0.0438342994933576
+          }
+        }
+      },
+      "speed_xy_consistency_max_absolute_error_mps": 0.050161354676554915,
+      "maximum_absolute_vehicle_yaw_rate_radps": 0.438342994933576
+    }
+  },
+  "transport": {
+    "status": "PASS",
+    "flags": {
+      "nonempty_observation": true,
+      "all_commands_acknowledged": true,
+      "command_frame_consistency": true,
+      "all_snapshot_conversions_match": true,
+      "control_frame_binding": true,
+      "observed_controls_match_prior_ack": true,
+      "worker_alignment_claims_match": true,
+      "next_command_links": true,
+      "phase_command_ledger": true,
+      "twenty_hz_frame_chain": true
+    },
+    "failed_flags": [],
+    "failures": [],
+    "receipt_count": 2617,
+    "acknowledged_count": 2617,
+    "failed_receipt_count": 0,
+    "command_reason_counts": {
+      "pre_capture_bootstrap": 1,
+      "stationary_warmup_start": 1,
+      "next_stationary_warmup_control": 70,
+      "initial_drive_control": 1,
+      "next_driving_control": 2413,
+      "driving_end_brake": 1,
+      "next_stationary_tail_control": 130
+    },
+    "recorded_state_count": 2613,
+    "bootstrap_observation_count": 1,
+    "alignment_failure_count": 0,
+    "control_mismatch_count": 0,
+    "control_mismatches": [],
+    "maximum_legacy_state_reconstruction_absolute_error": 0.0,
+    "server_binary_identity_proven": false,
+    "physical_actuation_proven": false,
+    "notice": "PASS means coherent recorded command acceptance and frame/state evidence only; it does not prove physical actuator timing, driving quality, visual quality or dataset admission."
+  },
+  "camera_ack": {
+    "status": "PASS",
+    "state_count": 2613,
+    "camera_anchor_count": 1307,
+    "expected_anchor_count": 1307,
+    "failures": [],
+    "source_timestamp_tolerance_seconds": 1e-06,
+    "camera_pixels_examined": false
+  },
+  "pixels": {
+    "image_count": 7842,
+    "referenced_image_count": 7842,
+    "unreferenced_jpeg_count": 0,
+    "decoded_count": 7842,
+    "decode_failure_count": 0,
+    "camera_anchor_count": 1307,
+    "camera_frames_cover_entire_native_recording": true,
+    "timestamp_or_phase_mismatch_count": 0,
+    "rig": {
+      "schema_id": "autoware-e2e.common10.rig.v1",
+      "rig_id": "carla_rig_dbfac2214e0df73d",
+      "domain": "carla",
+      "base_frame": "base_link",
+      "rectified": true,
+      "camera_order": [
+        "CAM_FRONT",
+        "CAM_BACK",
+        "CAM_FRONT_LEFT",
+        "CAM_BACK_LEFT",
+        "CAM_FRONT_RIGHT",
+        "CAM_BACK_RIGHT"
+      ],
+      "cameras": [
+        {
+          "name": "CAM_FRONT",
+          "model_index": 0,
+          "physical_id": "virtual:carla:CAM_FRONT",
+          "optical_frame": "CAM_FRONT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.0,
+            0.0,
+            1.0,
+            2.225,
+            -1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK",
+          "model_index": 1,
+          "physical_id": "virtual:carla:CAM_BACK",
+          "optical_frame": "CAM_BACK/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            224.06641222710715,
+            0.0,
+            320.0,
+            0.0,
+            224.06641222710715,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.9198621771937625,
+          "T_base_from_camera": [
+            -3.464102066193935e-07,
+            0.0,
+            -0.99999999999994,
+            -0.575,
+            0.99999999999994,
+            0.0,
+            -3.464102066193935e-07,
+            0.0,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_FRONT_LEFT",
+          "model_index": 2,
+          "physical_id": "virtual:carla:CAM_FRONT_LEFT",
+          "optical_frame": "CAM_FRONT_LEFT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.8191519934719051,
+            0.0,
+            0.5735765089253603,
+            1.695,
+            -0.5735765089253603,
+            0.0,
+            0.8191519934719051,
+            0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK_LEFT",
+          "model_index": 3,
+          "physical_id": "virtual:carla:CAM_BACK_LEFT",
+          "optical_frame": "CAM_BACK_LEFT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.9396926813897297,
+            0.0,
+            -0.34201997681799223,
+            1.105,
+            0.34201997681799223,
+            0.0,
+            0.9396926813897297,
+            0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_FRONT_RIGHT",
+          "model_index": 4,
+          "physical_id": "virtual:carla:CAM_FRONT_RIGHT",
+          "optical_frame": "CAM_FRONT_RIGHT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            -0.8191519934719051,
+            0.0,
+            0.5735765089253603,
+            1.695,
+            -0.5735765089253603,
+            0.0,
+            -0.8191519934719051,
+            -0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK_RIGHT",
+          "model_index": 5,
+          "physical_id": "virtual:carla:CAM_BACK_RIGHT",
+          "optical_frame": "CAM_BACK_RIGHT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            -0.9396926813897297,
+            0.0,
+            -0.34201997681799223,
+            1.105,
+            0.34201997681799223,
+            0.0,
+            -0.9396926813897297,
+            -0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        }
+      ]
+    },
+    "by_phase": {
+      "stationary_warmup": 210,
+      "driving": 7242,
+      "stationary_tail": 390
+    },
+    "all_pixel_and_metadata_checks_clear": true
+  },
+  "events": {
+    "collision": 0,
+    "lane_invasion": 0
+  },
+  "selected_event_frames": {
+    "collision": [],
+    "lane_invasion": []
+  },
+  "native_result": {
+    "goal_reached": true,
+    "termination_reason": "catalog_goal_tolerance",
+    "capture_status": "complete",
+    "owner_exit_code": 0
+  },
+  "sources": {
+    "preregistered": {
+      "preregistered_plan": {
+        "path": "docs/assets/validation/2026-09-27/drive_long_route_p06_capture/PLAN.md",
+        "expected_capture_sha256": "03482e12a8fea09c416b086ac3efbb18f353a187d1c391096a247d1c1166547a",
+        "current_checkout_sha256": "03482e12a8fea09c416b086ac3efbb18f353a187d1c391096a247d1c1166547a",
+        "current_checkout_matches_capture": true
+      },
+      "route": {
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_train_catalog_v4/routes/town01/right/town01_right_s0002_p06.json",
+        "expected_capture_sha256": "49d0c147e83ced265b9e954aacb7bad340970b87a42a060cbfcf1f7625387142",
+        "current_checkout_sha256": "49d0c147e83ced265b9e954aacb7bad340970b87a42a060cbfcf1f7625387142",
+        "current_checkout_matches_capture": true
+      },
+      "owner_wrapper": {
+        "path": "tools/e2e/run_owned_carla_expert_trial.sh",
+        "expected_capture_sha256": "0723336ac4b7649004e5cc2f4bfce95e7c0f12caf941a03839096d04cd9f507b",
+        "current_checkout_sha256": "0723336ac4b7649004e5cc2f4bfce95e7c0f12caf941a03839096d04cd9f507b",
+        "current_checkout_matches_capture": true
+      },
+      "collector": {
+        "path": "tools/e2e/collect_carla_vad_expert.py",
+        "expected_capture_sha256": "d22af16f051ee7835f41363d85934a3060ed9bd6dab61b727a8458ed7c30a08a",
+        "current_checkout_sha256": "638a03a500ed6be953e31110efda0fec5903f035b588566f16dc222baa0f72a6",
+        "current_checkout_matches_capture": false
+      },
+      "mapping": {
+        "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml",
+        "expected_capture_sha256": "9aaff2befed7ad12376b2e04bbdd51bd1808a3bafe39d87a6f6b241dbcca3136",
+        "current_checkout_sha256": "9aaff2befed7ad12376b2e04bbdd51bd1808a3bafe39d87a6f6b241dbcca3136",
+        "current_checkout_matches_capture": true
+      },
+      "calibration": {
+        "path": "autonomy/src/launcher/autoware_launch/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml",
+        "expected_capture_sha256": "5022cd1de5b48e9c824b6f2f8c59991fa665eeaf7a7bafd084c88acdb65e4bea",
+        "current_checkout_sha256": "5022cd1de5b48e9c824b6f2f8c59991fa665eeaf7a7bafd084c88acdb65e4bea",
+        "current_checkout_matches_capture": true
+      },
+      "common10_contract": {
+        "path": "learning/portable_e2e/config/common_10hz_v1.contract.json",
+        "expected_capture_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+        "current_checkout_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+        "current_checkout_matches_capture": true
+      }
+    },
+    "owner_source_archive_sha256": {
+      "scripts/e2e/run_owned_carla_expert_trial.sh": "0723336ac4b7649004e5cc2f4bfce95e7c0f12caf941a03839096d04cd9f507b",
+      "scripts/e2e/run_carla_map.sh": "a01c032fc18e0fc8ed9cb00ce7d933adc89495251f25eaa4078438be5d57432e",
+      "scripts/e2e/process_group_cleanup.sh": "319752496808bf3013db68e4af39efeaf04d00027ecd6ec635ac7d5baa000c56",
+      "scripts/e2e/workspace_runtime_lock.sh": "d27ac6c8e7dd4b16011f9b618d981dcc975520a372b9fa32345313a69954ec76",
+      "scripts/e2e/probe_carla_server.py": "df28db8dadf36632066e74e690ef2cf1a7d2fbe34583179aba3a7166da4ca01c",
+      "scripts/e2e/env.sh": "9caa807b7f3e72c7f5fd9f9a38a441eccb059ccb5f58918cea5ce4ab7523c3d5",
+      "scripts/e2e/collect_carla_vad_expert.py": "d22af16f051ee7835f41363d85934a3060ed9bd6dab61b727a8458ed7c30a08a",
+      "scripts/e2e/carla_goal_stop_profile.py": "87c1bbe629fdada6527655329bf03674a101a2156a3befa110e8d251d9357734",
+      "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+    },
+    "raw_metadata": {
+      "owner_plan.json": {
+        "sha256": "8af03b40a499c13aada5960411739cf4038c68d069080742e646ec2526218d5b",
+        "size_bytes": 393293
+      },
+      "owner_result.json": {
+        "sha256": "6f866e830842b8bd2b0185a3979360d277019dd919dfdb1f83443f82dd6f0b3a",
+        "size_bytes": 746
+      },
+      "provenance/scripts/e2e/run_owned_carla_expert_trial.sh": {
+        "sha256": "0723336ac4b7649004e5cc2f4bfce95e7c0f12caf941a03839096d04cd9f507b",
+        "size_bytes": 30981
+      },
+      "provenance/scripts/e2e/run_carla_map.sh": {
+        "sha256": "a01c032fc18e0fc8ed9cb00ce7d933adc89495251f25eaa4078438be5d57432e",
+        "size_bytes": 5603
+      },
+      "provenance/scripts/e2e/process_group_cleanup.sh": {
+        "sha256": "319752496808bf3013db68e4af39efeaf04d00027ecd6ec635ac7d5baa000c56",
+        "size_bytes": 2148
+      },
+      "provenance/scripts/e2e/workspace_runtime_lock.sh": {
+        "sha256": "d27ac6c8e7dd4b16011f9b618d981dcc975520a372b9fa32345313a69954ec76",
+        "size_bytes": 1440
+      },
+      "provenance/scripts/e2e/probe_carla_server.py": {
+        "sha256": "df28db8dadf36632066e74e690ef2cf1a7d2fbe34583179aba3a7166da4ca01c",
+        "size_bytes": 9420
+      },
+      "provenance/scripts/e2e/env.sh": {
+        "sha256": "9caa807b7f3e72c7f5fd9f9a38a441eccb059ccb5f58918cea5ce4ab7523c3d5",
+        "size_bytes": 10852
+      },
+      "provenance/scripts/e2e/collect_carla_vad_expert.py": {
+        "sha256": "d22af16f051ee7835f41363d85934a3060ed9bd6dab61b727a8458ed7c30a08a",
+        "size_bytes": 134485
+      },
+      "provenance/scripts/e2e/carla_goal_stop_profile.py": {
+        "sha256": "87c1bbe629fdada6527655329bf03674a101a2156a3befa110e8d251d9357734",
+        "size_bytes": 73341
+      },
+      "provenance/portable_e2e/model.py": {
+        "sha256": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+        "size_bytes": 28905
+      },
+      "provenance/portable_e2e/runtime_contract.py": {
+        "sha256": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+        "size_bytes": 34947
+      },
+      "lifecycle/ready.json": {
+        "sha256": "bc945e3c09e014ae78c9f396d275a49cd5c71c9f85fa76946abaf4219ecb1005",
+        "size_bytes": 939
+      },
+      "lifecycle/after_capture.json": {
+        "sha256": "b7addeaa19c4fa57ed4e293428c9c937f0185920ea8f025a82d92e8a9076aeef",
+        "size_bytes": 946
+      },
+      "lifecycle/stopped.json": {
+        "sha256": "21ad44f19b8bea9d09c697fb150dc2d89c47bac578b62bc45a787f8d6ca83d0f",
+        "size_bytes": 751
+      },
+      "episode/manifest.json": {
+        "sha256": "7693b6eee072e6d03966868dfb6b4f00b568b30eac55ec64b6c7a61079e6f706",
+        "size_bytes": 25019
+      },
+      "episode/route.json": {
+        "sha256": "49d0c147e83ced265b9e954aacb7bad340970b87a42a060cbfcf1f7625387142",
+        "size_bytes": 101977
+      },
+      "episode/states.jsonl": {
+        "sha256": "a4fbb0d896300dbbb0aed89ccd624ebe2cbe928ca64fcc15aa40112d54e02e7e",
+        "size_bytes": 5239968
+      },
+      "episode/camera_frames.jsonl": {
+        "sha256": "bd089d977d9939949936c840d5bd71d8c4e78f698eb4949be9ce8309c8390143",
+        "size_bytes": 992056
+      },
+      "episode/control_receipts.jsonl": {
+        "sha256": "c14c592caa833e01b22cd236c2860499640f1130452dcb48f1b72da929c0020b",
+        "size_bytes": 1252446
+      }
+    },
+    "qa_implementation_sha256": {
+      "tools/e2e/audit_long_turn_9kph_raw.py": "66c568dad5e1c1c409d1dd90a70f82ac244127b7280c0ec7b1e9007af7f8a84a",
+      "tools/e2e/audit_carla_raw_pre_admission.py": "0a7983857aea0e2b6588bb27712865ce1f70c27aa06a187fca4d0fc1a72dbc00",
+      "tools/e2e/audit_carla_acknowledged_control.py": "9d6fccb6874a5cdfc85e8bf5d9229435e4ba6fe6850eb63a9e83488f39bcc5bd",
+      "tools/e2e/audit_portable_target_feasibility.py": "8b56a4990f51639ec5ff9bca12f7453051772d1984e4db768613384b25f00894"
+    }
+  },
+  "limits": [
+    "One BasicAgent expert capture, not learned driving or an Autoware GUI trial.",
+    "ACK proves recorded command acceptance/readback alignment, not physical actuation timing.",
+    "Nine original bounds are necessary discrete label screens, not sufficient route safety proof."
+  ],
+  "visual_sample": {
+    "status": "PASS",
+    "selection_indices": [
+      0,
+      179,
+      359
+    ],
+    "frames": [
+      2637,
+      2995,
+      3355
+    ],
+    "layout": "three columns \u00d7 two rows per anchor; full native pixel frames without crop or resize",
+    "path": "raw_six_camera_first_middle_last.png",
+    "sha256": "436ea0ca563447987804f7e8f0400b15d6ff48215bbb0e37ea633a543126673f",
+    "source_images": [
+      {
+        "frame": 2637,
+        "camera": "CAM_FRONT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT/00002637.jpg",
+        "sha256": "ba314a42a49c9c79b086ff5b4604ab94c797ff86c87fc68dd5b8ed8b52f2253d"
+      },
+      {
+        "frame": 2637,
+        "camera": "CAM_BACK",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK/00002637.jpg",
+        "sha256": "5c8754100f13fe6e0749db267090753a0146fc51c0f8264c335e7a51f6655a0d"
+      },
+      {
+        "frame": 2637,
+        "camera": "CAM_FRONT_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_LEFT/00002637.jpg",
+        "sha256": "201e95017f5687a6c6e5edf2c44cff0fb31dc58f34eecdae65000d3cbdabad1e"
+      },
+      {
+        "frame": 2637,
+        "camera": "CAM_BACK_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_LEFT/00002637.jpg",
+        "sha256": "7b9f66eb777b86e050ecc9e3769a2cc0335b2d7b2131f1836db2b00f1e4cd4b8"
+      },
+      {
+        "frame": 2637,
+        "camera": "CAM_FRONT_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_RIGHT/00002637.jpg",
+        "sha256": "ee20bf5a56a9141b3ac10c5b3b03cb77873d90c24da6d8ae4f22f3dc1a2602c6"
+      },
+      {
+        "frame": 2637,
+        "camera": "CAM_BACK_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_RIGHT/00002637.jpg",
+        "sha256": "468625ced4d5e43cf3719b954e07068056dcb686fc04ee06048d81c4379122a8"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_FRONT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT/00002995.jpg",
+        "sha256": "5d89d88d9d98b3434af8b28da713001a9eb63e624f7df8643991f0fe5350690d"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_BACK",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK/00002995.jpg",
+        "sha256": "f9c2f9255fd1d595af97155e3d08e5fe431fcd202a74802c6904a77cd7c9c743"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_FRONT_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_LEFT/00002995.jpg",
+        "sha256": "a9bf8b233d69865fbcaa5d22046e8fbc87217c3e43048ee754b088a2ebf8446e"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_BACK_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_LEFT/00002995.jpg",
+        "sha256": "e7066f24421b6c9a00f645cf0a2258008303320b93d0d33a0b533312bff0379d"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_FRONT_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_RIGHT/00002995.jpg",
+        "sha256": "9cbef7f48b4b98b3c8c91a81571defbbb7033e79a3e014452fece621f6eac212"
+      },
+      {
+        "frame": 2995,
+        "camera": "CAM_BACK_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_RIGHT/00002995.jpg",
+        "sha256": "10f4051de445924e46316afaa6e0e8c473e92cbabeb85da29b895c4ba3e93efe"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_FRONT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT/00003355.jpg",
+        "sha256": "eb23e53b30459b1b23df4d955cc32542ecd875742df348a124790b5c849a9931"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_BACK",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK/00003355.jpg",
+        "sha256": "c57d34f80d743402bc1dde503f01daabf4436d452cc92b1f84c1475fe0051fd7"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_FRONT_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_LEFT/00003355.jpg",
+        "sha256": "4301483b62d40826c9f160bf9b2b8edae135caea40fc07a2d4c80d51f4d9e4e8"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_BACK_LEFT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_LEFT/00003355.jpg",
+        "sha256": "fc76c3f54aabd4092897f9a8363baea0ec60da3441d1a59a501fb1722741d2af"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_FRONT_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_FRONT_RIGHT/00003355.jpg",
+        "sha256": "4776fed255d9455d1f32f6007b54690161a1663501a2e8b45931fefd2f630549"
+      },
+      {
+        "frame": 3355,
+        "camera": "CAM_BACK_RIGHT",
+        "path": "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_trial_v1/episode/images/CAM_BACK_RIGHT/00003355.jpg",
+        "sha256": "668afe9ff401f1a965a4778362fbb1e94535e5466433dbf022c68bd0289a9639"
+      }
+    ]
+  }
+}

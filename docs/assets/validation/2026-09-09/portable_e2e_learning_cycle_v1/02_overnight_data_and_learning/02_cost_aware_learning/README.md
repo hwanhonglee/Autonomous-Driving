@@ -2,7 +2,7 @@
 
 <!-- HH_260906 - Predeclare an optional cost-aware training objective without replacing the physical decoder or accepting denied data. -->
 
-실행 전 고정한 [계획](../../../../../../../config/portable_e2e_candidate_regret_20260909.json)입니다.
+실행 전 고정한 [계획](../../../../../../../learning/config/portable_e2e_candidate_regret_20260909.json)입니다.
 학습 소스는 `05c5847`로 고정합니다. 이 선언 시점에는 아직 새 모델을 학습하지 않았습니다.
 
 앞선 모델은 여섯 경로 후보 중 고른 경로와 정답으로 사후 고른 최선 후보 사이에 오차가 남았습니다.

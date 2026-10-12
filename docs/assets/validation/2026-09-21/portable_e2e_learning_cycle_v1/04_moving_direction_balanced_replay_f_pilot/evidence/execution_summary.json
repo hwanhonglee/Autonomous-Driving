@@ -1,0 +1,309 @@
+{
+  "all_map_claim": false,
+  "arm": "COMPLETE",
+  "automatic_promotion": false,
+  "automatic_retry": false,
+  "closed_loop_claim": false,
+  "deployment_approved": false,
+  "diagnostic_gate": {
+    "adoption_allowed": false,
+    "automatic_promotion": false,
+    "combined_metric_checks": {
+      "ade_6p4s_m": {
+        "maximum_F": 3.5632455477589056,
+        "observed_F": 5.009189386116831,
+        "pass": false,
+        "reference": 3.5632455477589056,
+        "reference_arm": "D"
+      },
+      "fde_6p4s_m": {
+        "maximum_F": 10.353536791729749,
+        "observed_F": 12.260639390058087,
+        "pass": false,
+        "reference": 10.353536791729749,
+        "reference_arm": "D"
+      },
+      "speed_mae_6p4s_mps": {
+        "maximum_F": 1.6350220532345592,
+        "observed_F": 1.832156188774826,
+        "pass": false,
+        "reference": 1.6350220532345592,
+        "reference_arm": "D"
+      }
+    },
+    "episode_metric_checks": {
+      "town03_right_turn_dev": {
+        "ade_6p4s_m": {
+          "maximum_F": 2.9353143748791353,
+          "observed_F": 2.8673983424990395,
+          "pass": true,
+          "reference": 2.9353143748791353,
+          "reference_arm": "C"
+        },
+        "fde_6p4s_m": {
+          "maximum_F": 7.793866114022117,
+          "observed_F": 7.176532076887278,
+          "pass": true,
+          "reference": 7.793866114022117,
+          "reference_arm": "C"
+        },
+        "speed_mae_6p4s_mps": {
+          "maximum_F": 1.1076154233086357,
+          "observed_F": 0.9173796663298451,
+          "pass": true,
+          "reference": 1.1076154233086357,
+          "reference_arm": "C"
+        }
+      },
+      "town03_straight_dev": {
+        "ade_6p4s_m": {
+          "maximum_F": 3.764740187947343,
+          "observed_F": 7.209748518903081,
+          "pass": false,
+          "reference": 3.764740187947343,
+          "reference_arm": "D"
+        },
+        "fde_6p4s_m": {
+          "maximum_F": 11.027441243572932,
+          "observed_F": 17.4842483066931,
+          "pass": false,
+          "reference": 11.027441243572932,
+          "reference_arm": "D"
+        },
+        "speed_mae_6p4s_mps": {
+          "maximum_F": 1.7877504960065935,
+          "observed_F": 2.7720330608327215,
+          "pass": false,
+          "reference": 1.7877504960065935,
+          "reference_arm": "D"
+        }
+      }
+    },
+    "geometry": {
+      "checks": {
+        "all_candidates": {
+          "minimum": 664,
+          "observed_F": 664,
+          "pass": true
+        },
+        "any_candidate": {
+          "minimum": 664,
+          "observed_F": 664,
+          "pass": true
+        },
+        "selected": {
+          "minimum": 664,
+          "observed_F": 664,
+          "pass": true
+        }
+      },
+      "pass": true,
+      "sample_count": 665
+    },
+    "next_action": "do_not_confirm_or_promote_revise_training_data_or_sampling",
+    "pass": false,
+    "status": "FAIL_SINGLE_SEED_DIAGNOSTIC"
+  },
+  "ended_at_utc": "2026-09-21T09:48:45.666771+00:00",
+  "final_gpu": {
+    "physical_index": 0,
+    "pre_cuda_compute_processes": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "model_export": false,
+  "plan_sha256": "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+  "pre_cuda_gpu": {
+    "physical_index": 0,
+    "pre_cuda_compute_processes": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "resume": false,
+  "sampling_execution_schedule": {
+    "row_count": 33120,
+    "sha256": "d340a10c42f2a733988b69ae6571ec3c37b7e8fa1601c43e6111192cd35c55b0"
+  },
+  "schema": "portable_e2e.moving_direction_balanced_replay_seed_pilot_summary.v1",
+  "source_dataset_reference_postcheck_pass": true,
+  "stages": [
+    {
+      "arm": "F_direction_balanced_replay_train",
+      "checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--run-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/training",
+        "--model-config",
+        "/home/pro6000/personal/hwanhong/portable_e2e/source_worktrees/moving_direction_balanced_f_seed20260906_20260921_v1/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260906",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1",
+        "--max-steps",
+        "8280",
+        "--checkpoint-interval",
+        "414",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "direction_balanced_cohort_replay"
+      ],
+      "ended_at_utc": "2026-09-21T09:46:52.611111+00:00",
+      "history_sha256": "a451577823d8bde44193bd44dc850811d04b2242887a1f68c87a0788aa071ce9",
+      "input_checkpoint_sha256": null,
+      "owner_pid": 917552,
+      "path": "F_direction_balanced_replay_train/training/run.json",
+      "plan_sha256": "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sampling_execution_schedule_row_count": 33120,
+      "sampling_execution_schedule_sha256": "d340a10c42f2a733988b69ae6571ec3c37b7e8fa1601c43e6111192cd35c55b0",
+      "sha256": "65cb92bf2782475ef66c7e689ed14784e8bc6c939c6425b20e4bcc7bc1ef034e",
+      "stage": "train",
+      "started_at_utc": "2026-09-21T09:30:25.231447+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 7200
+    },
+    {
+      "arm": "F_direction_balanced_replay_train",
+      "checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/training/checkpoints/latest.pt",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "ended_at_utc": "2026-09-21T09:47:26.716985+00:00",
+      "input_checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "owner_pid": 917552,
+      "path": "F_direction_balanced_replay_train/evaluation/metrics.json",
+      "plan_sha256": "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "1aea34c394f220b36f9f47b6342f221a8e439d7f9a9db987aeab5b39be93b237",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-21T09:47:07.199406+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 900
+    },
+    {
+      "arm": "F_direction_balanced_replay_train",
+      "checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+        "--output-json",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4"
+      ],
+      "ended_at_utc": "2026-09-21T09:48:10.859159+00:00",
+      "input_checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "owner_pid": 917552,
+      "path": "F_direction_balanced_replay_train/gate_v8.json",
+      "plan_sha256": "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "3c75b78ec72f9e9f7d3851f62f6415feb514391fcb9b3a6d33859ebc8c7baa41",
+      "stage": "audit",
+      "started_at_utc": "2026-09-21T09:47:41.343871+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 900
+    },
+    {
+      "arm": "F_direction_balanced_replay_train",
+      "checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "/home/pro6000/personal/hwanhong/portable_e2e/benchmarks/moving_direction_balanced_f_20260921_v1/evaluate_portable_moving_direction_balanced_replay_subgroups.py",
+        "--repo-root",
+        "/home/pro6000/personal/hwanhong/portable_e2e/source_worktrees/moving_direction_balanced_f_seed20260906_20260921_v1",
+        "--workspace",
+        "/home/pro6000/personal/hwanhong/portable_e2e",
+        "--runner",
+        "/home/pro6000/personal/hwanhong/portable_e2e/benchmarks/moving_direction_balanced_f_20260921_v1/run_moving_direction_balanced_replay_seed_pilot.py",
+        "--runner-sha256",
+        "0be4703dd817d903f074b1a9b7bec059b5f86fe9a1fb1145089e64921e94089f",
+        "--plan",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/plan.json",
+        "--plan-sha256",
+        "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_direction_balanced_replay_seed20260906_20260921_v1/F_direction_balanced_replay_train/subgroup"
+      ],
+      "ended_at_utc": "2026-09-21T09:48:45.665152+00:00",
+      "input_checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+      "owner_pid": 917552,
+      "path": "F_direction_balanced_replay_train/subgroup/summary.json",
+      "plan_sha256": "a2fdf6dcf66234c252d4289f2f979313902b8bbeb92f9796d07675e1b1eedc8d",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "76d60018630aee5c0093d4623696d63772b5900cef3f99265f8824e8949bc8e4",
+      "stage": "subgroup",
+      "started_at_utc": "2026-09-21T09:48:25.506849+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 1200
+    }
+  ],
+  "started_at_utc": "2026-09-21T09:30:10.593309+00:00",
+  "status": "COMPLETE_NOT_PROMOTED",
+  "test_read_or_use": false,
+  "training_data_approved": false,
+  "vehicle_control_approved": false
+}

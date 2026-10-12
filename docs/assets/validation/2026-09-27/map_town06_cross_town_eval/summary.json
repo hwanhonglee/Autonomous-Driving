@@ -1,0 +1,564 @@
+{
+  "schema": "portable_e2e.town06_cross_town_map_eval.v1",
+  "status": "EXPLORATORY_EVALUATION_ONLY",
+  "town": "Town06",
+  "route_sha256": "e27e95cb60d40657638183f7f78ce2e1f4f070067707ac4dd3f2f89dd1c52283",
+  "labels": [
+    "other",
+    "road",
+    "sidewalk",
+    "lane_marking",
+    "traffic_light_fixture",
+    "traffic_sign",
+    "pole"
+  ],
+  "input": "original 640x360 RGB; CARLA oracle semantic labels only for evaluation",
+  "raw_frames": 240,
+  "retained_frames": 232,
+  "retention_rule": "first frame, then >=0.25m from last retained ego XY",
+  "models": {
+    "ai_v2": {
+      "raw_240": {
+        "classes": {
+          "other": {
+            "target_pixels": 24144265,
+            "predicted_pixels": 23407662,
+            "true_positive_pixels": 21692733,
+            "precision": 0.9267364250218583,
+            "recall": 0.8984631754166051,
+            "iou": 0.8388789302559082
+          },
+          "road": {
+            "target_pixels": 28069550,
+            "predicted_pixels": 20330618,
+            "true_positive_pixels": 17589804,
+            "precision": 0.8651878659074702,
+            "recall": 0.6266507300615792,
+            "iou": 0.5709054264986938
+          },
+          "sidewalk": {
+            "target_pixels": 2044725,
+            "predicted_pixels": 9264795,
+            "true_positive_pixels": 7492,
+            "precision": 0.0008086525389930376,
+            "recall": 0.00366406240447982,
+            "iou": 0.0006628898813558062
+          },
+          "lane_marking": {
+            "target_pixels": 746876,
+            "predicted_pixels": 7799,
+            "true_positive_pixels": 5566,
+            "precision": 0.7136812411847673,
+            "recall": 0.007452374959163234,
+            "iou": 0.007430160363845582
+          },
+          "traffic_light_fixture": {
+            "target_pixels": 1125,
+            "predicted_pixels": 206609,
+            "true_positive_pixels": 1,
+            "precision": 4.8400602103490164e-06,
+            "recall": 0.0008888888888888889,
+            "iou": 4.813871652553999e-06
+          },
+          "traffic_sign": {
+            "target_pixels": 13320,
+            "predicted_pixels": 108246,
+            "true_positive_pixels": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "iou": 0.0
+          },
+          "pole": {
+            "target_pixels": 276139,
+            "predicted_pixels": 1970271,
+            "true_positive_pixels": 60556,
+            "precision": 0.03073485830121846,
+            "recall": 0.21929535487562424,
+            "iou": 0.027703588620282965
+          }
+        },
+        "confusion": [
+          [
+            21692733,
+            1274253,
+            712921,
+            1964,
+            169214,
+            7557,
+            285623
+          ],
+          [
+            524154,
+            17589804,
+            8498393,
+            129,
+            2201,
+            6725,
+            1448144
+          ],
+          [
+            719311,
+            1283073,
+            7492,
+            86,
+            2167,
+            1043,
+            31553
+          ],
+          [
+            249991,
+            182384,
+            44310,
+            5566,
+            27676,
+            92729,
+            144220
+          ],
+          [
+            1068,
+            0,
+            0,
+            0,
+            1,
+            0,
+            56
+          ],
+          [
+            13184,
+            7,
+            4,
+            0,
+            6,
+            0,
+            119
+          ],
+          [
+            207221,
+            1097,
+            1675,
+            54,
+            5344,
+            192,
+            60556
+          ]
+        ],
+        "mean_iou_present": 0.20651225849881988,
+        "pixel_accuracy": 0.7117359664351852
+      },
+      "retained_232": {
+        "classes": {
+          "other": {
+            "target_pixels": 23246289,
+            "predicted_pixels": 22583303,
+            "true_positive_pixels": 20909730,
+            "precision": 0.9258933469563775,
+            "recall": 0.8994867955052955,
+            "iou": 0.8390788841447036
+          },
+          "road": {
+            "target_pixels": 27258633,
+            "predicted_pixels": 19723037,
+            "true_positive_pixels": 17102263,
+            "precision": 0.8671211740869319,
+            "recall": 0.6274072144410177,
+            "iou": 0.5723762523131735
+          },
+          "sidewalk": {
+            "target_pixels": 1940675,
+            "predicted_pixels": 8920117,
+            "true_positive_pixels": 7282,
+            "precision": 0.0008163570051827795,
+            "recall": 0.0037523026781918663,
+            "iou": 0.0006709350247062932
+          },
+          "lane_marking": {
+            "target_pixels": 722807,
+            "predicted_pixels": 7620,
+            "true_positive_pixels": 5415,
+            "precision": 0.7106299212598425,
+            "recall": 0.007491626395427825,
+            "iou": 0.007468841895030703
+          },
+          "traffic_light_fixture": {
+            "target_pixels": 1111,
+            "predicted_pixels": 202872,
+            "true_positive_pixels": 1,
+            "precision": 4.929216451752829e-06,
+            "recall": 0.0009000900090009,
+            "iou": 4.902393348432705e-06
+          },
+          "traffic_sign": {
+            "target_pixels": 11630,
+            "predicted_pixels": 105686,
+            "true_positive_pixels": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "iou": 0.0
+          },
+          "pole": {
+            "target_pixels": 271655,
+            "predicted_pixels": 1910165,
+            "true_positive_pixels": 59374,
+            "precision": 0.03108317867828172,
+            "recall": 0.2185639874105023,
+            "iou": 0.027974327733190855
+          }
+        },
+        "confusion": [
+          [
+            20909730,
+            1239518,
+            643790,
+            1936,
+            166353,
+            7554,
+            277408
+          ],
+          [
+            516812,
+            17102263,
+            8225345,
+            129,
+            2049,
+            6648,
+            1405387
+          ],
+          [
+            695960,
+            1204671,
+            7282,
+            86,
+            1942,
+            1000,
+            29734
+          ],
+          [
+            243871,
+            175487,
+            42435,
+            5415,
+            27183,
+            90294,
+            138122
+          ],
+          [
+            1055,
+            0,
+            0,
+            0,
+            1,
+            0,
+            55
+          ],
+          [
+            11530,
+            7,
+            2,
+            0,
+            6,
+            0,
+            85
+          ],
+          [
+            204345,
+            1091,
+            1263,
+            54,
+            5338,
+            190,
+            59374
+          ]
+        ],
+        "mean_iou_present": 0.20679630621487902,
+        "pixel_accuracy": 0.7124802629609674
+      }
+    },
+    "sign_scale_ab_rejected": {
+      "raw_240": {
+        "classes": {
+          "other": {
+            "target_pixels": 24144265,
+            "predicted_pixels": 22385988,
+            "true_positive_pixels": 20694551,
+            "precision": 0.9244421555126359,
+            "recall": 0.8571207696734607,
+            "iou": 0.8010059490545293
+          },
+          "road": {
+            "target_pixels": 28069550,
+            "predicted_pixels": 15269683,
+            "true_positive_pixels": 12360228,
+            "precision": 0.8094619907957487,
+            "recall": 0.44034293389099577,
+            "iou": 0.39898724959048876
+          },
+          "sidewalk": {
+            "target_pixels": 2044725,
+            "predicted_pixels": 16287136,
+            "true_positive_pixels": 6125,
+            "precision": 0.0003760636615301794,
+            "recall": 0.0029955128440254802,
+            "iou": 0.00033422941375997123
+          },
+          "lane_marking": {
+            "target_pixels": 746876,
+            "predicted_pixels": 1653,
+            "true_positive_pixels": 906,
+            "precision": 0.5480943738656987,
+            "recall": 0.0012130527691343678,
+            "iou": 0.0012118407272114422
+          },
+          "traffic_light_fixture": {
+            "target_pixels": 1125,
+            "predicted_pixels": 569667,
+            "true_positive_pixels": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "iou": 0.0
+          },
+          "traffic_sign": {
+            "target_pixels": 13320,
+            "predicted_pixels": 25849,
+            "true_positive_pixels": 3,
+            "precision": 0.00011605864830360942,
+            "recall": 0.00022522522522522523,
+            "iou": 7.659704846039932e-05
+          },
+          "pole": {
+            "target_pixels": 276139,
+            "predicted_pixels": 756024,
+            "true_positive_pixels": 50804,
+            "precision": 0.06719892490185497,
+            "recall": 0.18397980727097585,
+            "iou": 0.051769026421523624
+          }
+        },
+        "confusion": [
+          [
+            20694551,
+            1604503,
+            1088090,
+            535,
+            548151,
+            614,
+            207821
+          ],
+          [
+            293738,
+            12360228,
+            15055135,
+            1,
+            133,
+            907,
+            359408
+          ],
+          [
+            921891,
+            1115126,
+            6125,
+            0,
+            50,
+            25,
+            1508
+          ],
+          [
+            272024,
+            176246,
+            134900,
+            906,
+            2738,
+            23862,
+            136200
+          ],
+          [
+            1081,
+            0,
+            0,
+            0,
+            0,
+            0,
+            44
+          ],
+          [
+            12994,
+            5,
+            78,
+            0,
+            1,
+            3,
+            239
+          ],
+          [
+            189709,
+            13575,
+            2808,
+            211,
+            18594,
+            438,
+            50804
+          ]
+        ],
+        "mean_iou_present": 0.17905498460799624,
+        "pixel_accuracy": 0.5988248155381944
+      },
+      "retained_232": {
+        "classes": {
+          "other": {
+            "target_pixels": 23246289,
+            "predicted_pixels": 21583910,
+            "true_positive_pixels": 19944557,
+            "precision": 0.924047450160791,
+            "recall": 0.8579673512619584,
+            "iou": 0.8014483612679151
+          },
+          "road": {
+            "target_pixels": 27258633,
+            "predicted_pixels": 14779198,
+            "true_positive_pixels": 11980867,
+            "precision": 0.8106574524544566,
+            "recall": 0.43952559910102607,
+            "iou": 0.39860536147296843
+          },
+          "sidewalk": {
+            "target_pixels": 1940675,
+            "predicted_pixels": 15778221,
+            "true_positive_pixels": 6004,
+            "precision": 0.0003805245217442448,
+            "recall": 0.0030937689206075205,
+            "iou": 0.00033896215253838844
+          },
+          "lane_marking": {
+            "target_pixels": 722807,
+            "predicted_pixels": 1633,
+            "true_positive_pixels": 886,
+            "precision": 0.5425597060624617,
+            "recall": 0.0012257767287809885,
+            "iou": 0.0012245112320573171
+          },
+          "traffic_light_fixture": {
+            "target_pixels": 1111,
+            "predicted_pixels": 556532,
+            "true_positive_pixels": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "iou": 0.0
+          },
+          "traffic_sign": {
+            "target_pixels": 11630,
+            "predicted_pixels": 25410,
+            "true_positive_pixels": 3,
+            "precision": 0.0001180637544273908,
+            "recall": 0.0002579535683576956,
+            "iou": 8.1000081000081e-05
+          },
+          "pole": {
+            "target_pixels": 271655,
+            "predicted_pixels": 727896,
+            "true_positive_pixels": 49807,
+            "precision": 0.06842598393177048,
+            "recall": 0.18334652408385635,
+            "iou": 0.05244255294058188
+          }
+        },
+        "confusion": [
+          [
+            19944557,
+            1568840,
+            995853,
+            535,
+            535097,
+            614,
+            200793
+          ],
+          [
+            288060,
+            11980867,
+            14643387,
+            1,
+            133,
+            906,
+            345279
+          ],
+          [
+            886806,
+            1046321,
+            6004,
+            0,
+            50,
+            25,
+            1469
+          ],
+          [
+            265393,
+            169594,
+            130524,
+            886,
+            2660,
+            23432,
+            130318
+          ],
+          [
+            1069,
+            0,
+            0,
+            0,
+            0,
+            0,
+            42
+          ],
+          [
+            11371,
+            5,
+            62,
+            0,
+            1,
+            3,
+            188
+          ],
+          [
+            186654,
+            13571,
+            2391,
+            211,
+            18591,
+            430,
+            49807
+          ]
+        ],
+        "mean_iou_present": 0.1791629641638659,
+        "pixel_accuracy": 0.5983245779454023
+      }
+    }
+  },
+  "gate": {
+    "parent_dev_rejected": true,
+    "town06_sign_iou_better": true,
+    "town06_sign_precision_better": true,
+    "town06_lane_nonregression": false,
+    "automatic_promotion": false,
+    "deployment_approved": false
+  },
+  "source_sha256": {
+    "owner_plan_sha256": "2298a4073406582a33e82593d1c3ff819b6a35fea1f5b2968aebf4a9a318931b",
+    "owner_result_sha256": "e672912f0dda81fb7aec38fd102102091f13738fcfd948b47308a0bf17a96b53",
+    "owner_started_sha256": "346375ed8f96d35b3bf53c91065b849ad9fd62c51bdf413a1e14fff1777708d6",
+    "mapping_summary_sha256": "864c7d9f471d75bd38a8881550d20e469b7f4ff02e3619f6c76a73edb5ff2445",
+    "scout_audit_sha256": "b98f7fcab734b46a8ca5a2a2512ea91b2370c0354bc9abb7c2f089c088bbff98",
+    "route_sha256": "e27e95cb60d40657638183f7f78ce2e1f4f070067707ac4dd3f2f89dd1c52283",
+    "model_source_sha256": "1b0076c8f9d34192ab5aedf6cdf96ce2c14458e2bb49986685a6811376b0750b",
+    "parent_checkpoint_sha256": "ae489cd99e48f6f68da3241e8296c705847398c23b8ba69b71ec024cef4ef380",
+    "candidate_checkpoint_sha256": "30c3c56b8cb6f34f602c1e4396a2802441f9a909d68275480a54b4885dd87b3b",
+    "parent_training_source_sha256_recorded": "ab1f50d695aea52289d068547351d575ef4d730081ba1631ebef86d9d45d2832",
+    "candidate_training_source_sha256": "86e583aacf654d78ce913a95ba537e0025317aa5a737aefacc2162aa7e2adceb",
+    "evaluator_sha256": "cc280f6c55186cbf751c864377e33c5d5b4cf5995f4aa850d3a716469dfe96b1"
+  },
+  "input_manifest_sha256": "3d1a9b55de3dd101283c6ccd6ac3af22c96e26415b611a2c99418247c26a94a2",
+  "predictions_sha256": "84d887601e4c4db17428927bba37665955117c7401298b0729ccfc49bbbc159d",
+  "wall_seconds": 60.30610348796472,
+  "cpu_threads": 2,
+  "gpu_used": false,
+  "training_executed": false,
+  "scout_training_data_approved": false,
+  "blind_independent_test": false,
+  "limitations": "Selected because of sign-size gap; one Town06 route/weather, correlated frames, CARLA oracle labels, no HD-map or driving approval"
+}

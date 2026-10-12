@@ -7,7 +7,7 @@
 > 최신 화면 끊김 수정, 30 kph 제어 A/B와 선택 baseline 회귀, 현재 60 kph 후보는
 > [2026-09-02 runtime·제어 캠페인 보고서](validation-2026-09-02-runtime-control-campaign.md)와
 > [Git에 포함되는 정리 화면](assets/validation/2026-09-02-runtime-control-campaign-v1/README.md),
-> [canonical 캠페인 폴더](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/)에서
+> [canonical 캠페인 폴더](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1)에서
 > 이어진다. 이 후속 캠페인은 아래 9-map/18-trial 결과를 덮어쓰지 않는다.
 
 검증 자료의 계보는 [2026-08-31 초기 map inventory](validation-2026-08-31.md),

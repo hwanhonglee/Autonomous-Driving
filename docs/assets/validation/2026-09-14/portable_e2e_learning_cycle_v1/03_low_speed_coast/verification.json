@@ -1,0 +1,163 @@
+{
+  "comment": "HH_260906 - Preserve actual source/test/data checks and cleanup; do not turn reproducibility into training or vehicle approval.",
+  "verified_at_utc": "2026-09-14T05:19:36.327176+00:00",
+  "plan_sha256": "48bcc6bf0b226ea4514c732dbec082b2d07c67df7d5a09b59a97b5fde072748e",
+  "source_head_commit": "3cb676acbd2be4511be156d43ec002c554b438f3",
+  "uncommitted_execution_sources": true,
+  "current_source_and_external_checks": {
+    "source_sha256": {
+      "scripts/e2e/run_owned_carla_expert_trial.sh": true,
+      "scripts/e2e/run_carla_map.sh": true,
+      "scripts/e2e/process_group_cleanup.sh": true,
+      "scripts/e2e/workspace_runtime_lock.sh": true,
+      "scripts/e2e/probe_carla_server.py": true,
+      "scripts/e2e/env.sh": true,
+      "scripts/e2e/collect_carla_vad_expert.py": true,
+      "scripts/e2e/carla_goal_stop_profile.py": true,
+      "scripts/e2e/probe_carla_stationary_motion.py": true,
+      "portable_e2e/model.py": true,
+      "portable_e2e/runtime_contract.py": true,
+      "scripts/e2e/probe_carla_stationary_camera_quality.py": true,
+      "scripts/e2e/calibrate_carla_low_speed_response.py": true,
+      "scripts/e2e/carla_low_speed_response_matrix.py": true,
+      "scripts/e2e/carla_physics_substeps.py": true,
+      "scripts/e2e/probe_carla_low_speed_coast.py": true
+    },
+    "external_sha256": {
+      "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping": true,
+      "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/C_track_1_0_7.umap": true,
+      "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Config/DefaultEngine.ini": true
+    }
+  },
+  "summary_sha256": "2083fc51686da271e0c307943a4d78a7bdbd4f87635d66cc684e06a280c29c24",
+  "input_pin_count": 6135,
+  "source_test_sha256": {
+    "tests/test_probe_carla_low_speed_coast.py": "b886f9281ddd3c094318aa3156dc5bc9f8ce9101772f646f5050373c952727d8",
+    "tests/test_summarize_carla_low_speed_coast.py": "caee7e1854ac50b05724dd0593a8f72fd7d7449238669d8a4d21338b252292b2",
+    "tests/test_probe_carla_stationary_motion.py": "197c62b554ea960d5740c8ee1151229e558c2a34f43092b3b91f300d8c209369",
+    "tests/test_run_owned_carla_expert_trial.py": "7e7d93660d4ba12a2bbfa8f8106b83f49d9d4b25cb3280104dfda089e2b1f7a9",
+    "tests/test_carla_acknowledged_control_transport.py": "c87c4b1c31a746f627cac499ad1e7006236c98c4308b884f1ee9f1e383d8ca4d",
+    "tests/test_carla_physics_substeps.py": "40e19d148340c90f8b2b01cf91410982a2fe4048f3054c0f3a586898edec3e5a",
+    "tests/test_probe_carla_stationary_camera_quality.py": "cbeb197acff43e36e44665404cafcad388d709ed76fdc56d5958832713e48e52",
+    "tests/test_calibrate_carla_low_speed_response.py": "144b04768848943a33951fe5b273580b128245e43f8f4649076eaf3fdf09fc19",
+    "tests/test_summarize_carla_stationary_motion.py": "86adf18b8719752ab1ddc796744d22d42b4bb6cda7514875e8a95c7d2b83ae1b",
+    "/home/a/autoware_e2e/scripts/e2e/summarize_carla_low_speed_coast.py": "74794b8e10235ace7aa138d265230364bebc68cb3e13cd1c31dc06f857017b9b",
+    "/home/a/autoware_e2e/scripts/e2e/summarize_carla_stationary_motion.py": "28b5ee2d991e7f44ec49f5a13f0f9ef3a61ff1c56a4a7ea7ce1dc31ed827422d"
+  },
+  "cases": [
+    {
+      "id": "01_coast_repeat_1",
+      "owner_exit_code": 0,
+      "completed_at_utc": "2026-09-14T05:06:14.041336+00:00",
+      "manifest_sha256": "3883bdfe7ab3e003ec7d4bcefac55bed5f409c3fdf9da2b319a84125a6b8f400",
+      "owner_result_sha256": "575e8811a4437c847a749a87fae3191271484a8139d0ae53ce8e54ca88d6bc39",
+      "state_count": 1013,
+      "phase_counts": {
+        "settle": 70,
+        "launch": 43,
+        "coast": 900
+      },
+      "saved_camera_anchor_count": 506,
+      "owned_actor_count": 8,
+      "cleanup_errors": []
+    },
+    {
+      "id": "02_coast_repeat_2",
+      "owner_exit_code": 0,
+      "completed_at_utc": "2026-09-14T05:08:48.469662+00:00",
+      "manifest_sha256": "25c055b7060ea2c9a0677e59a5de84a5093ba495d3a0d7ec6e26fd06b13809dc",
+      "owner_result_sha256": "5e9cd7aa71f534d8c57629c6556b89a4d0eaeaa1cdff76668ea2c683d9142978",
+      "state_count": 1013,
+      "phase_counts": {
+        "settle": 70,
+        "launch": 43,
+        "coast": 900
+      },
+      "saved_camera_anchor_count": 506,
+      "owned_actor_count": 8,
+      "cleanup_errors": []
+    }
+  ],
+  "pytest": {
+    "command": "CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_probe_carla_low_speed_coast.py tests/test_summarize_carla_low_speed_coast.py tests/test_probe_carla_stationary_motion.py tests/test_run_owned_carla_expert_trial.py tests/test_carla_acknowledged_control_transport.py tests/test_carla_physics_substeps.py tests/test_probe_carla_stationary_camera_quality.py tests/test_calibrate_carla_low_speed_response.py tests/test_summarize_carla_stationary_motion.py",
+    "exit_code": 0,
+    "terminal_result": "373 passed in 58.33s",
+    "scope": "Nine-file regression set; not all repository tests or driving features. Supplemental tail analysis separately rerun on both actual captures."
+  },
+  "independent_audit": {
+    "paired_physical_control_fields_exactly_equal": 31,
+    "paired_native_ticks": 1013,
+    "all_jpeg_hashes_and_decode_checked": 6072,
+    "evidence_inputs_excluding_plan_reauthenticated": 6134,
+    "route_projection_recomputed_all_rows": true,
+    "actual_source_error_safety_fields_absent": true,
+    "tick70_strict_settle_bounds_pass": true
+  },
+  "analysis_revision": {
+    "initial_directory": "artifacts/analysis/2026-09-14/low_speed_coast_v1_initial_summary",
+    "initial_summary_sha256": "717d8cbb98548557735e6be9f21168a61a67a09f1f1296261422abce4de8e0ee",
+    "initial_source_sha256": "1d40e860a71a2b97de2bb53f6c65efa54af7cd8e8a5cbba645d34bd14938faf4",
+    "initial_and_final_case_results_exactly_equal": true,
+    "change": "Reject COMPLETE with error/safety_failure; independently enforce tick70 settle0.1m/s/0.5m limits. Actual data already meets them; no CARLA rerun or raw edit."
+  },
+  "supplemental_tail": {
+    "json_sha256": "ecb601790f3e7e2d26bed0561dad94eea405d13b37929ffdcb6ee81f4c6aa4fa",
+    "source_sha256": "f9f82588e9fc21bbf1bc502a3d341f8cc8e311631c76c5ea33698794eaa51e5a",
+    "scope": "Post-capture descriptive signed-velocity/parity analysis; no cause attribution or label/gate changes."
+  },
+  "visual_inspection": {
+    "files": [
+      "evidence/01_coast_repeat_1_measured_traces.png",
+      "evidence/02_coast_repeat_2_scheduled_final_six_camera_trace.png"
+    ],
+    "full_fov_and_ego_center_observed": true,
+    "camera_native_offset_explicit": true,
+    "visual_training_quality_approved": false,
+    "autoware_gui_capture": false
+  },
+  "ports": {
+    "2100": "BIND_FREE",
+    "2101": "BIND_FREE",
+    "2102": "BIND_FREE"
+  },
+  "scope": {
+    "training_data_approved": false,
+    "learned_model_control": false,
+    "model_loaded": false,
+    "model_promoted": false,
+    "remote_ssh_used": false,
+    "packages_installed": false,
+    "system_or_conda_changed": false,
+    "gpu1_used": false,
+    "git_commit": false,
+    "git_push": false,
+    "labels_modified": false,
+    "runtime_gate_evaluated": false,
+    "decoder_bounds_evaluated": false,
+    "noise_tolerance_established": false
+  },
+  "preserved_prior_files_sha256": {
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/01_data_readiness/README.md": "f6d3689734dbcb803e6b791fc937bffbbdb1531ac25c47547ccb4cad57c6c151",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/01_data_readiness/data_readiness.json": "e9d419e6f8172d432261828a7eed27a8319a079109c3c1fd78911c4841bb1144",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/README.md": "82074867317a135f2e09a02d1b5369354658f169f3f67c765f1122ebf099d147",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/SHA256SUMS": "cdf70b25be2aa20b65a0c4a81fb8379ed06a264b56c6e8b24e1c334c02bacf8a",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/verification.json": "6977bbfb7437859ee64fd7e581af89973b9d51918bedfcf6cf866ac6ce628974",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v2_plan.json": "c6ca6f049e0d50aae65083af2a0737a65353bfc1060bed4829656c0c80de76f3",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v1_plan.json": "309afc3e570daf693dd9e905203cf30495748d41a3b1004537ec555b615fecea",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v2_execution_status.json": "a3d414b0ce404621c2d0904b5f1d6dd86322c745068645994470f5a55fd0ecd9",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v1_execution_status.json": "46cdc6c8fba4da1d22cda25ad0876defc3c5e7dd35ca6ceeaddcf9f0aab6c773",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v3_b1_preflight_note.json": "57938a92327b4fe002ab2be50a6e15b9a691279bb42c3bde9c6a5c17d811652b",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v3_plan.json": "200944fb01d1d758452b852862129610d453a652b9f98bc49f5f13b283001301",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/provenance/stationary_motion_abba_v3_a2_port_cooldown_note.json": "5f8a092aed2c8e0820a3a4ace124c76bdd357d8c27092b1fa9314ca26824427e",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/01_service_A1_six_camera_trace.png": "e3c4ab5d867193ce919dfa923f9fce6cc98a887648804081056d268fb9726b77",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/04_service_A2_six_camera_trace.png": "e862fcda422ed25f79cf57821cb766980357191ebe932024a2514ece290d550b",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/02_parking_B1_six_camera_trace.png": "13dafda1c3c5e38c0c14bc3a1e45263a4670511a92fb9b171732013fbd4b3144",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/02_parking_B1_measured_traces.png": "cefca1c2660361f3c305f97c944c71562e37f7943a9d70d290369521e805bd80",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/01_service_A1_measured_traces.png": "f8ac4e3747869182d361d722101c69e06762b0b96e88efa2558ddd994f83cbac",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/03_parking_B2_six_camera_trace.png": "aff3afc522390f6b3319833d20625f64f672c575ce00af1dced0d0452ef2dbf2",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/summary.json": "0a3987a22f23a3569ff129d61f75a0012b383ef99269f19bd201a84b684b0079",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/04_service_A2_measured_traces.png": "c82e2978135a9e9edd2b76792f63ba55f18e779e17734754573e4f5946754771",
+    "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/02_stationary_motion/evidence/03_parking_B2_measured_traces.png": "2a589556287d03ee08d336f0bc91127e74b39643a248ede89bab35e671e435f5",
+    "docs/assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/SHA256SUMS": "d081c816fe11702f80d911b7861c37eda242f5c8a8bff81ef8c3b97b560f9832"
+  }
+}

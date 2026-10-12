@@ -1,0 +1,4757 @@
+{
+  "trials": [
+    {
+      "path": "/home/a/autoware_e2e/storage/experiments/training/2026-09-27/drive_control_ak/b_coast_27_hold",
+      "owner_exit": 0,
+      "capture_status": "complete",
+      "error": null,
+      "goal_reached": true,
+      "remaining_route_m": 0.46864431516880245,
+      "duration_seconds": 63.550000946968794,
+      "max_speed_kmh": 8.978412808796095,
+      "collision_events": 0,
+      "lane_sensor_events": 0,
+      "body_lane_containment_verified": false,
+      "measured_speed_rate": {
+        "native20": {
+          "acceleration_max": 2.349570131024194,
+          "deceleration_min": -2.731667468640473,
+          "decoder_violations": 0,
+          "runtime_rate_violations": 0
+        },
+        "camera10": {
+          "acceleration_max": 2.1310111007888852,
+          "deceleration_min": -1.2684410633809637,
+          "decoder_violations": 0,
+          "runtime_rate_violations": 0
+        }
+      },
+      "command_alignment_mismatches": 0,
+      "pixels": {
+        "image_count": 3816,
+        "referenced_image_count": 3816,
+        "unreferenced_jpeg_count": 0,
+        "decoded_count": 3816,
+        "decode_failure_count": 0,
+        "camera_anchor_count": 636,
+        "camera_frames_cover_entire_native_recording": true,
+        "timestamp_or_phase_mismatch_count": 0,
+        "rig": {
+          "schema_id": "autoware-e2e.common10.rig.v1",
+          "rig_id": "carla_rig_dbfac2214e0df73d",
+          "domain": "carla",
+          "base_frame": "base_link",
+          "rectified": true,
+          "camera_order": [
+            "CAM_FRONT",
+            "CAM_BACK",
+            "CAM_FRONT_LEFT",
+            "CAM_BACK_LEFT",
+            "CAM_FRONT_RIGHT",
+            "CAM_BACK_RIGHT"
+          ],
+          "cameras": [
+            {
+              "name": "CAM_FRONT",
+              "model_index": 0,
+              "physical_id": "virtual:carla:CAM_FRONT",
+              "optical_frame": "CAM_FRONT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.0,
+                0.0,
+                1.0,
+                2.225,
+                -1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK",
+              "model_index": 1,
+              "physical_id": "virtual:carla:CAM_BACK",
+              "optical_frame": "CAM_BACK/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                224.06641222710715,
+                0.0,
+                320.0,
+                0.0,
+                224.06641222710715,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.9198621771937625,
+              "T_base_from_camera": [
+                -3.464102066193935e-07,
+                0.0,
+                -0.99999999999994,
+                -0.575,
+                0.99999999999994,
+                0.0,
+                -3.464102066193935e-07,
+                0.0,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_FRONT_LEFT",
+              "model_index": 2,
+              "physical_id": "virtual:carla:CAM_FRONT_LEFT",
+              "optical_frame": "CAM_FRONT_LEFT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.8191519934719051,
+                0.0,
+                0.5735765089253603,
+                1.695,
+                -0.5735765089253603,
+                0.0,
+                0.8191519934719051,
+                0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK_LEFT",
+              "model_index": 3,
+              "physical_id": "virtual:carla:CAM_BACK_LEFT",
+              "optical_frame": "CAM_BACK_LEFT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.9396926813897297,
+                0.0,
+                -0.34201997681799223,
+                1.105,
+                0.34201997681799223,
+                0.0,
+                0.9396926813897297,
+                0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_FRONT_RIGHT",
+              "model_index": 4,
+              "physical_id": "virtual:carla:CAM_FRONT_RIGHT",
+              "optical_frame": "CAM_FRONT_RIGHT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                -0.8191519934719051,
+                0.0,
+                0.5735765089253603,
+                1.695,
+                -0.5735765089253603,
+                0.0,
+                -0.8191519934719051,
+                -0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK_RIGHT",
+              "model_index": 5,
+              "physical_id": "virtual:carla:CAM_BACK_RIGHT",
+              "optical_frame": "CAM_BACK_RIGHT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                -0.9396926813897297,
+                0.0,
+                -0.34201997681799223,
+                1.105,
+                0.34201997681799223,
+                0.0,
+                -0.9396926813897297,
+                -0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            }
+          ]
+        },
+        "by_phase": {
+          "stationary_warmup": 210,
+          "driving": 3216,
+          "stationary_tail": 390
+        },
+        "all_pixel_and_metadata_checks_clear": true
+      },
+      "measured_future": {
+        "camera_anchor_count": 636,
+        "disposition_counts": {
+          "full_64_point_anchor": 571,
+          "tail_label_context_only": 65
+        },
+        "full_anchor_counts_by_phase": {
+          "stationary_warmup": 35,
+          "driving": 536
+        },
+        "interpolation_counts": {
+          "linear_native_bracket": 36544
+        },
+        "full_64_point_anchors": {
+          "sample_count": 571,
+          "horizon_s": 6.4,
+          "horizon_eligible_anchor_count": 571,
+          "valid_step_count": 36544,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:1983",
+                "point_index": 10,
+                "target_timestamp_ns": 5679776905,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2217",
+                "point_index": 0,
+                "target_timestamp_ns": 16379777079,
+                "value": 2.494003556748943
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:3081",
+                "point_index": 1,
+                "target_timestamp_ns": 59679777723,
+                "value": -1.2684410174855827
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2087",
+                "point_index": 0,
+                "target_timestamp_ns": 9879776982,
+                "value": 2.131011091230821
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:3081",
+                "point_index": 1,
+                "target_timestamp_ns": 59679777723,
+                "value": -1.2684410174855827
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2087",
+                "point_index": 0,
+                "target_timestamp_ns": 9879776982,
+                "value": 2.131011091230821
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:1983",
+                "point_index": 0,
+                "target_timestamp_ns": 4679776905,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2217",
+                "point_index": 0,
+                "target_timestamp_ns": 16379777079,
+                "value": 2.4621585515255093
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2549",
+                "point_index": 1,
+                "target_timestamp_ns": 33079777326,
+                "value": -0.9686397457070406
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2087",
+                "point_index": 1,
+                "target_timestamp_ns": 9979776982,
+                "value": 2.3830271402481107
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 36544,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2549",
+                "point_index": 1,
+                "target_timestamp_ns": 33079777326,
+                "value": -0.9686397457070406
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2087",
+                "point_index": 1,
+                "target_timestamp_ns": 9979776982,
+                "value": 2.3830271402481107
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 31870,
+              "violating_step_count": 487,
+              "violating_anchor_count": 191,
+              "horizon_eligible_violating_anchor_count": 191,
+              "unique_episode_relative_100ms_violation_tick_count": 9,
+              "violating_steps_by_capture_phase": {
+                "pre_tail": 487
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 358,
+                "near_goal": 129
+              },
+              "violating_anchors_by_capture_phase": {
+                "pre_tail": 191
+              },
+              "minimum": {
+                "sample_id": "raw-frame:2199",
+                "point_index": 0,
+                "target_timestamp_ns": 15479777065,
+                "value": 1.9009607083404696e-06
+              },
+              "maximum": {
+                "sample_id": "raw-frame:3083",
+                "point_index": 0,
+                "target_timestamp_ns": 59679777724,
+                "value": 3.7981110848782174
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 31870,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:3065",
+                "point_index": 1,
+                "target_timestamp_ns": 58879777711,
+                "value": 5.353810888723003e-06
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2551",
+                "point_index": 1,
+                "target_timestamp_ns": 33179777328,
+                "value": 1.1476875161163187
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 31806,
+              "violating_step_count": 64,
+              "violating_anchor_count": 64,
+              "horizon_eligible_violating_anchor_count": 64,
+              "unique_episode_relative_100ms_violation_tick_count": 1,
+              "violating_steps_by_capture_phase": {
+                "pre_tail": 64
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 64
+              },
+              "violating_anchors_by_capture_phase": {
+                "pre_tail": 64
+              },
+              "minimum": {
+                "sample_id": "raw-frame:2813",
+                "point_index": 63,
+                "target_timestamp_ns": 52479777523,
+                "value": 5.326254217674631e-07
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2551",
+                "point_index": 0,
+                "target_timestamp_ns": 33079777328,
+                "value": 0.044145689620289516
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.12180210444979789,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.44145689620289513
+        },
+        "all_available_prefixes": {
+          "10": {
+            "sample_count": 571,
+            "horizon_s": 1.0,
+            "horizon_eligible_anchor_count": 571,
+            "valid_step_count": 5710,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1985",
+                  "point_index": 9,
+                  "target_timestamp_ns": 5679776906,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.494003556748943
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.4621585515255093
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 5710,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 4990,
+                "violating_step_count": 76,
+                "violating_anchor_count": 41,
+                "horizon_eligible_violating_anchor_count": 41,
+                "unique_episode_relative_100ms_violation_tick_count": 9,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 76
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 55,
+                  "near_goal": 21
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 41
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2199",
+                  "point_index": 0,
+                  "target_timestamp_ns": 15479777065,
+                  "value": 1.9009607083404696e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3083",
+                  "point_index": 0,
+                  "target_timestamp_ns": 59679777724,
+                  "value": 3.7981110848782174
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 4990,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3065",
+                  "point_index": 1,
+                  "target_timestamp_ns": 58879777711,
+                  "value": 5.353810888723003e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33179777328,
+                  "value": 1.1476875161163187
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 4980,
+                "violating_step_count": 10,
+                "violating_anchor_count": 10,
+                "horizon_eligible_violating_anchor_count": 10,
+                "unique_episode_relative_100ms_violation_tick_count": 1,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 10
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 10
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 10
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2921",
+                  "point_index": 9,
+                  "target_timestamp_ns": 52479777603,
+                  "value": 5.326311740549983e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33079777328,
+                  "value": 0.044145689620289516
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.12180210444979789,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.44145689620289513
+          },
+          "30": {
+            "sample_count": 571,
+            "horizon_s": 3.0,
+            "horizon_eligible_anchor_count": 571,
+            "valid_step_count": 17130,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.494003556748943
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.4621585515255093
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 17130,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 14970,
+                "violating_step_count": 236,
+                "violating_anchor_count": 101,
+                "horizon_eligible_violating_anchor_count": 101,
+                "unique_episode_relative_100ms_violation_tick_count": 9,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 236
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 175,
+                  "near_goal": 61
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 101
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2199",
+                  "point_index": 0,
+                  "target_timestamp_ns": 15479777065,
+                  "value": 1.9009607083404696e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3083",
+                  "point_index": 0,
+                  "target_timestamp_ns": 59679777724,
+                  "value": 3.7981110848782174
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 14970,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3065",
+                  "point_index": 1,
+                  "target_timestamp_ns": 58879777711,
+                  "value": 5.353810888723003e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33179777328,
+                  "value": 1.1476875161163187
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 14940,
+                "violating_step_count": 30,
+                "violating_anchor_count": 30,
+                "horizon_eligible_violating_anchor_count": 30,
+                "unique_episode_relative_100ms_violation_tick_count": 1,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 30
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 30
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 30
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2881",
+                  "point_index": 29,
+                  "target_timestamp_ns": 52479777574,
+                  "value": 5.326290888341066e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33079777328,
+                  "value": 0.044145689620289516
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.12180210444979789,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.44145689620289513
+          },
+          "64": {
+            "sample_count": 571,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 571,
+            "valid_step_count": 36544,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.494003556748943
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.4621585515255093
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 36544,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 31870,
+                "violating_step_count": 487,
+                "violating_anchor_count": 191,
+                "horizon_eligible_violating_anchor_count": 191,
+                "unique_episode_relative_100ms_violation_tick_count": 9,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 487
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 358,
+                  "near_goal": 129
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 191
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2199",
+                  "point_index": 0,
+                  "target_timestamp_ns": 15479777065,
+                  "value": 1.9009607083404696e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3083",
+                  "point_index": 0,
+                  "target_timestamp_ns": 59679777724,
+                  "value": 3.7981110848782174
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 31870,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3065",
+                  "point_index": 1,
+                  "target_timestamp_ns": 58879777711,
+                  "value": 5.353810888723003e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33179777328,
+                  "value": 1.1476875161163187
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 31806,
+                "violating_step_count": 64,
+                "violating_anchor_count": 64,
+                "horizon_eligible_violating_anchor_count": 64,
+                "unique_episode_relative_100ms_violation_tick_count": 1,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 64
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 64
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 64
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2813",
+                  "point_index": 63,
+                  "target_timestamp_ns": 52479777523,
+                  "value": 5.326254217674631e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33079777328,
+                  "value": 0.044145689620289516
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.12180210444979789,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.44145689620289513
+          }
+        },
+        "by_anchor_phase": {
+          "stationary_warmup": {
+            "sample_count": 35,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 35,
+            "valid_step_count": 2240,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 63,
+                  "target_timestamp_ns": 14379776955,
+                  "value": 1.9990338555918752
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 1,
+                  "target_timestamp_ns": 4779776905,
+                  "value": -1.1240801197942184e-05
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 18,
+                  "target_timestamp_ns": 9879776955,
+                  "value": 2.1310104625942805
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 1,
+                  "target_timestamp_ns": 4779776905,
+                  "value": -1.1240801197942184e-05
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 18,
+                  "target_timestamp_ns": 9879776955,
+                  "value": 2.1310104625942805
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4679776905,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 63,
+                  "target_timestamp_ns": 14379776955,
+                  "value": 1.9504081427125775
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1991",
+                  "point_index": 0,
+                  "target_timestamp_ns": 5079776911,
+                  "value": -5.540593761566015e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9979776955,
+                  "value": 2.3830270416272046
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1991",
+                  "point_index": 0,
+                  "target_timestamp_ns": 5079776911,
+                  "value": -5.540593761566015e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9979776955,
+                  "value": 2.3830270416272046
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 70,
+                "violating_anchor_count": 35,
+                "horizon_eligible_violating_anchor_count": 35,
+                "unique_episode_relative_100ms_violation_tick_count": 2,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 70
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 70
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 35
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2027",
+                  "point_index": 63,
+                  "target_timestamp_ns": 13179776937,
+                  "value": 4.4986619749670046e-05
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1983",
+                  "point_index": 52,
+                  "target_timestamp_ns": 9879776905,
+                  "value": 3.6290048419240493
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2027",
+                  "point_index": 63,
+                  "target_timestamp_ns": 13179776937,
+                  "value": 0.00011126270049500555
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9979776955,
+                  "value": 0.11983157536364183
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1989",
+                  "point_index": 63,
+                  "target_timestamp_ns": 11279776909,
+                  "value": 0.00016091941608704918
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2051",
+                  "point_index": 25,
+                  "target_timestamp_ns": 10579776955,
+                  "value": 0.0014563572604411141
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.12180208610674811,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.014563572604411141
+          },
+          "driving": {
+            "sample_count": 536,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 536,
+            "valid_step_count": 34304,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2967",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60179777638,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.494003556748943
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3081",
+                  "point_index": 1,
+                  "target_timestamp_ns": 59679777723,
+                  "value": -1.2684410174855827
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9879776982,
+                  "value": 2.131011091230821
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2053",
+                  "point_index": 0,
+                  "target_timestamp_ns": 8179776957,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2217",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16379777079,
+                  "value": 2.4621585515255093
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 34304,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2549",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33079777326,
+                  "value": -0.9686397457070406
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2087",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9979776982,
+                  "value": 2.3830271402481107
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 30855,
+                "violating_step_count": 417,
+                "violating_anchor_count": 156,
+                "horizon_eligible_violating_anchor_count": 156,
+                "unique_episode_relative_100ms_violation_tick_count": 9,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 417
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 288,
+                  "near_goal": 129
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 156
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2199",
+                  "point_index": 0,
+                  "target_timestamp_ns": 15479777065,
+                  "value": 1.9009607083404696e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3083",
+                  "point_index": 0,
+                  "target_timestamp_ns": 59679777724,
+                  "value": 3.7981110848782174
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 30855,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3065",
+                  "point_index": 1,
+                  "target_timestamp_ns": 58879777711,
+                  "value": 5.353810888723003e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 1,
+                  "target_timestamp_ns": 33179777328,
+                  "value": 1.1476875161163187
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 30791,
+                "violating_step_count": 64,
+                "violating_anchor_count": 64,
+                "horizon_eligible_violating_anchor_count": 64,
+                "unique_episode_relative_100ms_violation_tick_count": 1,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 64
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 64
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 64
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2813",
+                  "point_index": 63,
+                  "target_timestamp_ns": 52479777523,
+                  "value": 5.326254217674631e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2551",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33079777328,
+                  "value": 0.044145689620289516
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.12180210444979789,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.44145689620289513
+          }
+        },
+        "interpretation": "Necessary discrete XY/speed bounds, not a sufficient feasibility proof; yaw is a proxy. Overlapping horizon windows are not independent events. Original warmup anchors remain included, tail anchors remain context-only; unavailable futures are not extrapolated."
+      },
+      "configuration": {
+        "profile_id": "comfortable_v2_ak_coast_27_hold",
+        "desired_deceleration_mps2": 0.12,
+        "target_acceleration_limit_mps2": 1.5,
+        "stop_buffer_m": 2.7,
+        "goal_tolerance_m": 1.0,
+        "stopped_speed_mps": 0.1,
+        "hold_seconds": 2.0,
+        "normal_brake_cap": 0.0,
+        "normal_throttle_cap": 0.2,
+        "minimum_tail_seconds": 6.5,
+        "maximum_projection_step_m": 1.0,
+        "maximum_projection_error_m": 3.0,
+        "development_only": true,
+        "training_data_approved": false,
+        "policy_source_sha256": "bc9dcb54c1094ef0552be6a2b8ea1856e504fdd62147f6c8acd439307f440c2d",
+        "parent_profile": "comfortable_v2",
+        "launch_only_cap": 0.13,
+        "launch_handoff_speed_mps": 0.5,
+        "ak_arm": "coast_27_hold",
+        "hold_brake": 1.0,
+        "control_source": "CARLA BasicAgent expert, not a learned model",
+        "tail_policy": "full brake only after measured stop and continuous dwell",
+        "bounds": {
+          "physical_decoder": {
+            "maximum_acceleration_mps2": 2.9,
+            "maximum_deceleration_mps2": 2.9
+          },
+          "runtime_speed_rate_gate": {
+            "maximum_acceleration_mps2": 3.0,
+            "maximum_deceleration_mps2": 6.0
+          },
+          "source_sha256": {
+            "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+            "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+          },
+          "notice": "Speed-rate checks alone do not establish complete decoder or runtime feasibility."
+        },
+        "terminal_plan": {
+          "policy": "Append actual map-projected requested goal-center waypoint; never extend the catalog route or invent a waypoint.",
+          "appended_goal_waypoint": true,
+          "original_plan_points": 80,
+          "effective_plan_points": 81,
+          "original_terminal_carla_xyz": {
+            "x": 334.7633361816406,
+            "y": 226.15875244140625,
+            "z": 0.0
+          },
+          "requested_goal_center_carla_xyz": {
+            "x": 334.82998543376425,
+            "y": 228.0788696289058,
+            "z": 0.0
+          },
+          "effective_terminal_carla_xyz": {
+            "x": 334.7621765136719,
+            "y": 228.07882690429688,
+            "z": 0.0
+          },
+          "terminal_road_section_lane": [
+            19,
+            0,
+            -1
+          ],
+          "original_to_goal_gap_m": 1.9200748130931045,
+          "map_projection_planar_error_m": 0.06780893355219733,
+          "maximum_map_projection_error_m": 0.25,
+          "maximum_terminal_gap_m": 2.25,
+          "catalog_route_changed": false,
+          "goal_tolerance_changed": false,
+          "global_route_planner_source": {
+            "python_class": "agents.navigation.global_route_planner.GlobalRoutePlanner",
+            "source_file": "/home/a/carla-autoware-universe/CARLA_0.9.15/PythonAPI/carla/agents/navigation/global_route_planner.py",
+            "source_sha256": "9b164a2de723d91d55cd1203543747580c1c6c509ed0294a6de17b001f7db8d0"
+          }
+        },
+        "effective_control": {
+          "original_pid_max_brake": 0.3,
+          "normal_brake_cap": 0.0,
+          "original_pid_max_throttle": 0.75,
+          "normal_throttle_cap": 0.2,
+          "empty_queue_brake_capped_before_hazard_override": true,
+          "basic_agent_emergency_brake_modified": false,
+          "launch_only_cap": 0.13,
+          "launch_handoff_planar_actor_speed_mps": 0.5,
+          "handoff_latched": true,
+          "launch_speed_source": "CARLA actor measured XY velocity; not commanded speed",
+          "policy_source_sha256": "bc9dcb54c1094ef0552be6a2b8ea1856e504fdd62147f6c8acd439307f440c2d",
+          "ak_arm": "coast_27_hold",
+          "hold_brake_source": "following normal command after measured <=0.1 m/s upstream goal-window entry",
+          "hold_brake_after_emergency": false,
+          "unchanged_basic_agent_emergency_brake": 0.5
+        }
+      },
+      "above_normal_brake_cap_frames": [
+        {
+          "frame": 3085,
+          "elapsed_seconds": 55.10000082105398,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686900373614833
+        },
+        {
+          "frame": 3086,
+          "elapsed_seconds": 55.15000082179904,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686900373614833
+        },
+        {
+          "frame": 3087,
+          "elapsed_seconds": 55.2000008225441,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686900373614833
+        },
+        {
+          "frame": 3088,
+          "elapsed_seconds": 55.250000823289156,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.468690035279792
+        },
+        {
+          "frame": 3089,
+          "elapsed_seconds": 55.300000824034214,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.468690035279792
+        },
+        {
+          "frame": 3090,
+          "elapsed_seconds": 55.35000082477927,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686748002173715
+        },
+        {
+          "frame": 3091,
+          "elapsed_seconds": 55.40000082552433,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686748002173715
+        },
+        {
+          "frame": 3092,
+          "elapsed_seconds": 55.45000082626939,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3093,
+          "elapsed_seconds": 55.500000827014446,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3094,
+          "elapsed_seconds": 55.550000827759504,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3095,
+          "elapsed_seconds": 55.60000082850456,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3096,
+          "elapsed_seconds": 55.65000082924962,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3097,
+          "elapsed_seconds": 55.70000082999468,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3098,
+          "elapsed_seconds": 55.75000083073974,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3099,
+          "elapsed_seconds": 55.800000831484795,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3100,
+          "elapsed_seconds": 55.85000083222985,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3101,
+          "elapsed_seconds": 55.90000083297491,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3102,
+          "elapsed_seconds": 55.95000083371997,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3103,
+          "elapsed_seconds": 56.00000083446503,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3104,
+          "elapsed_seconds": 56.050000835210085,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3105,
+          "elapsed_seconds": 56.10000083595514,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3106,
+          "elapsed_seconds": 56.1500008367002,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3107,
+          "elapsed_seconds": 56.20000083744526,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3108,
+          "elapsed_seconds": 56.25000083819032,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3109,
+          "elapsed_seconds": 56.300000838935375,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3110,
+          "elapsed_seconds": 56.35000083968043,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3111,
+          "elapsed_seconds": 56.40000084042549,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3112,
+          "elapsed_seconds": 56.45000084117055,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3113,
+          "elapsed_seconds": 56.50000084191561,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3114,
+          "elapsed_seconds": 56.550000842660666,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3115,
+          "elapsed_seconds": 56.600000843405724,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3116,
+          "elapsed_seconds": 56.65000084415078,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3117,
+          "elapsed_seconds": 56.70000084489584,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3118,
+          "elapsed_seconds": 56.7500008456409,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3119,
+          "elapsed_seconds": 56.800000846385956,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3120,
+          "elapsed_seconds": 56.850000847131014,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3121,
+          "elapsed_seconds": 56.90000084787607,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3122,
+          "elapsed_seconds": 56.95000084862113,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3123,
+          "elapsed_seconds": 57.00000084936619,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        },
+        {
+          "frame": 3124,
+          "elapsed_seconds": 57.050000850111246,
+          "phase": "complete",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46864431516880245
+        }
+      ],
+      "hazard_reason_verified": false,
+      "raw_sha256": {
+        "manifest.json": "69f4f30f9a24cd063a2f9fab0cac983768c16410bfd40e8af88e91f2bb887e1b",
+        "states.jsonl": "1014a8d612a60b32f329b0f30fdbe6e9bd22fc612eb7caa330278a9417e4ad70",
+        "camera_frames.jsonl": "9b1882c1d68d1cdd88eca7a35849c94e3cb86f0f58e0ac6fc7e0384d84923460",
+        "route.json": "3f94016e8e86da050f86fb90bf4deaff668ecf59e38357f53018036dbfdf005a"
+      },
+      "owner_sha256": "4c656e70f8f005c67f714d1444dbe3db4c394075ada5ef664bcbc789dd7bb9cc",
+      "learned_model_control": false,
+      "training_data_approved": false,
+      "notice": "Read-only necessary-condition diagnostic, not a replacement for source-bound admission, lane containment or closed-loop approval."
+    },
+    {
+      "path": "/home/a/autoware_e2e/storage/experiments/training/2026-09-27/drive_control_al/rear_axle",
+      "owner_exit": 0,
+      "capture_status": "complete",
+      "error": null,
+      "goal_reached": true,
+      "remaining_route_m": 0.4686643990178112,
+      "duration_seconds": 63.9000009521842,
+      "max_speed_kmh": 8.97943036756209,
+      "collision_events": 0,
+      "lane_sensor_events": 0,
+      "body_lane_containment_verified": false,
+      "measured_speed_rate": {
+        "native20": {
+          "acceleration_max": 2.3250519491284005,
+          "deceleration_min": -1.995085514116113,
+          "decoder_violations": 0,
+          "runtime_rate_violations": 0
+        },
+        "camera10": {
+          "acceleration_max": 1.9371688587331697,
+          "deceleration_min": -0.9984548501920767,
+          "decoder_violations": 0,
+          "runtime_rate_violations": 0
+        }
+      },
+      "command_alignment_mismatches": 0,
+      "pixels": {
+        "image_count": 3840,
+        "referenced_image_count": 3840,
+        "unreferenced_jpeg_count": 0,
+        "decoded_count": 3840,
+        "decode_failure_count": 0,
+        "camera_anchor_count": 640,
+        "camera_frames_cover_entire_native_recording": true,
+        "timestamp_or_phase_mismatch_count": 0,
+        "rig": {
+          "schema_id": "autoware-e2e.common10.rig.v1",
+          "rig_id": "carla_rig_dbfac2214e0df73d",
+          "domain": "carla",
+          "base_frame": "base_link",
+          "rectified": true,
+          "camera_order": [
+            "CAM_FRONT",
+            "CAM_BACK",
+            "CAM_FRONT_LEFT",
+            "CAM_BACK_LEFT",
+            "CAM_FRONT_RIGHT",
+            "CAM_BACK_RIGHT"
+          ],
+          "cameras": [
+            {
+              "name": "CAM_FRONT",
+              "model_index": 0,
+              "physical_id": "virtual:carla:CAM_FRONT",
+              "optical_frame": "CAM_FRONT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.0,
+                0.0,
+                1.0,
+                2.225,
+                -1.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK",
+              "model_index": 1,
+              "physical_id": "virtual:carla:CAM_BACK",
+              "optical_frame": "CAM_BACK/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                224.06641222710715,
+                0.0,
+                320.0,
+                0.0,
+                224.06641222710715,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.9198621771937625,
+              "T_base_from_camera": [
+                -3.464102066193935e-07,
+                0.0,
+                -0.99999999999994,
+                -0.575,
+                0.99999999999994,
+                0.0,
+                -3.464102066193935e-07,
+                0.0,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_FRONT_LEFT",
+              "model_index": 2,
+              "physical_id": "virtual:carla:CAM_FRONT_LEFT",
+              "optical_frame": "CAM_FRONT_LEFT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.8191519934719051,
+                0.0,
+                0.5735765089253603,
+                1.695,
+                -0.5735765089253603,
+                0.0,
+                0.8191519934719051,
+                0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK_LEFT",
+              "model_index": 3,
+              "physical_id": "virtual:carla:CAM_BACK_LEFT",
+              "optical_frame": "CAM_BACK_LEFT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                0.9396926813897297,
+                0.0,
+                -0.34201997681799223,
+                1.105,
+                0.34201997681799223,
+                0.0,
+                0.9396926813897297,
+                0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_FRONT_RIGHT",
+              "model_index": 4,
+              "physical_id": "virtual:carla:CAM_FRONT_RIGHT",
+              "optical_frame": "CAM_FRONT_RIGHT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                -0.8191519934719051,
+                0.0,
+                0.5735765089253603,
+                1.695,
+                -0.5735765089253603,
+                0.0,
+                -0.8191519934719051,
+                -0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            },
+            {
+              "name": "CAM_BACK_RIGHT",
+              "model_index": 5,
+              "physical_id": "virtual:carla:CAM_BACK_RIGHT",
+              "optical_frame": "CAM_BACK_RIGHT/camera_optical_link",
+              "width_px": 640,
+              "height_px": 360,
+              "source_encoding": "bgr8",
+              "storage_codec": "jpeg",
+              "K": [
+                457.0073621574767,
+                0.0,
+                320.0,
+                0.0,
+                457.0073621574767,
+                180.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "D": [],
+              "horizontal_fov_rad": 1.2217304763960306,
+              "T_base_from_camera": [
+                -0.9396926813897297,
+                0.0,
+                -0.34201997681799223,
+                1.105,
+                0.34201997681799223,
+                0.0,
+                -0.9396926813897297,
+                -0.55,
+                0.0,
+                -1.0,
+                0.0,
+                1.6,
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "timestamp_source": "carla_simulation_frame",
+              "trigger_mode": "synchronous_world_tick",
+              "firmware": "0.9.15-dev-dirty",
+              "exposure_mode": "virtual_postprocess_disabled"
+            }
+          ]
+        },
+        "by_phase": {
+          "stationary_warmup": 210,
+          "driving": 3240,
+          "stationary_tail": 390
+        },
+        "all_pixel_and_metadata_checks_clear": true
+      },
+      "measured_future": {
+        "camera_anchor_count": 640,
+        "disposition_counts": {
+          "full_64_point_anchor": 575,
+          "tail_label_context_only": 65
+        },
+        "full_anchor_counts_by_phase": {
+          "stationary_warmup": 35,
+          "driving": 540
+        },
+        "interpolation_counts": {
+          "linear_native_bracket": 36800
+        },
+        "full_64_point_anchors": {
+          "sample_count": 575,
+          "horizon_s": 6.4,
+          "horizon_eligible_anchor_count": 575,
+          "valid_step_count": 36800,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:1914",
+                "point_index": 10,
+                "target_timestamp_ns": 5629458527,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2022",
+                "point_index": 63,
+                "target_timestamp_ns": 16329458607,
+                "value": 2.431265570423309
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2896",
+                "point_index": 63,
+                "target_timestamp_ns": 60029459259,
+                "value": -0.998455354769613
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2020",
+                "point_index": 0,
+                "target_timestamp_ns": 9929458606,
+                "value": 1.938081903707948
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2896",
+                "point_index": 63,
+                "target_timestamp_ns": 60029459259,
+                "value": -0.998455354769613
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2020",
+                "point_index": 0,
+                "target_timestamp_ns": 9929458606,
+                "value": 1.938081903707948
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:1914",
+                "point_index": 0,
+                "target_timestamp_ns": 4629458527,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2148",
+                "point_index": 0,
+                "target_timestamp_ns": 16329458701,
+                "value": 2.463075169084271
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:3020",
+                "point_index": 1,
+                "target_timestamp_ns": 60029459351,
+                "value": -0.9713691049650389
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2018",
+                "point_index": 1,
+                "target_timestamp_ns": 9929458604,
+                "value": 2.4502629471704793
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 36800,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:3020",
+                "point_index": 1,
+                "target_timestamp_ns": 60029459351,
+                "value": -0.9713691049650389
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2018",
+                "point_index": 1,
+                "target_timestamp_ns": 9929458604,
+                "value": 2.4502629471704793
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 32126,
+              "violating_step_count": 551,
+              "violating_anchor_count": 191,
+              "horizon_eligible_violating_anchor_count": 191,
+              "unique_episode_relative_100ms_violation_tick_count": 26,
+              "violating_steps_by_capture_phase": {
+                "pre_tail": 551
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 471,
+                "near_goal": 80
+              },
+              "violating_anchors_by_capture_phase": {
+                "pre_tail": 191
+              },
+              "minimum": {
+                "sample_id": "raw-frame:2302",
+                "point_index": 1,
+                "target_timestamp_ns": 24129458816,
+                "value": 1.734931104189752e-07
+              },
+              "maximum": {
+                "sample_id": "raw-frame:3020",
+                "point_index": 1,
+                "target_timestamp_ns": 60029459351,
+                "value": 101.83169357672682
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 32126,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2302",
+                "point_index": 1,
+                "target_timestamp_ns": 24129458816,
+                "value": 1.0439468357150824e-06
+              },
+              "maximum": {
+                "sample_id": "raw-frame:3020",
+                "point_index": 1,
+                "target_timestamp_ns": 60029459351,
+                "value": 1.308890214161576
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 32062,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "raw-frame:2214",
+                "point_index": 63,
+                "target_timestamp_ns": 25929458751,
+                "value": 1.4985559112105158e-07
+              },
+              "maximum": {
+                "sample_id": "raw-frame:2492",
+                "point_index": 0,
+                "target_timestamp_ns": 33529458958,
+                "value": 0.04146242170796488
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.09919766174805994,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.4146242170796488
+        },
+        "all_available_prefixes": {
+          "10": {
+            "sample_count": 575,
+            "horizon_s": 1.0,
+            "horizon_eligible_anchor_count": 575,
+            "valid_step_count": 5750,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1916",
+                  "point_index": 9,
+                  "target_timestamp_ns": 5629458528,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2130",
+                  "point_index": 9,
+                  "target_timestamp_ns": 16329458688,
+                  "value": 2.431265468329674
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3004",
+                  "point_index": 9,
+                  "target_timestamp_ns": 60029459339,
+                  "value": -0.9984549379886428
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3004",
+                  "point_index": 9,
+                  "target_timestamp_ns": 60029459339,
+                  "value": -0.9984549379886428
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2148",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16329458701,
+                  "value": 2.463075169084271
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 5750,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 5030,
+                "violating_step_count": 101,
+                "violating_anchor_count": 47,
+                "horizon_eligible_violating_anchor_count": 47,
+                "unique_episode_relative_100ms_violation_tick_count": 26,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 101
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 75,
+                  "near_goal": 26
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 47
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.734931104189752e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 101.83169357672682
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 5030,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.0439468357150824e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 1.308890214161576
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 5020,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2322",
+                  "point_index": 9,
+                  "target_timestamp_ns": 25929458831,
+                  "value": 1.4986609089378796e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2492",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33529458958,
+                  "value": 0.04146242170796488
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.09919766174805994,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.4146242170796488
+          },
+          "30": {
+            "sample_count": 575,
+            "horizon_s": 3.0,
+            "horizon_eligible_anchor_count": 575,
+            "valid_step_count": 17250,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2090",
+                  "point_index": 29,
+                  "target_timestamp_ns": 16329458658,
+                  "value": 2.431265506142131
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2964",
+                  "point_index": 29,
+                  "target_timestamp_ns": 60029459309,
+                  "value": -0.9984550942814983
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2964",
+                  "point_index": 29,
+                  "target_timestamp_ns": 60029459309,
+                  "value": -0.9984550942814983
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2148",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16329458701,
+                  "value": 2.463075169084271
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 17250,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 15090,
+                "violating_step_count": 281,
+                "violating_anchor_count": 101,
+                "horizon_eligible_violating_anchor_count": 101,
+                "unique_episode_relative_100ms_violation_tick_count": 26,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 281
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 235,
+                  "near_goal": 46
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 101
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.734931104189752e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 101.83169357672682
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 15090,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.0439468357150824e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 1.308890214161576
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 15060,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2282",
+                  "point_index": 29,
+                  "target_timestamp_ns": 25929458801,
+                  "value": 1.498621534791033e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2492",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33529458958,
+                  "value": 0.04146242170796488
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.09919766174805994,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.4146242170796488
+          },
+          "64": {
+            "sample_count": 575,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 575,
+            "valid_step_count": 36800,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2022",
+                  "point_index": 63,
+                  "target_timestamp_ns": 16329458607,
+                  "value": 2.431265570423309
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2896",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60029459259,
+                  "value": -0.998455354769613
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2896",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60029459259,
+                  "value": -0.998455354769613
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2148",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16329458701,
+                  "value": 2.463075169084271
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 36800,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 32126,
+                "violating_step_count": 551,
+                "violating_anchor_count": 191,
+                "horizon_eligible_violating_anchor_count": 191,
+                "unique_episode_relative_100ms_violation_tick_count": 26,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 551
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 471,
+                  "near_goal": 80
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 191
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.734931104189752e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 101.83169357672682
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 32126,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.0439468357150824e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 1.308890214161576
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 32062,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2214",
+                  "point_index": 63,
+                  "target_timestamp_ns": 25929458751,
+                  "value": 1.4985559112105158e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2492",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33529458958,
+                  "value": 0.04146242170796488
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.09919766174805994,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.4146242170796488
+          }
+        },
+        "by_anchor_phase": {
+          "stationary_warmup": {
+            "sample_count": 35,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 35,
+            "valid_step_count": 2240,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 10,
+                  "target_timestamp_ns": 5629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 63,
+                  "target_timestamp_ns": 14329458578,
+                  "value": 1.9314577687313421
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 21,
+                  "target_timestamp_ns": 10129458578,
+                  "value": -0.15132765650661295
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 53,
+                  "target_timestamp_ns": 9929458527,
+                  "value": 1.9371689431630068
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 21,
+                  "target_timestamp_ns": 10129458578,
+                  "value": -0.15132765650661295
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 53,
+                  "target_timestamp_ns": 9929458527,
+                  "value": 1.9371689431630068
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 0,
+                  "target_timestamp_ns": 4629458527,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 63,
+                  "target_timestamp_ns": 14329458578,
+                  "value": 1.953091278856354
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1922",
+                  "point_index": 0,
+                  "target_timestamp_ns": 5029458533,
+                  "value": -5.540593761566015e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9929458578,
+                  "value": 2.4502628235495902
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 2240,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1922",
+                  "point_index": 0,
+                  "target_timestamp_ns": 5029458533,
+                  "value": -5.540593761566015e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9929458578,
+                  "value": 2.4502628235495902
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 140,
+                "violating_anchor_count": 35,
+                "horizon_eligible_violating_anchor_count": 35,
+                "unique_episode_relative_100ms_violation_tick_count": 4,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 140
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 140
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 35
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 46,
+                  "target_timestamp_ns": 12629458578,
+                  "value": 0.00013898404792781166
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1914",
+                  "point_index": 52,
+                  "target_timestamp_ns": 9829458527,
+                  "value": 3.435096786100483
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 46,
+                  "target_timestamp_ns": 12629458578,
+                  "value": 0.0002755233969197957
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 19,
+                  "target_timestamp_ns": 9929458578,
+                  "value": 0.11372118010411951
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 1015,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1930",
+                  "point_index": 63,
+                  "target_timestamp_ns": 11729458539,
+                  "value": 7.567438310671082e-05
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:1982",
+                  "point_index": 24,
+                  "target_timestamp_ns": 10429458578,
+                  "value": 0.0017172623198805344
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.09919765599664537,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.01717262319880534
+          },
+          "driving": {
+            "sample_count": 540,
+            "horizon_s": 6.4,
+            "horizon_eligible_anchor_count": 540,
+            "valid_step_count": 34560,
+            "invalid_step_count": 0,
+            "metrics": {
+              "speed_limit": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2904",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60429459265,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2022",
+                  "point_index": 63,
+                  "target_timestamp_ns": 16329458607,
+                  "value": 2.431265570423309
+                }
+              },
+              "speed_acceleration": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2896",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60029459259,
+                  "value": -0.998455354769613
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "speed_deceleration": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2896",
+                  "point_index": 63,
+                  "target_timestamp_ns": 60029459259,
+                  "value": -0.998455354769613
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2020",
+                  "point_index": 0,
+                  "target_timestamp_ns": 9929458606,
+                  "value": 1.938081903707948
+                }
+              },
+              "xy_speed_limit": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:1984",
+                  "point_index": 0,
+                  "target_timestamp_ns": 8129458579,
+                  "value": 0.0
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2148",
+                  "point_index": 0,
+                  "target_timestamp_ns": 16329458701,
+                  "value": 2.463075169084271
+                }
+              },
+              "xy_acceleration": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_deceleration": {
+                "assessed_step_count": 34560,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": -0.9713691049650389
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2018",
+                  "point_index": 1,
+                  "target_timestamp_ns": 9929458604,
+                  "value": 2.4502629471704793
+                }
+              },
+              "xy_curvature": {
+                "assessed_step_count": 31111,
+                "violating_step_count": 411,
+                "violating_anchor_count": 156,
+                "horizon_eligible_violating_anchor_count": 156,
+                "unique_episode_relative_100ms_violation_tick_count": 26,
+                "violating_steps_by_capture_phase": {
+                  "pre_tail": 411
+                },
+                "violating_steps_by_future_goal_proximity": {
+                  "interior": 331,
+                  "near_goal": 80
+                },
+                "violating_anchors_by_capture_phase": {
+                  "pre_tail": 156
+                },
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.734931104189752e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 101.83169357672682
+                }
+              },
+              "xy_lateral_acceleration": {
+                "assessed_step_count": 31111,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2302",
+                  "point_index": 1,
+                  "target_timestamp_ns": 24129458816,
+                  "value": 1.0439468357150824e-06
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:3020",
+                  "point_index": 1,
+                  "target_timestamp_ns": 60029459351,
+                  "value": 1.308890214161576
+                }
+              },
+              "yaw_label_heading_envelope": {
+                "assessed_step_count": 31047,
+                "violating_step_count": 0,
+                "violating_anchor_count": 0,
+                "horizon_eligible_violating_anchor_count": 0,
+                "unique_episode_relative_100ms_violation_tick_count": 0,
+                "violating_steps_by_capture_phase": {},
+                "violating_steps_by_future_goal_proximity": {},
+                "violating_anchors_by_capture_phase": {},
+                "minimum": {
+                  "sample_id": "raw-frame:2214",
+                  "point_index": 63,
+                  "target_timestamp_ns": 25929458751,
+                  "value": 1.4985559112105158e-07
+                },
+                "maximum": {
+                  "sample_id": "raw-frame:2492",
+                  "point_index": 0,
+                  "target_timestamp_ns": 33529458958,
+                  "value": 0.04146242170796488
+                }
+              }
+            },
+            "speed_xy_consistency_max_absolute_error_mps": 0.09919766174805994,
+            "maximum_absolute_vehicle_yaw_rate_radps": 0.4146242170796488
+          }
+        },
+        "interpretation": "Necessary discrete XY/speed bounds, not a sufficient feasibility proof; yaw is a proxy. Overlapping horizon windows are not independent events. Original warmup anchors remain included, tail anchors remain context-only; unavailable futures are not extrapolated."
+      },
+      "configuration": {
+        "profile_id": "comfortable_v2_al_rear_axle",
+        "desired_deceleration_mps2": 0.12,
+        "target_acceleration_limit_mps2": 1.5,
+        "stop_buffer_m": 2.7,
+        "goal_tolerance_m": 1.0,
+        "stopped_speed_mps": 0.1,
+        "hold_seconds": 2.0,
+        "normal_brake_cap": 0.0,
+        "normal_throttle_cap": 0.2,
+        "minimum_tail_seconds": 6.5,
+        "maximum_projection_step_m": 1.0,
+        "maximum_projection_error_m": 3.0,
+        "development_only": true,
+        "training_data_approved": false,
+        "policy_source_sha256": "ce8ca490f0363ecc79219aefac59c27f5b3b7aa4c4d7fc5a29ff04f87141414d",
+        "parent_profile": "comfortable_v2",
+        "launch_only_cap": 0.13,
+        "launch_handoff_speed_mps": 0.5,
+        "ak_arm": "coast_27_hold",
+        "hold_brake": 1.0,
+        "control_source": "CARLA BasicAgent expert, not a learned model",
+        "tail_policy": "full brake only after measured stop and continuous dwell",
+        "bounds": {
+          "physical_decoder": {
+            "maximum_acceleration_mps2": 2.9,
+            "maximum_deceleration_mps2": 2.9
+          },
+          "runtime_speed_rate_gate": {
+            "maximum_acceleration_mps2": 3.0,
+            "maximum_deceleration_mps2": 6.0
+          },
+          "source_sha256": {
+            "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+            "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3"
+          },
+          "notice": "Speed-rate checks alone do not establish complete decoder or runtime feasibility."
+        },
+        "terminal_plan": {
+          "policy": "Append actual map-projected requested goal-center waypoint; never extend the catalog route or invent a waypoint.",
+          "appended_goal_waypoint": true,
+          "original_plan_points": 80,
+          "effective_plan_points": 81,
+          "original_terminal_carla_xyz": {
+            "x": 334.7633361816406,
+            "y": 226.15875244140625,
+            "z": 0.0
+          },
+          "requested_goal_center_carla_xyz": {
+            "x": 334.82998543376425,
+            "y": 228.0788696289058,
+            "z": 0.0
+          },
+          "effective_terminal_carla_xyz": {
+            "x": 334.7621765136719,
+            "y": 228.07882690429688,
+            "z": 0.0
+          },
+          "terminal_road_section_lane": [
+            19,
+            0,
+            -1
+          ],
+          "original_to_goal_gap_m": 1.9200748130931045,
+          "map_projection_planar_error_m": 0.06780893355219733,
+          "maximum_map_projection_error_m": 0.25,
+          "maximum_terminal_gap_m": 2.25,
+          "catalog_route_changed": false,
+          "goal_tolerance_changed": false,
+          "global_route_planner_source": {
+            "python_class": "agents.navigation.global_route_planner.GlobalRoutePlanner",
+            "source_file": "/home/a/carla-autoware-universe/CARLA_0.9.15/PythonAPI/carla/agents/navigation/global_route_planner.py",
+            "source_sha256": "9b164a2de723d91d55cd1203543747580c1c6c509ed0294a6de17b001f7db8d0"
+          }
+        },
+        "effective_control": {
+          "original_pid_max_brake": 0.3,
+          "normal_brake_cap": 0.0,
+          "original_pid_max_throttle": 0.75,
+          "normal_throttle_cap": 0.2,
+          "empty_queue_brake_capped_before_hazard_override": true,
+          "basic_agent_emergency_brake_modified": false,
+          "launch_only_cap": 0.13,
+          "launch_handoff_planar_actor_speed_mps": 0.5,
+          "handoff_latched": true,
+          "launch_speed_source": "CARLA actor measured XY velocity; not commanded speed",
+          "policy_source_sha256": "ce8ca490f0363ecc79219aefac59c27f5b3b7aa4c4d7fc5a29ff04f87141414d",
+          "ak_arm": "coast_27_hold",
+          "hold_brake_source": "following normal command after measured <=0.1 m/s upstream goal-window entry",
+          "hold_brake_after_emergency": false,
+          "al_arm": "rear_axle",
+          "control_reference": "rear_axle_proxy_for_waypoint_purge_and_lateral_PID_only",
+          "rear_axle_shift_m": 1.425,
+          "route_and_stop_goal_reference_unchanged": true,
+          "basic_agent_actor_reference_unchanged": true,
+          "longitudinal_PID_actor_reference_unchanged": true,
+          "emergency_override_remains_after_normal_planner": true,
+          "upstream_carla_pythonapi_sha256": {
+            "local_planner.py": "7a5db9112b0d107038765abfb87b2d7a418b98e4d2c0aa92a4aade53c95b319f",
+            "controller.py": "f95f427a5ad5ba50a96f6971df72a5f3ec078c8457b0ba2a12558396e8b5c402"
+          },
+          "development_only": true,
+          "training_data_approved": false,
+          "unchanged_basic_agent_emergency_brake": 0.5
+        }
+      },
+      "above_normal_brake_cap_frames": [
+        {
+          "frame": 3023,
+          "elapsed_seconds": 55.45000082626939,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686948772990718
+        },
+        {
+          "frame": 3024,
+          "elapsed_seconds": 55.500000827014446,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686948772990718
+        },
+        {
+          "frame": 3025,
+          "elapsed_seconds": 55.550000827759504,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686948772990718
+        },
+        {
+          "frame": 3026,
+          "elapsed_seconds": 55.60000082850456,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46869487521748
+        },
+        {
+          "frame": 3027,
+          "elapsed_seconds": 55.65000082924962,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.46869487521748
+        },
+        {
+          "frame": 3028,
+          "elapsed_seconds": 55.70000082999468,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686796401545905
+        },
+        {
+          "frame": 3029,
+          "elapsed_seconds": 55.75000083073974,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686796401545905
+        },
+        {
+          "frame": 3030,
+          "elapsed_seconds": 55.800000831484795,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3031,
+          "elapsed_seconds": 55.85000083222985,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3032,
+          "elapsed_seconds": 55.90000083297491,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3033,
+          "elapsed_seconds": 55.95000083371997,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3034,
+          "elapsed_seconds": 56.00000083446503,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3035,
+          "elapsed_seconds": 56.050000835210085,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3036,
+          "elapsed_seconds": 56.10000083595514,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3037,
+          "elapsed_seconds": 56.1500008367002,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3038,
+          "elapsed_seconds": 56.20000083744526,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3039,
+          "elapsed_seconds": 56.25000083819032,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3040,
+          "elapsed_seconds": 56.300000838935375,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3041,
+          "elapsed_seconds": 56.35000083968043,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3042,
+          "elapsed_seconds": 56.40000084042549,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3043,
+          "elapsed_seconds": 56.45000084117055,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3044,
+          "elapsed_seconds": 56.50000084191561,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3045,
+          "elapsed_seconds": 56.550000842660666,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3046,
+          "elapsed_seconds": 56.600000843405724,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3047,
+          "elapsed_seconds": 56.65000084415078,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3048,
+          "elapsed_seconds": 56.70000084489584,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3049,
+          "elapsed_seconds": 56.7500008456409,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3050,
+          "elapsed_seconds": 56.800000846385956,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3051,
+          "elapsed_seconds": 56.850000847131014,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3052,
+          "elapsed_seconds": 56.90000084787607,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3053,
+          "elapsed_seconds": 56.95000084862113,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3054,
+          "elapsed_seconds": 57.00000084936619,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3055,
+          "elapsed_seconds": 57.050000850111246,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3056,
+          "elapsed_seconds": 57.100000850856304,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3057,
+          "elapsed_seconds": 57.15000085160136,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3058,
+          "elapsed_seconds": 57.20000085234642,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3059,
+          "elapsed_seconds": 57.25000085309148,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3060,
+          "elapsed_seconds": 57.300000853836536,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3061,
+          "elapsed_seconds": 57.350000854581594,
+          "phase": "holding",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        },
+        {
+          "frame": 3062,
+          "elapsed_seconds": 57.40000085532665,
+          "phase": "complete",
+          "current_control": {
+            "throttle": 0.0,
+            "steer": 0.0,
+            "brake": 1.0,
+            "hand_brake": false,
+            "reverse": false,
+            "gear": 1,
+            "manual_gear_shift": false
+          },
+          "remaining_m": 0.4686643990178112
+        }
+      ],
+      "hazard_reason_verified": false,
+      "raw_sha256": {
+        "manifest.json": "53a378a6026d204173001559e359af7638ee142df046fbc1d72216fda98269ad",
+        "states.jsonl": "6ebb4d8b15414a0d30b934f4f3168222148e5b987954aebf2e0a1df4e9f44bf2",
+        "camera_frames.jsonl": "88db213ad24304ad756870a7b00033000af73e272b51872779ce232d2ff51dc0",
+        "route.json": "3f94016e8e86da050f86fb90bf4deaff668ecf59e38357f53018036dbfdf005a"
+      },
+      "owner_sha256": "f7bf4c6f45635980570d9d4f4ecfcff3c917379dc77220daae2ca6d9866e08fb",
+      "learned_model_control": false,
+      "training_data_approved": false,
+      "notice": "Read-only necessary-condition diagnostic, not a replacement for source-bound admission, lane containment or closed-loop approval."
+    }
+  ],
+  "diagnostic_source_sha256": {
+    "/home/a/autoware_e2e/tools/e2e/audit_carla_raw_pre_admission.py": "0a7983857aea0e2b6588bb27712865ce1f70c27aa06a187fca4d0fc1a72dbc00",
+    "/home/a/autoware_e2e/tools/e2e/audit_portable_target_feasibility.py": "8b56a4990f51639ec5ff9bca12f7453051772d1984e4db768613384b25f00894",
+    "/home/a/autoware_e2e/tools/e2e/prepare_carla_common10_dataset.py": "eab12ef9d83f7ca72d8396ac46d77082cbafbc9600b44c59d733cb76e0de7e65"
+  },
+  "script_sha256": "7d653ddafbca62e298c77d5825ecbd12816db211bb8a430dbc03c742f6b8d14f",
+  "training_executed": false,
+  "automatic_promotion": false
+}

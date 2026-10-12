@@ -1,0 +1,351 @@
+{
+  "changed_fusion": false,
+  "changed_threshold": false,
+  "diagnostic_source_sha256": {
+    "/home/a/autoware_e2e/learning/tests/test_map_lane_evidence_diagnosis_20261001.py": "9b15d248bbd7eff6d706bcb06a055387b0e25467a4654832ccf0fe33c1f32892",
+    "/home/a/autoware_e2e/tools/e2e/diagnose_map_lane_evidence_20261001.py": "15751362f68c4515a85efe03ef6551044e8706c769e3866e29d426f96310a14a"
+  },
+  "gpu_used": false,
+  "hd_map_approved": false,
+  "input_sha256": {
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_left_control_grid.npz": "c8ff156ed9d0b6a06cde5ee158352ce37be2b6ce0ada887a2c6fd93784b7aeb6",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_left_geometry_grid.npz": "fb62b8d9edeea41d2abf50cc178772c629693353bea0ab4785e3fceb45c2b50f",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_left_oracle_grid.npz": "02a348b8ef980473cf08a4b9880062ca1e7c2f61dc284f5547563dfb903ac551",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_straight_control_grid.npz": "8ffcf92046cec6443dbc019a7e00a83265526933b55d6d118e6887b64d0d2e2d",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_straight_geometry_grid.npz": "0da23114c51d0b48dd4dfe3d9c0aa66ad06e06a63bd6c4d9dce6662bd5f8d20e",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/ctrack_straight_oracle_grid.npz": "744401e1247dcfca3de32202f8ca3efe323bc516aecc47a86b27864213afd5a5",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_geometry_full_projection/run_v1/summary.json": "b848700f12f740d1afb424187e4e5ef8fe3eb8af6819629b625da03da9397fd1",
+    "/home/a/autoware_e2e/learning/portable_e2e/mapping.py": "264f9dda759f6986bde9c614e5cf3ae21680a22ae58d855db11564ceb3b3b867",
+    "/home/a/autoware_e2e/learning/portable_e2e/mapping_projection.py": "c42ab7d20454475f544b8073d6a23a104a0a2bb1cc2cbb7be092fa3e871cbbee",
+    "/home/a/autoware_e2e/tools/e2e/project_map_geometry_full_20261001.py": "079f163a95d130e3aa0a1ac4ed209242ace86e85009bcec5070d14f3b5e33c3f",
+    "/home/a/autoware_e2e/tools/e2e/project_map_photometric_fixed_20261001.py": "a229abee7fc4a62bfe37e738ffdf212174b28c3a70f2e4e5d9fade47ee9a0bf3"
+  },
+  "interpretation": "Missing accepted lane evidence is the largest accounting category; final grids cannot identify the upstream raw-image, confidence, sampling or projection cause.",
+  "limitations": [
+    "No causal proof; zero accepted lane evidence does not prove a raw image perception miss or zero network lane probability.",
+    "Depth and pose are oracle simulator inputs; no ground-height filter was used and 2D cells can mix surfaces over time.",
+    "Any-lane-presence set counts illustrate rare-label promotion risk, not a new fusion run, threshold recommendation or accuracy guarantee.",
+    "Oracle-dominant non-lane cells can contain secondary oracle lane evidence; FP counts are relative to this fixed reference.",
+    "Original LEFT owner FAIL and unavailable original live replay remain unchanged; this is exposed external diagnostic evidence, not TRAIN eligibility."
+  ],
+  "loaded_final_numeric_grids": 6,
+  "neural_forwards": 0,
+  "results": {
+    "ctrack_left": {
+      "control": {
+        "accepted_lane_evidence_losing_to": {
+          "road": 89
+        },
+        "accepted_lane_evidence_missing": {
+          "among_current_lane_misses": {
+            "denominator": 1253,
+            "fraction": 0.9289704708699122,
+            "numerator": 1164
+          },
+          "denominator": 1375,
+          "fraction": 0.8465454545454546,
+          "numerator": 1164
+        },
+        "any_accepted_lane_presence_set_diagnostic": {
+          "current_dominant": {
+            "false_positive_cells": 40,
+            "lane_cells": 162,
+            "precision_vs_oracle_dominant": 0.7530864197530864,
+            "true_positive_cells": 122
+          },
+          "false_positive_cells_with_secondary_oracle_lane_evidence": 399,
+          "false_positive_cells_without_any_oracle_lane_evidence": 34,
+          "false_positive_oracle_dominant_labels": {
+            "road": 433
+          },
+          "if_every_lane_evidence_cell_were_labeled_lane": {
+            "additional_false_positive_cells": 393,
+            "additional_true_positive_cells": 89,
+            "false_positive_cells": 433,
+            "lane_cells": 644,
+            "precision_vs_oracle_dominant": 0.327639751552795,
+            "true_positive_cells": 211
+          },
+          "interpretation": "False positives are relative to oracle-dominant 2D cell labels, not proof of nonexistent physical markings.",
+          "this_is_not_a_changed_fusion_or_threshold_experiment": true
+        },
+        "counts_sum": 1375,
+        "exact_confidence_sum_tied_lane_losses": {
+          "count": 0,
+          "sorted_cell_xy_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        "four_way": {
+          "a_no_learned_observation": {
+            "count": 175,
+            "denominator": 1375,
+            "fraction": 0.12727272727272726,
+            "sorted_cell_xy_sha256": "649d8d38dafd224a734f9272f0601c9156702df40e6f6f43b96a6c4474a40dae"
+          },
+          "b_observed_without_accepted_lane_evidence": {
+            "count": 989,
+            "denominator": 1375,
+            "fraction": 0.7192727272727273,
+            "sorted_cell_xy_sha256": "bcb18fcaf13933957b30ab766dbebc23e5d4b7e6af78e98686e3cfd5e9471b5a"
+          },
+          "c_accepted_lane_evidence_loses": {
+            "count": 89,
+            "denominator": 1375,
+            "fraction": 0.06472727272727273,
+            "sorted_cell_xy_sha256": "f6540b91024c85414ff613b92bae3c7dab00637917cc6c4e9c3b81f5aff377b5"
+          },
+          "d_lane_dominant": {
+            "count": 122,
+            "denominator": 1375,
+            "fraction": 0.08872727272727272,
+            "sorted_cell_xy_sha256": "11e59c09639fbfd7ab08890e1304ce8071f0db28540bd4d7300a2d677bcc3c7a"
+          }
+        },
+        "observed_without_lane_dominant_labels": {
+          "road": 840,
+          "sidewalk": 149
+        },
+        "oracle_dominant_lane_cells": 1375
+      },
+      "geometry": {
+        "accepted_lane_evidence_losing_to": {
+          "road": 77
+        },
+        "accepted_lane_evidence_missing": {
+          "among_current_lane_misses": {
+            "denominator": 1241,
+            "fraction": 0.9379532634971797,
+            "numerator": 1164
+          },
+          "denominator": 1375,
+          "fraction": 0.8465454545454546,
+          "numerator": 1164
+        },
+        "any_accepted_lane_presence_set_diagnostic": {
+          "current_dominant": {
+            "false_positive_cells": 60,
+            "lane_cells": 194,
+            "precision_vs_oracle_dominant": 0.6907216494845361,
+            "true_positive_cells": 134
+          },
+          "false_positive_cells_with_secondary_oracle_lane_evidence": 404,
+          "false_positive_cells_without_any_oracle_lane_evidence": 41,
+          "false_positive_oracle_dominant_labels": {
+            "road": 445
+          },
+          "if_every_lane_evidence_cell_were_labeled_lane": {
+            "additional_false_positive_cells": 385,
+            "additional_true_positive_cells": 77,
+            "false_positive_cells": 445,
+            "lane_cells": 656,
+            "precision_vs_oracle_dominant": 0.32164634146341464,
+            "true_positive_cells": 211
+          },
+          "interpretation": "False positives are relative to oracle-dominant 2D cell labels, not proof of nonexistent physical markings.",
+          "this_is_not_a_changed_fusion_or_threshold_experiment": true
+        },
+        "counts_sum": 1375,
+        "exact_confidence_sum_tied_lane_losses": {
+          "count": 0,
+          "sorted_cell_xy_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        "four_way": {
+          "a_no_learned_observation": {
+            "count": 116,
+            "denominator": 1375,
+            "fraction": 0.08436363636363636,
+            "sorted_cell_xy_sha256": "85819faa1afce998943b5200838014ff1f1bc38a7a205f182791b66ccd22d619"
+          },
+          "b_observed_without_accepted_lane_evidence": {
+            "count": 1048,
+            "denominator": 1375,
+            "fraction": 0.7621818181818182,
+            "sorted_cell_xy_sha256": "8aae4becdac93450b9d667673993c8bee10132f5eec175a22dcd334d7f24d3c5"
+          },
+          "c_accepted_lane_evidence_loses": {
+            "count": 77,
+            "denominator": 1375,
+            "fraction": 0.056,
+            "sorted_cell_xy_sha256": "70e132d3bcaeac332b02d64499c1fb1e0acc276ef662c1e94c3f3a9729ad6bcd"
+          },
+          "d_lane_dominant": {
+            "count": 134,
+            "denominator": 1375,
+            "fraction": 0.09745454545454546,
+            "sorted_cell_xy_sha256": "34e3363cd7011c01077da3f38fe86ee920400385aa10f59ff7648d63fec782ab"
+          }
+        },
+        "observed_without_lane_dominant_labels": {
+          "road": 947,
+          "sidewalk": 101
+        },
+        "oracle_dominant_lane_cells": 1375
+      }
+    },
+    "ctrack_straight": {
+      "control": {
+        "accepted_lane_evidence_losing_to": {
+          "pole": 6,
+          "road": 18
+        },
+        "accepted_lane_evidence_missing": {
+          "among_current_lane_misses": {
+            "denominator": 925,
+            "fraction": 0.9740540540540541,
+            "numerator": 901
+          },
+          "denominator": 1172,
+          "fraction": 0.7687713310580204,
+          "numerator": 901
+        },
+        "any_accepted_lane_presence_set_diagnostic": {
+          "current_dominant": {
+            "false_positive_cells": 58,
+            "lane_cells": 305,
+            "precision_vs_oracle_dominant": 0.8098360655737705,
+            "true_positive_cells": 247
+          },
+          "false_positive_cells_with_secondary_oracle_lane_evidence": 545,
+          "false_positive_cells_without_any_oracle_lane_evidence": 125,
+          "false_positive_oracle_dominant_labels": {
+            "road": 635,
+            "sidewalk": 35
+          },
+          "if_every_lane_evidence_cell_were_labeled_lane": {
+            "additional_false_positive_cells": 612,
+            "additional_true_positive_cells": 24,
+            "false_positive_cells": 670,
+            "lane_cells": 941,
+            "precision_vs_oracle_dominant": 0.2879914984059511,
+            "true_positive_cells": 271
+          },
+          "interpretation": "False positives are relative to oracle-dominant 2D cell labels, not proof of nonexistent physical markings.",
+          "this_is_not_a_changed_fusion_or_threshold_experiment": true
+        },
+        "counts_sum": 1172,
+        "exact_confidence_sum_tied_lane_losses": {
+          "count": 0,
+          "sorted_cell_xy_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        "four_way": {
+          "a_no_learned_observation": {
+            "count": 116,
+            "denominator": 1172,
+            "fraction": 0.09897610921501707,
+            "sorted_cell_xy_sha256": "1d6026948e15f848becfccbe5d00361ee1c0aefbccb289bb3af97100295d9c00"
+          },
+          "b_observed_without_accepted_lane_evidence": {
+            "count": 785,
+            "denominator": 1172,
+            "fraction": 0.6697952218430034,
+            "sorted_cell_xy_sha256": "645e9074e97651f1c6a4cd80629f24988acd8a21e2fb68b713dec1bf7ee663a5"
+          },
+          "c_accepted_lane_evidence_loses": {
+            "count": 24,
+            "denominator": 1172,
+            "fraction": 0.020477815699658702,
+            "sorted_cell_xy_sha256": "7f358419d5b9d09dade76a1ae153548158d8d5982202ef59636144bc0f9bbecd"
+          },
+          "d_lane_dominant": {
+            "count": 247,
+            "denominator": 1172,
+            "fraction": 0.21075085324232082,
+            "sorted_cell_xy_sha256": "81c7508cb8a48cc989c4a2a3ba54b38c268a5de07fde7571370decec6b93ab49"
+          }
+        },
+        "observed_without_lane_dominant_labels": {
+          "pole": 31,
+          "road": 661,
+          "sidewalk": 93
+        },
+        "oracle_dominant_lane_cells": 1172
+      },
+      "geometry": {
+        "accepted_lane_evidence_losing_to": {
+          "road": 19
+        },
+        "accepted_lane_evidence_missing": {
+          "among_current_lane_misses": {
+            "denominator": 899,
+            "fraction": 0.978865406006674,
+            "numerator": 880
+          },
+          "denominator": 1172,
+          "fraction": 0.7508532423208191,
+          "numerator": 880
+        },
+        "any_accepted_lane_presence_set_diagnostic": {
+          "current_dominant": {
+            "false_positive_cells": 76,
+            "lane_cells": 349,
+            "precision_vs_oracle_dominant": 0.7822349570200573,
+            "true_positive_cells": 273
+          },
+          "false_positive_cells_with_secondary_oracle_lane_evidence": 560,
+          "false_positive_cells_without_any_oracle_lane_evidence": 147,
+          "false_positive_oracle_dominant_labels": {
+            "road": 662,
+            "sidewalk": 45
+          },
+          "if_every_lane_evidence_cell_were_labeled_lane": {
+            "additional_false_positive_cells": 631,
+            "additional_true_positive_cells": 19,
+            "false_positive_cells": 707,
+            "lane_cells": 999,
+            "precision_vs_oracle_dominant": 0.2922922922922923,
+            "true_positive_cells": 292
+          },
+          "interpretation": "False positives are relative to oracle-dominant 2D cell labels, not proof of nonexistent physical markings.",
+          "this_is_not_a_changed_fusion_or_threshold_experiment": true
+        },
+        "counts_sum": 1172,
+        "exact_confidence_sum_tied_lane_losses": {
+          "count": 0,
+          "sorted_cell_xy_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        "four_way": {
+          "a_no_learned_observation": {
+            "count": 79,
+            "denominator": 1172,
+            "fraction": 0.0674061433447099,
+            "sorted_cell_xy_sha256": "19ad8edb6e4e5f38ac1fd60625d2aae785d61783286212ecf51d69ba435adacb"
+          },
+          "b_observed_without_accepted_lane_evidence": {
+            "count": 801,
+            "denominator": 1172,
+            "fraction": 0.6834470989761092,
+            "sorted_cell_xy_sha256": "2fef6f51dc41ffb6caa5dc6c3312b08525827a6486e8b0db24e96bbd5739066f"
+          },
+          "c_accepted_lane_evidence_loses": {
+            "count": 19,
+            "denominator": 1172,
+            "fraction": 0.016211604095563138,
+            "sorted_cell_xy_sha256": "dcf8f09125bd149e3b55531194ae85258322cec29cbf4f958cd6e18a48340eef"
+          },
+          "d_lane_dominant": {
+            "count": 273,
+            "denominator": 1172,
+            "fraction": 0.23293515358361774,
+            "sorted_cell_xy_sha256": "c29478546ccb183b36d12598ea4d82a52b8897a2188e757e2b880b601eaf919e"
+          }
+        },
+        "observed_without_lane_dominant_labels": {
+          "pole": 5,
+          "road": 667,
+          "sidewalk": 129
+        },
+        "oracle_dominant_lane_cells": 1172
+      }
+    }
+  },
+  "schema": "portable_e2e.map_lane_accepted_evidence_diagnosis.v1",
+  "simulator_launched": false,
+  "source_semantics": {
+    "dominant": "max accumulated confidence_sum; exact ties retain first label insertion order from label_order",
+    "frame_aggregation": "maximum positive confidence per frame/cell/class; one frame vote per class, then sums across frames",
+    "observed_frames_is_not_the_dominant_key": true,
+    "observed_scope": "accepted projected labels only: argmax class, confidence>=0.5, stride3, strict0.1<depth<40m,0.2m grid",
+    "tie_uses_class_id": false
+  },
+  "status": "POST_HOC_FROZEN_GRID_ACCOUNTING_ONLY",
+  "training_steps": 0
+}

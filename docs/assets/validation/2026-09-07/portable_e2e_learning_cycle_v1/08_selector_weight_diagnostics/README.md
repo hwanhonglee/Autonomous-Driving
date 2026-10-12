@@ -74,4 +74,4 @@ Town04 held-out `test`는 열지 않았다.
 원본 JSON 2개와 PNG 12개에는 계정별 경로가 없어 bytes 그대로 발행했다. JSON의 PNG별
 hash와 [SHA256SUMS](SHA256SUMS)로 검증할 수 있다. checkpoint 자체는 private 자료에
 보관한다. 전체 반복 과정은 [학습·검증 반복 가이드](../../../../../portable-e2e-learning-loop.md),
-도구는 [selector 진단 CLI](../../../../../../scripts/e2e/diagnose_portable_selector.py)에 있다.
+도구는 [selector 진단 CLI](../../../../../../tools/e2e/diagnose_portable_selector.py)에 있다.

@@ -11,7 +11,7 @@
 학습을 앞당기기 위해 기존 v3 데이터의 한계를 명시한 탐색적 비교부터 진행했으며,
 새 검증 데이터에서의 품질 확인은 별도로 남습니다.
 
-설정은 [perspective_trajectory_physical_no_accel_v1.model.json](../portable_e2e/config/perspective_trajectory_physical_no_accel_v1.model.json)입니다. 기존 physical-v1 설정에서 모델 ID만 다릅니다.
+설정은 [perspective_trajectory_physical_no_accel_v1.model.json](../learning/portable_e2e/config/perspective_trajectory_physical_no_accel_v1.model.json)입니다. 기존 physical-v1 설정에서 모델 ID만 다릅니다.
 
 ## 무엇이 같고 다른가
 

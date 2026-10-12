@@ -1,0 +1,27 @@
+# HH_261001 — Prospective W1 → W2 matched short replay
+
+This protocol is fixed before the W2 training outcome. It is a simulation-only diagnostic on the known Town07 TRAIN straight route, not independent validation, training-data admission, model promotion, or a route-completion claim. No simulator is started by preparation or export.
+
+## Endpoint eligibility and late binding
+
+W1 is the existing warmup-anchor-off checkpoint `b9ee946ada6824e7d79f51bc1693463dc506db3faaa9038ddaa05816cf7ecf76`, model state `ffcb58cd319bb6d1db412da71f8f9ef8697613482cdd2d760c64b7abbf6f110f`. Its existing NPZ and metadata remain unchanged.
+
+W2 is exclusively the final endpoint of `portable_e2e.warmup_duration_w2_20261001.v1`, arm `W2_warmup_anchor_off_4blocks`: 12,000 scheduled batches, 11,996 optimizer updates, 47,984 forwarded rows, 48,000 scheduled rows, and 46,196 active-supervision exposures. The skipped one-based schedule steps are exactly 1693, 4693, 7693, and 10693. The original AH parent, W1 schedule, mask, data, architecture, loss, optimizer continuity, and frozen training-source closure must match the W2 training preregistration. The mandatory first-block actual model state must equal the W1 state above after 2,999 updates; its actual checkpoint and receipt are verified, not merely their asserted fields. This checkpoint is identity evidence only and is never selected as W2.
+
+The W2 checkpoint SHA256 is deliberately unknown now. After the fixed training run ends, the operator supplies its exact SHA256 to a restricted CPU `weights_only=True` reader. The wrapper verifies the final checkpoint, parent and first-block tensors, fixed-end receipt, final complete status, and all 27 archived training sources. It does not use DEV or TRAIN metric values to select or reject a completed endpoint. A new exclusive-create JSON binding records the exact checkpoint, model-state, NPZ, metadata, training-evidence, source-closure and this plan hashes. Every subsequent preflight, worker and owner requires the caller's exact binding SHA256. There is no wildcard, latest-file selection, unsafe pickle fallback, first-block substitution, retry or replacement binding. Export contains only finite strict model-ABI numeric arrays, not optimizer state; runtime loading uses `allow_pickle=False`.
+
+## Fixed paired capture
+
+Run one fresh owned W1 replay first, then one fresh owned W2 replay. Both use the same new wrapper and sparse observation cadence. Historical W1 all-input archives are descriptive context, not the matched control. W2 may proceed after a retained W1 driving/runtime failure if owner cleanup and source checks succeed; do not select on progress, comfort or model scores. If W1 ownership/source cleanup fails, stop for explicit review.
+
+Each arm: packaged CARLA 0.9.15 Town07, exact original straight route SHA256 `8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9`; seed 0, ClearNoon, existing six-camera geometry and appearance, 20 Hz physics, 10 Hz camera capture, 1.2 s stationary warmup, total budget exactly 20 s, goal-stop profile disabled. Teacher target is 9 km/h and learned speed cap is 2.5 m/s. Original argmax selection, gains, lookahead, runtime gates, teacher emergency override, 1 m CTE emergency threshold, source/process-generation/port ownership gates and cleanup remain unchanged. No trajectory filtering, score filtering, smoothing, clipping, fallback concealment, controller retuning or model changes.
+
+Archive actual pre-forward six-field inputs at inference call indices 0, 10, 20, … for both arms using the existing sparse observer. Copy overhead remains inside the unchanged policy deadline; disk writing is separately timed outside it. Retain every control proposal, actual ACK, native state, camera record, raw output, emergency and failure; do not delete failed windows. Report exact archive coverage, not all-inference coverage.
+
+Outputs are fresh `warmup_duration_W1_town07_sparse20_v1` and `warmup_duration_W2_town07_sparse20_v1` under `storage/experiments/validation/2026-10-01`. No long run is authorized. A 20 s budget completion is not full-route completion or learned goal stopping.
+
+## Disk and prospective analysis
+
+Prior measured sparse C9/C30 20 s directories consumed 230,596,060 and 231,019,612 bytes (about 220 MiB), so reserve 256 MiB per arm plus 64 MiB shared renderer/log headroom above a 5 GiB floor. Initial paired reservation requires at least 5 GiB + 576 MiB free; each arm separately requires 5 GiB + 320 MiB. Recheck under the owner workspace lock before process launch. During capture, stop through the existing retained-failure cleanup if free space is below 5 GiB + 16 MiB before a camera bundle. This is a bounded allocation estimate, not a filesystem quota; other writers can invalidate it. Do not delete prior evidence to fit. Lack of reserve blocks execution without changing duration or observation cadence.
+
+Compare fixed full raw traces: native duration/rates, learned handoff and ACK counts, progress and speed, selected candidate and complete 64-step runtime gates, raw and swept 10 cm body-lane clearance, collisions/invasions, longitudinal/lateral acceleration, emergency/fallback, source/tensor identity, sparse coverage, owner process extinction and TCP/UDP release. Preserve cleanup separately from driving outcome. No outcome-dependent extension, retraining, admission, metric-based endpoint selection or post hoc window exclusion. One paired sample cannot establish population-level or unseen-town generalization.

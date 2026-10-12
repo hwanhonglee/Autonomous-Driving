@@ -1,0 +1,146 @@
+{
+  "schema": "portable_e2e.independent_c_track_right_offline_scout.v1",
+  "status": "NO_PHYSICAL_TURN_PASS",
+  "split": "TRAIN_CANDIDATE_C_TRACK_1_0_7",
+  "split_source_path": "/home/a/autoware_e2e/storage/experiments/training/2026-09-15/moving_cohort_v1/cohort.json",
+  "split_source_sha256": "32765291218e35ce1ea002db68f8b2e0b694889252c82e5e38bc8cde8f271863",
+  "split_source_ct_slot_count": 6,
+  "source_xodr_path": "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr",
+  "source_xodr_sha256": "3f760b8ec8cb117a975c9631a74948b620c991aeaef5c1b07497ebb37ec7be27",
+  "scout_tool_sha256": "039812c5a545efb2e6930458d55a31d9e0f31bcc9eaba29a318eea89a2805456",
+  "physical_turn_source_sha256": "94359e82390ab8c115c514bae6cb874f233bc46b548a6cab239f2e49551bcdfd",
+  "route_serializer_source_sha256": "482f0ea2af2f6e5b53619237b1442ddb78e211b9374f6529480768346f304c5d",
+  "planner_source_sha256": "9b164a2de723d91d55cd1203543747580c1c6c509ed0294a6de17b001f7db8d0",
+  "physical_turn_profile": "carla_vad_30kph_v2",
+  "right_heading_range_deg": [
+    60,
+    120
+  ],
+  "sampling_resolution_m": 1.0,
+  "fixed_window_m": [
+    30.0,
+    120.0
+  ],
+  "minimum_route_length_m": 146.0,
+  "future_at_9kmh_m": 16.0,
+  "future_guard_m": 10.0,
+  "moving_contract": {
+    "minimum_continuous_sec": 30.0,
+    "speed_strictly_above_mps": 0.5
+  },
+  "goal_tolerance_m": 2.5,
+  "connector_count": 65,
+  "signal_controlled_connectors_excluded": 0,
+  "scopes": [
+    {
+      "upstream_m": 50,
+      "downstream_m": 90,
+      "stages": {
+        "endpoint_pairs": 650,
+        "unreachable_endpoint_pairs": 62,
+        "length_at_least_146m": 342,
+        "traverses_selected_connector": 238,
+        "single_right_no_other_maneuver": 2,
+        "right_turn_in_fixed_window": 2,
+        "physical_turn_pass": 0
+      }
+    },
+    {
+      "upstream_m": 60,
+      "downstream_m": 80,
+      "stages": {
+        "endpoint_pairs": 692,
+        "unreachable_endpoint_pairs": 35,
+        "length_at_least_146m": 343,
+        "traverses_selected_connector": 233,
+        "single_right_no_other_maneuver": 1,
+        "right_turn_in_fixed_window": 1,
+        "physical_turn_pass": 0
+      }
+    },
+    {
+      "upstream_m": 60,
+      "downstream_m": 100,
+      "stages": {
+        "endpoint_pairs": 896,
+        "unreachable_endpoint_pairs": 57,
+        "length_at_least_146m": 493,
+        "traverses_selected_connector": 304,
+        "single_right_no_other_maneuver": 1,
+        "right_turn_in_fixed_window": 1,
+        "physical_turn_pass": 0
+      }
+    },
+    {
+      "upstream_m": 70,
+      "downstream_m": 80,
+      "stages": {
+        "endpoint_pairs": 777,
+        "unreachable_endpoint_pairs": 43,
+        "length_at_least_146m": 422,
+        "traverses_selected_connector": 274,
+        "single_right_no_other_maneuver": 0,
+        "right_turn_in_fixed_window": 0,
+        "physical_turn_pass": 0
+      }
+    }
+  ],
+  "total_endpoint_pairs": 3015,
+  "total_physical_turn_pass": 0,
+  "best_rejected_witness": {
+    "upstream_m": 60,
+    "downstream_m": 100,
+    "junction_id": 1106,
+    "connector_road_id": 1117,
+    "connector_lane_id": -1,
+    "start_index": 0,
+    "goal_index": 0,
+    "start": {
+      "road_id": 869,
+      "lane_id": -1,
+      "xyz_carla_m": [
+        -35.61627197265625,
+        65.39012908935547,
+        7.355676174163818
+      ],
+      "yaw_carla_deg": -426.5947570800781
+    },
+    "goal": {
+      "road_id": 79,
+      "lane_id": 1,
+      "xyz_carla_m": [
+        83.56194305419922,
+        86.56946563720703,
+        13.911271095275879
+      ],
+      "yaw_carla_deg": 44.386444091796875
+    },
+    "route_sha256": "767bed680c7486dc2d31b2770d5e2f42d4f2dbb8f49f7b0fbfcbfe1087789996",
+    "route_length_m": 175.5530955846169,
+    "right_turn_m": [
+      60.21618181467056,
+      75.56394124031067
+    ],
+    "physical_failure_reasons": [
+      "longitudinal grade exceeds the controller capability"
+    ],
+    "maximum_grade_ratio": 0.18007387678482162,
+    "allowed_grade_ratio": 0.09983341664682815,
+    "worst_grade_window": {
+      "start_distance_m": 38.69457298517227,
+      "end_distance_m": 43.69457298517227,
+      "start_z_m": 9.583185456163783,
+      "end_z_m": 10.48355484008789,
+      "rise_m": 0.900369383924108,
+      "signed_grade_ratio": 0.18007387678482162,
+      "absolute_grade_ratio": 0.18007387678482162
+    }
+  },
+  "live_map_sha_verified": false,
+  "nominal_body_corridor_verified": false,
+  "continuous_moving_verified": false,
+  "actual_goal_verified": false,
+  "capture_authorized": false,
+  "dataset_admitted": false,
+  "training_executed": false
+}

@@ -1,0 +1,4312 @@
+{
+  "schema": "portable_e2e.other_non_test_right_static_scout.v2",
+  "status": "BOUNDED_OFFLINE_AUDIT",
+  "scope": "Town03 DEV, Town02_Opt TRAIN candidate, Town05_Opt split-conflicted DEV candidate",
+  "source_sha256": {
+    "tools/e2e/physical_turn_geometry.py": "94359e82390ab8c115c514bae6cb874f233bc46b548a6cab239f2e49551bcdfd",
+    "tools/e2e/prepare_carla_route.py": "482f0ea2af2f6e5b53619237b1442ddb78e211b9374f6529480768346f304c5d",
+    "tools/e2e/rank_town01_v5_long_turns.py": "dfb2dd5647ec27707d535f69f34b6612454d7b7d499b9be81230e33da78e26fa",
+    "tools/e2e/rank_town01_wide_turns.py": "9cf96cdd0730d68b6da4177076b3f957fe3b693b3c2fc82a684faef562d5cef1",
+    "tools/e2e/audit_future_actor_lane_containment.py": "75d73449c8ffb17e27d1ddb419bd064a58ab052043b2a7b0ada69de8a65fa57d",
+    "tools/e2e/audit_new_long_turn_candidates.py": "bb9f8c863d5bbb9e3b3f8f3b0f869af9c6a66a921b7980b10ee21c948198cc59",
+    "storage/datasets/prepared/carla-common10-trainval-research-20260914-v1/dataset.json": "c73900cedce870a0f55663fde08b3a64b90fae139506fbe2099fdc8bf991c4a9",
+    "docs/assets/validation/2026-09-27/map_next_training_design/README.md": "656d38b18d39b1847c2b5ced606140edf97456c530128a1cc965a2358aafe630",
+    "storage/datasets/raw/carla/common10_v1/2026-09-05/30kph/town03/turn/qualified/b1_compact_lookahead/ClearNoon/seed_0000/run_002/episode/route.json": "47ea507b9a4228fdce79ef58eff1e1d2cf149c02dd2df413ebadf53756f771ee",
+    "storage/experiments/training/2026-09-27/drive_long_route_town01_right_s0002_p06_9kph_steer045_purge15_trial_v1/episode/manifest.json": "9258274bd2c426c186db2b811fca0e546b7423fcec75c11d41702c8bea14dbb8"
+  },
+  "planner_source_sha256": "9b164a2de723d91d55cd1203543747580c1c6c509ed0294a6de17b001f7db8d0",
+  "physical_turn_profile": "carla_vad_30kph_v2",
+  "right_heading_range_deg": [
+    60,
+    120
+  ],
+  "sampling_resolution_m": 1.0,
+  "upstream_grid_m": [
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+  ],
+  "downstream_grid_m": [
+    80,
+    100,
+    120,
+    140,
+    160
+  ],
+  "fixed_window_m": [
+    30.0,
+    120.0
+  ],
+  "target_speed_kmh_for_distance_budget_only": 9.0,
+  "minimum_route_length_m": 146.0,
+  "future_sec": 6.4,
+  "future_distance_at_9kmh_m": 16.0,
+  "future_guard_m": 10.0,
+  "moving_contract": {
+    "speed_strictly_above_mps": 0.5,
+    "minimum_continuous_sec": 30.0
+  },
+  "goal_tolerance_m": 2.5,
+  "maps": [
+    {
+      "town": "Town03",
+      "xodr_path": "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town03.xodr",
+      "xodr_sha256": "abf177bcd9b66cfefb7ac4919f6456815f1384f4229f1343c8a6a90bbb7713c9",
+      "old_dev_site": {
+        "lane_transitions": [
+          [
+            817,
+            0,
+            1
+          ],
+          [
+            19,
+            0,
+            1
+          ]
+        ],
+        "center_xy_ros_m": [
+          -72.93460083007812,
+          133.51820373535156
+        ],
+        "junction_id": 730,
+        "route_sha256": "47ea507b9a4228fdce79ef58eff1e1d2cf149c02dd2df413ebadf53756f771ee"
+      },
+      "counts": {
+        "right_connectors": 57,
+        "endpoint_pairs": 7154,
+        "unreachable_pairs": 0,
+        "length_at_least_146m": 6206,
+        "traverses_connector": 5445,
+        "single_right_no_other_maneuver": 183,
+        "turn_inside_30_120m": 115,
+        "physical_turn_pass": 20,
+        "signal_record_free_pass": 10,
+        "novel_junction_pass": 4,
+        "no_other_junction_in_protected_span_pass": 9
+      },
+      "candidate_errors": {},
+      "physical_rejections": {
+        "initial lateral deviation exceeds the maximum": 61,
+        "initial heading change exceeds the maximum": 40,
+        "longitudinal grade exceeds the controller capability": 13,
+        "turn p95 absolute curvature exceeds the maximum": 37,
+        "turn command arc length exceeds the maximum": 12,
+        "turn command tail distance exceeds the maximum": 17,
+        "turn command lead distance exceeds the maximum": 15
+      },
+      "physical_pass_routes": [
+        {
+          "junction_id": 238,
+          "connector_road_id": 255,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 91.14054870605469,
+          "upstream_m": 50,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 144,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -11.076027870178223,
+              130.73277282714844,
+              0.0
+            ],
+            "yaw_carla_deg": 179.3424072265625
+          },
+          "goal": {
+            "road_id": 4,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -74.25486755371094,
+              40.36225128173828,
+              0.31233319640159607
+            ],
+            "yaw_carla_deg": 269.84375
+          },
+          "route_length_m": 151.61500854676018,
+          "right_turn_m": [
+            50.3005485534668,
+            71.6030524969101
+          ],
+          "route_sha256": "bb98feeb63037b32d591fd0e0c061eb44c568973ebc1d858949605aa91c9c195",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            144,
+            255,
+            316
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            316
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                255,
+                0,
+                1
+              ],
+              [
+                4,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -71.33065032958984,
+              -130.22994995117188
+            ],
+            "center_distance_to_existing_dev_m": 263.75303075084844
+          }
+        },
+        {
+          "junction_id": 238,
+          "connector_road_id": 255,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 91.14054870605469,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 144,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -1.003614068031311,
+              130.84698486328125,
+              0.0
+            ],
+            "yaw_carla_deg": -178.2371826171875
+          },
+          "goal": {
+            "road_id": 4,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -74.25486755371094,
+              40.36225128173828,
+              0.31233319640159607
+            ],
+            "yaw_carla_deg": 269.84375
+          },
+          "route_length_m": 161.68480689709435,
+          "right_turn_m": [
+            60.370346903800964,
+            81.67285084724426
+          ],
+          "route_sha256": "e4a97b4f8389daef93e70a6d9f1dd2839b88feea8c83ae07f12cfde074249831",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            144,
+            255,
+            316
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            316
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                255,
+                0,
+                1
+              ],
+              [
+                4,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -71.33065032958984,
+              -130.22994995117188
+            ],
+            "center_distance_to_existing_dev_m": 263.75303075084844
+          }
+        },
+        {
+          "junction_id": 238,
+          "connector_road_id": 255,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 91.14054870605469,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 144,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              8.927148818969727,
+              130.95965576171875,
+              0.0
+            ],
+            "yaw_carla_deg": -180.46267700195312
+          },
+          "goal": {
+            "road_id": 4,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -74.25486755371094,
+              40.36225128173828,
+              0.31233319640159607
+            ],
+            "yaw_carla_deg": 269.84375
+          },
+          "route_length_m": 171.6168273824955,
+          "right_turn_m": [
+            70.30236738920212,
+            91.60487133264542
+          ],
+          "route_sha256": "330f2e36eed66df44d12914efcb9157a4d341aa6bb9a023105d0b0d9d2328201",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            144,
+            255,
+            316
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            316
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                255,
+                0,
+                1
+              ],
+              [
+                4,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -71.33065032958984,
+              -130.22994995117188
+            ],
+            "center_distance_to_existing_dev_m": 263.75303075084844
+          }
+        },
+        {
+          "junction_id": 238,
+          "connector_road_id": 255,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 91.14054870605469,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 144,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              18.915363311767578,
+              130.8220977783203,
+              0.0
+            ],
+            "yaw_carla_deg": 179.18280029296875
+          },
+          "goal": {
+            "road_id": 4,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -74.25486755371094,
+              40.36225128173828,
+              0.31233319640159607
+            ],
+            "yaw_carla_deg": 269.84375
+          },
+          "route_length_m": 181.60788805668602,
+          "right_turn_m": [
+            80.29342806339264,
+            101.59593200683594
+          ],
+          "route_sha256": "e2ed4fac231dea6375aaa79dc2780096942edc9c0a79d26c8afd185427fe9145",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            144,
+            255,
+            316
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            144,
+            316
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                255,
+                0,
+                1
+              ],
+              [
+                4,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -71.33065032958984,
+              -130.22994995117188
+            ],
+            "center_distance_to_existing_dev_m": 263.75303075084844
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 19,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -15.090758323669434,
+              -138.5956268310547,
+              0.0
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -16.627004623413086,
+              -194.42092895507812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 158.84658977232834,
+          "right_turn_m": [
+            49.72999441623688,
+            67.05871343612671
+          ],
+          "route_sha256": "29188efd8f793dae0bd7ef0a04320478198fe60dc4a54618853c25e64090e962",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -5.093053340911865,
+              -138.38145446777344,
+              0.0
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -36.62069320678711,
+              -194.92337036132812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 149.42658838352884,
+          "right_turn_m": [
+            60.309993267059326,
+            77.63871228694916
+          ],
+          "route_sha256": "373bbdb38594f1a9f78f147d3f5c54f397783d7440ae4cb531de997d1c948f2c",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 60,
+          "downstream_m": 100,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -5.093053340911865,
+              -138.38145446777344,
+              0.0
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -16.627004623413086,
+              -194.42092895507812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 169.4265886231508,
+          "right_turn_m": [
+            60.309993267059326,
+            77.63871228694916
+          ],
+          "route_sha256": "9a89d43701d05100c62427403ee00d777e91da39aea49138036d0167f83b73df",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              4.904654026031494,
+              -138.16726684570312,
+              0.0
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -36.62069320678711,
+              -194.92337036132812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 159.4265895160171,
+          "right_turn_m": [
+            70.30999439954758,
+            87.63871341943741
+          ],
+          "route_sha256": "95eed881ff6263fbce46fdf743d9b2a908c990be1dbea5f12c1184ce39f2e099",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 70,
+          "downstream_m": 100,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              4.904654026031494,
+              -138.16726684570312,
+              0.0
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -16.627004623413086,
+              -194.42092895507812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 179.42658975563904,
+          "right_turn_m": [
+            70.30999439954758,
+            87.63871341943741
+          ],
+          "route_sha256": "adcceab9ebb71549b442c6e587d16c74b21057e85213c9d3b854ed198e3cd2fe",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              14.902359008789062,
+              -137.95309448242188,
+              0.0012355436338111758
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -36.62069320678711,
+              -194.92337036132812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 169.42659261545862,
+          "right_turn_m": [
+            80.3099974989891,
+            97.63871651887894
+          ],
+          "route_sha256": "0ab0bfec8a21dc44e90e87e9bae9597fe6c6b8c8117c2f37f68e380551e67d86",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 783,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 90.61009979248047,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 2,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1230,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              14.902359008789062,
+              -137.95309448242188,
+              0.0012355436338111758
+            ],
+            "yaw_carla_deg": -178.77273559570312
+          },
+          "goal": {
+            "road_id": 2,
+            "lane_id": 3,
+            "xyz_carla_m": [
+              -16.627004623413086,
+              -194.42092895507812,
+              0.0
+            ],
+            "yaw_carla_deg": 1.4395599365234375
+          },
+          "route_length_m": 189.42659285508057,
+          "right_turn_m": [
+            80.3099974989891,
+            97.63871651887894
+          ],
+          "route_sha256": "d47d2b36e6c2436d194fc5b00f03a9a3ebce5d8fcd9a37628125af0cad48c91c",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1230
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            809
+          ],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                783,
+                0,
+                -1
+              ],
+              [
+                2,
+                0,
+                3
+              ]
+            ],
+            "center_xy_ros_m": [
+              -72.66541290283203,
+              142.25299072265625
+            ],
+            "center_distance_to_existing_dev_m": 8.738933908307256
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 791,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 89.38988494873047,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 2,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -36.268978118896484,
+              -208.9189453125,
+              0.0
+            ],
+            "yaw_carla_deg": -178.56044006347656
+          },
+          "goal": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -148.9734649658203,
+              -66.76737213134766,
+              0.2683815062046051
+            ],
+            "yaw_carla_deg": 90.02984619140625
+          },
+          "route_length_m": 215.48560263263062,
+          "right_turn_m": [
+            94.07064294815063,
+            112.69165909290314
+          ],
+          "route_sha256": "401a26fb4e664cb2f432d5af0b22e427b44fd43160fab26fd9f95baca5327015",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                791,
+                0,
+                -1
+              ],
+              [
+                20,
+                0,
+                -1
+              ]
+            ],
+            "center_xy_ros_m": [
+              -91.13653564453125,
+              142.2000732421875
+            ],
+            "center_distance_to_existing_dev_m": 20.166439673956543
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 791,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 89.38988494873047,
+          "upstream_m": 80,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 2,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -36.268978118896484,
+              -208.9189453125,
+              0.0
+            ],
+            "yaw_carla_deg": -178.56044006347656
+          },
+          "goal": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -148.98388671875,
+              -46.767372131347656,
+              0.06548607349395752
+            ],
+            "yaw_carla_deg": 90.02984619140625
+          },
+          "route_length_m": 235.4866923247464,
+          "right_turn_m": [
+            94.07064294815063,
+            112.69165909290314
+          ],
+          "route_sha256": "267d6b3c232d6852b68e305e6bf649132c34585fa4fac8ab13e22685b58c9239",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                791,
+                0,
+                -1
+              ],
+              [
+                20,
+                0,
+                -1
+              ]
+            ],
+            "center_xy_ros_m": [
+              -91.13653564453125,
+              142.2000732421875
+            ],
+            "center_distance_to_existing_dev_m": 20.166439673956543
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 791,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 89.38988494873047,
+          "upstream_m": 80,
+          "downstream_m": 140,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 2,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -36.268978118896484,
+              -208.9189453125,
+              0.0
+            ],
+            "yaw_carla_deg": -178.56044006347656
+          },
+          "goal": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              -148.9943084716797,
+              -26.767375946044922,
+              0.0
+            ],
+            "yaw_carla_deg": 90.02984619140625
+          },
+          "route_length_m": 255.48687020037372,
+          "right_turn_m": [
+            94.07064294815063,
+            112.69165909290314
+          ],
+          "route_sha256": "8443c02db3ffff98b4fedbc966772ef3c68d6854f6219d0b89b7a957ec921444",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                791,
+                0,
+                -1
+              ],
+              [
+                20,
+                0,
+                -1
+              ]
+            ],
+            "center_xy_ros_m": [
+              -91.13653564453125,
+              142.2000732421875
+            ],
+            "center_distance_to_existing_dev_m": 20.166439673956543
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.46304321289062,
+              -86.76554107666016,
+              0.49601638317108154
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.48748016357422,
+              -44.909244537353516,
+              -0.5017585158348083
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 176.77827842419396,
+          "right_turn_m": [
+            77.30255895853043,
+            96.76834279298782
+          ],
+          "route_sha256": "ebac4e103e82fdf26eed75936a33a02cc4c554bb641d39183606dc7fdeaede04",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.46304321289062,
+              -86.76554107666016,
+              0.49601638317108154
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.43292999267578,
+              -24.909318923950195,
+              -0.20881633460521698
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 196.78042480828995,
+          "right_turn_m": [
+            77.30255895853043,
+            96.76834279298782
+          ],
+          "route_sha256": "ed4b00740659475310d2eb96582aabd2f648c0f8a60dda17c82ff84218f94489",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 90,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.46826171875,
+              -76.76554107666016,
+              0.3821989595890045
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.48748016357422,
+              -44.909244537353516,
+              -0.5017585158348083
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 186.7789269227291,
+          "right_turn_m": [
+            87.30320745706558,
+            106.76899129152298
+          ],
+          "route_sha256": "78d919f8208d24bebf497fcc9c4d0d73eed892e31450b73d3ed9469575fe2984",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 90,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.46826171875,
+              -76.76554107666016,
+              0.3821989595890045
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.43292999267578,
+              -24.909318923950195,
+              -0.20881633460521698
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 206.7810733068251,
+          "right_turn_m": [
+            87.30320745706558,
+            106.76899129152298
+          ],
+          "route_sha256": "396ae3f33f911c1d5b3c183c71c9eb0075913c2264412c038257f583334fd4d2",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 100,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.4734649658203,
+              -66.76554107666016,
+              0.2683815062046051
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.48748016357422,
+              -44.909244537353516,
+              -0.5017585158348083
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 196.77957542126427,
+          "right_turn_m": [
+            97.30385595560074,
+            116.76963979005814
+          ],
+          "route_sha256": "aa680c115eebf1b602c6fab6a7c7cdad43d858b475786e472e2cdc7267f536bb",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        },
+        {
+          "junction_id": 730,
+          "connector_road_id": 823,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 88.6164779663086,
+          "upstream_m": 100,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 20,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              -145.4734649658203,
+              -66.76554107666016,
+              0.2683815062046051
+            ],
+            "yaw_carla_deg": 270.02984619140625
+          },
+          "goal": {
+            "road_id": 3,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -88.43292999267578,
+              -24.909318923950195,
+              -0.20881633460521698
+            ],
+            "yaw_carla_deg": 89.84373474121094
+          },
+          "route_length_m": 216.78172180536026,
+          "right_turn_m": [
+            97.30385595560074,
+            116.76963979005814
+          ],
+          "route_sha256": "bf95ee921afa9ef5a66163031c1ab4e39a5eef04142161924d8532ad4d60c7cc",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": false,
+          "site": {
+            "lane_transitions": [
+              [
+                823,
+                0,
+                1
+              ],
+              [
+                3,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -90.88780975341797,
+              134.39111328125
+            ],
+            "center_distance_to_existing_dev_m": 17.97441742367218
+          }
+        }
+      ],
+      "town05_nominal_witness": null
+    },
+    {
+      "town": "Town02_Opt",
+      "xodr_path": "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town02_Opt.xodr",
+      "xodr_sha256": "953c05f17def231239ffcadba3307628a82d0d335b67b4e29c3098f7aed1dd7d",
+      "old_dev_site": null,
+      "counts": {
+        "right_connectors": 16,
+        "endpoint_pairs": 2615,
+        "unreachable_pairs": 0,
+        "length_at_least_146m": 2188,
+        "traverses_connector": 1940,
+        "single_right_no_other_maneuver": 33,
+        "turn_inside_30_120m": 25,
+        "physical_turn_pass": 4,
+        "signal_record_free_pass": 0,
+        "novel_junction_pass": 4,
+        "no_other_junction_in_protected_span_pass": 4
+      },
+      "candidate_errors": {},
+      "physical_rejections": {
+        "initial lateral deviation exceeds the maximum": 8,
+        "initial heading change exceeds the maximum": 8,
+        "turn p95 absolute curvature exceeds the maximum": 17
+      },
+      "physical_pass_routes": [
+        {
+          "junction_id": 20,
+          "connector_road_id": 55,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 89.9522476196289,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 178,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              132.51878356933594,
+              240.9240264892578,
+              0.0
+            ],
+            "yaw_carla_deg": -359.96514892578125
+          },
+          "goal": {
+            "road_id": 19,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              143.413330078125,
+              302.5513916015625,
+              0.0
+            ],
+            "yaw_carla_deg": 179.92127990722656
+          },
+          "route_length_m": 158.59646952665906,
+          "right_turn_m": [
+            49.53999936580658,
+            61.74089872837067
+          ],
+          "route_sha256": "211e6b7546a1d7ae0ae5a2024433b7429267e12d1797548f4758dd6cb9682111",
+          "direct_signal_road_ids": [
+            10,
+            13,
+            19
+          ],
+          "signal_reference_road_ids": [
+            55,
+            178
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                55,
+                0,
+                1
+              ],
+              [
+                13,
+                0,
+                1
+              ]
+            ],
+            "center_xy_ros_m": [
+              188.27748107910156,
+              -242.78330993652344
+            ]
+          }
+        },
+        {
+          "junction_id": 20,
+          "connector_road_id": 55,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 89.9522476196289,
+          "upstream_m": 50,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 178,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              132.51878356933594,
+              240.9240264892578,
+              0.0
+            ],
+            "yaw_carla_deg": -359.96514892578125
+          },
+          "goal": {
+            "road_id": 19,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              123.41675567626953,
+              302.55535888671875,
+              0.0
+            ],
+            "yaw_carla_deg": 180.01942443847656
+          },
+          "route_length_m": 178.5930497796562,
+          "right_turn_m": [
+            49.53999936580658,
+            61.74089872837067
+          ],
+          "route_sha256": "d2befb07247d862ba649741c1a73743560ed3bc9e16f8e84f10cc2074dffd46b",
+          "direct_signal_road_ids": [
+            10,
+            13,
+            19
+          ],
+          "signal_reference_road_ids": [
+            55,
+            178
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                55,
+                0,
+                1
+              ],
+              [
+                13,
+                0,
+                1
+              ]
+            ],
+            "center_xy_ros_m": [
+              188.27748107910156,
+              -242.78330993652344
+            ]
+          }
+        },
+        {
+          "junction_id": 20,
+          "connector_road_id": 55,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 89.9522476196289,
+          "upstream_m": 50,
+          "downstream_m": 140,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 178,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              132.51878356933594,
+              240.9240264892578,
+              0.0
+            ],
+            "yaw_carla_deg": -359.96514892578125
+          },
+          "goal": {
+            "road_id": 19,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              103.41675567626953,
+              302.548583984375,
+              0.0
+            ],
+            "yaw_carla_deg": 180.01942443847656
+          },
+          "route_length_m": 198.59304983926046,
+          "right_turn_m": [
+            49.53999936580658,
+            61.74089872837067
+          ],
+          "route_sha256": "ef1a836eb50b363dda6d83fd04650cf50b34b9732dbe7157972de89431da2e40",
+          "direct_signal_road_ids": [
+            10,
+            13,
+            19
+          ],
+          "signal_reference_road_ids": [
+            55,
+            178
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                55,
+                0,
+                1
+              ],
+              [
+                13,
+                0,
+                1
+              ]
+            ],
+            "center_xy_ros_m": [
+              188.27748107910156,
+              -242.78330993652344
+            ]
+          }
+        },
+        {
+          "junction_id": 20,
+          "connector_road_id": 55,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 89.9522476196289,
+          "upstream_m": 50,
+          "downstream_m": 160,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 178,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              132.51878356933594,
+              240.9240264892578,
+              0.0
+            ],
+            "yaw_carla_deg": -359.96514892578125
+          },
+          "goal": {
+            "road_id": 19,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              83.41675567626953,
+              302.54180908203125,
+              0.0
+            ],
+            "yaw_carla_deg": 180.01942443847656
+          },
+          "route_length_m": 218.59304983926046,
+          "right_turn_m": [
+            49.53999936580658,
+            61.74089872837067
+          ],
+          "route_sha256": "612be07ad2c32abd48a94ec823f63a510a7209a1075df5c60e157ba1a01c65d8",
+          "direct_signal_road_ids": [
+            10,
+            13,
+            19
+          ],
+          "signal_reference_road_ids": [
+            55,
+            178
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                55,
+                0,
+                1
+              ],
+              [
+                13,
+                0,
+                1
+              ]
+            ],
+            "center_xy_ros_m": [
+              188.27748107910156,
+              -242.78330993652344
+            ]
+          }
+        }
+      ],
+      "town05_nominal_witness": null
+    },
+    {
+      "town": "Town05_Opt",
+      "xodr_path": "/home/a/carla-autoware-universe/CARLA_0.9.15/CarlaUE4/Content/Carla/Maps/OpenDrive/Town05_Opt.xodr",
+      "xodr_sha256": "7edc53b0be840e177598da7a4ed9571146d7b2595ce280d154c90f92e8a48851",
+      "old_dev_site": null,
+      "counts": {
+        "right_connectors": 68,
+        "endpoint_pairs": 7136,
+        "unreachable_pairs": 0,
+        "length_at_least_146m": 5959,
+        "traverses_connector": 5209,
+        "single_right_no_other_maneuver": 137,
+        "turn_inside_30_120m": 87,
+        "physical_turn_pass": 42,
+        "signal_record_free_pass": 2,
+        "novel_junction_pass": 42,
+        "no_other_junction_in_protected_span_pass": 27
+      },
+      "candidate_errors": {},
+      "physical_rejections": {
+        "turn p95 absolute curvature exceeds the maximum": 32,
+        "initial lateral deviation exceeds the maximum": 20,
+        "initial heading change exceeds the maximum": 9
+      },
+      "physical_pass_routes": [
+        {
+          "junction_id": 207,
+          "connector_road_id": 293,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.3136978149414,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1863,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -123.64590454101562,
+              94.92523193359375,
+              0.0
+            ],
+            "yaw_carla_deg": -359.93438720703125
+          },
+          "goal": {
+            "road_id": 41,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -100.66197967529297,
+              144.23944091796875,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": -179.73028564453125
+          },
+          "route_length_m": 146.94462941699007,
+          "right_turn_m": [
+            60.15999794006348,
+            75.18272131681442
+          ],
+          "route_sha256": "6fa84428634087b41bc56a927e49bf85f4246af592bdafcf11797a028ddece9d",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            293,
+            1863
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                293,
+                0,
+                1
+              ],
+              [
+                41,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -56.52970886230469,
+              -97.48953247070312
+            ]
+          }
+        },
+        {
+          "junction_id": 207,
+          "connector_road_id": 293,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.3136978149414,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1863,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -133.64590454101562,
+              94.91378784179688,
+              0.0
+            ],
+            "yaw_carla_deg": -359.93438720703125
+          },
+          "goal": {
+            "road_id": 41,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -100.66197967529297,
+              144.23944091796875,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": -179.73028564453125
+          },
+          "route_length_m": 156.9446354370592,
+          "right_turn_m": [
+            70.1600039601326,
+            85.18272733688354
+          ],
+          "route_sha256": "27588b207a70ba053ab50d6b1858d7b6e4b10192dec9c93a476ed057b9aa55a8",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            293,
+            1863
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                293,
+                0,
+                1
+              ],
+              [
+                41,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -56.52970886230469,
+              -97.48953247070312
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 45,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -152.36160278320312,
+              -146.02052307128906,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -274.6004638671875,
+              -64.06240844726562,
+              0.0
+            ],
+            "yaw_carla_deg": -258.481201171875
+          },
+          "route_length_m": 171.11290304365107,
+          "right_turn_m": [
+            68.72605431079865,
+            83.91570580005646
+          ],
+          "route_sha256": "7ce94379474b1e767991954e2f20851ac9fc3501b0cba209402546a38bb9db03",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 60,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 45,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -152.36160278320312,
+              -146.02052307128906,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.47064208984375,
+              -43.09731674194336,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 192.12990747673024,
+          "right_turn_m": [
+            68.72605431079865,
+            83.91570580005646
+          ],
+          "route_sha256": "3e2ab559d5c9e0f592deeae5445f81779c7228465c8eadc852eeee7ad5613c31",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 60,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 45,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -152.36160278320312,
+              -146.02052307128906,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.6161193847656,
+              -23.097848892211914,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 212.12990390045155,
+          "right_turn_m": [
+            68.72605431079865,
+            83.91570580005646
+          ],
+          "route_sha256": "792ae185d800dff809eb197c326e98435264b087663387acb9a7e12ac9061e55",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -142.36190795898438,
+              -145.9432830810547,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -274.6004638671875,
+              -64.06240844726562,
+              0.0
+            ],
+            "yaw_carla_deg": -258.481201171875
+          },
+          "route_length_m": 180.1129119843478,
+          "right_turn_m": [
+            77.72606325149536,
+            92.91571474075317
+          ],
+          "route_sha256": "b7ad9c076f6e5a9056ca8e92730b0d1e22942e73236d84985184b9aeee19ed53",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 70,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -142.36190795898438,
+              -145.9432830810547,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.47064208984375,
+              -43.09731674194336,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 201.12991641742695,
+          "right_turn_m": [
+            77.72606325149536,
+            92.91571474075317
+          ],
+          "route_sha256": "d152d8dae13e76c69c961e4a8259640e1b89842f1147019d6e28c73b714709f2",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 70,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -142.36190795898438,
+              -145.9432830810547,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.6161193847656,
+              -23.097848892211914,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 221.12991284114827,
+          "right_turn_m": [
+            77.72606325149536,
+            92.91571474075317
+          ],
+          "route_sha256": "15bff4ecbdcc0fa8bdeec2c8163e37396750cb6373d8856052cd6e97ee274aff",
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -132.36221313476562,
+              -145.8660430908203,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -274.6004638671875,
+              -64.06240844726562,
+              0.0
+            ],
+            "yaw_carla_deg": -258.481201171875
+          },
+          "route_length_m": 191.11290447416255,
+          "right_turn_m": [
+            88.72605574131012,
+            103.91570723056793
+          ],
+          "route_sha256": "10f4c9a8d32f29b6d4e7296c9b62766d8314db07242414879b13a8f865489877",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -132.36221313476562,
+              -145.8660430908203,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.47064208984375,
+              -43.09731674194336,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 212.1299089072417,
+          "right_turn_m": [
+            88.72605574131012,
+            103.91570723056793
+          ],
+          "route_sha256": "a0c9f1aa2c2305940957b19a427055c5a84374dec62e486e2050e906a1d93ef0",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 80,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -132.36221313476562,
+              -145.8660430908203,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.4425506591797
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.6161193847656,
+              -23.097848892211914,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 232.12990533096303,
+          "right_turn_m": [
+            88.72605574131012,
+            103.91570723056793
+          ],
+          "route_sha256": "c28ed29b09e35465fcd2166a93679f02688dc6cd1314e50b18b1e3bb7d05a37a",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 90,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -122.36251068115234,
+              -145.78880310058594,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.44256591796875
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -274.6004638671875,
+              -64.06240844726562,
+              0.0
+            ],
+            "yaw_carla_deg": -258.481201171875
+          },
+          "route_length_m": 201.11288993062922,
+          "right_turn_m": [
+            98.7260411977768,
+            113.9156926870346
+          ],
+          "route_sha256": "d1c8264bb9a487ad6cb87db5843f43162f3879dd551c80f3f543df57fac1dbf6",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 90,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -122.36251068115234,
+              -145.78880310058594,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.44256591796875
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.47064208984375,
+              -43.09731674194336,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 222.1298943637084,
+          "right_turn_m": [
+            98.7260411977768,
+            113.9156926870346
+          ],
+          "route_sha256": "e00a7495e6c61681dcd1d06fd2d93a965b76a219eb3fb678cc49c346e2890205",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 396,
+          "connector_road_id": 444,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.10209655761719,
+          "upstream_m": 90,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1897,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -122.36251068115234,
+              -145.78880310058594,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 180.44256591796875
+          },
+          "goal": {
+            "road_id": 9,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -275.6161193847656,
+              -23.097848892211914,
+              0.0
+            ],
+            "yaw_carla_deg": 90.41678619384766
+          },
+          "route_length_m": 242.1298907874297,
+          "right_turn_m": [
+            98.7260411977768,
+            113.9156926870346
+          ],
+          "route_sha256": "e916134e727ac31bbcef02232c7d37c0e762fff8f86cdf063a78368eb5197362",
+          "direct_signal_road_ids": [
+            45,
+            1897
+          ],
+          "signal_reference_road_ids": [
+            1897
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                444,
+                0,
+                1
+              ],
+              [
+                9,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.14752197265625,
+              97.7774658203125
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 43,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.06471252441406,
+              23.197187423706055,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.2235107421875,
+              45.7775764465332,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 158.50044247817,
+          "right_turn_m": [
+            49.86000645160675,
+            66.68982601165771
+          ],
+          "route_sha256": "badc12697d0593685dc6f4c046220eac435900cb637ef15d8f22c9e653a49b41",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 50,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 43,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.06471252441406,
+              23.197187423706055,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.4272766113281,
+              25.778615951538086,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 178.50044086884458,
+          "right_turn_m": [
+            49.86000645160675,
+            66.68982601165771
+          ],
+          "route_sha256": "0d1e80e74bed41fbc6e1ea69cdf76c1540db09c807e666eae041d334c99497b1",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.06747436523438,
+              13.197189331054688,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.0197448730469,
+              65.77654266357422,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 149.4204396671245,
+          "right_turn_m": [
+            60.7800076007843,
+            77.60982716083527
+          ],
+          "route_sha256": "1d4ecb946d5982b303decd9a793f4a90729713637e5218f367155a703591dd41",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 60,
+          "downstream_m": 100,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.06747436523438,
+              13.197189331054688,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.2235107421875,
+              45.7775764465332,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 169.42044362734754,
+          "right_turn_m": [
+            60.7800076007843,
+            77.60982716083527
+          ],
+          "route_sha256": "3395c698da468ffb464f23168de852c38048146ce3dc55593c0bcb7c64d0c18b",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 60,
+          "downstream_m": 120,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.06747436523438,
+              13.197189331054688,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.4272766113281,
+              25.778615951538086,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 189.42044201802213,
+          "right_turn_m": [
+            60.7800076007843,
+            77.60982716083527
+          ],
+          "route_sha256": "34062759ef858088d4fb361ad223974db32c8189c41eabd3adc02dc0e15d9554",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07022094726562,
+              3.197190523147583,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.0197448730469,
+              65.77654266357422,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 158.4204384750316,
+          "right_turn_m": [
+            69.7800064086914,
+            86.60982596874237
+          ],
+          "route_sha256": "8109a771a5b0e9bfaa76a657c6e7c3efec9eee5f97874d829060f5fc82525a5c",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 70,
+          "downstream_m": 100,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07022094726562,
+              3.197190523147583,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.2235107421875,
+              45.7775764465332,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 178.42044243525464,
+          "right_turn_m": [
+            69.7800064086914,
+            86.60982596874237
+          ],
+          "route_sha256": "fa46cfbd1c491e8ac17b7c96a72623de7c6b4638a605648b1b3462564e5181c8",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 70,
+          "downstream_m": 120,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07022094726562,
+              3.197190523147583,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.4272766113281,
+              25.778615951538086,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 198.42044082592923,
+          "right_turn_m": [
+            69.7800064086914,
+            86.60982596874237
+          ],
+          "route_sha256": "220fce21fc75497e9559e20e8464c2cede865a6b69dce8154da999d86f2bf5b6",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07298278808594,
+              -6.802809715270996,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.0197448730469,
+              65.77654266357422,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 168.4204396671245,
+          "right_turn_m": [
+            79.7800076007843,
+            96.60982716083527
+          ],
+          "route_sha256": "b8929fa2f96a37d7509782e5dee4c6d31b6cf061b4fd324c6975f5180aef5dd7",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07298278808594,
+              -6.802809715270996,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.2235107421875,
+              45.7775764465332,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 188.42044362734754,
+          "right_turn_m": [
+            79.7800076007843,
+            96.60982716083527
+          ],
+          "route_sha256": "4b2e444debb4d0e91ead52c9dce67d3626870ad7292128eb9fa4ad813140c1c2",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 562,
+          "connector_road_id": 639,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.08135986328125,
+          "upstream_m": 80,
+          "downstream_m": 120,
+          "start_index": 1,
+          "goal_index": 0,
+          "start": {
+            "road_id": 967,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              -195.07298278808594,
+              -6.802809715270996,
+              0.055450439453125
+            ],
+            "yaw_carla_deg": 89.98420715332031
+          },
+          "goal": {
+            "road_id": 24,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              -265.4272766113281,
+              25.778615951538086,
+              0.0
+            ],
+            "yaw_carla_deg": -90.58375549316406
+          },
+          "route_length_m": 208.42044201802213,
+          "right_turn_m": [
+            79.7800076007843,
+            96.60982716083527
+          ],
+          "route_sha256": "71f15d01a75a641dedadcf99c32a3115b92b8ab9ee69745f9400c131fc9da816",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            967
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            694
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                639,
+                0,
+                1
+              ],
+              [
+                24,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              -196.9195556640625,
+              -81.56722259521484
+            ]
+          }
+        },
+        {
+          "junction_id": 720,
+          "connector_road_id": 831,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.44888305664062,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1639,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              39.02766799926758,
+              5.233848571777344,
+              0.0
+            ],
+            "yaw_carla_deg": 0.250274658203125
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              58.520294189453125,
+              84.84651184082031,
+              0.0
+            ],
+            "yaw_carla_deg": 175.7823486328125
+          },
+          "route_length_m": 154.02360382794598,
+          "right_turn_m": [
+            49.86839556694031,
+            61.821045994758606
+          ],
+          "route_sha256": "c8639db37d83dbab297b4e9e514f4541e66d6b5c0c27a13868a4595e8fa26024",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1639
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                831,
+                0,
+                1
+              ],
+              [
+                31,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              94.29715728759766,
+              -7.044527530670166
+            ]
+          }
+        },
+        {
+          "junction_id": 720,
+          "connector_road_id": 831,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.44888305664062,
+          "upstream_m": 60,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1639,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              29.188562393188477,
+              5.624093532562256,
+              0.0
+            ],
+            "yaw_carla_deg": -4.643218994140625
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              75.32380676269531,
+              79.77364349365234,
+              0.0
+            ],
+            "yaw_carla_deg": 150.62025451660156
+          },
+          "route_length_m": 146.17802678547065,
+          "right_turn_m": [
+            59.71686327457428,
+            71.66951370239258
+          ],
+          "route_sha256": "aa49108294fd20d222cb637c74f9c73dee78fa505fed1eef575dbd0e29165959",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1639
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                831,
+                0,
+                1
+              ],
+              [
+                31,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              94.29715728759766,
+              -7.044527530670166
+            ]
+          }
+        },
+        {
+          "junction_id": 720,
+          "connector_road_id": 831,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.44888305664062,
+          "upstream_m": 60,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1639,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              29.188562393188477,
+              5.624093532562256,
+              0.0
+            ],
+            "yaw_carla_deg": -4.643218994140625
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              58.520294189453125,
+              84.84651184082031,
+              0.0
+            ],
+            "yaw_carla_deg": 175.7823486328125
+          },
+          "route_length_m": 163.87207153557995,
+          "right_turn_m": [
+            59.71686327457428,
+            71.66951370239258
+          ],
+          "route_sha256": "7b1055bc259b2aecfda7888d0d8d6e839a800d784570206941cbec79890627ab",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1639
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                831,
+                0,
+                1
+              ],
+              [
+                31,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              94.29715728759766,
+              -7.044527530670166
+            ]
+          }
+        },
+        {
+          "junction_id": 720,
+          "connector_road_id": 831,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.44888305664062,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1639,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              19.061176300048828,
+              6.002941608428955,
+              0.0
+            ],
+            "yaw_carla_deg": -0.1394500732421875
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              75.32380676269531,
+              79.77364349365234,
+              0.0
+            ],
+            "yaw_carla_deg": 150.62025451660156
+          },
+          "route_length_m": 156.31759535274665,
+          "right_turn_m": [
+            69.85643184185028,
+            81.80908226966858
+          ],
+          "route_sha256": "cdb33e46b0a2d0ee5bb1d610d1a361dc1fdd94fb1a7984a560abab2147e49197",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1639
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                831,
+                0,
+                1
+              ],
+              [
+                31,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              94.29715728759766,
+              -7.044527530670166
+            ]
+          }
+        },
+        {
+          "junction_id": 720,
+          "connector_road_id": 831,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 90.44888305664062,
+          "upstream_m": 70,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1639,
+            "lane_id": 1,
+            "xyz_carla_m": [
+              19.061176300048828,
+              6.002941608428955,
+              0.0
+            ],
+            "yaw_carla_deg": -0.1394500732421875
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              58.520294189453125,
+              84.84651184082031,
+              0.0
+            ],
+            "yaw_carla_deg": 175.7823486328125
+          },
+          "route_length_m": 174.01164010285595,
+          "right_turn_m": [
+            69.85643184185028,
+            81.80908226966858
+          ],
+          "route_sha256": "7c3922b0402f837a8767e38db8b9d89ce41efd114ca5ca4a7cebfd642b169ac7",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1639
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                831,
+                0,
+                1
+              ],
+              [
+                31,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              94.29715728759766,
+              -7.044527530670166
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 25,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              35.14824676513672,
+              -26.63926887512207,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 271.5320739746094
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.47342681884766,
+              -27.684045791625977,
+              0.0
+            ],
+            "yaw_carla_deg": 90.16929626464844
+          },
+          "route_length_m": 154.71880991038765,
+          "right_turn_m": [
+            50.218431651592255,
+            63.11466073989868
+          ],
+          "route_sha256": "0d08dcc7b65fe2c78a6a4ea56a2a378a4253a3da03af5e8c99b30088238f52d5",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 60,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 25,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              34.934078216552734,
+              -16.717241287231445,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 270.7075500488281
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.47342681884766,
+              -27.684045791625977,
+              0.0
+            ],
+            "yaw_carla_deg": 90.16929626464844
+          },
+          "route_length_m": 164.64096540984596,
+          "right_turn_m": [
+            60.14058715105057,
+            73.036816239357
+          ],
+          "route_sha256": "d23034a972672687d308f2035ad32bfcc900521559e51a80c9c0e49033430213",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 70,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1674,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              34.910919189453125,
+              -6.8224358558654785,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 269.5616455078125
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.46768188476562,
+              -47.38291931152344,
+              0.0
+            ],
+            "yaw_carla_deg": 86.8951187133789
+          },
+          "route_length_m": 154.5687429991704,
+          "right_turn_m": [
+            69.76842039823532,
+            82.66464948654175
+          ],
+          "route_sha256": "3e78f0666b32a60f8ccf681e8b19cecb901b5a7ce340e2f037d268df5a547467",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367,
+            1674
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 70,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1674,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              34.910919189453125,
+              -6.8224358558654785,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 269.5616455078125
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.47342681884766,
+              -27.684045791625977,
+              0.0
+            ],
+            "yaw_carla_deg": 90.16929626464844
+          },
+          "route_length_m": 174.26879865703071,
+          "right_turn_m": [
+            69.76842039823532,
+            82.66464948654175
+          ],
+          "route_sha256": "5afe6db1111d11114d892cd147e1a3af80e5d4eb37e584d114c5aa63355e5c0f",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367,
+            1674
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 80,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1674,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              34.999717712402344,
+              3.1704461574554443,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 269.4882507324219
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.46768188476562,
+              -47.38291931152344,
+              0.0
+            ],
+            "yaw_carla_deg": 86.8951187133789
+          },
+          "route_length_m": 164.5614766565305,
+          "right_turn_m": [
+            79.7611540555954,
+            92.65738314390182
+          ],
+          "route_sha256": "fb858ae472b1bbb51b32fba67ded9e937fff38b965c9113691c509ac6b6aedf5",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367,
+            1674
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 1292,
+          "connector_road_id": 1367,
+          "connector_lane_id": 1,
+          "connector_heading_deg": 87.02365112304688,
+          "upstream_m": 80,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 1674,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              34.999717712402344,
+              3.1704461574554443,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": 269.4882507324219
+          },
+          "goal": {
+            "road_id": 33,
+            "lane_id": 2,
+            "xyz_carla_m": [
+              96.47342681884766,
+              -27.684045791625977,
+              0.0
+            ],
+            "yaw_carla_deg": 90.16929626464844
+          },
+          "route_length_m": 184.2615323143908,
+          "right_turn_m": [
+            79.7611540555954,
+            92.65738314390182
+          ],
+          "route_sha256": "f0820dbad7f7c81f705fa4fa9bf0329fa8528913d7f5bf63984960c09bd2b5ba",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            1367,
+            1674
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                1367,
+                0,
+                1
+              ],
+              [
+                33,
+                0,
+                2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.929500579833984,
+              82.53258514404297
+            ]
+          }
+        },
+        {
+          "junction_id": 2062,
+          "connector_road_id": 2071,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 87.7944564819336,
+          "upstream_m": 50,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 2,
+          "start": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              92.23899841308594,
+              140.09425354003906,
+              0.038604736328125
+            ],
+            "yaw_carla_deg": 169.63873291015625
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              105.72049713134766,
+              52.625953674316406,
+              0.0
+            ],
+            "yaw_carla_deg": -80.9815444946289
+          },
+          "route_length_m": 189.6189705105738,
+          "right_turn_m": [
+            92.89953684806824,
+            107.98273539543152
+          ],
+          "route_sha256": "9cf40909e267696160779559862b8d5e39a46605af310c6390541d52e6684d8e",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2071,
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            2187
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        },
+        {
+          "junction_id": 2062,
+          "connector_road_id": 2071,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 87.7944564819336,
+          "upstream_m": 50,
+          "downstream_m": 140,
+          "start_index": 0,
+          "goal_index": 2,
+          "start": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              92.23899841308594,
+              140.09425354003906,
+              0.038604736328125
+            ],
+            "yaw_carla_deg": 169.63873291015625
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              106.50797271728516,
+              31.897607803344727,
+              0.0
+            ],
+            "yaw_carla_deg": -89.30083465576172
+          },
+          "route_length_m": 210.38113595115271,
+          "right_turn_m": [
+            92.89953684806824,
+            107.98273539543152
+          ],
+          "route_sha256": "5756dcb2134df57a58b1f7e9ccb1bf0eee06f4096485704f39dd095aa5332986",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2071,
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            2187
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        },
+        {
+          "junction_id": 2062,
+          "connector_road_id": 2071,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 87.7944564819336,
+          "upstream_m": 60,
+          "downstream_m": 120,
+          "start_index": 0,
+          "goal_index": 2,
+          "start": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              101.88135528564453,
+              137.97300720214844,
+              0.038604736328125
+            ],
+            "yaw_carla_deg": 165.5470733642578
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              105.72049713134766,
+              52.625953674316406,
+              0.0
+            ],
+            "yaw_carla_deg": -80.9815444946289
+          },
+          "route_length_m": 199.49397909364265,
+          "right_turn_m": [
+            102.77454543113708,
+            117.85774397850037
+          ],
+          "route_sha256": "bd49f8c9d8567e1a87e8134854a478d630d14393e5aa3f52f0a04029d265081e",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2071,
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            2187
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        },
+        {
+          "junction_id": 2062,
+          "connector_road_id": 2071,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 87.7944564819336,
+          "upstream_m": 60,
+          "downstream_m": 140,
+          "start_index": 0,
+          "goal_index": 2,
+          "start": {
+            "road_id": 20,
+            "lane_id": -1,
+            "xyz_carla_m": [
+              101.88135528564453,
+              137.97300720214844,
+              0.038604736328125
+            ],
+            "yaw_carla_deg": 165.5470733642578
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              106.50797271728516,
+              31.897607803344727,
+              0.0
+            ],
+            "yaw_carla_deg": -89.30083465576172
+          },
+          "route_length_m": 220.25614453422156,
+          "right_turn_m": [
+            102.77454543113708,
+            117.85774397850037
+          ],
+          "route_sha256": "46976f4f896209fdb764f1832c272324ceff3944f82c4ea9a26bc28a297b32bd",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2071,
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [
+            2187
+          ],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        },
+        {
+          "junction_id": 2086,
+          "connector_road_id": 2187,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 89.5609130859375,
+          "upstream_m": 50,
+          "downstream_m": 80,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 2084,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              35.05101776123047,
+              152.79910278320312,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": -89.97710418701172
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              106.32356262207031,
+              46.2519416809082,
+              0.0
+            ],
+            "yaw_carla_deg": -88.20872497558594
+          },
+          "route_length_m": 153.0660326818058,
+          "right_turn_m": [
+            49.93998748064041,
+            65.02318602800369
+          ],
+          "route_sha256": "ba3ed68d8cd29a68eafef404ca1236cab46289f5474e63f1349285d2472eaaae",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        },
+        {
+          "junction_id": 2086,
+          "connector_road_id": 2187,
+          "connector_lane_id": -1,
+          "connector_heading_deg": 89.5609130859375,
+          "upstream_m": 50,
+          "downstream_m": 100,
+          "start_index": 0,
+          "goal_index": 0,
+          "start": {
+            "road_id": 2084,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              35.05101776123047,
+              152.79910278320312,
+              1.52587890625e-05
+            ],
+            "yaw_carla_deg": -89.97710418701172
+          },
+          "goal": {
+            "road_id": 30,
+            "lane_id": -2,
+            "xyz_carla_m": [
+              106.57807159423828,
+              26.15353775024414,
+              0.0
+            ],
+            "yaw_carla_deg": -89.30083465576172
+          },
+          "route_length_m": 173.16608423271282,
+          "right_turn_m": [
+            49.93998748064041,
+            65.02318602800369
+          ],
+          "route_sha256": "1ff0fbbd7ebb38c492159e352de19dd2f26457e76e9b82302133b7cbe34fee18",
+          "direct_signal_road_ids": [],
+          "signal_reference_road_ids": [
+            2187
+          ],
+          "other_junction_road_ids_in_30_146m": [],
+          "different_junction_from_existing_dev": true,
+          "site": {
+            "lane_transitions": [
+              [
+                2187,
+                0,
+                -1
+              ],
+              [
+                30,
+                0,
+                -2
+              ]
+            ],
+            "center_xy_ros_m": [
+              38.06024932861328,
+              -96.59938049316406
+            ]
+          }
+        }
+      ],
+      "town05_nominal_witness": {
+        "route_sha256": "d152d8dae13e76c69c961e4a8259640e1b89842f1147019d6e28c73b714709f2",
+        "source_prius_manifest_sha256": "9258274bd2c426c186db2b811fca0e546b7423fcec75c11d41702c8bea14dbb8",
+        "signals": {
+          "direct_signal_road_ids": [
+            45
+          ],
+          "signal_reference_road_ids": []
+        },
+        "geometry": {
+          "status": "FAIL",
+          "scope": "offline nominal route with both zero-arc seam lane IDs; not a driven trajectory",
+          "sample_step_m": 0.1,
+          "actor_rear_axle_offset_m": 1.425,
+          "zero_arc_seams": [
+            {
+              "arc_m": 0.0,
+              "from_lane": [
+                45,
+                0,
+                2
+              ],
+              "to_lane": [
+                45,
+                0,
+                2
+              ],
+              "pose_identical": true,
+              "production_lane_gate_supported": true
+            },
+            {
+              "arc_m": 77.72606325149536,
+              "from_lane": [
+                444,
+                0,
+                1
+              ],
+              "to_lane": [
+                444,
+                0,
+                1
+              ],
+              "pose_identical": true,
+              "production_lane_gate_supported": true
+            },
+            {
+              "arc_m": 92.91571474075317,
+              "from_lane": [
+                9,
+                0,
+                -2
+              ],
+              "to_lane": [
+                9,
+                0,
+                -2
+              ],
+              "pose_identical": true,
+              "production_lane_gate_supported": true
+            }
+          ],
+          "production_lane_gate_supported": true,
+          "body_count": 901,
+          "sweep_count": 900,
+          "raw_body_outside_count": 80,
+          "inset_body_outside_count": 86,
+          "raw_sweep_outside_count": 84,
+          "inset_sweep_outside_count": 89,
+          "maximum_raw_outside_m2": 0.1556845072302722,
+          "maximum_inset_outside_m2": 0.2601274622840398,
+          "minimum_raw_body_clearance_m": 0.0,
+          "minimum_inset_body_clearance_m": 0.0,
+          "minimum_raw_sweep_clearance_m": 0.0,
+          "minimum_inset_sweep_clearance_m": 0.0,
+          "physical_continuous_time_proven": false,
+          "capture_authorized": false
+        }
+      }
+    }
+  ],
+  "live_map_sha_verified": false,
+  "nominal_body_corridor_verified": false,
+  "continuous_moving_verified": false,
+  "actual_goal_verified": false,
+  "capture_authorized": false,
+  "dataset_admitted": false,
+  "training_executed": false,
+  "learned_closed_loop_tested": false
+}

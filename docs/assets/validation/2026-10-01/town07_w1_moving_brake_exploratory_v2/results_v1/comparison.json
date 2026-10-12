@@ -1,0 +1,248 @@
+{
+  "ABBA": false,
+  "all_integrity_checks_pass": true,
+  "analyzed_at_utc": "2026-10-01T06:30:43.369193+00:00",
+  "both_full_twenty_second_captures": true,
+  "both_terminal_attempts_present": true,
+  "declared_experiment_schema": "portable_e2e.town07_w1_moving_brake_exploratory.v2",
+  "declared_plan_sha256": "936284e29de108f54267050337b81c4d0e7fe472077911d8abe981f17a5fe3d3",
+  "exploratory": true,
+  "independent_replication": false,
+  "interpretation_limits": [
+    "Partial attempts are retained and have no full twenty-second outcome; no trimming or favorable retry is performed.",
+    "Native first-to-last span is count minus one intervals; nominal count/20 coverage is reported separately.",
+    "The first near-stop excludes setup zeros and requires prior driving vx>0.5 m/s.",
+    "Observed input/history and branch equality do not prove equal internal gear, contact or wheel torque.",
+    "ACK proves accepted frame-bound commands/readback, not independently measured physical actuation.",
+    "A/B use the same W1 weights; changing brake can change subsequent visited states, camera inputs and predictions.",
+    "One exploratory attempt per arm is not a replicated causal or safety approval.",
+    "Actual CARLA camera images are not an Autoware screen; any 2 Hz GIF is sampled playback, not the recorded 10 Hz stream."
+  ],
+  "matched_start_observations": {
+    "first_learned_handoff_state_B_minus_A": {
+      "route_progress_m": 0.002613464110953534,
+      "vx": 0.03184755306373421,
+      "x": -0.0011254369020150534,
+      "y": 0.0026263570779860856,
+      "yaw": -0.0015929698060308528,
+      "z": -4.942116244855549e-05
+    },
+    "initial_recorded_state_B_minus_A": {
+      "route_progress_m": 0.0,
+      "vx": 0.0,
+      "x": 0.0,
+      "y": 0.0,
+      "yaw": 0.0,
+      "z": 0.0
+    }
+  },
+  "matching_observations_prove_internal_state": false,
+  "model_promoted": false,
+  "reporter_sha256": "94efd6bec2b3164bb3f4de09ee41218ee514a27cbb90b0616498ddc42ecbcef1",
+  "schema": "portable_e2e.town07_moving_brake_postrun_report.20261001.v1",
+  "tensor_identity": {
+    "actual_data_only_tensor_sha256": "ffcb58cd319bb6d1db412da71f8f9ef8697613482cdd2d760c64b7abbf6f110f",
+    "checkpoint_sha256": "b9ee946ada6824e7d79f51bc1693463dc506db3faaa9038ddaa05816cf7ecf76",
+    "new_inferences": 0,
+    "new_models_constructed": 0
+  },
+  "training_data_approved": false,
+  "trial_count": 2,
+  "trials": [
+    {
+      "arm": "A_original",
+      "bounded_sweep_clearance_proven": false,
+      "camera_count": 200,
+      "cleanup_verified": true,
+      "first_learned_handoff_state": {
+        "route_progress_m": 0.4220351417964627,
+        "vx": 0.7301997568142504,
+        "x": -199.494457764648,
+        "y": -68.47069572750571,
+        "yaw": 1.560711601537039,
+        "z": 0.034475937737913645
+      },
+      "full_400_state_200_camera_capture": true,
+      "initial_recorded_state": {
+        "route_progress_m": 0.31809989301818486,
+        "vx": 0.0,
+        "x": -199.49595267056569,
+        "y": -68.57462071981438,
+        "yaw": 1.5595018606118705,
+        "z": 0.446100115776062
+      },
+      "input_sha256": {
+        "camera_frames.jsonl": "465c074b241c808157bba85c2bacdcd7bde51484c52f93c1a1da6b4f1095951e",
+        "control_receipts.jsonl": "3e26b21db58252a7b44b67b3712b458cb1fa8208c58c3503bbc8d9dd1e35e355",
+        "learned_control.jsonl": "deb9a54837858301e73d19bfa3ed21750f7b063a2b06cf578e6d994ce65726d5",
+        "manifest.json": "a6555a67be2c5bd2251527a486c65c3551e2018c6008551f245c33c52a5f3f92",
+        "states.jsonl": "a71aa63088e0b5c13cbb00bef0e70761170cd134aa306acecbacaf8fc30c9cce"
+      },
+      "integrity_issue_counts": {},
+      "model_state_sha256": "ffcb58cd319bb6d1db412da71f8f9ef8697613482cdd2d760c64b7abbf6f110f",
+      "original_capture_error": "CollectionError: BasicAgent did not finish within the driving budget reserved by the maximum total duration and stationary tail",
+      "original_jpeg_count": 1200,
+      "original_jpeg_decode_checked_count": 1200,
+      "original_jpeg_path_and_content_sha256": "aadfcf1b6bf17d9170193c56be9bcf134b0d06849f38e195c9a44969caec4a0e",
+      "owner_status": "DIAGNOSTIC_BUDGET_REACHED",
+      "run": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/A1_original",
+      "sampled_exact_input_audit": {
+        "all_inputs_retained": false,
+        "directory_bytes": 78892184,
+        "index_sha256": "b3dd9af09721767fb76b2a1bdaaa5ea22a87c206a7daa195ca8cac211ce3b06b",
+        "issue_counts": {},
+        "maximum_bytes": 134217728,
+        "present": true,
+        "sample_count": 19
+      },
+      "source_archive_audit": {
+        "external_file_count": 5,
+        "issues": [],
+        "local_file_count": 79,
+        "matches": true
+      },
+      "source_checkpoint_sha256": "b9ee946ada6824e7d79f51bc1693463dc506db3faaa9038ddaa05816cf7ecf76",
+      "summary": {
+        "acknowledged_learned_command_count": 366,
+        "collision_events": 0,
+        "control_source_counts": {
+          "expert_startup": 11,
+          "learned_trajectory_tracker": 366
+        },
+        "current_automatic_gear_counts": {
+          "0": 31,
+          "1": 369
+        },
+        "final_route_progress_m": 27.341575056088534,
+        "final_speed_mps": 1.7219953279451614,
+        "first_speed_at_or_below_0p05_after_motion_s": 12.150000181049109,
+        "first_stop_requires_prior_driving_speed_above_mps": 0.5,
+        "full_twenty_second_native_count": true,
+        "inference_seconds": {
+          "maximum": 0.04235114296898246,
+          "median": 0.026471593882888556,
+          "p95": 0.030816255137324333,
+          "p95_convention": "nearest rank: sorted[ceil(0.95*n)-1], no interpolation",
+          "sample_count": 183
+        },
+        "lane_invasion_events": 0,
+        "maximum_abs_route_cte_m": 0.1225429376373417,
+        "maximum_abs_signed_rate_mps2": 19.856139191258208,
+        "maximum_forward_speed_mps": 2.3297906076253994,
+        "maximum_world_planar_speed_mps": 2.3299227858310037,
+        "minimum_signed_rate_mps2": -19.856139191258208,
+        "net_route_progress_m": 27.023475163070348,
+        "nominal_native_coverage_seconds": 20.0,
+        "normal_suppression_returned_command_count": 0,
+        "normal_suppression_unique_inference_count": 0,
+        "observed_native_span_seconds": 19.950000297278166,
+        "retained_control_decision_count": 377,
+        "signed_rate_below_minus_8_mps2_count": 2,
+        "state_count": 400,
+        "unique_inference_frames_count": 183
+      },
+      "training_data_approved": false,
+      "trial_id": "A1_original",
+      "vehicle_control_approved": false,
+      "whole_body_clearance_proven": false
+    },
+    {
+      "arm": "B_suppress_normal_moving_brake",
+      "bounded_sweep_clearance_proven": false,
+      "camera_count": 200,
+      "cleanup_verified": true,
+      "first_learned_handoff_state": {
+        "route_progress_m": 0.4246486059074162,
+        "vx": 0.7620473098779846,
+        "x": -199.49558320155,
+        "y": -68.46806937042773,
+        "yaw": 1.5591186317310082,
+        "z": 0.03442651657546509
+      },
+      "full_400_state_200_camera_capture": true,
+      "initial_recorded_state": {
+        "route_progress_m": 0.31809989301818486,
+        "vx": 0.0,
+        "x": -199.49595267056569,
+        "y": -68.57462071981438,
+        "yaw": 1.5595018606118705,
+        "z": 0.446100115776062
+      },
+      "input_sha256": {
+        "camera_frames.jsonl": "89f40cf2d372209eab7db83c032ee61cb25693385495ad526c8bb4ae6b65ec5d",
+        "control_receipts.jsonl": "4d4974463628f2506a5989155625d7f82410a2e0fa7c59f14bd9a5995ad514e1",
+        "learned_control.jsonl": "b4986d439dea3b3fa22c4663ad88c1821845e7a39bfd557b07ca2651a4d02aa5",
+        "manifest.json": "00d98ff0d76e4f70861be26963203b03b9b82d32a1d2ae3ab015214d758ebd61",
+        "states.jsonl": "673d475707c514cd7b91f3861a9ac22c67dd2d97a2b63afd26dbd945aba26bf8"
+      },
+      "integrity_issue_counts": {},
+      "model_state_sha256": "ffcb58cd319bb6d1db412da71f8f9ef8697613482cdd2d760c64b7abbf6f110f",
+      "original_capture_error": "CollectionError: BasicAgent did not finish within the driving budget reserved by the maximum total duration and stationary tail",
+      "original_jpeg_count": 1200,
+      "original_jpeg_decode_checked_count": 1200,
+      "original_jpeg_path_and_content_sha256": "2015792ac33f7c14f130ca3d30e540f3e8f9ce314e9734dea75cd7d0b1bbf9ca",
+      "owner_status": "DIAGNOSTIC_BUDGET_REACHED",
+      "run": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/B1_suppress_normal_moving_brake",
+      "sampled_exact_input_audit": {
+        "all_inputs_retained": false,
+        "directory_bytes": 78892197,
+        "index_sha256": "9823e1822c21f4f64b420fc7f1c5728be5238228c0b8714f8efe56cd9750fa69",
+        "issue_counts": {},
+        "maximum_bytes": 134217728,
+        "present": true,
+        "sample_count": 19
+      },
+      "source_archive_audit": {
+        "external_file_count": 5,
+        "issues": [],
+        "local_file_count": 79,
+        "matches": true
+      },
+      "source_checkpoint_sha256": "b9ee946ada6824e7d79f51bc1693463dc506db3faaa9038ddaa05816cf7ecf76",
+      "summary": {
+        "acknowledged_learned_command_count": 366,
+        "collision_events": 0,
+        "control_source_counts": {
+          "expert_startup": 11,
+          "learned_trajectory_tracker": 366
+        },
+        "current_automatic_gear_counts": {
+          "0": 31,
+          "1": 369
+        },
+        "final_route_progress_m": 23.626581873665128,
+        "final_speed_mps": 0.37774397253979664,
+        "first_speed_at_or_below_0p05_after_motion_s": null,
+        "first_stop_requires_prior_driving_speed_above_mps": 0.5,
+        "full_twenty_second_native_count": true,
+        "inference_seconds": {
+          "maximum": 0.038909115828573704,
+          "median": 0.026185310911387205,
+          "p95": 0.03044806933030486,
+          "p95_convention": "nearest rank: sorted[ceil(0.95*n)-1], no interpolation",
+          "sample_count": 183
+        },
+        "lane_invasion_events": 0,
+        "maximum_abs_route_cte_m": 0.039293648222223726,
+        "maximum_abs_signed_rate_mps2": 3.432099321406578,
+        "maximum_forward_speed_mps": 2.326376357422898,
+        "maximum_world_planar_speed_mps": 2.326508704533901,
+        "minimum_signed_rate_mps2": -0.9642024528613199,
+        "net_route_progress_m": 23.308481980646942,
+        "nominal_native_coverage_seconds": 20.0,
+        "normal_suppression_returned_command_count": 134,
+        "normal_suppression_unique_inference_count": 67,
+        "observed_native_span_seconds": 19.950000297278166,
+        "retained_control_decision_count": 377,
+        "signed_rate_below_minus_8_mps2_count": 0,
+        "state_count": 400,
+        "unique_inference_frames_count": 183
+      },
+      "training_data_approved": false,
+      "trial_id": "B1_suppress_normal_moving_brake",
+      "vehicle_control_approved": false,
+      "whole_body_clearance_proven": false
+    }
+  ],
+  "vehicle_control_approved": false
+}

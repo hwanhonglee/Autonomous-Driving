@@ -1,0 +1,125 @@
+{
+  "schema": "portable_e2e.map_sign_probe_audit.v1",
+  "scope": "read-only audit of saved CARLA oracle semantic frames; no training or map approval",
+  "sign_class": "traffic_sign",
+  "sign_semantic_tag": 8,
+  "native_frame_wh": [
+    640,
+    360
+  ],
+  "retention_rule": "keep first frame and each subsequent frame >=0.25m from last retained ego XY",
+  "frozen_dataset": {
+    "name": "map_expanded_20260926_ai_v2",
+    "manifest_sha256": "e9805574a252e72f8e81fcd434156da7782b25e8e965b8078f976cf4f234892c",
+    "histograms": {
+      "train": {
+        "zero": 224,
+        "one_to_four": 0,
+        "five_to_64": 152,
+        "at_least_65": 121
+      },
+      "dev": {
+        "zero": 2,
+        "one_to_four": 31,
+        "five_to_64": 76,
+        "at_least_65": 9
+      }
+    }
+  },
+  "captures": {
+    "p02_right": {
+      "route_path": "storage/experiments/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/maps/town01/catalog/turn/routes/town01/right/town01_right_s0000_p02.json",
+      "route_sha256": "788665af9e3b5449634f1c5392e94b2a6258ae3262d26e69f3cf81b96791489a",
+      "owner_plan_sha256": "9a6e27e852fbe8855804c941bf2079fcf6473fc1e8fab7c2c9cf06cd775cbafa",
+      "owner_result_sha256": "d69a4091c55ae8c8beacb3d4db5e6b37ddbbdef5204ec1d5571237cf7c787e47",
+      "mapping_summary_sha256": "3465b053f7f77843a804e763481fdea87eb14d6b3612cccd19e980a24dcc1d7d",
+      "source_checks_passed": 13,
+      "capture": {
+        "town": "Town01",
+        "quality": "Epic",
+        "motion_mode": "basic-agent",
+        "ignores_traffic_lights": true,
+        "collision_events": 0,
+        "live_replay_exact_match": true,
+        "travel_m": 79.49184939975464,
+        "agent_goal_reached": true
+      },
+      "raw_frame_count": 240,
+      "retained_frame_count": 197,
+      "raw_sign_histogram": {
+        "zero": 189,
+        "one_to_four": 0,
+        "five_to_64": 51,
+        "at_least_65": 0
+      },
+      "retained_sign_histogram": {
+        "zero": 181,
+        "one_to_four": 0,
+        "five_to_64": 16,
+        "at_least_65": 0
+      },
+      "raw_sign_pixels": 1691,
+      "retained_sign_pixels": 434,
+      "min_distance_to_frozen_train_m": 73.51531574024243,
+      "min_distance_to_frozen_dev_m": 128.36014136804297,
+      "example": {
+        "stem": "frames/0205",
+        "sign_pixels": 37,
+        "ego_x": 158.0402374267578,
+        "ego_y": 26.189393997192383
+      }
+    },
+    "p04_left": {
+      "route_path": "storage/experiments/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/maps/town01/catalog/turn/routes/town01/left/town01_left_s0000_p04.json",
+      "route_sha256": "f4d474eee01892e16b8b78a69de5a3b32ccc8e4f227e30a9a89dc023dbfc25a7",
+      "owner_plan_sha256": "48eecf367ca26ad83b1a4a30daeabefce6cd0b77595057807281afc4573c7406",
+      "owner_result_sha256": "eca0229866760d8ea2836d9d6eef2195be3a7b30b099b96d966ba72b67a80e54",
+      "mapping_summary_sha256": "12db3589fbf29f9ae3fa7180b30a960c6ae354adf3516c2eb661f8686dd815fb",
+      "source_checks_passed": 13,
+      "capture": {
+        "town": "Town01",
+        "quality": "Epic",
+        "motion_mode": "basic-agent",
+        "ignores_traffic_lights": true,
+        "collision_events": 0,
+        "live_replay_exact_match": true,
+        "travel_m": 83.9889730314992,
+        "agent_goal_reached": true
+      },
+      "raw_frame_count": 240,
+      "retained_frame_count": 207,
+      "raw_sign_histogram": {
+        "zero": 212,
+        "one_to_four": 0,
+        "five_to_64": 28,
+        "at_least_65": 0
+      },
+      "retained_sign_histogram": {
+        "zero": 179,
+        "one_to_four": 0,
+        "five_to_64": 28,
+        "at_least_65": 0
+      },
+      "raw_sign_pixels": 944,
+      "retained_sign_pixels": 944,
+      "min_distance_to_frozen_train_m": 73.45612321547783,
+      "min_distance_to_frozen_dev_m": 176.67991750070405,
+      "example": {
+        "stem": "frames/0067",
+        "sign_pixels": 56,
+        "ego_x": 158.05490112304688,
+        "ego_y": 21.67339324951172
+      }
+    }
+  },
+  "minimum_inter_capture_retained_pose_distance_m": 0.01724618221103126,
+  "predeclared_gate": {
+    "minimum_retained_native_1_to_4_pixel_frames": 24,
+    "minimum_train_pose_distance_m": 20,
+    "minimum_dev_pose_distance_m": 80
+  },
+  "decision": "NO_TRAIN_EXPANSION: neither route has 1-4-pixel traffic-sign labels after retention",
+  "training_performed": false,
+  "train_or_dev_bytes_modified": false,
+  "model_approved": false
+}

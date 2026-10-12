@@ -331,13 +331,13 @@ XODR에서 다시 생성해야 할 때만 첫 번째 명령을 실행한다. `.v
 
 ```bash
 cd /path/to/autoware_e2e
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 
 # 원본 Virtual PCD의 현재 호스트 경로를 명시한다. manifest의 hash/size 검증은 유지된다.
 C_TRACK_PCD=/absolute/path/to/c_track_virtual_pointcloud_map.pcd
 
 # 필요할 때만: packaged runtime XODR -> Autoware Local Lanelet2 재생성
-scripts/e2e/build_xodr_lanelet_map.sh --install --force \
+tools/e2e/build_xodr_lanelet_map.sh --install --force \
   --translation-z-m -15 \
   --json-report data/generated/xodr_lanelet/c_track_finalize.json \
   "$CARLA_ROOT/CarlaUE4/Content/Carla/Maps/OpenDrive/C_track_1_0_7.xodr" \
@@ -345,10 +345,10 @@ scripts/e2e/build_xodr_lanelet_map.sh --install --force \
   data/generated/xodr_lanelet/c_track_autoware.osm
 
 # Virtual PCD hash/구조와 모든 pinned source를 확인하고 bundle 생성
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   inspect c_track_simulation_xodr_current \
   --source "pointcloud_map=$C_TRACK_PCD" --skip-reference-assets
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   setup c_track_simulation_xodr_current \
   --source "pointcloud_map=$C_TRACK_PCD" --skip-reference-assets
 ```
@@ -358,9 +358,9 @@ Lanelet-only와 Virtual PCD의 pinned source를 재확인하려면 다음 명령
 symlink와 metadata를 만드는 정적 bundle 작업일 뿐 주행 검증은 아니다.
 
 ```bash
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   inspect c_track_virtual_lanelet_only_reference --json
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   setup c_track_virtual_lanelet_only_reference --dry-run
 ```
 
@@ -374,7 +374,7 @@ crash가 재현됐으므로 반드시 `Epic`을 사용한다.
 
 ```bash
 cd /path/to/autoware_e2e
-scripts/e2e/run_carla_map.sh C_track_1_0_7 \
+tools/e2e/run_carla_map.sh C_track_1_0_7 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 ```
@@ -385,13 +385,13 @@ OSM과 592 MB PCD를 읽는 cold load는 이 PC에서 약 `100 s` 걸렸고 이�
 
 ```bash
 cd /path/to/autoware_e2e
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 export CARLA_PORT=2100
 export AUTOWARE_E2E_FULL_MAP_PATH="$PWD/data/maps/C_track_1_0_7_xodr_full"
 
 # 직진 394 -> 290
-scripts/e2e/run_route_vad_fast.sh --full --visualize --recommended \
-  autoware_e2e_vad_launch/config/routes/c_track_straight_394_290.json
+tools/e2e/run_route_vad_fast.sh --full --visualize --recommended \
+  autonomy/autoware_e2e_vad_launch/config/routes/c_track_straight_394_290.json
 ```
 
 검증된 좌회전은 기본 `--recommended`의 `3 m`가 아니라 `15 m` lookahead를 쓴
@@ -399,10 +399,10 @@ scripts/e2e/run_route_vad_fast.sh --full --visualize --recommended \
 드러내므로 임의의 숨은 기본값에 의존하지 않는다.
 
 ```bash
-scripts/e2e/run_route_vad_fast.sh --full --visualize \
-  --model-override autoware_e2e_vad_launch/config/vad_carla_tiny_recommended.param.yaml \
-  --sensor-mapping autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml \
-  autoware_e2e_vad_launch/config/routes/c_track_left_369_425.json \
+tools/e2e/run_route_vad_fast.sh --full --visualize \
+  --model-override autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_recommended.param.yaml \
+  --sensor-mapping autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml \
+  autonomy/autoware_e2e_vad_launch/config/routes/c_track_left_369_425.json \
   use_lateral_controller_param_override:=true \
   lateral_controller_param_path:="$PWD/autoware_e2e_vad_launch/config/mpc_carla_recommended.param.yaml" \
   use_longitudinal_controller_param_override:=true \
@@ -484,7 +484,7 @@ goal tolerance나 MPC 횡제어 문제가 아니었다. Launch 인자 배선을 
 
 ```bash
 cd /home/a/autoware_e2e
-scripts/e2e/setup_b2d_vad_training.sh --check
+tools/e2e/setup_b2d_vad_training.sh --check
 ```
 
 이 명령은 read-only 점검이다. dataset/checkpoint를 받지 않고 환경도 설치하지 않는다.
@@ -559,7 +559,7 @@ bootstrap 설정이다. 이후 map asset을 바꾸면 같은 PNG/GIF visual gate
 
 ### 로컬 custom map asset과 Cook 판단
 
-재현 기준은 `scripts/e2e/custom_map_bundles.yaml`이다. 발견된 편집 원본과 현재
+재현 기준은 `tools/e2e/custom_map_bundles.yaml`이다. 발견된 편집 원본과 현재
 실행 bundle은 다음과 같다.
 
 | 맵 | RoadRunner / OpenDRIVE | Unreal source level | Full Autoware source / bundle |
@@ -592,18 +592,18 @@ CARLA Shipping build는 positional map override를 무시하고 일부 맵에서
 cd /home/a/autoware_e2e
 
 # 일반 packaged Town
-scripts/e2e/run_carla_map.sh Town04 \
+tools/e2e/run_carla_map.sh Town04 \
   --port 2100 --quality Low --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 
 # source-editor sky 수정 없이 검증된 Epic packaged maps
-scripts/e2e/run_carla_map.sh Town03 \
+tools/e2e/run_carla_map.sh Town03 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
-scripts/e2e/run_carla_map.sh C_track_1_0_7 \
+tools/e2e/run_carla_map.sh C_track_1_0_7 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
-scripts/e2e/run_carla_map.sh Woraksan_v1_0_3_parking_lot_hegiht_fit \
+tools/e2e/run_carla_map.sh Woraksan_v1_0_3_parking_lot_hegiht_fit \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 ```
@@ -616,7 +616,7 @@ RGB sensor를 렌더링하지만 `-nullrhi`는 그렇지 않으므로 expert/VAD
 정적 inventory는 CARLA를 실행하지 않고 현재 계약과 asset을 검사한다.
 
 ```bash
-python3 scripts/e2e/inventory_carla_training_maps.py \
+python3 tools/e2e/inventory_carla_training_maps.py \
   --output artifacts/inventory/carla_training_maps_static.json
 ```
 
@@ -626,9 +626,9 @@ manifest의 Town10HD_Opt와 일치하는지 확인하고 10초 동안 renderer�
 `load_world`를 호출하지 않는다.
 
 ```bash
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 
-python3 scripts/e2e/prepare_carla_expert_route_catalog.py \
+python3 tools/e2e/prepare_carla_expert_route_catalog.py \
   --map-id town10hd_opt \
   --output-root data/training/catalogs/town10hd_opt \
   --active-server-profile packaged_0915 \
@@ -644,7 +644,7 @@ exporter는 기본적으로 차선 침범을 한 건도 허용하지 않으며, 
 완화하는 실험에서만 `--maximum-lane-invasions N`을 exporter에 직접 지정한다.
 
 ```bash
-python3 scripts/e2e/run_carla_expert_collection_suite.py \
+python3 tools/e2e/run_carla_expert_collection_suite.py \
   --catalog data/training/catalogs/town10hd_opt/route_catalog.json \
   --output-root data/training/suites/town10hd_opt_lane_follow_smoke \
   --active-server-profile packaged_0915 \
@@ -652,7 +652,7 @@ python3 scripts/e2e/run_carla_expert_collection_suite.py \
   --scenarios lane_follow --weathers ClearNoon --seeds 0 \
   --fail-fast
 
-python3 scripts/e2e/run_carla_expert_collection_suite.py \
+python3 tools/e2e/run_carla_expert_collection_suite.py \
   --catalog data/training/catalogs/town10hd_opt/route_catalog.json \
   --output-root data/training/suites/town10hd_opt_lane_follow_smoke \
   --active-server-profile packaged_0915 \
@@ -678,7 +678,7 @@ wrapper로 정확한 level과 quality를 시작한다. Town11/12/13/15 같은 so
 월악산 catalog는 확인된 불량 spawn 4를 양쪽 후보에서 제외한다.
 
 ```bash
-python3 scripts/e2e/prepare_carla_expert_route_catalog.py \
+python3 tools/e2e/prepare_carla_expert_route_catalog.py \
   --map-id woraksan_1_0_3 \
   --output-root data/training/catalogs/woraksan_packaged_safe_smoke \
   --active-server-profile packaged_0915 \
@@ -761,8 +761,8 @@ BEV `[1,256,106,200]`, initializer 한 개의 `[100,100] -> [100,53]` raw-data �
 실행 profile에는 연결하지 않았다.
 
 ```bash
-scripts/e2e/generate_vad_rotate_center_variant.py
-scripts/e2e/generate_vad_rotate_center_variant.py --validate-only
+tools/e2e/generate_vad_rotate_center_variant.py
+tools/e2e/generate_vad_rotate_center_variant.py --validate-only
 ```
 
 비교 이미지의 당시 생성 경로는 다음 세 파일로 보존한다. 이 파일은 Git clone에
@@ -847,7 +847,7 @@ cd /home/hong/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
-scripts/e2e/run_carla.sh \
+tools/e2e/run_carla.sh \
   -RenderOffScreen \
   -nosound \
   -carla-port=2100
@@ -860,7 +860,7 @@ Terminal 2에서 Full Autoware + VAD + UI를 시작한다. `--recommended`가 `-
 cd /home/hong/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 
-scripts/e2e/run_route_vad_fast.sh --recommended --visualize \
+tools/e2e/run_route_vad_fast.sh --recommended --visualize \
   data/routes/town01_fast_left_clear_noon.json \
   carla_port:=2100
 ```
@@ -872,7 +872,7 @@ scripts/e2e/run_route_vad_fast.sh --recommended --visualize \
 cd /home/hong/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 
-scripts/e2e/route_test.sh \
+tools/e2e/route_test.sh \
   --full-stack \
   --route-file data/routes/town01_fast_left_clear_noon.json \
   --result artifacts/runs/$(date +%F)/my_recommended_left/result.json
@@ -888,7 +888,7 @@ cd /home/hong/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
-scripts/e2e/run_recorded_route_trial.sh --recommended \
+tools/e2e/run_recorded_route_trial.sh --recommended \
   artifacts/runs/$(date +%F)/my_recommended_left \
   data/routes/town01_fast_left_clear_noon.json \
   carla_port:=2100 carla_timeout:=60
@@ -898,7 +898,7 @@ scripts/e2e/run_recorded_route_trial.sh --recommended \
 `route_result.png`, `path_vs_control.png`, `steering_tracking.png`,
 `turn_path_control.gif`, model override/sensor/MPC/actuation 설정과 SHA-256이 함께
 저장된다. ONNX/TensorRT weight 자체는 용량 때문에 복사하지 않으며, 실행 전
-`scripts/e2e/doctor.sh`의 공식 model hash 검사로 무결성을 확인한다.
+`tools/e2e/doctor.sh`의 공식 model hash 검사로 무결성을 확인한다.
 
 `--recommended`가 고정하는 기준 구성은 다음과 같다. 이 값을 command line에서
 개별 override하면 wrapper가 실행을 거부하므로, 변경 시험은 별도 profile과 artifact로
@@ -961,7 +961,7 @@ reference route 오차는 서로 다른 지표이므로 함께 표시한다.
 검증했다.
 
 ```bash
-scripts/e2e/run_route_vad_fast.sh --recommended \
+tools/e2e/run_route_vad_fast.sh --recommended \
   data/routes/town01_fast_left_clear_noon.json \
   carla_port:=2100 carla_timeout:=60
 ```
@@ -1088,7 +1088,7 @@ route-center planner로 바꾸므로 crossing 횟수 자체는 결함 판정이�
 ```bash
 export CARLA_HOST=localhost CARLA_PORT=2100 ROS_DOMAIN_ID=42
 
-scripts/e2e/run_recorded_route_trial.sh --recommended \
+tools/e2e/run_recorded_route_trial.sh --recommended \
   artifacts/runs/$(date +%F)/my_right_run \
   data/routes/town01_fast_right_clear_noon.json
 ```
@@ -1180,7 +1180,7 @@ cd /home/a/autoware_e2e
 export CARLA_PORT=2100
 
 # 최소 Autoware control shell, RViz 없음
-scripts/e2e/run_route_vad_fast.sh \
+tools/e2e/run_route_vad_fast.sh \
   data/routes/town01_lane_follow_clear_noon.json \
   carla_port:=2100
 ```
@@ -1189,7 +1189,7 @@ scripts/e2e/run_route_vad_fast.sh \
 자체를 끄므로 6-camera mosaic 대신 전방 raw camera를 표시한다.
 
 ```bash
-scripts/e2e/run_visualization.sh --fast
+tools/e2e/run_visualization.sh --fast
 ```
 
 표준 Autoware UI까지 한 번에 확인할 때만 다음 명령을 사용한다. 이 모드는 fast
@@ -1197,7 +1197,7 @@ camera/model 설정을 쓰지만 Full Autoware module과 RViz를 다시 켜므�
 측정용은 아니다.
 
 ```bash
-scripts/e2e/run_route_vad_fast.sh --full --visualize \
+tools/e2e/run_route_vad_fast.sh --full --visualize \
   data/routes/town01_lane_follow_clear_noon.json
 ```
 
@@ -1206,7 +1206,7 @@ Temporal head FP16은 별도 engine cache를 만드는 실험 옵션이다. 첫 
 주행 결과를 비교하기 전에는 기본값으로 사용하지 않는다.
 
 ```bash
-scripts/e2e/run_route_vad_fast.sh --fp16-heads \
+tools/e2e/run_route_vad_fast.sh --fp16-heads \
   data/routes/town01_lane_follow_clear_noon.json \
   carla_port:=2100
 ```
@@ -1305,7 +1305,7 @@ tire angle처럼 publish했고, yaw rate도 CARLA `deg/s, clockwise-positive`를
 - angular velocity의 world -> vehicle frame 회전과 degree/sign 변환
 - lateral velocity의 CARLA -> ROS 부호 변환
 - `wheel_base=2.79 m`, `wheel_tread=1.64 m`를 vehicle-info YAML에서 bridge로 전달
-- `scripts/e2e/build.sh`와 `build_full.sh`에서 재현 가능한 patch 자동 적용
+- `tools/e2e/build.sh`와 `build_full.sh`에서 재현 가능한 patch 자동 적용
 
 같은 우회전을 기본 MPC `input_delay=0.24`, `vehicle_model_steer_tau=0.27`로 실행한
 결과다. 수정 후에는 독립적으로 두 번 완주했다.
@@ -1360,8 +1360,8 @@ VAD 쪽의 큰 raw 보정에는 command scheduling도 섞여 있다. 이 진단 
 기존 bag이나 같은 토픽으로 새로 기록한 bag은 다음 명령으로 다시 분석한다.
 
 ```bash
-source scripts/e2e/env.sh
-python3 scripts/e2e/analyze_turn_dynamics.py \
+source tools/e2e/env.sh
+python3 tools/e2e/analyze_turn_dynamics.py \
   --bag artifacts/diagnostics/2026-08-24_right_turn/baseline/bag \
   --route-file data/routes/town01_fast_right_clear_noon.json \
   --result-dir artifacts/diagnostics/2026-08-24_right_turn/baseline \
@@ -1374,7 +1374,7 @@ bridge 수정 후 bag은 `--steering-report-mode virtual`을 사용한다. 수�
 `virtual`을 쓰거나 수정 후 bag에 `legacy_fl`을 쓰면 조향각을 잘못 해석한다.
 
 ```bash
-python3 scripts/e2e/analyze_turn_dynamics.py \
+python3 tools/e2e/analyze_turn_dynamics.py \
   --bag artifacts/diagnostics/2026-08-24_right_turn/bridge_fixed_run02/bag \
   --route-file data/routes/town01_fast_right_clear_noon.json \
   --result-dir artifacts/diagnostics/2026-08-24_right_turn/bridge_fixed_run02 \
@@ -1388,8 +1388,8 @@ python3 scripts/e2e/analyze_turn_dynamics.py \
 동작할 수 있으므로 이 helper가 실행을 거부한다.
 
 ```bash
-source scripts/e2e/env.sh
-scripts/e2e/record_turn_dynamics.sh \
+source tools/e2e/env.sh
+tools/e2e/record_turn_dynamics.sh \
   artifacts/runs/$(date +%F)/right_turn_tuning/my_run/bag
 ```
 
@@ -1508,13 +1508,13 @@ model을 완전히 재생성하지 않으므로 시작 시점 주입 방식을 �
 
 ```bash
 mkdir -p data/generated/control
-python3 scripts/e2e/generate_mpc_config.py \
+python3 tools/e2e/generate_mpc_config.py \
   --input-delay 0.09 \
   --steer-tau 0.15 \
   --output data/generated/control/mpc_delay009_tau015.param.yaml
 
 mpc_file=$(realpath data/generated/control/mpc_delay009_tau015.param.yaml)
-scripts/e2e/run_route_vad_fast.sh --full --visualize \
+tools/e2e/run_route_vad_fast.sh --full --visualize \
   data/routes/town01_fast_right_clear_noon.json \
   use_lateral_controller_param_override:=true \
   lateral_controller_param_path:="$mpc_file"
@@ -1562,8 +1562,8 @@ fast VAD 입력을 함께 사용한다. 현재 결과는 위와 같이 `FAIL`이
 `--recommended`를 대체하지 않는다.
 
 ```bash
-scripts/e2e/build_smart_mpc.sh
-scripts/e2e/run_route_vad_smart_mpc.sh \
+tools/e2e/build_smart_mpc.sh
+tools/e2e/run_route_vad_smart_mpc.sh \
   data/routes/town01_fast_right_clear_noon.json
 ```
 
@@ -1593,19 +1593,19 @@ Town01 map source 위치와 세부 조건은 뒤의 `준비와 빌드` 절을 �
 
 ```bash
 cd /home/a/autoware_e2e
-scripts/e2e/download_vad_models.sh
+tools/e2e/download_vad_models.sh
 export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
-scripts/e2e/build_full.sh
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
+tools/e2e/build_full.sh
 ```
 
 준비된 workspace에서는 환경 진단부터 시작한다.
 
 ```bash
 cd /home/a/autoware_e2e
-scripts/e2e/doctor.sh
+tools/e2e/doctor.sh
 ```
 
 Driver/library mismatch가 나오면 먼저 재부팅한 뒤 이 문서의 NVIDIA compatibility
@@ -1619,7 +1619,7 @@ cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
-scripts/e2e/run_carla.sh \
+tools/e2e/run_carla.sh \
   -RenderOffScreen \
   -nosound \
   -carla-port=2100
@@ -1637,7 +1637,7 @@ cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 export CARLA_PORT=2100
 
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -1646,7 +1646,7 @@ scripts/e2e/prepare_carla_route.sh \
   --goal-index 145 \
   --output data/routes/town01_lane_follow_clear_noon.json
 
-scripts/e2e/run_route_vad_full.sh \
+tools/e2e/run_route_vad_full.sh \
   data/routes/town01_lane_follow_clear_noon.json
 ```
 
@@ -1659,7 +1659,7 @@ TensorRT VAD와 RViz를 함께 실행한다. `run_visualization.sh`를 추가로
 cd /home/a/autoware_e2e
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
 
-scripts/e2e/route_test.sh \
+tools/e2e/route_test.sh \
   --full-stack \
   --route-file data/routes/town01_lane_follow_clear_noon.json \
   --result artifacts/runs/2026-08-23/full_stack_lane_follow/town01_lane_follow_full_stack.json \
@@ -1698,7 +1698,7 @@ evaluator 완료 및 stable STOP
 bundle을 바꾸지 않는다. Full stack을 종료하고 route JSON만 새로 만든다.
 
 ```bash
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather HardRainNoon \
@@ -1708,7 +1708,7 @@ scripts/e2e/prepare_carla_route.sh \
   --preferred-distance 30 \
   --output data/routes/town01_left_hard_rain.json
 
-scripts/e2e/run_route_vad_full.sh \
+tools/e2e/run_route_vad_full.sh \
   data/routes/town01_left_hard_rain.json
 ```
 
@@ -1725,7 +1725,7 @@ scripts/e2e/run_route_vad_full.sh \
 > straight/turn 폐루프를 통과해야 `BLOCKED`를 해제한다.
 
 처음 한 번에는 manifest를 검사하고 두 Full map bundle을 만든다. Source asset이 바뀌면
-먼저 `scripts/e2e/custom_map_bundles.yaml`의 고정 path/SHA-256/topology를 검토해 갱신해야
+먼저 `tools/e2e/custom_map_bundles.yaml`의 고정 path/SHA-256/topology를 검토해 갱신해야
 한다. 변경하지 않은 target에 대한 `setup`은 `keep`으로 끝나는 idempotent 작업이다.
 의도한 source 변경 때문에 generated metadata나 파생 OSM이 달라진 경우에는 diff를 검토한
 뒤에만 `setup <profile> --refresh-generated`를 사용한다. Regular OSM/PCD 파일을 이 옵션이
@@ -1733,11 +1733,11 @@ scripts/e2e/run_route_vad_full.sh \
 
 ```bash
 cd /home/a/autoware_e2e
-python3 scripts/e2e/setup_custom_full_map.py list
-python3 scripts/e2e/setup_custom_full_map.py inspect c_track_simulation
-python3 scripts/e2e/setup_custom_full_map.py setup c_track_simulation
-python3 scripts/e2e/setup_custom_full_map.py inspect woraksan_simulation_current
-python3 scripts/e2e/setup_custom_full_map.py setup woraksan_simulation_current
+python3 tools/e2e/setup_custom_full_map.py list
+python3 tools/e2e/setup_custom_full_map.py inspect c_track_simulation
+python3 tools/e2e/setup_custom_full_map.py setup c_track_simulation
+python3 tools/e2e/setup_custom_full_map.py inspect woraksan_simulation_current
+python3 tools/e2e/setup_custom_full_map.py setup woraksan_simulation_current
 ```
 
 맵 변경 순서는 `Full stack 종료 -> CARLA Ctrl-C -> 다음 CARLA cold-start -> 다음
@@ -1746,12 +1746,12 @@ stack`이다. 실행 중 `client.load_world()`로 두 custom map을 바꾸지 �
 
 ```bash
 # Terminal 1: 둘 중 현재 시험할 맵 하나만 실행한다.
-scripts/e2e/run_carla_map.sh C_track_1_0_7 \
+tools/e2e/run_carla_map.sh C_track_1_0_7 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 
 # 또는, 앞 server를 Ctrl-C한 뒤 월악산
-scripts/e2e/run_carla_map.sh Woraksan_v1_0_3_parking_lot_hegiht_fit \
+tools/e2e/run_carla_map.sh Woraksan_v1_0_3_parking_lot_hegiht_fit \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 ```
@@ -1763,13 +1763,13 @@ Lanelet2 centerline, 차량 footprint와 boundary clearance를 검사한다.
 
 ```bash
 # C-track server가 실행 중일 때
-scripts/e2e/prepare_carla_route.sh --port 2100 \
+tools/e2e/prepare_carla_route.sh --port 2100 \
   --town C_track_1_0_7 --weather ClearNoon --scenario lane_follow \
   --start-index 394 --goal-index 290 \
   --output data/routes/custom_maps/c_track_lane_follow_394_290_regenerated.json
 
 # 월악산 canonical safe route를 같은 검증 catalog에서 다시 파생
-python3 scripts/e2e/trim_route_goal.py \
+python3 tools/e2e/trim_route_goal.py \
   data/training/catalogs/woraksan_packaged_safe_smoke/routes/woraksan_1_0_3/straight/woraksan_1_0_3_straight_s0000_p00.json \
   --map-bundle data/maps/Woraksan_v1_0_3_parking_lot_hegiht_fit_full \
   --output data/routes/custom_maps/woraksan_straight_lanelet_safe_regenerated.json --json
@@ -1788,41 +1788,41 @@ route에 map transform을 한 번 적용한 stable JSON을 먼저 만든다. **F
 ```bash
 # 한 번 준비: source CARLA route -> Autoware map frame route
 mkdir -p data/generated/aligned_routes
-python3 scripts/e2e/align_carla_route_to_map.py \
+python3 tools/e2e/align_carla_route_to_map.py \
   data/routes/custom_maps/c_track_lane_follow_394_290.json \
   data/maps/C_track_1_0_7_full \
   --output data/generated/aligned_routes/c_track_lane_follow_394_290.map.json --json
-python3 scripts/e2e/align_carla_route_to_map.py \
+python3 tools/e2e/align_carla_route_to_map.py \
   data/routes/custom_maps/woraksan_straight_lanelet_safe.json \
   data/maps/Woraksan_v1_0_3_parking_lot_hegiht_fit_full \
   --output data/generated/aligned_routes/woraksan_straight_lanelet_safe.map.json --json
 
 # C-track Terminal 2: Full stack + RViz
-scripts/e2e/run_route_vad_fast.sh --recommended --visualize \
+tools/e2e/run_route_vad_fast.sh --recommended --visualize \
   data/generated/aligned_routes/c_track_lane_follow_394_290.map.json
 
 # C-track Terminal 3: engage/evaluate. Terminal 2와 같은 aligned route를 사용한다.
-scripts/e2e/route_test.sh --full-stack \
+tools/e2e/route_test.sh --full-stack \
   --route-file data/generated/aligned_routes/c_track_lane_follow_394_290.map.json \
   --result artifacts/runs/custom_maps/c_track_ui_result.json --ready-timeout 300
 
 # 한 명령으로 정량 기록할 때는 raw canonical route를 준다. 이 runner는 자동 정합한다.
-CARLA_PORT=2100 scripts/e2e/run_recorded_route_trial.sh \
+CARLA_PORT=2100 tools/e2e/run_recorded_route_trial.sh \
   --recommended --ready-timeout 300 \
   artifacts/runs/custom_maps/c_track_my_run \
   data/routes/custom_maps/c_track_lane_follow_394_290.json
 
 # 월악산 Terminal 2: +/-0.20 m corridor는 이 맵에서 3회 반복 검증했다.
-scripts/e2e/run_route_vad_fast.sh --recommended --tight-corridor --visualize \
+tools/e2e/run_route_vad_fast.sh --recommended --tight-corridor --visualize \
   data/generated/aligned_routes/woraksan_straight_lanelet_safe.map.json
 
 # 월악산 Terminal 3
-scripts/e2e/route_test.sh --full-stack \
+tools/e2e/route_test.sh --full-stack \
   --route-file data/generated/aligned_routes/woraksan_straight_lanelet_safe.map.json \
   --result artifacts/runs/custom_maps/woraksan_ui_result.json --ready-timeout 300
 
 # 월악산 자동 기록
-CARLA_PORT=2100 scripts/e2e/run_recorded_route_trial.sh \
+CARLA_PORT=2100 tools/e2e/run_recorded_route_trial.sh \
   --recommended --tight-corridor --ready-timeout 300 \
   artifacts/runs/custom_maps/woraksan_my_run \
   data/routes/custom_maps/woraksan_straight_lanelet_safe.json
@@ -1863,7 +1863,7 @@ data/maps/TownXX_full/
 
 ```bash
 # 예: Town03 world만 먼저 시작한다. Full 주행에는 Town03_full도 별도로 필요하다.
-scripts/e2e/run_carla_map.sh Town03 \
+tools/e2e/run_carla_map.sh Town03 \
   --port 2100 --quality Epic --startup-timeout-sec 180 -- \
   -RenderOffScreen -nosound
 ```
@@ -1873,7 +1873,7 @@ scripts/e2e/run_carla_map.sh Town03 \
 
 ```bash
 export AUTOWARE_E2E_FULL_MAP_PATH=/absolute/path/to/TownXX_full
-scripts/e2e/run_route_vad_full.sh data/routes/townxx_route.json
+tools/e2e/run_route_vad_full.sh data/routes/townxx_route.json
 ```
 
 2026-09-01 v16에서 Full VAD 폐루프까지 승인·검증한 executable variant는
@@ -2070,7 +2070,7 @@ segment 존재 여부는 확인하지만, 중간 lanelet ID 순서, 전체 polyl
 기본 route manager 설정은 목표 허용 오차 1.0 m, 정지 속도 0.15 m/s 이하,
 1.0 simulation second 유지다. VAD 원본 후보는 0.5 m 간격으로 보간되며 목표에
 가까워지면 최대 1.2 m/s^2 범위에서 감속 속도가 제한된다. 세부 값은
-`autoware_e2e_vad_launch/config/vad_route_manager.param.yaml`에 있다.
+`autonomy/autoware_e2e_vad_launch/config/vad_route_manager.param.yaml`에 있다.
 
 Minimal baseline의 maneuver command는 교차로 시작 2.0 m 전부터 선택하고, 교차로 종료
 2.5 m 전부터 `LANE_FOLLOW`로 복귀한다. corridor 반폭도 0.5 m다. 이 값들은
@@ -2113,9 +2113,9 @@ autoware_e2e/
   ansible/, docker/             # upstream Autoware 개발/컨테이너 도구, 이동 금지
   repositories/                # pinned repository manifest
   src/                         # Autoware 1.9.0 pinned repositories
-  autoware_e2e_vad_launch/     # 프로젝트 ROS launch, route manager, RViz 설정
+  autonomy/autoware_e2e_vad_launch/     # 프로젝트 ROS launch, route manager, RViz 설정
   patches/                     # upstream 수정의 재현 가능한 patch
-  scripts/e2e/                 # build, run, evaluate, analysis entry points
+  tools/e2e/                 # build, run, evaluate, analysis entry points
   tests/                       # 프로젝트 단위/회귀 테스트
   data/maps/Town01_full/       # full shell용 Lanelet2/PCD/projector bundle
   data/maps/C_track_1_0_7_full/
@@ -2137,7 +2137,7 @@ autoware_e2e/
 ```
 
 Python `venv`만으로는 ROS, CUDA, TensorRT, CARLA Python API를 격리할 수 없다.
-대신 모든 wrapper가 `scripts/e2e/env.sh`를 source하여 이전 Autoware prefix를
+대신 모든 wrapper가 `tools/e2e/env.sh`를 source하여 이전 Autoware prefix를
 제거하고 ROS 2 Humble, 이 workspace, CARLA 0.9.15 Python API만 설정한다.
 
 `runs/`에 있다는 것은 비교 조건이 유효했다는 뜻이며 PASS나 parameter 채택을 뜻하지
@@ -2158,8 +2158,8 @@ node 중복, 잘못된 sensor mapping, stale stack처럼 비교 조건이 깨진
 spconv 디렉터리를 다시 만들 때만 아래 명령이 필요하다.
 
 ```bash
-scripts/e2e/download_vad_models.sh
-scripts/e2e/setup_spconv.sh
+tools/e2e/download_vad_models.sh
+tools/e2e/setup_spconv.sh
 ```
 
 ### CUDA 12.8
@@ -2171,8 +2171,8 @@ CUDA 12.8 compiler/header/runtime package를 다운로드해
 `data/vendor/cuda-12.8/root/usr/local/cuda-12.8`에 추출한다.
 
 ```bash
-scripts/e2e/setup_cuda_12_8.sh
-source scripts/e2e/env.sh
+tools/e2e/setup_cuda_12_8.sh
+source tools/e2e/env.sh
 "${CUDACXX}" --version
 ```
 
@@ -2194,8 +2194,8 @@ generator를 요구한다. `build_full.sh`는 Autoware 1.9.0의 Ansible role과 
 버전 및 옵션으로 다음 setup을 먼저 실행한다.
 
 ```bash
-scripts/e2e/setup_acados.sh
-source scripts/e2e/env.sh
+tools/e2e/setup_acados.sh
+source tools/e2e/env.sh
 ```
 
 이 스크립트는 acados `v0.5.3` source와 submodule을
@@ -2220,17 +2220,17 @@ library의 version mismatch를 보고하면 우선 재부팅으로 맞추는 것
 
 ```bash
 unset AUTOWARE_E2E_NVIDIA_COMPAT_ROOT
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 nvidia-smi
 ```
 
-재부팅 후에도 실제 mismatch가 확인될 때만 `scripts/e2e/setup_nvidia_compat.sh`를
+재부팅 후에도 실제 mismatch가 확인될 때만 `tools/e2e/setup_nvidia_compat.sh`를
 실행하고, 스크립트가 출력한 경로를 그 shell에 설정한다.
 
 ```bash
-scripts/e2e/setup_nvidia_compat.sh
+tools/e2e/setup_nvidia_compat.sh
 export AUTOWARE_E2E_NVIDIA_COMPAT_ROOT=/path/printed/by/setup_nvidia_compat
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 ```
 
 스크립트는 현재 loaded kernel module과 같은 version의 NVIDIA library를 project
@@ -2259,9 +2259,9 @@ inventory이고, `READY_TO_PREPARE`와 오류 0건을 확인한 뒤에만 두 �
 ```bash
 export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
-bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
+bash tools/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 ```
 
 도구는 `packaged_town_full_maps.yaml`의 source/runtime hash, Lanelet2 구조, PCD 변환과
@@ -2269,7 +2269,7 @@ bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 `map_bundle.json`까지 모두 만든 결과가 `data/maps/Town01_full`이다. 기존
 `setup_town01_full_map.sh`는 이 4-file admission 계약 이전의 legacy 3-file helper라
 새 runtime 준비에 사용하지 않는다. C-track/월악산은 asset hash, transform과 파생 OSM
-규칙을 고정한 `scripts/e2e/setup_custom_full_map.py`를 사용한다.
+규칙을 고정한 `tools/e2e/setup_custom_full_map.py`를 사용한다.
 
 `run_route_vad_full.sh`는 CARLA world 이름 `Town01`과 Autoware map directory
 `Town01_full`을 별도 launch argument로 전달한다. Directory 이름을 CARLA town
@@ -2280,23 +2280,23 @@ bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 Minimal VAD 경로만 빌드할 때는 다음 순서로 실행한다.
 
 ```bash
-scripts/e2e/build.sh
-scripts/e2e/doctor.sh
+tools/e2e/build.sh
+tools/e2e/doctor.sh
 ```
 
 표준 map/sensing/system/control/API/RViz까지 포함한 full 경로는 별도 명령 하나로
 전체 의존성을 빌드한다. `build.sh`를 먼저 실행할 필요는 없다.
 
 ```bash
-scripts/e2e/build_full.sh
-scripts/e2e/doctor.sh
+tools/e2e/build_full.sh
+tools/e2e/doctor.sh
 ```
 
 Full 빌드는 패키지를 순차 처리하고 각 패키지 내부 병렬 작업을 기본 2개로
 제한한다. 중단된 빌드를 완료된 패키지 다음부터 이어갈 때는 다음처럼 실행한다.
 
 ```bash
-AUTOWARE_E2E_FULL_BUILD_RESUME=1 scripts/e2e/build_full.sh
+AUTOWARE_E2E_FULL_BUILD_RESUME=1 tools/e2e/build_full.sh
 ```
 
 패키지 내부 병렬 수는 `CMAKE_BUILD_PARALLEL_LEVEL`로 조정할 수 있다.
@@ -2346,7 +2346,7 @@ Town matrix runner는 campaign plan을 만들기 전에 이 provenance를 새로
 Route logic 회귀 테스트는 `colcon test`에도 등록되어 있다.
 
 ```bash
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 colcon test --packages-select autoware_e2e_vad_launch
 colcon test-result --verbose
 ```
@@ -2404,7 +2404,7 @@ Terminal 1:
 
 ```bash
 export CARLA_PORT=2100
-scripts/e2e/run_carla.sh -RenderOffScreen -nosound -carla-port=2100
+tools/e2e/run_carla.sh -RenderOffScreen -nosound -carla-port=2100
 ```
 
 CARLA 화면 자체가 필요하면 `-RenderOffScreen`을 빼도 된다. VAD는 실제 camera
@@ -2418,7 +2418,7 @@ sensor image가 필요하므로 CARLA의 `-RenderOffScreen`은 가능하지만
 Terminal 2:
 
 ```bash
-scripts/e2e/run_visualization.sh
+tools/e2e/run_visualization.sh
 ```
 
 RViz와 `rqt_image_view`는 아직 topic이 없어도 대기하다가 VAD stack이 시작되면
@@ -2434,7 +2434,7 @@ RViz와 `rqt_image_view`는 아직 topic이 없어도 대기하다가 VAD stack�
 주행 중 동일한 화면을 파일로 남길 때는 다음 명령을 사용할 수 있다.
 
 ```bash
-scripts/e2e/capture_ros_image.sh artifacts/vad_surround_input.png
+tools/e2e/capture_ros_image.sh artifacts/vad_surround_input.png
 ```
 
 ### 3. Route JSON 준비
@@ -2444,7 +2444,7 @@ VAD/bridge가 실행 중이지 않은 상태에서 Terminal 3에서 실행한다
 ```bash
 export CARLA_PORT=2100
 
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -2461,7 +2461,7 @@ route 길이, waypoint, 누적 거리, `RoadOption`, VAD command가 들어간다
 Spawn index를 직접 정하지 않고 조건에 맞는 route를 찾게 할 수도 있다.
 
 ```bash
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -2482,7 +2482,7 @@ VAD가 반드시 성공한다는 의미는 아니다. 회귀 테스트에는 고
 Route 준비가 끝난 뒤 같은 Terminal 3에서 실행한다.
 
 ```bash
-scripts/e2e/run_route_vad.sh \
+tools/e2e/run_route_vad.sh \
   data/routes/town01_lane_follow_clear_noon.json \
   carla_port:=2100
 ```
@@ -2497,7 +2497,7 @@ scripts/e2e/run_route_vad.sh \
 Terminal 4:
 
 ```bash
-scripts/e2e/route_test.sh \
+tools/e2e/route_test.sh \
   --route-file data/routes/town01_lane_follow_clear_noon.json \
   --result artifacts/runs/2026-08-23/minimal_lane_follow/town01_lane_follow_clear_noon.json \
   --sim-timeout 180 \
@@ -2530,7 +2530,7 @@ disengage하고 JSON을 atomic write한다. CARLA의 real-time factor가 매우 
 Evaluator가 끝난 뒤 CARLA나 ROS 없이 생성할 수 있다.
 
 ```bash
-scripts/e2e/render_route_result.sh \
+tools/e2e/render_route_result.sh \
   data/routes/town01_lane_follow_clear_noon.json \
   artifacts/runs/2026-08-23/minimal_lane_follow/town01_lane_follow_clear_noon.json \
   --output artifacts/runs/2026-08-23/minimal_lane_follow/town01_lane_follow_clear_noon.png
@@ -2571,12 +2571,12 @@ CARLA server를 2100번 port에 시작하고, bridge가 아직 없는 상태에�
 ```bash
 export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
-bash scripts/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01 --prepare
+bash tools/e2e/bootstrap_preflight.sh --map data/maps/Town01_full --strict
 
 export CARLA_PORT=2100
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -2590,7 +2590,7 @@ scripts/e2e/prepare_carla_route.sh \
 
 ```bash
 export CARLA_PORT=2100
-scripts/e2e/run_route_vad_full.sh \
+tools/e2e/run_route_vad_full.sh \
   data/routes/town01_lane_follow_clear_noon.json
 ```
 
@@ -2603,7 +2603,7 @@ launch는 기본으로 RViz를 함께 시작하므로 `run_visualization.sh`를 
 확인한다.
 
 ```bash
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 ros2 topic echo /planning/vad_route/standard_route_aligned --once
 ros2 topic echo /system/vad/aeb_configured --once
 ros2 topic echo /planning/route_state --once
@@ -2622,8 +2622,8 @@ engage하지 않는다.
 bridge-to-VAD 연결, route/AEB readiness와 live message freshness를 한 번에 검사한다.
 
 ```bash
-source scripts/e2e/env.sh
-scripts/e2e/validate_full_stack.py \
+source tools/e2e/env.sh
+tools/e2e/validate_full_stack.py \
   --verbose \
   --json artifacts/runs/2026-08-23/full_stack_lane_follow/full_stack_validation.json
 ```
@@ -2640,8 +2640,8 @@ Full stack의 표준 Autoware 상태 전이까지 포함해 주행을 평가할 
 terminal에서 `--full-stack`을 명시한다.
 
 ```bash
-source scripts/e2e/env.sh
-scripts/e2e/route_test.sh \
+source tools/e2e/env.sh
+tools/e2e/route_test.sh \
   --full-stack \
   --route-file data/routes/town01_lane_follow_clear_noon.json \
   --result artifacts/runs/2026-08-23/full_stack_lane_follow/town01_lane_follow_full_stack.json \
@@ -2845,7 +2845,7 @@ campaign은 map renderer 안정성과 동일 조건 비교를 위해 `Epic`을 �
 불일치가 남은 경우에만 앞의 compatibility 절을 적용한다.
 
 ```bash
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 nvidia-smi dmon -s pucvmt
 nvidia-smi \
   --query-gpu='temperature.gpu,clocks.current.graphics,clocks_event_reasons.sw_thermal_slowdown' \
@@ -2891,12 +2891,12 @@ jq '.metrics.sim_elapsed_sec / .metrics.wall_elapsed_sec' \
 ### 바로 조정할 수 있는 설정
 
 편집용 overlay는
-`autoware_e2e_vad_launch/config/vad_user_override.param.yaml`이다. Official YAML이나
+`autonomy/autoware_e2e_vad_launch/config/vad_user_override.param.yaml`이다. Official YAML이나
 다운로드한 JSON/ONNX를 직접 덮어쓰지 않고 다음처럼 마지막 parameter layer로 넣는다.
 
 ```bash
-scripts/e2e/run_route_vad_fast.sh \
-  --model-override autoware_e2e_vad_launch/config/vad_user_override.param.yaml \
+tools/e2e/run_route_vad_fast.sh \
+  --model-override autonomy/autoware_e2e_vad_launch/config/vad_user_override.param.yaml \
   data/routes/town01_lane_follow_clear_noon.json \
   carla_port:=2100
 ```
@@ -2976,13 +2976,13 @@ CARLA 서버와 visualization만 실행한 상태에서 수동 VAD stack이 없�
 먼저 실제 실행 없이 설정과 생성될 명령을 확인할 수 있다.
 
 ```bash
-scripts/e2e/run_route_suite.sh --port 2100 --dry-run
+tools/e2e/run_route_suite.sh --port 2100 --dry-run
 ```
 
 짧은 baseline 한 개만 실행:
 
 ```bash
-scripts/e2e/run_route_suite.sh \
+tools/e2e/run_route_suite.sh \
   --port 2100 \
   --case town01_lane_follow_clear_noon
 ```
@@ -2990,10 +2990,10 @@ scripts/e2e/run_route_suite.sh \
 기본 6개 case 전체 실행:
 
 ```bash
-scripts/e2e/run_route_suite.sh --port 2100
+tools/e2e/run_route_suite.sh --port 2100
 ```
 
-기본 matrix는 `scripts/e2e/route_suite.default.json`에 있다.
+기본 matrix는 `tools/e2e/route_suite.default.json`에 있다.
 
 | Case | Route | Weather | Start -> Goal |
 |---|---|---|---:|
@@ -3010,7 +3010,7 @@ Turn case 세 개는 맑은 날의 intersection command 선택과 추종을 확�
 원하는 case를 여러 번 지정할 수도 있다.
 
 ```bash
-scripts/e2e/run_route_suite.sh \
+tools/e2e/run_route_suite.sh \
   --port 2100 \
   --case town01_lane_follow_clear_noon \
   --case town01_lane_follow_wet_cloudy_noon \
@@ -3022,7 +3022,7 @@ Suite는 기본적으로 실패한 case가 있어도 나머지를 계속 실행�
 다음처럼 지정한다.
 
 ```bash
-scripts/e2e/run_route_suite.sh \
+tools/e2e/run_route_suite.sh \
   --port 2100 \
   --suite path/to/my_route_suite.json \
   --output-dir artifacts/regressions/route_suites/my_run
@@ -3102,14 +3102,14 @@ launch를 사용할 수 있다. 먼저 한 터미널에서 stack을 시작한다
 
 ```bash
 export CARLA_PORT=2100
-scripts/e2e/run_vad.sh carla_port:=2100
+tools/e2e/run_vad.sh carla_port:=2100
 ```
 
 다른 터미널에서 topic 검사와 제한 거리 주행을 실행한다.
 
 ```bash
-scripts/e2e/smoke_test.sh
-scripts/e2e/demo_drive.sh 10
+tools/e2e/smoke_test.sh
+tools/e2e/demo_drive.sh 10
 ```
 
 이 경로는 `default_command` 기반의 짧은 minimal 확인용이다. Minimal 시작점부터
@@ -3120,8 +3120,8 @@ scripts/e2e/demo_drive.sh 10
 수동 engage는 진단 상황에서만 사용한다.
 
 ```bash
-scripts/e2e/engage.sh true
-scripts/e2e/engage.sh false
+tools/e2e/engage.sh true
+tools/e2e/engage.sh false
 ```
 
 ## 한계와 성공의 의미
@@ -3217,15 +3217,15 @@ cd /home/a/autoware_e2e
 
 RIG=data/real_vehicle/vad_rig01
 mkdir -p "${RIG}"
-cp autoware_e2e_vad_launch/config/vad_real_data_collection.yaml \
+cp autonomy/autoware_e2e_vad_launch/config/vad_real_data_collection.yaml \
   "${RIG}/collection.yaml"
-cp autoware_e2e_vad_launch/config/vad_real_calibration.template.yaml \
+cp autonomy/autoware_e2e_vad_launch/config/vad_real_calibration.template.yaml \
   "${RIG}/calibration.yaml"
-cp autoware_e2e_vad_launch/config/vad_real_commissioning.template.yaml \
+cp autonomy/autoware_e2e_vad_launch/config/vad_real_commissioning.template.yaml \
   "${RIG}/commissioning.yaml"
-cp autoware_e2e_vad_launch/config/vad_real_reprojection_report.template.yaml \
+cp autonomy/autoware_e2e_vad_launch/config/vad_real_reprojection_report.template.yaml \
   "${RIG}/reprojection_report.yaml"
-cp autoware_e2e_vad_launch/config/vad_real_device_inventory.template.yaml \
+cp autonomy/autoware_e2e_vad_launch/config/vad_real_device_inventory.template.yaml \
   "${RIG}/device_inventory.yaml"
 ```
 
@@ -3298,7 +3298,7 @@ rectification과 extrinsic을 검사한다. 다음 renderer는 첫 surround fram
 cd /home/a/autoware_e2e
 RIG=data/real_vehicle/vad_rig01
 
-python3 scripts/e2e/render_vad_calibration_preview.py \
+python3 tools/e2e/render_vad_calibration_preview.py \
   /absolute/path/to/commissioning_bag \
   --profile "${RIG}/collection.yaml" \
   --calibration "${RIG}/calibration.yaml" \
@@ -3337,7 +3337,7 @@ Placeholder가 하나라도 남거나 SHA/오차 한계가 맞지 않으면 capt
 ```bash
 PROFILE=/home/a/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
 
-python3 scripts/e2e/vad_training_data_contract.py \
+python3 tools/e2e/vad_training_data_contract.py \
   check --capture-ready "${PROFILE}"
 ```
 
@@ -3346,7 +3346,7 @@ python3 scripts/e2e/vad_training_data_contract.py \
 
 ```bash
 export ROS_DOMAIN_ID=42
-python3 scripts/e2e/vad_training_data_contract.py \
+python3 tools/e2e/vad_training_data_contract.py \
   preflight "${PROFILE}" --timeout 20
 ```
 
@@ -3363,7 +3363,7 @@ export ROS_DOMAIN_ID=42
 PROFILE=/home/a/autoware_e2e/data/real_vehicle/vad_rig01/collection.yaml
 SESSION="artifacts/datasets/real_vehicle/rig01_$(date +%Y%m%d_%H%M%S)"
 
-scripts/e2e/record_vad_training_data.sh \
+tools/e2e/record_vad_training_data.sh \
   --profile "${PROFILE}" \
   --duration 60 \
   "${SESSION}"
@@ -3392,7 +3392,7 @@ jq '.gates | map_values(.pass)' "${SESSION}/training_data_report.json"
 학습 dataset으로 채택하기 전에는 목표 gate를 명시해 snapshot 기준으로 다시 검사한다.
 
 ```bash
-python3 scripts/e2e/validate_vad_training_bag.py "${SESSION}/bag" \
+python3 tools/e2e/validate_vad_training_bag.py "${SESSION}/bag" \
   --profile "${SESSION}/collection_profile.yaml" \
   --calibration "${SESSION}/calibration.yaml" \
   --commissioning "${SESSION}/commissioning_evidence/commissioning.yaml" \
@@ -3468,7 +3468,7 @@ Town03 28)이며 process death 수가 아니다. C-track/Town03 geometry smoothi
 유용한 topic 점검 명령:
 
 ```bash
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 ros2 topic hz /sensing/camera/CAM_FRONT/image_raw/compressed
 ros2 topic hz /localization/kinematic_state
 ros2 topic hz /planning/vad/candidate_trajectories

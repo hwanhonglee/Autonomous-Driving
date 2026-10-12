@@ -1,0 +1,28 @@
+{
+  "schema": "portable_e2e.town02_p02_manual_object_review.v1",
+  "review_scope": "Complete contact sheets 01, 02, 03 and 19 at original image resolution, with native RGB frames 0016, 0088 and 0239 cross-checked; all other sheets unreviewed",
+  "labels": {
+    "rgb_confirmed_sign": {
+      "S_RIGHT_30": [
+        "0083_c01", "0082_c01", "0084_c01", "0081_c01", "0080_c01",
+        "0079_c01", "0078_c01", "0077_c01", "0076_c01", "0075_c01",
+        "0074_c01", "0073_c01", "0072_c01", "0071_c01", "0070_c01",
+        "0069_c01", "0068_c01", "0067_c01", "0066_c01"
+      ],
+      "S_EARLY_LEFT_BACK": ["0016_c01", "0015_c01", "0014_c02"],
+      "S_LATER_LEFT_BACK": ["0089_c01", "0088_c02"]
+    },
+    "invalid_non_sign": [],
+    "uncertain": [
+      "0021_c02", "0057_c03", "0058_c03", "0018_c02",
+      "0019_c02", "0036_c02", "0056_c03", "0239_c01"
+    ]
+  },
+  "notes": {
+    "S_RIGHT_30": "One right-hand 30 km/h sign repeated across 19 frames, not 19 separate objects; readable 30 face and tag-8 footprint match.",
+    "S_EARLY_LEFT_BACK": "One left sign reverse face/pole, exiting left frame edge by 0016; original RGB has a red-rimmed round physical sign.",
+    "S_LATER_LEFT_BACK": "Another left sign reverse face/pole by 0088-0089; world position is about 29.8 m from the early left sign.",
+    "uncertain": "Small selected crops are not sufficiently readable or their temporal identity is not established; counted against the reviewed quality numerator."
+  },
+  "policy": "Unlisted components are unreviewed, not valid. Back faces count as physical sign-class objects, not as readable speed-limit content. Geometry only separates candidate objects and never substitutes for RGB review."
+}

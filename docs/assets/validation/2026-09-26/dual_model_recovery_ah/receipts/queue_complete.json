@@ -1,0 +1,41 @@
+{
+  "started_at_utc": "2026-09-26T04:10:31.391468+00:00",
+  "pid": 1993226,
+  "physical_gpu": 0,
+  "automatic_retry": false,
+  "automatic_promotion": false,
+  "commands": {
+    "mapping": [
+      "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+      "/home/pro6000/personal/hwanhong/portable_e2e/source_worktrees/dual_recovery_20260926_ah_v1/train_map_native_ah.py",
+      "--frozen-repo",
+      "/home/pro6000/personal/hwanhong/portable_e2e/source_worktrees/moving_recovery_k_20260922_v1",
+      "--data",
+      "/home/pro6000/personal/hwanhong/dataset/map_native_20260926_ah_v1",
+      "--parent",
+      "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/map_perception_pilot_20260922_v2",
+      "--output",
+      "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/map_native_20260926_ah_v1"
+    ],
+    "driving": [
+      "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+      "/home/pro6000/personal/hwanhong/portable_e2e/source_worktrees/dual_recovery_20260926_ah_v1/run_driving_near_horizon_ah.py",
+      "--baseline",
+      "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_recovery_k_20260922_v1",
+      "--output",
+      "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/driving_near_20260926_ah_v1"
+    ]
+  },
+  "jobs": {
+    "mapping": {
+      "returncode": 0,
+      "completed_at_utc": "2026-09-26T04:11:50.440195+00:00",
+      "log": "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/mapping_20260926_ah_v1.launch.log"
+    },
+    "driving": {
+      "returncode": 0,
+      "completed_at_utc": "2026-09-26T04:42:22.915991+00:00",
+      "log": "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/driving_20260926_ah_v1.launch.log"
+    }
+  }
+}

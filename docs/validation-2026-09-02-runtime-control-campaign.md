@@ -5,7 +5,7 @@
 해석한다. 원본은 아래 폴더이며, 이전 전체 Town 9-map/18-trial 결과를 대체하지 않는다.
 
 - Canonical root:
-  [`artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/)
+  [`artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1)
 - Git에 포함되는 정리 화면(PNG/GIF/경로·제어 분석):
   [`docs/assets/validation/2026-09-02-runtime-control-campaign-v1/README.md`](assets/validation/2026-09-02-runtime-control-campaign-v1/README.md)
 - 전체 Town 30 kph 결과:
@@ -64,14 +64,14 @@ autoware_vad_runtime_control_campaign_v1/
 
 - 2026-08-31 초기 inventory·map 준비도·원본 자료:
   [`validation-2026-08-31.md`](validation-2026-08-31.md),
-  [`artifacts/validation/2026-08-31/maps`](../artifacts/validation/2026-08-31/maps/)
+  [`artifacts/validation/2026-08-31/maps`](../storage/experiments/validation/2026-08-31/maps)
 - 2026-09-01 v16 owned-window 최종 matrix와 화면 판독 기준선:
   [`validation-2026-09-01.md`](validation-2026-09-01.md),
   [`v16_owned_window_visual_audit.md`](assets/validation/2026-09-01/owned_window_visual_audit/v16_owned_window_visual_audit.md),
-  [`v16 aggregate.json`](../artifacts/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/aggregate.json)
+  [`v16 aggregate.json`](../storage/experiments/validation/2026-09-01/autoware_vad_town_matrix_30kph_v16_owned_window_final/aggregate.json)
 - 2026-09-02 최신 camera-source 5 Hz 전체 Town 결과:
   [`validation-2026-09-02-all-towns-camera-source-5hz.md`](validation-2026-09-02-all-towns-camera-source-5hz.md),
-  [`latest aggregate.json`](../artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/aggregate.json)
+  [`latest aggregate.json`](../storage/experiments/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/aggregate.json)
 
 ## 화면 끊김 원인과 수정 결과
 
@@ -99,9 +99,9 @@ CAM_FRONT publish 시간과 여섯 camera receipt 폭이 모두 약 0.62~0.66초
 증거도 이 재현만으로 성립하지 않는다.
 
 - 재현 요약:
-  [`runtime_stutter_summary.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/10_runtime_stutter/town07_straight_A_baseline_health_001/runtime_stutter_summary.json)
+  [`runtime_stutter_summary.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/10_runtime_stutter/town07_straight_A_baseline_health_001/runtime_stutter_summary.json)
 - 원본 무결성 포인터:
-  [`source_pointers.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/10_runtime_stutter/town07_straight_A_baseline_health_001/source_pointers.json)
+  [`source_pointers.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/10_runtime_stutter/town07_straight_A_baseline_health_001/source_pointers.json)
 
 ### 적용한 simulation 전용 transport 계약
 
@@ -146,11 +146,11 @@ PID의 `max_i_effort 0.3 → 0.4`, 두 회전은 curvature preview `3 m → 5 m`
 좋아졌다는 이유만으로 채택하지 않았으며, 사전에 정의한 종합 gate를 사용했다.
 
 - Town07 비교:
-  [`A_baseline_vs_B_pid_i40_decision.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town07_straight/comparison/A_baseline_vs_B_pid_i40_decision.json)
+  [`A_baseline_vs_B_pid_i40_decision.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town07_straight/comparison/A_baseline_vs_B_pid_i40_decision.json)
 - C-track 비교:
-  [`A_baseline_vs_B_turn_preview_5m_decision.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/c_track_turn/comparison/A_baseline_vs_B_turn_preview_5m_decision.json)
+  [`A_baseline_vs_B_turn_preview_5m_decision.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/c_track_turn/comparison/A_baseline_vs_B_turn_preview_5m_decision.json)
 - Town03 비교:
-  [`A_baseline_vs_B_turn_preview_5m_decision.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town03_turn/comparison/A_baseline_vs_B_turn_preview_5m_decision.json)
+  [`A_baseline_vs_B_turn_preview_5m_decision.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town03_turn/comparison/A_baseline_vs_B_turn_preview_5m_decision.json)
 
 ## 선택 baseline의 depth-1 회귀
 
@@ -173,9 +173,9 @@ PID의 `max_i_effort 0.3 → 0.4`, 두 회전은 curvature preview `3 m → 5 m`
 
 | 장면 | 전체화면 | 주행 GIF | 경로·제어 | 원본 JSON |
 |---|---|---|---|---|
-| Town07 직진 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/03_path_vs_control.png) | [result](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town07_straight/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
-| C-track 좌회전 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/03_path_vs_control.png) | [result](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/c_track_turn/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
-| Town03 좌회전 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/03_path_vs_control.png) | [result](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town03_turn/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
+| Town07 직진 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town07_straight/C_selected_baseline_regression/03_path_vs_control.png) | [result](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town07_straight/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
+| C-track 좌회전 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/c_track_turn/C_selected_baseline_regression/03_path_vs_control.png) | [result](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/c_track_turn/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
+| Town03 좌회전 | [PNG](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/01_autoware_vehicle_centered_fullscreen.png) | [GIF](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/02_autoware_drive.gif) | [path](assets/validation/2026-09-02-runtime-control-campaign-v1/30kph/town03_turn/C_selected_baseline_regression/03_path_vs_control.png) | [result](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/20_30kph_control_ab/town03_turn/C_selected_baseline_depth1_loopback_regression_001/attempts/attempt_001/result.json) |
 
 ## 60 kph 현재 후보
 
@@ -187,9 +187,9 @@ v3를 덮어쓰지 않고, v4가 health·camera·route-speed·provenance gate를
 이 블록과 상단 판정을 갱신한다.
 
 - Pilot:
-  [`pilot_run.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/pilot_run.json)
+  [`pilot_run.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/pilot_run.json)
 - Trial:
-  [`trial/attempt_001`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001/)
+  [`trial/attempt_001`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001)
 
 Town06의 물리적으로 직선인 `445.880 m` 경로를 `77.400 sim-s / 77.524 wall-s`,
 RTF `0.998405`로 주행해 goal에 도착했다. 그러나 최고속도는 `10.100424 m/s`
@@ -215,7 +215,7 @@ RTF `0.998405`로 주행해 goal에 도착했다. 그러나 최고속도는 `10.
 키워 60 kph 성공으로 처리하지 않는다.
 
 상세 병목 분리는 로컬 원본
-[`town06_60kph_v3_speed_limit_analysis.md`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_v3_speed_limit_analysis.md)에
+[`town06_60kph_v3_speed_limit_analysis.md`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_v3_speed_limit_analysis.md)에
 기록했다. 곡률 안전 제한을 꺼서 60 kph를 만드는 방식은 사용하지 않는다.
 
 경로 진단은 `path_dominant`다. raw VAD route-offset p95 `1.178 m`, raw→final 개입 p95
@@ -228,8 +228,8 @@ RTF `0.998405`로 주행해 goal에 도착했다. 그러나 최고속도는 `10.
 | 차량 중심 주행 | [02_autoware_drive.gif](assets/validation/2026-09-02-runtime-control-campaign-v1/60kph/town06_straight/selected_pilot/02_autoware_drive.gif) |
 | 경로·제어 | [03_path_vs_control.png](assets/validation/2026-09-02-runtime-control-campaign-v1/60kph/town06_straight/selected_pilot/03_path_vs_control.png) |
 | 속도 | [05_speed_profile.png](assets/validation/2026-09-02-runtime-control-campaign-v1/60kph/town06_straight/selected_pilot/05_speed_profile.png) |
-| 종방향 응답 | [longitudinal_response.png](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001/longitudinal_response.png) |
-| runtime load | [runtime_load_analysis.png](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001/runtime_load_analysis.png) |
+| 종방향 응답 | [longitudinal_response.png](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001/longitudinal_response.png) |
+| runtime load | [runtime_load_analysis.png](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_pilot_best_effort_image_depth1_v3/trial/attempt_001/runtime_load_analysis.png) |
 
 ### 2026-09-03 geometry-only v4 A/B: HOLD
 
@@ -267,11 +267,11 @@ route-manager parameter dump, trajectory code, actuation manifest/map까지 SHA�
 v4 evidence integrity는 이 강화된 계약에서도 **PASS**다.
 
 - A/B 기계 판정:
-  [`town06_60kph_geometry_corridor_ab_v4.md`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_geometry_corridor_ab_v4.md)
+  [`town06_60kph_geometry_corridor_ab_v4.md`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_geometry_corridor_ab_v4.md)
 - 비교 차트:
-  [`town06_60kph_geometry_corridor_ab_v4.png`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_geometry_corridor_ab_v4.png)
+  [`town06_60kph_geometry_corridor_ab_v4.png`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_geometry_corridor_ab_v4.png)
 - B pilot 계약:
-  [`pilot_run.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/pilot_run.json)
+  [`pilot_run.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/30_60kph/town06_straight_60kph_geometry_corridor_0p2_v4/pilot_run.json)
 - B 차량 중심 전체화면:
   [`01_autoware_vehicle_centered_fullscreen.png`](assets/validation/2026-09-02-runtime-control-campaign-v1/60kph/town06_straight/B_geometry_corridor_0p2_hold/01_autoware_vehicle_centered_fullscreen.png)
 - B 차량 중심 주행 GIF·경로/제어 분석:
@@ -306,7 +306,7 @@ stop-anchor를 재현하지 않았으며, route CTE 최대 `0.2037 m`가 실제 
 조금 넘어 production에서는 재-clipping될 수 있다. 따라서 production 함수·stop-anchor·
 0.20 m corridor를 사용한 전체 snapshot preflight를 먼저 수행했고, PASS일 때만
 straight-only 전용 flag와 fail-closed provenance를 열도록 했다. 입력 digest와 전체 sweep은
-[`town06_60kph_smoothing_offline_screen_v1`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_offline_screen_v1/README.md)에
+[`town06_60kph_smoothing_offline_screen_v1`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_offline_screen_v1/README.md)에
 보존했다.
 
 #### Production-equivalent 전체 snapshot preflight: HOLD
@@ -334,11 +334,11 @@ dump로 strength 10을 재생성했을 때 geometry 399/399가 PASS했고 최대
 Town06 straight CARLA A/B를 열도록 했고, 이번에는 live v5를 실행하지 않았다.
 
 - Production preflight 보고서:
-  [`README.md`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/README.md)
+  [`README.md`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/README.md)
 - 기계 판독 결과:
-  [`summary.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/summary.json)
+  [`summary.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/summary.json)
 - 전 구간 차트:
-  [`comparison.png`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/comparison.png)
+  [`comparison.png`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_smoothing_production_preflight_v1/comparison.png)
 
 같은 production pipeline의 추가 read-only sweep에서도 단순 strength 해법은 없었다.
 `3k/10k/30k/100k`는 각각 곡률 p95/최대가
@@ -372,11 +372,11 @@ accepted subset의 p95가 처음으로 목표 아래에 들어온 것은 경계 
 `live_ab_authorized=false`, `real_vehicle_ready=false`, 운영 **HOLD**다.
 
 - C1 상세 보고서:
-  [`README.md`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/README.md)
+  [`README.md`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/README.md)
 - 기계 판독 결과:
-  [`summary.json`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/summary.json)
+  [`summary.json`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/summary.json)
 - 비교 차트:
-  [`comparison.png`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/comparison.png)
+  [`comparison.png`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/50_reports/town06_60kph_endpoint_tapered_c1_corridor_preflight_v1/comparison.png)
 
 이 raw bag과 생성 보고서는 ignored `artifacts/`에 있어 새 clone에는 포함되지 않는다.
 tracked preflight script는 사용자가 보존한 동일 trial을 `--trial-dir`로 명시할 때만
@@ -433,7 +433,7 @@ asset schema에서 재도출한다. Output 변경은 `O_NOFOLLOW` dir-fd와 nonb
 rename quarantine으로 정리했다. 총 **23,954 entries / 93,917 files /
 11,883,427,314 bytes**이며 삭제나 복사는 수행하지 않았다. 상세 plan, 보존 대상,
 복원 journal은 로컬
-[`99_integrity/CLEANUP.md`](../artifacts/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/99_integrity/CLEANUP.md)에
+[`99_integrity/CLEANUP.md`](../storage/experiments/validation/2026-09-02/autoware_vad_runtime_control_campaign_v1/99_integrity/CLEANUP.md)에
 있다. 실행기가 재사용하는 0-byte `autoware_e2e_*.lock`과 발행기 실제 두 대상의
 0-byte flock만 `/tmp`에 유지했다. 테스트별 발행 lock은 각 테스트 임시 폴더로 분리해
 workstation `/tmp`에 찌꺼기를 남기지 않는다.

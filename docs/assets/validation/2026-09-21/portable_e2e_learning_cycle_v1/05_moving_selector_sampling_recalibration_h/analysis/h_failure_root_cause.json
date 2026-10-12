@@ -1,0 +1,506 @@
+{
+  "schema": "portable_e2e.h_failure_root_cause_analysis.v1",
+  "status": "COMPLETE_READ_ONLY_DERIVED_DIAGNOSTIC",
+  "candidate_indexing": "Zero-based. DRIVE candidates are 0..5 and STOP candidates are 6..11.",
+  "scope": {
+    "remote_access": "read_only",
+    "remote_files_modified": false,
+    "local_derived_files_only": true,
+    "test_read_or_used": false,
+    "closed_loop_evaluation": false,
+    "carla_or_autoware_runtime_started": false,
+    "vehicle_control": false,
+    "real_vehicle": false,
+    "source_checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c"
+  },
+  "inputs": {
+    "exact_artifact_root": "artifacts/training/2026-09-21/moving_selector_sampling_recalibration_h_v1",
+    "files": [
+      {
+        "path": "cache/train.pt",
+        "sha256": "a586abd602ca410e26b37785d30b371b3310e4ee31644870838c3569cc077ca0"
+      },
+      {
+        "path": "cache/val.pt",
+        "sha256": "cbc9040ea13f32826a701a3ccc112ffc79cdb9e6e47f3db6600f96fd83728e50"
+      },
+      {
+        "path": "H0_f_right_replay/final_logits.pt",
+        "sha256": "4ff9e4059637dee0d7f521ea50455a47d5abf33b2aa19c85a499d119e4b21bce"
+      },
+      {
+        "path": "H0_f_right_replay/head_only.pt",
+        "sha256": "d02be1971ce411d7ee2cbdbebe085f391674e166f35f87758e753dda0e3f71ab"
+      },
+      {
+        "path": "H0_f_right_replay/history.jsonl",
+        "sha256": "f0c1218f8d37745ee8110d6b2b95553e07814d977d846f2abf9c5213ab817d8c"
+      },
+      {
+        "path": "H0_f_right_replay/report.json",
+        "sha256": "272d3a9dda12100f0b8ffef70269d681437be387e981c2c02d2c8a9e93ca70f5"
+      },
+      {
+        "path": "H1_train_cyclic_uniform_replay/final_logits.pt",
+        "sha256": "e9761120a929aa79e890d53103842a4caa832ad7be008efa7914677d8d40c107"
+      },
+      {
+        "path": "H1_train_cyclic_uniform_replay/head_only.pt",
+        "sha256": "b8025f584fe796e7a7c60e1cb426246f86859a0a42bd4882397fceb9189656c7"
+      },
+      {
+        "path": "H1_train_cyclic_uniform_replay/history.jsonl",
+        "sha256": "0bdbfeff48187e804c2639f9838674a398461c965bcbfb1ddac635f576f5cf92"
+      },
+      {
+        "path": "H1_train_cyclic_uniform_replay/report.json",
+        "sha256": "a91db88bfcb4cc309063632667bd0012d1eeb7eaacb08955bbac314cc7beb115"
+      },
+      {
+        "path": "plan.json",
+        "sha256": "3bf5bd5e63e3c637b47efab52e5c4e98b83a35fd337059bc4028962a80c82542"
+      },
+      {
+        "path": "summary.json",
+        "sha256": "e916adbb57fc2dddd21b77da6024daad9519e0e0184d944bb6677701d0666b7e"
+      },
+      {
+        "path": "source/portable_e2e/losses.py",
+        "sha256": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973"
+      },
+      {
+        "path": "source/portable_e2e/frozen_stopmix_selector_recalibration.py",
+        "sha256": "821dc47f9a82af541e2e2e7a063a48608a583dc2329e1bf36106faaeae1f14a0"
+      }
+    ],
+    "dataset_manifest_sha256": "70fceaf0a6fea1b6ac455154bdc7b1113cfef15abc1a26ca7327ac2a186799e6",
+    "dataset_metadata_sha256": {
+      "TRAIN_CTrack_left_episode": "873e09a9e7f022c29761b16122dfb8af9f73f9de0702525b3812530ba12f67ad",
+      "TRAIN_CTrack_left_collection_config": "0c2dfdde2d21f7287fa9c095dc6e444af93a5c71cf233aad737fde1efc267e02",
+      "TRAIN_Town01_right_episode": "fe7a9351c541140cc22bc0a86964b0b143477946e90cf1d77a0dcab95975e42e",
+      "TRAIN_Town01_right_collection_config": "8e9444e77ad8adb039e02488d3e11069b15e34563ffd515b83d138c2f46db295",
+      "TRAIN_Town07_straight_30kph_episode": "2848a4b4bd4f59c8c7155f63fe95c6a7e0586ef844d902fe92cc5bec698a60c9",
+      "TRAIN_Town07_straight_30kph_collection_config": "444e331e1f16942db9c22ab80e37a073616ab8eec4b6f480598ff6cd3ce39046",
+      "TRAIN_Town07_straight_15kph_episode": "7bd93fedbf9fc5cd6dcf654fc8eeccb4dd3d007e401ac5f30d134d06a129f876",
+      "TRAIN_Town07_straight_15kph_collection_config": "a6c623408d4b08c2f6b4b45bac80b41a5cc9e2be6d24c57af6844a84fa4e2de0",
+      "DEV_Town03_right_episode": "cb17152c99cbdd4069af30c77aa1c3a388b4ca5b6456759c11fa4b27dd1dc496",
+      "DEV_Town03_right_collection_config": "d100ec9adfb9666f7f5052a6f542b3d39b148361790daf505480555e8304b570",
+      "DEV_Town03_straight_episode": "5f6fc54cfb23e6987b3e6461f0f0af5621f12ab59f8c4baf1c36288f2d7722de",
+      "DEV_Town03_straight_collection_config": "ca0e675f5d38ddd2844a04bb7dd021b1a4ac4ad333e72576a11664cd2ed8c562"
+    }
+  },
+  "method": {
+    "composite_cost": "Recomputed from the pinned native trajectory_loss prefix: smooth-L1 XY + 0.2 speed + 0.05 kinematic speed + 0.1 yaw + 0.5 final displacement.",
+    "hard_oracle": "argmin of the 12 frozen composite candidate costs",
+    "selected_candidate": "argmax of F, H0, or H1 logits",
+    "selected_composite_regret": "selected composite cost minus minimum composite cost",
+    "expected_composite_regret": "softmax(logits)-weighted composite regret",
+    "ade_selection_regret": "selected ADE minus minimum candidate ADE",
+    "fused_knn": "TRAIN-feature-standardized Euclidean and cosine nearest-neighbor diagnostics; labels are used only after neighbor retrieval for diagnosis.",
+    "candidate_geometry": "Flattened candidate XY divided by 120 m concatenated with candidate speed divided by 55 m/s, matching the existing research residual ABI."
+  },
+  "episodes": [
+    {
+      "name": "TRAIN_Town07_straight_30kph",
+      "sample_count": 309,
+      "adapter": "carla_native_expert_to_common10_v1",
+      "target_speed_kph": 30.0
+    },
+    {
+      "name": "TRAIN_CTrack_left_30kph",
+      "sample_count": 304,
+      "adapter": "carla_native_expert_to_common10_v1",
+      "target_speed_kph": 30.0
+    },
+    {
+      "name": "TRAIN_Town01_right_30kph",
+      "sample_count": 534,
+      "adapter": "carla_native_expert_to_common10_v1",
+      "target_speed_kph": 30.0
+    },
+    {
+      "name": "TRAIN_Town07_straight_15kph",
+      "sample_count": 328,
+      "adapter": "carla_fixed_moving_task_to_common10_v1",
+      "target_speed_kph": 15.0
+    },
+    {
+      "name": "DEV_Town03_right_30kph",
+      "sample_count": 337,
+      "adapter": "carla_native_expert_to_common10_v1",
+      "target_speed_kph": 30.0
+    },
+    {
+      "name": "DEV_Town03_straight_15kph",
+      "sample_count": 328,
+      "adapter": "carla_fixed_moving_dev_task_to_common10_v2",
+      "target_speed_kph": 15.0
+    }
+  ],
+  "replay_exposure": {
+    "H0_f_right_replay": {
+      "base": 29500,
+      "replay": 3620,
+      "total_by_episode": {
+        "TRAIN_Town07_straight_30kph": 6180,
+        "TRAIN_CTrack_left_30kph": 6080,
+        "TRAIN_Town01_right_30kph": 14300,
+        "TRAIN_Town07_straight_15kph": 6560
+      },
+      "replay_by_episode": {
+        "TRAIN_Town07_straight_30kph": 0,
+        "TRAIN_CTrack_left_30kph": 0,
+        "TRAIN_Town01_right_30kph": 3620,
+        "TRAIN_Town07_straight_15kph": 0
+      }
+    },
+    "H1_train_cyclic_uniform_replay": {
+      "base": 29500,
+      "replay": 3620,
+      "total_by_episode": {
+        "TRAIN_Town07_straight_30kph": 7107,
+        "TRAIN_CTrack_left_30kph": 6992,
+        "TRAIN_Town01_right_30kph": 11805,
+        "TRAIN_Town07_straight_15kph": 7216
+      },
+      "replay_by_episode": {
+        "TRAIN_Town07_straight_30kph": 927,
+        "TRAIN_CTrack_left_30kph": 912,
+        "TRAIN_Town01_right_30kph": 1125,
+        "TRAIN_Town07_straight_15kph": 656
+      }
+    }
+  },
+  "aggregate": {
+    "train": {
+      "sample_count": 1475,
+      "oracle_histogram": [57, 38, 423, 65, 50, 625, 130, 11, 47, 13, 10, 6],
+      "F": {
+        "selected_histogram": [54, 111, 387, 55, 17, 608, 182, 0, 61, 0, 0, 0],
+        "oracle_agreement_count": 1228,
+        "oracle_agreement_rate": 0.8325423598,
+        "cross_entropy": 0.5596184134,
+        "expected_composite_regret": 1.2647473812,
+        "selected_composite_regret": 1.0420062542,
+        "selected_ade_m": 0.965477109,
+        "oracle_ade_m": 0.5528029799,
+        "ade_selection_regret_m": 0.412674129
+      },
+      "H0": {
+        "selected_histogram": [22, 108, 390, 65, 18, 603, 182, 7, 56, 19, 0, 5],
+        "oracle_agreement_count": 1265,
+        "oracle_agreement_rate": 0.8576270938,
+        "cross_entropy": 0.4250621796,
+        "expected_composite_regret": 1.1284739971,
+        "selected_composite_regret": 0.8667836189,
+        "selected_ade_m": 0.8966389894,
+        "oracle_ade_m": 0.5528029799,
+        "ade_selection_regret_m": 0.3438360095
+      },
+      "H1": {
+        "selected_histogram": [24, 109, 390, 64, 18, 602, 182, 7, 56, 19, 0, 4],
+        "oracle_agreement_count": 1262,
+        "oracle_agreement_rate": 0.8555932045,
+        "cross_entropy": 0.4554170668,
+        "expected_composite_regret": 1.0380773544,
+        "selected_composite_regret": 0.8729774356,
+        "selected_ade_m": 0.8986411095,
+        "oracle_ade_m": 0.5528029799,
+        "ade_selection_regret_m": 0.3458381295
+      }
+    },
+    "development_val": {
+      "sample_count": 665,
+      "oracle_histogram": [27, 13, 366, 23, 20, 181, 15, 3, 13, 0, 2, 2],
+      "F": {
+        "selected_histogram": [7, 0, 245, 49, 0, 355, 0, 0, 9, 0, 0, 0],
+        "oracle_agreement_count": 200,
+        "oracle_agreement_rate": 0.3007518797,
+        "cross_entropy": 2.9848637581,
+        "expected_composite_regret": 9.1862373352,
+        "selected_composite_regret": 9.0347146988,
+        "selected_ade_m": 5.009188652,
+        "oracle_ade_m": 1.0244467258,
+        "ade_selection_regret_m": 3.9847419262
+      },
+      "H0": {
+        "selected_histogram": [43, 0, 240, 41, 0, 313, 0, 4, 10, 14, 0, 0],
+        "oracle_agreement_count": 173,
+        "oracle_agreement_rate": 0.260150376,
+        "cross_entropy": 3.7189178467,
+        "expected_composite_regret": 8.8742866516,
+        "selected_composite_regret": 8.7897405624,
+        "selected_ade_m": 4.9544363022,
+        "oracle_ade_m": 1.0244467258,
+        "ade_selection_regret_m": 3.9299895763
+      },
+      "H1": {
+        "selected_histogram": [45, 0, 242, 41, 0, 309, 0, 3, 9, 14, 2, 0],
+        "oracle_agreement_count": 172,
+        "oracle_agreement_rate": 0.2586466165,
+        "cross_entropy": 3.7275886536,
+        "expected_composite_regret": 8.8262290955,
+        "selected_composite_regret": 8.7510328293,
+        "selected_ade_m": 4.9430236816,
+        "oracle_ade_m": 1.0244467258,
+        "ade_selection_regret_m": 3.9185769558
+      }
+    }
+  },
+  "train_episode_distributions": {
+    "TRAIN_Town07_straight_30kph": {
+      "sample_count": 309,
+      "oracle_histogram": [16, 7, 15, 16, 8, 220, 3, 3, 10, 4, 4, 3],
+      "F_selected_histogram": [22, 33, 13, 2, 0, 227, 0, 0, 12, 0, 0, 0],
+      "H0_selected_histogram": [7, 32, 15, 15, 0, 221, 0, 2, 12, 5, 0, 0],
+      "H1_selected_histogram": [7, 32, 16, 15, 0, 220, 0, 2, 12, 5, 0, 0],
+      "oracle_agreement": {"F": 235, "H0": 249, "H1": 249}
+    },
+    "TRAIN_CTrack_left_30kph": {
+      "sample_count": 304,
+      "oracle_histogram": [13, 5, 46, 14, 27, 181, 0, 1, 10, 4, 3, 0],
+      "F_selected_histogram": [13, 34, 30, 21, 17, 174, 0, 0, 15, 0, 0, 0],
+      "H0_selected_histogram": [6, 33, 31, 22, 18, 174, 0, 0, 14, 6, 0, 0],
+      "H1_selected_histogram": [6, 34, 30, 22, 18, 174, 0, 0, 14, 6, 0, 0],
+      "oracle_agreement": {"F": 250, "H0": 255, "H1": 254}
+    },
+    "TRAIN_Town01_right_30kph": {
+      "sample_count": 534,
+      "oracle_histogram": [28, 26, 34, 35, 15, 224, 127, 7, 27, 5, 3, 3],
+      "F_selected_histogram": [19, 44, 16, 32, 0, 207, 182, 0, 34, 0, 0, 0],
+      "H0_selected_histogram": [9, 43, 16, 28, 0, 208, 182, 5, 30, 8, 0, 5],
+      "H1_selected_histogram": [11, 43, 16, 27, 0, 208, 182, 5, 30, 8, 0, 4],
+      "oracle_agreement": {"F": 415, "H0": 433, "H1": 431}
+    },
+    "TRAIN_Town07_straight_15kph": {
+      "sample_count": 328,
+      "oracle_histogram": [0, 0, 328, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "F_selected_histogram": [0, 0, 328, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "H0_selected_histogram": [0, 0, 328, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "H1_selected_histogram": [0, 0, 328, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "oracle_agreement": {"F": 328, "H0": 328, "H1": 328},
+      "H1_logit_2_minus_5_mean": 12.2806596756,
+      "H1_logit_2_minus_5_median": 12.3270969391
+    }
+  },
+  "town03_development": {
+    "right_turn": {
+      "sample_count": 337,
+      "F": {
+        "oracle_agreement_count": 149,
+        "cross_entropy": 2.6831035614,
+        "expected_composite_regret": 3.7915945053,
+        "selected_composite_regret": 3.3468053341,
+        "selected_ade_m": 2.867398262,
+        "oracle_ade_m": 1.499268651
+      },
+      "H0": {
+        "oracle_agreement_count": 133,
+        "cross_entropy": 3.8228719234,
+        "expected_composite_regret": 4.1421880722,
+        "selected_composite_regret": 3.4301533699,
+        "selected_ade_m": 2.8494160175,
+        "oracle_ade_m": 1.499268651
+      },
+      "H1": {
+        "oracle_agreement_count": 131,
+        "cross_entropy": 3.8548355103,
+        "expected_composite_regret": 4.1358289719,
+        "selected_composite_regret": 3.4437310696,
+        "selected_ade_m": 2.8614675999,
+        "oracle_ade_m": 1.499268651
+      }
+    },
+    "straight": {
+      "sample_count": 328,
+      "oracle_histogram": [16, 0, 312, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "F_selected_histogram": [5, 0, 65, 0, 0, 258, 0, 0, 0, 0, 0, 0],
+      "H0_selected_histogram": [43, 0, 53, 3, 0, 229, 0, 0, 0, 0, 0, 0],
+      "H1_selected_histogram": [45, 0, 53, 4, 0, 226, 0, 0, 0, 0, 0, 0],
+      "F": {
+        "oracle_agreement_count": 51,
+        "cross_entropy": 3.2949037552,
+        "expected_composite_regret": 14.7289028168,
+        "selected_composite_regret": 14.8786945343,
+        "selected_ade_m": 7.209748745,
+        "oracle_ade_m": 0.5365962386,
+        "ade_selection_regret_m": 6.6731524467,
+        "oracle_2_selected_2": 50,
+        "oracle_2_selected_5": 258,
+        "logit_2_minus_5_mean": -2.7570238113,
+        "logit_2_minus_5_median": -3.5009832382
+      },
+      "H0": {
+        "oracle_agreement_count": 40,
+        "cross_entropy": 3.6121103764,
+        "expected_composite_regret": 13.7362270355,
+        "selected_composite_regret": 14.2963895798,
+        "selected_ade_m": 7.1172156334,
+        "oracle_ade_m": 0.5365962386,
+        "ade_selection_regret_m": 6.5806193352,
+        "oracle_2_selected_2": 39,
+        "oracle_2_selected_5": 229,
+        "logit_2_minus_5_mean": -2.5540094376,
+        "logit_2_minus_5_median": -3.603427887
+      },
+      "H1": {
+        "oracle_agreement_count": 41,
+        "cross_entropy": 3.596850872,
+        "expected_composite_regret": 13.6453294754,
+        "selected_composite_regret": 14.2039632797,
+        "selected_ade_m": 7.0816955566,
+        "oracle_ade_m": 0.5365962386,
+        "ade_selection_regret_m": 6.5450992584,
+        "oracle_2_selected_2": 40,
+        "oracle_2_selected_5": 226,
+        "logit_2_minus_5_mean": -2.4779653549,
+        "logit_2_minus_5_median": -3.508731842,
+        "oracle_2_logit_2_minus_5_mean": -2.793576479,
+        "oracle_2_logit_2_minus_5_median": -3.8358266354,
+        "selected_5_count": 226,
+        "selected_5_probability_mean": 0.9011985064,
+        "selected_5_probability_median": 0.9807907343,
+        "selected_5_probability_ge_0p9_count": 176,
+        "selected_5_probability_ge_0p99_count": 78,
+        "selected_5_top1_top2_margin_mean": 4.1071090698,
+        "selected_5_top1_top2_margin_median": 4.2917761803
+      },
+      "candidate_2_vs_5": {
+        "target_average_speed_mps": 4.1174969673,
+        "candidate_2_average_speed_mps": 3.9197220802,
+        "candidate_5_average_speed_mps": 7.3649091721,
+        "candidate_2_ade_m": 0.5583797097,
+        "candidate_5_ade_m": 8.5473718643,
+        "candidate_5_minus_2_ade_m": 7.988992691,
+        "candidate_2_composite_cost": 1.2257114649,
+        "candidate_5_composite_cost": 19.0886917114,
+        "candidate_5_minus_2_composite_cost": 17.8629798889
+      }
+    }
+  },
+  "head_change_diagnostic": {
+    "H0_vs_H1_prediction_changes": {
+      "train": 5,
+      "development_val": 8,
+      "development_straight": 4
+    },
+    "H0_vs_H1_mean_absolute_logit_delta": {
+      "train": 0.2482867092,
+      "development_val": 0.2006220818
+    },
+    "H0_vs_H1_mean_row_l2_logit_delta": {
+      "train": 1.045368433,
+      "development_val": 0.7990173697
+    },
+    "H1_vs_F_mean_absolute_logit_delta": {
+      "train": 2.9601581097,
+      "development_val": 2.690128088
+    },
+    "H1_vs_F_mean_row_l2_logit_delta": {
+      "train": 12.7856311798,
+      "development_val": 11.7315301895
+    },
+    "interpretation": "The head moved materially from F, but changing replay identities changed almost no argmax decisions. The failure is not explained by an update that was too small or by H0 right-replay identities alone."
+  },
+  "representation_diagnostic": {
+    "town07_15kph_train_to_town03_15kph_dev_logit_2_minus_5_mean_flip": 14.7586250305,
+    "fused_standardized_euclidean_1nn_for_town03_straight": {
+      "query_count": 328,
+      "nearest_train_episode_counts": {
+        "TRAIN_Town01_right_30kph": 172,
+        "TRAIN_Town07_straight_30kph": 155,
+        "TRAIN_CTrack_left_30kph": 1,
+        "TRAIN_Town07_straight_15kph": 0
+      },
+      "nearest_train_oracle_counts": {"0": 51, "2": 13, "3": 5, "5": 259},
+      "nearest_oracle_matches_dev_rate": 0.0609756112,
+      "town03_straight_centroid_distance_to_train_episode": {
+        "TRAIN_Town07_straight_30kph": 4.1835169792,
+        "TRAIN_CTrack_left_30kph": 8.4155197144,
+        "TRAIN_Town01_right_30kph": 10.7816076279,
+        "TRAIN_Town07_straight_15kph": 13.6603679657
+      }
+    },
+    "fused_cosine_1nn_for_town03_straight": {
+      "nearest_train_episode_counts": {
+        "TRAIN_Town01_right_30kph": 169,
+        "TRAIN_Town07_straight_30kph": 159,
+        "TRAIN_Town07_straight_15kph": 0
+      },
+      "nearest_train_oracle_counts": {"0": 51, "2": 13, "3": 8, "5": 256},
+      "nearest_oracle_matches_dev_rate": 0.0640243888
+    },
+    "town03_candidate_2_geometry_centroid_distance_to_same_train_candidate": {
+      "TRAIN_Town07_straight_15kph": 0.098073,
+      "TRAIN_Town01_right_30kph": 0.104837,
+      "TRAIN_CTrack_left_30kph": 0.577233,
+      "TRAIN_Town07_straight_30kph": 0.731327
+    },
+    "interpretation": "The fused context places Town03 15 kph straight beside candidate-5-dominant 30 kph TRAIN regions, while the frozen candidate geometry retains a close Town07 15 kph analogue."
+  },
+  "ranked_root_causes": [
+    {
+      "rank": 1,
+      "cause": "Fused-context map/domain shortcut in a candidate-index linear classifier",
+      "confidence": "high",
+      "evidence": "Town07 15 kph TRAIN is 328/328 oracle-2 and selected-2 with H1 logit(2-5)=+12.281, but Town03 15 kph DEV has 312/328 oracle-2 and H1 logit(2-5)=-2.478. Fused 1-NN never selects the Town07 15 kph episode and matches the DEV oracle only 6.1%, although candidate-2 geometry is closest to Town07 15 kph candidate 2."
+    },
+    {
+      "rank": 2,
+      "cause": "The selector cannot inspect the generated candidate geometry it is asked to rank",
+      "confidence": "high",
+      "evidence": "On Town03 straight, candidate 2 has 0.558 m ADE and 3.920 m/s average speed versus candidate 5 at 8.547 m and 7.365 m/s, but H1 chooses candidate 5 on 226 rows with mean probability 0.901."
+    },
+    {
+      "rank": 3,
+      "cause": "TRAIN fit improved while DEV classification generalized worse",
+      "confidence": "high",
+      "evidence": "TRAIN agreement improves from 83.25% to 85.56% and CE from 0.560 to 0.455, while DEV agreement falls from 30.08% to 25.86% and CE rises from 2.985 to 3.728."
+    },
+    {
+      "rank": 4,
+      "cause": "Right-turn replay imbalance is secondary rather than primary",
+      "confidence": "high",
+      "evidence": "H1 redistributes all 3,620 replay rows, yet H0 and H1 differ on only 5/1,475 TRAIN and 8/665 DEV argmax decisions."
+    }
+  ],
+  "next_minimal_experiment": {
+    "decision": "RUN_GEOMETRY_AWARE_DRIVE_STOP_MODE_PRESERVING_RESIDUAL_AB_BEFORE_MORE_RIGHT_TURN_DATA",
+    "classification": "performance recovery selector diagnostic, not an autonomous-function head",
+    "frozen_components": [
+      "F image encoder",
+      "F calibration/camera fusion",
+      "F ego and route encoders",
+      "F fused contexts",
+      "F DRIVE and STOP candidate generators",
+      "all candidate XY and speed tensors",
+      "F original logits as the causal prior"
+    ],
+    "paired_arms": {
+      "control": "Equal-capacity zero-initialized residual with fused context and original per-candidate logit; candidate geometry inputs are zeroed.",
+      "geometry": "Equal-capacity zero-initialized shared residual with fused context, original per-candidate logit, and normalized per-candidate XY/speed geometry."
+    },
+    "mode_preservation": {
+      "groups": {"DRIVE": [0, 1, 2, 3, 4, 5], "STOP": [6, 7, 8, 9, 10, 11]},
+      "required_invariant": "For every row and each group, normalize residual logits so the final group maximum exactly equals the original F group maximum. Therefore the F DRIVE-versus-STOP mode decision cannot change, while ranking inside each mode may change.",
+      "training_target": "Use the original F-selected mode as the causal mode mask, then use the minimum composite-cost candidate within that fixed mode for within-mode CE and expected regret. Retain every TRAIN row."
+    },
+    "fixed_controls": [
+      "exact zero-residual F-logit parity before fitting",
+      "H1 cyclic-uniform exposure identities",
+      "same batch positions, exposure budget, optimizer, seed, and final-only DEV evaluation across arms",
+      "no generator gradient and no cache mutation",
+      "C right-turn and D straight/combined absolute gates plus frozen geometry gate",
+      "no TEST, closed-loop, export, promotion, or vehicle control"
+    ],
+    "decision_rule": "A single seed is only a recovery signal. Require the geometry arm to beat the equal-capacity control and pass all fixed absolute moving gates. If it signals, confirm with three fresh seeds and a sealed stationary DEV guard before any promotion.",
+    "fallback": "If geometry-aware mode-preserving ranking still fails or overfits, defer unique-right-turn G collection and add physically distinct TRAIN straight episodes across multiple TRAIN towns at both 15 and 30 kph. Right-turn-only data is not aligned with the present 0/3 straight failure."
+  },
+  "limitations": [
+    "This is a derived open-loop cache analysis, not a new training run.",
+    "Town03 is development data already used by the fixed H evaluation; no claim is made about unseen TEST performance.",
+    "Nearest-neighbor and centroid results diagnose representation geometry and are not deployable predictors.",
+    "The proposed residual is plausible because candidate geometry contains an invariant signal; it is not yet proven on this H cache.",
+    "The sealed stationary DEV guard is absent, so no selector result from this cache can be promoted."
+  ]
+}

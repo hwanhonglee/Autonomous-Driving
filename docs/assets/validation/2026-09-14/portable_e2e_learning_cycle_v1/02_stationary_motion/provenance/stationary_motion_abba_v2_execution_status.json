@@ -1,0 +1,61 @@
+{
+  "schema": "carla.stationary_motion_campaign_execution.v1",
+  "campaign_id": "hh260914-c-track-stationary-motion-abba-v2",
+  "status": "STOPPED_INVALID_PRETICK_ORIGIN",
+  "completed_at_utc": "2026-09-14T03:23:22.689256+00:00",
+  "cases": [
+    {
+      "id": "01_service_A1",
+      "status": "FAILED_AT_SETTLE_BOUND",
+      "state_count": 70,
+      "camera_anchor_count": 35,
+      "jpeg_count": 210,
+      "control_ack_count": 70
+    },
+    {
+      "id": "02_parking_B1",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "03_parking_B2",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "04_service_A2",
+      "status": "NOT_RUN"
+    }
+  ],
+  "cause": "Pre-first-tick frame-bracketed ego.get_transform() returned zero pose; using it as motion origin caused a false 196m displacement. Immutable native positions show submillimetre movement. Do not reinterpret original FAIL as a completed comparison.",
+  "evidence_sha256": {
+    "plan.json": "c6ca6f049e0d50aae65083af2a0737a65353bfc1060bed4829656c0c80de76f3",
+    "01_service_A1/owner_result.json": "dfac6f7ae5721f57e04fdd0b741978e0ca6471e96c1d30a0c80c550e6b4af23d",
+    "01_service_A1/collector.log": "0a9dee9d924a6661e20af83f010cdbe4846cb2e54e85a16dbb52e7107bfaf232",
+    "01_service_A1/lifecycle/stopped.json": "40a921bfa95b0a588ec7fe5072c71f19b3fdb26756eecf4f49f1fe32f469ab9d",
+    "01_service_A1/motion_probe.partial/manifest.json": "290420c33520b85e565cbada39ba0090db5eba7231e073b377fb80e3d76a6e69",
+    "01_service_A1/motion_probe.partial/native_states.jsonl": "d849c93c9e63ccb0676cd6057191183c0d1f04ce111746786caf93335dc227c1"
+  },
+  "first_immutable_pose": {
+    "x": -193.73744201660156,
+    "y": 30.208091735839844,
+    "z": 14.895299911499023,
+    "roll": 0,
+    "pitch": 0,
+    "yaw": -8.443704605102539
+  },
+  "last_immutable_pose": {
+    "x": -193.7375946044922,
+    "y": 30.208030700683594,
+    "z": 13.947065353393555,
+    "roll": -0.001434326171875,
+    "pitch": 0.0005805660621263087,
+    "yaw": -8.443704605102539
+  },
+  "original_reported_net_motion_m": 196.07850642522754,
+  "world_settings_weather_restored": true,
+  "cleanup_errors": [],
+  "owner_process_stopped": true,
+  "owner_ports_released": true,
+  "training_data_approved": false,
+  "vehicle_control_approved": false,
+  "correction_policy": "HH_260906 - Keep every v2 state/image and abort result; bind the existing 0.5m displacement limit to the explicit requested spawn pose in a separately declared v3. No added ticks, removed phases, threshold changes or control changes."
+}

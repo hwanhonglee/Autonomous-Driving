@@ -1,0 +1,107 @@
+{
+  "counts": {
+    "native_state_count": 1462,
+    "camera_anchor_count": 731,
+    "full_64_point_anchor_count": 666,
+    "original_curvature_assessed_step_count": 38103,
+    "original_violating_anchor_count": 134,
+    "original_violating_window_step_count": 612,
+    "unique_episode_relative_100ms_violation_tick_count": 39,
+    "first_point_failure_occurrence_count": 36,
+    "interior_point_failure_occurrence_count": 576,
+    "unique_ticks_failing_only_at_first_point": 29
+  },
+  "original_metric_failure_counts": {
+    "speed_limit": 0,
+    "speed_acceleration": 0,
+    "speed_deceleration": 0,
+    "xy_speed_limit": 0,
+    "xy_acceleration": 0,
+    "xy_deceleration": 0,
+    "xy_curvature": 612,
+    "xy_lateral_acceleration": 0,
+    "yaw_label_heading_envelope": 0
+  },
+  "unique_failure_ticks_by_capture_phase": {
+    "driving": 39
+  },
+  "unique_failure_ticks_by_pilot_state": {
+    "launch_low": 3,
+    "normal_pid": 3,
+    "coast_low": 32,
+    "service_brake_hold": 1
+  },
+  "window_failure_heading_reference_counts": {
+    "anchor_body_heading_after_unassessed_steps": 49,
+    "last_assessed_segment_heading": 527,
+    "anchor_body_heading_first_point": 36
+  },
+  "raw_virtual_base_pose_maximum_replay_residual": 0.0,
+  "curvature_replay_exact_value_and_flag_match": true,
+  "schema": "carla.curvature_conditioning_diagnostic.v1",
+  "status": "DIAGNOSTIC_FAILURES_RETAINED_NOT_ADMITTED",
+  "generated_at_utc": "2026-09-14T07:31:16.849852+00:00",
+  "scope": {
+    "training_data_approved": false,
+    "new_data_admission": false,
+    "targets_changed": false,
+    "thresholds_changed": false,
+    "failures_removed": false,
+    "images_opened": false,
+    "model_executed": false,
+    "simulator_contacted": false,
+    "other_metrics_recomputed": false,
+    "prior_capture_or_pixel_QA_rerun": false
+  },
+  "unchanged_curvature_contract": {
+    "time_step_ns": 100000000,
+    "minimum_heading_step_m": 0.0001,
+    "maximum_curvature_rad_per_m": 0.2,
+    "rounding_tolerance": 1e-06,
+    "initial_heading": "anchor body-forward; held until a displacement exceeds the minimum step",
+    "curvature": "abs(wrapped displacement-heading change) / current displacement length"
+  },
+  "sources": {
+    "script_sha256": "165b1545ee476349bdb58cd4e8fc610a85242ff5d44a1c0edd8024a954ad1385",
+    "original_auditor_source_sha256": {
+      "portable_e2e/config/common_10hz_v1.contract.json": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+      "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+      "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+      "portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+      "scripts/e2e/audit_carla_acknowledged_control.py": "9d6fccb6874a5cdfc85e8bf5d9229435e4ba6fe6850eb63a9e83488f39bcc5bd",
+      "scripts/e2e/audit_carla_brake_free_goal_stop.py": "8386c0bce5c64250cb33de8c686369d36f5cbde141c1a9cd0a03911a1980cceb",
+      "scripts/e2e/audit_carla_comfortable_v3_trial.py": "ba0c81cb0faf9d1c7f178cdea25f31861c73f416578b935a8240dcf25d53efed",
+      "scripts/e2e/audit_carla_raw_pre_admission.py": "0a7983857aea0e2b6588bb27712865ce1f70c27aa06a187fca4d0fc1a72dbc00",
+      "scripts/e2e/audit_portable_target_feasibility.py": "8b56a4990f51639ec5ff9bca12f7453051772d1984e4db768613384b25f00894",
+      "scripts/e2e/prepare_carla_common10_dataset.py": "c63c7e5b7e0c06336c885f2d6120e3e8a8a74daf372ddf5df167eac2b4b4b666",
+      "scripts/e2e/summarize_carla_goal_stop_trials.py": "890984ed44df9dacc5112a2c2d099652b8fd0490e41c6856aea9c216a4029032",
+      "artifacts/training/2026-09-14/brake_hold_goal_stop_v5/summarize_pilot.py": "b698e4955bbf8f54a5fab269ac8e052ded3be589d14f7e07fcf63d41b5cc0df2",
+      "artifacts/training/2026-09-14/brake_hold_goal_stop_v5/README.public.md": "f6e2b2da4d21eebf4824df1ecd79a1a87956771b25f3a6677d4910a3179291c9"
+    }
+  },
+  "input_sha256": {
+    "sealed06_sha256sums": "aa58bfcabc25920d77a22e9f2bab92fda2a703cc6e5c8b0b9f1ebf396f0c967e",
+    "sealed06_summary": "904193c01710e69758a101589880328353cacf52ff72be7469c418ca70510fce",
+    "sealed06_future_windows": "a3e4e57e9c9ca2549ff211a7b19690893a77149d27cc87fe498e68b0a6a6dfb6",
+    "raw_metadata": {
+      "owner_plan.json": "e182cca5ded49f58e18ef13d45963b81062fe19a83e93871a970f7d426a9a07d",
+      "owner_result.json": "57031f30df0858269c6fd84387b953334239ef12916de5cf3a220eff2d6165ee",
+      "episode/manifest.json": "88af039d7b7a324f90a2a4ce7a515522fe99d36b696797c834e233a50c7974fe",
+      "episode/route.json": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+      "episode/states.jsonl": "951e362989fb1b7fa2138045f88212c12be806b1ed385cf8ad6760c674edc559",
+      "episode/camera_frames.jsonl": "c3439c5b711653f9a6ab0b6845e7c2633e4304b057a24019e0e7fc160d6330d0",
+      "episode/control_receipts.jsonl": "45eb7f528f4b2120f8300f6c8058d4e436d9a5ac79946ea64a7c870a58f680e0",
+      "lifecycle/stopped.json": "4c273c7589a5930868466f879c6928f383bfe316d6f3511ffcf5cd04864354f3",
+      "owner_started.json": "97269b13b12cc215f1a25c51a82955e9414416a3f546c9e58b1966777738f07f"
+    }
+  },
+  "limitations": [
+    "All original curvature failures remain failures; overlapping windows are not independent physical events.",
+    "Actor-reference curvature is a coordinate diagnostic, not replacement training labels or physical wheel-geometry approval.",
+    "Float32 spacing is representational sensitivity, not calibrated uncertainty or proof that a failure is an artifact.",
+    "Native 100 ms witnesses use exact recorded endpoints; individual window targets retain their original nanosecond interpolation brackets.",
+    "Small displacement makes direction-based curvature sensitive; body yaw, path heading and lateral acceleration are distinct observables.",
+    "Control acknowledgements do not prove substep torque timing; simultaneous control changes and physics cause are not isolated.",
+    "Other metric counts are preserved from the sealed scalar report, not independently recomputed here."
+  ]
+}

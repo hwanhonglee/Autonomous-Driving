@@ -1,0 +1,50 @@
+{
+  "augmentation": "TRAIN only: probability 0.5 aligned crop, scale 0.65..1.0, resize to native; no flip",
+  "automatic_promotion": false,
+  "b_reference_checkpoint_sha256": "12c63095e1a6c401e7772ddf9441c727e3e96ee523623995f1368bf818826fff",
+  "b_reference_source_sha256": "86e583aacf654d78ce913a95ba537e0025317aa5a737aefacc2162aa7e2adceb",
+  "batch_size": 8,
+  "changes": "TRAIN-only 7:1 Town01/Town03 rehearsal sampler; all B data/loss/model/optimizer/seed/steps fixed",
+  "data_manifest_sha256": "e5f4ec6ab46f16f2f2167f4b453abe4bea829ac9bce7a1215a64d7a41444de0d",
+  "dev_used_for_sampler": false,
+  "gpu": {
+    "memory_used_mib_before_torch": 0,
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "physical_index": 0,
+    "utilization_percent_before_torch": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "initialization": "scratch",
+  "input_shape": [
+    3,
+    360,
+    640
+  ],
+  "learning_rate": 0.0003,
+  "loss_mode": "sqrt_frequency",
+  "optimizer": "AdamW(lr=3e-4,weight_decay=1e-4)",
+  "parent_checkpoint_sha256": "ae489cd99e48f6f68da3241e8296c705847398c23b8ba69b71ec024cef4ef380",
+  "sampling_contract": {
+    "added_draws_per_batch": 1,
+    "added_range": [
+      497,
+      913
+    ],
+    "batch_size": 8,
+    "dev_or_test_used": false,
+    "parent_draws_per_batch": 7,
+    "parent_range": [
+      0,
+      497
+    ],
+    "replacement": true,
+    "schema": "town01_town03_rehearsal_7_to_1.v1",
+    "seed": 20260922,
+    "shuffled_within_batch": true,
+    "source": "TRAIN indices only"
+  },
+  "seed": 20260922,
+  "source_sha256": "e1808cb77df8bc7c28d5019eb46c2d40d7e756d2f45ce59d01b43d944ab04de2",
+  "started_at_utc": "2026-09-26T18:46:38.919194Z",
+  "steps": 2000
+}

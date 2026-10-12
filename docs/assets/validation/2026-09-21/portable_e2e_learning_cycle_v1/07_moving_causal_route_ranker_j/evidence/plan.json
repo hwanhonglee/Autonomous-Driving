@@ -1,0 +1,494 @@
+{
+  "all_map_claim": false,
+  "automatic_promotion": false,
+  "closed_loop_evaluation": false,
+  "declared_at_utc": "2026-09-21T12:03:59.147962Z",
+  "deployment_approved": false,
+  "dev_policy": "The sealed CPU DEV cache is loaded before fit only for integrity, identity coverage and F-mode counts. No DEV outcome or metric drives fit or selection. Device transfer and one DEV evaluation phase follow all three fixed TRAIN folds and the final all-TRAIN fit; that phase performs one combined full-split reduction plus two sealed subgroup reductions over the same final logits.",
+  "drive_and_policy_count_proof": {
+    "limitation": "C-track has zero policy-applied held DRIVE rows, so three folds validate the shared scorer training protocol, not three-route applied-policy performance.",
+    "loss_drive_count_by_train_physical_route_group": {
+      "c_track": 289,
+      "town01": 318,
+      "town07_same_physical_route": 625
+    },
+    "policy_applied_drive_count_by_dev_maneuver_metadata": {
+      "town03_dev_right": 129,
+      "town03_dev_straight": 328
+    },
+    "policy_applied_drive_count_by_train_physical_route_group": {
+      "c_track": 0,
+      "town01": 156,
+      "town07_same_physical_route": 625
+    }
+  },
+  "experiment_id": "hh260921-moving-causal-route-ranker-seed20260906-v1",
+  "external_gpu_lock": {
+    "declared_by_environment": true,
+    "external_lock_held": true,
+    "independent_nonblocking_acquire_failed": true,
+    "path": "/home/pro6000/personal/hwanhong/portable_e2e/runs/campaigns/.gpu0_training.lock"
+  },
+  "fit": {
+    "features": [
+      "lateral",
+      "heading",
+      "speed",
+      "curvature"
+    ],
+    "final_fit_steps": 256,
+    "fold_fit_steps": 256,
+    "learning_rate": 0.025,
+    "leave_one_route_group_out": [
+      "town07_same_physical_route",
+      "c_track",
+      "town01"
+    ],
+    "loss_rows": "All and only original-F DRIVE1232 rows; route-group balanced; STOP243 excluded.",
+    "seed": 20260906,
+    "shared_nonnegative_weight_count": 4
+  },
+  "git": {
+    "base_commit": "b478f02e42b94bf04bffec5c8170e05edc33b0f8",
+    "base_transitive_source_sha256": {
+      "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+      "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+      "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+      "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+      "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+      "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+      "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+      "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+      "portable_e2e/visualize.py": "5bf0c16fd4e5fea0cc33402097642573ed2b9992bb5b3ce51cad88fc4be6ea2c"
+    },
+    "overlay_paths": [
+      "portable_e2e/evaluate.py",
+      "portable_e2e/frozen_causal_route_ranker.py",
+      "portable_e2e/frozen_drive_mode_residual_recovery.py",
+      "portable_e2e/frozen_stopmix_drive_rank.py",
+      "portable_e2e/frozen_stopmix_residual.py",
+      "portable_e2e/frozen_stopmix_selector.py",
+      "portable_e2e/frozen_stopmix_selector_recalibration.py",
+      "portable_e2e/train.py",
+      "scripts/e2e/diagnose_stopmix_training_oracles.py",
+      "scripts/e2e/run_moving_causal_route_ranker.py",
+      "scripts/e2e/run_moving_drive_mode_residual_recovery.py"
+    ],
+    "porcelain": [
+      " M portable_e2e/evaluate.py",
+      " M portable_e2e/train.py",
+      "?? portable_e2e/frozen_causal_route_ranker.py",
+      "?? portable_e2e/frozen_drive_mode_residual_recovery.py",
+      "?? portable_e2e/frozen_stopmix_drive_rank.py",
+      "?? portable_e2e/frozen_stopmix_residual.py",
+      "?? portable_e2e/frozen_stopmix_selector.py",
+      "?? portable_e2e/frozen_stopmix_selector_recalibration.py",
+      "?? scripts/e2e/diagnose_stopmix_training_oracles.py",
+      "?? scripts/e2e/run_moving_causal_route_ranker.py",
+      "?? scripts/e2e/run_moving_drive_mode_residual_recovery.py"
+    ]
+  },
+  "gpu": {
+    "physical_index": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "new_autonomous_function_head_added": false,
+  "output": "runs/diagnostics/moving_causal_route_ranker_seed20260906_20260921_v1",
+  "parent_h": {
+    "dev_cache_sha256": "cbc9040ea13f32826a701a3ccc112ffc79cdb9e6e47f3db6600f96fd83728e50",
+    "manifest": {
+      "all_files_verified": true,
+      "sha256": "fba179f8c4670da20b0648f121a4358cfb2582d9f672ed29f04ed809e31e00ba",
+      "verified_file_count": 31
+    },
+    "plan_sha256": "3bf5bd5e63e3c637b47efab52e5c4e98b83a35fd337059bc4028962a80c82542",
+    "root": "runs/diagnostics/moving_selector_sampling_recalibration_seed20260906_20260921_v1",
+    "summary_sha256": "e916adbb57fc2dddd21b77da6024daad9519e0e0184d944bb6677701d0666b7e",
+    "train_cache_sha256": "a586abd602ca410e26b37785d30b371b3310e4ee31644870838c3569cc077ca0"
+  },
+  "parent_i_reproducibility_context": {
+    "data_or_weight_dependency": false,
+    "manifest": {
+      "all_files_verified": true,
+      "sha256": "72b741f9bfe815e88cdcc85a0b7067e965230d9e3581b845226bc57926c1ad08",
+      "verified_file_count": 33
+    },
+    "plan_sha256": "1fee39ef45d008f8082ad0e501ef1467e793c869469854e29d78c85495788a82",
+    "purpose": "Seal the immediately preceding failed I study as context; J data and frozen F candidates remain bound through exact H.",
+    "root": "runs/diagnostics/moving_drive_mode_residual_recovery_seed20260906_20260921_v1",
+    "summary_sha256": "67d13d580c43bc42bcee818339c64e207a84d7ed66d848176c3dac895126b0cf"
+  },
+  "python_environment": {
+    "base_prefix": "/usr",
+    "cuda_visible_devices": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "executable": "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+    "isolated_personal_venv": true,
+    "prefix": "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312",
+    "python_dont_write_bytecode": "1",
+    "python_no_user_site": "1"
+  },
+  "raw_sidecar": {
+    "cache_sample_count": 2140,
+    "causality_validation_field_allowlist": [
+      "anchor_timestamp_ns",
+      "ego.timestamp_ns",
+      "navigation.command_timestamp_ns",
+      "navigation.route_source_timestamp_ns"
+    ],
+    "dataset_json_sha256": "70fceaf0a6fea1b6ac455154bdc7b1113cfef15abc1a26ca7327ac2a186799e6",
+    "dataset_to_episode_to_samples_chain_verified": true,
+    "episode_proofs": [
+      {
+        "episode_id": "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a",
+        "episode_manifest": "episodes/carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a/episode.json",
+        "episode_manifest_sha256": "2848a4b4bd4f59c8c7155f63fe95c6a7e0586ef844d902fe92cc5bec698a60c9",
+        "route_group_non_ranker_metadata": "town07_same_physical_route",
+        "sample_count": 309,
+        "sample_jsonl": "episodes/carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_dfc36d890f2a/samples.jsonl",
+        "sample_jsonl_sha256": "781ca35661ec018d9ca8dd228f4a9bda41ef3ebb11a21ee7958f2eaa09c660ca",
+        "split": "train"
+      },
+      {
+        "episode_id": "carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7",
+        "episode_manifest": "episodes/carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7/episode.json",
+        "episode_manifest_sha256": "873e09a9e7f022c29761b16122dfb8af9f73f9de0702525b3812530ba12f67ad",
+        "route_group_non_ranker_metadata": "c_track",
+        "sample_count": 304,
+        "sample_jsonl": "episodes/carla_c_track_1_0_7_c_track_1_0_7_left_s0000_p01_ClearNoon_s0000_9b5bfc42d8e7/samples.jsonl",
+        "sample_jsonl_sha256": "fc60a820dc87b1bcf8bf96de08b7c0de6177d8f24ee04fb44be248ac5d854adb",
+        "split": "train"
+      },
+      {
+        "episode_id": "carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9",
+        "episode_manifest": "episodes/carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9/episode.json",
+        "episode_manifest_sha256": "cb17152c99cbdd4069af30c77aa1c3a388b4ca5b6456759c11fa4b27dd1dc496",
+        "route_group_non_ranker_metadata": "town03_dev_right",
+        "sample_count": 337,
+        "sample_jsonl": "episodes/carla_town03_town03_right_s0000_p00_ClearNoon_s0000_1cc631b7eac9/samples.jsonl",
+        "sample_jsonl_sha256": "7c27d8e05c15bd8cc9b4558ccd06bf2415f00a18795578abc6c933c4ba5e3ca1",
+        "split": "val"
+      },
+      {
+        "episode_id": "carla_town01_town01_right_s0001_p00_ClearNoon_s0001_1af7c32f1f1f",
+        "episode_manifest": "episodes/carla_town01_town01_right_s0001_p00_ClearNoon_s0001_1af7c32f1f1f/episode.json",
+        "episode_manifest_sha256": "fe7a9351c541140cc22bc0a86964b0b143477946e90cf1d77a0dcab95975e42e",
+        "route_group_non_ranker_metadata": "town01",
+        "sample_count": 534,
+        "sample_jsonl": "episodes/carla_town01_town01_right_s0001_p00_ClearNoon_s0001_1af7c32f1f1f/samples.jsonl",
+        "sample_jsonl_sha256": "4ec758139cc54f55f25a071a723298045648c165e864bd34e1b8604b17a71318",
+        "split": "train"
+      },
+      {
+        "episode_id": "carla_town03_town03_straight_s0000_p07_ClearNoon_s0201_26b281301320",
+        "episode_manifest": "episodes/carla_town03_town03_straight_s0000_p07_ClearNoon_s0201_26b281301320/episode.json",
+        "episode_manifest_sha256": "5f6fc54cfb23e6987b3e6461f0f0af5621f12ab59f8c4baf1c36288f2d7722de",
+        "route_group_non_ranker_metadata": "town03_dev_straight",
+        "sample_count": 328,
+        "sample_jsonl": "episodes/carla_town03_town03_straight_s0000_p07_ClearNoon_s0201_26b281301320/samples.jsonl",
+        "sample_jsonl_sha256": "9f4336dc580cefb05c0323bb8082c14b26ede9f703416cd0805f1b4b99e634ff",
+        "split": "val"
+      },
+      {
+        "episode_id": "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_f3f1a4d7b240",
+        "episode_manifest": "episodes/carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_f3f1a4d7b240/episode.json",
+        "episode_manifest_sha256": "7bd93fedbf9fc5cd6dcf654fc8eeccb4dd3d007e401ac5f30d134d06a129f876",
+        "route_group_non_ranker_metadata": "town07_same_physical_route",
+        "sample_count": 328,
+        "sample_jsonl": "episodes/carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_f3f1a4d7b240/samples.jsonl",
+        "sample_jsonl_sha256": "a73f1cd63bc09e55be8c4cf7bd05dfd23f1bf5cee935cba597730865a77da28b",
+        "split": "train"
+      }
+    ],
+    "forbidden_ranker_fields_serialized": [],
+    "ordered_sample_coverage": {
+      "train": true,
+      "val": true
+    },
+    "policy_reason_counts": [
+      {
+        "count": 304,
+        "reason": "TURN_EVIDENCE_OR_CAUSAL_LATCH_F_FALLBACK",
+        "route_group_non_ranker_metadata": "c_track",
+        "split": "train"
+      },
+      {
+        "count": 156,
+        "reason": "CONFIDENT_CAUSAL_STRAIGHT_ROUTE_RANKER",
+        "route_group_non_ranker_metadata": "town01",
+        "split": "train"
+      },
+      {
+        "count": 2,
+        "reason": "ROUTE_INTENT_CONFIDENCE_MARGIN_F_FALLBACK",
+        "route_group_non_ranker_metadata": "town01",
+        "split": "train"
+      },
+      {
+        "count": 376,
+        "reason": "TURN_EVIDENCE_OR_CAUSAL_LATCH_F_FALLBACK",
+        "route_group_non_ranker_metadata": "town01",
+        "split": "train"
+      },
+      {
+        "count": 637,
+        "reason": "CONFIDENT_CAUSAL_STRAIGHT_ROUTE_RANKER",
+        "route_group_non_ranker_metadata": "town07_same_physical_route",
+        "split": "train"
+      },
+      {
+        "count": 129,
+        "reason": "CONFIDENT_CAUSAL_STRAIGHT_ROUTE_RANKER",
+        "route_group_non_ranker_metadata": "town03_dev_right",
+        "split": "val"
+      },
+      {
+        "count": 3,
+        "reason": "ROUTE_INTENT_CONFIDENCE_MARGIN_F_FALLBACK",
+        "route_group_non_ranker_metadata": "town03_dev_right",
+        "split": "val"
+      },
+      {
+        "count": 205,
+        "reason": "TURN_EVIDENCE_OR_CAUSAL_LATCH_F_FALLBACK",
+        "route_group_non_ranker_metadata": "town03_dev_right",
+        "split": "val"
+      },
+      {
+        "count": 328,
+        "reason": "CONFIDENT_CAUSAL_STRAIGHT_ROUTE_RANKER",
+        "route_group_non_ranker_metadata": "town03_dev_straight",
+        "split": "val"
+      }
+    ],
+    "ranker_input_field_allowlist": [
+      "navigation.route_polyline_base_m",
+      "ego.linear_velocity_base_mps[current]",
+      "ego.linear_acceleration_base_mps2[current]"
+    ],
+    "raw_sample_count": 2140,
+    "route_source_timestamp_causality": {
+      "anchor_minus_route_source_maximum_ns": 53300000794,
+      "anchor_minus_route_source_minimum_ns": 0,
+      "future_count": 0,
+      "verified_count": 2140
+    },
+    "route_valid_point_histogram": {
+      "10": 7,
+      "100": 9,
+      "101": 9,
+      "102": 10,
+      "103": 10,
+      "104": 10,
+      "105": 9,
+      "106": 10,
+      "107": 10,
+      "108": 9,
+      "109": 10,
+      "11": 4,
+      "110": 9,
+      "111": 10,
+      "112": 10,
+      "113": 11,
+      "114": 9,
+      "115": 9,
+      "116": 10,
+      "117": 10,
+      "118": 10,
+      "119": 9,
+      "12": 4,
+      "120": 10,
+      "121": 1009,
+      "13": 4,
+      "14": 6,
+      "15": 6,
+      "16": 4,
+      "17": 4,
+      "18": 4,
+      "19": 7,
+      "20": 5,
+      "21": 4,
+      "22": 4,
+      "23": 5,
+      "24": 6,
+      "25": 4,
+      "26": 5,
+      "27": 4,
+      "28": 5,
+      "29": 6,
+      "30": 4,
+      "31": 5,
+      "32": 4,
+      "33": 6,
+      "34": 5,
+      "35": 5,
+      "36": 4,
+      "37": 6,
+      "38": 6,
+      "39": 5,
+      "4": 5,
+      "40": 4,
+      "41": 5,
+      "42": 6,
+      "43": 7,
+      "44": 5,
+      "45": 6,
+      "46": 8,
+      "47": 10,
+      "48": 15,
+      "49": 198,
+      "5": 5,
+      "50": 10,
+      "51": 10,
+      "52": 10,
+      "53": 9,
+      "54": 9,
+      "55": 11,
+      "56": 10,
+      "57": 10,
+      "58": 9,
+      "59": 9,
+      "6": 6,
+      "60": 10,
+      "61": 10,
+      "62": 10,
+      "63": 9,
+      "64": 10,
+      "65": 11,
+      "66": 8,
+      "67": 10,
+      "68": 9,
+      "69": 11,
+      "7": 4,
+      "70": 10,
+      "71": 10,
+      "72": 9,
+      "73": 9,
+      "74": 10,
+      "75": 10,
+      "76": 10,
+      "77": 9,
+      "78": 10,
+      "79": 10,
+      "8": 4,
+      "80": 9,
+      "81": 10,
+      "82": 9,
+      "83": 11,
+      "84": 10,
+      "85": 10,
+      "86": 9,
+      "87": 9,
+      "88": 10,
+      "89": 10,
+      "9": 5,
+      "90": 10,
+      "91": 9,
+      "92": 10,
+      "93": 10,
+      "94": 9,
+      "95": 10,
+      "96": 9,
+      "97": 10,
+      "98": 11,
+      "99": 10
+    },
+    "schema": "portable_e2e.causal_route_sidecar_build_proof.v1",
+    "sidecar_sha256": {
+      "train": "c012908a6abdb6adc68b3b28bcbdd7afa400808b963bfbf4c559b074c05f32e3",
+      "val": "38bbeb62637583ea9e756e76821a0f64fbaeb8009ddc8e936518ef8bbd5cd1e0"
+    },
+    "test_read_or_used": false
+  },
+  "repo_root": "source_worktrees/moving_causal_route_ranker_j_seed20260906_20260921_v1",
+  "runtime_checkpoint_exported": false,
+  "schema": "portable_e2e.moving_causal_route_ranker_plan.v1",
+  "selection_policy": {
+    "causal_prefix_limitation": "A causally indistinguishable pre-turn straight prefix may be reranked; no episode/map identity is used to rewrite the past.",
+    "straight_heading_maximum_rad": 0.1,
+    "threshold_origin": "Predeclared exploratory TRAIN-input heuristic; no DEV outcome or TEST selected it.",
+    "turn_evidence_fallback": "Exact full K12 F logits from first current command/route turn evidence onward.",
+    "turn_latch_heading_minimum_rad": 0.35
+  },
+  "shared_h_source_sha256": {
+    "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+    "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+    "portable_e2e/evaluate.py": "9d30d3be7e114ee80f31355b2c2780c840ef48328e358935ec33944dc8d14887",
+    "portable_e2e/frozen_stopmix_drive_rank.py": "206313ff9a0b50c00408e615946f0cf69cca93f3e2b939eddd78b7956ab96a5d",
+    "portable_e2e/frozen_stopmix_residual.py": "d4bf42fc9f4db930f31ef7b8ccd79900249687642f47bf525dedb240207550b7",
+    "portable_e2e/frozen_stopmix_selector.py": "4716c22d29b8e306b86f8835bf2a5ec2bf956bbb6859c6b6f001a261865b8de3",
+    "portable_e2e/frozen_stopmix_selector_recalibration.py": "821dc47f9a82af541e2e2e7a063a48608a583dc2329e1bf36106faaeae1f14a0",
+    "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "c5ee8ab4533c3feedb0c60fe270fcb4a5e42247e186cfc8fe1ac9ec2fb7e0247",
+    "scripts/e2e/diagnose_stopmix_training_oracles.py": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37"
+  },
+  "shared_i_source_sha256": {
+    "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+    "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+    "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+    "portable_e2e/evaluate.py": "9d30d3be7e114ee80f31355b2c2780c840ef48328e358935ec33944dc8d14887",
+    "portable_e2e/frozen_drive_mode_residual_recovery.py": "8ba514e16cf3af80f2bdc6b8117a0459da8e82ddd796b40fb914018689598b78",
+    "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+    "portable_e2e/frozen_stopmix_drive_rank.py": "206313ff9a0b50c00408e615946f0cf69cca93f3e2b939eddd78b7956ab96a5d",
+    "portable_e2e/frozen_stopmix_residual.py": "d4bf42fc9f4db930f31ef7b8ccd79900249687642f47bf525dedb240207550b7",
+    "portable_e2e/frozen_stopmix_selector.py": "4716c22d29b8e306b86f8835bf2a5ec2bf956bbb6859c6b6f001a261865b8de3",
+    "portable_e2e/frozen_stopmix_selector_recalibration.py": "821dc47f9a82af541e2e2e7a063a48608a583dc2329e1bf36106faaeae1f14a0",
+    "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "c5ee8ab4533c3feedb0c60fe270fcb4a5e42247e186cfc8fe1ac9ec2fb7e0247",
+    "portable_e2e/visualize.py": "5bf0c16fd4e5fea0cc33402097642573ed2b9992bb5b3ce51cad88fc4be6ea2c",
+    "scripts/e2e/diagnose_stopmix_training_oracles.py": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37",
+    "scripts/e2e/run_moving_drive_mode_residual_recovery.py": "4e7422c25474260fb8ef0c16c7fb35641042e96111c7c785dfced8229c5dbf8e"
+  },
+  "source_sha256": {
+    "portable_e2e/__init__.py": "c5c53d6d0650bd67d4aeb3a828d55fae978987b61bbe6842234739b07431e8ef",
+    "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+    "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+    "portable_e2e/evaluate.py": "9d30d3be7e114ee80f31355b2c2780c840ef48328e358935ec33944dc8d14887",
+    "portable_e2e/frozen_causal_route_ranker.py": "20fbc7c3fda71d72f926fe89174fa3dd8882cfff0cbcf4dd7228d7e14ac286db",
+    "portable_e2e/frozen_drive_mode_residual_recovery.py": "8ba514e16cf3af80f2bdc6b8117a0459da8e82ddd796b40fb914018689598b78",
+    "portable_e2e/frozen_selector.py": "21cc33a90b373c9927268c11ec826d36cdab1eb52309be45300d63c406f53f11",
+    "portable_e2e/frozen_stopmix_drive_rank.py": "206313ff9a0b50c00408e615946f0cf69cca93f3e2b939eddd78b7956ab96a5d",
+    "portable_e2e/frozen_stopmix_residual.py": "d4bf42fc9f4db930f31ef7b8ccd79900249687642f47bf525dedb240207550b7",
+    "portable_e2e/frozen_stopmix_selector.py": "4716c22d29b8e306b86f8835bf2a5ec2bf956bbb6859c6b6f001a261865b8de3",
+    "portable_e2e/frozen_stopmix_selector_recalibration.py": "821dc47f9a82af541e2e2e7a063a48608a583dc2329e1bf36106faaeae1f14a0",
+    "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "c5ee8ab4533c3feedb0c60fe270fcb4a5e42247e186cfc8fe1ac9ec2fb7e0247",
+    "portable_e2e/visualize.py": "5bf0c16fd4e5fea0cc33402097642573ed2b9992bb5b3ce51cad88fc4be6ea2c",
+    "scripts/e2e/diagnose_stopmix_training_oracles.py": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37",
+    "scripts/e2e/run_moving_causal_route_ranker.py": "5f2260d4e7ab39ff1ca45fa949b8f99358118edf37aabd72cb32b4226e741c12",
+    "scripts/e2e/run_moving_drive_mode_residual_recovery.py": "4e7422c25474260fb8ef0c16c7fb35641042e96111c7c785dfced8229c5dbf8e"
+  },
+  "strict_gate": {
+    "combined_D_maximum": {
+      "ade_6p4s_m": 3.5632455477589056,
+      "fde_6p4s_m": 10.353536791729749,
+      "speed_mae_6p4s_mps": 1.6350220532345592
+    },
+    "geometry_minimum": {
+      "all_candidates_geometry_pass_count": 664,
+      "any_candidate_geometry_pass_count": 664,
+      "selected_geometry_pass_count": 664
+    },
+    "preservation": "Exact fallback K12 rows, DRIVE/STOP mode and reranked DRIVE group maximum on TRAIN and DEV.",
+    "right_C_maximum": {
+      "ade_6p4s_m": 2.9353143748791353,
+      "fde_6p4s_m": 7.793866114022117,
+      "speed_mae_6p4s_mps": 1.1076154233086357
+    },
+    "straight_D_maximum": {
+      "ade_6p4s_m": 3.764740187947343,
+      "fde_6p4s_m": 11.027441243572932,
+      "speed_mae_6p4s_mps": 1.7877504960065935
+    }
+  },
+  "test_read_or_use": false,
+  "vehicle_control_approved": false
+}

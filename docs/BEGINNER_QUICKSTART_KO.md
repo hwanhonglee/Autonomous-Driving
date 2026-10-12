@@ -25,7 +25,7 @@ clone 직후 실행하는 `bootstrap_preflight.sh`는 `sudo`, 설치, 다운로�
 | 용어 | 이 프로젝트에서 뜻하는 것 |
 |---|---|
 | repository 또는 repo | Git으로 관리하는 이 프로젝트 폴더 |
-| workspace | repo와 그 아래 `src/`, `build/`, `install/`, `data/`를 합친 작업 공간 |
+| workspace | repo 안의 `autonomy/`, `learning/`, `tools/`, `storage/`, `docs/`를 합친 작업 공간 |
 | terminal | 명령을 입력하는 창. 긴 실행은 Terminal 1/2처럼 별도 창으로 나눈다. |
 | ROS 2 | Autoware의 node와 topic을 연결하는 middleware 환경 |
 | CARLA server | 가상 세계, 차량 물리와 카메라를 계산하는 simulator process |
@@ -136,7 +136,7 @@ Git LFS가 미리 활성화돼 있으면 clone 도중 큰 object를 전부 받�
 이제 어떤 dependency도 설치하지 않는 첫 진단을 실행한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh
+bash tools/e2e/bootstrap_preflight.sh
 ```
 
 출력 의미는 다음과 같다.
@@ -152,7 +152,7 @@ bash scripts/e2e/bootstrap_preflight.sh
 반환한다. CI나 최종 확인에서는 엄격 모드를 사용한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh --strict
+bash tools/e2e/bootstrap_preflight.sh --strict
 echo $?
 ```
 
@@ -160,7 +160,7 @@ echo $?
 종료 코드 `2`다. 특정 외부 경로를 검사하려면 다음처럼 지정한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh \
+bash tools/e2e/bootstrap_preflight.sh \
   --carla-root /absolute/path/to/CARLA_0.9.15 \
   --map /absolute/path/to/Town01_full
 ```
@@ -173,7 +173,7 @@ bash scripts/e2e/bootstrap_preflight.sh \
 | 발행된 validation PNG/GIF | LFS | `git lfs pull` |
 | 2026-09-06 exact 3개 route와 CARLA rig | 예 | 2026-09-06 pinned 발행 asset 폴더 |
 | Autoware repository manifest | 예 | `autoware.repos` |
-| Autoware source `src/` | 아니오 | `vcs import` |
+| Autoware source `autonomy/src/` | 아니오 | `vcs import` |
 | ROS/CMake/system dependency | 아니오 | 호스트 준비 + `rosdep` |
 | CARLA 0.9.15 server와 Python egg | 아니오 | 별도 package/runtime 확보 |
 | 공식 VAD v0.1 ONNX | 아니오 | project download script |
@@ -293,8 +293,8 @@ sudo apt-get install \
 
 ```bash
 cd ../Autonomous-Driving
-mkdir -p src
-vcs import src < autoware.repos
+mkdir -p autonomy/src
+vcs import autonomy/src < autoware.repos
 ```
 
 `autoware.repos`는 이 branch가 사용하는 Autoware 1.9.0 계열 source 32개를 선언한다.
@@ -303,7 +303,7 @@ vcs import src < autoware.repos
 32개 HEAD와 각 manifest tag/commit의 일치를 보고하는지 확인한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh
+bash tools/e2e/bootstrap_preflight.sh
 ```
 
 기본 full VAD build에는 `autoware.repos`를 사용한다. `tools.repos`의 `main`과
@@ -318,7 +318,7 @@ source /opt/ros/humble/setup.bash
 sudo rosdep init
 rosdep update
 rosdep install \
-  --from-paths src autoware_e2e_vad_launch \
+  --from-paths autonomy/src autonomy/autoware_e2e_vad_launch \
   --ignore-src \
   --rosdistro humble \
   -y
@@ -362,7 +362,7 @@ C-track과 월악산은 stock CARLA map이 아니므로 별도의 cooked `.umap`
 CARLA 위치만 검사한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh --carla-root "$CARLA_ROOT"
+bash tools/e2e/bootstrap_preflight.sh --carla-root "$CARLA_ROOT"
 ```
 
 ## 8. VAD model 받기
@@ -371,7 +371,7 @@ bash scripts/e2e/bootstrap_preflight.sh --carla-root "$CARLA_ROOT"
 검사한다. 약 400 MB 이상의 여유와 network가 필요하다.
 
 ```bash
-scripts/e2e/download_vad_models.sh
+tools/e2e/download_vad_models.sh
 ```
 
 기본 저장 위치는 다음과 같다.
@@ -404,7 +404,7 @@ Autoware bundle 이름도 같은 개념이 아니다.
 
 ### 9.2 Town01 첫 bundle과 모든 packaged Town
 
-`scripts/e2e/packaged_town_full_maps.yaml`에는 각 packaged Town의 OSM, PCD, CARLA
+`tools/e2e/packaged_town_full_maps.yaml`에는 각 packaged Town의 OSM, PCD, CARLA
 level/OpenDRIVE hash가 고정돼 있다. 그러나 manifest가 원본 파일을 배포하지는 않는다.
 원본 Lanelet2/HDMaps와 정확한 CARLA package를 확보한 뒤에만 다음 inventory/setup
 도구를 사용한다.
@@ -413,7 +413,7 @@ level/OpenDRIVE hash가 고정돼 있다. 그러나 manifest가 원본 파일을
 export AUTOWARE_E2E_TOWN_LANELET_ROOT=/absolute/path/to/autoware-contents/maps
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
 
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 \
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01 \
   --map town03 \
   --map town07
 ```
@@ -424,7 +424,7 @@ python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 \
 모두 맞을 때만 다음 명령으로 세 Town을 준비한다.
 
 ```bash
-python3 scripts/e2e/prepare_packaged_town_full_maps.py --map town01 \
+python3 tools/e2e/prepare_packaged_town_full_maps.py --map town01 \
   --map town03 \
   --map town07 \
   --prepare
@@ -438,7 +438,7 @@ OSM/PCD symlink, projector와 provenance를 담은 `map_bundle.json`까지 만�
 
 ```bash
 for map_dir in Town01_full Town03_full Town07_full; do
-  bash scripts/e2e/bootstrap_preflight.sh \
+  bash tools/e2e/bootstrap_preflight.sh \
     --map "data/maps/$map_dir" \
     --strict || exit 1
 done
@@ -452,7 +452,7 @@ done
 새 PC에 원본 파일이 있어도 찾지 못할 수 있다. 최신 C-track 실행 bundle은
 `c_track_simulation_xodr_current` 계약으로 만든
 `data/maps/C_track_1_0_7_xodr_full`이다. C-track/월악산은
-`scripts/e2e/custom_map_bundles.yaml`과 `setup_custom_full_map.py`의 별도 계약을 따른다.
+`tools/e2e/custom_map_bundles.yaml`과 `setup_custom_full_map.py`의 별도 계약을 따른다.
 새 PC에 동일 hash의 cooked C-track level, OpenDRIVE와 Virtual PCD/Lanelet source가
 별도로 전달되지 않았다면 C-track은 `BLOCKED`가 정상이다.
 맵 소유자가 다운로드 위치와 권한을 배포하지 않은 환경에서는 preflight의 map BLOCK이
@@ -474,23 +474,23 @@ test "$(sha256sum "$C_TRACK_XODR" | awk '{print $1}')" = \
 test "$(sha256sum "$C_TRACK_PCD" | awk '{print $1}')" = \
   3eae5f4a1a6dd72d3753516d428bdb8d4a8e6d90d2d1ec459f2caa60faa52a75
 
-scripts/e2e/build_xodr_lanelet_map.sh --install --force \
+tools/e2e/build_xodr_lanelet_map.sh --install --force \
   --translation-z-m -15 \
   --json-report data/generated/xodr_lanelet/c_track_finalize.json \
   "$C_TRACK_XODR" \
   data/generated/xodr_lanelet/c_track_commonroad.osm \
   data/generated/xodr_lanelet/c_track_autoware.osm
 
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   inspect c_track_simulation_xodr_current \
   --source "pointcloud_map=$C_TRACK_PCD" \
   --skip-reference-assets
-python3 scripts/e2e/setup_custom_full_map.py \
+python3 tools/e2e/setup_custom_full_map.py \
   setup c_track_simulation_xodr_current \
   --source "pointcloud_map=$C_TRACK_PCD" \
   --skip-reference-assets
 
-bash scripts/e2e/bootstrap_preflight.sh \
+bash tools/e2e/bootstrap_preflight.sh \
   --carla-root "$CARLA_ROOT" \
   --map data/maps/C_track_1_0_7_xodr_full \
   --strict
@@ -513,7 +513,7 @@ source /opt/ros/humble/setup.bash
 Full Autoware, VAD, map/system/control/API/RViz를 한 번에 빌드한다.
 
 ```bash
-scripts/e2e/build_full.sh
+tools/e2e/build_full.sh
 ```
 
 이 wrapper는 단순 compiler 실행만 하지 않는다. pinned source 상태를 확인하고 project
@@ -524,13 +524,13 @@ patch를 적용하며 workspace-local CUDA 12.8, TensorRT 10.8, spconv, acados�
 메모리가 부족하면 병렬도를 낮춘다.
 
 ```bash
-CMAKE_BUILD_PARALLEL_LEVEL=1 COLCON_WORKERS=1 scripts/e2e/build_full.sh
+CMAKE_BUILD_PARALLEL_LEVEL=1 COLCON_WORKERS=1 tools/e2e/build_full.sh
 ```
 
 중단 뒤 완료 package를 건너뛰며 이어갈 때만 resume를 사용한다.
 
 ```bash
-AUTOWARE_E2E_FULL_BUILD_RESUME=1 scripts/e2e/build_full.sh
+AUTOWARE_E2E_FULL_BUILD_RESUME=1 tools/e2e/build_full.sh
 ```
 
 source drift나 patch hash mismatch가 발생했을 때 무조건 파일을 덮어쓰거나
@@ -541,8 +541,8 @@ source drift나 patch hash mismatch가 발생했을 때 무조건 파일을 덮�
 preflight strict부터 다시 실행한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh --strict
-scripts/e2e/doctor.sh
+bash tools/e2e/bootstrap_preflight.sh --strict
+tools/e2e/doctor.sh
 ```
 
 `doctor.sh`는 GPU, CARLA, model, spconv, ROS package와 TensorRT link를 검사한다.
@@ -551,9 +551,9 @@ scripts/e2e/doctor.sh
 Python/launcher 회귀 테스트는 다음과 같다.
 
 ```bash
-source scripts/e2e/env.sh
-python3 -m pytest -q tests
-python3 -m pytest -q autoware_e2e_vad_launch/test
+source tools/e2e/env.sh
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' python3 tools/workspace_python.py -m pytest -- -q learning/tests
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES='' python3 tools/workspace_python.py -m pytest -- -q autonomy/autoware_e2e_vad_launch/test
 
 colcon test --packages-select autoware_e2e_vad_launch
 colcon test-result --verbose
@@ -562,7 +562,7 @@ colcon test-result --verbose
 두 pytest directory에는 이름이 같은 test module이 있으므로 인자 없이 한 번에 합쳐
 수집하지 않는다. 위처럼 두 process로 분리하는 것이 이 repository에서 검증한 명령이다.
 
-`env.sh`는 실행 파일이 아니다. 반드시 `source scripts/e2e/env.sh` 형태로 현재 shell에
+`env.sh`는 실행 파일이 아니다. 반드시 `source tools/e2e/env.sh` 형태로 현재 shell에
 적용한다. 다른 Autoware workspace를 먼저 source한 terminal도 정리하지만, 처음에는
 새 terminal을 사용하는 편이 이해하기 쉽다.
 
@@ -607,7 +607,7 @@ preflight의 `visual.screen_geometry`를 다시 확인한다.
 cd /absolute/path/to/Autonomous-Driving
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
 
-scripts/e2e/run_carla_map.sh Town01 \
+tools/e2e/run_carla_map.sh Town01 \
   --port 2100 \
   --quality Epic \
   --startup-timeout-sec 180 \
@@ -626,10 +626,10 @@ no-rendering mode는 VAD camera 입력을 없애므로 사용하지 않는다.
 cd /absolute/path/to/Autonomous-Driving
 export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
 export CARLA_PORT=2100
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 mkdir -p data/routes
 
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -640,7 +640,7 @@ scripts/e2e/prepare_carla_route.sh \
   --max-traces 20000 \
   --output data/routes/beginner_town01_straight.json
 
-scripts/e2e/prepare_carla_route.sh \
+tools/e2e/prepare_carla_route.sh \
   --port 2100 \
   --town Town01 \
   --weather ClearNoon \
@@ -663,7 +663,7 @@ timeout을 사용한다. engine cache가 정상 생성된 뒤에만 동일 PC의
 줄인다.
 
 ```bash
-scripts/e2e/run_recorded_route_trial.sh \
+tools/e2e/run_recorded_route_trial.sh \
   --recommended \
   --speed-30kph \
   --camera-source-5hz \
@@ -694,7 +694,7 @@ autoware_rviz_drive.gif
 직진과 같은 output directory를 재사용하거나 덮어쓰지 않는다.
 
 ```bash
-scripts/e2e/run_recorded_route_trial.sh \
+tools/e2e/run_recorded_route_trial.sh \
   --recommended \
   --speed-30kph \
   --camera-source-5hz \
@@ -762,22 +762,22 @@ export CARLA_ROOT=/absolute/path/to/CARLA_0.9.15
 HH_RUNTIME_BUNDLE=/absolute/path/to/physical_v1_e10.runtime.npz
 HH_ASSET_ROOT="$REPO_ROOT/docs/assets/validation/2026-09-06/portable_e2e_physical_v1_30kph_shadow_v3"
 HH_RIG_FILE="$HH_ASSET_ROOT/config/carla_common10_rig.json"
-HH_CONTRACT_FILE="$REPO_ROOT/portable_e2e/config/common_10hz_v1.contract.json"
-HH_SENSOR_MAPPING="$REPO_ROOT/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml"
-HH_CARLA_WRAPPER="$REPO_ROOT/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
+HH_CONTRACT_FILE="$REPO_ROOT/learning/portable_e2e/config/common_10hz_v1.contract.json"
+HH_SENSOR_MAPPING="$REPO_ROOT/autonomy/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml"
+HH_CARLA_WRAPPER="$REPO_ROOT/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py"
 HH_RUN_STAMP="$(date +%F-%H%M%S)"
-HH_CAMPAIGN_ROOT="$REPO_ROOT/artifacts/validation/$HH_RUN_STAMP/physical_v1_shadow_repro"
+HH_CAMPAIGN_ROOT="$REPO_ROOT/storage/experiments/validation/$HH_RUN_STAMP/physical_v1_shadow_repro"
 
 cd "$REPO_ROOT"
-source scripts/e2e/env.sh
+source tools/e2e/env.sh
 printf 'code revision: %s\n' "$(git rev-parse HEAD)"
 
-scripts/e2e/doctor.sh
+tools/e2e/doctor.sh
 for HH_MAP in \
   data/maps/Town07_full \
   data/maps/C_track_1_0_7_xodr_full \
   data/maps/Town03_full; do
-  bash scripts/e2e/bootstrap_preflight.sh \
+  bash tools/e2e/bootstrap_preflight.sh \
     --carla-root "$CARLA_ROOT" \
     --map "$HH_MAP" \
     --strict
@@ -821,18 +821,18 @@ HH_SHADOW_ARGS=(
   --portable-device cpu
 )
 
-scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+tools/e2e/run_owned_carla_route_trial.sh --quality Epic \
   "$HH_CAMPAIGN_ROOT/10_town07_straight" \
   "$HH_ASSET_ROOT/01_town07_straight/route/source_route.json" \
   "${HH_SHADOW_ARGS[@]}" \
   --control-ab-longitudinal-recovery-2p0
 
-scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+tools/e2e/run_owned_carla_route_trial.sh --quality Epic \
   "$HH_CAMPAIGN_ROOT/20_c_track_turn" \
   "$HH_ASSET_ROOT/02_c_track_turn/route/source_route.json" \
   "${HH_SHADOW_ARGS[@]}"
 
-scripts/e2e/run_owned_carla_route_trial.sh --quality Epic \
+tools/e2e/run_owned_carla_route_trial.sh --quality Epic \
   "$HH_CAMPAIGN_ROOT/30_town03_turn" \
   "$HH_ASSET_ROOT/03_town03_turn/route/source_route.json" \
   "${HH_SHADOW_ARGS[@]}"
@@ -900,7 +900,7 @@ route 성공은 선택 attempt의 `result.json`에서 `success=true`, `reason="g
 않은 map은 실패 실행으로 속이지 않고 BLOCKED로 기록한다.
 
 ```bash
-scripts/e2e/run_autoware_vad_town_matrix.sh \
+tools/e2e/run_autoware_vad_town_matrix.sh \
   artifacts/validation/my_30kph_matrix \
   --runtime-profile speed_30kph_camera_source_5hz_best_effort_image \
   --port 2100
@@ -961,7 +961,7 @@ pinned Autoware source patch를 확인하고 필요하면 적용한다. 다음 �
 repository root에서 읽기 전용 사전진단과 핵심 상태를 확인한다.
 
 ```bash
-bash scripts/e2e/bootstrap_preflight.sh
+bash tools/e2e/bootstrap_preflight.sh
 
 printf 'CARLA_ROOT=%s\n' "${CARLA_ROOT:-NOT_SET}"
 printf 'DISPLAY=%s\n' "${DISPLAY:-NOT_SET}"
@@ -986,7 +986,7 @@ cold-start하고 각각 정리하므로, 별도 terminal에서 CARLA를 미리 �
 HH_60_OUTPUT="$PWD/artifacts/validation/manual/town06_strict10_$(date +%Y%m%d_%H%M%S)"
 HH_60_EXIT=0
 
-scripts/e2e/run_autoware_vad_60kph_pilot.sh \
+tools/e2e/run_autoware_vad_60kph_pilot.sh \
   "$HH_60_OUTPUT" \
   --camera-source-10hz-strict \
   --port 2100 || HH_60_EXIT=$?
@@ -1097,11 +1097,11 @@ stamp에서만 발생한 recorder 시작 경계 artifact였지만, 사후에 par
 
 ### `source.layout 0/32` 또는 `source.revision` mismatch
 
-원인: `src/`는 Git에 들어 있지 않다.
+원인: `autonomy/src/`는 Git에 들어 있지 않다.
 
 ```bash
-mkdir -p src
-vcs import src < autoware.repos
+mkdir -p autonomy/src
+vcs import autonomy/src < autoware.repos
 ```
 
 ### `setup-dev-env.sh`가 `./ansible`을 찾지 못함
@@ -1167,7 +1167,7 @@ six-camera coverage와 GPU/CPU load를 함께 본다. 2026-09-01 v16은 5 sim-Hz
 ```bash
 CMAKE_BUILD_PARALLEL_LEVEL=1 COLCON_WORKERS=1 \
   AUTOWARE_E2E_FULL_BUILD_RESUME=1 \
-  scripts/e2e/build_full.sh
+  tools/e2e/build_full.sh
 ```
 
 disk와 kernel log도 함께 확인한다.
@@ -1180,7 +1180,7 @@ disk와 kernel log도 함께 확인한다.
 git branch --show-current
 git rev-parse HEAD
 git status --short
-bash scripts/e2e/bootstrap_preflight.sh
+bash tools/e2e/bootstrap_preflight.sh
 timeout 10s nvidia-smi
 df -h .
 free -h

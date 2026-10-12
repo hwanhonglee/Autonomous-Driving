@@ -18,10 +18,10 @@
 | VisionPilot | 공식 외부 비교 후보 | 전방 단안 기반 L2 운전자 보조 스택. 아직 이 PC/서버에서 실행하거나 우리 모델과 성능 비교하지 않음 |
 | CARLA BasicAgent 원본 수집 | 선생님 역할의 주행 기록 | 최근 출발·정지·회전 품질 검사에 사용한 규칙 기반 expert. 이 촬영을 Portable 모델이 운전한 결과라고 부르면 안 됨 |
 
-자체 모델의 실제 코드는 [model.py](../portable_e2e/model.py), [train.py](../portable_e2e/train.py),
-[evaluate.py](../portable_e2e/evaluate.py)에 있다. 기존 VAD 연결은
-[carla_vad.launch.xml](../autoware_e2e_vad_launch/launch/carla_vad.launch.xml),
-Portable의 비제어 연결은 [shadow node](../autoware_e2e_vad_launch/scripts/portable_e2e_shadow_node.py)다.
+자체 모델의 실제 코드는 [model.py](../learning/portable_e2e/model.py), [train.py](../learning/portable_e2e/train.py),
+[evaluate.py](../learning/portable_e2e/evaluate.py)에 있다. 기존 VAD 연결은
+[carla_vad.launch.xml](../autonomy/autoware_e2e_vad_launch/launch/carla_vad.launch.xml),
+Portable의 비제어 연결은 [shadow node](../autonomy/autoware_e2e_vad_launch/scripts/portable_e2e_shadow_node.py)다.
 최근 학습 실행 이력과 현재 실행 중인지 여부는 [학습 루프 안내](portable-e2e-learning-loop.md)를
 따른다. **코드나 과거 checkpoint가 있다는 사실은 지금 GPU에서 학습 중이라는 뜻이 아니다.**
 
@@ -65,7 +65,7 @@ Portable의 비제어 연결은 [shadow node](../autoware_e2e_vad_launch/scripts
 ## 3. 섞어서 쓰려면 먼저 맞춰야 하는 부분
 
 - **센서:** VisionPilot 문서의 기준은 전방 1대, 약 50–55° 수평 화각, 1–2MP, 10 Hz다.
-  현재 [Portable 센서 설정](../autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml)의
+  현재 [Portable 센서 설정](../autonomy/autoware_e2e_vad_launch/config/sensor_mapping_portable_e2e_10hz.yaml)의
   전방 카메라는 640×360·70°다. crop/resize/TF 변경만으로 원래 없던 원거리 화상 정보를
   복구할 수 없다. 적합한 센서·전처리·보정 조건을 먼저 선언해야 한다.
   [공식 센서·보정 문서](https://github.com/autowarefoundation/vision_pilot/blob/f9fb99799e779ac602fde06175f2ec3ea3df3f6f/github-io/hardware.md)
@@ -113,7 +113,7 @@ ODD는 **테스트할 도로·날씨·속도·교통 상황의 범위**다. 목�
 ## 5. 환경 확인 범위와 설치 제한
 
 <!-- HH_260906 - Link reproducible prerequisite inspection without treating discovery as inference readiness. -->
-18:23 KST에는 [사전 검사기](../scripts/e2e/visionpilot_preflight.py)를 실제 실행해
+18:23 KST에는 [사전 검사기](../tools/e2e/visionpilot_preflight.py)를 실제 실행해
 위 단계 1의 초기 결과를 JSON·해시·명령으로 남겼다. 검사 완료와 모델 미실행 상태를 구분한다.
 아래 기존 발견과 일치하며, 설정 YAML은 원본 해시만 자동 연결하고 센서 수치는 CLI 선언으로 받는다.
 실시간 센서·추론·10 Hz 처리량을 검사했다고 표시하지 않는다.

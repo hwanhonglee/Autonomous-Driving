@@ -1,0 +1,1066 @@
+{
+  "schema": "HH_publication_security_peer_review_20261012_v1",
+  "provenance": "HH_261012 - Preserve bounded and full compressed-text screening separately without exposing secret values or claiming exhaustive security.",
+  "observed_date_kst": "2026-10-12",
+  "status": "COMPLETED_LEXICAL_PEER_SCREEN_NOT_EXHAUSTIVE_SECURITY_CERTIFICATION",
+  "preliminary_strong_marker_only_text_screen": {
+    "files_scanned": 6463,
+    "bytes_read": 1212021040,
+    "matched_filenames_only": [],
+    "unreadable_count": 0,
+    "symlink_count": 0,
+    "scope": "Earlier root tracked+untracked nonignored present text files; compressed/binary extensions excluded; quoted-literal screening was not performed in this preliminary run."
+  },
+  "later_plain_text_screen": {
+    "scope": "Existing root Git cached+untracked nonignored files, including docs/assets, excluding named binary/compressed extensions; local file bytes, not final staged blobs",
+    "files_discovered": 11082,
+    "files_fully_scanned": 6471,
+    "bytes_read": 1212473544,
+    "matched_filenames_only": [
+      {
+        "path": "learning/tests/test_export_active_autoware_snapshot_20261012.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v1_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v2_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v3_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v4_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v5_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v6_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ]
+      }
+    ],
+    "unreadable_filenames": [],
+    "symlink_filenames": [],
+    "generation_changed_filenames": [],
+    "skipped_extensions_count": {
+      ".pcd": 1,
+      ".gif": 336,
+      ".png": 2508,
+      ".jpg": 18,
+      ".gz": 56,
+      ".npz": 1039,
+      ".mcap": 16,
+      ".db3": 2
+    },
+    "nonexistent_tracked_old_paths_count": 635,
+    "elapsed_seconds": 60.1812789429996,
+    "disk_write_count": 0,
+    "remote_operation_count": 0,
+    "secret_values_exposed": false,
+    "coverage_limit": "Lexical strong-marker and quoted-literal screening is not comprehensive secret proof. Literal findings can be intentional negative fixtures and require contextual review."
+  },
+  "plain_text_literal_context_review": {
+    "candidate_file_count": 7,
+    "strong_marker_candidate_file_count": 0,
+    "context_review_completed_file_count": 7,
+    "unresolved_candidate_file_count": 0,
+    "credential_values_exposed": false,
+    "findings": [
+      {
+        "path": "learning/tests/test_export_active_autoware_snapshot_20261012.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "INTENTIONAL_NEGATIVE_TEST_FIXTURE_NOT_A_PRODUCTION_CREDENTIAL",
+        "contextual_reason": "AST/source structure places the literals in rejection-test parametrization; no real key or password was generated or used.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v1_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v2_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v3_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v4_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v5_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      },
+      {
+        "path": "tools/e2e/run_owned_town03_stationary_wheel_rpc_v6_20261005.py",
+        "categories": [
+          "POTENTIAL_QUOTED_CREDENTIAL_LITERAL"
+        ],
+        "contextual_classification": "EXPERIMENT_COMMAND_SUBSTITUTION_MARKER_NOT_A_LOGIN_OR_API_CREDENTIAL",
+        "contextual_reason": "PLAN_TOKEN and AUTH_TOKEN are inserted into fixed_contract commands; substituted replaces them with the expected declaration digest and launch-authority SHA. Literal values were not printed or saved.",
+        "publication_blocker_identified": false
+      }
+    ]
+  },
+  "initial_bounded_gzip_screen": {
+    "scope": "First declared bounded streaming screen; the partial interval and unscanned files remain historical facts despite the later full follow-up.",
+    "per_file_uncompressed_cap_bytes": 209715200,
+    "total_uncompressed_cap_bytes": 1073741824,
+    "files_discovered": 56,
+    "files_reaching_eof": 32,
+    "files_partially_scanned": 1,
+    "files_not_scanned_due_to_total_cap": 23,
+    "uncompressed_scanned_bytes_total": 1073741824,
+    "elapsed_seconds": 51.336566024000604,
+    "matched_filenames_only": [],
+    "disk_write_count": 0,
+    "remote_operation_count": 0,
+    "secret_values_exposed": false,
+    "files": [
+      {
+        "path": "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/08_low_speed_steering_abba/analysis/future_windows.jsonl.gz",
+        "compressed_bytes": 14110161,
+        "uncompressed_scanned_bytes": 94733412,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/09_hold_brake_ramp/analysis/future_windows.jsonl.gz",
+        "compressed_bytes": 18819047,
+        "uncompressed_scanned_bytes": 126655240,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-15/portable_e2e_learning_cycle_v1/01_native_boundary_and_substeps/native_analysis/native_intervals.jsonl.gz",
+        "compressed_bytes": 5186935,
+        "uncompressed_scanned_bytes": 39515130,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-15/portable_e2e_learning_cycle_v1/01_native_boundary_and_substeps/substep_analysis/future_windows.jsonl.gz",
+        "compressed_bytes": 9126168,
+        "uncompressed_scanned_bytes": 67875575,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-15/portable_e2e_learning_cycle_v1/02_terminal_approach_feedback/analysis/future_windows.jsonl.gz",
+        "compressed_bytes": 9433792,
+        "uncompressed_scanned_bytes": 64283821,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/coast_comparison/g_staged_coast.future.jsonl.gz",
+        "compressed_bytes": 124,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/b_after_bootstrap.future.jsonl.gz",
+        "compressed_bytes": 2733858,
+        "uncompressed_scanned_bytes": 20159097,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/c_launch_cap.future.jsonl.gz",
+        "compressed_bytes": 4211751,
+        "uncompressed_scanned_bytes": 39740048,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/d_launch_brake_cap.future.jsonl.gz",
+        "compressed_bytes": 124,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/driving_town01_p03_9kph_v2.future.jsonl.gz",
+        "compressed_bytes": 2734153,
+        "uncompressed_scanned_bytes": 20158012,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/e_staged_launch.future.jsonl.gz",
+        "compressed_bytes": 2805702,
+        "uncompressed_scanned_bytes": 20799536,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/comparison/f_staged_early_brake.future.jsonl.gz",
+        "compressed_bytes": 3044863,
+        "uncompressed_scanned_bytes": 22261437,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/b_after_bootstrap.future.jsonl.gz",
+        "compressed_bytes": 2662377,
+        "uncompressed_scanned_bytes": 20159097,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/c_launch_cap.future.jsonl.gz",
+        "compressed_bytes": 4114250,
+        "uncompressed_scanned_bytes": 39740048,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/d_launch_brake_cap.future.jsonl.gz",
+        "compressed_bytes": 162,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/driving_town01_p03_9kph_v2.future.jsonl.gz",
+        "compressed_bytes": 2662095,
+        "uncompressed_scanned_bytes": 20158012,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/e_staged_launch.future.jsonl.gz",
+        "compressed_bytes": 2733271,
+        "uncompressed_scanned_bytes": 20799536,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/f_staged_early_brake.future.jsonl.gz",
+        "compressed_bytes": 2968482,
+        "uncompressed_scanned_bytes": 22261437,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/g_staged_coast.future.jsonl.gz",
+        "compressed_bytes": 158,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/h_earlier_coast.future.jsonl.gz",
+        "compressed_bytes": 159,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_aj/final_audit/i_coast_buffer.future.jsonl.gz",
+        "compressed_bytes": 158,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_ak/final_audit/a_coast_27.future.jsonl.gz",
+        "compressed_bytes": 4140926,
+        "uncompressed_scanned_bytes": 29760030,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_ak/final_audit/b_coast_27_hold.future.jsonl.gz",
+        "compressed_bytes": 3880744,
+        "uncompressed_scanned_bytes": 28589915,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_ak/final_audit/i_coast_buffer.future.jsonl.gz",
+        "compressed_bytes": 158,
+        "uncompressed_scanned_bytes": 133,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_al/final_audit/b_coast_27_hold.future.jsonl.gz",
+        "compressed_bytes": 3880744,
+        "uncompressed_scanned_bytes": 28589915,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_al/final_audit/rear_axle.future.jsonl.gz",
+        "compressed_bytes": 3904866,
+        "uncompressed_scanned_bytes": 28801037,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_am/final_audit/b_coast_27_hold.future.jsonl.gz",
+        "compressed_bytes": 3880744,
+        "uncompressed_scanned_bytes": 28589915,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_am/final_audit/lateral_kp_170.future.jsonl.gz",
+        "compressed_bytes": 3908341,
+        "uncompressed_scanned_bytes": 28848494,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_am/final_audit/rear_axle.future.jsonl.gz",
+        "compressed_bytes": 3904866,
+        "uncompressed_scanned_bytes": 28801037,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_an/final_audit/goal_window_020_zero.future.jsonl.gz",
+        "compressed_bytes": 3910948,
+        "uncompressed_scanned_bytes": 28845955,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_ao/final_audit/goal_window_020_zero.future.jsonl.gz",
+        "compressed_bytes": 3910948,
+        "uncompressed_scanned_bytes": 28845955,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-09-27/drive_control_ao/final_audit/start_zero_below_020.future.jsonl.gz",
+        "compressed_bytes": 3914433,
+        "uncompressed_scanned_bytes": 28845061,
+        "completed_eof": true,
+        "status": "COMPLETED",
+        "pattern_categories": [],
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 93511532,
+        "uncompressed_scanned_bytes": 145924141,
+        "completed_eof": false,
+        "status": "PARTIAL_TOTAL_CAP",
+        "pattern_categories": [],
+        "file_generation_unchanged": true,
+        "scanned_stream_sha256": "2b31c7f77976cda82e3b1cd1694673215b4b23050ac2194550781922455e58b4"
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 3492608,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12560724,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 533261,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_camera_futures.jsonl.gz",
+        "compressed_bytes": 6344707,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_control_checks.jsonl.gz",
+        "compressed_bytes": 6300,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_image_checks.jsonl.gz",
+        "compressed_bytes": 394238,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_native.jsonl.gz",
+        "compressed_bytes": 1819971,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_projection_rows.jsonl.gz",
+        "compressed_bytes": 36972,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_selected_windows.jsonl.gz",
+        "compressed_bytes": 16597,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 581893,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9541246,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 533434,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9378280,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_native_geometry_and_bounds.jsonl.gz",
+        "compressed_bytes": 319296,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_windows.jsonl.gz",
+        "compressed_bytes": 66320,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12543820,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534170,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12588466,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 537247,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12302561,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 535153,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12259537,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534807,
+        "uncompressed_scanned_bytes": 0,
+        "completed_eof": false,
+        "status": "NOT_SCANNED_TOTAL_CAP",
+        "pattern_categories": []
+      }
+    ],
+    "coverage_limit": "This first run alone did not verify one tail and 23 complete files. Complete-stream hashes for the first 32 files were emitted during execution but are not transcribed in this summary."
+  },
+  "followup_gzip_budget_inventory": {
+    "scope": "Fresh full-stream follow-up of one partially scanned and 23 unscanned .gz files",
+    "file_count": 24,
+    "compressed_bytes_total": 190973140,
+    "last_member_isize_modulo_sum_bytes": 1527187912,
+    "isize_limit": "Each footer describes only the last gzip member, modulo 2^32. Concatenated streams or >4GiB members can make this an underestimate; it is not an exact decompression budget.",
+    "files": [
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 93511532,
+        "last_member_isize_modulo_2pow32_bytes": 822609559
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 3492608,
+        "last_member_isize_modulo_2pow32_bytes": 13896443
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12560724,
+        "last_member_isize_modulo_2pow32_bytes": 103035942
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 533261,
+        "last_member_isize_modulo_2pow32_bytes": 1836917
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_camera_futures.jsonl.gz",
+        "compressed_bytes": 6344707,
+        "last_member_isize_modulo_2pow32_bytes": 37486828
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_control_checks.jsonl.gz",
+        "compressed_bytes": 6300,
+        "last_member_isize_modulo_2pow32_bytes": 74419
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_image_checks.jsonl.gz",
+        "compressed_bytes": 394238,
+        "last_member_isize_modulo_2pow32_bytes": 1834361
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_native.jsonl.gz",
+        "compressed_bytes": 1819971,
+        "last_member_isize_modulo_2pow32_bytes": 7340195
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_projection_rows.jsonl.gz",
+        "compressed_bytes": 36972,
+        "last_member_isize_modulo_2pow32_bytes": 213320
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_selected_windows.jsonl.gz",
+        "compressed_bytes": 16597,
+        "last_member_isize_modulo_2pow32_bytes": 120266
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 581893,
+        "last_member_isize_modulo_2pow32_bytes": 2707901
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9541246,
+        "last_member_isize_modulo_2pow32_bytes": 57334134
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 533434,
+        "last_member_isize_modulo_2pow32_bytes": 2479111
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9378280,
+        "last_member_isize_modulo_2pow32_bytes": 54849989
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_native_geometry_and_bounds.jsonl.gz",
+        "compressed_bytes": 319296,
+        "last_member_isize_modulo_2pow32_bytes": 2283755
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_windows.jsonl.gz",
+        "compressed_bytes": 66320,
+        "last_member_isize_modulo_2pow32_bytes": 598378
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12543820,
+        "last_member_isize_modulo_2pow32_bytes": 102973591
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534170,
+        "last_member_isize_modulo_2pow32_bytes": 1845149
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12588466,
+        "last_member_isize_modulo_2pow32_bytes": 103074461
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 537247,
+        "last_member_isize_modulo_2pow32_bytes": 1848851
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12302561,
+        "last_member_isize_modulo_2pow32_bytes": 102581053
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 535153,
+        "last_member_isize_modulo_2pow32_bytes": 1836992
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12259537,
+        "last_member_isize_modulo_2pow32_bytes": 102486330
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534807,
+        "last_member_isize_modulo_2pow32_bytes": 1839967
+      }
+    ]
+  },
+  "full_remaining_gzip_screen": {
+    "scope": "New declared full-stream follow-up of previous partially scanned one and previously unscanned 23 .gz files; previous bounded run remains preserved",
+    "per_file_uncompressed_cap_bytes": 4294967296,
+    "total_uncompressed_cap_bytes": 8589934592,
+    "wall_cap_seconds": 600,
+    "files_declared": 24,
+    "uncompressed_scanned_bytes_total": 1527187912,
+    "completed_eof_count": 24,
+    "unfinished_count": 0,
+    "matched_filenames_only": [],
+    "elapsed_seconds": 73.13240710199989,
+    "disk_write_count": 0,
+    "remote_operation_count": 0,
+    "secret_values_exposed": false,
+    "coverage_limit": "Lexical strong-marker and quoted-literal screening, including all gzip members to EOF when completed, does not prove absence of every form of secret. Final staged blobs are a separate Root audit.",
+    "files": [
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 93511532,
+        "uncompressed_scanned_bytes": 822609559,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "bb2804761707ac10cb91ff16a5787dd8d8ab78f182c550195b808c563c2ce0b2",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_150s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 3492608,
+        "uncompressed_scanned_bytes": 13896443,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "3caa92bd6f288145bd9f77f7d3802bd525b478523b70fd882e7ec75cdcc72480",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12560724,
+        "uncompressed_scanned_bytes": 103035942,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "32b8087bac3feeb188c04bf732ce52f88ec32c3b60994067c23906770df49d52",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/selector_phase_ab/warmup_W1_20s_body_lane_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 533261,
+        "uncompressed_scanned_bytes": 1836917,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "75e18aa79ea49747fadb522de4351ac3bd2966846a91e353ec626d711caa47ea",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_camera_futures.jsonl.gz",
+        "compressed_bytes": 6344707,
+        "uncompressed_scanned_bytes": 37486828,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "e34aad63a065a7afeeed6ea6fdb39e951adfc609ef32ce58917293faa98dae5e",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_control_checks.jsonl.gz",
+        "compressed_bytes": 6300,
+        "uncompressed_scanned_bytes": 74419,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "ec1e0961f22b9acc4832a548c1c93bd33d9c9646a88f5215ff60eb00a4392138",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_image_checks.jsonl.gz",
+        "compressed_bytes": 394238,
+        "uncompressed_scanned_bytes": 1834361,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "f658baf1c73fcd5d68a678c23a6693b6fb18abdc8897dfd2d1760d1c89e80107",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_native.jsonl.gz",
+        "compressed_bytes": 1819971,
+        "uncompressed_scanned_bytes": 7340195,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "11f1d77bad18b0af49bd111f04f6aafc679f45fddecfe6b223e4ac5e426f05ef",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_projection_rows.jsonl.gz",
+        "compressed_bytes": 36972,
+        "uncompressed_scanned_bytes": 213320,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "bad547f91bfb5f9c09644dd66ebede31a2961ae279dd57e54ee22ed059adb45a",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_moving_v4_qa_v1/all_selected_windows.jsonl.gz",
+        "compressed_bytes": 16597,
+        "uncompressed_scanned_bytes": 120266,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "4a2e17c30e672deb2fc9820b71b7c106b9f2e3c76e8833c1cd13dfa43c32bfeb",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 581893,
+        "uncompressed_scanned_bytes": 2707901,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "9c9e813b187af43398a37391cde0f7fcfbb4a46ea5d581728626f512a1878b03",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v1/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9541246,
+        "uncompressed_scanned_bytes": 57334134,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "743ac1afccef88b974378567d2788cb9ec75ca62e7f4167a1a0b9dd49336dd93",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_image_checks.jsonl.gz",
+        "compressed_bytes": 533434,
+        "uncompressed_scanned_bytes": 2479111,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "bd44020d531a07c309bc8c960bb08220959da7b5169bf16287c5c39deb503920",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/raw_audit/all_raw_futures.jsonl.gz",
+        "compressed_bytes": 9378280,
+        "uncompressed_scanned_bytes": 54849989,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "db6814e41aec881551785e72c894c68ffe82a15b5f9272b2b3348bcfed75a8bd",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_native_geometry_and_bounds.jsonl.gz",
+        "compressed_bytes": 319296,
+        "uncompressed_scanned_bytes": 2283755,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "07b2cd60c8637bafbb7c9822340adf91d8ae1d559c0fac6c6675d483a420c7e1",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_low_speed_start_expert_v2/window_census_v1/all_windows.jsonl.gz",
+        "compressed_bytes": 66320,
+        "uncompressed_scanned_bytes": 598378,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "3b29ac68ec5f42e07657a769d1379779e0205b63c69bb1e085e1c4d20085b1ab",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12543820,
+        "uncompressed_scanned_bytes": 102973591,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "c269a23c20e91b86fc1f6762bc113586e033769e9f6bc12d8fa91b911d9c7ed1",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_A/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534170,
+        "uncompressed_scanned_bytes": 1845149,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "8852139c95df540b91b8cc8b6bc273c821e26cdb9ab6a637b823b4e4a8aaf7bd",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12588466,
+        "uncompressed_scanned_bytes": 103074461,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "7f250ec70ac05960863cf1e8838fb0d35335b09d97407780bac930f745f3c723",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/town07_w1_moving_brake_exploratory_v2/body_audit_B/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 537247,
+        "uncompressed_scanned_bytes": 1848851,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "77cb427c0fadde5d6d9170dd8b6418fbde4794d7cc69a386a3b400b04b32ed54",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12302561,
+        "uncompressed_scanned_bytes": 102581053,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "c936704652e4c39db73bd3d1bf5dc41f934ff364ebb5e946c1e85c5977194f43",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C30_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 535153,
+        "uncompressed_scanned_bytes": 1836992,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "a257a23750cd58166e87a02025e03a19e9be939d1c87fcea8419bf0f401a8826",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_candidate_nine_bounds.jsonl.gz",
+        "compressed_bytes": 12259537,
+        "uncompressed_scanned_bytes": 102486330,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "ee7fddb0477108ccd40be91c7333b575f27b9f1aca9ea91e2b626b9005155252",
+        "file_generation_unchanged": true
+      },
+      {
+        "path": "docs/assets/validation/2026-10-01/warmup_supervision_ab/speed_cap_C9_body_v1/all_native_body_sweeps.jsonl.gz",
+        "compressed_bytes": 534807,
+        "uncompressed_scanned_bytes": 1839967,
+        "completed_eof": true,
+        "pattern_categories": [],
+        "status": "COMPLETED",
+        "scanned_stream_sha256": "11aeb4ce496649f4ae714f4f286de0f8211a9b41a8a972292b3e9fd4ba596c34",
+        "file_generation_unchanged": true
+      }
+    ]
+  },
+  "combined_gzip_eof_coverage": {
+    "discovered_file_count": 56,
+    "distinct_completed_eof_file_count": 56,
+    "unfinished_file_count": 0,
+    "distinct_uncompressed_bytes_scanned": 2455005595,
+    "total_uncompressed_bytes_processed_in_both_runs": 2600929736,
+    "repeated_prefix_bytes_in_followup": 145924141,
+    "matched_filenames_only": [],
+    "note": "Every discovered gzip stream reached EOF in one of the two runs. This establishes lexical scan coverage, not proof that every possible secret encoding or credential form is absent."
+  },
+  "original_source_modifications": 0,
+  "model_training_jobs_started": 0,
+  "simulator_jobs_started": 0,
+  "package_installations": 0,
+  "remote_operations": 0,
+  "secret_values_stored": false,
+  "scan_disk_writes": 0,
+  "report_creation_separate_from_scan_writes": true,
+  "final_staged_blob_audit_performed_by_this_peer": false,
+  "remaining_required_publication_review": [
+    "Root must independently examine the final staged Git blobs and LFS pointers rather than infer final index safety from these local-file observations.",
+    "Excluded binary formats, encrypted content, unknown credential shapes, personal information, and final edits after the scans are not certified by lexical matching.",
+    "An experiment authorization marker or exported research source does not grant real-vehicle actuation, feature approval, or model promotion."
+  ]
+}

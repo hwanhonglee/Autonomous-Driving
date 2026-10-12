@@ -1,0 +1,754 @@
+{
+  "schema": "active_autoware_comment_only_audit_v1",
+  "provenance": "HH_261012 - Record comment-only annotations without changing active Autoware logic or rewriting frozen patches.",
+  "scope": "Current project-selected autonomy/src checkout customizations only; no external PC4/VILS worktree changes.",
+  "date": "2026-10-12",
+  "comment_files_added": 62,
+  "previous_HH_files_preserved": 6,
+  "changed_files_total": 68,
+  "original_bytes_restored_after_removing_one_added_comment_line": 62,
+  "original_modes_preserved": true,
+  "python_AST_unchanged": 13,
+  "XML_elements_unchanged": 4,
+  "JSON_schema_assertions_and_defaults_unchanged": 1,
+  "json_comment_contract": {
+    "schema_draft": "draft-07",
+    "keyword": "$comment",
+    "reference": "https://json-schema.org/draft-07/json-schema-core#rfc.section.9"
+  },
+  "validation": "Read-only syntax/byte preservation only; no build, execution, vehicle approval or performance claim.",
+  "mutations": {
+    "application_logic": 0,
+    "original_patch_files": 0,
+    "nested_git_branch_or_HEAD": 0,
+    "git_commit_or_push": 0,
+    "build_or_import_application_modules": 0,
+    "SSH_or_GPU_or_CARLA": 0
+  },
+  "repositories": [
+    {
+      "path": "autonomy/src/launcher/autoware_launch",
+      "files": 5,
+      "annotated": 5
+    },
+    {
+      "path": "autonomy/src/core/autoware_core",
+      "files": 6,
+      "annotated": 5
+    },
+    {
+      "path": "autonomy/src/core/autoware_lanelet2_extension",
+      "files": 3,
+      "annotated": 3
+    },
+    {
+      "path": "autonomy/src/universe/autoware_universe",
+      "files": 54,
+      "annotated": 49
+    }
+  ],
+  "files": [
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/launcher/autoware_launch/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml",
+      "before_sha256": "772caf3dcbaff07fa3990ce10639f29890cdb086e710b0ceb0d71f60bab705b6",
+      "after_sha256": "f086f890191f96d408972f3e80195a1dc254c1124beb6b62434fdfddfb2eaed0",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Select the nominal iLQR Smart MPC preset for explicit CARLA controller comparisons.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/launcher/autoware_launch/autoware_launch/launch/autoware.launch.xml",
+      "before_sha256": "db0e7d8c866ab81f036c713c14af55ad8267d6b671dda6a48033d23e426ea9be",
+      "after_sha256": "2bddedd39a8ac52e0184ab4c0e4727586b0da5defc19e98c3c03d1d0bb153c4d",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Expose optional controller and command-gate parameter paths while retaining upstream defaults.",
+      "original_mode_retained": true,
+      "XML_elements_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/launcher/autoware_launch/autoware_launch/launch/components/tier4_control_component.launch.xml",
+      "before_sha256": "01be187a2e768b3d7d9fde750e0536168c3d3d4223bbf9ec8ebe5f68c044449f",
+      "after_sha256": "661ef5e66f7bcb05c87f5e8779099b41c93bcb6a55fcb8b064087234c4efcee0",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Resolve explicit lateral and longitudinal overrides and forward gate and Smart MPC parameters.",
+      "original_mode_retained": true,
+      "XML_elements_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/launcher/autoware_launch/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml",
+      "before_sha256": "5022cd1de5b48e9c824b6f2f8c59991fa665eeaf7a7bafd084c88acdb65e4bea",
+      "after_sha256": "c6cc17d93fbfd0212161f6695762d8d61ca6beae9934f9130fbfd0622360fb11",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Express the CARLA sensor rig in ROS x-forward, y-left base_link coordinates before spawn conversion.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/launcher/autoware_launch/tier4_universe_launch/tier4_control_launch/launch/control.launch.xml",
+      "before_sha256": "0fd7b23ecf495ee2e7ccd2edf857bec2dcf613922cbcc7950401f995398ad7ad",
+      "after_sha256": "30fdde58ddbe6d6a9acac7af72f3621e68da707eb1ae9e5eacba6abd4e1e91b4",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Load an explicit runtime parameter file when the Smart MPC controller is selected.",
+      "original_mode_retained": true,
+      "XML_elements_unchanged": false
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/map/autoware_map_loader/CMakeLists.txt",
+      "before_sha256": "d37f96e701172104498d0b45355eda8fe7b013a84b0876154f8f0ef3f6bf60b7",
+      "after_sha256": "35bf5b962ba232482f1ed8742265fff8b9004deef233f483ac67fade5029811b",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Register the map-hash generator shutdown regression test with ament pytest.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/map/autoware_map_loader/package.xml",
+      "before_sha256": "b305f64266a543c5658bd750c2df66f9492ffa4a501b0735260a8b80c154263a",
+      "after_sha256": "e56a26a9b3f44f26d18341cbd47d589f941890490351f9c41bdb741fd27aa56f",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Declare the pytest dependency required by the map-hash generator shutdown regression.",
+      "original_mode_retained": true,
+      "XML_elements_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/map/autoware_map_loader/script/map_hash_generator",
+      "before_sha256": "38e96674fee9d973bbaeb7a99e213ea5fac5738e24fcf703b3550eaa14a65223",
+      "after_sha256": "38e96674fee9d973bbaeb7a99e213ea5fac5738e24fcf703b3550eaa14a65223",
+      "existing_HH_file_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/map/autoware_map_loader/test/test_map_hash_generator.py",
+      "before_sha256": "0c6876ea21d12ae77354fdc075a87589b4eb53cb207c2334a48922282d2455be",
+      "after_sha256": "d954e39ddfdab40b72badf02af791e209d6e2b75948828f07bc9b7f55ffa2059",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Check map-hash generator cleanup on normal, keyboard and external executor shutdown paths.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/planning/autoware_route_handler/src/route_handler.cpp",
+      "before_sha256": "73cd7ab5a92c254929abd6546cf5ab465146695bd62ce8c2cd563bb71453a6bd",
+      "after_sha256": "4b4df58c6c71fde3f31bbe19b366b67acabb9fe0947845c07e677214eaf738ce",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Reject empty or non-finite routes and clear outputs before planning instead of reporting stale paths.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_core/planning/autoware_route_handler/test/test_route_handler.cpp",
+      "before_sha256": "fef6c7cf4bfdcaa38879ae0574c36c1ada79495fbc2cfe171b502ad30d71316e",
+      "after_sha256": "95ebc02d5664ff677e1146d5342a55e2cde9b0980795a49980bbf7b082ab7659",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress empty-path and non-finite Town05 route failures without retaining stale lanelets.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_lanelet2_extension/autoware_lanelet2_extension/lib/deprecated.cpp",
+      "before_sha256": "cb42495eb007a2667589a04b1e5576a57da7575d63273dbead09090dea5e714b",
+      "after_sha256": "c1608c6c50dd1f2fee051ea6e8f0ff0b2f13527f19aca4fa81b076e07fe4e507",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Avoid zero-length interpolation denominators and handle degenerate or non-finite resampling inputs.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_lanelet2_extension/autoware_lanelet2_extension/lib/utilities.cpp",
+      "before_sha256": "076b6680133e83c6543cd13e85b0f1524d37c81bebc3cc7b82fdbeda4374a20d",
+      "after_sha256": "4a19078d5bf542d33ee6902a6f17d9708b109ac57abe536e232a6994a95af5b8",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Avoid zero-length interpolation denominators and handle degenerate or non-finite resampling inputs.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/core/autoware_lanelet2_extension/autoware_lanelet2_extension/test/src/test_utilities.cpp",
+      "before_sha256": "06397501070933540bb7c05d4bebd5882920fc6bef0aa575758d1bc3981940b4",
+      "after_sha256": "84baca89fe2b4b56b3d181d4c70b6c757d372e0f36206db9ab3dda1966327cff",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress finite Town05 centerline generation when a boundary contains duplicate points.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/node.hpp",
+      "before_sha256": "7cdc969047d2efd30ba8fabd1087634cee4714b3f182d332d6aafae7935e5c3f",
+      "after_sha256": "ec61ce11384b11972d948ea2fcc9b57bb500a146eb67d26a395f3ed7041b82fd",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Use named collision and obstacle timeout fields to prevent parameter-update swaps.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/include/autoware/autonomous_emergency_braking/utils.hpp",
+      "before_sha256": "fb50e5c8255d99504ac54637363067aba6c3f013ed2ac8618c1997f3f637bc7a",
+      "after_sha256": "0d72187520844d1e9bf3de7022a186a3ca747bf15065d357669e9f26352c7be2",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Declare conservative vertical-overlap checks for predicted-object braking inputs.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/node.cpp",
+      "before_sha256": "cbb8cfa9c3159f762703b5037e8d8b554d95ac0185d406249cb5bc6e52e12153",
+      "after_sha256": "0d2ed1cc1549e9cfc305a99f8e10090128348146e6e87d5def5cb0a92dea7ae0",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Preserve named timeouts and reject only proven vertical or longitudinal non-obstacles in AEB.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/src/utils.cpp",
+      "before_sha256": "072a602c1cdb039560178be6983212ec3177a550068a0e124e3af54cd3a3c749",
+      "after_sha256": "13701a4e2cf6bce54d6ae955feec2cc101b0bde4f10779b1f9ffc4a0ad3fed85",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Normalize object orientations and conservatively check vertical overlap without dropping uncertain inputs.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_autonomous_emergency_braking/test/test.cpp",
+      "before_sha256": "e72701fb89e78724624864b5835cdc22e23cad6734e5fe60b2e163343e1c90a3",
+      "after_sha256": "d6095d16ab5788d159002ef104274720c9558124b964fb74db965d58731d3822",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress timeout stability and predicted-object height, orientation and forward-region safety checks.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/param/runtime.param.yaml",
+      "before_sha256": "684fc04c6abc1158c6098be33ecd5e260a34016c454f36b316f15808663b5027",
+      "after_sha256": "7b6a51f7f0aa6dbd826866556f7db7c7afa80102ec0355512b6873a7a5711c4d",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Keep the experimental distant-goal reference guard disabled unless explicitly enabled.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/reference_horizon.py",
+      "before_sha256": "9a6a70f95c28ed3cc8b7bbe12d969b203b5e39b3137524d7a890c2dda11ff7ed",
+      "after_sha256": "6b52db3b70acdefd8aa6a1aa8df72312db4ffc10b1c1993db1bc5f8e6b55c074",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Condition only a private distant-goal speed reference and preserve the original near-goal stop profile.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/control/autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py",
+      "before_sha256": "f29aa7f5d3b51113720deb0d96e78e16770c9639d568463f928a418136afdc76",
+      "after_sha256": "f9e5730e216dda88f69d923e027e3041b5dca3ef0f38c34918261b8ea02835ce",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Add opt-in distant-goal reference conditioning, controller diagnostics and clean executor shutdown.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/CMakeLists.txt",
+      "before_sha256": "e7ca99875d9d7d37eba1cf7fa2986f9773cf37025a7de21190678f25d4912ac4",
+      "after_sha256": "918b8712d5ef6402637968290326e0bf51adb1f34352841532e294f71ac8cb17",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Register VAD precision, synchronization, startup, temporal-policy and object-orientation regressions.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/config/vad_carla_tiny.param.yaml",
+      "before_sha256": "7fde5063c6753a4ee2cb73d5b54f3b817ae608958cd8e85e5fe6298700dda0ee",
+      "after_sha256": "b3a2ac37f379739368ff9d43a531d828f4f89f87ca40b42fa96936deb3d5a1cd",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Expose temporal BEV comparisons and bounded synchronized camera delivery settings for CARLA.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/data_types.cpp",
+      "before_sha256": "357e41d2b0c5d6a141b32fc6fa28f0865727d99ef6c9ebe66357bb741dddbabc",
+      "after_sha256": "1c54713497c37a471271e09b61509cdef3c153fe8ef96c54f45bca44da5506f8",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Retain static camera calibration across per-frame resets instead of requiring repeated CameraInfo.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/input_converter/bev_shift_converter.cpp",
+      "before_sha256": "11d90452c831e6dc95d2d8b20616ce816790197635b195f09ca682d3062a385e",
+      "after_sha256": "9ef0d14bce1cb5c5d36a1ff74b1f7499db835ac85648dae7cfda80aebe40b5a0",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Provide explicit legacy, ROS-corrected and zero BEV translation modes for controlled comparisons.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/networks/net.cpp",
+      "before_sha256": "29b0981753d849b87d05ac2026e8dea1770b0ecdb50a42cf8feaeb36c96e0284",
+      "after_sha256": "c487a5b535adde43af86c2c5d408c06750ccb31fd34daa8252e06b98a4c8474e",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Require FP32 LayerNorm inside FP16 VAD head engines and fail if the precision policy cannot be applied.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/output_converter/objects_converter.cpp",
+      "before_sha256": "9a040ba9fe10debe700514bb0bb5551dca887004ae93396968801beba00e03ce",
+      "after_sha256": "132f068bdd82500bf16b31be65a1ef4f37734a4949091813932022a2e561794f",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Validate object geometry and convert Bench2Drive SECOND yaw to physical heading before the map transform.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/output_converter/trajectory_converter.cpp",
+      "before_sha256": "240a63a901e87ff049c57385c27e5e67a188005bc4fecc4d1708f70af0478e05",
+      "after_sha256": "7b988b7d21a4d00670e3ec2bc80e176d3bdabf8b6bad524542a2d02b220fb8cc",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Reuse each candidate trajectory UUID in generator metadata so both identifiers refer to the same source.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/lib/synchronization_strategy.cpp",
+      "before_sha256": "7bfce587ae53c8a8adb7b51830a4c5293725873f117ab428f85dda9d810a56a7",
+      "after_sha256": "1c2a04415ac9cb9435b13b6213ea4ec27835407eb9b19aac263591cec3dd922c",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Assemble bounded camera bundles with causal vehicle state and serialize the latest complete inference input.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/schema/tensorrt_vad.schema.json",
+      "before_sha256": "c0fb0b6beef1997ee2815f6e945a22fdda7cb0aa07da57554554dd7903845b07",
+      "after_sha256": "4244c011c06dc019640f2ea8b0e1c0f9d1c8c38123b043da36c1de30c3eb60b5",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Describe explicit BEV translation and temporal-head comparison parameters without changing their defaults.",
+      "original_mode_retained": true,
+      "schema_comment": "HH_261012 - Describe explicit BEV translation and temporal-head comparison parameters without changing their defaults.",
+      "JSON_without_comment_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/data_types.hpp",
+      "before_sha256": "f8b8cc34026f8a400e83017f4062d744e21e03d606c4fc5f209fb207656a88f8",
+      "after_sha256": "a2ec9e10fad116d8d3742804ffd4ff8760487e1587ad4e15bcb9a2252b684123",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Document that per-frame reset preserves the cached camera calibration.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/input_converter/bev_shift_converter.hpp",
+      "before_sha256": "68c41ca15291a8194ee58d733dfd5e243568a2bce1942b7283473ccf406b3b33",
+      "after_sha256": "cd4af0dfe6ba817a90f866eb87fa2334453a24a817d245a19c34b8c203eb71b6",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Declare explicit BEV translation modes rather than silently changing the public-model baseline.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/networks/net.hpp",
+      "before_sha256": "870b80f905f6415276b3bc021366196129a4a0136bf8e778f37dab0651ec778e",
+      "after_sha256": "b03491ded954e85fc0dc1e1e65101f95e5121b41974a89ae8f7195a4223ec058",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Expose network-aware FP32 LayerNorm policy helpers for FP16 head engine construction.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/runtime_configuration.hpp",
+      "before_sha256": "829517f8aa04ad7bf383c7c4e1ec8756355850c80256e649dd6059b98a8ee39d",
+      "after_sha256": "a62e2539415e055bf6166d559adfc5946527040c4c35fe5bd75326fc3ec24005",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Accept only declared reliable or best-effort image QoS settings and reject unknown values.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/runtime_startup.hpp",
+      "before_sha256": "2793ac493990b9c2cc0b0ac244a40b15907700b627cc2c3592533738fce75b7d",
+      "after_sha256": "2c603e050c31b191ef4cfcf127d108eae38fb5ad832361ef78c24612aa7a4254",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Initialize TensorRT before sensor subscriptions and start the worker only after subscription setup succeeds.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/synchronization_strategy.hpp",
+      "before_sha256": "b9ea6d3df1f71b112673d56ba060bb030cb909f8f9cab57a167ff22875d35deb",
+      "after_sha256": "8fa58acf83099b1dce0abca68843f03f0246ec31b61dbba7229b63129068c099",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Declare bounded causal frame assembly, rejection reasons and a single-slot latest-frame mailbox.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/temporal_head_policy.hpp",
+      "before_sha256": "00938b8e4a039b1479cefae14b66ca72ad7ca0d59b8cac6ac10e98a6364ecd2a",
+      "after_sha256": "0d4fb9650e0406f8a50eef96b012e7f9188e02273f2d3bed61a92c5bf28f6fac",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Advance recurrent BEV state only after successful inference and support explicit stateless comparisons.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/vad_config.hpp",
+      "before_sha256": "36868cef61ba83a67a11c7c64490e17fd363f6b906ae8f85870ce13de67b8d75",
+      "after_sha256": "0c276cdb615551b83aad33f65fdfc95851a31f8627b762b0b49cdf229a1d8f62",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Make recurrent-head selection explicit while keeping the upstream temporal behavior enabled by default.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/vad_interface_config.hpp",
+      "before_sha256": "ff408a888bbd4562f3e18cd62d043757368764377ac339403d0d259c4f54397d",
+      "after_sha256": "0ff47e9e53dea3f73f782df3c83f00b3592adf2d1c1832ffe9060ef12e91ef81",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Carry the declared BEV translation mode into the input conversion configuration.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/vad_model.hpp",
+      "before_sha256": "4788139caa43beede3099ac8ab525680b2818ccf92829f127c1edf0103fd93c6",
+      "after_sha256": "7c857cd37d277258846b9abb56251a83a42d9f0f420b9a369c576d6b47a5f0df",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Serialize shared TensorRT and BEV state while applying the explicit temporal-head execution policy.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/vad_node.cpp",
+      "before_sha256": "c8e5bf319a49ca0f782606b71edc2edb11b8558954a6a47b94145849356b05ba",
+      "after_sha256": "640222d06ff4a02ef538ea3b43848614da987b8aec815ee213b7af382747d05a",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Validate bounded synchronization settings and run complete frames through one latest-input inference worker.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/src/vad_node.hpp",
+      "before_sha256": "ab1077aed129c071412a3e639b3d080f481abb9dc1353259f20b70c143bdd9df",
+      "after_sha256": "6d5cd95eeb966cb19cf2414d3242b8410f44d44ea08f8cb4bf96c04fbffa8bbe",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Own the bounded frame buffer, inference mailbox and worker lifecycle used by the VAD node.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_bev_shift_contract.cpp",
+      "before_sha256": "b42a69ae8bc1183ff0a219e61fcaecb82e50b0892daf2d04034d5c7b29fc162c",
+      "after_sha256": "ddd155a8d7f64ec95659fe0ec537d3e176d1d8f481472e28df3f72f962102c73",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress declared BEV shift conventions, unsupported modes and first-frame behavior.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_frame_assembly.cpp",
+      "before_sha256": "4def1f60347b2908ca39cc4b237ba474b5456ae466c21e1e5799a8d7192d609f",
+      "after_sha256": "8be1133af359479d951d24b2efb4af938db1d3a507c1b6e2dfeb3bc7fe49a3ae",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress bounded camera assembly, causal state selection and latest-frame mailbox rejection semantics.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_layer_norm_precision.cpp",
+      "before_sha256": "898ecf81adc0821fa2b08f907becbcbbfdd19dc94bf2b52ab243536196e14c6e",
+      "after_sha256": "aa950d16c82858da5bb976172edda890a9a80eaa14627bf3fd988f80a343267b",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress network and precision selection for the FP32 LayerNorm policy.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_objects_converter_orientation.cpp",
+      "before_sha256": "af3a92ee2322a415c13a053392269d652b84c5c7354e1ee8bb38443054110fd2",
+      "after_sha256": "13a58ef6898866ea6401cb7aee5c1ad9e9ea4f5e04a84a18db0388463139127c",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress physical object headings and invalid object geometry at the VAD output conversion boundary.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_runtime_startup.cpp",
+      "before_sha256": "a8120758d743a2ab8e8ad97ee33c0a17416974e51fa482c6e8cfe33d049dc25b",
+      "after_sha256": "3b1d9d0fac8123c838bf55d0d651dfc9afbeb803b25b6f221c6dfabbab1847c5",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress model-first startup order and prevent worker startup after subscription setup failure.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/e2e/autoware_tensorrt_vad/test/test_temporal_head_policy.cpp",
+      "before_sha256": "8b543ecb9c2c6b84e905e01f51457ac27160217119289263fc7aa2cde6c6cf02",
+      "after_sha256": "f889171fd91ab8386abe58f0fbfb29760a0abaab7ebf87c4a294efa89d522dbf",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress recurrent and stateless head selection without advancing state after failed inference.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/perception/autoware_simpl_prediction/CMakeLists.txt",
+      "before_sha256": "4c83844d44f64a4b69ae7a9896632abf37f5ee8e4499e9b3f13cf743a5edf240",
+      "after_sha256": "dbd8e57b4236a4a0c6b3b08d0bf7be8e940aefe6a96bb6fdcfe16aa043cb63e7",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Treat TensorRT SDK includes as system headers while retaining warnings for project code.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/perception/autoware_tensorrt_classifier/CMakeLists.txt",
+      "before_sha256": "f2002adbcc9884d8f6d77b1576ed936874cb6ac4416b02ad3e9acb5118c85a11",
+      "after_sha256": "80cddfc36e393b50da46abf11f68dc47f51fcab5667530573716abfaa556f033",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Treat TensorRT SDK includes as system headers while retaining warnings for project code.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/perception/autoware_tensorrt_common/CMakeLists.txt",
+      "before_sha256": "34cabc9f9c7f80463e347af930c1d9b85056c7154a4138ab782ecb882d3e5289",
+      "after_sha256": "57c9ca6bb0eb3dafbad3693c88afba03b86390463fb31e0756f0181561e236ef",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Keep third-party TensorRT header warnings outside the Autoware project warning-as-error policy.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/perception/autoware_tensorrt_plugins/CMakeLists.txt",
+      "before_sha256": "37994d37b62cd48ab73b52454ac1b9d229b66150a5222fc4e520133393ce090f",
+      "after_sha256": "67963f3ffcda73fd7c1fbec90a3dad1218268fd662fdb6f94135e8b7b06c042f",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Use the resolved local TensorRT SDK include directory as a system-header search path.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/perception/autoware_tensorrt_plugins/include/autoware/multi_scale_deform_attn_ops/ms_deform_attn_kernel.hpp",
+      "before_sha256": "90cf1d403c68f404d9b190b1a947e3864ce88dba76669cde5487a82a29b0d107",
+      "after_sha256": "430ded650afdaf14bb2c461ac9d4e818921e342fa4b729b123f1deeb0010f513",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Remove the unused cuBLAS header dependency from the deformable-attention kernel declaration.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/planning/autoware_mission_planner_universe/src/lanelet2_plugins/default_planner.cpp",
+      "before_sha256": "978577644c31f20b590d7b224bf5138f48f70e4e277727568acda7f5a16176f6",
+      "after_sha256": "6ee844171d919b7c2fd2586bbc89ba8bfe2fb7602e519acef933c8c1aade9686",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Use finite lane-only routes when no drivable area exists and reject invalid lane geometry.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/planning/autoware_mission_planner_universe/test/test_lanelet2_plugins_default_planner.cpp",
+      "before_sha256": "9fb67706b0f8b079a080f7b6d8fa58f71ed5f01e239b26ac2934a6e28556cbb1",
+      "after_sha256": "78e5d6c47bea2087001a24de48fe4cd029ff37a15f53119b3e5325e000d1a50e",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Regress lane-only planning and preserve valid mixed-area routes while rejecting non-finite geometry.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/README.md",
+      "before_sha256": "a9a541e05f22717f5b3e252dfa969b1fcff8d67316b31af89ab98bcf68895b0f",
+      "after_sha256": "7c50ffc7a9c759c010c53954b2299eb18694bff2cb856c16537382ff09be14b1",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Document independent image and CameraInfo QoS plus the optional simulation-only depth-one profile.",
+      "original_mode_retained": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/launch/autoware_carla_interface.launch.xml",
+      "before_sha256": "4ebfc9edc7a09797bbd500e933ec674f285fd2a01d6e97c175b93599e062bc18",
+      "after_sha256": "4ebfc9edc7a09797bbd500e933ec674f285fd2a01d6e97c175b93599e062bc18",
+      "existing_HH_file_unchanged": true,
+      "XML_elements_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_autoware.py",
+      "before_sha256": "ece64abee500e4ea4976cb5c36cc984db14bcde60ccae4ce70c95385efe2c8b3",
+      "after_sha256": "ece64abee500e4ea4976cb5c36cc984db14bcde60ccae4ce70c95385efe2c8b3",
+      "existing_HH_file_unchanged": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/carla_ros.py",
+      "before_sha256": "09545696a376b4ebd038223cc5cbc1d1667758d99f1787565a1f365841b1577e",
+      "after_sha256": "09545696a376b4ebd038223cc5cbc1d1667758d99f1787565a1f365841b1577e",
+      "existing_HH_file_unchanged": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/carla_wrapper.py",
+      "before_sha256": "5b7d5721401cb4969c2f5a37fb595d441936926fff9848dad783845f1cf42b8b",
+      "after_sha256": "5b7d5721401cb4969c2f5a37fb595d441936926fff9848dad783845f1cf42b8b",
+      "existing_HH_file_unchanged": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/coordinate_transformer.py",
+      "before_sha256": "11cfd596d0f5025098eb8b5550c201e8670154c95dea590c0953f38842ebfb41",
+      "after_sha256": "048ff6810f675877187300e1463ad56205f911eec18f95821f6dce0d9be4f33b",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Shift the reported vehicle pose along its local longitudinal axis to the declared base_link origin.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/ros_publisher_manager.py",
+      "before_sha256": "29855f33d914ad4c7123cc8e8abcda12a540e9d9eda378044a0381a6f90e9518",
+      "after_sha256": "7383a4e1e336ebf4902c04081092269cf36f63e8de5727e47decf0b824e8d14c",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Configure image and CameraInfo QoS independently with legacy shared-profile fallback.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/runtime_timing.py",
+      "before_sha256": "7cb0420ee1e57b518722d56116535945b4c037b02266cfd2e83825b734db4937",
+      "after_sha256": "1ee1f93e0dd3276c417a55525928943cad83ff8e2da396e375a431f52e6f3899",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Provide rate-limited timing diagnostics without adding an unbounded event queue.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_kit_loader.py",
+      "before_sha256": "4414460ab0ff91380f850b01d85306bfdd33ecb0b6c19bbbb4fa168ac7133903",
+      "after_sha256": "8eb2b410c80778bbf2705b025c852f920af94fc71a49504bcaacbcaf097a4e8f",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Convert canonical ROS rig calibration to CARLA spawn coordinates and carry separate camera QoS settings.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_manager.py",
+      "before_sha256": "320e4f6ac165ed00293604de42c6a2f18f4fa7aa074fea105fe07c658d3c6e50",
+      "after_sha256": "0377da161ec3a27e8f6181411fabed1c8170c17cfae1ad1c62d1a283fce2e82b",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Allow separate optional image and CameraInfo QoS settings while preserving legacy configuration.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/modules/sensor_publish_worker.py",
+      "before_sha256": "061d2b2cd88f55f3e9d15d7e706a49949ecbf2d5ceb5de432a64958e6ac5498c",
+      "after_sha256": "061d2b2cd88f55f3e9d15d7e706a49949ecbf2d5ceb5de432a64958e6ac5498c",
+      "existing_HH_file_unchanged": true,
+      "python_AST_unchanged": true
+    },
+    {
+      "path": "/home/a/autoware_e2e/autonomy/src/universe/autoware_universe/simulator/autoware_carla_interface/src/autoware_carla_interface/vehicle_status_conversion.py",
+      "before_sha256": "cfb8706343617793ecc93518f107ce95779ffc086b3043edac074c510fa70eb3",
+      "after_sha256": "96d661c02adfc9bf5f517ca7c10a8fc26d7322e0dff2154275403bd76f64e2bc",
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "new_HH_count": 1,
+      "explanation": "Convert wheel steering to the virtual tire angle and retain signed speed in the declared base_link frame.",
+      "original_mode_retained": true,
+      "python_AST_unchanged": true
+    }
+  ],
+  "diff_checks": [
+    {
+      "repo": "autonomy/src/core/autoware_core",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "repo": "autonomy/src/core/autoware_lanelet2_extension",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "repo": "autonomy/src/launcher/autoware_launch",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "repo": "autonomy/src/universe/autoware_universe",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

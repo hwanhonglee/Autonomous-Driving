@@ -38,7 +38,7 @@ train 1,147 / 개발용 val 337이며 독립 Town04 test는 모델 평가·학�
 - 처음부터 새 head를 쓰는 효과와 기존 head를 더 학습하는 효과를 따로 표시한다.
   공유 MLP는 깊이·용량·입력도 달라지므로 궤적 입력만의 인과 효과라고 단정하지 않는다.
 
-[고정 계획](../config/portable_e2e_frozen_selector_20260908.json)은 결과를 보기 전에 정했다.
+[고정 계획](../learning/config/portable_e2e_frozen_selector_20260908.json)은 결과를 보기 전에 정했다.
 각 방식은 세 seed 모두에서 같은 캐시의 원래 C보다 ADE/FDE가 개선되고, 형상 PASS가
 감소하지 않으며 속도 MAE가 5% 넘게 악화하지 않아야 상대 기준을 통과한다. 별도로
 1/3/6.4초 ADE 0.5/1/2 m, 6.4초 FDE 4 m 이하의 기존 절대 기준을 유지한다.

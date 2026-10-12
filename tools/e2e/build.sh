@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: tools/e2e/build.sh
+
+Build the minimal Autoware/CARLA VAD runtime. This command accepts no
+positional arguments. Configure build parallelism with environment variables:
+  CMAKE_BUILD_PARALLEL_LEVEL=N  compiler jobs per package (default: 2)
+  COLCON_WORKERS=N              colcon package workers (default: 3)
+EOF
+}
+
+if (( $# > 0 )); then
+  if (( $# == 1 )) && [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+  echo "build.sh accepts no arguments: $*" >&2
+  usage >&2
+  exit 2
+fi
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "${root}"
+source tools/e2e/workspace_runtime_lock.sh
+e2e_acquire_workspace_runtime_lock "minimal build"
+tools/e2e/apply_vad_uuid_patch.sh
+tools/e2e/apply_vad_fp16_layer_norm_patch.sh
+tools/e2e/apply_vad_frame_assembly_patch.sh
+tools/e2e/apply_vad_causal_state_sync_patch.sh
+tools/e2e/apply_vad_bev_shift_modes_patch.sh
+tools/e2e/apply_vad_temporal_head_mode_patch.sh
+tools/e2e/apply_vad_object_safety_patches.sh
+tools/e2e/apply_mission_planner_lane_only_patch.sh
+# HH_260906 - Reapply the clean map hash shutdown contract in the ignored Core checkout.
+tools/e2e/apply_map_loader_clean_shutdown_patch.sh
+tools/e2e/apply_tensorrt_system_headers_patch.sh
+tools/e2e/apply_tensorrt_unused_cublas_patch.sh
+tools/e2e/apply_tensorrt_local_sdk_headers_patch.sh
+tools/e2e/apply_tensorrt_consumer_system_headers_patch.sh
+tools/e2e/apply_carla_fast_sensor_patch.sh
+tools/e2e/apply_carla_sensor_frame_patch.sh
+tools/e2e/apply_carla_vehicle_status_patch.sh
+tools/e2e/apply_carla_base_link_pose_patch.sh
+tools/e2e/apply_carla_base_link_route_contract_patch.sh
+tools/e2e/apply_carla_imu_source_timestamp_patch.sh
+tools/e2e/apply_carla_runtime_timing_patch.sh
+tools/e2e/apply_carla_camera_qos_split_patch.sh
+# HH_260906 - Reapply the executor-first CARLA shutdown contract in the ignored checkout.
+tools/e2e/apply_carla_clean_shutdown_patch.sh
+# HH_260906 - Reapply the bounded Common10 camera delivery contract in the ignored checkout.
+tools/e2e/apply_carla_camera_delivery_contract_patch.sh
+tools/e2e/apply_autoware_launch_control_override.sh
+tools/e2e/apply_autoware_launch_vehicle_cmd_gate_override.sh
+tools/e2e/setup_cuda_12_8.sh
+tools/e2e/setup_tensorrt_10_8.sh
+tools/e2e/setup_spconv.sh
+export AUTOWARE_E2E_SKIP_INSTALL=1
+source tools/e2e/env.sh
+
+# colcon-cmake otherwise injects one make job per host CPU. MAKEFLAGS is the
+# supported override that prevents that injection while packages themselves
+# may still be scheduled in parallel by colcon.
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
+if [[ ! "${CMAKE_BUILD_PARALLEL_LEVEL}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "CMAKE_BUILD_PARALLEL_LEVEL must be a positive integer." >&2
+  exit 2
+fi
+export MAKEFLAGS="-j${CMAKE_BUILD_PARALLEL_LEVEL} -l${CMAKE_BUILD_PARALLEL_LEVEL}"
+
+runtime_packages=(
+  autoware_autonomous_emergency_braking
+  autoware_carla_interface
+  autoware_external_cmd_selector
+  autoware_lanelet2_extension
+  autoware_map_loader
+  autoware_mission_planner_universe
+  autoware_perception_rviz_plugin
+  autoware_planning_rviz_plugin
+  autoware_raw_vehicle_cmd_converter
+  autoware_route_handler
+  autoware_shift_decider
+  autoware_tensorrt_vad
+  autoware_trajectory_follower_node
+  autoware_twist2accel
+  autoware_vehicle_cmd_gate
+  autoware_vehicle_velocity_converter
+  carla_sensor_kit_description
+  sample_vehicle_launch
+  sample_vehicle_description
+  tier4_vehicle_launch
+)
+
+colcon --log-base autonomy/log build --build-base autonomy/build --install-base autonomy/install \
+  --base-paths autonomy/src autonomy/autoware_e2e_vad_launch \
+  --symlink-install \
+  --parallel-workers "${COLCON_WORKERS:-3}" \
+  --packages-up-to "${runtime_packages[@]}" \
+  --cmake-args \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF \
+    -Dament_cmake_auto_DIR="${AUTOWARE_E2E_AMENT_CMAKE_AUTO_DIR}" \
+    -DCUDA_TOOLKIT_ROOT_DIR="${AUTOWARE_E2E_CUDA_ROOT}" \
+    -DCMAKE_CUDA_COMPILER="${CUDACXX}" \
+    -DTENSORRT_ROOT="${TENSORRT_ROOT}" \
+    -DNVINFER="${TENSORRT_ROOT}/lib64/libnvinfer.so" \
+    -DNVONNXPARSER="${TENSORRT_ROOT}/lib64/libnvonnxparser.so" \
+    -Dcumm_DIR="${AUTOWARE_E2E_SPCONV_ROOT}/share/cmake/cumm" \
+    -Dspconv_DIR="${AUTOWARE_E2E_SPCONV_ROOT}/lib/cmake/spconv"
+
+# This package is launch/config data only. Its control YAML is copied from the
+# pinned autoware_launch source without installing that package's full stack.
+# Discover only this package for the second invocation: if the complete src
+# tree is in the colcon graph, colcon requires every exec_depend's install
+# marker even though this data-only package has no such build dependency.
+colcon --log-base autonomy/log build --build-base autonomy/build --install-base autonomy/install \
+  --base-paths autonomy/autoware_e2e_vad_launch \
+  --symlink-install \
+  --packages-select autoware_e2e_vad_launch \
+  --cmake-args \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=ON \
+    -Dament_cmake_auto_DIR="${AUTOWARE_E2E_AMENT_CMAKE_AUTO_DIR}"
+
+# Reload through the project wrapper so the completed runtime and launch
+# packages are available to subsequent commands.
+unset AUTOWARE_E2E_SKIP_INSTALL
+source tools/e2e/env.sh
+python3 tools/workspace_python.py tools/e2e/mission_planner_build_provenance.py capture
+python3 tools/workspace_python.py tools/e2e/vad_object_safety_build_provenance.py capture

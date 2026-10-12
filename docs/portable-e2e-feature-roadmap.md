@@ -1,10 +1,93 @@
 # Portable E2E 자율주행 기능 요구사항·로드맵
 
-> 기준일: 2026-09-09
+<!-- HH_261012 - Index actual CPU tensor input progress without changing prospective feature gates or failed-attempt denominators. -->
+**10월 12일 최신:** [주행·지도 현황과 다음 학습 준비](assets/validation/2026-10-12/README.md).
+지도 CPU Tensor 입력은 실제 16배치/군과 독립 저장 검산을 완료했습니다. 새 trainer·전체 학습·모델 성능 개선은 아직 전이며 현재 학습 중인 작업은 없습니다.
+정식 완료 **메인 0/9·하위 0/30**, 첫 RTE-01·SAF-01 지연 미달을 유지합니다. 아래 합격 기준과 실패 분모는 바꾸지 않습니다.
+
+<!-- HH_261008 - Point readers to the latest nontraining evidence without changing prospective feature criteria or historical attempts. -->
+**10월 8일 기록:** [비학습 주행 지연·지도 정답 검산 현황](assets/validation/2026-10-08/README.md).
+현재 정식 완료는 메인 **0/9**, 하위 **0/30**이고 첫 목표는RTE-01입니다.
+과거 학습은 종료됐으며, 오늘은 로컬 기록 입력의 추론/ROS 비교와 지도 정답 검산을 진행합니다.
+소스 검사·정답 해시 일치·짧은 비구동 추론을 기능 완료로 세지 않습니다. 아래 기준과 실패 분모는 유지합니다.
+
+<!-- HH_261002 - Preserve main-feature acceptance and clarify that three bounded straight passes do not finish the continuing nine-domain objective. -->
+**10월 2일 현재 목표:** [메인 9개 영역의 현황과 이어갈 작업](assets/validation/2026-10-02/README.md).
+메인 **0/9**, 하위 **0/30**이다. 새 모델의 저속 직진 45초 3회 성공은 기본 주행의 일부 근거이며
+메인 기능 완료나 작업 종료 기준이 아니다. 실제 새 모델 학습과 폐루프 시험은 실행했으며,
+아래 10월 1일 초기의 “새 설계 미실행” 설명은 후속 실행 전 기록이다.
+
+<!-- HH_261001 - Put current measured work above historical milestones without rewriting frozen feature acceptance. -->
+**10월 1일 현재:** [한눈에 보는 주행·지도 현황](assets/validation/2026-10-01/README.md).
+<!-- HH_261001 - Connect the new design to five basic-driving targets without advancing feature approval. -->
+[재설계와 본 학습 계획](portable-e2e-redesign-2026-10-01.md)은 연속 영상 기반의 별도 경량 모델을 권장한다.
+현재 우선 목표는 `RTE-01~04 + SPD-01` 5개이며, 이는 완료 5개라는 뜻이 아니다.
+새 설계의 구현·학습은 아직 실행하지 않았고, 승인 수는 0/30을 유지한다.
+주행 W1은 준비 대기 정답 분리 학습 후 같은 20초에 4.23→29.76m로 개선됐습니다.
+추가 150초에서는 200.51m를 진행했지만 마지막 9.77m와 10cm 안전 여유 일부가 미달입니다.
+이는 **실제 모델 제어**이며, 아래 과거 기록의 “모델 폐루프 실행 없음”과 시점이 다릅니다.
+기능 **승인**은 여전히 0/30입니다. 지도 모델은 추가 비교 학습과 전수 평가를 진행하고,
+주행은 저속 순항 자료와 더 긴 학습을 각각 분리해 개선합니다.
+
+아래 날짜별 설명은 당시의 원본 판단입니다. 현재 수치는 위 최신 요약을 먼저 읽어주세요.
+
+<!-- HH_260928 - Link the latest expert failure and map-render rejection without changing feature approval. -->
+**9월 28일 후속:** [주행·지도 관문 및 원본 화면](assets/validation/2026-09-28/README.md). Town01 BasicAgent 우회전 단회는 신호 대기 추정 구간 때문에 고정 창 연속 이동 30초와 종점 2.5m 기준을 통과하지 못했다. Town13 원본 센서는 240쌍 수집했으나 RGB 렌더 경고가 전 프레임에 있어 지도 학습/DEV로 승인하지 않았다. 새 모델 학습은 0회이며 학습 모델 폐루프 승인 기능은 **0/30**이다.
+
+<!-- HH_260906 - Surface the latest driving-data and map-model decisions before historical milestones. -->
+**9월 27일 기록:** [주행·지도 통합 현황과 원본 화면](assets/validation/2026-09-27/README.md).
+주행 AO는 BasicAgent 우회전 정답 수집의 출발 조향을 바꾼 실험이지 학습 모델 주행이 아닙니다.
+AN 대비 전체 미래 곡률 위반이 6→10시점으로 늘어 TRAIN 편입을 거부했습니다.
+지도 B와 7:1 복습 C는 각 2,000 step 학습했지만 고정 Town01 DEV의 차선·표지판
+보호 관문을 모두 실패했습니다. 기존 AI v2를 유지하며 Town07 TEST는 열지 않았습니다.
+우회전 주행 AH의 절대 품질도 여전히 미달이고, 자체 모델의 폐루프 승인 기능은 **0/30**입니다.
+다음 우선순위는 신규 head가 아니라 독립 장면의 적격 정답·독립 DEV 확보와 기본
+주행·지도 성능 재검증입니다.
+
+<!-- HH_260906 - Track measured collection quality separately from model capability and training starts. -->
+**9월 22일 M 후속:** [우회전 수집 6회 및 라벨 품질 검사](assets/validation/2026-09-22/portable_e2e_learning_cycle_v1/04_right_diversity_m/README.md).
+지면 생성으로 워밍업 좌표/속도 불일치를 해소해 Common10 후보 487개를 만들었으나,
+현재 런타임 물리 타깃 검사에서 221개가 실패했다. 수집 제어 개선이 우선이며 새 학습은 아직 없다.
+
+<!-- HH_260906 - Record the completed L comparison without counting offline gains as approved driving functions. -->
+**9월 22일 11:53 KST 후속 완료:** [L 전체 모델 15,000 step 학습·평가](assets/validation/2026-09-22/portable_e2e_learning_cycle_v1/03_geometry_recovery_l_results/README.md).
+후보 형상 점수를 추가한 L은 직진 ADE 0.511 → 0.423 m로 개선됐지만 우회전 ADE는
+3.833 → 3.877 m로 악화했다. K1 대비 비퇴행 3/9로 미채택이며 GPU 0 학습은 종료됐다.
+다음은 새로운 기능 head가 아니라 독립 우회전 데이터 다양성 확보와 기본 주행 성능 복구다.
+
+<!-- HH_260906 - Link completed K full-model recovery and retain the unresolved right-turn regression. -->
+**9월 22일 최신:** [전체 모델 K0/K1 학습·평가·사후 분석](assets/validation/2026-09-22/portable_e2e_learning_cycle_v1/01_full_model_recovery_k/README.md).
+각 15,000 step 전체 학습을 완료했다. 데이터 확장 K1의 직진 ADE는 2.696 → 0.511 m로 개선됐으나
+우회전 ADE는 3.270 → 3.833 m로 악화해 미채택이다. 사후 재생에서 우회전 후보 선택의 추가
+오차 증가를 확인했다. 신규 기능 확대는 보류하며, 자체 모델 폐루프 승인 **0/30**은 그대로다.
+
+> 기준일: 2026-09-14 (기능 승인 상태 불변; 연구 결과 복구 반영)
 >
-> 기계 판독 원본: [`config/portable_e2e_feature_matrix.yaml`](../config/portable_e2e_feature_matrix.yaml)
+> 기계 판독 원본: [`config/portable_e2e_feature_matrix.yaml`](../learning/config/portable_e2e_feature_matrix.yaml)
 
 ## 현재 결론
+
+<!-- HH_260906 - Link live whole-model work without rewriting historical experiment or feature-acceptance counts. -->
+**9월 15일 최신 진행:** [현재 결과 목록](assets/validation/2026-09-15/portable_e2e_learning_cycle_v1/CURRENT.md).
+19:29–21:30 KST에 PRO6000 GPU 0에서 전체 모델 6개의 20-epoch 이어학습·평가를 완료했습니다.
+로컬에서는 Town07 이동 데이터 pilot과 TRAIN 328개 변환·원격 전송도 마쳤습니다.
+평균 경로 오차는 개선됐지만 최종 네 가지 경로 목표 통과는 0/6이고 모델은 미채택입니다.
+아래 9월 14일의 “학습 중이 아님”은 당시 상태입니다. 기능 승인 0/30은 불변입니다.
+
+<!-- HH_260906 - Link the resumed status and distinguish recovered training completion from feature approval. -->
+**9월 14일 재개 요약:** [중단 지점·두 환경·30개 기능·다음 학습 계획](portable-e2e-status-2026-09-14.md).
+9월 9일 06:41 KST에 이미 종료된 순위 선택기 이어학습 6회의 원본을 회수·독립 검산했습니다.
+당시 모델은 미채택이고 계속 학습 중인 프로세스는 없었습니다. 30개 중 부분 근거 10개,
+learned closed-loop 통과 0개이며 우선 행동 목표는 직진·좌회전·우회전·종점 정지·속도 추종 5개입니다.
+
+<!-- HH_260906 - Record METEOR as a pinned design reference without promoting its task heads or replay results to driving milestones. -->
+**METEOR 검토:** [입출력 차이·공식 평가의 범위·자체 모델 반영 순서](portable-e2e-meteor-review-2026-09-14.md).
+공유 BEV 표현과 차로/깊이 보조 학습을 설계 후보로 반영합니다. 공개 모델의 8-camera/3초
+입출력은 현재 6-camera/6.4초 route-aware 계약과 다르므로 바로 교체하지 않습니다.
+우선 TRAIN/VAL의 독립 장면·정지 유지·정답 label 준비 상태를 계측하며 기능 승인 상태는 그대로입니다.
+[실제 계측 완료](assets/validation/2026-09-14/portable_e2e_learning_cycle_v1/01_data_readiness/README.md):
+VAL 정지 유지 0개, TRAIN의 118개는 한 episode에 집중되어 있습니다. 보조 정답 5종도 현재
+학습에 사용할 payload가 없으며, 143개 CPU 검사 통과와 기능 승인은 구분합니다.
 
 <!-- HH_260906 - Count completed full-model input-ablation runs separately from historical selector-only fits and driving milestones. -->
 **9월 9일 추가 진행:** [가속도 입력 A/B](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/01_no_accel_development_ab/README.md)를
@@ -26,6 +109,12 @@
 추가 완료했습니다. 후보 인지 선택기는 세 seed의 VAL 평균 오차를 줄였지만 TRAIN 정지 유지
 118개에서 STOP 선택이 모두 0개로 퇴행했습니다. VAL의 정지 유지 표본은 0개라 평균 개선이
 해당 기능의 증거가 되지 않으며 채택하지 않았습니다. 원래 모델·데이터·안전 기준은 그대로입니다.
+
+<!-- HH_260906 - Append the equal-size residual outcome while preserving earlier failed heads and the missing independent hold coverage. -->
+06:14 KST에 완료한 [같은 크기의 잔차 선택기 6회](assets/validation/2026-09-09/portable_e2e_learning_cycle_v1/02_overnight_data_and_learning/11_matched_residual_selector/README.md)는
+기존 점수에서 시작한 후보 인지 B가 TRAIN 정지 유지 118개에서 STOP 선택을 모두 보존했습니다.
+단, VAL ADE는 세 seed 중 두 개 개선·한 개 악화였고 VAL 정지 유지 표본은 여전히 0개입니다.
+이전에 실패한 선택기를 소급 승인하지 않으며 learned closed-loop 기능 수는 계속 0/30입니다.
 
 <!-- HH_260906 - Refresh feature progress from completed physical-v1 training and isolated live shadow evidence. -->
 목표 기능을 9개 상위 영역, 30개 하위 기능으로 분해했다. 아래는 9월 8일까지의 근거이며,
@@ -249,11 +338,13 @@ open-loop, closed-loop 문장과 두 환경의 책임을 생략 없이 기록했
 
 ### MF-03 속도·승차감
 
+<!-- HH_261008 - Escape literal jerk magnitude delimiters for correct table rendering without changing prospective thresholds. -->
+
 | ID | 기능 | 단계 / 상태 | 데이터 요구 | Open-loop 통과 | Closed-loop 통과 | Local / Pro6000 |
 |---|---|---|---|---|---|---|
 | `SPD-01` | 30 km/h 추종 | P2→P4 / below target | straight/turn speed, limit, grade, curvature, actuator | speed MAE<=1.0 m/s; physical-v1 1.393 m/s | steady 직선 ±3 km/h>=80%, overspeed>33 km/h 0 | actuation 보정·동일경로 / speed A/B |
 | `SPD-02` | 곡률·상황 감속 | P0→P4 / not started | curvature/friction/visibility/safe-speed | envelope 위반 0, lateral accel<=2.0 m/s² | lateral accel<=2.0 m/s², lane/collision/saturation 0 | friction/curve scenario / envelope-risk head |
-| `SPD-03` | accel·decel·jerk | P0→P4 / not started | IMU/actuator/grade/intervention/emergency mask | accel MAE<=0.5 m/s², jerk MAE<=1.0 m/s³ | normal accel -3~2 m/s², |jerk| p95<=2.5 m/s³ | synchronized response / comfort regularization |
+| `SPD-03` | accel·decel·jerk | P0→P4 / not started | IMU/actuator/grade/intervention/emergency mask | accel MAE<=0.5 m/s², jerk MAE<=1.0 m/s³ | normal accel -3~2 m/s², \|jerk\| p95<=2.5 m/s³ | synchronized response / comfort regularization |
 
 ### MF-04 교통규칙·교차로
 

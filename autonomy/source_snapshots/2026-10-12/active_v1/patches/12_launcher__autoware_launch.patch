@@ -1,0 +1,270 @@
+diff --git a/autoware_launch/launch/autoware.launch.xml b/autoware_launch/launch/autoware.launch.xml
+index f0823bf..91d017c 100644
+--- a/autoware_launch/launch/autoware.launch.xml
++++ b/autoware_launch/launch/autoware.launch.xml
+@@ -1,4 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8"?>
++<!-- HH_261012 - Expose optional controller and command-gate parameter paths while retaining upstream defaults. -->
+ <launch>
+   <!-- Essential parameters -->
+   <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
+@@ -31,6 +32,28 @@
+   <arg name="launch_vehicle_interface" default="true" description="launch vehicle interface"/>
+   <!-- Control -->
+   <arg name="check_external_emergency_heartbeat" default="false"/>
++  <arg
++    name="vehicle_cmd_gate_param_path"
++    default="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"
++    description="vehicle command gate parameter file"
++  />
++  <arg name="use_lateral_controller_param_override" default="false"/>
++  <arg
++    name="lateral_controller_param_path"
++    default=""
++    description="lateral trajectory follower parameter file used when its override is enabled"
++  />
++  <arg name="use_longitudinal_controller_param_override" default="false"/>
++  <arg
++    name="longitudinal_controller_param_path"
++    default=""
++    description="longitudinal trajectory follower parameter file used when its override is enabled"
++  />
++  <arg
++    name="smart_mpc_runtime_param_path"
++    default="$(find-pkg-share autoware_smart_mpc_trajectory_follower)/param/runtime.param.yaml"
++    description="Smart MPC runtime parameter file; the default keeps experimental guards disabled"
++  />
+   <!-- Map -->
+   <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
+   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
+@@ -125,6 +148,12 @@
+       <arg name="module_preset" value="$(var control_module_preset)"/>
+       <arg name="use_sim_time" value="$(var use_sim_time)"/>
+       <arg name="vehicle_model" value="$(var vehicle_model)"/>
++      <arg name="use_lateral_controller_param_override" value="$(var use_lateral_controller_param_override)"/>
++      <arg name="lateral_controller_param_path" value="$(var lateral_controller_param_path)"/>
++      <arg name="smart_mpc_runtime_param_path" value="$(var smart_mpc_runtime_param_path)"/>
++      <arg name="use_longitudinal_controller_param_override" value="$(var use_longitudinal_controller_param_override)"/>
++      <arg name="longitudinal_controller_param_path" value="$(var longitudinal_controller_param_path)"/>
++      <arg name="vehicle_cmd_gate_param_path" value="$(var vehicle_cmd_gate_param_path)"/>
+     </include>
+   </group>
+ 
+diff --git a/autoware_launch/launch/components/tier4_control_component.launch.xml b/autoware_launch/launch/components/tier4_control_component.launch.xml
+index 5c18754..4a449f8 100644
+--- a/autoware_launch/launch/components/tier4_control_component.launch.xml
++++ b/autoware_launch/launch/components/tier4_control_component.launch.xml
+@@ -1,4 +1,5 @@
+ <?xml version="1.0"?>
++<!-- HH_261012 - Resolve explicit lateral and longitudinal overrides and forward gate and Smart MPC parameters. -->
+ <launch>
+   <!-- optional parameters are written here -->
+   <arg name="module_preset" default="default"/>
+@@ -10,6 +11,15 @@
+   <arg name="use_aeb_autoware_state_check" default="true"/>
+   <arg name="use_sim_time" default="false"/>
+   <arg name="vehicle_model" default="sample_vehicle"/>
++  <arg name="vehicle_cmd_gate_param_path" default="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"/>
++  <arg name="use_lateral_controller_param_override" default="false"/>
++  <arg name="lateral_controller_param_path" default=""/>
++  <arg name="use_longitudinal_controller_param_override" default="false"/>
++  <arg name="longitudinal_controller_param_path" default=""/>
++  <arg
++    name="smart_mpc_runtime_param_path"
++    default="$(find-pkg-share autoware_smart_mpc_trajectory_follower)/param/runtime.param.yaml"
++  />
+ 
+   <!-- Input topic parameters for control modules -->
+   <arg name="control_input_objects_topic_name" default="/perception/object_recognition/objects"/>
+@@ -25,6 +35,26 @@
+ 
+   <let name="latlon_controller_param_path_dir" value="$(var vehicle_id)" if="$(var use_individual_control_param)"/>
+   <let name="latlon_controller_param_path_dir" value="" unless="$(var use_individual_control_param)"/>
++  <let
++    name="resolved_lateral_controller_param_path"
++    value="$(var lateral_controller_param_path)"
++    if="$(var use_lateral_controller_param_override)"
++  />
++  <let
++    name="resolved_lateral_controller_param_path"
++    value="$(find-pkg-share autoware_launch)/config/control/trajectory_follower/$(var latlon_controller_param_path_dir)/lateral/$(var lateral_controller_mode).param.yaml"
++    unless="$(var use_lateral_controller_param_override)"
++  />
++  <let
++    name="resolved_longitudinal_controller_param_path"
++    value="$(var longitudinal_controller_param_path)"
++    if="$(var use_longitudinal_controller_param_override)"
++  />
++  <let
++    name="resolved_longitudinal_controller_param_path"
++    value="$(find-pkg-share autoware_launch)/config/control/trajectory_follower/$(var latlon_controller_param_path_dir)/longitudinal/$(var longitudinal_controller_mode).param.yaml"
++    unless="$(var use_longitudinal_controller_param_override)"
++  />
+ 
+   <include file="$(find-pkg-share tier4_control_launch)/launch/control.launch.xml">
+     <!-- option -->
+@@ -38,21 +68,22 @@
+     <arg name="trajectory_follower_node_param_path" value="$(find-pkg-share autoware_launch)/config/control/trajectory_follower/trajectory_follower_node.param.yaml"/>
+     <arg
+       name="lat_controller_param_path"
+-      value="$(find-pkg-share autoware_launch)/config/control/trajectory_follower/$(var latlon_controller_param_path_dir)/lateral/$(var lateral_controller_mode).param.yaml"
++      value="$(var resolved_lateral_controller_param_path)"
+     />
+     <arg
+       name="lon_controller_param_path"
+-      value="$(find-pkg-share autoware_launch)/config/control/trajectory_follower/$(var latlon_controller_param_path_dir)/longitudinal/$(var longitudinal_controller_mode).param.yaml"
++      value="$(var resolved_longitudinal_controller_param_path)"
+     />
+     <arg name="lateral_controller_mode" value="$(var lateral_controller_mode)"/>
+     <arg name="longitudinal_controller_mode" value="$(var longitudinal_controller_mode)"/>
+     <arg name="check_external_emergency_heartbeat" value="$(var check_external_emergency_heartbeat)"/>
++    <arg name="smart_mpc_runtime_param_path" value="$(var smart_mpc_runtime_param_path)"/>
+ 
+     <!-- common param path -->
+     <arg name="nearest_search_param_path" value="$(find-pkg-share autoware_launch)/config/control/common/nearest_search.param.yaml"/>
+ 
+     <!-- package param path -->
+-    <arg name="vehicle_cmd_gate_param_path" value="$(find-pkg-share autoware_launch)/config/control/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"/>
++    <arg name="vehicle_cmd_gate_param_path" value="$(var vehicle_cmd_gate_param_path)"/>
+     <arg name="control_command_gate_param_path" value="$(find-pkg-share autoware_launch)/config/control/control_command_gate/control_command_gate.param.yaml"/>
+     <arg name="lane_departure_checker_param_path" value="$(find-pkg-share autoware_launch)/config/control/lane_departure_checker/lane_departure_checker.param.yaml"/>
+     <arg name="control_validator_param_path" value="$(find-pkg-share autoware_launch)/config/control/control_validator/control_validator.param.yaml"/>
+diff --git a/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml b/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml
+index 1cb2900..2bcc2de 100644
+--- a/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml
++++ b/sensor_kit/carla_sensor_kit_launch/carla_sensor_kit_description/config/sensor_kit_calibration.yaml
+@@ -1,6 +1,8 @@
+ # CARLA sensor kit calibration (in base_link frame)
+-# Frames: base_link at rear axle center on ground (x forward, y right, z up).
+-# Conversion from CARLA vehicle origin ("car center") to base_link:
++# HH_261012 - Express the CARLA sensor rig in ROS x-forward, y-left base_link coordinates before spawn conversion.
++# Frames: ROS base_link at rear axle center on ground (x forward, y left, z up).
++# The CARLA interface converts this canonical ROS calibration when spawning sensor actors.
++# Conversion from CARLA vehicle origin ("car center") to ROS base_link before the Y flip:
+ #   x_base = x_car_center + 1.425  (WB=2.850 m)
+ #   y_base = y_car_center
+ #   z_base = z_car_center
+@@ -18,19 +20,19 @@ sensor_kit_base_link:
+ 
+   CAM_FRONT_LEFT/camera_link:
+     x: 1.695 # 0.270 + 1.425
+-    y: -0.550
++    y: 0.550
+     z: 1.600
+     roll: 0.000
+     pitch: 0.000
+-    yaw: -0.959931 # -55 deg
++    yaw: 0.959931 # +55 deg
+ 
+   CAM_FRONT_RIGHT/camera_link:
+     x: 1.695 # 0.270 + 1.425
+-    y: 0.550
++    y: -0.550
+     z: 1.600
+     roll: 0.000
+     pitch: 0.000
+-    yaw: 0.959931 # +55 deg
++    yaw: -0.959931 # -55 deg
+ 
+   CAM_BACK/camera_link:
+     x: -0.575 # -2.000 + 1.425
+@@ -42,19 +44,19 @@ sensor_kit_base_link:
+ 
+   CAM_BACK_LEFT/camera_link:
+     x: 1.105 # -0.320 + 1.425
+-    y: -0.550
++    y: 0.550
+     z: 1.600
+     roll: 0.000
+     pitch: 0.000
+-    yaw: -1.919862 # -110 deg
++    yaw: 1.919862 # +110 deg
+ 
+   CAM_BACK_RIGHT/camera_link:
+     x: 1.105 # -0.320 + 1.425
+-    y: 0.550
++    y: -0.550
+     z: 1.600
+     roll: 0.000
+     pitch: 0.000
+-    yaw: 1.919862 # +110 deg
++    yaw: -1.919862 # -110 deg
+ 
+   # LiDAR (roof)
+   velodyne_top_base_link:
+diff --git a/tier4_universe_launch/tier4_control_launch/launch/control.launch.xml b/tier4_universe_launch/tier4_control_launch/launch/control.launch.xml
+index 8a2cf99..2f28599 100644
+--- a/tier4_universe_launch/tier4_control_launch/launch/control.launch.xml
++++ b/tier4_universe_launch/tier4_control_launch/launch/control.launch.xml
+@@ -1,4 +1,5 @@
+ <launch>
++<!-- HH_261012 - Load an explicit runtime parameter file when the Smart MPC controller is selected. -->
+   <!-- controller -->
+   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
+   <arg name="lateral_controller_mode"/>
+@@ -38,6 +39,10 @@
+   <arg name="predicted_path_checker_param_path"/>
+   <arg name="collision_detector_param_path"/>
+   <arg name="control_command_gate_param_path" default="$(find-pkg-share autoware_control_command_gate)/config/default.param.yaml"/>
++  <arg
++    name="smart_mpc_runtime_param_path"
++    default="$(find-pkg-share autoware_smart_mpc_trajectory_follower)/param/runtime.param.yaml"
++  />
+ 
+   <!-- component -->
+   <arg name="use_intra_process" default="false" description="use ROS 2 component container communication"/>
+@@ -187,7 +192,9 @@
+ 
+       <!-- smart_mpc, under development -->
+       <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'smart_mpc_trajectory_follower'&quot;)">
+-        <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="controller_node_exe"/>
++        <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="controller_node_exe">
++          <param from="$(var smart_mpc_runtime_param_path)"/>
++        </node>
+       </group>
+ 
+       <!-- external cmd selector -->
+diff --git a/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml b/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml
+new file mode 100644
+index 0000000..6b584a2
+--- /dev/null
++++ b/autoware_launch/config/control/preset/smart_mpc_nominal_ilqr_preset.yaml
+@@ -0,0 +1,38 @@
++launch:
++# HH_261012 - Select the nominal iLQR Smart MPC preset for explicit CARLA controller comparisons.
++  # Opt-in Smart MPC controller. The package defaults select nominal iLQR
++  # with use_trained_model=false.
++  - arg:
++      name: trajectory_follower_mode
++      default: smart_mpc_trajectory_follower
++
++  # external_cmd selector/converter
++  - arg:
++      name: launch_external_cmd_selector
++      default: "true"
++  - arg:
++      name: launch_external_cmd_converter
++      default: "true"
++
++  # optional control checkers
++  - arg:
++      name: launch_lane_departure_checker
++      default: "true"
++  - arg:
++      name: launch_control_validator
++      default: "true"
++  - arg:
++      name: launch_autonomous_emergency_braking
++      default: "true"
++  - arg:
++      name: launch_collision_detector
++      default: "true"
++  - arg:
++      name: launch_obstacle_collision_checker
++      default: "false"
++  - arg:
++      name: launch_predicted_path_checker
++      default: "false"
++  - arg:
++      name: launch_control_evaluator
++      default: "true"

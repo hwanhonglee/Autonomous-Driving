@@ -1,0 +1,507 @@
+{
+  "all_map_claim": false,
+  "arms": {
+    "A_baseline_train": "COMPLETE",
+    "B_town07_augmented_train": "COMPLETE"
+  },
+  "automatic_promotion": false,
+  "automatic_retry": false,
+  "closed_loop_claim": false,
+  "comparison": {
+    "arms": {
+      "A_baseline_train": {
+        "subgroup_summary_sha256": "f79f2ff7d689af978d7fcb34c72cbcce24262ff12e32cb6b53174f0c3920d925"
+      },
+      "B_town07_augmented_train": {
+        "subgroup_summary_sha256": "64e98364bebec7508122fad51b351492172d1ab44623bda9a4332b24692fbfc9"
+      }
+    },
+    "diagnostic_gate": {
+      "adoption_allowed": false,
+      "automatic_promotion": false,
+      "episode_metric_checks": {
+        "town03_right_turn_dev": {
+          "ade_6p4s_m": {
+            "C": 2.9353143748791353,
+            "D": 3.367132111101547,
+            "maximum_D": 2.9353143748791353,
+            "maximum_D_over_C": 1.0,
+            "observed_D_over_C": 1.147111239572147,
+            "pass": false
+          },
+          "fde_6p4s_m": {
+            "C": 7.793866114022117,
+            "D": 9.697629961486387,
+            "maximum_D": 7.793866114022117,
+            "maximum_D_over_C": 1.0,
+            "observed_D_over_C": 1.24426437657675,
+            "pass": false
+          },
+          "speed_mae_6p4s_mps": {
+            "C": 1.1076154233086357,
+            "D": 1.4863724666108717,
+            "maximum_D": 1.1629961944740677,
+            "maximum_D_over_C": 1.05,
+            "observed_D_over_C": 1.341957176951206,
+            "pass": false
+          }
+        },
+        "town03_straight_dev": {
+          "ade_6p4s_m": {
+            "C": 8.090865013076037,
+            "D": 3.764740187947343,
+            "maximum_D": 7.281778511768434,
+            "maximum_D_over_C": 0.9,
+            "observed_D_over_C": 0.4653075019621468,
+            "pass": true
+          },
+          "fde_6p4s_m": {
+            "C": 19.32532976894844,
+            "D": 11.027441243572932,
+            "maximum_D": 17.392796792053595,
+            "maximum_D_over_C": 0.9,
+            "observed_D_over_C": 0.5706211161939192,
+            "pass": true
+          }
+        }
+      },
+      "geometry": {
+        "checks": {
+          "all_candidates": {
+            "C_pass_count": 664,
+            "D_pass_count": 664,
+            "pass": true
+          },
+          "any_candidate": {
+            "C_pass_count": 664,
+            "D_pass_count": 664,
+            "pass": true
+          },
+          "selected": {
+            "C_pass_count": 664,
+            "D_pass_count": 664,
+            "pass": true
+          }
+        },
+        "pass": true,
+        "sample_count": 665
+      },
+      "pass": false,
+      "status": "FAIL_SINGLE_SEED_DIAGNOSTIC",
+      "three_seed_confirmation_required": true
+    },
+    "experimental_arm_labels": {
+      "A_baseline_train": "C_old_train_7380_steps",
+      "B_town07_augmented_train": "D_augmented_train_7380_steps"
+    },
+    "interpretation": "Fresh C/D fits use 7380 optimizer steps each and 29495/29500 sample exposures, respectively. The older A/B5740 results remain separate evidence. Single-seed open-loop diagnostic only; three-seed confirmation is required before any separate adoption review.",
+    "metric_delta_D_minus_C_by_episode": {
+      "town03_right_turn_dev": {
+        "ade_1p0s_m": 0.015370934948778392,
+        "ade_3p0s_m": 0.06761661295721022,
+        "ade_6p4s_m": 0.4318177362224116,
+        "candidate_score_loss": 1.213789866706605,
+        "fde_1p0s_m": 0.05014800857089308,
+        "fde_3p0s_m": 0.172395859035257,
+        "fde_6p4s_m": 1.90376384746427,
+        "loss": 0.3897565291967875,
+        "oracle_ade_m": 0.0937596563504075,
+        "regression_loss": 0.15811767077587469,
+        "selected_ade_m": 0.4318177362224116,
+        "selected_fde_m": 1.90376384746427,
+        "selected_kinematic_speed_mae_mps": -2.862310063691784e-07,
+        "selected_speed_mae_mps": 0.37875704330223603,
+        "selected_yaw_mae_rad": 0.0005279652199511736,
+        "speed_mae_1p0s_mps": 0.03403581848826803,
+        "speed_mae_3p0s_mps": -0.015254257517681613,
+        "speed_mae_6p4s_mps": 0.37875704330223603
+      },
+      "town03_straight_dev": {
+        "ade_1p0s_m": -0.21660707711537436,
+        "ade_3p0s_m": -1.5205329503500606,
+        "ade_6p4s_m": -4.326124825128694,
+        "candidate_score_loss": -5.473484238166726,
+        "fde_1p0s_m": -0.5477759897731608,
+        "fde_3p0s_m": -4.087190896545241,
+        "fde_6p4s_m": -8.297888525375507,
+        "loss": -5.179255295454002,
+        "oracle_ade_m": -1.9910700882716876,
+        "regression_loss": -4.2133778355470515,
+        "selected_ade_m": -4.326124825128694,
+        "selected_fde_m": -8.297888525375507,
+        "selected_kinematic_speed_mae_mps": -1.0578674491404034e-06,
+        "selected_speed_mae_mps": -1.261044500441086,
+        "selected_yaw_mae_rad": -0.002196408081345441,
+        "speed_mae_1p0s_mps": -0.5024702103763092,
+        "speed_mae_3p0s_mps": -1.3390795824731268,
+        "speed_mae_6p4s_mps": -1.261044500441086
+      }
+    }
+  },
+  "deployment_approved": false,
+  "ended_at_utc": "2026-09-21T07:06:38.285719+00:00",
+  "experimental_arm_labels": {
+    "A_baseline_train": "C_old_train_7380_steps",
+    "B_town07_augmented_train": "D_augmented_train_7380_steps"
+  },
+  "final_gpu": {
+    "physical_index": 0,
+    "pre_cuda_compute_processes": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "model_export": false,
+  "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+  "pre_cuda_gpu": {
+    "physical_index": 0,
+    "pre_cuda_compute_processes": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "resume": false,
+  "schema": "portable_e2e.moving_data_high_budget_ab_pilot.v1",
+  "source_and_views_postcheck_pass": true,
+  "stages": [
+    {
+      "arm": "A_baseline_train",
+      "checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/A_baseline_train",
+        "--run-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/training",
+        "--model-config",
+        "/home/pro6000/personal/hwanhong/portable_e2e/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260906",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1",
+        "--max-steps",
+        "7380",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "ended_at_utc": "2026-09-21T06:45:05.422131+00:00",
+      "history_sha256": "0d0b2746dac7048de7e00b2bd8332c5080bc344bc979ab0af2ed44e43eb9fd74",
+      "input_checkpoint_sha256": null,
+      "owner_pid": 882468,
+      "path": "A_baseline_train/training/run.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "3b566482cce05774e428529e8e2990dabc48195ac37fdfa3844072e194fecb6c",
+      "stage": "train",
+      "started_at_utc": "2026-09-21T06:29:29.785782+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 5400
+    },
+    {
+      "arm": "A_baseline_train",
+      "checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/A_baseline_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/training/checkpoints/latest.pt",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "ended_at_utc": "2026-09-21T06:45:50.580653+00:00",
+      "input_checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "owner_pid": 882468,
+      "path": "A_baseline_train/evaluation/metrics.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "0765c8f5418a5b61a99eae456e6dae731da93d03d2da8152f1a1ac4d69cd8dc7",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-21T06:45:31.773690+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 600
+    },
+    {
+      "arm": "A_baseline_train",
+      "checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/A_baseline_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+        "--output-json",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4"
+      ],
+      "ended_at_utc": "2026-09-21T06:46:45.640402+00:00",
+      "input_checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "owner_pid": 882468,
+      "path": "A_baseline_train/gate_v8.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "35a5c01e654232ae27534683e102ca4cbe443d84439e01e36458025de346ff37",
+      "stage": "audit",
+      "started_at_utc": "2026-09-21T06:46:16.950401+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 600
+    },
+    {
+      "arm": "A_baseline_train",
+      "checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "/home/pro6000/personal/hwanhong/portable_e2e/benchmarks/moving_data_high_budget_ab_20260921_v1/evaluate_portable_moving_data_subgroups.py",
+        "--repo-root",
+        "/home/pro6000/personal/hwanhong/portable_e2e/autoware_e2e",
+        "--plan",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/plan.json",
+        "--plan-sha256",
+        "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+        "--arm",
+        "A_baseline_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/A_baseline_train/subgroup"
+      ],
+      "ended_at_utc": "2026-09-21T06:47:31.218857+00:00",
+      "input_checkpoint_sha256": "01b6764df96639336ba00cc11bca67406e1aced3829d471d741a1fe60ed8b061",
+      "owner_pid": 882468,
+      "path": "A_baseline_train/subgroup/summary.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "f79f2ff7d689af978d7fcb34c72cbcce24262ff12e32cb6b53174f0c3920d925",
+      "stage": "subgroup",
+      "started_at_utc": "2026-09-21T06:47:11.961343+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 900
+    },
+    {
+      "arm": "B_town07_augmented_train",
+      "checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.train",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--run-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/training",
+        "--model-config",
+        "/home/pro6000/personal/hwanhong/portable_e2e/autoware_e2e/portable_e2e/config/perspective_trajectory_physical_stopmix_v1.model.json",
+        "--split",
+        "train",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--seed",
+        "20260906",
+        "--learning-rate",
+        "0.0001",
+        "--weight-decay",
+        "0.0001",
+        "--candidate-score-weight",
+        "0.1",
+        "--candidate-regret-weight",
+        "0.1",
+        "--max-steps",
+        "7380",
+        "--checkpoint-interval",
+        "154",
+        "--num-workers",
+        "0",
+        "--maximum-gradient-norm",
+        "5",
+        "--sampling-policy",
+        "uniform_without_replacement"
+      ],
+      "ended_at_utc": "2026-09-21T07:03:44.122960+00:00",
+      "history_sha256": "7529937af53848caad8c0f6e3dd0d5e218b76ab3165f8bcb83b45385185d68f4",
+      "input_checkpoint_sha256": null,
+      "owner_pid": 882468,
+      "path": "B_town07_augmented_train/training/run.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "46e7ee1259eae3a694a3af78d4f438d0395d7cb68079180aba872212f0b08520",
+      "stage": "train",
+      "started_at_utc": "2026-09-21T06:47:57.532837+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 5400
+    },
+    {
+      "arm": "B_town07_augmented_train",
+      "checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.evaluate",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/training/checkpoints/latest.pt",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/evaluation",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4",
+        "--num-workers",
+        "0",
+        "--render-count",
+        "12"
+      ],
+      "ended_at_utc": "2026-09-21T07:04:30.037500+00:00",
+      "input_checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "owner_pid": 882468,
+      "path": "B_town07_augmented_train/evaluation/metrics.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "4fc1468ddaef42bf440e9e20d3524738813ab859e71fb9545fad462984b9bd10",
+      "stage": "evaluate",
+      "started_at_utc": "2026-09-21T07:04:10.480204+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 600
+    },
+    {
+      "arm": "B_town07_augmented_train",
+      "checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "-m",
+        "portable_e2e.audit_runtime",
+        "/home/pro6000/personal/hwanhong/portable_e2e/datasets/prepared/moving-data-ab-seed20260906-20260921-v1/B_town07_augmented_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+        "--output-json",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/gate_v8.json",
+        "--split",
+        "val",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "4"
+      ],
+      "ended_at_utc": "2026-09-21T07:05:25.532058+00:00",
+      "input_checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "owner_pid": 882468,
+      "path": "B_town07_augmented_train/gate_v8.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "a4a62b831f2b54b5bf05a9f4d2a0877c4e2448716ecc8e6402c561466e7b3621",
+      "stage": "audit",
+      "started_at_utc": "2026-09-21T07:04:56.441320+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 600
+    },
+    {
+      "arm": "B_town07_augmented_train",
+      "checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "command": [
+        "/home/pro6000/personal/hwanhong/portable_e2e/venvs/py312/bin/python",
+        "/home/pro6000/personal/hwanhong/portable_e2e/benchmarks/moving_data_high_budget_ab_20260921_v1/evaluate_portable_moving_data_subgroups.py",
+        "--repo-root",
+        "/home/pro6000/personal/hwanhong/portable_e2e/autoware_e2e",
+        "--plan",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/plan.json",
+        "--plan-sha256",
+        "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+        "--arm",
+        "B_town07_augmented_train",
+        "--checkpoint",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/training/checkpoints/latest.pt",
+        "--checkpoint-sha256",
+        "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+        "--output-dir",
+        "/home/pro6000/personal/hwanhong/portable_e2e/runs/diagnostics/moving_data_high_budget_ab_seed20260906_20260921_v1/B_town07_augmented_train/subgroup"
+      ],
+      "ended_at_utc": "2026-09-21T07:06:11.970924+00:00",
+      "input_checkpoint_sha256": "aba44cb524e852aa37e1342ef179a27f471ec1f2507ca1f317648b4ea80f0757",
+      "owner_pid": 882468,
+      "path": "B_town07_augmented_train/subgroup/summary.json",
+      "plan_sha256": "dda31c7ff03b959575d8483bfed8506bbf4e2c6c5bb4597c6285517a3c991cdc",
+      "pre_cuda_gpu": {
+        "physical_index": 0,
+        "pre_cuda_compute_processes": 0,
+        "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+      },
+      "sha256": "64e98364bebec7508122fad51b351492172d1ab44623bda9a4332b24692fbfc9",
+      "stage": "subgroup",
+      "started_at_utc": "2026-09-21T07:05:51.912865+00:00",
+      "status": "COMPLETE",
+      "timeout_seconds": 900
+    }
+  ],
+  "started_at_utc": "2026-09-21T06:29:03.526871+00:00",
+  "status": "COMPLETE_NOT_PROMOTED",
+  "test_read_or_use": false,
+  "training_data_approved": false,
+  "vehicle_control_approved": false
+}

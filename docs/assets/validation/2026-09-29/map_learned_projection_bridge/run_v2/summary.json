@@ -1,0 +1,318 @@
+{
+  "schema": "portable_e2e.learned_mapping_projection_bridge.v1",
+  "status": "CPU_ONLY_THREE_FRAME_PLUMBING_NOT_HD_MAP",
+  "preregistration_sha256": "3a91fe16a7e3981ee1e6ad7b4b3dc21ee95d89eeced78ba7ebb72c04efada831",
+  "script_sha256": "e900ac60fa5e66ec621cfd6a108d3960013d19e696ea7bc74e1e619669b8105d",
+  "input_sha256": {
+    "checkpoint": "ae489cd99e48f6f68da3241e8296c705847398c23b8ba69b71ec024cef4ef380",
+    "summary.json": "95e30aa5b121d668c03bae2863f7208b961db13caea44724c66ba76855d3591e",
+    "records.json": "51ffdcd08f8aa89d95c64bef664b352419db1e35437ed8a8079eb11336811a65",
+    "frames/0000.npz": "dd1a1004b22e8ee03c2e5a2672bbd99846f6bf1a2afe4098d36af3e9371873b8",
+    "frames/0090.npz": "21a897942101c4fbe6fd0224ae0dd3b7497deeaa36b3532ee366bc693f36602e",
+    "frames/0179.npz": "19a556be9a39bb1e275c96a4bf623a9a43a0c79241624f4aef3fcbe93575dd69",
+    "frames/0000.png": "059daf073396ec7c1a2f6035e0d3ecb65091ba1dfd9475683d139ae24969b9ea",
+    "frames/0090.png": "94bcc362a3736b60e8511118eee26df6b1fabae2d449be56b85f90893606f00b",
+    "frames/0179.png": "fbcc52650c26144d5881226bf024664010c15938f3eab591f7d840ba2fed67ec"
+  },
+  "support_sha256": {
+    "learning/portable_e2e/mapping_projection.py": "c42ab7d20454475f544b8073d6a23a104a0a2bb1cc2cbb7be092fa3e871cbbee",
+    "learning/portable_e2e/mapping.py": "264f9dda759f6986bde9c614e5cf3ae21680a22ae58d855db11564ceb3b3b867",
+    "learning/portable_e2e/map_perception.py": "1b0076c8f9d34192ab5aedf6cdf96ce2c14458e2bb49986685a6811376b0750b"
+  },
+  "indices": [
+    0,
+    90,
+    179
+  ],
+  "source_record_count": 180,
+  "frames_actually_projected": 3,
+  "model_input": "RGB only",
+  "projection_depth": "CARLA optical-axis oracle depth",
+  "projection_pose": "CARLA world_from_camera oracle pose",
+  "oracle_semantics_used_by_model": false,
+  "oracle_semantics_used_by_reference_only": true,
+  "stride": 3,
+  "max_depth_m": 40.0,
+  "min_model_confidence": 0.5,
+  "grid_resolution_m": 0.2,
+  "oracle_source": "oracle_sensor",
+  "learned_source": "learned_prediction",
+  "cell_overlap_diagnostic": {
+    "common_cells": 10422,
+    "union_cells": 10759,
+    "occupancy_jaccard": 0.9686773863741983,
+    "dominant_label_agreement_in_common_cells": 0.9799462675110343
+  },
+  "artifact_sha256": {
+    "frame_0000_ego_centered.png": "b816c06d1a336985271e0957caa12ab0e56fd2450afc0fbf8a6fddd14b7158d7",
+    "frame_0000_prediction.npz": "f2c9ba5f004285156c3be8809c197807a1ff041b42ee0468e6c3e5ee62f417a1",
+    "frame_0090_ego_centered.png": "ea12c8756a7b789b79b5b1b89e60f09ad3d1cebaf7f87a237f3395a76cef8511",
+    "frame_0090_prediction.npz": "c934e4eb8d45cc4ca2181caa5ab0bbf7e5b92a85df72eeb7f92b4abb9f607155",
+    "frame_0179_ego_centered.png": "d183024f772d47f3dda60950ebd12580686610014c122a8f59b83a1fe775feb7",
+    "frame_0179_prediction.npz": "77e3794312c84b66556d6a978a60aa82574182fd18a67f497e148479f8a0c29c",
+    "learned_evidence.json": "22c7d29c7b2318112be0f69f7ba9c1616bfe0ffd6143dfd42104e84f482c2335",
+    "oracle_evidence.json": "cdf2b0e4d1f1d232009ac5a30197f9cd0996d36138f132be1f0d5996db16ba04"
+  },
+  "rows": [
+    {
+      "index": 0,
+      "timestamp_s": 7.3089533927850425,
+      "inference_seconds_cpu_2threads": 0.1183916749432683,
+      "pixel_metrics": {
+        "confusion": [
+          [
+            93469,
+            7,
+            779,
+            0,
+            366,
+            190,
+            1513
+          ],
+          [
+            7,
+            89991,
+            190,
+            46,
+            0,
+            0,
+            17
+          ],
+          [
+            504,
+            11,
+            41044,
+            0,
+            0,
+            4,
+            117
+          ],
+          [
+            0,
+            2,
+            0,
+            1309,
+            0,
+            0,
+            1
+          ],
+          [
+            30,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            14,
+            0
+          ],
+          [
+            217,
+            0,
+            21,
+            0,
+            4,
+            5,
+            539
+          ]
+        ],
+        "iou": {
+          "other": 0.9627840382357182,
+          "road": 0.9968982286670137,
+          "sidewalk": 0.9618936020623389,
+          "lane_marking": 0.9639175257731959,
+          "traffic_light_fixture": 0.0,
+          "traffic_sign": 0.06572769953051644,
+          "pole": 0.22117357406647517
+        }
+      },
+      "oracle_projected_points": 14643,
+      "learned_projected_points": 14741,
+      "oracle_accumulated_cells": 3173,
+      "learned_accumulated_cells": 3229
+    },
+    {
+      "index": 90,
+      "timestamp_s": 16.308953526895493,
+      "inference_seconds_cpu_2threads": 0.10192674305289984,
+      "pixel_metrics": {
+        "confusion": [
+          [
+            83569,
+            193,
+            712,
+            0,
+            425,
+            86,
+            1762
+          ],
+          [
+            31,
+            91654,
+            702,
+            31,
+            0,
+            0,
+            27
+          ],
+          [
+            713,
+            114,
+            47131,
+            0,
+            5,
+            10,
+            292
+          ],
+          [
+            0,
+            0,
+            0,
+            974,
+            0,
+            0,
+            0
+          ],
+          [
+            34,
+            0,
+            0,
+            0,
+            149,
+            0,
+            10
+          ],
+          [
+            9,
+            0,
+            0,
+            0,
+            0,
+            188,
+            3
+          ],
+          [
+            294,
+            0,
+            100,
+            0,
+            2,
+            6,
+            1174
+          ]
+        ],
+        "iou": {
+          "other": 0.9515074919160177,
+          "road": 0.9881619803346559,
+          "sidewalk": 0.9468048775588099,
+          "lane_marking": 0.9691542288557214,
+          "traffic_light_fixture": 0.2384,
+          "traffic_sign": 0.6225165562913907,
+          "pole": 0.3198910081743869
+        }
+      },
+      "oracle_projected_points": 15630,
+      "learned_projected_points": 15621,
+      "oracle_accumulated_cells": 7088,
+      "learned_accumulated_cells": 7143
+    },
+    {
+      "index": 179,
+      "timestamp_s": 25.208953659515828,
+      "inference_seconds_cpu_2threads": 0.09008788131177425,
+      "pixel_metrics": {
+        "confusion": [
+          [
+            78385,
+            794,
+            880,
+            0,
+            402,
+            92,
+            1531
+          ],
+          [
+            829,
+            93603,
+            1583,
+            34,
+            0,
+            0,
+            674
+          ],
+          [
+            568,
+            59,
+            45274,
+            0,
+            3,
+            2,
+            522
+          ],
+          [
+            0,
+            2,
+            0,
+            216,
+            0,
+            0,
+            0
+          ],
+          [
+            242,
+            0,
+            0,
+            0,
+            2155,
+            2,
+            47
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            604,
+            0,
+            46,
+            0,
+            50,
+            14,
+            1787
+          ]
+        ],
+        "iou": {
+          "other": 0.9295362102292267,
+          "road": 0.9592633585439341,
+          "sidewalk": 0.9251486605227128,
+          "lane_marking": 0.8571428571428571,
+          "traffic_light_fixture": 0.7428472940365392,
+          "traffic_sign": 0.0,
+          "pole": 0.33876777251184836
+        }
+      },
+      "oracle_projected_points": 16088,
+      "learned_projected_points": 15887,
+      "oracle_accumulated_cells": 10541,
+      "learned_accumulated_cells": 10640
+    }
+  ],
+  "independent_dev_count": 0,
+  "test_used": false,
+  "hd_map_approved": false,
+  "learned_closed_loop_tested": false,
+  "gpu_used": false
+}

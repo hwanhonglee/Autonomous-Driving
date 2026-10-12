@@ -1,0 +1,9 @@
+# Junction identity and connector-wide body screen
+
+<!-- HH_260929 - Keep prior reports intact while correcting road versus junction identity. -->
+
+The [v2 report](report_v2.json) correctly added direct `<signal>` records, but its `other_junction_road_ids` column treated a second **road ID inside the same junction** as a second junction. OpenDRIVE `road@junction` shows `Town05_Opt` roads 639 and 694 both belong to junction 562, and `Town03` roads 255/316 and 783/809 likewise share their respective junctions. V3 uses the pinned XODR junction ID for the unchanged 30–146 m protection span. This changes a diagnostic label, not the route/physical/30 s/future/goal acceptance gates.
+
+V3 also checks one deterministic nominal Prius body and 10 cm inset sweep witness for **each distinct physical connector** that passed the unchanged profile in the fixed endpoint grid, including the reference-free Town05 junction 562 route. It records the exact representative route hash, endpoint scope, signal records, body/sweep counts, and unsupported geometry failures. The other endpoint variants are not silently declared body failures from one witness. The Prius dimensions come from a pinned prior Town01 raw manifest and are a cross-map nominal hypothesis; live Town05 geometry and actual driven body remain unverified. V3 writes new `report_v3.json` and preserves v1/v2.
+
+The first v3 attempt stopped before writing a report: a row enumerated at junction 2062 had its only RIGHT block on junction 2086. A route passing through the enumerated connector is insufficient to attribute its right turn to that connector. V3 therefore additionally requires the contiguous RIGHT block itself to contain the enumerated road/lane. This is an identity guard, not a physical threshold change. The failed attempt left no `report_v3.json`.

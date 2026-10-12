@@ -1,0 +1,9 @@
+{
+  "comment": "HH_260906 - Preserve the observed post-B2 TCP cooldown without changing the experiment or terminating foreign processes.",
+  "stage": "AFTER_B2_BEFORE_A2",
+  "measurement_status": "B2 COMPLETE; A2 not launched; read-only bind guard refused port2101",
+  "observation": "2026-09-14T03:37:58Z\nState Recv-Q Send-Q Local Address:Port Peer Address:PortProcess\n",
+  "earlier_ss_observation": "TIME-WAIT 0 0 127.0.0.1:2101 127.0.0.1:41284; read-only socket.bind(127.0.0.1,2101) returned Errno98, and process scan found no CARLA/collector/wrapper beyond the scan itself.",
+  "interpretation": "Unlike the earlier B1 refusal whose transient cause was not captured, the earlier post-B2 snapshot showed server-side 127.0.0.1:2101 in TIME-WAIT. The timestamped later observation above is empty after natural release. No port change, forced socket release or process kill.",
+  "training_data_approved": false
+}

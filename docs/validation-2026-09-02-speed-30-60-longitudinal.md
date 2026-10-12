@@ -220,9 +220,9 @@ CARLA 단일 game/render thread나 render fence 대기는 배제할 수 없으�
 ## 자료와 무결성
 
 - 문서용 전체 묶음: [`docs/assets/.../2026-09-02-speed-30-60-longitudinal-v1`](assets/validation/2026-09-02-speed-30-60-longitudinal-v1/README.md)
-- 60 kph 원본: [`artifacts/.../autoware_vad_60kph_town06_straight_pilot_v1`](../artifacts/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1/)
-- 동일 경로 30 kph 원본: [`artifacts/.../autoware_vad_30kph_town06_long_straight_comparison_v1`](../artifacts/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1/)
-- 전체 Town 30 kph 원본: [`artifacts/.../autoware_vad_town_matrix_30kph_camera_source_5hz_v1`](../artifacts/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1/)
+- 60 kph 원본: [`artifacts/.../autoware_vad_60kph_town06_straight_pilot_v1`](../storage/experiments/validation/2026-09-02/autoware_vad_60kph_town06_straight_pilot_v1)
+- 동일 경로 30 kph 원본: [`artifacts/.../autoware_vad_30kph_town06_long_straight_comparison_v1`](../storage/experiments/validation/2026-09-02/autoware_vad_30kph_town06_long_straight_comparison_v1)
+- 전체 Town 30 kph 원본: [`artifacts/.../autoware_vad_town_matrix_30kph_camera_source_5hz_v1`](../storage/experiments/validation/2026-09-02/autoware_vad_town_matrix_30kph_camera_source_5hz_v1)
 
 최종 회귀 검증은 관련 Python test `225 passed`,
 `autoware_e2e_vad_launch` package build 성공 및 colcon test `258 tests, 0 errors,

@@ -1,0 +1,815 @@
+{
+  "all_map_claim": false,
+  "arms": {
+    "H0_f_right_replay": {
+      "arm_schedule_sha256": "aad003519c512ec8669b5d953e0e3ca068352c7087bb0cf036ea39ad6c090ec3",
+      "files": {
+        "final_logits.pt": "4ff9e4059637dee0d7f521ea50455a47d5abf33b2aa19c85a499d119e4b21bce",
+        "head_only.pt": "d02be1971ce411d7ee2cbdbebe085f391674e166f35f87758e753dda0e3f71ab",
+        "history.jsonl": "f0c1218f8d37745ee8110d6b2b95553e07814d977d846f2abf9c5213ab817d8c",
+        "report.json": "272d3a9dda12100f0b8ffef70269d681437be387e981c2c02d2c8a9e93ca70f5"
+      },
+      "final_head_sha256": "9a4561e1a45d5d4c04fd98b2567b1ab16b6a60b62e715093004774f39a073c60",
+      "initial_head_sha256": "e4322282697bc83d81c67664fb39ffddef0700e5cf559cb1dbbc3c9910ea67ac",
+      "paired_base_position_order_sha256": "02247a0986b5df7831abb05c9c9f44cbf60189a8946441785a63215582a95ed8",
+      "status": "HEAD_ONLY_FIT_COMPLETE_NOT_PROMOTED",
+      "strict_gate": {
+        "geometry_check_count": 3,
+        "geometry_checks": [
+          {
+            "metric": "selected_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          },
+          {
+            "metric": "any_candidate_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          },
+          {
+            "metric": "all_candidates_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          }
+        ],
+        "geometry_pass_count": 3,
+        "interpretation": "The nine moving DEV metrics and frozen geometry are strict screens. The missing stop guard independently prevents promotion even if all screens pass.",
+        "metric_check_count": 9,
+        "metric_checks": [
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 2.9353143748791353,
+            "metric": "ade_6p4s_m",
+            "observed": 2.8494160415864487,
+            "pass": true
+          },
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 7.793866114022117,
+            "metric": "fde_6p4s_m",
+            "observed": 7.36358480566687,
+            "pass": true
+          },
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 1.1076154233086357,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 0.967975614509526,
+            "pass": true
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 3.764740187947343,
+            "metric": "ade_6p4s_m",
+            "observed": 7.1172157827673885,
+            "pass": false
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 11.027441243572932,
+            "metric": "fde_6p4s_m",
+            "observed": 16.558228598498715,
+            "pass": false
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 1.7877504960065935,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 2.6940117329359055,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 3.5632455477589056,
+            "metric": "ade_6p4s_m",
+            "observed": 4.954436066320964,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 10.353536791729749,
+            "metric": "fde_6p4s_m",
+            "observed": 11.898687271157602,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 1.6350220532345592,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 1.8193137239692803,
+            "pass": false
+          }
+        ],
+        "metric_pass_count": 3,
+        "pass": false,
+        "promotion_eligible": false,
+        "status": "FAIL_STRICT_PERFORMANCE_GATE_NOT_PROMOTED",
+        "stop_guard": {
+          "pass": null,
+          "reason": "The fixed DEV contract contains only Town03 right-turn and straight episodes; no stationary episode may be inferred, substituted, or selected post hoc.",
+          "required_for_promotion": true,
+          "sample_count": 0,
+          "status": "NOT_EVALUABLE_NO_SEALED_STATIONARY_DEV_EPISODE"
+        }
+      },
+      "subgroup_metrics": {
+        "combined_val": {
+          "composite_oracle_histogram": [
+            27,
+            13,
+            366,
+            23,
+            20,
+            181,
+            15,
+            3,
+            13,
+            0,
+            2,
+            2
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 665,
+            "ade_3p0s_m": 665,
+            "ade_6p4s_m": 665,
+            "candidate_score_loss": 665,
+            "fde_1p0s_m": 665,
+            "fde_3p0s_m": 665,
+            "fde_6p4s_m": 665,
+            "loss": 665,
+            "oracle_ade_m": 665,
+            "regression_loss": 665,
+            "selected_ade_m": 665,
+            "selected_fde_m": 665,
+            "selected_kinematic_speed_mae_mps": 665,
+            "selected_speed_mae_mps": 665,
+            "selected_yaw_mae_rad": 665,
+            "speed_mae_1p0s_mps": 665,
+            "speed_mae_3p0s_mps": 665,
+            "speed_mae_6p4s_mps": 665
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.17869934422853298,
+            "ade_3p0s_m": 1.4517076392707071,
+            "ade_6p4s_m": 4.954436066320964,
+            "candidate_score_loss": 3.718917642299898,
+            "fde_1p0s_m": 0.4707778117570438,
+            "fde_3p0s_m": 3.966602719408509,
+            "fde_6p4s_m": 11.898687271157602,
+            "loss": 2.6115203775857623,
+            "oracle_ade_m": 1.0244467483875446,
+            "regression_loss": 2.2396286168716903,
+            "selected_ade_m": 4.954436066320964,
+            "selected_fde_m": 11.898687271157602,
+            "selected_kinematic_speed_mae_mps": 4.009488892412825e-06,
+            "selected_speed_mae_mps": 1.8193137239692803,
+            "selected_yaw_mae_rad": 0.057514562474605735,
+            "speed_mae_1p0s_mps": 0.4755537955048389,
+            "speed_mae_3p0s_mps": 1.272292790601128,
+            "speed_mae_6p4s_mps": 1.8193137239692803
+          },
+          "sample_count": 665,
+          "selected_composite_oracle_agreement_count": 173,
+          "selected_histogram": [
+            43,
+            0,
+            240,
+            41,
+            0,
+            313,
+            0,
+            4,
+            10,
+            14,
+            0,
+            0
+          ]
+        },
+        "town03_right_turn_dev": {
+          "composite_oracle_histogram": [
+            11,
+            13,
+            54,
+            23,
+            20,
+            181,
+            15,
+            3,
+            13,
+            0,
+            2,
+            2
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 337,
+            "ade_3p0s_m": 337,
+            "ade_6p4s_m": 337,
+            "candidate_score_loss": 337,
+            "fde_1p0s_m": 337,
+            "fde_3p0s_m": 337,
+            "fde_6p4s_m": 337,
+            "loss": 337,
+            "oracle_ade_m": 337,
+            "regression_loss": 337,
+            "selected_ade_m": 337,
+            "selected_fde_m": 337,
+            "selected_kinematic_speed_mae_mps": 337,
+            "selected_speed_mae_mps": 337,
+            "selected_yaw_mae_rad": 337,
+            "speed_mae_1p0s_mps": 337,
+            "speed_mae_3p0s_mps": 337,
+            "speed_mae_6p4s_mps": 337
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.1519483532148582,
+            "ade_3p0s_m": 0.7954369045860336,
+            "ade_6p4s_m": 2.8494160415864487,
+            "candidate_score_loss": 3.822872091128936,
+            "fde_1p0s_m": 0.3350471146515286,
+            "fde_3p0s_m": 2.0368099105972743,
+            "fde_6p4s_m": 7.36358480566687,
+            "loss": 3.6943060111928765,
+            "oracle_ade_m": 1.4992685994072554,
+            "regression_loss": 3.312018825277377,
+            "selected_ade_m": 2.8494160415864487,
+            "selected_fde_m": 7.36358480566687,
+            "selected_kinematic_speed_mae_mps": 3.593610724645324e-06,
+            "selected_speed_mae_mps": 0.967975614509526,
+            "selected_yaw_mae_rad": 0.08741441469650595,
+            "speed_mae_1p0s_mps": 0.305901569013072,
+            "speed_mae_3p0s_mps": 0.5586334555368395,
+            "speed_mae_6p4s_mps": 0.967975614509526
+          },
+          "sample_count": 337,
+          "selected_composite_oracle_agreement_count": 133,
+          "selected_histogram": [
+            0,
+            0,
+            187,
+            38,
+            0,
+            84,
+            0,
+            4,
+            10,
+            14,
+            0,
+            0
+          ]
+        },
+        "town03_straight_dev": {
+          "composite_oracle_histogram": [
+            16,
+            0,
+            312,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 328,
+            "ade_3p0s_m": 328,
+            "ade_6p4s_m": 328,
+            "candidate_score_loss": 328,
+            "fde_1p0s_m": 328,
+            "fde_3p0s_m": 328,
+            "fde_6p4s_m": 328,
+            "loss": 328,
+            "oracle_ade_m": 328,
+            "regression_loss": 328,
+            "selected_ade_m": 328,
+            "selected_fde_m": 328,
+            "selected_kinematic_speed_mae_mps": 328,
+            "selected_speed_mae_mps": 328,
+            "selected_yaw_mae_rad": 328,
+            "speed_mae_1p0s_mps": 328,
+            "speed_mae_3p0s_mps": 328,
+            "speed_mae_6p4s_mps": 328
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.2061843576545759,
+            "ade_3p0s_m": 2.1259858076256224,
+            "ade_6p4s_m": 7.1172157827673885,
+            "candidate_score_loss": 3.6121107514311626,
+            "fde_1p0s_m": 0.6102328256408616,
+            "fde_3p0s_m": 5.949347164027575,
+            "fde_6p4s_m": 16.558228598498715,
+            "loss": 1.4990241425793345,
+            "oracle_ade_m": 0.536596227346397,
+            "regression_loss": 1.1378130611123107,
+            "selected_ade_m": 7.1172157827673885,
+            "selected_fde_m": 16.558228598498715,
+            "selected_kinematic_speed_mae_mps": 4.427557630661773e-06,
+            "selected_speed_mae_mps": 2.6940117329359055,
+            "selected_yaw_mae_rad": 0.026794288261997992,
+            "speed_mae_1p0s_mps": 0.6498611071487752,
+            "speed_mae_3p0s_mps": 2.005534247109076,
+            "speed_mae_6p4s_mps": 2.6940117329359055
+          },
+          "sample_count": 328,
+          "selected_composite_oracle_agreement_count": 40,
+          "selected_histogram": [
+            43,
+            0,
+            53,
+            3,
+            0,
+            229,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "H1_train_cyclic_uniform_replay": {
+      "arm_schedule_sha256": "3385b2798f0e5a70bee6bd125f947834b528bff71dc78793f9169b21219f8763",
+      "files": {
+        "final_logits.pt": "e9761120a929aa79e890d53103842a4caa832ad7be008efa7914677d8d40c107",
+        "head_only.pt": "b8025f584fe796e7a7c60e1cb426246f86859a0a42bd4882397fceb9189656c7",
+        "history.jsonl": "0bdbfeff48187e804c2639f9838674a398461c965bcbfb1ddac635f576f5cf92",
+        "report.json": "a91db88bfcb4cc309063632667bd0012d1eeb7eaacb08955bbac314cc7beb115"
+      },
+      "final_head_sha256": "36d27c8bf802fa4d9e1404086d22fb12ed32914586e9da5baec4f55c39697499",
+      "initial_head_sha256": "e4322282697bc83d81c67664fb39ffddef0700e5cf559cb1dbbc3c9910ea67ac",
+      "paired_base_position_order_sha256": "02247a0986b5df7831abb05c9c9f44cbf60189a8946441785a63215582a95ed8",
+      "status": "HEAD_ONLY_FIT_COMPLETE_NOT_PROMOTED",
+      "strict_gate": {
+        "geometry_check_count": 3,
+        "geometry_checks": [
+          {
+            "metric": "selected_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          },
+          {
+            "metric": "any_candidate_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          },
+          {
+            "metric": "all_candidates_geometry_pass_count",
+            "minimum": 664,
+            "observed": 664,
+            "pass": true
+          }
+        ],
+        "geometry_pass_count": 3,
+        "interpretation": "The nine moving DEV metrics and frozen geometry are strict screens. The missing stop guard independently prevents promotion even if all screens pass.",
+        "metric_check_count": 9,
+        "metric_checks": [
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 2.9353143748791353,
+            "metric": "ade_6p4s_m",
+            "observed": 2.8614672133229253,
+            "pass": true
+          },
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 7.793866114022117,
+            "metric": "fde_6p4s_m",
+            "observed": 7.368718502429544,
+            "pass": true
+          },
+          {
+            "group": "town03_right_turn_dev",
+            "maximum": 1.1076154233086357,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 0.9664940630646771,
+            "pass": true
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 3.764740187947343,
+            "metric": "ade_6p4s_m",
+            "observed": 7.081695101246601,
+            "pass": false
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 11.027441243572932,
+            "metric": "fde_6p4s_m",
+            "observed": 16.447721110247983,
+            "pass": false
+          },
+          {
+            "group": "town03_straight_dev",
+            "maximum": 1.7877504960065935,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 2.6808348788720804,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 3.5632455477589056,
+            "metric": "ade_6p4s_m",
+            "observed": 4.94302322909348,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 10.353536791729749,
+            "metric": "fde_6p4s_m",
+            "observed": 11.846782917994306,
+            "pass": false
+          },
+          {
+            "group": "combined_val",
+            "maximum": 1.6350220532345592,
+            "metric": "speed_mae_6p4s_mps",
+            "observed": 1.8120636646012616,
+            "pass": false
+          }
+        ],
+        "metric_pass_count": 3,
+        "pass": false,
+        "promotion_eligible": false,
+        "status": "FAIL_STRICT_PERFORMANCE_GATE_NOT_PROMOTED",
+        "stop_guard": {
+          "pass": null,
+          "reason": "The fixed DEV contract contains only Town03 right-turn and straight episodes; no stationary episode may be inferred, substituted, or selected post hoc.",
+          "required_for_promotion": true,
+          "sample_count": 0,
+          "status": "NOT_EVALUABLE_NO_SEALED_STATIONARY_DEV_EPISODE"
+        }
+      },
+      "subgroup_metrics": {
+        "combined_val": {
+          "composite_oracle_histogram": [
+            27,
+            13,
+            366,
+            23,
+            20,
+            181,
+            15,
+            3,
+            13,
+            0,
+            2,
+            2
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 665,
+            "ade_3p0s_m": 665,
+            "ade_6p4s_m": 665,
+            "candidate_score_loss": 665,
+            "fde_1p0s_m": 665,
+            "fde_3p0s_m": 665,
+            "fde_6p4s_m": 665,
+            "loss": 665,
+            "oracle_ade_m": 665,
+            "regression_loss": 665,
+            "selected_ade_m": 665,
+            "selected_fde_m": 665,
+            "selected_kinematic_speed_mae_mps": 665,
+            "selected_speed_mae_mps": 665,
+            "selected_yaw_mae_rad": 665,
+            "speed_mae_1p0s_mps": 665,
+            "speed_mae_3p0s_mps": 665,
+            "speed_mae_6p4s_mps": 665
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.17827733796566053,
+            "ade_3p0s_m": 1.4502930378443317,
+            "ade_6p4s_m": 4.94302322909348,
+            "candidate_score_loss": 3.7275889924566323,
+            "fde_1p0s_m": 0.46896762761350413,
+            "fde_3p0s_m": 3.962007688194569,
+            "fde_6p4s_m": 11.846782917994306,
+            "loss": 2.61238752011966,
+            "oracle_ade_m": 1.0244467483875446,
+            "regression_loss": 2.2396286168716903,
+            "selected_ade_m": 4.94302322909348,
+            "selected_fde_m": 11.846782917994306,
+            "selected_kinematic_speed_mae_mps": 4.007272099600352e-06,
+            "selected_speed_mae_mps": 1.8120636646012616,
+            "selected_yaw_mae_rad": 0.057135220073667684,
+            "speed_mae_1p0s_mps": 0.4737658400844811,
+            "speed_mae_3p0s_mps": 1.2702989780365077,
+            "speed_mae_6p4s_mps": 1.8120636646012616
+          },
+          "sample_count": 665,
+          "selected_composite_oracle_agreement_count": 172,
+          "selected_histogram": [
+            45,
+            0,
+            242,
+            41,
+            0,
+            309,
+            0,
+            3,
+            9,
+            14,
+            2,
+            0
+          ]
+        },
+        "town03_right_turn_dev": {
+          "composite_oracle_histogram": [
+            11,
+            13,
+            54,
+            23,
+            20,
+            181,
+            15,
+            3,
+            13,
+            0,
+            2,
+            2
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 337,
+            "ade_3p0s_m": 337,
+            "ade_6p4s_m": 337,
+            "candidate_score_loss": 337,
+            "fde_1p0s_m": 337,
+            "fde_3p0s_m": 337,
+            "fde_6p4s_m": 337,
+            "loss": 337,
+            "oracle_ade_m": 337,
+            "regression_loss": 337,
+            "selected_ade_m": 337,
+            "selected_fde_m": 337,
+            "selected_kinematic_speed_mae_mps": 337,
+            "selected_speed_mae_mps": 337,
+            "selected_yaw_mae_rad": 337,
+            "speed_mae_1p0s_mps": 337,
+            "speed_mae_3p0s_mps": 337,
+            "speed_mae_6p4s_mps": 337
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.150274502859625,
+            "ade_3p0s_m": 0.8018657912221082,
+            "ade_6p4s_m": 2.8614672133229253,
+            "candidate_score_loss": 3.8548354069074997,
+            "fde_1p0s_m": 0.3316879764818296,
+            "fde_3p0s_m": 2.0587552662839346,
+            "fde_6p4s_m": 7.368718502429544,
+            "loss": 3.697502368635523,
+            "oracle_ade_m": 1.4992685994072554,
+            "regression_loss": 3.312018825277377,
+            "selected_ade_m": 2.8614672133229253,
+            "selected_fde_m": 7.368718502429544,
+            "selected_kinematic_speed_mae_mps": 3.603354030734727e-06,
+            "selected_speed_mae_mps": 0.9664940630646771,
+            "selected_yaw_mae_rad": 0.08662323842726051,
+            "speed_mae_1p0s_mps": 0.30321841127617777,
+            "speed_mae_3p0s_mps": 0.5639212246464692,
+            "speed_mae_6p4s_mps": 0.9664940630646771
+          },
+          "sample_count": 337,
+          "selected_composite_oracle_agreement_count": 131,
+          "selected_histogram": [
+            0,
+            0,
+            189,
+            37,
+            0,
+            83,
+            0,
+            3,
+            9,
+            14,
+            2,
+            0
+          ]
+        },
+        "town03_straight_dev": {
+          "composite_oracle_histogram": [
+            16,
+            0,
+            312,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "metric_counts": {
+            "ade_1p0s_m": 328,
+            "ade_3p0s_m": 328,
+            "ade_6p4s_m": 328,
+            "candidate_score_loss": 328,
+            "fde_1p0s_m": 328,
+            "fde_3p0s_m": 328,
+            "fde_6p4s_m": 328,
+            "loss": 328,
+            "oracle_ade_m": 328,
+            "regression_loss": 328,
+            "selected_ade_m": 328,
+            "selected_fde_m": 328,
+            "selected_kinematic_speed_mae_mps": 328,
+            "selected_speed_mae_mps": 328,
+            "selected_yaw_mae_rad": 328,
+            "speed_mae_1p0s_mps": 328,
+            "speed_mae_3p0s_mps": 328,
+            "speed_mae_6p4s_mps": 328
+          },
+          "metrics": {
+            "ade_1p0s_m": 0.20704854341087545,
+            "ade_3p0s_m": 2.116512499795091,
+            "ade_6p4s_m": 7.081695101246601,
+            "candidate_score_loss": 3.5968510243223935,
+            "fde_1p0s_m": 0.6100140951301266,
+            "fde_3p0s_m": 5.917483494957772,
+            "fde_6p4s_m": 16.447721110247983,
+            "loss": 1.4974981680875872,
+            "oracle_ade_m": 0.536596227346397,
+            "regression_loss": 1.1378130611123107,
+            "selected_ade_m": 7.081695101246601,
+            "selected_fde_m": 16.447721110247983,
+            "selected_kinematic_speed_mae_mps": 4.412851678086842e-06,
+            "selected_speed_mae_mps": 2.6808348788720804,
+            "selected_yaw_mae_rad": 0.026838080276076388,
+            "speed_mae_1p0s_mps": 0.6489929178865944,
+            "speed_mae_3p0s_mps": 1.9960590566440326,
+            "speed_mae_6p4s_mps": 2.6808348788720804
+          },
+          "sample_count": 328,
+          "selected_composite_oracle_agreement_count": 41,
+          "selected_histogram": [
+            45,
+            0,
+            53,
+            4,
+            0,
+            226,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    }
+  },
+  "automatic_promotion": false,
+  "cache": {
+    "train": {
+      "cache_digest": "773c4532adf58b41ee36667a490181346fc0f99680d2f3d8430ab3df5136bda7",
+      "count": 1475,
+      "file_sha256": "a586abd602ca410e26b37785d30b371b3310e4ee31644870838c3569cc077ca0"
+    },
+    "val": {
+      "cache_digest": "9dfc96a91b7b72e0619704ebcd7d48a0a93d0b954c35f308bfea56cf7988276d",
+      "count": 665,
+      "file_sha256": "cbc9040ea13f32826a701a3ccc112ffc79cdb9e6e47f3db6600f96fd83728e50"
+    }
+  },
+  "checkpoint_proof": {
+    "checkpoint_id": "portable_e2e.pytorch_checkpoint.v1",
+    "checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+    "model_config_sha256": "c17b49ea680b5cae0d9fc35dc6c457af8cc32d1b7171863534f70e9b158cfb7a",
+    "training_dataset_fingerprint_sha256": "57ee2cd24e93254afd91da35066ce01917c4c1da02f48ecc729bff9eb2af14fc",
+    "training_domain_samples_seen": {
+      "carla": 33120
+    },
+    "training_episode_count": 4,
+    "training_sampling_plan_sha256": "abb0e655b174844cc20f293bc12c5156fe33b3a00741ac1cfe8b703367e41c7b",
+    "training_sampling_policy": "direction_balanced_cohort_replay"
+  },
+  "closed_loop_evaluation": false,
+  "completed_at_utc": "2026-09-21T10:28:52.656546Z",
+  "decision": {
+    "eligible_arms": [],
+    "h1_absolute_9_metric_and_geometry_gate_pass": false,
+    "h1_vs_h0_paired_6_metric_gate_pass": true,
+    "next_action": "Use the arm comparison only to decide whether selector sampling deserves a separately sealed confirmation study.",
+    "reason": "No arm is promotable: a recovery signal requires H1 absolute 9+geometry and paired 6-metric nonregression, while TEST and closed loop remain forbidden and the sealed stop guard is NOT_EVALUABLE.",
+    "recovery_signal": false,
+    "status": "FAIL_SELECTOR_SAMPLING_RECOVERY_SIGNAL",
+    "stop_guard_status": "NOT_EVALUABLE_NO_SEALED_STATIONARY_DEV_EPISODE"
+  },
+  "deployment_approved": false,
+  "generator_state_sha256_after": "404383f753c19c8eec7cecd42bfef04562f89658cfee94f8911a3ec67e5a869a",
+  "generator_state_sha256_before": "404383f753c19c8eec7cecd42bfef04562f89658cfee94f8911a3ec67e5a869a",
+  "gpu_preflight": {
+    "memory_used_mib_before_torch": 0,
+    "physical_index": 0,
+    "utilization_percent_before_torch": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "new_function_head_added": false,
+  "paired_h1_vs_h0_gate": {
+    "check_count": 6,
+    "checks": [
+      {
+        "H0": 7.1172157827673885,
+        "H1": 7.081695101246601,
+        "delta_H1_minus_H0": -0.035520681520787356,
+        "group": "town03_straight_dev",
+        "metric": "ade_6p4s_m",
+        "pass": true
+      },
+      {
+        "H0": 16.558228598498715,
+        "H1": 16.447721110247983,
+        "delta_H1_minus_H0": -0.11050748825073242,
+        "group": "town03_straight_dev",
+        "metric": "fde_6p4s_m",
+        "pass": true
+      },
+      {
+        "H0": 2.6940117329359055,
+        "H1": 2.6808348788720804,
+        "delta_H1_minus_H0": -0.013176854063825072,
+        "group": "town03_straight_dev",
+        "metric": "speed_mae_6p4s_mps",
+        "pass": true
+      },
+      {
+        "H0": 4.954436066320964,
+        "H1": 4.94302322909348,
+        "delta_H1_minus_H0": -0.011412837227483763,
+        "group": "combined_val",
+        "metric": "ade_6p4s_m",
+        "pass": true
+      },
+      {
+        "H0": 11.898687271157602,
+        "H1": 11.846782917994306,
+        "delta_H1_minus_H0": -0.051904353163296335,
+        "group": "combined_val",
+        "metric": "fde_6p4s_m",
+        "pass": true
+      },
+      {
+        "H0": 1.8193137239692803,
+        "H1": 1.8120636646012616,
+        "delta_H1_minus_H0": -0.007250059368018702,
+        "group": "combined_val",
+        "metric": "speed_mae_6p4s_mps",
+        "pass": true
+      }
+    ],
+    "pass": true,
+    "pass_count": 6,
+    "scope": "Paired H1 versus H0 final DEV only; same F head initialization, base order/positions, steps, optimizer and objective.",
+    "status": "PASS_H1_NONREGRESSION_ON_STRAIGHT_AND_COMBINED"
+  },
+  "paired_initial_head_sha256": "e4322282697bc83d81c67664fb39ffddef0700e5cf559cb1dbbc3c9910ea67ac",
+  "plan_sha256": "3bf5bd5e63e3c637b47efab52e5c4e98b83a35fd337059bc4028962a80c82542",
+  "projection_proof": {
+    "derived_ast_sha256": "b0e474a1103553b0452f40df4309bb1f59c9ebdaf01b73dcef4843c9ccaf6501",
+    "modification": "Return per_candidate immediately before the unchanged detached argmin; all prior statements and signature unchanged.",
+    "original_function_ast_sha256": "7a75e78ac4354145c9328df5e59f371406dd391ad94ac6b53668d9eea1b53f43",
+    "original_loss_sha256": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "prefix_first_line": 121,
+    "prefix_last_line": 204,
+    "prefix_source_sha256": "68189656a1202ed03bdaa2468893b3f4d28ae1f12f930e2ef5384ab0846eacda"
+  },
+  "runtime_checkpoint_exported": false,
+  "schema": "portable_e2e.moving_selector_sampling_recalibration_summary.v1",
+  "source_sha256": {
+    "portable_e2e/audit_runtime.py": "c4c68e888fb89bb4e78052e3167f4167d89c7e7da952e3a0da627d677a776647",
+    "portable_e2e/contract.py": "e2e3a2669fa94aa98cb7e50f20ffa7db433b99eead9a12c654392e4b293a5c09",
+    "portable_e2e/dataset.py": "3b30a7b4db1907a10ad94002bb880deaa4bb545a978bad3beec1b0aacf3b9c95",
+    "portable_e2e/evaluate.py": "9d30d3be7e114ee80f31355b2c2780c840ef48328e358935ec33944dc8d14887",
+    "portable_e2e/frozen_stopmix_drive_rank.py": "206313ff9a0b50c00408e615946f0cf69cca93f3e2b939eddd78b7956ab96a5d",
+    "portable_e2e/frozen_stopmix_residual.py": "d4bf42fc9f4db930f31ef7b8ccd79900249687642f47bf525dedb240207550b7",
+    "portable_e2e/frozen_stopmix_selector.py": "4716c22d29b8e306b86f8835bf2a5ec2bf956bbb6859c6b6f001a261865b8de3",
+    "portable_e2e/frozen_stopmix_selector_recalibration.py": "821dc47f9a82af541e2e2e7a063a48608a583dc2329e1bf36106faaeae1f14a0",
+    "portable_e2e/losses.py": "cdf37262024435c3a04888bf816c24db1b769b87034f08e1541c02d22da80973",
+    "portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "portable_e2e/stop_primitive_research.py": "4021eb2ba6d84260b6b658114fbe31a1e7ef826121e4d07690bfd4154919a92c",
+    "portable_e2e/torch_dataset.py": "a81d26b1c9aaf67db56cf993a41857133dccac78e42047754e106cff4c8987c9",
+    "portable_e2e/train.py": "c5ee8ab4533c3feedb0c60fe270fcb4a5e42247e186cfc8fe1ac9ec2fb7e0247",
+    "scripts/e2e/diagnose_stopmix_training_oracles.py": "35d3d0a464fb43c9789f6e24a35e453736c99fdceb36e3292d085c5ceb960d37",
+    "scripts/e2e/evaluate_portable_moving_data_subgroups.py": "eba4f7ef276f9a70a1b4857b4ccabccdc9889dea563ba898bb4713563f7a17b0",
+    "scripts/e2e/run_moving_selector_sampling_recalibration.py": "2364c1f9ed049c02f2c82d54975e08a3514a218fd51674cc7b1e2241b268c889"
+  },
+  "status": "PAIRED_HEAD_ONLY_FITS_COMPLETE_NOT_PROMOTED",
+  "test_read_or_use": false,
+  "torch": {
+    "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "device_uuid": "59f374a4-53f5-c050-34b2-56aab0e3c7e5",
+    "version": "2.13.0+cu130",
+    "visible_device_count": 1
+  },
+  "vehicle_control_approved": false
+}

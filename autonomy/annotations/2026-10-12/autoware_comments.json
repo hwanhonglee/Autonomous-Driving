@@ -1,0 +1,842 @@
+{
+  "schema": "autoware_source_comment_provenance_v1",
+  "provenance": "HH_261012 - Annotate local Autoware runtime sources without rewriting sealed configuration hashes or ordinary JSON data.",
+  "date": "2026-10-12",
+  "scope": "Root-owned Autoware launch, script, configuration and ROS Humble compatibility files only.",
+  "coverage": {
+    "files_previously_missing_HH": 71,
+    "inline_comment_only": 48,
+    "external_provenance_sidecar": 23,
+    "sidecar_ordinary_JSON": 14,
+    "sidecar_hash_bound_XML_or_YAML": 9
+  },
+  "preservation": {
+    "all_48_inline_sources_restore_original_bytes_when_one_new_comment_line_is_removed": true,
+    "all_23_sidecar_source_SHA256_unchanged": true,
+    "application_logic_changes": 0,
+    "original_fixture_mutations": 0,
+    "original_metadata_rewrites": 0,
+    "builds": 0,
+    "application_module_imports": 0,
+    "CARLA_or_GPU_or_vehicle_actuation": 0
+  },
+  "annotation_policy": "JSON metadata and routes keep their original data and schema. Hash-bound profiles keep the original raw SHA256. Read the English explanation in this sidecar rather than inserting an unsupported JSON property or invalidating a frozen profile.",
+  "limits": "These comments explain existing customization only. No vehicle capability or real-vehicle readiness is approved. Source comments do not imply rebuilt installed binaries.",
+  "files": [
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/accel_brake_map_calibrator_carla.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Configure simulation-time pedal calibration from measured CARLA status samples, not real-vehicle commissioning.",
+      "sha256": "c2636befa130590abdfaa2ef95c69041e9c287ff962fed53aa678fd57b650b21",
+      "hash_pinned_by": [],
+      "after_sha256": "a901ad3a5da127ff2b66e4f503f01b3e2d534b0958e73e7ba8625cf94d49011e",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/carla_actuation_sweep.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare bounded CARLA pedal sweeps, status watchdogs and reset tolerances for calibration data collection.",
+      "sha256": "b9d74e08566dedeac077758c88371b0b34f138c7c10192ae86d83c924b6f1edc",
+      "hash_pinned_by": [],
+      "after_sha256": "2d306396db947bed8e77fd09f7c880269676c14a9cac16572ee30247acae19e0",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/component_state_monitor_vad.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Monitor the VAD simulation topic contract in place of unused conventional perception and planning inputs.",
+      "sha256": "405ae53833691b2573b453eb42f32187e2c6042b7d978500e3183c9f29367d73",
+      "hash_pinned_by": [],
+      "after_sha256": "fae46665f190ee41f0e1a3f0abc88d729546261018280efbaa0a9dd5783d0bf2",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Bind the depth-one camera experiment to the loopback DDS interface without changing its sealed transport profile.",
+      "sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml.metadata.json",
+        "autonomy/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml.metadata.json",
+        "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml.metadata.json"
+      ],
+      "after_sha256": "3f797de4343c68d049e15778b23b41ffee67b05c3f731077884179f08cfce289",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/cyclonedds_camera_depth1_localhost_v2.xml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original cyclonedds_camera_depth1_localhost_v2.xml provenance and hash contract. Bind the depth-one camera experiment to the loopback DDS interface without changing its sealed transport profile.",
+      "sha256": "90cdd5f901d39d18814e351f958d0608993965cd29f38742e924a3169a259af7",
+      "hash_pinned_by": [],
+      "after_sha256": "90cdd5f901d39d18814e351f958d0608993965cd29f38742e924a3169a259af7",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/diagnostic_graph_vad.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Preserve the CARLA-specific ADAPI heartbeat allowances separately from real-vehicle diagnostic requirements.",
+      "sha256": "d531a7c4d97c799b5a2472728d67e8e8d43fbad58803882f561d1f5d19b3728d",
+      "hash_pinned_by": [],
+      "after_sha256": "53677bd4d9dc30de279317e70123083e35b20d29ee6ef402e0278c8be7281edb",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/dummy_diag_publisher_vad.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Provide simulator-only stand-in diagnostics; these values are not measured real-vehicle health.",
+      "sha256": "fa5046fd72430320c459c5ba88ad3b6eb87f4f1697bf200bfe04e8576b7b08de",
+      "hash_pinned_by": [],
+      "after_sha256": "4c538914dc6796e45c8378681dcbe1f2ebf27d1a492d408e9a86374d36994410",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/mpc_carla_recommended.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Configure the CARLA lateral MPC steering time constant and input-delay compensation profile.",
+      "sha256": "230c68b43cafe35202efb3a368931120d58bf2f472fb5a1cde60e3889fc26a75",
+      "hash_pinned_by": [],
+      "after_sha256": "036cd926916386d9253ff2abf324cbd84c9743621279dec4ab1f3ffbc794d90c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/mpc_carla_recommended.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original mpc_carla_recommended.param.yaml provenance and hash contract. Configure the CARLA lateral MPC steering time constant and input-delay compensation profile.",
+      "sha256": "16a51aa4b28c12971d9643c4d83961bd5bb004a7b080687e3acf0df5ccc84b1e",
+      "hash_pinned_by": [],
+      "after_sha256": "16a51aa4b28c12971d9643c4d83961bd5bb004a7b080687e3acf0df5ccc84b1e",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Declare a CARLA-only 30 kph longitudinal profile without changing the sealed A/B baseline.",
+      "sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph_i40_ab.param.yaml.metadata.json"
+      ],
+      "after_sha256": "16f2ab5d7ada5df72cdb6f09d3572c925cc6082607c0799a8e1830a40bb7fcc3",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original pid_carla_vad_30kph.param.yaml provenance and hash contract. Declare a CARLA-only 30 kph longitudinal profile without changing the sealed A/B baseline.",
+      "sha256": "517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f",
+      "hash_pinned_by": [],
+      "after_sha256": "517f67c00150ee0bd81c726761af1cf82bd576dbf91989880ad175dbe84e438f",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph_i40_ab.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Change only the integral effort limit for the explicit CARLA 30 kph PID comparison.",
+      "sha256": "3e4986f283ecc662ff8d4fe2cf3721e1fa49783db44d415455763149714bd490",
+      "hash_pinned_by": [],
+      "after_sha256": "a8095d4eff497ec67bbcb9b0906d7c8517a7c7ee133e9d9848186a53736fbc74",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph_i40_ab.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original pid_carla_vad_30kph_i40_ab.param.yaml provenance and hash contract. Change only the integral effort limit for the explicit CARLA 30 kph PID comparison.",
+      "sha256": "ff3a5c806c1f0aa6b84d7d28362e4c5c616d72062d7d555ce341b4786eca2782",
+      "hash_pinned_by": [],
+      "after_sha256": "ff3a5c806c1f0aa6b84d7d28362e4c5c616d72062d7d555ce341b4786eca2782",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_60kph_pilot.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Reuse the CARLA longitudinal dynamics profile for the exploratory straight-only 60 kph pilot.",
+      "sha256": "3c179fe8b93e4cf1536a3c77882dea32dba19d201228935bcceebb0b622257d5",
+      "hash_pinned_by": [],
+      "after_sha256": "3fba5bca7aeb3cd82c7f0aaf7922cbf675134dd6779a66d7951c704823d3073c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_60kph_pilot.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original pid_carla_vad_60kph_pilot.param.yaml provenance and hash contract. Reuse the CARLA longitudinal dynamics profile for the exploratory straight-only 60 kph pilot.",
+      "sha256": "d7f833c95eccfc6c7f28c64c1accb8997058722955a29b8aebad60850fd76a54",
+      "hash_pinned_by": [],
+      "after_sha256": "d7f833c95eccfc6c7f28c64c1accb8997058722955a29b8aebad60850fd76a54",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_no_steer_convergence.param.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the simulation-only PID baseline with steering-convergence waiting disabled.",
+      "sha256": "de1ca069eee774d4e415ab177a4285a6a237ec5fae6c41fdf6640ee294f502db",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_60kph_pilot.param.yaml.metadata.json",
+        "autonomy/autoware_e2e_vad_launch/config/pid_carla_vad_30kph.param.yaml.metadata.json"
+      ],
+      "after_sha256": "de1ca069eee774d4e415ab177a4285a6a237ec5fae6c41fdf6640ee294f502db",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/routes/c_track_left_369_425.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the recorded custom-track turn route as data, not a learned-model driving approval.",
+      "sha256": "ce20d9a435c291fd4f3ea4946173ea41fdf53aa3e0a5a2e8a88fc53c5dd752d5",
+      "hash_pinned_by": [],
+      "after_sha256": "ce20d9a435c291fd4f3ea4946173ea41fdf53aa3e0a5a2e8a88fc53c5dd752d5",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/routes/c_track_straight_394_290.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the recorded custom-track straight route as data, not a learned-model driving approval.",
+      "sha256": "bdf977c364ce8ac72db4ed92a0a75fbb876789e0255825960eddc9fe756251e5",
+      "hash_pinned_by": [],
+      "after_sha256": "bdf977c364ce8ac72db4ed92a0a75fbb876789e0255825960eddc9fe756251e5",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/routes/woraksan_straight_2_8_safe.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the declared Woraksan straight route data without modifying its sampled geometry.",
+      "sha256": "7fd7143dd7dd354478ed9723fecd736c3c0ff68de14c1acceb6b027baee3301d",
+      "hash_pinned_by": [],
+      "after_sha256": "7fd7143dd7dd354478ed9723fecd736c3c0ff68de14c1acceb6b027baee3301d",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_actuation_calibration.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Select the status and inertial sensor inputs required by the CARLA actuation calibration workflow.",
+      "sha256": "38294a3bf044a05eded805ae2b8e7f05c4411150059bcc0ce6e40cccf946f026",
+      "hash_pinned_by": [],
+      "after_sha256": "da4bf6f6fa9e6f60582ad76727bcc8c8d8b6819475cd80d99e4a19b1afea0c82",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_full.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare the full CARLA sensor-to-ROS topic mapping for the simulation stack.",
+      "sha256": "fb31a1bdc4f489e3026d07064a30447817290f90e119736dcad9a2f94055aa59",
+      "hash_pinned_by": [],
+      "after_sha256": "886a1bb3e304e0f23196fa0de24f9633c41da2bfa8b929f41b314c3a4593837c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare the reduced-resolution six-camera CARLA mapping used by the fast VAD profile.",
+      "sha256": "306db3f98758beccd04ce87d305a3596a4d46b4f34da4f0640193f2790bbc48c",
+      "hash_pinned_by": [],
+      "after_sha256": "f355f77fa1e03b520d7278342b87be6cd2b38e798d02e3bfca6ad99cca9a2025",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the five-hertz camera-source profile with best-effort images and reliable calibration metadata.",
+      "sha256": "17f1a1f110fae297131b9f7e06d7bff7237fd88ce7638745d4f7415b5fcdce4d",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml.metadata.json",
+        "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml.metadata.json"
+      ],
+      "after_sha256": "17f1a1f110fae297131b9f7e06d7bff7237fd88ce7638745d4f7415b5fcdce4d",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml provenance and hash contract. Preserve the five-hertz camera-source profile with best-effort images and reliable calibration metadata.",
+      "sha256": "35377df7a9b1a2f5c2ef9f437167a858b9c2334082dcd97480f1879b9d00e14a",
+      "hash_pinned_by": [],
+      "after_sha256": "35377df7a9b1a2f5c2ef9f437167a858b9c2334082dcd97480f1879b9d00e14a",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the sealed five-hertz image profile with depth-one best-effort histories.",
+      "sha256": "5c2877aeff20d3a58bcc7211a2f37116b6e17126e62839d8742f79fc185c38ef",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml.metadata.json"
+      ],
+      "after_sha256": "5c2877aeff20d3a58bcc7211a2f37116b6e17126e62839d8742f79fc185c38ef",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image_depth1.yaml provenance and hash contract. Preserve the sealed five-hertz image profile with depth-one best-effort histories.",
+      "sha256": "4da89823d528c6d4bb31e7db9567d272a0353ce2da7c6d2c1d4f492a8e827cb1",
+      "hash_pinned_by": [],
+      "after_sha256": "4da89823d528c6d4bb31e7db9567d272a0353ce2da7c6d2c1d4f492a8e827cb1",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Select reliable six-camera delivery for explicit simulation synchronization comparisons.",
+      "sha256": "9aaff2befed7ad12376b2e04bbdd51bd1808a3bafe39d87a6f6b241dbcca3136",
+      "hash_pinned_by": [],
+      "after_sha256": "7c6d4694a8204f119a3332b88592b7df89b46c70f79f07ff04f3439ab7eed3de",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Extend the reliable camera simulation profile with the declared IMU input mapping.",
+      "sha256": "02cecbfd2969638278b74f8b50fa1081ff1945fac8c7d9feaba27d038df0c865",
+      "hash_pinned_by": [],
+      "after_sha256": "10945dc796235f8cf03fc86866e5666e05e7dcd94228a40b2a57499b45e0998c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_reliable_imu_camera_source_5hz.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the reliable five-hertz camera-source baseline used by the image-QoS experiment.",
+      "sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/sensor_mapping_vad_fast_imu_camera_source_5hz_best_effort_image.yaml.metadata.json"
+      ],
+      "after_sha256": "f218da42fd6b0d36fb583080dbf00851c4b3e6f5e6b2abc412f9747f3647845d",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/smart_mpc_goal_stop_guard.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Enable the experimental private-reference distant-goal guard only in an explicitly selected simulation overlay.",
+      "sha256": "b858c6988f6c21728b6293986aed590a605306da52d679273dcd59add1a3207a",
+      "hash_pinned_by": [],
+      "after_sha256": "577970b909f6b617d6f06a7c4373270edf3d2047ca846ed6cd12d4a88264aa61",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the sealed five-hertz VAD image subscription and synchronization overlay.",
+      "sha256": "e825dc6d4cc98ba2bc3f78571d37b1d34e425c98f2573a4baab040a77d7a9e03",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml.metadata.json",
+        "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml.metadata.json"
+      ],
+      "after_sha256": "e825dc6d4cc98ba2bc3f78571d37b1d34e425c98f2573a4baab040a77d7a9e03",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml provenance and hash contract. Preserve the sealed five-hertz VAD image subscription and synchronization overlay.",
+      "sha256": "d952d3380ae7f499afbfd8b40c04fe06dd09830c86e505d47b0e79a741fc1191",
+      "hash_pinned_by": [],
+      "after_sha256": "d952d3380ae7f499afbfd8b40c04fe06dd09830c86e505d47b0e79a741fc1191",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the sealed depth-one VAD subscription overlay without changing its bounded frame buffer.",
+      "sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml.metadata.json"
+      ],
+      "after_sha256": "d9cb08286f6cabc52275f42fbbbe598d25b989f9f43a0e268a1c0bd9523b17fb",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original vad_carla_tiny_camera_source_5hz_best_effort_image_depth1.param.yaml provenance and hash contract. Preserve the sealed depth-one VAD subscription overlay without changing its bounded frame buffer.",
+      "sha256": "ab82b36adec32e6a7e826e5b1539da6739778127c1dbecd89c6ca795a5dbdbad",
+      "hash_pinned_by": [],
+      "after_sha256": "ab82b36adec32e6a7e826e5b1539da6739778127c1dbecd89c6ca795a5dbdbad",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_fast.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Apply the fast-profile VAD synchronization overlay without altering the upstream model weights.",
+      "sha256": "d39b3614964ee05b5ed2a9ac22fca57f1ca57d7e4894f9f58be559fdc6665987",
+      "hash_pinned_by": [],
+      "after_sha256": "0db3ba595d4356d166ca3cc8ef2d0fe5225ffd6ec79421c7e373313a46769e74",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_fast_fp16_heads.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Select explicitly named FP16 VAD head engines while retaining the required LayerNorm precision policy.",
+      "sha256": "21a438f8a4881b254d70ba5ff7fd23d216323c95be493fe2b6aebd650afee1ec",
+      "hash_pinned_by": [],
+      "after_sha256": "605e5f8e3509d1b96dea0b1fe7dabf44bff8d9fd87aae805d5795b81b4661e77",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_no_temporal_head.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Disable recurrent BEV state only for a declared stateless VAD simulation comparison.",
+      "sha256": "03f13881b818633a73c2de60ce1f20d8f238392a9dc282f6293d1a0e3e24be0c",
+      "hash_pinned_by": [],
+      "after_sha256": "f9a83f0ebf9378d2f31a192408c608a3e5198a42b5fd01560bfeffbf7c9fdc30",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_recommended.param.yaml",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the VAD synchronization baseline used by the sealed camera-source profile comparison.",
+      "sha256": "622b384594eb2d18fee14f5d07ccc9e81c314754de63f3f4c1f5d847d1e93feb",
+      "hash_pinned_by": [
+        "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_camera_source_5hz_best_effort_image.param.yaml.metadata.json"
+      ],
+      "after_sha256": "622b384594eb2d18fee14f5d07ccc9e81c314754de63f3f4c1f5d847d1e93feb",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_carla_tiny_rotate_center_xy_100_53.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Select alternate rotation-center engine assets only for the declared temporal VAD comparison.",
+      "sha256": "28679a444bdedde676d2e5da658765b9ee4d54b440dc925e0b94c364c2706fd4",
+      "hash_pinned_by": [],
+      "after_sha256": "57061053c44d6ac37b3ea753d7fc23a963291b50ea10e13a12fd0e7d817c7945",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_real_calibration.template.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Require measured real-camera intrinsics and extrinsics instead of copying the CARLA sensor rig.",
+      "sha256": "06873634ad71528feaf9d68db375d3a47a6f724d0eececd83c586033a0b135ed",
+      "hash_pinned_by": [],
+      "after_sha256": "fe57ed9be64a9f85f2c9eaa78b1063c9915cc7df482f7734ba66f0328067da48",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_real_commissioning.template.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Keep real-sensor commissioning unapproved until measured evidence and explicit approval replace all placeholders.",
+      "sha256": "bff9f3d8ddd03843afd4181bafb38caa70aaad25e1f890999109bcd0a17c0d77",
+      "hash_pinned_by": [],
+      "after_sha256": "c41f862d7b8d5837b8683fade1b73dfcba87360d6ea35c0d3493070a3df90dda",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_real_device_inventory.template.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Require an actual camera device inventory and its provenance before enabling real-sensor inputs.",
+      "sha256": "23772ec76aaf1675613e92650dd5e49c7beefac5e506c9dc50e87ce920c9230c",
+      "hash_pinned_by": [],
+      "after_sha256": "5512ba99d5b55e03297787c3f76348d2cf1077aac30e9dd671d2c1225c1d75b5",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_real_reprojection_report.template.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Require measured checkerboard reprojection results rather than fabricated real-camera calibration metrics.",
+      "sha256": "38c0c9304608aeae6dc8d1219743c41738da1ab68615e9ba8b30b7bc2362a1bc",
+      "hash_pinned_by": [],
+      "after_sha256": "36f5b75ea03ba1ffbf2efb3ba3ecba945f000a8caacf627c1293e258ea2d7c79",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_route_manager.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare route corridor, speed and goal-stop constraints for the VAD simulation trajectory adapter.",
+      "sha256": "777708ed2f4e2ca3586412cda31b7de683b1e2b09f4f50952cd23ab76b4417ed",
+      "hash_pinned_by": [],
+      "after_sha256": "4cbf94a6f657f560f7e4754169c8b64cd46d51a7189411db60c56295a98bebef",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vad_user_override.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Keep editable deployment overrides separate from the upstream VAD model configuration.",
+      "sha256": "acc01ccbd3495197f52c60e7e41b7483a5f1b6ee1a58755ed409b55faf8b8fe0",
+      "hash_pinned_by": [],
+      "after_sha256": "cf89c9f00eb9efb417b2f6e6c1672feb21f506ecb5b01056d1ee835bba66d2b1",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_30kph.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare explicit simulator-only 30 kph command limits while keeping emergency handling enabled.",
+      "sha256": "446a99c61c06cc42edb0398840300fc48100bc45d9fb682c70232baa5c215c41",
+      "hash_pinned_by": [],
+      "after_sha256": "b77115449841fb57ebefb0e73e66f9242bd4a8cea073e4e9bf42d3bfa6e4bf48",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_30kph.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original vehicle_cmd_gate_carla_30kph.param.yaml provenance and hash contract. Declare explicit simulator-only 30 kph command limits while keeping emergency handling enabled.",
+      "sha256": "58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733",
+      "hash_pinned_by": [],
+      "after_sha256": "58f38204983f8d54cebd924805b68e1ef9f01345f9d2873a8184afe7a7fcf733",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_60kph_pilot.param.yaml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Declare exploratory straight-only CARLA 60 kph command limits without implying real-vehicle approval.",
+      "sha256": "9fe143382967bb4787b6b7da1c578bc9ef2d461a09dfd4b833bcb4aeb7946784",
+      "hash_pinned_by": [],
+      "after_sha256": "8edf2d37c0c0ed4cef68bd75ba62871941c390cbad8b7b5199aa994c7df8718b",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/config/vehicle_cmd_gate_carla_60kph_pilot.param.yaml.metadata.json",
+      "method": "external_provenance_sidecar",
+      "explanation": "HH_261012 - Preserve the original vehicle_cmd_gate_carla_60kph_pilot.param.yaml provenance and hash contract. Declare exploratory straight-only CARLA 60 kph command limits without implying real-vehicle approval.",
+      "sha256": "9867a0839a4a707ff4b5647bf6a8389be171c8bf66d7f7cd37b1fe29c4fdf6fe",
+      "hash_pinned_by": [],
+      "after_sha256": "9867a0839a4a707ff4b5647bf6a8389be171c8bf66d7f7cd37b1fe29c4fdf6fe",
+      "mode_preserved": true,
+      "source_file_SHA_preserved": true,
+      "JSON_content_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/launch/carla_actuation_calibration.launch.xml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Launch CARLA-only pedal-sweep calibration with declared sensor mapping and bounded collection settings.",
+      "sha256": "a295c652b319a51f412478d852818d409d7912583ab9dc341377d26c52077040",
+      "hash_pinned_by": [],
+      "after_sha256": "3f46b356ea889a0c6b6263ca96f79812b88f7a1ef58af48826fbdd694c215a5c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/launch/mission_planning_full_shell.launch.xml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Launch the standard mission-planning components used to align simulation routes with the Autoware UI.",
+      "sha256": "437e12b889aa09588fd62422271793c324fee8a967861cda35e97b64b750606b",
+      "hash_pinned_by": [],
+      "after_sha256": "84b47f086d643accf0c6460f165369d30a267223acaf7c0132e5da7c0f505558",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/launch/system_vad_full_shell.launch.xml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Select VAD simulation diagnostic inputs and dummy publishers rather than claiming measured hardware readiness.",
+      "sha256": "4f4c1b3f46bff02f8b3976c9a47385a0266cb2b1f7febef49ede6082d84ddb7b",
+      "hash_pinned_by": [],
+      "after_sha256": "5ec24dd29b20ca3fce754e29b12d43deb8d4542b7a5d71a414df10e14438d5aa",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/launch/vad_carla_tiny_fast.launch.xml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Wire the explicit fast VAD engine, image-topic and BEV-mode options into the simulator launch.",
+      "sha256": "eb0cc40d8851f95d44a4e2e7da3f15305e175431b01d316ca0885439c5c3973e",
+      "hash_pinned_by": [],
+      "after_sha256": "48dc777211368510e990486b5ca4b7f03110d40740c7f778389476fe40018937",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/launch/vad_visualization.launch.xml",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Launch the declared RViz configuration for viewing the simulation state and model trajectories.",
+      "sha256": "cb5d8f5deb74297dea462e4986804f6e8d10fbc10b280576d5f127bf7dc41599",
+      "hash_pinned_by": [],
+      "after_sha256": "ba4a045ee0bc2f75667f5a973f4ece1583aa0e2a695939960c008e40b1643253",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "XML_elements_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/carla_actuation_sweep.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Collect CARLA pedal-response samples with watchdog, displacement and reset safeguards.",
+      "sha256": "833c573c008a1e6f34ad548aaa532118bac2c389d5e2b097a8cea962853b57ab",
+      "hash_pinned_by": [],
+      "after_sha256": "57ecee887a0519c93dfef449c14a0eab0492751720be75d5cca043ad8abce90e",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/carla_actuation_sweep_logic.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Validate pedal cases and sample eligibility while preserving reset and reverse-motion safety bounds.",
+      "sha256": "3082333f1e3ae8fb61ab5903305969abe1ad487db5e7c20a3337ba110daf8e1a",
+      "hash_pinned_by": [],
+      "after_sha256": "b2947b8d810686bee3ab2d6643b333dd308775b7e1a27580c75f7442437d219a",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/carla_autoware_state_publisher.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Publish a simulation-only Autoware state from engagement; do not use this as a real-vehicle state machine.",
+      "sha256": "72ca0255c64fb07be2d491edf59afa3ad7bc9a9cfe0023195ea782bb3524864e",
+      "hash_pinned_by": [],
+      "after_sha256": "93bedd6e90f7c90d915a413a32966091157330486ef04ccd4759862788df9ab5",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/carla_map_aligned_odometry.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Transform CARLA truth odometry into the declared map frame while rotating pose covariance consistently.",
+      "sha256": "1fb63909b2d7cd4ba8ac276acd20a4e1b9a0b8b77de248f64caf69dfeeb76664",
+      "hash_pinned_by": [],
+      "after_sha256": "ca0b5b236eff78951896757a5b00121dd2e6aa14ebbdc3ab6c80327019913c05",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/vad_aeb_configurator.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Configure simulator AEB to use VAD predicted objects and report parameter-configuration completion.",
+      "sha256": "59700a856dfb151b17601d43527141247aba0c67c4b8a76b622f70f36919dedf",
+      "hash_pinned_by": [],
+      "after_sha256": "8bb7276489b5df86eb7952e1f626e33074ee71c44c00da09825f7e9fd9668b1c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/vad_imu_acceleration_adapter.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Expose aligned gravity-inclusive CARLA IMU acceleration to VAD without pretending to remove gravity.",
+      "sha256": "bd98ae59ba9b77881a57eaaab7c17b83ef75f9e5fafeaa63a8a21e8c13011f7c",
+      "hash_pinned_by": [],
+      "after_sha256": "7ca536c59e4ce8eac3b43aafcaffdae55be322e2a7e631caecc3689f1147441c",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/scripts/vad_standard_route_adapter.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Align the standard Autoware route UI with the declared VAD route start and goal.",
+      "sha256": "29cb8065435aa3fb46b110a7a1d2c7613db1d7931b7722c582037011a1f88dc5",
+      "hash_pinned_by": [],
+      "after_sha256": "5f7883e1f8bdacb5e91b35acf092308944d03f152aee6148d8224b9ede182870",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/test/test_vad_aeb_configurator.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Regress explicit ROS boolean parameters and the simulation predicted-object AEB input contract.",
+      "sha256": "41794c8e4edd486887baa86d2e509f11e746ad6f472b3e6329218a7d31d16dd3",
+      "hash_pinned_by": [],
+      "after_sha256": "3932cd54184b952318694e0ef0764cb6940c0ac9afda8caf69600b57109dc209",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/autoware_e2e_vad_launch/test/test_vad_standard_route_adapter.py",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Regress finite route poses and start-goal alignment without accepting inactive route states.",
+      "sha256": "791f438ec818bd784d12cdad54630504214937b55c6dc08b726155c53af78632",
+      "hash_pinned_by": [],
+      "after_sha256": "82caf63410fb0456a99698c835d9a59c00c4a910f469dac9004a9d8696693374",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true,
+      "Python_AST_preserved": true
+    },
+    {
+      "path": "autonomy/cmake/ament_cmake_auto_humble_compat/share/ament_cmake_auto/cmake/ament_auto_package.cmake",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Add scoped-header installation support to the workspace-local Humble ament macro without replacing system packages.",
+      "sha256": "a2ae34f9221c7982fb31f17eb94be5a05132b1cb0eb2eec8840fd42db3f26792",
+      "hash_pinned_by": [],
+      "after_sha256": "b9921a7cae854cb31f979959adbace2b223ab33c3a185c3d791859fbc292b1b9",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/cmake/ament_cmake_auto_humble_compat/share/ament_cmake_auto/cmake/ament_cmake_auto-extras.cmake",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Reuse the system Humble macros except for the explicitly overridden ament_auto_package implementation.",
+      "sha256": "220f159f07941963e977bb6f55d1d28ac331f13451af83cb5f37edc2cabb6301",
+      "hash_pinned_by": [],
+      "after_sha256": "23ccb3af20ff64e37e7ab578b45cc2df3e70167a603ba599bd8c7526d064f039",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/cmake/ament_cmake_auto_humble_compat/share/ament_cmake_auto/cmake/ament_cmake_autoConfig.cmake",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Expose the workspace-local scoped-header compatibility package while leaving the system ROS installation unchanged.",
+      "sha256": "fa57f606979559390c702f88fc0dd4bb8fb46f37cb85b5affa80feebbbdb1109",
+      "hash_pinned_by": [],
+      "after_sha256": "f91beb2d78557fa4bc5b31e695d740e437ee82401594135adf5c181081c9ec6f",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/include/ros_humble_tf2_compat/tf2_ros/buffer.hpp",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Forward the newer tf2_ros buffer header spelling to the ROS Humble public header.",
+      "sha256": "ddebc9a8338b27178328f974d00312a7dadcc5615ba04b00e96513de307e7136",
+      "hash_pinned_by": [],
+      "after_sha256": "e4df8132f0a476013606f27f85f9816fbd15b54762276460f505199db32e0b4d",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/include/ros_humble_tf2_compat/tf2_ros/create_timer_ros.hpp",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Forward the newer tf2_ros timer header spelling to the ROS Humble public header.",
+      "sha256": "c30b8a7ef71f0b5ca1c96cbe2f3a5c093bda49e86235616621920be658d61f37",
+      "hash_pinned_by": [],
+      "after_sha256": "5fe8013bee5a8661df975711b868024923f971e2849b16357e64e4a153f2957b",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/include/ros_humble_tf2_compat/tf2_ros/static_transform_broadcaster.hpp",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Forward the newer static broadcaster header spelling to the ROS Humble public header.",
+      "sha256": "6c1a7d3c140b06d4c00996a197ebf3d6df8b8e94d6d1c3a410e4bab2c247e166",
+      "hash_pinned_by": [],
+      "after_sha256": "a8b4c7c956d07d56a54fedd4db7ce868bbdb23ccb01468d7b7439139c7ab4579",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/include/ros_humble_tf2_compat/tf2_ros/transform_broadcaster.hpp",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Forward the newer transform broadcaster header spelling to the ROS Humble public header.",
+      "sha256": "282eee2d322b02b61d159d04bb639426a04672b57fe8c7e11081f2e2a09fbe5b",
+      "hash_pinned_by": [],
+      "after_sha256": "6a2890a2e5d9270e242445a80874bbab2e043f5da3d803aecabe541fa9635cbd",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    },
+    {
+      "path": "autonomy/include/ros_humble_tf2_compat/tf2_ros/transform_listener.hpp",
+      "method": "inline_comment_only",
+      "explanation": "HH_261012 - Forward the newer transform listener header spelling to the ROS Humble public header.",
+      "sha256": "ba54efd462eac318f7b4be16eddc6c1ffda3eff9cea799e95c8b1bb1185267a5",
+      "hash_pinned_by": [],
+      "after_sha256": "82157d264037dd2ccc64b5572617322192821db9d63e1a288242924e7a7389ef",
+      "mode_preserved": true,
+      "inserted_line_count": 1,
+      "original_bytes_restored": true
+    }
+  ],
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

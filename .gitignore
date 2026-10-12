@@ -11,12 +11,27 @@ build/
 install/
 log/
 
+# HH_260906 - Keep relocated runtime products and imported repositories out of Git.
+/autonomy/build/
+/autonomy/install/
+/autonomy/log/
+/autonomy/layout_check/
+/autonomy/canonical_rebuild/
+/autonomy/src/
+/storage/assets/
+/storage/datasets/
+/storage/experiments/
+!/autoware_e2e.code-workspace
+
 # Python
 *.pyc
 __pycache__/
 .pytest_cache/
 .venv/
 .venv-map/
+
+# HH_260906 - Keep recoverable local cleanup archives out of source control.
+/.workspace_archive/
 
 # Accidental in-source CMake output
 CMakeFiles/

@@ -1,0 +1,41 @@
+{
+  "schema": "portable_e2e.map_paired_balanced_review_authorization.20261002.v1",
+  "study_id": "map_paired_balanced_20261002_v1",
+  "comment": "HH_261002 - Permit only the preregistered derived research fit after actual fixed RGB and semantic overlay inspection.",
+  "parent_weights_sha256": "ff5d7d03a43b859d21a0a3f6b01d815054d89d78e850730121f326e5b79c023e",
+  "render_manifest_sha256": "2ba55d3e33023cbd38a9f4e3a89f37dfa508bdf8e51274d27b5c47da27cb783b",
+  "training_plan_sha256": "ae242381c7979952959ea21644780863bd63642ee51fb4a310b2567f2a547b97",
+  "research_fit_authorized": true,
+  "native_diagnostic_denials_preserved": true,
+  "vehicle_control_approved": false,
+  "dev_or_test_used_for_fit": false,
+  "ctrack_train_eligible": false,
+  "independent_new_dev_sites": 0,
+  "reviewer": "Codex/root actual image inspection",
+  "review_note": "Inspected all six fixed native review panels containing unchanged OFF/ON RGB, common seven-class semantic targets and both alpha-0.4 overlays. Road and thin lane boundaries align; large appearance changes, tiny fixture/sign support, OFF white sky and seven-class limitations remain. This is agent visual inspection, not a human or vehicle release approval.",
+  "counts": {"original": 729, "physical_pairs": 480, "new_rgb_views": 960, "available_rgb_views": 1689, "logical_slots_per_arm": 1209},
+  "arms": {"control": "original729+new480_always_FALSE", "balanced": "original729+same_new480_predeclared_balanced_FALSE_TRUE"},
+  "optimization": {"steps_per_arm": 10000, "batch": 8, "seed": 20261002, "learning_rate": 0.00003, "weight_decay": 0.0001, "optimizer": "fresh AdamW in each arm", "checkpoint_selection": "fixed_final_10000_only", "gradient_norm_cap": 5.0},
+  "source_reviews": {
+    "p02": {
+      "source_capture": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/map_paired_p02_p04_v1/p02/mapping",
+      "qa_sha256": "2763f42908822b19465a1978e0f840a143efa7658613a7e945f7b935a0fea2ef",
+      "route_sha256": "788665af9e3b5449634f1c5392e94b2a6258ae3262d26e69f3cf81b96791489a",
+      "reviewed_indices": [0, 119, 239],
+      "rgb_conditions": ["false", "true"],
+      "semantic_target_overlay_reviewed": true,
+      "all_240_retained": true,
+      "review_note": "Actual OFF/ON road, thin yellow lane, sidewalks and small fixtures align to the same semantic pixels. ON highlights wash out some lane contrast and OFF sky is white; all frames and existing seven-class limits remain unchanged."
+    },
+    "p04": {
+      "source_capture": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/map_paired_p02_p04_v1/p04/mapping",
+      "qa_sha256": "0a38d8fbafdadb224b71d81fd2f6645286f7f523d32a6dd25e4231c993cfe473",
+      "route_sha256": "f4d474eee01892e16b8b78a69de5a3b32ccc8e4f227e30a9a89dc023dbfc25a7",
+      "reviewed_indices": [0, 119, 239],
+      "rgb_conditions": ["false", "true"],
+      "semantic_target_overlay_reviewed": true,
+      "all_240_retained": true,
+      "review_note": "Actual paired road and lane overlays align across the left-turn sequence. Fixed frame119 has foreground guardrail and no visible lane marking; guardrail/other and sidewalk support limitations are retained rather than relabelled or removed."
+    }
+  }
+}

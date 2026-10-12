@@ -1,0 +1,97 @@
+{
+  "created_at_utc": "2026-09-30T17:46:16.856307+00:00",
+  "evaluator_sources": {
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/ctrack_external_maps/PLAN.md": "95a845f52c4125c15d6942ae3e6d23085e6e961225b10188d31cccbd31eeca00",
+    "/home/a/autoware_e2e/tools/e2e/audit_ctrack_isolated_moving_20261001_v2.py": "3d85cd404cf0cd522d5f3ff44868e66c0df11ee629bc48a867a5f81f5abf4ca6",
+    "/home/a/autoware_e2e/tools/e2e/ctrack_warning_glyphs_20261001.py": "03c007128941bc438e8902fec57db413b047857fb2cf04921c7986e3ef583910",
+    "/home/a/autoware_e2e/tools/e2e/evaluate_ctrack_fixed_maps_20261001.py": "fa210fbce9aefa99f4ffc13efbeae42e2a4fe9c7281d144e71f298a44700ed38"
+  },
+  "model_sources": {
+    "/home/a/autoware_e2e/storage/experiments/training/2026-09-29/map_town02_p00_route_holdout_data_v1/manifest.json": "f4764b9aa9d015f3d136a145f6194dd60bda8900c27dd2423de6145b9f472834",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/A/weights.npz": "dd212df685f6e46f4347df457c18f559785de5649128033068dd1fc9a770f9a6",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/B/weights.npz": "ff5d7d03a43b859d21a0a3f6b01d815054d89d78e850730121f326e5b79c023e",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/bundle.json": "1ed896e7f46909076553a37f97facde0546ffbe31f03bfba5c7857491e47a7ab",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/dual_recovery_objectives.py": "d10bcad9060c1f4bde40b20773fd4c18f1d4b6ba3861dd7cef55cd36cff4ad15",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_context_recovery.py": "c8e2a8f0026852cc2b68ff653f78ed4666a1d2d2bad81997d1f5c16798fbc50d",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_learning_balance.py": "57c9392d8b700f5cf628865042b66ae630961f35fb8858a5d0ead77fe5a7c73b",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_perception.py": "1b0076c8f9d34192ab5aedf6cdf96ce2c14458e2bb49986685a6811376b0750b",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/plan.md": "a9fbda9023812419c8c61476c116d613c269d78409ee970a4cda623b6cde24a6",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_context_recovery_20261001.py": "a5605f442abe83afa07b3ff8780b18588b5e210f7608d3c536f5cf91c2923500",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_photometric_pilot.py": "4de567323d3964ec877da831ec2acb08e445fe77c9da659f052edcf52ca53484",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_town02_p00_route_holdout.py": "7ca69282db68019c6c5a2d09145dfcb4426047cf69c3f8f9355072ac0d3cd108",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/summary.json": "127c15564bd2180eee4061fd6993f52f00bac0dcbc65aecc6505b5dae425b606"
+  },
+  "policy": {
+    "absent_class_false_positives": "still reported as pixel counts",
+    "batch_size": 1,
+    "confusion_orientation": "rows=ground_truth; columns=prediction",
+    "dataset_admitted": false,
+    "device": "cpu",
+    "fit_steps": 0,
+    "frame_selection": "all240_no_dedup",
+    "frames_per_route": 240,
+    "full_fov_wh": [
+      640,
+      360
+    ],
+    "independent_dev_approved": false,
+    "inference_order": "frame-major A then B; no warmup or checkpoint selection",
+    "iou_absent_ground_truth_class": null,
+    "labels": [
+      "other",
+      "road",
+      "sidewalk",
+      "lane_marking",
+      "traffic_light_fixture",
+      "traffic_sign",
+      "pole"
+    ],
+    "latency": "model forward + argmax only; first cold inference included; p50/p95 per arm",
+    "learned_thresholds": false,
+    "limitations": [
+      "CTrack has no examples in these learned map weights' Town01+Town02 TRAIN.",
+      "Historical human CTrack RGB exposure and source repairs are disclosed; not independent certification.",
+      "CTrack RGB postprocess=true differs from TRAIN postprocess=false; camera rig also differs.",
+      "This is joint source/render/rig/map-domain diagnosis, not pure map-geometry generalization.",
+      "LEFT is forensic raw recovery: original owner FAIL remains, original live-map equality unavailable.",
+      "Oracle raw semantics are targets only; depth/pose never enter learned model input.",
+      "No TRAIN admission, threshold tuning, retraining, automatic promotion or whole-pipeline 10Hz claim."
+    ],
+    "model_promotion": false,
+    "performance_pass_thresholds": null,
+    "raw_label_table": {
+      "1": "road",
+      "2": "sidewalk",
+      "24": "lane_marking",
+      "6": "pole",
+      "7": "traffic_light_fixture",
+      "8": "traffic_sign"
+    },
+    "rgb_processing": "raw BGRA -> RGB -> float32/255 only; no resize/crop/normalization",
+    "role": "external_map_diagnostic_evaluation",
+    "routes": [
+      "left",
+      "straight"
+    ],
+    "source_paths": {
+      "left": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/ctrack_left_external_diagnostic_20261001/capture",
+      "straight": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/ctrack_straight_external_diagnostic_20261001_v2/capture"
+    },
+    "torch_threads": 2,
+    "train_eligible": false,
+    "unknown_tags_map_to": "other",
+    "visual_indices": [
+      0,
+      119,
+      239
+    ],
+    "visual_kind": "native full-FOV RGB/GT/A/B PNG only",
+    "weights_sha256": {
+      "A": "dd212df685f6e46f4347df457c18f559785de5649128033068dd1fc9a770f9a6",
+      "B": "ff5d7d03a43b859d21a0a3f6b01d815054d89d78e850730121f326e5b79c023e"
+    }
+  },
+  "predictions_made": false,
+  "schema": "portable_e2e.ctrack_fixed_maps_preregistration.v1",
+  "simulator_launched": false
+}

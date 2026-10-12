@@ -1,0 +1,817 @@
+{
+  "artifact_id": "portable_e2e.frozen_f_causal_route_ranker.v1",
+  "automatic_promotion": false,
+  "cache_sha256_after": {
+    "train": "773c4532adf58b41ee36667a490181346fc0f99680d2f3d8430ab3df5136bda7",
+    "val": "9dfc96a91b7b72e0619704ebcd7d48a0a93d0b954c35f308bfea56cf7988276d"
+  },
+  "cache_sha256_before": {
+    "train": "773c4532adf58b41ee36667a490181346fc0f99680d2f3d8430ab3df5136bda7",
+    "val": "9dfc96a91b7b72e0619704ebcd7d48a0a93d0b954c35f308bfea56cf7988276d"
+  },
+  "closed_loop_evaluation": false,
+  "command_contract": {
+    "limitation": "A causally indistinguishable straight prefix before any turn evidence can be reranked. Exact F fallback is guaranteed from the first current command or route-geometry turn evidence through the rest of that sequence, not retrospectively for the prefix.",
+    "names": [
+      "left",
+      "right",
+      "straight",
+      "lane_follow",
+      "change_left",
+      "change_right"
+    ],
+    "source": "Command names come from common_10hz_v1. The margin and latch are predeclared exploratory conservative heuristics informed only by TRAIN input structure; they are not contract guarantees and no DEV outcome selected them.",
+    "straight_candidate_commands": [
+      2,
+      3
+    ],
+    "straight_heading_maximum_rad": 0.1,
+    "turn_fallback_commands": [
+      0,
+      1,
+      4,
+      5
+    ],
+    "turn_latch_heading_minimum_rad": 0.35
+  },
+  "core_combined_full_split_metric_reduction_count": 1,
+  "deployment_approved": false,
+  "dev_post_freeze_evaluation_phase": {
+    "combined_full_split_reduction_count": 1,
+    "intermediate_selection_count": 0,
+    "phase_count": 1,
+    "same_final_logits_reused": true,
+    "sealed_subgroup_reduction_count": 2,
+    "total_metric_reduction_count": 3
+  },
+  "dev_post_freeze_phase_count": 1,
+  "dev_tensors_transferred_only_after_final_train_scorer_frozen": true,
+  "dev_used_for_structure_or_threshold_selection": false,
+  "dev_used_for_training": false,
+  "device": "cuda:0",
+  "final_dev_metrics": {
+    "composite_oracle_histogram": [
+      27,
+      13,
+      366,
+      23,
+      20,
+      181,
+      15,
+      3,
+      13,
+      0,
+      2,
+      2
+    ],
+    "interpretation": "Development VAL, not held-out test or driving approval.",
+    "metric_counts": {
+      "ade_1p0s_m": 665,
+      "ade_3p0s_m": 665,
+      "ade_6p4s_m": 665,
+      "candidate_score_loss": 665,
+      "fde_1p0s_m": 665,
+      "fde_3p0s_m": 665,
+      "fde_6p4s_m": 665,
+      "loss": 665,
+      "oracle_ade_m": 665,
+      "regression_loss": 665,
+      "selected_ade_m": 665,
+      "selected_fde_m": 665,
+      "selected_kinematic_speed_mae_mps": 665,
+      "selected_speed_mae_mps": 665,
+      "selected_yaw_mae_rad": 665,
+      "speed_mae_1p0s_mps": 665,
+      "speed_mae_3p0s_mps": 665,
+      "speed_mae_6p4s_mps": 665
+    },
+    "metrics": {
+      "ade_1p0s_m": 0.18768517339139953,
+      "ade_3p0s_m": 1.1184335793543578,
+      "ade_6p4s_m": 3.563605480265797,
+      "candidate_score_loss": 2.0994688948294273,
+      "fde_1p0s_m": 0.4210396419566377,
+      "fde_3p0s_m": 2.9377280790330773,
+      "fde_6p4s_m": 7.614227611364279,
+      "loss": 2.449575510777925,
+      "oracle_ade_m": 1.0244467483875446,
+      "regression_loss": 2.2396286168716903,
+      "selected_ade_m": 3.563605480265797,
+      "selected_fde_m": 7.614227611364279,
+      "selected_kinematic_speed_mae_mps": 3.711863073955388e-06,
+      "selected_speed_mae_mps": 1.2912620167086895,
+      "selected_yaw_mae_rad": 0.05901031878713826,
+      "speed_mae_1p0s_mps": 0.4175906362838315,
+      "speed_mae_3p0s_mps": 0.9296141905219931,
+      "speed_mae_6p4s_mps": 1.2912620167086895
+    },
+    "sample_count": 665,
+    "selected_composite_oracle_agreement_count": 275,
+    "selected_histogram": [
+      215,
+      0,
+      237,
+      121,
+      2,
+      81,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "split": "val"
+  },
+  "final_history": {
+    "first": {
+      "effective_weights": [
+        1.0158754587173462,
+        1.0158754587173462,
+        1.0158754587173462,
+        1.0158754587173462
+      ],
+      "gradient_norm": 0.040513526648283005,
+      "optimization_loss": 1.6698001623153687,
+      "route_group_counts": {
+        "c_track": 289,
+        "town01": 318,
+        "town07_same_physical_route": 625
+      },
+      "step": 1
+    },
+    "last": {
+      "effective_weights": [
+        6.294270992279053,
+        6.657544136047363,
+        2.7771432399749756,
+        6.5407538414001465
+      ],
+      "gradient_norm": 0.023932859301567078,
+      "optimization_loss": 1.3624401092529297,
+      "route_group_counts": {
+        "c_track": 289,
+        "town01": 318,
+        "town07_same_physical_route": 625
+      },
+      "step": 256
+    },
+    "row_count": 256
+  },
+  "final_preservation": {
+    "train": {
+      "fallback_row_count": 694,
+      "fallback_row_logit_mismatch_count": 0,
+      "mode_change_count": 0,
+      "original_drive_count": 1232,
+      "original_stop_count": 243,
+      "pass": true,
+      "reranked_drive_group_maximum_mismatch_count": 0,
+      "sample_count": 1475,
+      "straight_drive_reranked_count": 781,
+      "straight_ranker_policy_count": 793
+    },
+    "val": {
+      "fallback_row_count": 208,
+      "fallback_row_logit_mismatch_count": 0,
+      "mode_change_count": 0,
+      "original_drive_count": 656,
+      "original_stop_count": 9,
+      "pass": true,
+      "reranked_drive_group_maximum_mismatch_count": 0,
+      "sample_count": 665,
+      "straight_drive_reranked_count": 457,
+      "straight_ranker_policy_count": 457
+    }
+  },
+  "geometry": {
+    "all_candidates_geometry_pass_count": 664,
+    "any_candidate_geometry_pass_count": 664,
+    "inheritance": "Bit-identical cached F candidates; every candidate has the same 664/665 pass mask, so selector identity cannot change these counts.",
+    "parent_gate_sha256": "3c75b78ec72f9e9f7d3851f62f6415feb514391fcb9b3a6d33859ebc8c7baa41",
+    "sample_count": 665,
+    "selected_geometry_pass_count": 664
+  },
+  "history": {
+    "path": "history.jsonl",
+    "row_count": 1024,
+    "sha256": "a1a9c9886111fd07f14d069f026ac66acdf02e2d415c71893b59c9e9b818ffa3"
+  },
+  "input_contract": {
+    "forbidden_ranker_inputs": [
+      "target",
+      "label",
+      "future_ego",
+      "image",
+      "fused_context",
+      "map_id",
+      "episode_id",
+      "original_F_candidate_ranking_logits"
+    ],
+    "policy_inputs": [
+      "raw.navigation.current_command",
+      "raw.navigation.current_route_heading_change",
+      "causal_turn_latch",
+      "original_F_mode_and_DRIVE_group_maximum_only"
+    ],
+    "ranker_inputs": [
+      "raw.navigation.route_polyline_base_m",
+      "raw.ego.current_planar_speed_mps",
+      "raw.ego.current_longitudinal_acceleration_mps2",
+      "frozen_candidate_xy",
+      "frozen_candidate_speed"
+    ]
+  },
+  "interpretation": "Exploratory TRAIN-fold route-conditioned reranker. Town03 is repeatedly seen DEV, not TEST or deployment evidence.",
+  "new_autonomous_function_head_added": false,
+  "raw_dataset_sha256": "70fceaf0a6fea1b6ac455154bdc7b1113cfef15abc1a26ca7327ac2a186799e6",
+  "runtime_checkpoint_exported": false,
+  "scorer": {
+    "candidate_index_parameters": false,
+    "features": [
+      "lateral",
+      "heading",
+      "speed",
+      "curvature"
+    ],
+    "final_effective_weights": [
+      6.294270992279053,
+      6.657544136047363,
+      2.7771432399749756,
+      6.5407538414001465
+    ],
+    "fit_steps": 256,
+    "learning_rate": 0.025,
+    "maximum_gradient_norm": 10.0,
+    "nonnegative_weights": true,
+    "parameter_count": 4,
+    "parameter_keys": [
+      "raw_weights"
+    ],
+    "route_group_balanced_objective": true
+  },
+  "seed": 20260906,
+  "sidecar_sha256_after": {
+    "train": "c012908a6abdb6adc68b3b28bcbdd7afa400808b963bfbf4c559b074c05f32e3",
+    "val": "38bbeb62637583ea9e756e76821a0f64fbaeb8009ddc8e936518ef8bbd5cd1e0"
+  },
+  "sidecar_sha256_before": {
+    "train": "c012908a6abdb6adc68b3b28bcbdd7afa400808b963bfbf4c559b074c05f32e3",
+    "val": "38bbeb62637583ea9e756e76821a0f64fbaeb8009ddc8e936518ef8bbd5cd1e0"
+  },
+  "source_checkpoint_sha256": "a551570aa6fc1697e9dcfd9fa714b2c1066f95e2194a5fefa9b0d9f3c20baf8c",
+  "status": "CAUSAL_ROUTE_RANKER_FIT_COMPLETE_NOT_PROMOTED",
+  "strict_gate": {
+    "geometry_check_count": 3,
+    "geometry_checks": [
+      {
+        "metric": "selected_geometry_pass_count",
+        "minimum": 664,
+        "observed": 664,
+        "pass": true
+      },
+      {
+        "metric": "any_candidate_geometry_pass_count",
+        "minimum": 664,
+        "observed": 664,
+        "pass": true
+      },
+      {
+        "metric": "all_candidates_geometry_pass_count",
+        "minimum": 664,
+        "observed": 664,
+        "pass": true
+      }
+    ],
+    "geometry_pass_count": 3,
+    "metric_check_count": 9,
+    "metric_checks": [
+      {
+        "group": "town03_right_turn_dev",
+        "maximum": 2.9353143748791353,
+        "metric": "ade_6p4s_m",
+        "observed": 2.9948093166867773,
+        "pass": false
+      },
+      {
+        "group": "town03_right_turn_dev",
+        "maximum": 7.793866114022117,
+        "metric": "fde_6p4s_m",
+        "observed": 8.008272572511736,
+        "pass": false
+      },
+      {
+        "group": "town03_right_turn_dev",
+        "maximum": 1.1076154233086357,
+        "metric": "speed_mae_6p4s_mps",
+        "observed": 1.1119319290718621,
+        "pass": false
+      },
+      {
+        "group": "town03_straight_dev",
+        "maximum": 3.764740187947343,
+        "metric": "ade_6p4s_m",
+        "observed": 4.1480088350249495,
+        "pass": false
+      },
+      {
+        "group": "town03_straight_dev",
+        "maximum": 11.027441243572932,
+        "metric": "fde_6p4s_m",
+        "observed": 7.209370353963317,
+        "pass": true
+      },
+      {
+        "group": "town03_straight_dev",
+        "maximum": 1.7877504960065935,
+        "metric": "speed_mae_6p4s_mps",
+        "observed": 1.4755127520822897,
+        "pass": true
+      },
+      {
+        "group": "combined_val",
+        "maximum": 3.5632455477589056,
+        "metric": "ade_6p4s_m",
+        "observed": 3.563605480265797,
+        "pass": false
+      },
+      {
+        "group": "combined_val",
+        "maximum": 10.353536791729749,
+        "metric": "fde_6p4s_m",
+        "observed": 7.614227611364279,
+        "pass": true
+      },
+      {
+        "group": "combined_val",
+        "maximum": 1.6350220532345592,
+        "metric": "speed_mae_6p4s_mps",
+        "observed": 1.2912620167086895,
+        "pass": true
+      }
+    ],
+    "metric_pass_count": 4,
+    "pass": false,
+    "preservation_check_count": 2,
+    "preservation_checks": [
+      {
+        "fallback_row_logit_mismatch_count": 0,
+        "mode_change_count": 0,
+        "pass": true,
+        "reranked_drive_group_maximum_mismatch_count": 0,
+        "split": "train"
+      },
+      {
+        "fallback_row_logit_mismatch_count": 0,
+        "mode_change_count": 0,
+        "pass": true,
+        "reranked_drive_group_maximum_mismatch_count": 0,
+        "split": "val"
+      }
+    ],
+    "preservation_pass_count": 2,
+    "promotion_eligible": false,
+    "status": "FAIL_STRICT_PERFORMANCE_OR_PRESERVATION_GATE_NOT_PROMOTED",
+    "stop_guard": {
+      "pass": null,
+      "required_for_promotion": true,
+      "status": "NOT_EVALUABLE_NO_SEALED_STATIONARY_DEV_EPISODE"
+    }
+  },
+  "structure_and_budget_fixed_before_dev": true,
+  "subgroup_metrics": {
+    "combined_val": {
+      "composite_oracle_histogram": [
+        27,
+        13,
+        366,
+        23,
+        20,
+        181,
+        15,
+        3,
+        13,
+        0,
+        2,
+        2
+      ],
+      "metric_counts": {
+        "ade_1p0s_m": 665,
+        "ade_3p0s_m": 665,
+        "ade_6p4s_m": 665,
+        "candidate_score_loss": 665,
+        "fde_1p0s_m": 665,
+        "fde_3p0s_m": 665,
+        "fde_6p4s_m": 665,
+        "loss": 665,
+        "oracle_ade_m": 665,
+        "regression_loss": 665,
+        "selected_ade_m": 665,
+        "selected_fde_m": 665,
+        "selected_kinematic_speed_mae_mps": 665,
+        "selected_speed_mae_mps": 665,
+        "selected_yaw_mae_rad": 665,
+        "speed_mae_1p0s_mps": 665,
+        "speed_mae_3p0s_mps": 665,
+        "speed_mae_6p4s_mps": 665
+      },
+      "metrics": {
+        "ade_1p0s_m": 0.18768517339139953,
+        "ade_3p0s_m": 1.1184335793543578,
+        "ade_6p4s_m": 3.563605480265797,
+        "candidate_score_loss": 2.0994688948294273,
+        "fde_1p0s_m": 0.4210396419566377,
+        "fde_3p0s_m": 2.9377280790330773,
+        "fde_6p4s_m": 7.614227611364279,
+        "loss": 2.449575510777925,
+        "oracle_ade_m": 1.0244467483875446,
+        "regression_loss": 2.2396286168716903,
+        "selected_ade_m": 3.563605480265797,
+        "selected_fde_m": 7.614227611364279,
+        "selected_kinematic_speed_mae_mps": 3.711863073955388e-06,
+        "selected_speed_mae_mps": 1.2912620167086895,
+        "selected_yaw_mae_rad": 0.05901031878713826,
+        "speed_mae_1p0s_mps": 0.4175906362838315,
+        "speed_mae_3p0s_mps": 0.9296141905219931,
+        "speed_mae_6p4s_mps": 1.2912620167086895
+      },
+      "sample_count": 665,
+      "selected_composite_oracle_agreement_count": 275,
+      "selected_histogram": [
+        215,
+        0,
+        237,
+        121,
+        2,
+        81,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0
+      ]
+    },
+    "town03_right_turn_dev": {
+      "composite_oracle_histogram": [
+        11,
+        13,
+        54,
+        23,
+        20,
+        181,
+        15,
+        3,
+        13,
+        0,
+        2,
+        2
+      ],
+      "metric_counts": {
+        "ade_1p0s_m": 337,
+        "ade_3p0s_m": 337,
+        "ade_6p4s_m": 337,
+        "candidate_score_loss": 337,
+        "fde_1p0s_m": 337,
+        "fde_3p0s_m": 337,
+        "fde_6p4s_m": 337,
+        "loss": 337,
+        "oracle_ade_m": 337,
+        "regression_loss": 337,
+        "selected_ade_m": 337,
+        "selected_fde_m": 337,
+        "selected_kinematic_speed_mae_mps": 337,
+        "selected_speed_mae_mps": 337,
+        "selected_yaw_mae_rad": 337,
+        "speed_mae_1p0s_mps": 337,
+        "speed_mae_3p0s_mps": 337,
+        "speed_mae_6p4s_mps": 337
+      },
+      "metrics": {
+        "ade_1p0s_m": 0.15394839958373446,
+        "ade_3p0s_m": 0.8645662568973859,
+        "ade_6p4s_m": 2.9948093166867773,
+        "candidate_score_loss": 2.630172205696474,
+        "fde_1p0s_m": 0.33978591565296984,
+        "fde_3p0s_m": 2.1906140392275875,
+        "fde_6p4s_m": 8.008272572511736,
+        "loss": 3.5750360492428968,
+        "oracle_ade_m": 1.4992685994072554,
+        "regression_loss": 3.312018825277377,
+        "selected_ade_m": 2.9948093166867773,
+        "selected_fde_m": 8.008272572511736,
+        "selected_kinematic_speed_mae_mps": 3.5810759418220147e-06,
+        "selected_speed_mae_mps": 1.1119319290718621,
+        "selected_yaw_mae_rad": 0.08446865896929265,
+        "speed_mae_1p0s_mps": 0.3080385975561793,
+        "speed_mae_3p0s_mps": 0.6113005237161936,
+        "speed_mae_6p4s_mps": 1.1119319290718621
+      },
+      "sample_count": 337,
+      "selected_composite_oracle_agreement_count": 132,
+      "selected_histogram": [
+        14,
+        0,
+        110,
+        121,
+        2,
+        81,
+        0,
+        0,
+        9,
+        0,
+        0,
+        0
+      ]
+    },
+    "town03_straight_dev": {
+      "composite_oracle_histogram": [
+        16,
+        0,
+        312,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "metric_counts": {
+        "ade_1p0s_m": 328,
+        "ade_3p0s_m": 328,
+        "ade_6p4s_m": 328,
+        "candidate_score_loss": 328,
+        "fde_1p0s_m": 328,
+        "fde_3p0s_m": 328,
+        "fde_6p4s_m": 328,
+        "loss": 328,
+        "oracle_ade_m": 328,
+        "regression_loss": 328,
+        "selected_ade_m": 328,
+        "selected_fde_m": 328,
+        "selected_kinematic_speed_mae_mps": 328,
+        "selected_speed_mae_mps": 328,
+        "selected_yaw_mae_rad": 328,
+        "speed_mae_1p0s_mps": 328,
+        "speed_mae_3p0s_mps": 328,
+        "speed_mae_6p4s_mps": 328
+      },
+      "metrics": {
+        "ade_1p0s_m": 0.22234765403881307,
+        "ade_3p0s_m": 1.3792667793246305,
+        "ade_6p4s_m": 4.1480088350249495,
+        "candidate_score_loss": 1.5542035553513505,
+        "fde_1p0s_m": 0.5045228899888149,
+        "fde_3p0s_m": 3.705342221369104,
+        "fde_6p4s_m": 7.209370353963317,
+        "loss": 1.2932334189734809,
+        "oracle_ade_m": 0.536596227346397,
+        "regression_loss": 1.1378130611123107,
+        "selected_ade_m": 4.1480088350249495,
+        "selected_fde_m": 7.209370353963317,
+        "selected_kinematic_speed_mae_mps": 3.840888228562729e-06,
+        "selected_speed_mae_mps": 1.4755127520822897,
+        "selected_yaw_mae_rad": 0.03285342709320348,
+        "speed_mae_1p0s_mps": 0.5301486783456512,
+        "speed_mae_3p0s_mps": 1.256662076747999,
+        "speed_mae_6p4s_mps": 1.4755127520822897
+      },
+      "sample_count": 328,
+      "selected_composite_oracle_agreement_count": 143,
+      "selected_histogram": [
+        201,
+        0,
+        127,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "test_read_or_used": false,
+  "train_only_leave_one_route_group_out": [
+    {
+      "final_effective_weights": [
+        6.067915439605713,
+        6.430581569671631,
+        0.9801677465438843,
+        7.059637069702148
+      ],
+      "fit_drive_count": 607,
+      "fit_policy_straight_drive_count": 156,
+      "fit_steps": 256,
+      "held_drive_count": 625,
+      "held_policy_preservation": {
+        "fallback_row_count": 0,
+        "fallback_row_logit_mismatch_count": 0,
+        "mode_change_count": 0,
+        "original_drive_count": 625,
+        "original_stop_count": 0,
+        "pass": true,
+        "reranked_drive_group_maximum_mismatch_count": 0,
+        "sample_count": 625,
+        "straight_drive_reranked_count": 625,
+        "straight_ranker_policy_count": 625
+      },
+      "held_policy_straight_drive_count": 625,
+      "held_route_group": "town07_same_physical_route",
+      "held_scorer_alignment": {
+        "mean_weighted_alignment_cost": 0.9810929298400879,
+        "mean_weighted_alignment_regret": 0.0,
+        "mean_weighted_selected_minus_target_cost": -0.20644569396972656,
+        "mean_weighted_target_alignment_cost": 1.187538504600525,
+        "oracle_agreement_count": 245,
+        "oracle_agreement_percent": 39.20000076293945,
+        "sample_count": 625
+      },
+      "history_first": {
+        "effective_weights": [
+          1.0158754587173462,
+          1.0158754587173462,
+          1.0158753395080566,
+          1.0158754587173462
+        ],
+        "gradient_norm": 0.0420934334397316,
+        "optimization_loss": 1.6781697273254395,
+        "route_group_counts": {
+          "c_track": 289,
+          "town01": 318
+        },
+        "step": 1
+      },
+      "history_last": {
+        "effective_weights": [
+          6.067915439605713,
+          6.430581569671631,
+          0.9801677465438843,
+          7.059637069702148
+        ],
+        "gradient_norm": 0.028039881959557533,
+        "optimization_loss": 1.3329017162322998,
+        "route_group_counts": {
+          "c_track": 289,
+          "town01": 318
+        },
+        "step": 256
+      },
+      "optimization_row_exposures": 155392
+    },
+    {
+      "final_effective_weights": [
+        6.543149948120117,
+        6.634863376617432,
+        5.13774299621582,
+        4.543617248535156
+      ],
+      "fit_drive_count": 943,
+      "fit_policy_straight_drive_count": 781,
+      "fit_steps": 256,
+      "held_drive_count": 289,
+      "held_policy_preservation": {
+        "fallback_row_count": 289,
+        "fallback_row_logit_mismatch_count": 0,
+        "mode_change_count": 0,
+        "original_drive_count": 289,
+        "original_stop_count": 0,
+        "pass": true,
+        "reranked_drive_group_maximum_mismatch_count": 0,
+        "sample_count": 289,
+        "straight_drive_reranked_count": 0,
+        "straight_ranker_policy_count": 0
+      },
+      "held_policy_straight_drive_count": 0,
+      "held_route_group": "c_track",
+      "held_scorer_alignment": {
+        "mean_weighted_alignment_cost": 2.1434381008148193,
+        "mean_weighted_alignment_regret": 0.0,
+        "mean_weighted_selected_minus_target_cost": -0.7928587198257446,
+        "mean_weighted_target_alignment_cost": 2.9362971782684326,
+        "oracle_agreement_count": 50,
+        "oracle_agreement_percent": 17.30103874206543,
+        "sample_count": 289
+      },
+      "history_first": {
+        "effective_weights": [
+          1.0158754587173462,
+          1.0158754587173462,
+          1.0158754587173462,
+          1.0158754587173462
+        ],
+        "gradient_norm": 0.05216972529888153,
+        "optimization_loss": 1.6433708667755127,
+        "route_group_counts": {
+          "town01": 318,
+          "town07_same_physical_route": 625
+        },
+        "step": 1
+      },
+      "history_last": {
+        "effective_weights": [
+          6.543149948120117,
+          6.634863376617432,
+          5.13774299621582,
+          4.543617248535156
+        ],
+        "gradient_norm": 0.025895878672599792,
+        "optimization_loss": 1.260585069656372,
+        "route_group_counts": {
+          "town01": 318,
+          "town07_same_physical_route": 625
+        },
+        "step": 256
+      },
+      "optimization_row_exposures": 241408
+    },
+    {
+      "final_effective_weights": [
+        6.339422702789307,
+        6.7630181312561035,
+        2.6328928470611572,
+        6.5156636238098145
+      ],
+      "fit_drive_count": 914,
+      "fit_policy_straight_drive_count": 625,
+      "fit_steps": 256,
+      "held_drive_count": 318,
+      "held_policy_preservation": {
+        "fallback_row_count": 162,
+        "fallback_row_logit_mismatch_count": 0,
+        "mode_change_count": 0,
+        "original_drive_count": 318,
+        "original_stop_count": 0,
+        "pass": true,
+        "reranked_drive_group_maximum_mismatch_count": 0,
+        "sample_count": 318,
+        "straight_drive_reranked_count": 156,
+        "straight_ranker_policy_count": 156
+      },
+      "held_policy_straight_drive_count": 156,
+      "held_route_group": "town01",
+      "held_scorer_alignment": {
+        "mean_weighted_alignment_cost": 1.0463124513626099,
+        "mean_weighted_alignment_regret": 0.0,
+        "mean_weighted_selected_minus_target_cost": -0.3052576780319214,
+        "mean_weighted_target_alignment_cost": 1.3515701293945312,
+        "oracle_agreement_count": 222,
+        "oracle_agreement_percent": 69.81131744384766,
+        "sample_count": 318
+      },
+      "history_first": {
+        "effective_weights": [
+          1.0158754587173462,
+          1.0158754587173462,
+          1.0158754587173462,
+          1.0158754587173462
+        ],
+        "gradient_norm": 0.036059752106666565,
+        "optimization_loss": 1.6878600120544434,
+        "route_group_counts": {
+          "c_track": 289,
+          "town07_same_physical_route": 625
+        },
+        "step": 1
+      },
+      "history_last": {
+        "effective_weights": [
+          6.339422702789307,
+          6.7630181312561035,
+          2.6328928470611572,
+          6.5156636238098145
+        ],
+        "gradient_norm": 0.022870557382702827,
+        "optimization_loss": 1.4116077423095703,
+        "route_group_counts": {
+          "c_track": 289,
+          "town07_same_physical_route": 625
+        },
+        "step": 256
+      },
+      "optimization_row_exposures": 233984
+    }
+  ],
+  "train_partition": {
+    "all_fold_and_final_optimization_row_exposures": 946176,
+    "drive_count_by_physical_route_group": {
+      "c_track": 289,
+      "town01": 318,
+      "town07_same_physical_route": 625
+    },
+    "drive_rows_used_for_loss": 1232,
+    "f_original_drive_count": 1232,
+    "f_original_stop_count": 243,
+    "final_fit_optimization_row_exposures": 315392,
+    "sample_count": 1475,
+    "stop_optimization_row_exposures": 0,
+    "stop_rows_used_for_loss": 0
+  },
+  "vehicle_control_approved": false
+}

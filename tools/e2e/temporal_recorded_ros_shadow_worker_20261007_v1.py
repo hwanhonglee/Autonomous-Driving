@@ -1,0 +1,257 @@
+"""HH_261007 - Seal and admit a new owned, CPU-only recorded-JPEG DDS parity protocol.
+
+The frozen V1 hard DENY is never modified or called. ROOT must separately seal
+the prospective plan and an external execution authority. No training, CARLA,
+actuator, original-BGRA, V5 terminal-policy, or feature approval is implied.
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+from copy import deepcopy
+import hashlib
+import fcntl
+import importlib.util
+import json
+import math
+import os
+from pathlib import Path
+import shutil
+import resource
+import signal
+import stat
+import sys
+import time
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[2]
+SCHEMA = "portable_e2e.owned_recorded_ROS_shadow.20261007.v1"
+HERE = Path(__file__).resolve()
+NODE = ROOT / "autonomy/autoware_e2e_vad_launch/scripts/temporal_recorded_shadow_20261007_v1.py"
+OWNER = HERE.with_name("run_owned_temporal_recorded_ros_shadow_20261007_v1.py")
+PLAN_DIR = ROOT / "storage/experiments/plans/2026-10-07/temporal_recorded_ros_shadow_v1"
+PLAN, AUTHORITY = PLAN_DIR / "ROOT_plan.json", PLAN_DIR / "ROOT_execution_authority.json"
+OUTPUT = ROOT / "storage/experiments/diagnostics/2026-10-07/temporal_recorded_ros_shadow_v1"
+EPISODE = ROOT / "storage/experiments/validation/2026-10-04/temporal_route_joint_town03_known_dev_straight_full209_v1/episode"
+LOCK = ROOT / "storage/assets/locks/autoware_e2e_runtime.lock"
+FLOOR, SHARED, QUOTA, CLOSING = 2*1024**3, 64*1024**2, 128*1024**2, 16*1024**2
+FILE_LIMIT, JSON_LIMIT, PLAN_LIMIT = 32*1024**2, 1024**2, 4*1024**2
+FROZEN = {
+    "learning/portable_e2e/temporal_recorded_ros_bundle_v1_20261005.py": "6fa21ab9447bcf73bdd2fd79b0ab72ddd94b531d3a11459334f754fdfbad7d82",
+    "autonomy/autoware_e2e_vad_launch/scripts/temporal_recorded_shadow_v1_20261005.py": "e0e1b001c3684dfdf1ea41274c4c39b7f9a286d008d37d942aefbe35a3591e7e",
+    "learning/portable_e2e/temporal_autoware_shadow_adapter_v1_20261005.py": "7d3cf7b6f4f131c2647921a00b62f08e4b41e30cd6b98f9583ad425267e46a0e",
+}
+_bundle = None
+
+
+def need(value, message):
+    if not value: raise ValueError(message)
+
+
+def encode(value):
+    return (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)+"\n").encode()
+
+
+def digest(path):
+    path = Path(path)
+    need(path.is_absolute() and path.resolve(strict=True) == path and path.is_file(), "canonical regular input required")
+    before = path.stat(); value = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024**2), b""): value.update(block)
+    after = path.stat()
+    need(all(getattr(after, key) == getattr(before, key) for key in ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")), "input changed while hashing")
+    return value.hexdigest()
+
+
+def load_module(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec); sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def frozen_bundle():
+    global _bundle
+    if _bundle is not None: return _bundle
+    for name, pin in FROZEN.items(): need(digest(ROOT/name) == pin, "frozen prototype changed")
+    _bundle=load_module(ROOT/next(iter(FROZEN)), "_hh_frozen_recorded_bundle_261007")
+    return _bundle
+
+
+def source_pins():
+    bundle = frozen_bundle()
+    names = bundle.project_source_closure()
+    names |= {str(p.relative_to(ROOT)) for p in (HERE, OWNER, NODE)}
+    names |= {"tools/e2e/prepare_carla_common10_dataset.py", "tools/workspace_python.py", "tools/canonical_workspace.py",
+              "learning/tests/test_owned_recorded_ros_shadow_20261007_v1.py"}
+    return {name: digest(ROOT/name) for name in sorted(names)}
+
+
+def bounded_json(path, pin=None, limit=JSON_LIMIT):
+    path = Path(path); need(path.resolve(strict=True) == path and path.is_file() and path.stat().st_size <= limit, "bounded canonical JSON required")
+    raw = path.read_bytes()
+    if pin is not None: need(hashlib.sha256(raw).hexdigest() == pin, "raw JSON SHA differs")
+    return frozen_bundle().decode(raw, limit)
+
+
+def new_json(path, value, limit=JSON_LIMIT):
+    raw = encode(value); need(len(raw) <= limit <= PLAN_LIMIT, "bounded new JSON required")
+    with Path(path).open("xb") as stream: stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+    return hashlib.sha256(raw).hexdigest()
+
+
+def budget(startup=False):
+    need(shutil.disk_usage(ROOT).free >= FLOOR+SHARED+(QUOTA if startup else CLOSING), "separate CPU protocol reserve denied; GPU reserve is unchanged")
+    total = 0
+    for directory in (OUTPUT, PLAN_DIR):
+        if not directory.exists(): continue
+        for path in directory.rglob("*"):
+            mode = path.lstat().st_mode
+            need(stat.S_ISREG(mode) or stat.S_ISDIR(mode), "special/symlink output denied")
+            if stat.S_ISREG(mode):
+                need(path.stat().st_size <= FILE_LIMIT, "complete raw file exceeds declared quota")
+                total += path.stat().st_size
+    need(total <= QUOTA-CLOSING, "all-output closing reserve exhausted")
+    return total
+
+
+def append(path, value):
+    budget(); raw = encode(value); need(len(raw) <= 512*1024, "complete scalar row too large")
+    path = Path(path)
+    need(path.parent.resolve(strict=True) == path.parent and path.is_relative_to(OUTPUT), "owned output path required")
+    need(not path.is_symlink() and (not path.exists() or path.stat().st_size+len(raw) <= FILE_LIMIT), "raw row quota denied")
+    with path.open("ab" if path.exists() else "xb") as stream: stream.write(raw); stream.flush()
+
+
+def process_identity(pid):
+    base = Path("/proc")/str(pid); raw = (base/"stat").read_text(); fields = raw[raw.rfind(")")+2:].split()
+    return dict(pid=pid, starttime=int(fields[19]), ppid=int(fields[1]), pgid=int(fields[2]), session=int(fields[3]),
+        uid=base.stat().st_uid, argv=[x.decode() for x in (base/"cmdline").read_bytes().split(b"\0") if x])
+
+
+def same_generation(expected):
+    actual = process_identity(expected["pid"])
+    need(all(actual[k] == expected[k] for k in ("pid", "starttime", "uid", "ppid", "pgid", "session", "argv")), "owned PID generation/argv changed")
+    return actual
+
+
+def live_owner():
+    receipt=bounded_json(OUTPUT/"owner_started.json");same_generation(receipt["identity"])
+    need(os.getppid()==receipt["identity"]["pid"],"owned parent died/reparented")
+    raw_fd=os.environ.get("HH_OWNED_RUNTIME_LOCK_FD","")
+    need(raw_fd.isdecimal(),"exact inherited runtime lease descriptor required")
+    fd=int(raw_fd);actual=os.fstat(fd);declared=receipt["lock_identity"]
+    need(fd==receipt["lock_fd"] and (actual.st_dev,actual.st_ino)==(declared["dev"],declared["ino"])
+        and Path("/proc/self/fd"+"/"+str(fd)).resolve(strict=True)==LOCK,"inherited lease FD/inode differs")
+    fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    return receipt
+
+
+def verify_project_modules(view, modules, extra=()):
+    for module in (*tuple(modules), *extra):
+        name, filename = getattr(module, "__name__", ""), getattr(module, "__file__", None)
+        if name == "scripts" and filename is None:
+            need(list(module.__path__) == [str(ROOT/"tools")], "foreign virtual scripts namespace")
+            continue
+        if name.startswith(("autoware_planning_msgs", "autoware_vehicle_msgs")):
+            need(type(filename) is str, "actual ROS generated module origin required")
+            path=Path(filename)
+            package=name.split(".")[0]
+            need(path.is_relative_to(ROOT/"autonomy/install"/package) or path.is_relative_to(ROOT/"autonomy/build"/package), "foreign Autoware overlay denied")
+            actual=path.resolve(strict=True)
+            need(str(actual) in view["generated_ROS_sources"] and digest(actual)==view["generated_ROS_sources"][str(actual)], "generated ROS source/ABI seal differs")
+            continue
+        if not filename:
+            need(not (name in ("portable_e2e","canonical_workspace","workspace_python") or name.startswith(("portable_e2e.","scripts."))), "unsealed virtual project module")
+            continue
+        path = Path(filename)
+        if not path.is_absolute() or not path.is_relative_to(ROOT): continue
+        relative = str(path.relative_to(ROOT))
+        need(relative in view["source_sha256"] and digest(path) == view["source_sha256"][relative], "unsealed imported project source")
+
+
+def authorize(plan_sha, authority_sha):
+    plan = bounded_json(PLAN, plan_sha, PLAN_LIMIT)
+    grant = bounded_json(AUTHORITY, authority_sha)
+    need(plan["schema"] == SCHEMA and plan["fixed"] == fixed_contract(), "exact fresh recorded protocol required")
+    need(grant == dict(schema=SCHEMA+".ROOT_authority", plan_path=str(PLAN), plan_sha256=plan_sha,
+        source_sha256=plan["source_sha256"], recorded_CPU_ROS_only=True, training_authorized=False,
+        GPU_authorized=False, CARLA_authorized=False, actuation_authorized=False, TEST_authorized=False, model_promoted=False),
+        "externally SHA-pinned ROOT authority required; no self-admission flag")
+    need(plan["source_sha256"] == source_pins(), "whole project source closure drift")
+    for name, pin in plan["source_sha256"].items():
+        need(digest(PLAN_DIR/"sources"/name) == pin, "archived/current source closure differs")
+    for path, pin in plan["input_sha256"].items(): need(digest(path) == pin, "whole recorded/model/rig input changed")
+    for path, pin in plan["setup_sha256"].items(): need(digest(path) == pin, "clean canonical setup source changed")
+    for path, pin in plan["generated_ROS_sources"].items(): need(digest(path)==pin,"canonical generated ROS message/ABI input changed")
+    need(os.environ.get("CUDA_VISIBLE_DEVICES") == "" and os.environ.get("PYTHONNOUSERSITE") == "1", "clean CPU-only environment required")
+    need(os.environ.get("ROS_LOG_DIR")==str(OUTPUT/"ros_logs") and os.environ.get("OMP_NUM_THREADS")=="4"
+        and os.environ.get("MKL_NUM_THREADS")=="4" and os.environ.get("OPENBLAS_NUM_THREADS")=="1", "bounded clean ROS log/CPU thread environment required")
+    bundle = frozen_bundle(); bundle.verify_ros_environment(plan)
+    view = deepcopy(plan); view["admitted_authority_sha256"] = authority_sha
+    view["plan_sha256"] = plan_sha
+    view["source_sha256"] = plan["source_sha256"]
+    return view
+
+
+def fixed_contract():
+    return dict(camera_anchors=918, native_states=1836, direct_then_DDS_no_simultaneous_NN=True,
+        ROS_DOMAIN_ID=93, ROS_LOCALHOST_ONLY="1", RMW_IMPLEMENTATION="rmw_cyclonedds_cpp",
+        CPU_threads=4, interop_threads=1, physical_GPU_used=False, policy_deadline_seconds=.1,
+        TF_limits=dict(translation_m=.005, rotation_rad=.005), raw_atol=1e-6, raw_rtol=1e-6,
+        whole_input_tensor_hashes=True, matching_valid_contexts_only_raw_and_trajectory=True,
+        all_failure_prefill_reset_and_noncomparable_rows_retained=True, original_V5_terminal_equivalence=False,
+        positive_published_trajectory_context_required_for_overall_parity=True,
+        original_BGRA_equivalence=False, wall_10Hz_or_P3_approved=False, automatic_retry=False,
+        floor_bytes=FLOOR, shared_bytes=SHARED, quota_bytes=QUOTA, closing_bytes=CLOSING,
+        file_limit_bytes=FILE_LIMIT, total_deadline_seconds=1800, per_role_deadline_seconds=900,
+        startup_seconds=60, receipt_seconds=5, graph_empty_settle_seconds=.5,
+        ROS_LOG_DIR=str(OUTPUT/"ros_logs"), inherited_runtime_lease_required=True, Linux_parent_death_SIGTERM=True,
+        runtime_lock=str(LOCK), output=str(OUTPUT), CPU_policy_changed_from_historical_V5_claim=False)
+
+
+def worker_command(mode, plan_sha, authority_sha):
+    return ["/usr/bin/python3", "-B", str(ROOT/"tools/workspace_python.py"), "-m", "scripts.e2e.temporal_recorded_ros_shadow_worker_20261007_v1", "--",
+        "--mode", mode, "--plan-sha256", plan_sha, "--authority-sha256", authority_sha]
+
+
+def pure_proxy(view):
+    old = frozen_bundle()
+    result = SimpleNamespace(**vars(old))
+    result.verify_imported_project_modules = verify_project_modules
+    return result
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument("--mode", choices=("direct", "subscriber", "publisher"), required=True)
+    parser.add_argument("--plan-sha256", required=True); parser.add_argument("--authority-sha256", required=True)
+    args = parser.parse_args(argv)
+    resource.setrlimit(resource.RLIMIT_FSIZE,(FILE_LIMIT,FILE_LIMIT));resource.setrlimit(resource.RLIMIT_CORE,(0,0))
+    import ctypes
+    need(ctypes.CDLL(None,use_errno=True).prctl(1,signal.SIGTERM,0,0,0)==0,"Linux parent-death guard required")
+    def interrupted(number,frame):raise SystemExit("owned worker interrupted: "+str(number))
+    signal.signal(signal.SIGTERM,interrupted);signal.signal(signal.SIGHUP,interrupted)
+    result = dict(schema=SCHEMA+".role_result", mode=args.mode, status="FAILED_RETAINED", expected=918, completed=0, UNEXECUTED=918,
+        failing_bundle_may_have_executed=True, error=None, P3_approved=False)
+    try:
+        view = authorize(args.plan_sha256, args.authority_sha256); budget()
+        owner = live_owner()
+        actual = process_identity(os.getpid())
+        need(actual["argv"] == worker_command(args.mode, args.plan_sha256, args.authority_sha256)
+            and actual["ppid"] == owner["identity"]["pid"] and actual["pgid"] == actual["session"] == actual["pid"], "exact owned child session/argv required")
+        new_json(OUTPUT/(args.mode+"_started.json"), dict(identity=actual, plan_sha256=args.plan_sha256,
+            authority_sha256=args.authority_sha256, mode=args.mode))
+        # HH_261007 - Only this admitted branch imports the actual ROS/model implementation.
+        implementation = load_module(NODE, "_hh_owned_recorded_ros_runtime_261007")
+        result = implementation.run(args.mode, view)
+    except BaseException as error:
+        result["error"] = repr(error)
+        path = OUTPUT/(args.mode+"_anchors.jsonl")
+        if path.exists():
+            result["completed"] = sum(1 for _ in path.open("rb")); result["UNEXECUTED"] = 918-result["completed"]
+    new_json(OUTPUT/(args.mode+"_result.json"), result)
+    return 0 if result["status"] == "COMPLETE_RECORDED_ROLE_NOT_FEATURE_APPROVAL" else 1
+
+
+if __name__ == "__main__": raise SystemExit(main())

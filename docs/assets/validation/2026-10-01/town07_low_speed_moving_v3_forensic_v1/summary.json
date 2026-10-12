@@ -1,0 +1,2683 @@
+{
+  "schema": "carla.town07_moving_v3_raw_forensic.20261001.v1",
+  "status": "FORENSIC_ONLY_SOURCE_CLOSURE_BLOCKED",
+  "flags": {
+    "source_closure_complete": false,
+    "v3_external_agents_pass": true,
+    "native_complete": true,
+    "membership_clear": true,
+    "selected_windows_clear": true,
+    "all_pixels": true,
+    "all_ack_and_snapshot_checks": true,
+    "fixed_control_replay": false,
+    "no_collision_or_lane_events": true
+  },
+  "source_closure_discrepancy": {
+    "tools/e2e/carla_physics_substeps.py": "5a8382a8bd4320578fcbdf0c87b8a4698806f0975180d6a996c3e5367e3e9f81"
+  },
+  "physics_substep_profile": "inherited",
+  "owner_plan_sha256": "3695aa5243f942e38390f36f5581b87606ffe6b1df9eccb2b52c2fc0df043f6b",
+  "native_manifest_sha256": "98b5f9aaa11b53967bc1813dd287eec0150d3edb843ab6904fe1a334ce701c65",
+  "v3_external_source": {
+    "status": "PASS",
+    "addendum_sha256": "d25e834f697670320317cec286dbe57f942df869f08b85b90ae425cd5c0f0574",
+    "archived_source_file_count": 8,
+    "imported_module_count": 8,
+    "capture_time_eight_file_agents_closure_verified": true,
+    "scope": "Eight fixed CARLA agents Python files; no binary, OS, or complete dependency attestation."
+  },
+  "native_count": 1395,
+  "camera_count": 698,
+  "selected_count": 327,
+  "selected_span_s": 32.600000486,
+  "membership_flags": {
+    "nonempty": true,
+    "window_closed": true,
+    "span_at_least_30s": true,
+    "support_is_last_driving": true,
+    "exact_70_warmup": true,
+    "exact_130_tail": true,
+    "saved_membership_and_progress_clear": true
+  },
+  "window_failure_counts": {},
+  "failed_window_frames": [],
+  "protected_native_count": 800,
+  "scoped_native_failures": {
+    "protected": [],
+    "outside_protected": [
+      {
+        "frame": 1255,
+        "capture_phase": "driving",
+        "failed_checks": [
+          "native_scalar_rate",
+          "native_longitudinal_rate"
+        ],
+        "scalar_rate_mps2": 3.1938520991650408,
+        "longitudinal_dvx_dt_mps2": 3.193784810480312
+      },
+      {
+        "frame": 2414,
+        "capture_phase": "stationary_tail",
+        "failed_checks": [
+          "native_scalar_rate",
+          "native_longitudinal_rate"
+        ],
+        "scalar_rate_mps2": -5.803957340089333,
+        "longitudinal_dvx_dt_mps2": -5.8039573451058
+      },
+      {
+        "frame": 2415,
+        "capture_phase": "stationary_tail",
+        "failed_checks": [
+          "native_scalar_rate",
+          "native_longitudinal_rate"
+        ],
+        "scalar_rate_mps2": -20.99588761098475,
+        "longitudinal_dvx_dt_mps2": -20.99588763673199
+      },
+      {
+        "frame": 2416,
+        "capture_phase": "stationary_tail",
+        "failed_checks": [
+          "native_scalar_rate",
+          "native_longitudinal_rate"
+        ],
+        "scalar_rate_mps2": -19.27710191909078,
+        "longitudinal_dvx_dt_mps2": -19.277103879858338
+      }
+    ]
+  },
+  "pixel_summary": {
+    "image_count": 4188,
+    "referenced_image_count": 4188,
+    "unreferenced_jpeg_count": 0,
+    "decoded_count": 4188,
+    "decode_failure_count": 0,
+    "camera_anchor_count": 698,
+    "camera_frames_cover_entire_native_recording": true,
+    "timestamp_or_phase_mismatch_count": 0,
+    "rig": {
+      "schema_id": "autoware-e2e.common10.rig.v1",
+      "rig_id": "carla_rig_dbfac2214e0df73d",
+      "domain": "carla",
+      "base_frame": "base_link",
+      "rectified": true,
+      "camera_order": [
+        "CAM_FRONT",
+        "CAM_BACK",
+        "CAM_FRONT_LEFT",
+        "CAM_BACK_LEFT",
+        "CAM_FRONT_RIGHT",
+        "CAM_BACK_RIGHT"
+      ],
+      "cameras": [
+        {
+          "name": "CAM_FRONT",
+          "model_index": 0,
+          "physical_id": "virtual:carla:CAM_FRONT",
+          "optical_frame": "CAM_FRONT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.0,
+            0.0,
+            1.0,
+            2.225,
+            -1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK",
+          "model_index": 1,
+          "physical_id": "virtual:carla:CAM_BACK",
+          "optical_frame": "CAM_BACK/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            224.06641222710715,
+            0.0,
+            320.0,
+            0.0,
+            224.06641222710715,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.9198621771937625,
+          "T_base_from_camera": [
+            -3.464102066193935e-07,
+            0.0,
+            -0.99999999999994,
+            -0.575,
+            0.99999999999994,
+            0.0,
+            -3.464102066193935e-07,
+            0.0,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_FRONT_LEFT",
+          "model_index": 2,
+          "physical_id": "virtual:carla:CAM_FRONT_LEFT",
+          "optical_frame": "CAM_FRONT_LEFT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.8191519934719051,
+            0.0,
+            0.5735765089253603,
+            1.695,
+            -0.5735765089253603,
+            0.0,
+            0.8191519934719051,
+            0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK_LEFT",
+          "model_index": 3,
+          "physical_id": "virtual:carla:CAM_BACK_LEFT",
+          "optical_frame": "CAM_BACK_LEFT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            0.9396926813897297,
+            0.0,
+            -0.34201997681799223,
+            1.105,
+            0.34201997681799223,
+            0.0,
+            0.9396926813897297,
+            0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_FRONT_RIGHT",
+          "model_index": 4,
+          "physical_id": "virtual:carla:CAM_FRONT_RIGHT",
+          "optical_frame": "CAM_FRONT_RIGHT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            -0.8191519934719051,
+            0.0,
+            0.5735765089253603,
+            1.695,
+            -0.5735765089253603,
+            0.0,
+            -0.8191519934719051,
+            -0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        },
+        {
+          "name": "CAM_BACK_RIGHT",
+          "model_index": 5,
+          "physical_id": "virtual:carla:CAM_BACK_RIGHT",
+          "optical_frame": "CAM_BACK_RIGHT/camera_optical_link",
+          "width_px": 640,
+          "height_px": 360,
+          "source_encoding": "bgr8",
+          "storage_codec": "jpeg",
+          "K": [
+            457.0073621574767,
+            0.0,
+            320.0,
+            0.0,
+            457.0073621574767,
+            180.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "D": [],
+          "horizontal_fov_rad": 1.2217304763960306,
+          "T_base_from_camera": [
+            -0.9396926813897297,
+            0.0,
+            -0.34201997681799223,
+            1.105,
+            0.34201997681799223,
+            0.0,
+            -0.9396926813897297,
+            -0.55,
+            0.0,
+            -1.0,
+            0.0,
+            1.6,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp_source": "carla_simulation_frame",
+          "trigger_mode": "synchronous_world_tick",
+          "firmware": "0.9.15-dev-dirty",
+          "exposure_mode": "virtual_postprocess_disabled"
+        }
+      ]
+    },
+    "by_phase": {
+      "stationary_warmup": 210,
+      "driving": 3588,
+      "stationary_tail": 390
+    },
+    "all_pixel_and_metadata_checks_clear": true
+  },
+  "transport_flags": {
+    "nonempty_observation": true,
+    "all_commands_acknowledged": true,
+    "command_frame_consistency": true,
+    "all_snapshot_conversions_match": true,
+    "control_frame_binding": true,
+    "observed_controls_match_prior_ack": true,
+    "worker_alignment_claims_match": true,
+    "next_command_links": true,
+    "phase_command_ledger": true,
+    "twenty_hz_frame_chain": true
+  },
+  "control_summary": {
+    "status": "FAIL",
+    "error_type": "EvidenceError",
+    "error": "normal policy is not bound to causal same-frame observation"
+  },
+  "whole_capture_body_summary": {
+    "sampled_body_raw_lane": {
+      "assessed_count": 1395,
+      "violation_count": 0,
+      "violation_frames": [],
+      "maximum_outside_m2": 0.0,
+      "minimum_interior_clearance_m": 0.5643058002844773,
+      "minimum_clearance_frame": 1841,
+      "status": "PASS"
+    },
+    "previous_sweep_raw_lane": {
+      "assessed_count": 1394,
+      "violation_count": 0,
+      "violation_frames": [],
+      "maximum_outside_m2": 0.0,
+      "minimum_interior_clearance_m": 0.5386767627438636,
+      "minimum_clearance_frame": 1845,
+      "status": "PASS"
+    },
+    "sampled_body_inset_10cm_lane": {
+      "assessed_count": 1395,
+      "violation_count": 0,
+      "violation_frames": [],
+      "maximum_outside_m2": 0.0,
+      "minimum_interior_clearance_m": 0.464305804063117,
+      "minimum_clearance_frame": 1841,
+      "status": "PASS"
+    },
+    "previous_sweep_inset_10cm_lane": {
+      "assessed_count": 1394,
+      "violation_count": 0,
+      "violation_frames": [],
+      "maximum_outside_m2": 0.0,
+      "minimum_interior_clearance_m": 0.43867677745205147,
+      "minimum_clearance_frame": 1845,
+      "status": "PASS"
+    }
+  },
+  "whole_capture_future_summary": {
+    "camera_anchor_count": 698,
+    "anchor_count_by_phase": {
+      "stationary_warmup": 35,
+      "driving": 598,
+      "stationary_tail": 65
+    },
+    "disposition_counts": {
+      "full_64_point_anchor": 633,
+      "tail_label_context_only": 65
+    },
+    "native_gap_count": 0,
+    "native_gaps": [],
+    "available_64_point_anchor_count": 633,
+    "bound_assessed_64_point_anchor_count": 633,
+    "bound_unassessed_anchor_count": 0,
+    "interpolation_counts": {
+      "linear_native_bracket": 40512
+    },
+    "all_available_prefixes": {
+      "10": {
+        "sample_count": 633,
+        "horizon_s": 1.0,
+        "horizon_eligible_anchor_count": 633,
+        "valid_step_count": 6330,
+        "invalid_step_count": 0,
+        "metrics": {
+          "speed_limit": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+              "point_index": 0,
+              "target_timestamp_ns": 15201663786,
+              "value": 2.4943549895662764
+            }
+          },
+          "speed_acceleration": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "speed_deceleration": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 17,
+            "violating_anchor_count": 9,
+            "horizon_eligible_violating_anchor_count": 9,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 17
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 17
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 9
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "xy_speed_limit": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1371",
+              "point_index": 9,
+              "target_timestamp_ns": 15301663774,
+              "value": 2.4621349516917026
+            }
+          },
+          "xy_acceleration": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_deceleration": {
+            "assessed_step_count": 6330,
+            "violating_step_count": 17,
+            "violating_anchor_count": 9,
+            "horizon_eligible_violating_anchor_count": 9,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 17
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 17
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 9
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_curvature": {
+            "assessed_step_count": 5849,
+            "violating_step_count": 16,
+            "violating_anchor_count": 7,
+            "horizon_eligible_violating_anchor_count": 7,
+            "unique_episode_relative_100ms_violation_tick_count": 3,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 16
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 16
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 7
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+              "point_index": 1,
+              "target_timestamp_ns": 54401664369,
+              "value": 5.468183703876128e-07
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 6,
+              "target_timestamp_ns": 67001664549,
+              "value": 99.13556101809512
+            }
+          },
+          "xy_lateral_acceleration": {
+            "assessed_step_count": 5849,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2401",
+              "point_index": 9,
+              "target_timestamp_ns": 66801664541,
+              "value": 7.443112173274102e-08
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": 0.12899212244868272
+            }
+          },
+          "yaw_label_heading_envelope": {
+            "assessed_step_count": 5819,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+              "point_index": 1,
+              "target_timestamp_ns": 64801664524,
+              "value": 1.865174681370263e-14
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+              "point_index": 0,
+              "target_timestamp_ns": 33601664060,
+              "value": 0.0025037708568453887
+            }
+          }
+        },
+        "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+        "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+      },
+      "30": {
+        "sample_count": 633,
+        "horizon_s": 3.0,
+        "horizon_eligible_anchor_count": 633,
+        "valid_step_count": 18990,
+        "invalid_step_count": 0,
+        "metrics": {
+          "speed_limit": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+              "point_index": 0,
+              "target_timestamp_ns": 15201663786,
+              "value": 2.4943549895662764
+            }
+          },
+          "speed_acceleration": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "speed_deceleration": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 57,
+            "violating_anchor_count": 29,
+            "horizon_eligible_violating_anchor_count": 29,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 57
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 57
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 29
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "xy_speed_limit": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1331",
+              "point_index": 29,
+              "target_timestamp_ns": 15301663744,
+              "value": 2.4621349520757763
+            }
+          },
+          "xy_acceleration": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_deceleration": {
+            "assessed_step_count": 18990,
+            "violating_step_count": 57,
+            "violating_anchor_count": 29,
+            "horizon_eligible_violating_anchor_count": 29,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 57
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 57
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 29
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_curvature": {
+            "assessed_step_count": 17589,
+            "violating_step_count": 76,
+            "violating_anchor_count": 27,
+            "horizon_eligible_violating_anchor_count": 27,
+            "unique_episode_relative_100ms_violation_tick_count": 3,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 76
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 76
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 27
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+              "point_index": 1,
+              "target_timestamp_ns": 54401664369,
+              "value": 5.468183703876128e-07
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 6,
+              "target_timestamp_ns": 67001664549,
+              "value": 99.13556101809512
+            }
+          },
+          "xy_lateral_acceleration": {
+            "assessed_step_count": 17589,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2363",
+              "point_index": 28,
+              "target_timestamp_ns": 66801664513,
+              "value": 7.438860160673489e-08
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": 0.12899212244868272
+            }
+          },
+          "yaw_label_heading_envelope": {
+            "assessed_step_count": 17459,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+              "point_index": 1,
+              "target_timestamp_ns": 64801664524,
+              "value": 1.865174681370263e-14
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+              "point_index": 0,
+              "target_timestamp_ns": 33601664060,
+              "value": 0.0025037708568453887
+            }
+          }
+        },
+        "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+        "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+      },
+      "64": {
+        "sample_count": 633,
+        "horizon_s": 6.4,
+        "horizon_eligible_anchor_count": 633,
+        "valid_step_count": 40512,
+        "invalid_step_count": 0,
+        "metrics": {
+          "speed_limit": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+              "point_index": 0,
+              "target_timestamp_ns": 15201663786,
+              "value": 2.4943549895662764
+            }
+          },
+          "speed_acceleration": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "speed_deceleration": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 125,
+            "violating_anchor_count": 63,
+            "horizon_eligible_violating_anchor_count": 63,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 125
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 125
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 63
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 1,
+              "target_timestamp_ns": 66501664549,
+              "value": -13.399922058942181
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+              "point_index": 0,
+              "target_timestamp_ns": 8501663686,
+              "value": 2.396514895992959
+            }
+          },
+          "xy_speed_limit": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+              "point_index": 0,
+              "target_timestamp_ns": 3201663607,
+              "value": 0.0
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1263",
+              "point_index": 63,
+              "target_timestamp_ns": 15301663694,
+              "value": 2.4621349527159286
+            }
+          },
+          "xy_acceleration": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_deceleration": {
+            "assessed_step_count": 40512,
+            "violating_step_count": 125,
+            "violating_anchor_count": 63,
+            "horizon_eligible_violating_anchor_count": 63,
+            "unique_episode_relative_100ms_violation_tick_count": 2,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 125
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 125
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 63
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": -16.79557598135147
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+              "point_index": 1,
+              "target_timestamp_ns": 8501663685,
+              "value": 2.3927703777756726
+            }
+          },
+          "xy_curvature": {
+            "assessed_step_count": 37481,
+            "violating_step_count": 178,
+            "violating_anchor_count": 61,
+            "horizon_eligible_violating_anchor_count": 61,
+            "unique_episode_relative_100ms_violation_tick_count": 3,
+            "violating_steps_by_capture_phase": {
+              "stationary_tail": 178
+            },
+            "violating_steps_by_future_goal_proximity": {
+              "interior": 178
+            },
+            "violating_anchors_by_capture_phase": {
+              "stationary_tail": 61
+            },
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+              "point_index": 1,
+              "target_timestamp_ns": 54401664369,
+              "value": 5.468183703876128e-07
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 6,
+              "target_timestamp_ns": 67001664549,
+              "value": 99.13556101809512
+            }
+          },
+          "xy_lateral_acceleration": {
+            "assessed_step_count": 37481,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2293",
+              "point_index": 63,
+              "target_timestamp_ns": 66801664461,
+              "value": 7.4309230787766e-08
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+              "point_index": 2,
+              "target_timestamp_ns": 66601664549,
+              "value": 0.12899212244868272
+            }
+          },
+          "yaw_label_heading_envelope": {
+            "assessed_step_count": 37181,
+            "violating_step_count": 0,
+            "violating_anchor_count": 0,
+            "horizon_eligible_violating_anchor_count": 0,
+            "unique_episode_relative_100ms_violation_tick_count": 0,
+            "violating_steps_by_capture_phase": {},
+            "violating_steps_by_future_goal_proximity": {},
+            "violating_anchors_by_capture_phase": {},
+            "minimum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+              "point_index": 1,
+              "target_timestamp_ns": 64801664524,
+              "value": 1.865174681370263e-14
+            },
+            "maximum": {
+              "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+              "point_index": 0,
+              "target_timestamp_ns": 33601664060,
+              "value": 0.0025037708568453887
+            }
+          }
+        },
+        "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+        "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+      }
+    },
+    "full_64_point_anchors": {
+      "sample_count": 633,
+      "horizon_s": 6.4,
+      "horizon_eligible_anchor_count": 633,
+      "valid_step_count": 40512,
+      "invalid_step_count": 0,
+      "metrics": {
+        "speed_limit": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+            "point_index": 0,
+            "target_timestamp_ns": 3201663607,
+            "value": 0.0
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+            "point_index": 0,
+            "target_timestamp_ns": 15201663786,
+            "value": 2.4943549895662764
+          }
+        },
+        "speed_acceleration": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 1,
+            "target_timestamp_ns": 66501664549,
+            "value": -13.399922058942181
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+            "point_index": 0,
+            "target_timestamp_ns": 8501663686,
+            "value": 2.396514895992959
+          }
+        },
+        "speed_deceleration": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 125,
+          "violating_anchor_count": 63,
+          "horizon_eligible_violating_anchor_count": 63,
+          "unique_episode_relative_100ms_violation_tick_count": 2,
+          "violating_steps_by_capture_phase": {
+            "stationary_tail": 125
+          },
+          "violating_steps_by_future_goal_proximity": {
+            "interior": 125
+          },
+          "violating_anchors_by_capture_phase": {
+            "stationary_tail": 63
+          },
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 1,
+            "target_timestamp_ns": 66501664549,
+            "value": -13.399922058942181
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+            "point_index": 0,
+            "target_timestamp_ns": 8501663686,
+            "value": 2.396514895992959
+          }
+        },
+        "xy_speed_limit": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+            "point_index": 0,
+            "target_timestamp_ns": 3201663607,
+            "value": 0.0
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1263",
+            "point_index": 63,
+            "target_timestamp_ns": 15301663694,
+            "value": 2.4621349527159286
+          }
+        },
+        "xy_acceleration": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 2,
+            "target_timestamp_ns": 66601664549,
+            "value": -16.79557598135147
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+            "point_index": 1,
+            "target_timestamp_ns": 8501663685,
+            "value": 2.3927703777756726
+          }
+        },
+        "xy_deceleration": {
+          "assessed_step_count": 40512,
+          "violating_step_count": 125,
+          "violating_anchor_count": 63,
+          "horizon_eligible_violating_anchor_count": 63,
+          "unique_episode_relative_100ms_violation_tick_count": 2,
+          "violating_steps_by_capture_phase": {
+            "stationary_tail": 125
+          },
+          "violating_steps_by_future_goal_proximity": {
+            "interior": 125
+          },
+          "violating_anchors_by_capture_phase": {
+            "stationary_tail": 63
+          },
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 2,
+            "target_timestamp_ns": 66601664549,
+            "value": -16.79557598135147
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+            "point_index": 1,
+            "target_timestamp_ns": 8501663685,
+            "value": 2.3927703777756726
+          }
+        },
+        "xy_curvature": {
+          "assessed_step_count": 37481,
+          "violating_step_count": 178,
+          "violating_anchor_count": 61,
+          "horizon_eligible_violating_anchor_count": 61,
+          "unique_episode_relative_100ms_violation_tick_count": 3,
+          "violating_steps_by_capture_phase": {
+            "stationary_tail": 178
+          },
+          "violating_steps_by_future_goal_proximity": {
+            "interior": 178
+          },
+          "violating_anchors_by_capture_phase": {
+            "stationary_tail": 61
+          },
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+            "point_index": 1,
+            "target_timestamp_ns": 54401664369,
+            "value": 5.468183703876128e-07
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 6,
+            "target_timestamp_ns": 67001664549,
+            "value": 99.13556101809512
+          }
+        },
+        "xy_lateral_acceleration": {
+          "assessed_step_count": 37481,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2293",
+            "point_index": 63,
+            "target_timestamp_ns": 66801664461,
+            "value": 7.4309230787766e-08
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+            "point_index": 2,
+            "target_timestamp_ns": 66601664549,
+            "value": 0.12899212244868272
+          }
+        },
+        "yaw_label_heading_envelope": {
+          "assessed_step_count": 37181,
+          "violating_step_count": 0,
+          "violating_anchor_count": 0,
+          "horizon_eligible_violating_anchor_count": 0,
+          "unique_episode_relative_100ms_violation_tick_count": 0,
+          "violating_steps_by_capture_phase": {},
+          "violating_steps_by_future_goal_proximity": {},
+          "violating_anchors_by_capture_phase": {},
+          "minimum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+            "point_index": 1,
+            "target_timestamp_ns": 64801664524,
+            "value": 1.865174681370263e-14
+          },
+          "maximum": {
+            "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+            "point_index": 0,
+            "target_timestamp_ns": 33601664060,
+            "value": 0.0025037708568453887
+          }
+        }
+      },
+      "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+      "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+    },
+    "by_anchor_phase": {
+      "stationary_warmup": {
+        "10": {
+          "sample_count": 35,
+          "horizon_s": 1.0,
+          "horizon_eligible_anchor_count": 35,
+          "valid_step_count": 350,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1149",
+                "point_index": 0,
+                "target_timestamp_ns": 3301663609,
+                "value": 1.0110835027783106e-06
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1149",
+                "point_index": 1,
+                "target_timestamp_ns": 3401663609,
+                "value": -7.767943964850456e-06
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1149",
+                "point_index": 0,
+                "target_timestamp_ns": 3301663609,
+                "value": 1.0110835027783106e-05
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1149",
+                "point_index": 1,
+                "target_timestamp_ns": 3401663609,
+                "value": -7.767943964850456e-06
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1149",
+                "point_index": 0,
+                "target_timestamp_ns": 3301663609,
+                "value": 1.0110835027783106e-05
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 2,
+                "target_timestamp_ns": 3401663607,
+                "value": 2.273914383177909e-11
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 2,
+                "target_timestamp_ns": 3401663607,
+                "value": 2.273914383177909e-10
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 350,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 2,
+                "target_timestamp_ns": 3401663607,
+                "value": 2.273914383177909e-10
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 0,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": null,
+              "maximum": null
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 0,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": null,
+              "maximum": null
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 0,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": null,
+              "maximum": null
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 1.0110835027783106e-06,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.0
+        },
+        "30": {
+          "sample_count": 35,
+          "horizon_s": 3.0,
+          "horizon_eligible_anchor_count": 35,
+          "valid_step_count": 1050,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 29,
+                "target_timestamp_ns": 9501663658,
+                "value": 0.7327838533482723
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 20,
+                "target_timestamp_ns": 8601663658,
+                "value": -0.04457651486798553
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.396514400239307
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 20,
+                "target_timestamp_ns": 8601663658,
+                "value": -0.04457651486798553
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.396514400239307
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 29,
+                "target_timestamp_ns": 9501663658,
+                "value": 0.6746344559820218
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.3927702323096405
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 1050,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.3927702323096405
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 78,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1207",
+                "point_index": 29,
+                "target_timestamp_ns": 9101663652,
+                "value": 0.013496914264480282
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 0.17859768101611734
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 78,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1193",
+                "point_index": 29,
+                "target_timestamp_ns": 8401663641,
+                "value": 0.0008752769592043388
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 29,
+                "target_timestamp_ns": 9501663658,
+                "value": 0.046377286114158686
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 78,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 18,
+                "target_timestamp_ns": 8401663658,
+                "value": 5.966338534335591e-13
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 28,
+                "target_timestamp_ns": 9401663658,
+                "value": 0.0002631202246463626
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.08604185613865811,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.0026312022464636256
+        },
+        "64": {
+          "sample_count": 35,
+          "horizon_s": 6.4,
+          "horizon_eligible_anchor_count": 35,
+          "valid_step_count": 2240,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 63,
+                "target_timestamp_ns": 12901663658,
+                "value": 1.896495041654441
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 20,
+                "target_timestamp_ns": 8601663658,
+                "value": -0.04457651486798553
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.396514400239307
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 20,
+                "target_timestamp_ns": 8601663658,
+                "value": -0.04457651486798553
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.396514400239307
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1147",
+                "point_index": 0,
+                "target_timestamp_ns": 3201663607,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 63,
+                "target_timestamp_ns": 12901663658,
+                "value": 1.8466953581266066
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.3927702323096405
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 2240,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1159",
+                "point_index": 0,
+                "target_timestamp_ns": 3801663616,
+                "value": -6.365008335977197e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 2.3927702323096405
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 1015,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 62,
+                "target_timestamp_ns": 12801663658,
+                "value": 7.220210369652287e-05
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 19,
+                "target_timestamp_ns": 8501663658,
+                "value": 0.17859768101611734
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 1015,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 62,
+                "target_timestamp_ns": 12801663658,
+                "value": 0.00023805878152728473
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 32,
+                "target_timestamp_ns": 9801663658,
+                "value": 0.049222784888632215
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 1015,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 18,
+                "target_timestamp_ns": 8401663658,
+                "value": 5.966338534335591e-13
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1215",
+                "point_index": 28,
+                "target_timestamp_ns": 9401663658,
+                "value": 0.0002631202246463626
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.08604185613865811,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.0026312022464636256
+        }
+      },
+      "driving": {
+        "10": {
+          "sample_count": 598,
+          "horizon_s": 1.0,
+          "horizon_eligible_anchor_count": 598,
+          "valid_step_count": 5980,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2409",
+                "point_index": 9,
+                "target_timestamp_ns": 67201664547,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+                "point_index": 0,
+                "target_timestamp_ns": 15201663786,
+                "value": 2.4943549895662764
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 17,
+              "violating_anchor_count": 9,
+              "horizon_eligible_violating_anchor_count": 9,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 17
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 17
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 9
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1217",
+                "point_index": 0,
+                "target_timestamp_ns": 6701663659,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1371",
+                "point_index": 9,
+                "target_timestamp_ns": 15301663774,
+                "value": 2.4621349516917026
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 5980,
+              "violating_step_count": 17,
+              "violating_anchor_count": 9,
+              "horizon_eligible_violating_anchor_count": 9,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 17
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 17
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 9
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 5849,
+              "violating_step_count": 16,
+              "violating_anchor_count": 7,
+              "horizon_eligible_violating_anchor_count": 7,
+              "unique_episode_relative_100ms_violation_tick_count": 3,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 16
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 16
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 7
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+                "point_index": 1,
+                "target_timestamp_ns": 54401664369,
+                "value": 5.468183703876128e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 6,
+                "target_timestamp_ns": 67001664549,
+                "value": 99.13556101809512
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 5849,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2401",
+                "point_index": 9,
+                "target_timestamp_ns": 66801664541,
+                "value": 7.443112173274102e-08
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": 0.12899212244868272
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 5819,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+                "point_index": 1,
+                "target_timestamp_ns": 64801664524,
+                "value": 1.865174681370263e-14
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+                "point_index": 0,
+                "target_timestamp_ns": 33601664060,
+                "value": 0.0025037708568453887
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+        },
+        "30": {
+          "sample_count": 598,
+          "horizon_s": 3.0,
+          "horizon_eligible_anchor_count": 598,
+          "valid_step_count": 17940,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2369",
+                "point_index": 29,
+                "target_timestamp_ns": 67201664518,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+                "point_index": 0,
+                "target_timestamp_ns": 15201663786,
+                "value": 2.4943549895662764
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 57,
+              "violating_anchor_count": 29,
+              "horizon_eligible_violating_anchor_count": 29,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 57
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 57
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 29
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1217",
+                "point_index": 0,
+                "target_timestamp_ns": 6701663659,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1331",
+                "point_index": 29,
+                "target_timestamp_ns": 15301663744,
+                "value": 2.4621349520757763
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 17940,
+              "violating_step_count": 57,
+              "violating_anchor_count": 29,
+              "horizon_eligible_violating_anchor_count": 29,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 57
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 57
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 29
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 17511,
+              "violating_step_count": 76,
+              "violating_anchor_count": 27,
+              "horizon_eligible_violating_anchor_count": 27,
+              "unique_episode_relative_100ms_violation_tick_count": 3,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 76
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 76
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 27
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+                "point_index": 1,
+                "target_timestamp_ns": 54401664369,
+                "value": 5.468183703876128e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 6,
+                "target_timestamp_ns": 67001664549,
+                "value": 99.13556101809512
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 17511,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2363",
+                "point_index": 28,
+                "target_timestamp_ns": 66801664513,
+                "value": 7.438860160673489e-08
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": 0.12899212244868272
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 17381,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+                "point_index": 1,
+                "target_timestamp_ns": 64801664524,
+                "value": 1.865174681370263e-14
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+                "point_index": 0,
+                "target_timestamp_ns": 33601664060,
+                "value": 0.0025037708568453887
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+        },
+        "64": {
+          "sample_count": 598,
+          "horizon_s": 6.4,
+          "horizon_eligible_anchor_count": 598,
+          "valid_step_count": 38272,
+          "invalid_step_count": 0,
+          "metrics": {
+            "speed_limit": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2301",
+                "point_index": 63,
+                "target_timestamp_ns": 67201664467,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1387",
+                "point_index": 0,
+                "target_timestamp_ns": 15201663786,
+                "value": 2.4943549895662764
+              }
+            },
+            "speed_acceleration": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "speed_deceleration": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 125,
+              "violating_anchor_count": 63,
+              "horizon_eligible_violating_anchor_count": 63,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 125
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 125
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 63
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 1,
+                "target_timestamp_ns": 66501664549,
+                "value": -13.399922058942181
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1253",
+                "point_index": 0,
+                "target_timestamp_ns": 8501663686,
+                "value": 2.396514895992959
+              }
+            },
+            "xy_speed_limit": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1217",
+                "point_index": 0,
+                "target_timestamp_ns": 6701663659,
+                "value": 0.0
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1263",
+                "point_index": 63,
+                "target_timestamp_ns": 15301663694,
+                "value": 2.4621349527159286
+              }
+            },
+            "xy_acceleration": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_deceleration": {
+              "assessed_step_count": 38272,
+              "violating_step_count": 125,
+              "violating_anchor_count": 63,
+              "horizon_eligible_violating_anchor_count": 63,
+              "unique_episode_relative_100ms_violation_tick_count": 2,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 125
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 125
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 63
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": -16.79557598135147
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1251",
+                "point_index": 1,
+                "target_timestamp_ns": 8501663685,
+                "value": 2.3927703777756726
+              }
+            },
+            "xy_curvature": {
+              "assessed_step_count": 36466,
+              "violating_step_count": 178,
+              "violating_anchor_count": 61,
+              "horizon_eligible_violating_anchor_count": 61,
+              "unique_episode_relative_100ms_violation_tick_count": 3,
+              "violating_steps_by_capture_phase": {
+                "stationary_tail": 178
+              },
+              "violating_steps_by_future_goal_proximity": {
+                "interior": 178
+              },
+              "violating_anchors_by_capture_phase": {
+                "stationary_tail": 61
+              },
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2169",
+                "point_index": 1,
+                "target_timestamp_ns": 54401664369,
+                "value": 5.468183703876128e-07
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 6,
+                "target_timestamp_ns": 67001664549,
+                "value": 99.13556101809512
+              }
+            },
+            "xy_lateral_acceleration": {
+              "assessed_step_count": 36466,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2293",
+                "point_index": 63,
+                "target_timestamp_ns": 66801664461,
+                "value": 7.4309230787766e-08
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2411",
+                "point_index": 2,
+                "target_timestamp_ns": 66601664549,
+                "value": 0.12899212244868272
+              }
+            },
+            "yaw_label_heading_envelope": {
+              "assessed_step_count": 36166,
+              "violating_step_count": 0,
+              "violating_anchor_count": 0,
+              "horizon_eligible_violating_anchor_count": 0,
+              "unique_episode_relative_100ms_violation_tick_count": 0,
+              "violating_steps_by_capture_phase": {},
+              "violating_steps_by_future_goal_proximity": {},
+              "violating_anchors_by_capture_phase": {},
+              "minimum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:2377",
+                "point_index": 1,
+                "target_timestamp_ns": 64801664524,
+                "value": 1.865174681370263e-14
+              },
+              "maximum": {
+                "sample_id": "T07-LOW-CRUISE-20261001-V1:raw-frame:1755",
+                "point_index": 0,
+                "target_timestamp_ns": 33601664060,
+                "value": 0.0025037708568453887
+              }
+            }
+          },
+          "speed_xy_consistency_max_absolute_error_mps": 0.8347603893067919,
+          "maximum_absolute_vehicle_yaw_rate_radps": 0.025037708568453887
+        }
+      }
+    },
+    "tail_crossing_anchor_count": 64,
+    "training_data_approved": false,
+    "definitions": {
+      "horizons_seconds": [
+        1.0,
+        3.0,
+        6.4
+      ],
+      "decoder_initial_speed": "clamped longitudinal vx, not planar speed",
+      "speed_label": "Endpoint measured planar velocity; differs from XY interval-average speed.",
+      "xy_bounds": "Necessary discrete speed/acceleration/curvature/lateral bounds with initial path heading zero, not sufficient reachability.",
+      "body_yaw": "Vehicle yaw-label heading-envelope proxy only; not decoder displacement heading or a proof of XY impossibility.",
+      "stationary_heading": "Steps <=0.0001m remain unassessed by the unchanged heading diagnostic, not counted as passing.",
+      "native_gaps": "A horizon becomes an unavailable contiguous prefix at any missing/off-grid native20Hz interval; exact100ms endpoints do not override source incompleteness.",
+      "denominators": "All warmup/driving camera anchors retained; tail anchors context only; overlapping windows are not independent maneuvers.",
+      "not_solved": "Route-relative slip/reachability, physical reference-point identity, content realism, safety and dataset admission."
+    }
+  },
+  "training_data_approved": false,
+  "dataset_conversion_performed": false,
+  "admission_authority": "NONE",
+  "interpretation": "The frozen V3 QA remains BLOCKED_UNASSESSED_EVIDENCE. These raw numerical checks are posthoc diagnostics, not a bypass or an admission."
+}

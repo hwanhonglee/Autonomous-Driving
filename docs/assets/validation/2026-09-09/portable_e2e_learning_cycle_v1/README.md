@@ -1,5 +1,10 @@
 # Portable E2E — 9월 9일 학습·데이터 품질 실험
 
+<!-- HH_260906 - Append the September 14 recovery without implying uninterrupted overnight or ongoing training. -->
+**9월 14일 재개 확인:** 마지막 [12번 순위 선택기 이어학습](02_overnight_data_and_learning/12_drive_ranking_continuation/README.md)은
+9월 9일 06:41 KST에 정상 종료됐습니다. 미완료였던 결과 회수·독립 검산을 마쳤고 미채택입니다.
+새 학습을 중복 실행하지 않았습니다. [현재 목표·기능 수·환경별 현황·학습 계획](../../../../portable-e2e-status-2026-09-14.md)을 먼저 보세요.
+
 <!-- HH_260906 - Prioritize a bounded measured CARLA-data training experiment while separating development findings from deployment qualification. -->
 
 2026-09-09 사용자의 학습 우선 요청에 따라, 추가 설치 없이 기존 개인 venv와 GPU 0을
@@ -38,6 +43,12 @@ worker 0→2→2→0의 학습 기록은 모두 바이트 동일했고, 원격 c
 더하지 않습니다. 동일 입력·다른 미래 정답의 11쌍을 원본 그대로 분석했고 라벨을 수정하지 않았습니다.
 선택기의 전체 평균 오차는 개선됐지만 정지 유지 그룹은 퇴행해 채택하지 않았습니다.
 
+<!-- HH_260906 - Report the later residual comparison as six additional head fits, not whole-model training or independent safety validation. -->
+06:08–06:14 KST에는 [같은 크기의 잔차 선택기 A/B 6회](02_overnight_data_and_learning/11_matched_residual_selector/README.md)를
+추가 완료했습니다. 후보 인지 선택기가 TRAIN 정지 유지 118개를 세 seed 모두 보존했지만,
+VAL 경로 오차는 두 seed 개선·한 seed 악화여서 채택하지 않았습니다. VAL 정지 유지 표본은 0개입니다.
+오늘 이 두 연구 묶음의 선택기 전용 학습은 6+6회이며 전체 모델 학습 33회와 분리해 셉니다.
+
 이전 [2026-09-08 결과](../../2026-09-08/portable_e2e_learning_cycle_v1/README.md)는 그대로 보존합니다.
 원격은 학습·평가, 로컬은 코드 검증·CARLA expert 수집·결과 분석을 담당합니다.
 01의 학습 캠페인은 CARLA를 실행하지 않았고, 02의 로컬 수집은 별도 expert 제어입니다.
@@ -57,6 +68,9 @@ worker 0→2→2→0의 학습 기록은 모두 바이트 동일했고, 원격 c
 고정 commit `7f1141b`에서 **5,960 passed / 6 skipped / 0 failed**였습니다.
 05:40 KST의 [cf3bfc2 후속 전체 검사](02_overnight_data_and_learning/07_code_verification/frozen_cf3bfc2/README.md)는
 **6,095 passed / 6 skipped / 0 failed**이며, 위의 과거 검사 수와 합산하지 않습니다.
+06:23 KST의 [9d03bb2 후속 전체 검사](02_overnight_data_and_learning/07_code_verification/frozen_9d03bb2/README.md)는
+**6,312 passed / 6 skipped / 0 failed**, 소스·설정 579개 전후 동일입니다.
+이 커밋 뒤에 작성한 잔차 결과 요약기나 순위 보조학습 코드까지 검사한 수치는 아닙니다.
 이전 실패 로그도 보존하며, 이 테스트 통과가 차량 주행이나 모델 성능 통과를 의미하지 않습니다.
 9월 7일 캠페인 전체 학습 15회와 오늘 완료한 18회를 합친 후속 캠페인 실적은 33회이며,
 9월 8일 선택기 전용 9회와 이번 이어학습 6회, 짧은 계측 학습 2회·로딩 비교 4회는

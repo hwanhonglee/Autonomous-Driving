@@ -1,0 +1,39 @@
+{
+  "provenance": "HH_261012 - Retain the latest read-only physical GPU 0 failure and the limited-PATH diagnostic failure without claiming training.",
+  "checked_at_utc": "2026-10-12T09:17:22.343344+00:00",
+  "checked_at_kst": "2026-10-12T18:17:22.343344+09:00",
+  "ssh_authenticated": true,
+  "scope": "read_only_physical_gpu_0",
+  "training_started": false,
+  "gpu_availability_verified": false,
+  "gpu_1_used": false,
+  "system_changes": false,
+  "kernel": "6.8.0-142-generic",
+  "loaded_kernel_driver_version": "580.173.02",
+  "loaded_kernel_driver_raw": "NVRM version: NVIDIA UNIX Open Kernel Module for x86_64  580.173.02  Release Build  (dvs-builder@U22-I3-AK02-24-4)  Tue Jun 23 08:17:01 UTC 2026\nGCC version:  gcc version 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04.1) \n",
+  "commands": [
+    {
+      "argv": ["uname", "-r"],
+      "returncode": 0,
+      "stdout": "6.8.0-142-generic\n",
+      "stderr": ""
+    },
+    {
+      "argv": ["modinfo", "-F", "version", "nvidia"],
+      "error_type": "FileNotFoundError",
+      "note": "The deliberately limited PATH was /usr/bin:/bin; this invocation did not remeasure the installed kernel module version. Earlier absolute-path measurements are separate evidence."
+    },
+    {
+      "argv": ["nvidia-smi", "-i", "0", "--query-gpu=index,uuid,driver_version,memory.total,memory.free,utilization.gpu", "--format=csv,noheader,nounits"],
+      "returncode": 18,
+      "stdout": "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.178\n",
+      "stderr": ""
+    },
+    {
+      "argv": ["nvidia-smi", "-i", "0", "--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader,nounits"],
+      "returncode": 18,
+      "stdout": "Failed to initialize NVML: Driver/library version mismatch\nNVML library version: 580.178\n",
+      "stderr": ""
+    }
+  ]
+}

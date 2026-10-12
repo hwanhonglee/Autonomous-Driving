@@ -1,0 +1,77 @@
+{
+  "decision": {
+    "new_function_heads_allowed": false,
+    "next_experiment": "J_EXPLICIT_CAUSAL_ROUTE_CONDITIONED_DRIVE_RANKER",
+    "same_data_longer_fit_supported": false,
+    "status": "FAIL_DOMAIN_GENERALIZATION_MISSING_CAUSAL_ROUTE_INTENT"
+  },
+  "dev_straight_candidate_selection": {
+    "F_or_I0": {
+      "candidate_2": 65,
+      "candidate_5": 258,
+      "oracle_agreement": 51
+    },
+    "I1": {
+      "candidate_2": 105,
+      "candidate_3": 4,
+      "candidate_5": 219,
+      "oracle_agreement": 91
+    },
+    "oracle": {
+      "candidate_0": 16,
+      "candidate_2": 312
+    },
+    "sample_count": 328
+  },
+  "drive_oracle_agreement_percent": {
+    "I0": {
+      "dev": 27.74,
+      "train": 90.42
+    },
+    "I1": {
+      "dev": 30.95,
+      "train": 91.40
+    }
+  },
+  "i1_optimization": {
+    "epoch_0_loss": 0.2005,
+    "epoch_19_loss": 0.1304,
+    "epoch_2_loss": 0.1368,
+    "gradient_norm_above_5_count": 0,
+    "maximum_gradient_norm": 1.886,
+    "nonfinite_count": 0
+  },
+  "label_free_posthoc_probe": {
+    "combined_ade_fde_speed": [1.861, 5.057, 0.922],
+    "dev_was_already_observed": true,
+    "promotion_evidence": false,
+    "right_ade_fde_speed": [3.150, 8.348, 1.314],
+    "score_inputs": [
+      "navigation.route_polyline_base_m",
+      "current_ego_linear_speed_norm",
+      "frozen_candidate_xy",
+      "original_f_drive_stop_mode"
+    ],
+    "straight_ade_fde_speed": [0.537, 1.675, 0.518],
+    "straight_candidate_2_selected_count": 319,
+    "straight_sample_count": 328,
+    "target_or_future_ego_used_for_scoring": false,
+    "threshold_or_fallback_tuned": false
+  },
+  "logit_domain_flip": {
+    "candidate_2_minus_5_difference": 20.004,
+    "town03_15kph_dev_mean": -1.993,
+    "town07_15kph_train_mean": 18.011
+  },
+  "schema": "portable_e2e.moving_drive_mode_residual_failure_analysis.v1",
+  "source_artifact": {
+    "manifest_sha256": "72b741f9bfe815e88cdcc85a0b7067e965230d9e3581b845226bc57926c1ad08",
+    "summary_sha256": "67d13d580c43bc42bcee818339c64e207a84d7ed66d848176c3dac895126b0cf"
+  },
+  "train_stop_loss_interference": {
+    "f_original_stop_count": 243,
+    "fraction_percent": 16.47457627118644,
+    "loss_should_exclude_in_j": true,
+    "train_count": 1475
+  }
+}

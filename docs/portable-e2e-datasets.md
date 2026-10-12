@@ -107,7 +107,7 @@ SQLite record join·common10 변환·학습은 별도 단계이며 package 설�
 
 ## 이 프로젝트가 요구하는 `common10` 형식
 
-정식 기준은 [`portable_e2e/config/common_10hz_v1.contract.json`](../portable_e2e/config/common_10hz_v1.contract.json)이다. 핵심만 풀어 쓰면 다음과 같다.
+정식 기준은 [`portable_e2e/config/common_10hz_v1.contract.json`](../learning/portable_e2e/config/common_10hz_v1.contract.json)이다. 핵심만 풀어 쓰면 다음과 같다.
 
 | 항목 | 프로젝트 기준 |
 |---|---|

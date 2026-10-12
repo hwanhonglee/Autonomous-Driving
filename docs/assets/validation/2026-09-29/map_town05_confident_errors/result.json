@@ -1,0 +1,172 @@
+{
+  "audit_script_sha256": "726cf3204598882fc2264221cc214f62649e06706b8b51f15788309840f0d2df",
+  "definitions": {
+    "lane_missed": "oracle lane_marking pixels predicted as any class other than lane_marking",
+    "median_and_p90": "NumPy linear quantiles of all pixels in the named class mask",
+    "road_as_sidewalk": "oracle road pixels predicted as sidewalk",
+    "score": "maximum softmax probability of the saved argmax class",
+    "score_at_least_0_5": "pixel meets frozen map score filter only; depth/stride/spatial filters not applied",
+    "score_at_least_0_9": "descriptive high-score count; not a selected decision threshold"
+  },
+  "gpu_used": false,
+  "independent_validation": false,
+  "input_sha256": {
+    "frame_0000_prediction.npz": "6059c24c94007b9f763edefef8ffdb2bfc4ec2a38e0f524c99b01d0189562ca0",
+    "frame_0115_prediction.npz": "9c3f649765244684579bc4e8422c4e337f102ec7f6a1f527b96e48217948def3",
+    "frame_0231_prediction.npz": "deda991a1f333a78a574c4848c3d38d3aacda7bf34174e6176ba038776f689af",
+    "frames/0000.npz": "0eb681ae5deef4c189c369fe2362b7a4b3e8124dc6420b33df052504b17bc8d9",
+    "frames/0115.npz": "b5bc2dfbcb63ad9a154e0877545ca647fdcf9164849ef43136fefb5ef7a75bcf",
+    "frames/0231.npz": "915d2741bdcdd19240ec2016ca1576d969ab64f16cb007184ae49b15bef338f0"
+  },
+  "model_promoted": false,
+  "model_trained": false,
+  "post_hoc_after_failure": true,
+  "rows": [
+    {
+      "errors": {
+        "all_wrong": {
+          "median_score": 0.7854141294956207,
+          "p90_score": 0.9893911719322205,
+          "pixels": 127124,
+          "score_at_least_0_5": 110724,
+          "score_at_least_0_9": 40053
+        },
+        "lane_correct": {
+          "median_score": 0.9309121966362,
+          "p90_score": 0.996369993686676,
+          "pixels": 303,
+          "score_at_least_0_5": 288,
+          "score_at_least_0_9": 178
+        },
+        "lane_missed": {
+          "median_score": 0.8644738793373108,
+          "p90_score": 0.9942605376243592,
+          "pixels": 4772,
+          "score_at_least_0_5": 4349,
+          "score_at_least_0_9": 2085
+        },
+        "road_as_pole": {
+          "median_score": 0.5143176913261414,
+          "p90_score": 0.7125088930130007,
+          "pixels": 5455,
+          "score_at_least_0_5": 2965,
+          "score_at_least_0_9": 0
+        },
+        "road_as_sidewalk": {
+          "median_score": 0.7816415429115295,
+          "p90_score": 0.969630253314972,
+          "pixels": 71513,
+          "score_at_least_0_5": 65180,
+          "score_at_least_0_9": 18541
+        },
+        "road_correct": {
+          "median_score": 0.6995834708213806,
+          "p90_score": 0.9350265264511108,
+          "pixels": 36140,
+          "score_at_least_0_5": 31434,
+          "score_at_least_0_9": 5887
+        }
+      },
+      "index": 0
+    },
+    {
+      "errors": {
+        "all_wrong": {
+          "median_score": 0.7646552622318268,
+          "p90_score": 0.9916921496391297,
+          "pixels": 96820,
+          "score_at_least_0_5": 82224,
+          "score_at_least_0_9": 30989
+        },
+        "lane_correct": {
+          "median_score": 0.4345559924840927,
+          "p90_score": 0.9046668291091919,
+          "pixels": 22,
+          "score_at_least_0_5": 9,
+          "score_at_least_0_9": 3
+        },
+        "lane_missed": {
+          "median_score": 0.9510892629623413,
+          "p90_score": 0.9968122363090515,
+          "pixels": 11177,
+          "score_at_least_0_5": 10648,
+          "score_at_least_0_9": 6934
+        },
+        "road_as_pole": {
+          "median_score": 0.5814183950424194,
+          "p90_score": 0.8138971626758575,
+          "pixels": 13512,
+          "score_at_least_0_5": 9302,
+          "score_at_least_0_9": 256
+        },
+        "road_as_sidewalk": {
+          "median_score": 0.7066716551780701,
+          "p90_score": 0.9576839208602905,
+          "pixels": 33587,
+          "score_at_least_0_5": 27696,
+          "score_at_least_0_9": 6832
+        },
+        "road_correct": {
+          "median_score": 0.8513184189796448,
+          "p90_score": 0.9876628518104553,
+          "pixels": 70689,
+          "score_at_least_0_5": 65332,
+          "score_at_least_0_9": 28818
+        }
+      },
+      "index": 115
+    },
+    {
+      "errors": {
+        "all_wrong": {
+          "median_score": 0.8569543957710266,
+          "p90_score": 0.9989070296287537,
+          "pixels": 111921,
+          "score_at_least_0_5": 100210,
+          "score_at_least_0_9": 49158
+        },
+        "lane_correct": {
+          "median_score": 0.9863093197345734,
+          "p90_score": 0.9997210562229156,
+          "pixels": 850,
+          "score_at_least_0_5": 835,
+          "score_at_least_0_9": 651
+        },
+        "lane_missed": {
+          "median_score": 0.5691365599632263,
+          "p90_score": 0.9148869812488556,
+          "pixels": 3366,
+          "score_at_least_0_5": 2080,
+          "score_at_least_0_9": 397
+        },
+        "road_as_pole": {
+          "median_score": 0.5918273329734802,
+          "p90_score": 0.8354632735252381,
+          "pixels": 6549,
+          "score_at_least_0_5": 4749,
+          "score_at_least_0_9": 239
+        },
+        "road_as_sidewalk": {
+          "median_score": 0.8170866072177887,
+          "p90_score": 0.980112099647522,
+          "pixels": 43244,
+          "score_at_least_0_5": 39919,
+          "score_at_least_0_9": 14980
+        },
+        "road_correct": {
+          "median_score": 0.7964684367179871,
+          "p90_score": 0.9622346460819244,
+          "pixels": 49096,
+          "score_at_least_0_5": 45713,
+          "score_at_least_0_9": 13740
+        }
+      },
+      "index": 231
+    }
+  ],
+  "schema": "portable_e2e.map_town05_confident_errors.v1",
+  "semantic_mapper_sha256": "e900ac60fa5e66ec621cfd6a108d3960013d19e696ea7bc74e1e619669b8105d",
+  "source_summary_sha256": "cb4e9df72409ba9c8a6d5109c2255c85a1aeefacb78680c71516fe9ecd66b59c",
+  "status": "POST_HOC_REPEATED_DEV_DIAGNOSTIC_ONLY",
+  "threshold_tuned": false
+}

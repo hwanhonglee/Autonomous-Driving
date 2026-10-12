@@ -5,7 +5,8 @@
 2026-09-09 **05:34:23–05:40:53 KST 실제 실행 완료**. 기존 10-epoch STOPMIX 3개 모델의
 카메라 인코더·경로 생성기·12개 후보는 고정하고, 후보를 선택하는 점수 헤드만 새로 학습합니다.
 전체 모델 학습 6회가 아니라 **선택기 전용 학습 6회**입니다. 종료·무결성 검사 오류는 0개이고,
-9,240 step·36,930회 표본 노출을 완료했습니다. 모델은 미채택이며 상세 자료 수집을 진행 중입니다.
+9,240 step·36,930회 표본 노출을 완료했습니다. 모델은 미채택입니다.
+[전체 결과·108개 원본 PNG·6개 전체 학습 기록](results/README.md)을 게시했습니다.
 
 | 고정 조건 | 내용 |
 |---|---|
@@ -37,6 +38,15 @@ local commit `cf3bfc2`에 보존했고, 원격 b478 소스를 덮어쓰지 않�
 후보 인지 B는 세 seed의 VAL 평균 경로 오차가 원래 모델보다 줄었지만, TRAIN의 정지 유지
 118개에서 STOP 선택은 모두 0개로 퇴행했습니다. VAL에는 정지 유지 표본이 0개이므로
 VAL 평균만으로 정지 성능이 좋아졌다고 결론내릴 수 없습니다. 전체 결과·그림·원본 해시를 게시합니다.
+
+<!-- HH_260906 - Link the completed publication and its preserved final-verification failure without conflating it with training. -->
+게시 폴더는 212개 파일·211개 payload 체크섬·원본 108장과 수치 비교 그림 1장입니다.
+첫 게시 검사에서 검사 코드 자신의 개인키 탐지 문구를 오인한 실패도 별도 보존했고,
+실제 PEM 헤더 검출 회귀를 추가한 뒤 검증했습니다. 학습 실패·추가 학습으로 세지 않습니다.
+[그 실패 보존 설명](results/README.md#게시-도구-v1의-실패-보존)도 확인할 수 있습니다.
+
+다음 [같은 크기의 잔차 선택기 비교](../11_matched_residual_selector/README.md)는
+별도 사전 계획으로 진행했으며 이 실험의 조건·결과를 소급 변경하지 않습니다.
 
 [앞선 TRAIN oracle 진단](../09_train_oracle_diagnosis/README.md) ·
 [부모 10-epoch 이어학습](../08_stopmix_ten_epoch_continuation/README.md) ·

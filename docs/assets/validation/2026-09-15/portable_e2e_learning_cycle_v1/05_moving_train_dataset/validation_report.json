@@ -1,0 +1,135 @@
+{
+  "schema_id": "autoware-e2e.common10.validation-report.v1",
+  "schema_version": 1,
+  "status": "PASS",
+  "dataset_id": "carla-town07-moving-pilot-20260915-v1",
+  "dataset_root": "PORTABLE_E2E_ROOT/artifacts/training/2026-09-15/moving_cohort_v1/prepared_moving_train_v1.partial",
+  "contract_id": "common_10hz_v1",
+  "contract_sha256": "eb8f44c98a5bee6e560f4983c6ecbc67122c4fe043d4d50fe2ea3737bda9c722",
+  "contract_file_sha256": "6f1a7a82abe39a0cc16b42df2b191d2cdae735243a22e8f8cb47bf11faaa4642",
+  "resource_limits": {
+    "max_json_file_bytes": 268435456,
+    "max_jsonl_line_bytes": 8388608,
+    "max_jpeg_file_bytes": 16777216,
+    "max_source_manifest_frames": 500000
+  },
+  "dataset_manifest_sha256": "0cd658a8406ca3785844ab5cd0b44ac28d24466d1f3bc428b24cc541ce32db4c",
+  "mode": "planning",
+  "image_hashes_checked": true,
+  "dataset_fingerprint_sha256": "8e3cacc80b0d6c039ae7fbbd82cec8723967535c5f8e7eaed9b5cd2c7e04bfd3",
+  "episode_count": 1,
+  "sample_count": 328,
+  "split_sample_counts": {
+    "train": 328
+  },
+  "domain_sample_counts": {
+    "carla": 328
+  },
+  "scenario_sample_counts": {
+    "lane_follow": 328,
+    "straight": 328
+  },
+  "qualification": {
+    "schema": "PASS",
+    "common_10hz_planning": "PASS",
+    "image_payload_sha256": "PASS",
+    "native_source_frame_identity": "PASS",
+    "native_source_manifest_binding": "PASS",
+    "camera_timestamp_equals_native_source": "PASS",
+    "raw_source_artifact_content": "NOT_RUN_REQUIRES_RAW_SOURCE_REVIEW",
+    "canonical_causal_route_reconstruction": "PASS",
+    "jpeg_scan_payload_reuse_diagnostic": "MEASURED_NOT_A_QUALIFICATION_GATE",
+    "image_pixel_decode": "NOT_RUN_REQUIRES_APPROVED_IMAGE_LIBRARY",
+    "offline_1ms_bundle_readiness": "PASS",
+    "runtime_execution_tested": false,
+    "trajectory_geometry_recomputed_from_source_state": false
+  },
+  "manual_release_review_required": true,
+  "episodes": [
+    {
+      "episode_id": "carla_town07_town07_straight_s0000_p00_ClearNoon_s0000_f3f1a4d7b240",
+      "domain": "carla",
+      "split": "train",
+      "source_dataset_id": "carla_basicagent_expert",
+      "source_dataset_version": "moving-capture-v1-seed0",
+      "license_id": "project-generated-carla-internal-review",
+      "sample_count": 328,
+      "duration_s": 32.700000487000004,
+      "effective_rate_hz": 9.999999851070337,
+      "median_period_ms": 100.000001,
+      "p99_gap_ms": 100.000002,
+      "maximum_gap_ms": 100.000002,
+      "native_source_camera_cadence": {
+        "CAM_FRONT": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        },
+        "CAM_BACK": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        },
+        "CAM_FRONT_LEFT": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        },
+        "CAM_BACK_LEFT": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        },
+        "CAM_FRONT_RIGHT": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        },
+        "CAM_BACK_RIGHT": {
+          "effective_rate_hz": 9.999999851070337,
+          "median_period_ms": 100.000001,
+          "p99_gap_ms": 100.000002,
+          "maximum_gap_ms": 100.000002
+        }
+      },
+      "motion_distance_m": 134.63569478286115,
+      "maximum_pose_step_m": 0.41178020419688344,
+      "maximum_speed_consistency_error_mps": 0.0077881577761029774,
+      "raw_anchor_count": 575,
+      "eligible_anchor_count": 328,
+      "selected_bundle_count": 328,
+      "dropped_incomplete_bundle_count": 0,
+      "ineligible_anchor_reasons": {
+        "moving_task_fixed_window_context_only": 247
+      },
+      "bundle_coverage_percent": 100.0,
+      "camera_count_imbalance_percent": 0.0,
+      "camera_unique_jpeg_scan_percent": {
+        "CAM_FRONT": 100.0,
+        "CAM_BACK": 100.0,
+        "CAM_FRONT_LEFT": 100.0,
+        "CAM_BACK_LEFT": 100.0,
+        "CAM_FRONT_RIGHT": 100.0,
+        "CAM_BACK_RIGHT": 100.0
+      },
+      "minimum_unique_jpeg_scan_percent": 100.0,
+      "maximum_consecutive_identical_jpeg_scans": 1,
+      "cross_camera_duplicate_bundle_count": 0,
+      "cross_camera_duplicate_bundle_percent": 0.0,
+      "valid_future_point_percent": 100.0,
+      "maximum_bundle_skew_ms": 0.0,
+      "runtime_bundle_coverage_percent": 100.0,
+      "maximum_state_delta_ms": 0.0,
+      "maximum_command_age_ms": 0.0,
+      "command_counts": {
+        "2": 45,
+        "3": 283
+      }
+    }
+  ]
+}

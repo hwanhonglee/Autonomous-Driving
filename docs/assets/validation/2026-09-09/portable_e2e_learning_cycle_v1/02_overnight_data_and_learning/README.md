@@ -1,5 +1,11 @@
 # 오전 10시까지 — 정답 수집 품질 개선과 후속 학습
 
+<!-- HH_260906 - Retain the historical deadline while recording the actual interrupted endpoint and later recovery. -->
+**이 아래 시간 계획은 9월 9일의 역사적 계획입니다.** 9월 14일 재개 확인에서 마지막
+[12번 순위 선택기 이어학습](12_drive_ranking_continuation/README.md)은 9월 9일 06:41 KST에
+이미 정상 종료된 것으로 확인했습니다. 원본 회수·독립 검산을 완료했으며 새 모델 미채택입니다.
+9월 9일 오전 10시까지 계속 작업했다거나 지금도 학습 중이라고 해석하지 않습니다.
+
 <!-- HH_260906 - Track the explicitly authorized overnight continuation without claiming unperformed experiments or model promotion. -->
 
 사용자의 추가 요청으로 **2026-09-09 약 01:56 KST부터 10:00 KST까지** 작업을 이어갑니다.
@@ -120,6 +126,21 @@ GPU 0에서 완료했습니다. 3개 seed의 부모/이어학습 체크포인트
 완료했습니다. **6,095 통과 / 6 건너뜀 / 0 실패**, 소스·설정 573개 전후 동일입니다.
 최신 oracle·선택기·실행기 테스트를 포함하지만 이후 작성한 결과 게시·후속 연구 코드는 포함하지 않습니다.
 
+<!-- HH_260906 - Separate completed matched residual fits and later verification from earlier full-model and selector campaigns. -->
+06:08:58–06:14:03 KST: [같은 크기의 잔차 선택기 A/B 6회](11_matched_residual_selector/README.md)를
+추가 완료했습니다. 기존 점수에서 시작한 후보 인지 B는 TRAIN 정지 유지 118개를 세 seed 모두
+보존했지만 VAL 경로 오차는 두 seed 개선·한 seed 악화였습니다. 모델 채택 없이 전체 결과를 보존합니다.
+원래 생성기 forward 0회, 선택기 학습 6회이며 앞선 10의 6회와 구분합니다.
+
+06:23:55 KST: [9d03bb2 전체 코드 검사](07_code_verification/frozen_9d03bb2/README.md)를
+완료했습니다. 6,312 통과 / 6 건너뜀 / 0 실패, 소스·설정 579개 전후 동일입니다.
+후속 잔차 결과 요약기와 다음 순위 학습 연구 코드는 이 고정 검사에 포함되지 않습니다.
+
+06:22 KST: [10의 전체 자료 게시](10_frozen_stopmix_selector/results/README.md)를 완료했습니다.
+원본 경로 PNG 108장, 전체 TRAIN/VAL 13,356행과 학습 기록 9,240행을 보존했습니다.
+게시 도구가 자신의 검사 문구를 개인키로 오인한 최초 실패는 private 원본으로 남겼고,
+게시 검사만 수정했습니다. 이 실패를 학습 실패나 새 학습으로 세지 않습니다.
+
 ## 결과를 찾는 곳
 
 <!-- HH_260906 - Keep actual training, expert collection and read-only data readiness in separate discoverable categories. -->
@@ -136,7 +157,8 @@ GPU 0에서 완료했습니다. 3개 seed의 부모/이어학습 체크포인트
 | [05 부록: 보정 메타데이터 구조](05_real_data_readiness/calibration_opcode_inventory/README.md) | 32개 BLOB의 실행 없는 opcode 구조 검사 | 완료; 원래 진단은 숫자 해석·투영 검증 아님 |
 | [05 부록: 실행 없는 보정 숫자 진단](05_real_data_readiness/calibration_literal_diagnostic/README.md) | 별도 계획으로 고정 바이트 틀의 32개 값 해석, 8카메라 기본 수치 검사 | 수치 진단 완료; 투영·TF·학습 승인 아님 |
 | [06 Town07 저속 정지 원인 분석](06_town07_stop_conditioning/README.md) | 원본 1,337창 재구성, 고유 실패 119구간·실제 수치 PNG | 원본·실패 보존, 원인 단정·승인 없음 |
-| [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) · [cf3bfc2 후속 검사](07_code_verification/frozen_cf3bfc2/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 후속 6,095 통과 / 6 건너뜀 / 0 실패 |
+| [07 전체 코드 검사와 이전 실패](07_code_verification/README.md) · [9d03bb2 후속 검사](07_code_verification/frozen_9d03bb2/README.md) | 고정한 코드 전체 재검사, 원본 로그·SHA·미실행 사유 | 후속 6,312 통과 / 6 건너뜀 / 0 실패 |
 | [08 고정 10-epoch 이어학습](08_stopmix_ten_epoch_continuation/README.md) | 기존 6개 모델의 학습량만 늘리고 전체 종점·행동 비교 | 24/24단계 완료; 절대 조건 0/6 통과·미채택 |
 | [09 TRAIN의 정답 후보와 선택 오차 진단](09_train_oracle_diagnosis/README.md) | 6개 체크포인트의 전체 6,882행 cost·동률·그룹·11개 동일 입력 쌍 | 진단 완료; 새 학습·원인 단정·모델 승격 없음 |
-| [10 생성기 고정 선택기 A/B 학습](10_frozen_stopmix_selector/README.md) | 기존 3개 생성기 위 두 선택기를 각각 새로 학습 | 05:40 6회 완료; 전체 평균 개선과 정지 유지 퇴행, 미채택 |
+| [10 생성기 고정 선택기 A/B 학습](10_frozen_stopmix_selector/README.md) · [전체 자료](10_frozen_stopmix_selector/results/README.md) | 기존 3개 생성기 위 두 선택기를 각각 새로 학습 | 05:40 6회 완료; 전체 평균 개선과 정지 유지 퇴행, 미채택 |
+| [11 같은 크기의 잔차 선택기 A/B](11_matched_residual_selector/README.md) | 원래 점수에 같은 초기값·크기의 보정을 더하고 후보 정보만 비교 | 06:14 6회 완료; TRAIN 정지 유지 보존·VAL 결과 혼재, 미채택 |

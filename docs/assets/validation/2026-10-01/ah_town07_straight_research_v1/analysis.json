@@ -1,0 +1,92 @@
+{
+  "acknowledged_learned_commands": 366,
+  "acknowledged_learned_fraction": 0.9708222811671088,
+  "actual_body_lane_containment_verified": false,
+  "camera_bundle_count": 200,
+  "candidate_histogram": {
+    "1": 34,
+    "3": 99,
+    "5": 50
+  },
+  "captured_images": 1200,
+  "causal_interpretation": "Selected near-term speed reaches zero while later future points accelerate; repeated replanning keeps the tracker stopped.",
+  "checkpoint_sha256": "4841d4076fb49145643ab2895d87befcae9021ad02f08b8307e75f77be137d91",
+  "collision_events": 0,
+  "command_sources": {
+    "emergency_brake": 1,
+    "expert_startup": 10,
+    "learned_trajectory_tracker": 366
+  },
+  "dagger_label_status": "Expert scalar control proposals are logged on learned states. No counterfactual expert future trajectory was recorded; these are not Common10 trajectory training targets.",
+  "declared_driving_command_count": 377,
+  "emergency_reasons": {
+    "sensor/state/route skew exceeds 50 ms": 1
+  },
+  "feature_approval_count": 0,
+  "final_selected_speeds_mps_at_0p1_0p3_0p5_1_2_6p4s": [
+    0.0,
+    0.0,
+    0.0,
+    0.01479948591440916,
+    0.5602809190750122,
+    8.333333015441895
+  ],
+  "independent_dev": false,
+  "lane_invasion_events": 0,
+  "latency_ms_p50_p95_max": [
+    49.70576521009207,
+    71.27154543995859,
+    83.45256419852376
+  ],
+  "learned_command_observations_with_ack_alignment": 365,
+  "maximum_abs_cte_m": 0.12803996375031476,
+  "maximum_speed_kph": 8.388422419183824,
+  "original_capture_error": "CollectionError: BasicAgent did not finish within the driving budget reserved by the maximum total duration and stationary tail",
+  "original_capture_status": "failed",
+  "owner_outcome": {
+    "cleanup_errors": [
+      "source changed during diagnostic: tools/e2e/collect_ah_simulation_research.py"
+    ],
+    "collector_exit_code": 1,
+    "error": "collector returned 1; bounded route noncompletion or other failure retained",
+    "ports_released": false,
+    "status": "OWNER_FAILURE",
+    "training_data_approved": false,
+    "vehicle_control_approved": false
+  },
+  "progress_m": 14.609116038064865,
+  "run": "storage/experiments/validation/2026-10-01/ah_town07_straight_research_v1",
+  "same_training_route": true,
+  "schema": "portable_e2e.ah_actual_control_analysis.v1",
+  "source_data_sha256": {
+    "camera_frames.jsonl": "3045c4c4dc83bbe648a387cf4cfa3926e942f32322fd168872ae7c3addd4de16",
+    "learned_control.jsonl": "5b1ac5a4fddfb485c01cd6ce46e9dfde38e96d6429bf1cc6f1affe334f6b3f04",
+    "manifest.json": "0e72cb5168c3f7c6009721a245dd07a75aaad8850445fa3391ce6e41e56f79b3",
+    "states.jsonl": "ca7792fd1f41a6437ca417c5f589f369ee2cc5c532bb1ec44e404631447205f1"
+  },
+  "state_count": 400,
+  "teacher_action_difference": {
+    "brake": {
+      "mean": 0.17513977838011066,
+      "p95": 0.3
+    },
+    "steer": {
+      "mean": 0.06741837014893158,
+      "p95": 0.09092449120110477
+    },
+    "throttle": {
+      "mean": 0.673276732029625,
+      "p95": 0.75
+    }
+  },
+  "trailing_stationary_seconds": 10.6,
+  "training_data_approved": false,
+  "unique_valid_output_inferences": 183,
+  "visualization": {
+    "playback_fps": 5,
+    "recorded_camera_bundles": 200,
+    "rendered_frames": 101,
+    "sampled_every_second_bundle": true,
+    "six_original_views_per_frame": true
+  }
+}

@@ -39,7 +39,7 @@ collection config에 보존된 native capture/result의 정해진 경로에서
 
 ## 2026-09-07에 시작한 학습
 
-설정은 [고정 실험 계획](../config/portable_e2e_lr_ab_20260907.json)에 있다.
+설정은 [고정 실험 계획](../learning/config/portable_e2e_lr_ab_20260907.json)에 있다.
 첫 학습은 11:10:08 KST에 시작했다. 시작 기록은 완료·합격 기록이 아니다.
 
 - 기존 Common10 v2: Town07 직진 + C-track 좌회전 **train 613개**, Town03 우회전 **val 337개**.
@@ -111,7 +111,7 @@ venvs/py312/bin/python -m json.tool \
 tail -n 1 runs/campaigns/hh260907-candidate-rank-3seeds-v1/seed_20260905/E_candidate_rank/training/metrics.jsonl
 ```
 
-이 실험의 [고정 계획](../config/portable_e2e_candidate_rank_20260907.json),
+이 실험의 [고정 계획](../learning/config/portable_e2e_candidate_rank_20260907.json),
 [모델 설계·실행 결과](portable-e2e-candidate-ranking.md),
 [최신 코드 테스트](assets/validation/2026-09-07/portable_e2e_learning_cycle_v1/13_candidate_rank_code_validation/README.md)를 함께 확인한다.
 기존 campaign ID는 덮어쓰기 재실행용이 아니라 완료 기록 조회용이다.
@@ -171,7 +171,7 @@ test 데이터의 형식·센서·수집 품질 검사는 가능하다. 하지�
 ## 30개 기능까지 확장하는 순서
 
 전체 정의는 [9개 상위·30개 하위 기능표](portable-e2e-feature-roadmap.md)와
-[기계 판독용 기능표](../config/portable_e2e_feature_matrix.yaml)에 있다.
+[기계 판독용 기능표](../learning/config/portable_e2e_feature_matrix.yaml)에 있다.
 
 1. 직진·좌/우회전·목적지 정지: 데이터 다양성, 후보 선택, 속도 오차를 먼저 개선한다.
 2. 신호·정지선·교차로: 신호 상태·우선권·정지선 label과 위반 판정을 추가한다.

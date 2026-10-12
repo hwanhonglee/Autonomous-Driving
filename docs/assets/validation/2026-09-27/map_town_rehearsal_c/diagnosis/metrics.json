@@ -1,0 +1,86 @@
+{
+  "scope": "Repeated Town01 DEV only; 118 native 640x360 frames; Town07 sealed",
+  "input_sha256": {
+    "train_npz": "1328dd608eb642cc8c4b0d9be9d07cb391639a6a67b426fe2bbdb703e300e440",
+    "dev_npz": "417c60f924abb044617e2aba5b1afd70b83f5da7f905e54513e9c220172ba4b3",
+    "a_dev_predictions_npz": "e95e9e88bad161836f3a8fdc1a128ddfb980e8c34ee64473de54226a8ad41032",
+    "b_dev_predictions_npz": "d529c10a389b9f828bc36a2e212d737bb524c4e5c06fa874dc448993764a7591",
+    "c_dev_predictions_npz": "33cf924af55c1d6c640fbb80dced6bd53a957612fe59b2130b01cdc42b314b45"
+  },
+  "definitions": {
+    "class_ids": {"lane_marking": 3, "traffic_sign": 5},
+    "tp": "GT class and predicted class",
+    "fp": "GT other class and predicted class",
+    "fn": "GT class and predicted other class",
+    "iou": "TP / (TP + FP + FN)",
+    "spatial_bins": "Native image pixels: x [0,213), [213,427), [427,640); y [0,120), [120,240), [240,360)"
+  },
+  "lane_marking": {
+    "gt_pixels": 45917,
+    "gt_present_frames": 118,
+    "a": {"tp": 45308, "fp": 3745, "fn": 609, "iou": 0.9123273327695219},
+    "b": {"tp": 45194, "fp": 12709, "fn": 723, "iou": 0.7708866373281479},
+    "c": {"tp": 45211, "fp": 5051, "fn": 706, "iou": 0.8870467744467116},
+    "c_minus_a": {"tp": -97, "fp": 1306, "fn": 97},
+    "gt_detection_pair_a_c": {"both": 44917, "a_only": 391, "c_only": 294, "neither": 315},
+    "false_positive_by_true_class": {
+      "a": [356, 3389, 0, 0, 0, 0, 0],
+      "c": [3696, 1281, 51, 0, 4, 9, 10]
+    },
+    "frame_iou_comparison": {"c_worse": 65, "equal": 1, "c_better": 52},
+    "frame_80_to_117": {"a_fp": 1205, "c_fp": 3311},
+    "frame_112_to_117": {"gt": 1382, "a_fp": 75, "c_fp": 704},
+    "largest_iou_regressions": [
+      {"frame": 116, "gt": 226, "a_iou": 0.940678, "c_iou": 0.584656, "a_fp": 10, "c_fp": 152},
+      {"frame": 114, "gt": 189, "a_iou": 0.926108, "c_iou": 0.603279, "a_fp": 14, "c_fp": 116},
+      {"frame": 117, "gt": 252, "a_iou": 0.957529, "c_iou": 0.656992, "a_fp": 7, "c_fp": 127}
+    ]
+  },
+  "traffic_sign": {
+    "gt_pixels": 2915,
+    "gt_present_frames": 116,
+    "a": {"tp": 1262, "fp": 37061, "fn": 1653, "iou": 0.031568941364818894, "precision": 0.03293061607911698},
+    "b": {"tp": 587, "fp": 65680, "fn": 2328, "iou": 0.008557475034623514, "precision": 0.00885810433549127},
+    "c": {"tp": 1232, "fp": 51386, "fn": 1683, "iou": 0.022688348280878807, "precision": 0.023414040822532213},
+    "c_minus_a": {"tp": -30, "fp": 14325, "fn": 30},
+    "gt_detection_pair_a_c": {"both": 1009, "a_only": 253, "c_only": 223, "neither": 1430},
+    "false_positive_by_true_class": {
+      "a": [36388, 39, 118, 127, 176, 0, 213],
+      "c": [50591, 101, 168, 37, 121, 0, 368]
+    },
+    "frame_iou_comparison_on_gt_present": {"c_worse": 25, "equal": 81, "c_better": 10},
+    "frame_80_to_117": {"gt": 142, "a_tp": 0, "c_tp": 0, "a_fp": 33341, "c_fp": 42453},
+    "gt_size_bins_pixels_per_frame": [
+      {"min": 1, "max": 9, "frames": 37, "gt": 144, "a_tp": 0, "c_tp": 0},
+      {"min": 10, "max": 49, "frames": 66, "gt": 1670, "a_tp": 345, "c_tp": 418},
+      {"min": 50, "max": null, "frames": 13, "gt": 1101, "a_tp": 917, "c_tp": 814}
+    ],
+    "gt_x_bins": [
+      {"pixels": 60, "a_tp": 0, "c_tp": 0},
+      {"pixels": 1831, "a_tp": 423, "c_tp": 499},
+      {"pixels": 1024, "a_tp": 839, "c_tp": 733}
+    ],
+    "gt_y_bins": [
+      {"pixels": 2915, "a_tp": 1262, "c_tp": 1232},
+      {"pixels": 0, "a_tp": 0, "c_tp": 0},
+      {"pixels": 0, "a_tp": 0, "c_tp": 0}
+    ],
+    "false_positive_y_bins": {
+      "a": [20307, 16732, 22],
+      "c": [22961, 28425, 0]
+    }
+  },
+  "train_source_label_counts": {
+    "town01": {"frames": 497, "lane_marking_pixels": 287660, "traffic_sign_pixels": 67794, "sign_present_frames": 273},
+    "town03": {"frames": 416, "lane_marking_pixels": 2546611, "traffic_sign_pixels": 140, "sign_present_frames": 140},
+    "c_nominal_pre_augmentation_town03_share_of_positives": {"lane_marking": 0.6017432889909812, "traffic_sign": 0.0003523292936215921}
+  },
+  "weight_context": {
+    "a_lane": 1.4623256475361046,
+    "c_lane": 0.8015514213025802,
+    "a_sign": 2.1719589618481443,
+    "c_sign": 2.651247075868451,
+    "b_c_loss_contract_identical": true
+  },
+  "causal_claim": "Observed error anatomy and TRAIN label imbalance support hypotheses only; no isolated causal experiment or independent TEST was run."
+}

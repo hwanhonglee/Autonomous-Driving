@@ -1,0 +1,54 @@
+{
+  "schema": "portable_e2e.moving_dataset_handoff.v1",
+  "comment": "HH_260906 - Record the scoped same-filesystem handoff separately from the read-only verifier's no-promotion statement.",
+  "status": "TRANSFERRED_AND_CPU_VERIFIED_NOT_TRAINED",
+  "observed_at_utc": "2026-09-15T11:48:42+00:00",
+  "destination": "PERSONAL_DATASET_ROOT/prepared/carla-town07-moving-pilot-20260915-v1",
+  "staging_source": "PERSONAL_DATASET_ROOT/staging/carla-town07-moving-pilot-20260915-v1",
+  "local_inventory_sha256": "f71ed38454feb1a603075b8d0614223bd56f7d69e2c8373c711b37fe0c02eafb",
+  "staging_verification_sha256": "2b3786b36252d1252ce55dee8eee9aac9e415f817ecd9517310ca290419cc5e5",
+  "prepared_verification_sha256": "4f8d81047a41a6717bbdf631f8ebf99d8a7a23938ebc31c33f17cdcac4eb504c",
+  "verifier_sha256": "4a897efdbc21108809b6e15d569b1d7576918fcbe03e3b82704fce993a5f4728",
+  "file_count": 1980,
+  "total_size_bytes": 213747472,
+  "train_examples": 328,
+  "val_examples": 0,
+  "test_examples": 0,
+  "selected_jpeg_count": 1968,
+  "dataset_manifest_sha256": "0cd658a8406ca3785844ab5cd0b44ac28d24466d1f3bc428b24cc541ce32db4c",
+  "train_loader_fingerprint_sha256": "0a2be9910b0ddbe9d523dbc4bcbe2bad52a0acd6974959db620177fdc49f658a",
+  "checksum_dry_run_changed_entries": 0,
+  "staging_and_prepared_filesystem_device": 66306,
+  "destination_absent_before_rename": true,
+  "rename_command": "mv -Tn -- <exact_staging_source> <exact_prepared_destination>",
+  "rename_exit_code": 0,
+  "staging_source_absent_after_rename": true,
+  "prepared_payload_reverified": true,
+  "remote_native_git_worktree_clean_after_transfer": true,
+  "package_installations": 0,
+  "torch_imported_by_transfer_verifier": false,
+  "gpu_used_by_transfer_verifier": false,
+  "current_duration_training_data_changed": false,
+  "new_dataset_training_run_performed": false,
+  "model_or_vehicle_release_approved": false,
+  "notice": "The verifier did not perform promotion. The supervising workflow moved only this fresh staged dataset into its fresh prepared path, then independently re-ran byte inventory, planning validation and TRAIN loading. No existing dataset or running model was replaced.",
+  "publication_transform": {
+    "original_receipt": "artifacts/training/2026-09-15/moving_cohort_v1/transfer/handoff.json",
+    "original_receipt_sha256": "fa738f16d2d45d5f505cc1d009ccdebd66ad425a881c53c4e850675a290c994f",
+    "byte_exact_copy": false,
+    "redactions": {
+      "/destination": {
+        "replacement_prefix": "PERSONAL_DATASET_ROOT",
+        "operation": "replace personal absolute-root prefix, preserve relative suffix",
+        "original_prefix_disclosed": false
+      },
+      "/staging_source": {
+        "replacement_prefix": "PERSONAL_DATASET_ROOT",
+        "operation": "replace personal absolute-root prefix, preserve relative suffix",
+        "original_prefix_disclosed": false
+      }
+    },
+    "compactions": {},
+    "notice": "This is an explicitly sanitized/compacted publication, not the original verifier receipt. Original receipts and all hash references are retained unchanged."
+  }
+}

@@ -1,0 +1,2355 @@
+{
+  "arms": {
+    "W0_full_supervision": {
+      "checkpoint_sha256": "d027cc92e099e6c89340be3bc719ec317711b6a0c5c440c7276321add80f534d",
+      "evidence_sha256": {
+        "/home/a/autoware_e2e/learning/portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+        "/home/a/autoware_e2e/learning/portable_e2e/runtime.py": "bd1f672efe5cf571744bd4c5ef7655435dc67dddadc41c23fddddb82d721a57b",
+        "/home/a/autoware_e2e/learning/portable_e2e/simulation_research.py": "4a66e2d3b522272822ddb43c43edeed1ebc6a2ee6c20bd0cda6ce2b3ea6c9252",
+        "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/ah_warmup_supervision_ab_20261001_v1/exports/W0_full_supervision.json": "f2b46b4c91dfc7027901e5ea52b827d5b68fc60f8d255a81a09027fe6f1bc80f",
+        "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/ah_warmup_supervision_ab_20261001_v1/exports/W0_full_supervision.npz": "8d6f7e1131a6de75423f6b05e4c1ad4fac95c5ab74f4cdee49ad1106f7fd75f0",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1/episode.partial/learned_control.jsonl": "02550d24bf38328b564f359877f215a8852dd7fb99d1470ba68f4870e15c2c14",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1/episode.partial/states.jsonl": "7ee2a719840b185b82888cb7517d63a05ed83b573a79029e5907b55363d21ec5",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1/exact_input_replay.json": "98b3551d98677c603ce13ef3979c789fbef0f88a2e425222eaa30c52e92a33a0",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1/exact_runtime_inputs/index.jsonl": "266df3887d66485ef445e09e899e117fa96757476347dd91678d66a8c6785743",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1/owner_plan.json": "7a47e23a83071632bf9e0348fc2db5d21cce3d89c14e10b089152dc9880d7986",
+        "/home/a/autoware_e2e/tools/e2e/capture_exact_simulation_inputs_20261001.py": "e1b5a01fbed81814d820157b737474e114b05d76bc1d9b062989404f69bc9d2d",
+        "/home/a/autoware_e2e/tools/e2e/collect_ah_simulation_research.py": "32aac54f1e9ecc102396061958b627fe58e56a5cc9852636383c2f4ba2175287",
+        "/home/a/autoware_e2e/tools/e2e/research_warmup_supervision_candidate_20261001.py": "0dc4231f019cc9a8d930f81a661d384d8b4cfb267aa258f928bc9b942618eb0d",
+        "/home/a/autoware_e2e/tools/e2e/run_owned_ah_town07_research_20261001.py": "ae3fa4c060f8b88683179fc3ed0925b461858712e15834bf9b687771e79ec256"
+      },
+      "original_replay_status": "REPLAY_MISMATCH",
+      "probes": [
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 48,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 48,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "4a4c702f56a90805d02c3f1c3dfc36e1690faed04e32dbff18e1323da50a5471",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "4a4c702f56a90805d02c3f1c3dfc36e1690faed04e32dbff18e1323da50a5471",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "4a4c702f56a90805d02c3f1c3dfc36e1690faed04e32dbff18e1323da50a5471",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "a3623b2bd9c5172df1283509457e3a0d29f505d9498c6a74291ef18f220887c1",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "a3623b2bd9c5172df1283509457e3a0d29f505d9498c6a74291ef18f220887c1",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "a3623b2bd9c5172df1283509457e3a0d29f505d9498c6a74291ef18f220887c1",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "401270ce853d16c9bd36008108c2ed20292e49ba34b0b2d7e9c1dc3dac9c8a42",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "401270ce853d16c9bd36008108c2ed20292e49ba34b0b2d7e9c1dc3dac9c8a42",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "401270ce853d16c9bd36008108c2ed20292e49ba34b0b2d7e9c1dc3dac9c8a42",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        }
+      ],
+      "source_and_evidence_fingerprints_unchanged": true,
+      "trial": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W0_full_supervision_town07_v1"
+    },
+    "W1_warmup_anchor_off": {
+      "checkpoint_sha256": "b9ee946ada6824e7d79f51bc1693463dc506db3faaa9038ddaa05816cf7ecf76",
+      "evidence_sha256": {
+        "/home/a/autoware_e2e/learning/portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+        "/home/a/autoware_e2e/learning/portable_e2e/runtime.py": "bd1f672efe5cf571744bd4c5ef7655435dc67dddadc41c23fddddb82d721a57b",
+        "/home/a/autoware_e2e/learning/portable_e2e/simulation_research.py": "4a66e2d3b522272822ddb43c43edeed1ebc6a2ee6c20bd0cda6ce2b3ea6c9252",
+        "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/ah_warmup_supervision_ab_20261001_v1/exports/W1_warmup_anchor_off.json": "4b559b17387138faf2570c28f22974bacc9aa67b59a8c810ba5962a946128e1f",
+        "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/ah_warmup_supervision_ab_20261001_v1/exports/W1_warmup_anchor_off.npz": "4176ebe38bccd85394de480946614bfb306c571eb9a677282dd840d78c5354cf",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1/episode.partial/learned_control.jsonl": "35e5f75842430a69566411a4473b9144fc822f2db6556c926a6ef1cb10cad380",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1/episode.partial/states.jsonl": "c6d6c4dba8eae2f4a38c380689336271878fe1a183efebfd2463a4bc0a10eca0",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1/exact_input_replay.json": "0decdd18112e3eca0dda0112c0c0e4d4ee2455d200c3f8e24461f7debb50ff17",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1/exact_runtime_inputs/index.jsonl": "9c6e5893e1cc094fa35bc6f4919c419b2ef30deb17dfe5c056b2c83077176ca0",
+        "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1/owner_plan.json": "4201a027d15f0035d8bb5723eeca3a47abcf681eaec996c81fb7c1e612fe3fa8",
+        "/home/a/autoware_e2e/tools/e2e/capture_exact_simulation_inputs_20261001.py": "e1b5a01fbed81814d820157b737474e114b05d76bc1d9b062989404f69bc9d2d",
+        "/home/a/autoware_e2e/tools/e2e/collect_ah_simulation_research.py": "32aac54f1e9ecc102396061958b627fe58e56a5cc9852636383c2f4ba2175287",
+        "/home/a/autoware_e2e/tools/e2e/research_warmup_supervision_candidate_20261001.py": "0dc4231f019cc9a8d930f81a661d384d8b4cfb267aa258f928bc9b942618eb0d",
+        "/home/a/autoware_e2e/tools/e2e/run_owned_ah_town07_research_20261001.py": "ae3fa4c060f8b88683179fc3ed0925b461858712e15834bf9b687771e79ec256"
+      },
+      "original_replay_status": "REPLAY_MISMATCH",
+      "probes": [
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 48,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 48,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "3fb19d0ff17b9dc4d8c1a15152e0cbf55915f1aac8092a8396a6dd1801a6d758",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "3fb19d0ff17b9dc4d8c1a15152e0cbf55915f1aac8092a8396a6dd1801a6d758",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "3fb19d0ff17b9dc4d8c1a15152e0cbf55915f1aac8092a8396a6dd1801a6d758",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 0
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "5aee39b4cc9827d88177070854f23da45c4ce7f98d32b7b76663bc403a8af9c0",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "5aee39b4cc9827d88177070854f23da45c4ce7f98d32b7b76663bc403a8af9c0",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "5aee39b4cc9827d88177070854f23da45c4ce7f98d32b7b76663bc403a8af9c0",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 1
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 16,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 32,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": true,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "6339f88c8828fcd3ff7ed00ad5a87382cd04268fe80c03c64025cf42dd4b5145",
+          "ownership": "numpy",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "6339f88c8828fcd3ff7ed00ad5a87382cd04268fe80c03c64025cf42dd4b5145",
+          "ownership": "clone",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        },
+        {
+          "error_metrics": {
+            "candidate_logits": {
+              "elements": 12,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_speed": {
+              "elements": 768,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            },
+            "candidate_xy": {
+              "elements": 1536,
+              "max_absolute_error": 0.0,
+              "max_float32_ulp_distance": 0,
+              "unequal_elements": 0
+            }
+          },
+          "exact_hash_match": true,
+          "layouts": {
+            "calibration": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                16
+              ],
+              "storage_offset": 0,
+              "stride": [
+                96,
+                16,
+                1
+              ]
+            },
+            "ego_history": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10,
+                13
+              ],
+              "storage_offset": 0,
+              "stride": [
+                130,
+                13,
+                1
+              ]
+            },
+            "ego_history_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                10
+              ],
+              "storage_offset": 0,
+              "stride": [
+                10,
+                1
+              ]
+            },
+            "images": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                6,
+                3,
+                180,
+                320
+              ],
+              "storage_offset": 0,
+              "stride": [
+                1036800,
+                172800,
+                57600,
+                320,
+                1
+              ]
+            },
+            "route_mask": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                128,
+                1
+              ]
+            },
+            "route_xy": {
+              "contiguous": true,
+              "numpy_storage_shared": false,
+              "pointer_modulo_64": 0,
+              "shape": [
+                1,
+                128,
+                2
+              ],
+              "storage_offset": 0,
+              "stride": [
+                256,
+                2,
+                1
+              ]
+            }
+          },
+          "output_sha256": "6339f88c8828fcd3ff7ed00ad5a87382cd04268fe80c03c64025cf42dd4b5145",
+          "ownership": "runtime_owned",
+          "repeated_forward_bitwise_equal": true,
+          "sequence": 2
+        }
+      ],
+      "source_and_evidence_fingerprints_unchanged": true,
+      "trial": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/warmup_supervision_W1_warmup_anchor_off_town07_v1"
+    }
+  },
+  "device": "cpu",
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "MKL_NUM_THREADS": null,
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": null
+  },
+  "executable": "/usr/bin/python3",
+  "mkldnn_enabled": true,
+  "native_threadpools": [
+    {
+      "architecture": "Prescott",
+      "filepath": "/home/a/.local/lib/python3.10/site-packages/numpy.libs/libopenblas64_p-r0-15028c96.3.21.so",
+      "internal_api": "openblas",
+      "num_threads": 2,
+      "prefix": "libopenblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.21"
+    },
+    {
+      "filepath": "/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0",
+      "internal_api": "openmp",
+      "num_threads": 2,
+      "prefix": "libgomp",
+      "user_api": "openmp",
+      "version": null
+    },
+    {
+      "architecture": "Prescott",
+      "filepath": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so",
+      "internal_api": "openblas",
+      "num_threads": 2,
+      "prefix": "libopenblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.20"
+    }
+  ],
+  "numpy_version": "1.24.4",
+  "original_evidence_modified": false,
+  "profile": "omp2",
+  "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+  "schema": "portable_e2e.warmup_cpu_replay_diagnosis.v1",
+  "simulator_started": false,
+  "source_sha256": "17598fea20fdb96786382209bbd90d3b6c2a1f9162385053df64dbc851e5cab0",
+  "tolerance_acceptance_added": false,
+  "torch_build": "PyTorch built with:\n  - GCC 11.2\n  - C++ Version: 201402\n  - Intel(R) MKL-DNN v2.2.4 (Git Hash N/A)\n  - OpenMP 201511 (a.k.a. OpenMP 4.5)\n  - CPU capability usage: AVX2\n  - Build settings: BLAS_INFO=generic, BUILD_TYPE=RelWithDebInfo, CXX_COMPILER=/usr/bin/c++, CXX_FLAGS=-Wdate-time -D_FORTIFY_SOURCE=2 -g -O2 -ffile-prefix-map=/build/pytorch-m8E1ud/pytorch-1.8.1=. -fstack-protector-strong -Wformat -Werror=format-security -gsplit-dwarf -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=generic, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.8.0, USE_CUDA=OFF, USE_CUDNN=OFF, USE_EIGEN_FOR_BLAS=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=ON, USE_GLOG=ON, USE_MKL=OFF, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=OFF, USE_NNPACK=OFF, USE_OPENMP=ON, \n",
+  "torch_forward_intraop": 2,
+  "torch_initial_intraop": 2,
+  "torch_interop": 12,
+  "torch_version": "1.8.0a0",
+  "training_steps": 0
+}

@@ -1,0 +1,44 @@
+{
+  "augmentation": "TRAIN only: probability 0.5 aligned crop, scale 0.65..1.0, resize to native; no flip",
+  "automatic_promotion": false,
+  "batch_size": 8,
+  "changes": "Same frozen dataset and native model; TRAIN-only sign-scale frame exposure is the sole A/B change",
+  "data_manifest_sha256": "e9805574a252e72f8e81fcd434156da7782b25e8e965b8078f976cf4f234892c",
+  "dev_used_for_sampler": false,
+  "gpu": {
+    "memory_used_mib_before_torch": 0,
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "physical_index": 0,
+    "utilization_percent_before_torch": 0,
+    "uuid": "GPU-59f374a4-53f5-c050-34b2-56aab0e3c7e5"
+  },
+  "initialization": "scratch",
+  "input_shape": [
+    3,
+    360,
+    640
+  ],
+  "learning_rate": 0.0003,
+  "loss_mode": "sqrt_frequency",
+  "new_physical_routes": false,
+  "parent_checkpoint_sha256": "ae489cd99e48f6f68da3241e8296c705847398c23b8ba69b71ec024cef4ef380",
+  "parent_data_manifest_sha256": "e9805574a252e72f8e81fcd434156da7782b25e8e965b8078f976cf4f234892c",
+  "sampling_contract": {
+    "batch_size": 8,
+    "larger_sign_frames_per_batch": 1,
+    "no_sign_frames_per_batch": 4,
+    "replacement_within_stratum": true,
+    "small_max_pixels": 64,
+    "small_sign_frames_per_batch": 3,
+    "source_split": "TRAIN only",
+    "stratum_frame_counts": {
+      "absent": 224,
+      "larger": 121,
+      "small": 152
+    }
+  },
+  "seed": 20260922,
+  "source_sha256": "86e583aacf654d78ce913a95ba537e0025317aa5a737aefacc2162aa7e2adceb",
+  "started_at_utc": "2026-09-26T17:09:35.634259Z",
+  "steps": 2000
+}

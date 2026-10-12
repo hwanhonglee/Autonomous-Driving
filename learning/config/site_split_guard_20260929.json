@@ -1,0 +1,65 @@
+{
+  "schema": "portable_e2e.integrated_site_split_guard.v1",
+  "_comment": "HH_260929 - Conservative per-Town permissions prevent old suite labels from silently reopening exposed or held-out sites.",
+  "as_of": "2026-09-29",
+  "scope": "Prospective research preflight only; not a claim that any dataset or episode is admitted.",
+  "independent_dev_sites": [],
+  "operations": [
+    "reuse_existing_train",
+    "reuse_exploratory_dev",
+    "offline_train_scout",
+    "offline_dev_scout",
+    "quality_diagnostic"
+  ],
+  "sites": {
+    "Town01": {
+      "map": ["reuse_existing_train", "reuse_exploratory_dev"],
+      "drive": ["reuse_existing_train"],
+      "reason": "Map TRAIN and repeated within-Town DEV; driving right-turn TRAIN already exposed. No independent DEV claim."
+    },
+    "Town02_Opt": {
+      "map": ["reuse_existing_train"],
+      "drive": ["offline_train_scout"],
+      "reason": "Map D1 TRAIN already contains p02; driving route is a static TRAIN candidate only."
+    },
+    "Town03": {
+      "map": [],
+      "drive": ["reuse_exploratory_dev", "offline_dev_scout"],
+      "reason": "Historical map TRAIN exposure conflicts with driving DEV; no new independent DEV or map TRAIN admission."
+    },
+    "Town05_Opt": {
+      "map": ["reuse_exploratory_dev"],
+      "drive": ["offline_dev_scout"],
+      "reason": "Map DEV has been repeatedly read and historical TRAIN/DEV roles conflict; diagnostic use only."
+    },
+    "Town12": {
+      "map": [],
+      "drive": ["offline_train_scout"],
+      "reason": "Source-editor TRAIN candidate; offline XODR search does not authorize capture or dataset admission."
+    },
+    "Town13": {
+      "map": ["quality_diagnostic"],
+      "drive": [],
+      "reason": "Source-editor sky warning and camera crash: current video is not valid TRAIN or DEV."
+    },
+    "Town04": {"map": [], "drive": [], "reason": "Held-out/test reservation; prior exposure must be resolved before independent TEST claims."},
+    "Town06": {"map": [], "drive": [], "reason": "Reserved/previously diagnosed TEST candidate; no new tuning reads."},
+    "Town07": {"map": [], "drive": [], "reason": "Held-out in later plan despite historical driving TRAIN; conflict blocks independent TEST claims."},
+    "Town10HD_Opt": {"map": [], "drive": [], "reason": "Reserved TEST candidate; early suite train label is superseded for new work."},
+    "Town15": {"map": [], "drive": [], "reason": "Source-editor held-out TEST; no new TRAIN or DEV work."},
+    "Town02": {"map": [], "drive": [], "reason": "Unavailable standard renderer; use separately named optimized variant."},
+    "Town05": {"map": [], "drive": [], "reason": "Unavailable standard renderer; use separately named optimized variant."},
+    "Town08": {"map": [], "drive": [], "reason": "Local map payload unavailable."},
+    "Town09": {"map": [], "drive": [], "reason": "Local map payload unavailable."},
+    "Town10HD": {"map": [], "drive": [], "reason": "Standard variant unverified; optimized variant remains reserved."},
+    "Town11": {"map": [], "drive": [], "reason": "Undecorated source-editor proof of concept, excluded from visual training."},
+    "C_track_1_0_7": {"map": [], "drive": ["reuse_existing_train"], "reason": "Existing driving TRAIN site, not an independent validation site."},
+    "Woraksan_v1_0_3_parking_lot_hegiht_fit": {"map": [], "drive": ["offline_train_scout"], "reason": "Packaged custom map training candidate; route and quality gates still apply."}
+  },
+  "source_refs": [
+    "docs/assets/validation/2026-09-29/map_new_dev_feasibility/README.md",
+    "docs/assets/validation/2026-09-27/map_next_training_design/README.md",
+    "docs/assets/validation/2026-09-27/drive_next_data_plan/README.md",
+    "tools/e2e/carla_expert_suite.yaml"
+  ]
+}

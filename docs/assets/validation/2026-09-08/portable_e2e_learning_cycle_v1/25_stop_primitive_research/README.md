@@ -21,7 +21,7 @@
 <!-- HH_260906 - Report the full synthetic grid and finite-precision differences without interpreting geometry checks as learned driving performance. -->
 
 **2026-09-08 18:27:17–18:27:18 KST**에 기존 로컬 CPU 환경에서 완료했습니다.
-소스와 [고정 계획](../../../../../../config/portable_e2e_stop_primitive_probe_20260908.json)을
+소스와 [고정 계획](../../../../../../learning/config/portable_e2e_stop_primitive_probe_20260908.json)을
 커밋 `f409ab2`에 넣은 후 전체 시험을 실행했습니다. [실행 연결 기록](execution_binding.json)에
 선언·실행 시각과 실제 명령을 남겼습니다. 계획 파일의 `DECLARED_NOT_EXECUTED`는 선언 당시
 상태이며, 실제 결과의 `COMPLETE_NOT_ADMITTED`와 구별합니다.
@@ -83,7 +83,7 @@ CARLA 화면 FPS를 측정한 시험이 아닙니다. 실행 시간도 신경망
 
 <!-- HH_260906 - Keep the research identifier and tensor ABI outside all existing trained-model and runtime-bundle allowlists. -->
 
-코드: [stop_primitive_research.py](../../../../../../portable_e2e/stop_primitive_research.py).
+코드: [stop_primitive_research.py](../../../../../../learning/portable_e2e/stop_primitive_research.py).
 연구 ID: `portable_e2e.stop_primitive.research.v1`.
 
 | 입력 | 의미 | 모양 |
@@ -158,7 +158,7 @@ PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES='' OMP_NUM_THREADS=4 MKL_NUM_THRE
 새 코드 시험에는 별도 계획이 필요합니다. 재실행 시각이 달라지므로 새 summary의 해시는
 이번 보관본과 달라질 수 있습니다. 게시 도구의 기대 해시를 이번 값으로 무조건 재사용하지 마세요.
 
-그래프 생성기는 [curate_stop_primitive_probe.py](../../../../../../scripts/e2e/curate_stop_primitive_probe.py)이며
+그래프 생성기는 [curate_stop_primitive_probe.py](../../../../../../tools/e2e/curate_stop_primitive_probe.py)이며
 기존 Matplotlib이 필요합니다. 원본 결과의 summary·manifest 해시를 명시적으로 확인한 후
 새 출력 폴더에 게시하며, 숫자나 runtime 판정을 다시 계산해 바꾸지 않습니다.
 

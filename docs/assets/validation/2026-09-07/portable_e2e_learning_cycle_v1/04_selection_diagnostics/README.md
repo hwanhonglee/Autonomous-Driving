@@ -67,4 +67,4 @@ corpus 일치, train/val episode 비중복 검사를 통과했다.
 | val tensor fingerprint | `631be7323f502cafc0dd66766104203bd5e7fee7494436c479bff1e0dddc0285` |
 
 전체 반복 흐름은 [학습·검증 반복 가이드](../../../../../portable-e2e-learning-loop.md),
-진단 CLI는 [diagnose_portable_selector.py](../../../../../../scripts/e2e/diagnose_portable_selector.py)에 있다.
+진단 CLI는 [diagnose_portable_selector.py](../../../../../../tools/e2e/diagnose_portable_selector.py)에 있다.

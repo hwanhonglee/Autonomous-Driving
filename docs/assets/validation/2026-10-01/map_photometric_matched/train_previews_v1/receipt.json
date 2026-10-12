@@ -1,0 +1,133 @@
+{
+  "builder_source_sha256": "bfb695c6fc5a25e72c93861d2f0dc47568faa1bd6065394d8888b70956115f7b",
+  "conditional_example": {
+    "blend": 0.5,
+    "brightness": 0.35,
+    "gate": "explicit ON for input QA only"
+  },
+  "created_at_utc": "2026-09-30T19:14:39.620824+00:00",
+  "ctrack_inputs_used": false,
+  "indices": [
+    0,
+    119,
+    239
+  ],
+  "model_predictions_made": false,
+  "only_train_inputs": true,
+  "photometric_policy": {
+    "apply_after": "shared aligned crop",
+    "architecture_or_exposure_mixture_changed": false,
+    "brightness_uniform": [
+      0.35,
+      1.0
+    ],
+    "ctrack_train_eligible": false,
+    "eligible_ids": "729..1208: paired TRUE480 only",
+    "formula": "round_even(clip(scale*((1-blend)*RGB+blend*(.299R+.587G+.114B)),0,255))",
+    "function": "photometric",
+    "gate_probability": 0.5,
+    "grayscale_blend_uniform": [
+      0.0,
+      1.0
+    ],
+    "new_capture": false,
+    "original729_transformed": false,
+    "retuned_after_scores": false,
+    "rng": "separate PCG64 stream; original729 and control consume no photo draws",
+    "seed": 20261003,
+    "source_sha256": "4de567323d3964ec877da831ec2acb08e445fe77c9da659f052edcf52ca53484",
+    "target_transformed": false
+  },
+  "preview_seed": 20261003,
+  "prior_evidence": {
+    "difference": "Prior all729 scratch2000; this B-context continuation10000 applies only TRUE480, original729 unchanged.",
+    "files": {
+      "/home/a/autoware_e2e/docs/assets/validation/2026-09-29/map_photometric_pilot/PLAN.md": "79c14b50b268fa3a51f023baf34f602faa95cd687b7d90158911ca1372609579",
+      "/home/a/autoware_e2e/docs/assets/validation/2026-09-29/map_photometric_pilot/README.md": "5c4a505a40472f19efaf19659d2bf2c7e4da211ba1cf776991a70291f5fc7732",
+      "/home/a/autoware_e2e/docs/assets/validation/2026-09-29/map_photometric_pilot/SPATIAL_DIAGNOSTIC.md": "83fc7a5a1228553304c1eeb2dbd72cf949978de83f6da58fa9d083d3afc11620",
+      "/home/a/autoware_e2e/docs/assets/validation/2026-09-29/map_photometric_pilot/remote_run_v1/summary.json": "43014fd90032d4f4c18e14a53a9b89c06fa37412312258cedd4cf5e11630607c",
+      "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_appearance_matched_20261001_v1/source/train_map_photometric_pilot.py": "4de567323d3964ec877da831ec2acb08e445fe77c9da659f052edcf52ca53484"
+    },
+    "prior_status": "retention gate FAIL; not promoted",
+    "scope": "Ranges are reused unchanged; prior repeatedly observed DEV and current CTrack motivated exploration, not independent certification.",
+    "spatial_note": "Town01 far-field lane false positives increased; prior policy was not a general solution.",
+    "town01_lane_delta_pp": -5.485,
+    "town05_lane_delta_pp": 6.158
+  },
+  "reference_manifest_sha256": "32ed912505e0b215bfc54e563fcdba7553aa25412ba22d90b45bfa00339e93c8",
+  "samples": [
+    {
+      "conditional_rgb_sha256": "768308d4a9426296b5713fafc59300f7e836d61a9104a52bacddc44f5923f963",
+      "index": 0,
+      "pair_id": 0,
+      "png": "town01_p01_000_photo_inputs.png",
+      "png_sha256": "457b1d136f5311efb6f8ced65292dc844a83f3ad8294d949c8f960c1b2216dc4",
+      "rgb_sha256": "8a78d2dc15c59adb1c27f6243efc268ff86c77289e14573df651db30e31a9e5b",
+      "route": "town01_p01",
+      "seeded_applied": false,
+      "seeded_rgb_sha256": "8a78d2dc15c59adb1c27f6243efc268ff86c77289e14573df651db30e31a9e5b",
+      "target_sha256": "dd59df6c91d6e26a3af7e3c8367ade64f55598b1620b6b2c8d8f10277ee0d322"
+    },
+    {
+      "conditional_rgb_sha256": "bb60657db609b8bc5d3a69b25fbdd9d5c995f8ffdb863212a9ec9bfdcdaafa9d",
+      "index": 119,
+      "pair_id": 119,
+      "png": "town01_p01_119_photo_inputs.png",
+      "png_sha256": "f591d55da0d596e2514eca0bc3961e8f2a57e2c46288e260e2d517f090ae0de9",
+      "rgb_sha256": "7d4bb22da6537935b33fb102d653c9d1677947cf9b5507007b7c6690c47a9c7e",
+      "route": "town01_p01",
+      "seeded_applied": false,
+      "seeded_rgb_sha256": "7d4bb22da6537935b33fb102d653c9d1677947cf9b5507007b7c6690c47a9c7e",
+      "target_sha256": "1327459fba0f3854a5c236ea9c132e9ca2f11d62249ba6ccdd599c0ff126900d"
+    },
+    {
+      "conditional_rgb_sha256": "3e1a9b3180c930dd20d223ef25061e2bf840f7bbc5cb6008dab4b01e25d3762d",
+      "index": 239,
+      "pair_id": 239,
+      "png": "town01_p01_239_photo_inputs.png",
+      "png_sha256": "0819fd01d08f5a6d5884a49adfa7fb316d1938f73e4da7f58e29282a5b832e84",
+      "rgb_sha256": "077e1c398fb8ef9a5d9ebe3d363391d10713cfa56c3155f34f27f2d0531e4e74",
+      "route": "town01_p01",
+      "seeded_applied": true,
+      "seeded_rgb_sha256": "77ba8051d38caa31f999ef8baf859a4b8388638aab5cacb93c22bab6d4d93be9",
+      "target_sha256": "a5d23429da09dc5034b085c5bbf602666aaa51b14ce44c7f30526e653988b420"
+    },
+    {
+      "conditional_rgb_sha256": "035bcfea89c5dd48cfd8e2d44a38d9a0a849bb666fc3aced0ec8679fd32e0822",
+      "index": 0,
+      "pair_id": 240,
+      "png": "town02_p00_000_photo_inputs.png",
+      "png_sha256": "ff879fe39d5f03ae2185ce31be3fce9170ad734670f188c30041209e3d5f5cee",
+      "rgb_sha256": "ed68709e7f9024d74624cb6661acef41be1582901dc7aee117db2e6c16600baa",
+      "route": "town02_p00",
+      "seeded_applied": true,
+      "seeded_rgb_sha256": "24565494bb9d0cc204a5b004a084caf6e9e422ee1a34d6f77b90cb4c3db22f69",
+      "target_sha256": "221a3101a79eeac5de00111c8fbd1e527fb973448d8cb1e2423777a1d845f9e5"
+    },
+    {
+      "conditional_rgb_sha256": "e04a054e2a8c15b2b80728b90e62944298f853ae5a974820b87f9b18280288e5",
+      "index": 119,
+      "pair_id": 359,
+      "png": "town02_p00_119_photo_inputs.png",
+      "png_sha256": "afc32385d994941586db294dd50d90d9ab6be693dee6a996d7a9f3b6a5eb65a1",
+      "rgb_sha256": "82949d000f1748c8535ed950dcfacd2bcd5f45e7d5ef8b11348a8df95f97a59a",
+      "route": "town02_p00",
+      "seeded_applied": true,
+      "seeded_rgb_sha256": "81a7ff65418dee8d203aad35536aa3cd0a56dce03a2c8e7cf0f59bb4a8fb837f",
+      "target_sha256": "5c92440f4a17e37da37764067165c1564eab9e15688078dc5bee3373e5610ca3"
+    },
+    {
+      "conditional_rgb_sha256": "ac496bcb0a3a6863c0cc85926f94c08a9beeee1379e0c53fb1d81af26af17b31",
+      "index": 239,
+      "pair_id": 479,
+      "png": "town02_p00_239_photo_inputs.png",
+      "png_sha256": "b6b2fa34fbce535ce881557b46714b46fa45419d6ab0cbfd7f194ef708443693",
+      "rgb_sha256": "5508115be80ffa9b4c079e2831b9e72f23226e6c78ac7cb46ce5a4bcae6cd6fd",
+      "route": "town02_p00",
+      "seeded_applied": true,
+      "seeded_rgb_sha256": "719ad7beaa751372f77647c192163d1327b7674b10296780611c50ab85086a61",
+      "target_sha256": "551cf40034bad3723edbb6329b572bc8086b986703e0acc985754cb38469f864"
+    }
+  ],
+  "schema": "portable_e2e.map_photometric_train_preview.v1"
+}

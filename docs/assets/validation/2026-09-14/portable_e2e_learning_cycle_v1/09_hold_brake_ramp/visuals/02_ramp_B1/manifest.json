@@ -1,0 +1,1173 @@
+{
+  "schema": "carla.v7_actual_visual_evidence.v1",
+  "status": "RENDERED_NOT_ADMITTED",
+  "created_at_utc": "2026-09-14T08:36:06.930759+00:00",
+  "case": "02_ramp_B1",
+  "arm": "ramp",
+  "owner_exit_code": 0,
+  "raw_manifest_status": "complete",
+  "training_data_approved": false,
+  "learned_model_control": false,
+  "autoware_control": false,
+  "source_code_sha256": "7a8edbb0af109a7ed39997aadaec8a163f4098875e059a4448385300cb464d5c",
+  "original_inputs_unchanged": true,
+  "native_states": 1472,
+  "camera_anchors": 736,
+  "anchor_selection": [
+    {
+      "selection": "first_saved_camera_anchor",
+      "disposition": "OBSERVED",
+      "png": "01_first_saved_camera_anchor.png",
+      "reference_frame": 1914,
+      "reference_timestamp": 4.4115219006780535,
+      "reference_kind": "native endpoint",
+      "frame": 1914,
+      "timestamp": 4.4115219006780535,
+      "capture_phase": "stationary_warmup",
+      "camera_minus_reference_ns": 0
+    },
+    {
+      "selection": "launch_to_normal_pid",
+      "disposition": "OBSERVED",
+      "png": "02_launch_to_normal_pid.png",
+      "reference_frame": 2019,
+      "reference_timestamp": 9.66152197890915,
+      "reference_kind": "command-source observation",
+      "frame": 2020,
+      "timestamp": 9.711521979654208,
+      "capture_phase": "driving",
+      "camera_minus_reference_ns": 50000001
+    },
+    {
+      "selection": "normal_pid_to_zero_pedal_coast",
+      "disposition": "OBSERVED",
+      "png": "03_normal_pid_to_zero_pedal_coast.png",
+      "reference_frame": 2727,
+      "reference_timestamp": 45.061522506410256,
+      "reference_kind": "command-source observation",
+      "frame": 2728,
+      "timestamp": 45.111522507155314,
+      "capture_phase": "driving",
+      "camera_minus_reference_ns": 50000001
+    },
+    {
+      "selection": "zero_pedal_coast_to_service_brake_hold",
+      "disposition": "OBSERVED",
+      "png": "04_zero_pedal_coast_to_service_brake_hold.png",
+      "reference_frame": 3215,
+      "reference_timestamp": 69.46152286999859,
+      "reference_kind": "command-source observation",
+      "frame": 3216,
+      "timestamp": 69.51152287074365,
+      "capture_phase": "driving",
+      "camera_minus_reference_ns": 50000001
+    },
+    {
+      "selection": "first_full_hold_brake_readback",
+      "disposition": "OBSERVED",
+      "png": "05_first_full_hold_brake_readback.png",
+      "reference_frame": 3225,
+      "reference_timestamp": 69.96152287744917,
+      "reference_kind": "native endpoint",
+      "frame": 3226,
+      "timestamp": 70.01152287819423,
+      "capture_phase": "driving",
+      "camera_minus_reference_ns": 50000001
+    },
+    {
+      "selection": "last_saved_camera_anchor",
+      "disposition": "OBSERVED",
+      "png": "06_last_saved_camera_anchor.png",
+      "reference_frame": 3385,
+      "reference_timestamp": 77.96152299665846,
+      "reference_kind": "native endpoint",
+      "frame": 3384,
+      "timestamp": 77.9115229959134,
+      "capture_phase": "stationary_tail",
+      "camera_minus_reference_ns": -50000001
+    }
+  ],
+  "view": {
+    "ego_centered": true,
+    "extent_m": 20,
+    "past_trace_seconds": 10,
+    "coordinate_reference": "recorded virtual-base ROS XY, not independently calibrated physical axle truth",
+    "png_camera_pixels": "original decoded 640x360 RGB FOV, no crop or resize"
+  },
+  "gif": {
+    "file": "sampled_actual_camera_timelapse.gif",
+    "selection": "round(i*(N-1)/(min(24,N)-1)); N=1 uses index0",
+    "display_frame_duration_ms": 400,
+    "playback_is_realtime": false,
+    "size_px": [
+      960,
+      702
+    ],
+    "colors": 128,
+    "source_frames": [
+      {
+        "camera_index": 0,
+        "frame": 1914,
+        "timestamp": 4.4115219006780535,
+        "elapsed_sim_seconds": 0.0
+      },
+      {
+        "camera_index": 32,
+        "frame": 1978,
+        "timestamp": 7.611521948361769,
+        "elapsed_sim_seconds": 3.200000047
+      },
+      {
+        "camera_index": 64,
+        "frame": 2042,
+        "timestamp": 10.811521996045485,
+        "elapsed_sim_seconds": 6.400000095
+      },
+      {
+        "camera_index": 96,
+        "frame": 2106,
+        "timestamp": 14.011522043729201,
+        "elapsed_sim_seconds": 9.600000143
+      },
+      {
+        "camera_index": 128,
+        "frame": 2170,
+        "timestamp": 17.211522091412917,
+        "elapsed_sim_seconds": 12.80000019
+      },
+      {
+        "camera_index": 160,
+        "frame": 2234,
+        "timestamp": 20.411522139096633,
+        "elapsed_sim_seconds": 16.000000238
+      },
+      {
+        "camera_index": 192,
+        "frame": 2298,
+        "timestamp": 23.61152218678035,
+        "elapsed_sim_seconds": 19.200000286
+      },
+      {
+        "camera_index": 224,
+        "frame": 2362,
+        "timestamp": 26.811522234464064,
+        "elapsed_sim_seconds": 22.400000333
+      },
+      {
+        "camera_index": 256,
+        "frame": 2426,
+        "timestamp": 30.01152228214778,
+        "elapsed_sim_seconds": 25.600000381
+      },
+      {
+        "camera_index": 288,
+        "frame": 2490,
+        "timestamp": 33.211522329831496,
+        "elapsed_sim_seconds": 28.800000429
+      },
+      {
+        "camera_index": 320,
+        "frame": 2554,
+        "timestamp": 36.41152237751521,
+        "elapsed_sim_seconds": 32.000000477
+      },
+      {
+        "camera_index": 352,
+        "frame": 2618,
+        "timestamp": 39.61152242519893,
+        "elapsed_sim_seconds": 35.200000524
+      },
+      {
+        "camera_index": 383,
+        "frame": 2680,
+        "timestamp": 42.71152247139253,
+        "elapsed_sim_seconds": 38.30000057
+      },
+      {
+        "camera_index": 415,
+        "frame": 2744,
+        "timestamp": 45.91152251907624,
+        "elapsed_sim_seconds": 41.500000618
+      },
+      {
+        "camera_index": 447,
+        "frame": 2808,
+        "timestamp": 49.11152256675996,
+        "elapsed_sim_seconds": 44.700000666
+      },
+      {
+        "camera_index": 479,
+        "frame": 2872,
+        "timestamp": 52.311522614443675,
+        "elapsed_sim_seconds": 47.900000713
+      },
+      {
+        "camera_index": 511,
+        "frame": 2936,
+        "timestamp": 55.51152266212739,
+        "elapsed_sim_seconds": 51.100000761
+      },
+      {
+        "camera_index": 543,
+        "frame": 3000,
+        "timestamp": 58.711522709811106,
+        "elapsed_sim_seconds": 54.300000809
+      },
+      {
+        "camera_index": 575,
+        "frame": 3064,
+        "timestamp": 61.91152275749482,
+        "elapsed_sim_seconds": 57.500000856
+      },
+      {
+        "camera_index": 607,
+        "frame": 3128,
+        "timestamp": 65.11152280517854,
+        "elapsed_sim_seconds": 60.700000904
+      },
+      {
+        "camera_index": 639,
+        "frame": 3192,
+        "timestamp": 68.31152285286225,
+        "elapsed_sim_seconds": 63.900000952
+      },
+      {
+        "camera_index": 671,
+        "frame": 3256,
+        "timestamp": 71.51152290054597,
+        "elapsed_sim_seconds": 67.100001
+      },
+      {
+        "camera_index": 703,
+        "frame": 3320,
+        "timestamp": 74.71152294822969,
+        "elapsed_sim_seconds": 70.300001047
+      },
+      {
+        "camera_index": 735,
+        "frame": 3384,
+        "timestamp": 77.9115229959134,
+        "elapsed_sim_seconds": 73.500001095
+      }
+    ]
+  },
+  "source_camera_pixel_sha256": {
+    "1914": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "7866b4076853d6c2beda69d09efcd5bceda526a5e5e4d80d3f25a7f4c7af1b5e",
+        "decoded_rgb_sha256": "813b632a67fcf6a54322101910002ae30270db0c6f800d4d9cd5dec8f4abc895"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "c9409b7b817453d4d7806eac3a5d4fc9008bfa8523b85405feda6f7d8876e2a5",
+        "decoded_rgb_sha256": "565cefdeff15f45504ed33dc94081fee0a6437d063d2a4afa725edbfc337b5a0"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "36e555143bc99b540441e76ded5254880295f97616890c2510e6fc1d2cd0a99c",
+        "decoded_rgb_sha256": "23d2b7381b9f7e88f10d1e028dfe7400cb5ac36b21f1cc3070d2a96d5326d189"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "0e7ebd6d972c3dd4508dfd93e1325e1b5e24838579522afd9de6c47a58c0b2ec",
+        "decoded_rgb_sha256": "fc0aca95e9b6f095489237a91cca61513712436504bc55a0d7ce2e7e89124df0"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "439620f0f6355212de05a22e159bea44f350fdaaaab53c61d35aaf85a447f3a3",
+        "decoded_rgb_sha256": "2b11d33f4455196f4a1041c8e5a87c30ca2e87d0b687eb462d824d4b53a3b0f2"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "8b2a008f730c963ee7bf580d30c226a21ea522f73f0f2722e832115c1530a9d9",
+        "decoded_rgb_sha256": "59efcaacac24b0c670f29440901e55e1cf39bbacf13df901de85d9d88cfd359b"
+      }
+    },
+    "2020": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "af38dee392955b3f469c61d95c5d18d1274095c36536a3b8ec7dd186e295d66c",
+        "decoded_rgb_sha256": "05c05055d7ebee8fcf213c066539c93c234b2f99572fcb68ba42d68e5fc824f2"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "d93d1cfbb6c0e83f00688f08e90808ed82cf32f37a62f18a6a71b27d696c3894",
+        "decoded_rgb_sha256": "85079a19a3bdac7732bb13f656631274b01a7806c2edd248667477d794b8c607"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "6cee6c5eac50882a590033d03c6363de793dea09387c3ba299fb45bf7382b49a",
+        "decoded_rgb_sha256": "0733fbec55c00a573297322d1a56cdb83601baaa331d8cc42679b88f657f5a09"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "ccd07be86c4a9196274818b28231c306a8eeed1ed9dd5701cb3a59c88ad6ce25",
+        "decoded_rgb_sha256": "f39b31433690b8abe19fe7a4385e9d5cc604a09ba81e07bf2a1bfe8470ac04dc"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "fd2e39e3a783818faa303d21819e989c2b79036091c183f4ff7f23c5f3beeccd",
+        "decoded_rgb_sha256": "ad6cd32f96d750818c5312cc8465cf432332155dfb500f7a8753c74af97bf580"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "844dc6bddc15ec1af1c879e52d17bd640c60f3d2af40098d3dc56053df16d2cf",
+        "decoded_rgb_sha256": "44355e8da478e97d72f41da43ba6b09a885e41dbc039bbd2bc10ccbc408ef8f5"
+      }
+    },
+    "2728": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "14f4d7d6d982ab4dfcb848e4271e1366079b9e6023a9630c2508b59718f7840a",
+        "decoded_rgb_sha256": "ae2aefed68250c4848cf297d3f5ee5d2c0b42b63c9d5c153131f3d9e4e45354b"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "a6ded62a0216279f412dbdda15add79dbfb6d056c3cd0560c3c30e3d22a82dbd",
+        "decoded_rgb_sha256": "4665e708c3c6d1786cc020d3e3d3e2f935f5e106dba46d5e2fda54f1e770cfa2"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "a37cd670352e7e5821b514c1c026441822efb61ae1641c17d64d5f58e8786a60",
+        "decoded_rgb_sha256": "a198035a93bca48fcbd2bc18c4fc285efa5de62f504f9e3df54d1eaba4e4eb28"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "6094c4164a840be3edbd3248d8408e31c9e50731ca2ebfbad3e1c0fb6fa7656c",
+        "decoded_rgb_sha256": "f9134eadaed667af3e11afb4f658b3a06ad3ba2577bad835c6b90efbeb5e7a79"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "49d6e16ad87f70bcd5cc78a808ea35ce9116dabd2e90925ae2ad152e2f12e7c4",
+        "decoded_rgb_sha256": "9656b18e64c4d1e4de9d0d6913f177ce977f0581386a1233a566440cfc8bb60a"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "acd0ff0dbc6ac010090fb770b2e61a6ad8869f725a2f3e9de2651f5f1447828e",
+        "decoded_rgb_sha256": "9fd8ee1652c598ff93796cbf20431f50af1c0852e5760cd3a6a3534454114e30"
+      }
+    },
+    "3216": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "73b2da92a17f219faec823b43eaf622558c5281bac261f1d329512a014967a62",
+        "decoded_rgb_sha256": "847dc57ee64345a85d7ca28e085a0c0fd28d09ee33a5752f641aa074c0238c7e"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "2043c2251d2c24ad46b908f183551e59f0d24e0029cbdad2c44b23085b0aaf26",
+        "decoded_rgb_sha256": "1d44e619d105bd54646620d3ba08188399e54c704745f11e406c152784c60965"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "f9990f3653e06c7261f5cbc95c0254b9b3669a9e70de1782b5fee7d5c0cab02a",
+        "decoded_rgb_sha256": "eaff74356abccbb73035b950f77bb456b4d991398173364c03005b176e28d7d7"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "6394f1e4e988194364172d7f9f920414dc7b93fcb97f1184cde2b36eb38668aa",
+        "decoded_rgb_sha256": "76cbae3ad9129e4cfd811f9f7392bd741048ddc1a3eacf23b9a8e9aa275e95c3"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "0a323cd83370ca122242540ec7f34a435c3338103230da14c858a9800fa91dfc",
+        "decoded_rgb_sha256": "c59d2427ae5efc3dcc35f15f46bd8c5a76ae8e2e388c7926a28144d18c4c2d22"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "90d8660d60566bc945d8ffe5921560466b6937167fb9d5d4c80e470a1eafac86",
+        "decoded_rgb_sha256": "07dd2b8759f5419dd54bd9a2f40fc76e402828fbba37100e2efa89ea9fda3467"
+      }
+    },
+    "3226": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "1f7f6bd12d254e542321f63dc361e78fdc9a1452176d0d622c90bd57235675fe",
+        "decoded_rgb_sha256": "9941da1bcd2fb6f720c6c4236bcd73d237d971a6becec530436a8ba8bdc62fb9"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "09927f4539d8962b72c92296c60ed7f1b833e7cf88aaa52516004de029757e82",
+        "decoded_rgb_sha256": "cfd40c72aa27917c7e7419d1788921da55f3f0b08eb7972ce6e0471eb0711206"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "5dafc4b513384370a167cd81aa7017ecb04b3cf57dfed0804ce5c589cdaf8075",
+        "decoded_rgb_sha256": "c187ae6bc538f6f040ea36052d116aa1925fe63add408f83e967564dc116bea1"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "5c741953436e2cda074dcea05a260e9b66dc9738db4d5edf2f15d1f35020dba3",
+        "decoded_rgb_sha256": "9b59275741b038703b96c330ad95342f1420968d8cb67721310b37923e529dff"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "03ef6efa70f865cf7505fdbb903fe9c050310bf1fedfcf85513b034422990516",
+        "decoded_rgb_sha256": "bf048736e5bcc2808d59dba1184d35ed53a312964ad6403ab321d359413e0cbf"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "3f4afa1e5397febc39a662d77d0aefb08572b986d5d4c0cf93b1c0776920fa5b",
+        "decoded_rgb_sha256": "c4cb48c5c2e7488f453ee8a257c8fb879e0ab20bfbb5990b507043649730d53a"
+      }
+    },
+    "3384": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "12758d67e17db33a80496caaddea58c3259a833b036bfce81c3c67ef6f8ffc34",
+        "decoded_rgb_sha256": "a686421372f1fdd4e1fc7c1f868a986e50fac663a5945bc182eed9d74babe476"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "b9454f086b41c76b4120c5c65db8afe743aae6de908b1b45bdc9a346e4b71d7e",
+        "decoded_rgb_sha256": "e22aea76fc9d75982af5448fbdb80b5a34a678d42985a4a243073a9b39db74de"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "c2d5dbc77e0c5145c0f4b0168c18493b9eddd5a5d634d13343d8ade72dd1a100",
+        "decoded_rgb_sha256": "30b5c51f2aafb4148f18c229ca9103bd0f6041920f24e3a158946cd52ad2b95c"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "4cec3575ebfa5faf0c0f8ad67a44acf1085692325046c76b10f1e53b2ad76051",
+        "decoded_rgb_sha256": "7408d72724d6adb65c2b49e5da7b44426fe9c7ef2321cb2e1e1e02328e068119"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "6f7b7c70473e2177f2435b3c5ee6f8db2026847b5cd12bb2ba842d81af3a4005",
+        "decoded_rgb_sha256": "a264a01dcb01ecca8daee793b0abb76c977606e6540faa26bcf3c0b97c32e885"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "b103584dbcd12b58fc23becbdadb7929885a9bd1e24e14068f91f53fa23846c6",
+        "decoded_rgb_sha256": "8ff1905a368c4b4f84f2959982c3e041d3e31316db3ed3ebce99aadc721dbdd8"
+      }
+    },
+    "1978": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "457ad0d7def389a78045620c54ea28284d7530dae2e989b55abb5889e02dbf50",
+        "decoded_rgb_sha256": "d803abb237fae2ccd32930062fd55b52661afa4717dedac7f3ab8d9e2cead210"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "773401120292038916d045494cf86c0636f6028aa865566e244b9ad892bf6e28",
+        "decoded_rgb_sha256": "77cb4f9f7091331b46c1a247828f7d8198dad0e574b44acadb83fc1ce674d959"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "fd0774057c1efc65d6ce9363ef936608c6c431a19fef0bc0b011e3ef3f2d53d1",
+        "decoded_rgb_sha256": "5dd2e5057722c6d29b3582ac75b8aac4717933cfb19ba187b8ace3f6cc0de11a"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "cbe25473a199abbd45593f2b1d14ca0ff8443a18970587fa3dfa7880d16216e6",
+        "decoded_rgb_sha256": "ce6f7b9705d3c90d072843891374f08f9cdb953d1ac7460823c5816e5bcbcc3b"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "a1d2b6d7bdaf50158fbf5f62b907dba69684a17440595ea05102a52adefe0ac6",
+        "decoded_rgb_sha256": "f89b0882738b3e420884aaebbd518fa57999b25cee5c104d3a7eaf260756e1fd"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "905b06ca1a8f9100e1639331464b6c4b03e1e529024b974e6099bcc03e8b4ec4",
+        "decoded_rgb_sha256": "2e9afffdd9f28ace7c750c41cca3c8e2dec62ada2a9d41ce687145e887274596"
+      }
+    },
+    "2042": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "a756416bfd09e49616030fb3be5aa722ed9a4f800e29c88ceba20a29cf81bc32",
+        "decoded_rgb_sha256": "24da0cac8225d73ba46995412c1ee7706dd52bb17b733f5e2ec7c04b961df452"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "48fbdcbe5d6b7fa368b90f9086ca9ec54bb79d65d882293a1f418e845cc059ff",
+        "decoded_rgb_sha256": "1d18b2ca8c276d99d2033f1b9114d08fdbdeb342064c9d221fbd312a188148e6"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "f643c11f7f4a279b588b87ab75d42fe25e26d4ae8d1a50451c97a21e8e3075c1",
+        "decoded_rgb_sha256": "b9760d88378a9d38f627f087b4a638e83ae7cf0c922a1a0005f8f695bd0aa9e5"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "87b04baa54cc332eb128f5fea90e0d37724ff5797761fd541fd4cb471b7a2271",
+        "decoded_rgb_sha256": "c47abd837ab7763832d6889172c5c9063ee81072999099fd633ae5bbcb877743"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "675b0db8759ac38d1978d391aab8c0b0b0e159cf379a88d61cd803a1827a6f10",
+        "decoded_rgb_sha256": "3e5d9ef04c8290bd8b27febfdcc15a916abbe5bdd0e01e6a0cf2fd131f3b2247"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "760946d700c243e652927032f1543c8de859e55ffbf912d984c43db855796067",
+        "decoded_rgb_sha256": "1ca742e21d2b7d9ea9431ff715d0840f9a9c581cb64ea0c52e7926e747a38b92"
+      }
+    },
+    "2106": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "555d06d98bd221e011348c590da5985a261c72b88bb2a86e1fd71f7d6cf8be6a",
+        "decoded_rgb_sha256": "d63575fc6240dff9cb4c8500d722f8523dd3a218195bd6c77e564ecb7bbe792e"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "3138042dd8db8450d79193fbe81731524d98feb40c14521edca488a4483163e9",
+        "decoded_rgb_sha256": "39d3d113665f10864cfacc8e835ef816aeaa144d59e0e37ef4b1b5afb3bfbb0c"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "72578bf15ab22725d94cb17910abf62e6116fb94202b92ec8f62adaf9ce2c4dd",
+        "decoded_rgb_sha256": "c83e7503dd436a1d861045ef06a1203905b206a213e305f61f4d037beec83bc4"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "b9152843aeedcdf73cf8ee3dd13a547f4fc3918cc35f3bbcce51b5f30e3efc09",
+        "decoded_rgb_sha256": "7c675ece90fef263460b4245adc193c18e8347bd5654c712235eb6ea9cb57f53"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "c7c49d0063220b115b95bccb53d8d88557f7ec540b05cfb6a77dbc607343e362",
+        "decoded_rgb_sha256": "26f22033f2dcd4f1187cf6ec98b910b70ffaf33621aead4ef764992f1c92c8d0"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "d540cb07b56c6376c28453e4779a67d0df9d139f254a2d7c6b3641633cee8949",
+        "decoded_rgb_sha256": "02d5f5e2cbc2e43130f79e98ff103648364625c26339581c44721ff6f2f21cbd"
+      }
+    },
+    "2170": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "884a3cb391ed46603b95eaf42763b2f8daea8031837fa07576c04f80d94f9026",
+        "decoded_rgb_sha256": "922b6330fb5e54348ccd9ffa95d208ce2947aaab61d7bde5a25f864ed3986aef"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "6b720b3f46a19e3a1dba3a966ee4652237145dbab28886fc9047451082585013",
+        "decoded_rgb_sha256": "bd865c088b99f6df4bd521a67d551cf823988446b62a2e1e9f21d4508382a004"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "8a8ffe2804b895861fcf57173d6fe6cbe7a069b099207dbbbd50f8e5d310584b",
+        "decoded_rgb_sha256": "995eeb936a052fefe42b60e2cd23e9a319bc24c100d40a8a08000859ea9c5b18"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "ba279d6d5ce552c700303f30d452821402adc84e09da0103932dfa52c5f5bad0",
+        "decoded_rgb_sha256": "1ec32bc522937ab685a21bbaeaa4b9bd8641c6dd36f9418193d5181c5b632ab4"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "88e67c1cf74a1168c0f9738bd7d4c5e30aa098ad38dee4984b4a3b728f725d80",
+        "decoded_rgb_sha256": "4ac2ec6bfeb27d048f1f8f4a977b6a4114745bf888554f9829034e2485b899c8"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "5ef324fea9dfc10a4c0eef018beed9d7f77e5075f998864d24c086ca25b5688f",
+        "decoded_rgb_sha256": "3ade2d632400496a42d8e215525e7da515614e207baba1436398930719fd8686"
+      }
+    },
+    "2234": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "80baa962c292b5f001755cc38e1daa967ddffc23cd25b21b9881b514d41fd891",
+        "decoded_rgb_sha256": "b0d5bc3781b6918085ab570080d81f463b061dca0f198c476513b78afe16239e"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "d48e45bc905bd85488ef51c8209010259b3ca54db5e080252420c24ae556c3ee",
+        "decoded_rgb_sha256": "34d8cf6706d79d02e786a8f922627a1d6e99a12672fe3101ce1b2ad15318b2c7"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "6ee9882d1b79396786e08428c5300b2afb236bae87846c101925d3e9df5a99a6",
+        "decoded_rgb_sha256": "686eb54bb489cf19fa9fc5f3dd42eec988aca2cb9ab49ad3a6b52195d1c37879"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "08bf591f5254320e3bbdb2635f7ebc9cdcf6f72bb1c95ca7a2bdec4ce027e912",
+        "decoded_rgb_sha256": "5a7d0a2166e5e33fe4a4320508fa390d69c8da8a75f8dae862ea67207f102dc1"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "990d79718a1ce9bc8fd4ab6b2aa683af3a6b62f08fc3a8443a10c3969510eb77",
+        "decoded_rgb_sha256": "58a80c400c3a77e5c16329fa4d267c83973f5654cfd5c901e8620b2ceb0f4fbc"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "26e88d7f9769536e02085a8cb17c230e7d89ce6c430e1e94e0f53aafde24c970",
+        "decoded_rgb_sha256": "9336593ad29a481e313ea5cdec20425e4022f31935fd63332af3b6ce1c704956"
+      }
+    },
+    "2298": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "3f53928b679dc49e9d053e2b28fd4ec312b527c229ca75d19a5b4a653bb448ca",
+        "decoded_rgb_sha256": "0af75ac1b2757ee900016936e864964bb20f6f5da338d8489fe660f00f30fb81"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "b9cf45e74db50751653ec21562033c320504cfbb9a41e558d45e884e685b353f",
+        "decoded_rgb_sha256": "e7646a07f24adc0eb039fbf3a3b564e5ebfc38847fc2b95d47fd46d8d9a22a6a"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "c6399504e0feef83bd517b4ac9bcec0489acb23e8b0576fdd8e2b2596e7da071",
+        "decoded_rgb_sha256": "2e168bf55ccd6b5012ee0d0923ada33beff1ab91b8d34bdb26fb148d61fa6fe8"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "9cf085fec861beaba161f064562a73c3126f62ffb2f755b3300bb75ee2376013",
+        "decoded_rgb_sha256": "642b4cf67ac5ba18bb8b43070330f0befce43d7f9f99c8f618b9b16e65035669"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "9ecd9768da97337cadf54a77f50de657f157ae98cbf3c860fbfbb2268a06c6a1",
+        "decoded_rgb_sha256": "2df24979bd87d2b5a0533cb97fcb376fdef13373b79892d92c1bb05526b1812b"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "2ac3fdea02c4a39f11cca76fe907fedc29b99c9a4021aa435d80f433e203a59f",
+        "decoded_rgb_sha256": "44526c767cf57358f61eea4db0ff9661dd5ed419a81f8f8e0dfaa019f1d6a4ad"
+      }
+    },
+    "2362": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "0a53f7250409bc85770d91c470effe0781f442b72090dc66696dcf994a68c122",
+        "decoded_rgb_sha256": "4dd0c0b6710a3fd904e70c149f5726fd5a924de8628962582ea55bddc34514a5"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "cd2985177608ec6f826aee6e2f19602a9aa9bcc1b62bb04d32971b690e02facf",
+        "decoded_rgb_sha256": "2fc24607abfbc850f3e210c198be715e08c1beebfcb49f9d9e00a3d627830993"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "4b093a893bc492bd32aa6e71c957859b763c82da6bfdce1b94fb49e9a6fcb27d",
+        "decoded_rgb_sha256": "528412938bb456250bde5cfdf7a599b869deb285a5d257763bee3331badfca19"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "e5e6eeb3c0c105b8200576ce11209cdf46f192bf1e744c5adade945f94aeece2",
+        "decoded_rgb_sha256": "1c73d655f166d466948d49406ff0bf886ae538a47af3d78d79fdcdff0cf7fec0"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "1a9215f1c00667d0a17a654d7426ba88875b56245862a1cd927da963bcc3049b",
+        "decoded_rgb_sha256": "3b4430bbf741e59599986f87ef5d9f5f0028f7d6feeeb22f5389233e1eeeedb1"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "e9528c747687066a9513bf4fae39f90b005464eca7815f89dd166f9d6913eb97",
+        "decoded_rgb_sha256": "258815c39fa75735943cf9543bbd1a05f68f0775a2ee605a54cb1f09f0cfeedc"
+      }
+    },
+    "2426": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "0ade4a8d2baa0548f6f29891a96cf08b5cdd7f65ffd760db56a02ec49fb58f0c",
+        "decoded_rgb_sha256": "50a2d4b0082c18c6d9c4a485a9cad28746eb894b6f12a14ccdd8e2416f2e5e74"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "0a89d0f2035f2d28153e3e59a9a3878164ec682db9e60e75d026437266b2c046",
+        "decoded_rgb_sha256": "88e8972a2759e086f196b0f647eefd00b1e1b489a450aad174f5f2d35e373eb1"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "ce0d7541aac08f4fda7a06530143d2d1487b042b66a8f2f477ba2c85286aac1f",
+        "decoded_rgb_sha256": "879a02a9840e33b269cc685996a00d920bc65b0b0c5a3dcd772da92030ecf13f"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "a124a35d79b2de4d9209c1051b37836e929430f677391bec562e4ece5aa1227f",
+        "decoded_rgb_sha256": "b7f8bf0c05684ecd99a857b54c2c549f7d168271c670f9f4cc6f01f0edcc7caf"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "8d7170ae84d7297cf87a7187559c07c520b43109b5a2a7bc7dc8ab661f805d80",
+        "decoded_rgb_sha256": "7794d7b1de2c3358eb9d567f4c8b00dd30e0ddb42293a03d87237184abe60a0f"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "d7956743a9fdf55c9ef41cefcd3fd2eb4c39e9e52c3dd780c2ac5e3dac012a38",
+        "decoded_rgb_sha256": "6e7f79648a613196bdb608420828a7add740dfea39db48b4cdd396deb3fd03a7"
+      }
+    },
+    "2490": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "0a40ce00e635be5139f5f68f3f73680e3023cf4641be78242fef7106e0d56c37",
+        "decoded_rgb_sha256": "3c8b370d14dd5fa76fd15d2d228719c130443512ca3b7920f1292408bfd61b7c"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "cffafbf7b11cd710300c9f195b3233255d30d546bd50373fc8dff67b5e08bfb5",
+        "decoded_rgb_sha256": "783b0f9e155c7064734112463a4e15055f5e17cf8ed428ae0b0c6926f090903b"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "6a509266614e156ccdceae95abfcdbbd40bc0f6f3f4d5d9b5d6e5053ac595c8f",
+        "decoded_rgb_sha256": "b7e833c0de270faaa4a8eca8a4c405f4afd197d6d223d6c4eb3a31b47de5429f"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "32fee2ec1498b502b688434831f24b51a7862a383dae6cea9051ac5b0a6db538",
+        "decoded_rgb_sha256": "40180b17704814dbd059d2b9010425fb471c63ae39c027a458a5f615383ff4df"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "aee1bd65c88d73e78edfd888008eb6ea581419867138af45de656e365e5fc852",
+        "decoded_rgb_sha256": "ceb43cfed140520dbe3f0682c230f0c940beb8a4cd34510a6223fbb2f580c99c"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "5172224a0f635f0dd5bfb6d5927a09de38aca2c06e9c0a20a59f2984a8a5f770",
+        "decoded_rgb_sha256": "faf79951d010ba9954d8f41fd9fc59aac38683d064f37c72be3b0a5cec33a112"
+      }
+    },
+    "2554": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "43a256bf137e097c863efd5d39b9f72cc7b08237dd25f254f6007d58f1d2177f",
+        "decoded_rgb_sha256": "3f9df91ee8126a3b254784b102030f9b6ad8f2369d3d389059b91ead2179c6fe"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "98c4af7378b8a284a926b5e45fc08c3e86f7b6cbcc2550bc061a8bd674b68a7b",
+        "decoded_rgb_sha256": "710fd8c1115870461fa00c08ac9994e9c3761a7d3fd773d34ec6d60d7f06ba3f"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "c8555d5cfae3828c6ec0725a5f9bda318ec9107a1c264168ab9a13c37e3e1423",
+        "decoded_rgb_sha256": "66276917bafbdd61569f58255c43c0e53521bc1b83c45367a1f041afff2689ed"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "c508bc9968a6b2732143813faf53ede2206abb5fb2249406bccc5706cc062ff5",
+        "decoded_rgb_sha256": "b0b2bfdb7989008b5c374a5218c64a0a034698ded7ed851b8292eabab71b576f"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "c9f20b485f5154ee5d993858de465406dcc16bf3aeb1dc8cd58b90e460dc25f3",
+        "decoded_rgb_sha256": "63b86432e8dd3cc46f6acc02f2680db9009d14b7838472c704ae7d6f97cde0c6"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "c3fe20b4cb3ef01f0bb8eb93ebd05c63e07471547e83ce2d35a43e943ce88e9e",
+        "decoded_rgb_sha256": "35b29612ba7dc11cb1963766251c1389debb2097e7e4401285309dbe154d016f"
+      }
+    },
+    "2618": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "228f3b78a930859e80e704fe07140ddb804df05de1668537a799442398a57c49",
+        "decoded_rgb_sha256": "d96b0bfe1a2b1b5a854e860beb748e5dd5b446b363bc6c2e93f3df67d2c3b0f9"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "f03c533d80dc5035e3d3c94dd9730c175d3f4c52f871fc1e61453a56cf628e0a",
+        "decoded_rgb_sha256": "59d0f244daa9abb954547e3bc17b1622aa590a6287913707f72b443049b86e86"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "853165e35171364710d40e4ddf6fc5869d1b177f716ed20b9f366e5fe03af38d",
+        "decoded_rgb_sha256": "2e834366c675d33c68ab7d0c5f850cfbc0cf0163a5263f4a5d09280fd1786cef"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "9fb7c3b5001915bdf9a1ef9e71f28dcea82ff09ed0965263be6d2e57ac4e9c02",
+        "decoded_rgb_sha256": "584d315cd7345eb0dc5adc033fa67d85d797d1653f0ee6cf482a4a365d86ce37"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "0cbe57b9ef7a91baa5487bcbbe2545d3772bde451cf6b15b88758c988868ac8a",
+        "decoded_rgb_sha256": "001151d96393ea5f822fa03e8b89744395b890e8ad82d7d8e793f1c7011e4b07"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "0ada781ba7a379fed88090cf430cd1e77d1915c13e6f472283e70fc3423f3d03",
+        "decoded_rgb_sha256": "213cfd97bdeb56d1c6587eeac1bf90e818933e2d2d7c17f5c57883d99e1c1bb5"
+      }
+    },
+    "2680": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "48cf3c9fa9ad45e6446cd22a99e10fe0be1a969af7ff553efdb8d80fac4c11f2",
+        "decoded_rgb_sha256": "8b32f6035660fb0df546dd4d652a7e4ad8796770d9137058975c2063d2377d0a"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "9cc3f65f54548cb3c9cf753221f81d85cb33b0e3c2236357554b1a2084f48e9b",
+        "decoded_rgb_sha256": "27dbba0577dc754e4c9098e02327921d37c11ff859cef9a925c012f638780ce0"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "257b9d433f049e2106497f401b4750a174f2e636ea04c81f44e028903185adf7",
+        "decoded_rgb_sha256": "d9cd759ce2bfad441700fa7ce37dcb08ce4c970eb534bf5deb45b5e3444710a4"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "9e09561eb3896d1b216247d891c3993a5b4d9f57c614dbe18ffb8747b785d136",
+        "decoded_rgb_sha256": "650209f7ae58cd0cde2e1ba89c1476f76b130398e2addfeec7b38dfe60d60f03"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "5a1c81f0b40bfe1f1eb6647e963dc65bc4aa2dc0f94ee8f8b74a527e2600ab23",
+        "decoded_rgb_sha256": "287a1264c798de4b96795cec810c69c1381b305566acde6a167cd6cf488a6430"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "d6a75be55c5950aee9168b2f5d03a46792054a80cabc674f47e85e9948ecebcf",
+        "decoded_rgb_sha256": "5d81f2c5f2c01de4d1f88cdafba7987d0e91fb96fe2d0719e83b30900b1cc659"
+      }
+    },
+    "2744": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "5de6dc86a5fe0fc6222195b1062773959f462e3b6abe70fc53dc783370ca7cab",
+        "decoded_rgb_sha256": "236497c5fa8073ede99d367bdaabb9f070f8fe63017072271640f4114923e566"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "73ef4c2688efe063797c318f7b9aa50ebf885e59648857063f69f6d572a00b4d",
+        "decoded_rgb_sha256": "54cbd16b960db5534f9cddb6740511f7645cb3ea77489d178c482df3801b3865"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "39d3ff6bbd187b0247d93c3d2af99fdf8512383c9694c296625e40b383fe7cf5",
+        "decoded_rgb_sha256": "de34faff5b10b9ad5798922bac1916ba59dc10e2eb1697fd3ffc8674cb235835"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "5518e36da04edf509e79632d9ea396a41d03ebd04c468c4b8ff953d8221b06c3",
+        "decoded_rgb_sha256": "746cba475a8d3f63cbc506ef5bdf907511ac724aa523dd623650e0a91d481327"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "f18a5874c36c9628fb4b348219af6e0872376c0645159e0f74ca6466fe1a2d56",
+        "decoded_rgb_sha256": "d814b561e49c7f44911c4bd4dfaa261b4fd23a1a880e3e979263927fa3ddffe6"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "1647e2ddd80b4d18bab671de25582382b9950439a061c6a18da867edd045de62",
+        "decoded_rgb_sha256": "9180838bbb7ee89e5768eb15886e2d8d042e013249ca27017e5eb5e4c7d6a8f5"
+      }
+    },
+    "2808": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "08ad079d1824c6401965c7d383609e0b5c7761b020f0bccd8611fc75776c3daa",
+        "decoded_rgb_sha256": "dfc4d6af1789917ec2590eecc17e2aad45c7d0df00c5c1c7f2b48a2fd921bf64"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "9e119142371ebde271980972f8bbb41be930fd9270a949ec578a42d22c2a0f78",
+        "decoded_rgb_sha256": "47c2f051384236c549d2213aec64eccd93d2442a8b8c2f716ed89e49a499c31c"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "a6dcac013856bdc17366242ce58a0f09043233ea62b1335e288d852139baf04e",
+        "decoded_rgb_sha256": "a084df0cc621c2e3e64a4d87a07dc6b1947d9a3c5dcf5d9f019c39968166c784"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "7ef120cfae5a0cc6f0c5f535a554cdf6ab9b0d84c5a16a7014f64f6eb1617df5",
+        "decoded_rgb_sha256": "a12d5567601c4d77b5cee7648aa314a589ee630093c935813ddfce323c9801f3"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "ffcebd0ab7d4e92bb4c177a78d9e82ba64b8a78421343f935b96bf470b31e789",
+        "decoded_rgb_sha256": "5a1aeaa8a8c962b1abeb21f90e083ec9fd06f43dda47ea43de522e7e70224843"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "eb5a8c05a25788e1eb2d0ffd8b58d9e9d917da84f510abdfe7835a3e3851b2e1",
+        "decoded_rgb_sha256": "8b3be295c4f494513e248e66d53eeeabc819b0fdeaed05535b250c15957cb064"
+      }
+    },
+    "2872": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "c08d3dc013c607a35d41198f1678f7843d1cb124af2fe49f4d2bf0247c24c606",
+        "decoded_rgb_sha256": "3090c05c911796d2de3c8cac0611acd4ccfdda9b8fe2e516aab5b0224a8df1e3"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "2daff52d6529d1bb92710f2bde5273eb6460053d7ffed37177f484c3f25ab8b8",
+        "decoded_rgb_sha256": "e0c5638084e3b730e6e48a37f3373464e377699f7ced9650754779870994113c"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "80038f9f9945314cd0d5a94f31514f21d036e346040150ba629c6f81852de947",
+        "decoded_rgb_sha256": "eb944788f87e3d312912235daa93422b2ae5c4fec06bfa697209903dbcfb71b1"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "b2486fd54ded916e338aa51040fdeb61b1f18441eb04a7c23ec1b9a72c0d4df3",
+        "decoded_rgb_sha256": "ff09e0f0198ce45a838b2cea53d0550b1eba130a1c8a938b3753a4b36509bd27"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "f402ce9fb7c86d7a39a985ad867c461426e38983b4e7b1874c27258218c3e802",
+        "decoded_rgb_sha256": "b15ecc60552920d633abed18b464a544a6673dedda75bb2831f644d7d0832fa7"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "543668a5f5981a0b5a86f1419bfd4799a3315d2da730e96f6af81e8cf25a58ab",
+        "decoded_rgb_sha256": "f31fc21ab0b0008d64d3bd4bc253a8fa60b46ab126b5107ff0873b72f215ddcd"
+      }
+    },
+    "2936": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "b086b5f20ccb82d1203c03ee200d4df1583dce5a9eef9b7b337cda377d6665aa",
+        "decoded_rgb_sha256": "d5e498046de627e827d51877e53ff2b2b30eb2833d0dcea71365a0448bb35516"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "fe62e108e5ce4f6534347a78de6a0c9ffcba44db559e45c8c38170a760cf21ac",
+        "decoded_rgb_sha256": "6e2f68894695e245f6a3edfd48939b7e594b681d7307419b5153d1ff81137bdf"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "088437141449a41722571e49d400dcf74e722f2c127806b6823c583928226274",
+        "decoded_rgb_sha256": "a915f7c2856b197d3dfd5c7856038b71961675c31f220a898a4f4c5ea7ab8141"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "73fe2b5f5e6a81df01cc259f0c046a05e4b7969c951f0e615a4d9836cfa5cc19",
+        "decoded_rgb_sha256": "ff16375dbacda3ae147cbd393dbc8dd3f0e483d38df55331870388890e12cb27"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "74768e6b50ecfa427cbd011453cd8d14576547b6ad59e116926b7953a282cb5e",
+        "decoded_rgb_sha256": "8a9d6b999fea59f7f492e912cb63651374186eb2bdd2416dd524c06180d643f3"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "7709f570d781748cefa2ee7614f985759d7dd30674f890175a95ff1272e8e81e",
+        "decoded_rgb_sha256": "b728fddec6a077ae8318c8e22e39325c2295a7dd1644c449f6573b29f72a780e"
+      }
+    },
+    "3000": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "2e8f8f67ce8c73e6f044e9a2b41590a2df58c96c6f88e09254f323f411433c27",
+        "decoded_rgb_sha256": "37e8de55ebc4b922f5b43ef994a4fda5db38033511ad2a83a3ad5f511f3cf030"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "f216229984265a38269cf561a0341e56fb7c3321552c2054bf156f563de473a1",
+        "decoded_rgb_sha256": "0616e0bcbd0eddcabf213e3a51dd01a4633eea6b8c35a1048e0b08c3128d334e"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "67d1926e71862bfb22c6a3a4acce802db7e9b8995702c18052fdff3b347f33fe",
+        "decoded_rgb_sha256": "f5ab895393ba1a05976778a73f136342f8dbfa34a9981c999703cb63d80f6eb5"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "330f9c09a8676f56780a01c2b3f4a7927a21ada66c1b85f82d688f39a79e5b2e",
+        "decoded_rgb_sha256": "37f9fe23ad8d4f1f5e284cbaab5e3a20077974e82b6f5c368a0ac3ed0c017214"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "6e16d60200ab161da9dfbd2fe9ee53063d289776e16afcaf8d47de2c383de058",
+        "decoded_rgb_sha256": "9dc8873eb063c0f1436f139db8640ca76556f8d80e843d5f744c56241430f319"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "c016a684df1f73c2f8ada9721396c9f71839631f55aa78bb4f5cfcbcb89bbeea",
+        "decoded_rgb_sha256": "8a4288b249afe1625a4007dc7e6bafe9a49dd3a800718b20d3eea39da754216c"
+      }
+    },
+    "3064": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "9a81a6d5ede5438e6763e21da3a18db4b7bd36d9d8d9e9d51283b583402407b8",
+        "decoded_rgb_sha256": "3bcbe3883becc479d3fccbbd17e28cd29efd3a8608081848752a18d926e3fe27"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "434a06da4ec1b5effc9a0ae33028bb9b22fdb7357b256a884739c3883a46942d",
+        "decoded_rgb_sha256": "28b53a3df85e6344a43487c25b94737906441dbcdd4bbae749b90e77dbc681a6"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "71cb06ea17702de885a50f1623f3d9e57fb60ee99b6c1980fe0632191b2d547b",
+        "decoded_rgb_sha256": "b2bf2ad8e92de47c3bf3778e3e6e29bba944e760465827ab22f0d49fd01d0fc0"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "ffbd91b119d0dc5aca6c7e7573692dd4ebeab9029b53640604a733bea954d260",
+        "decoded_rgb_sha256": "931678126cabc2c7c144cb0a8885b3761359fa60671f37b357d32834a2cdbf41"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "64f9fecc08030f23cb69226342596bb8dd69a571096fe5968d97d5af7aed8a64",
+        "decoded_rgb_sha256": "08c9ab372680deee2e984a9f36e949551d7fc397b256477022dde5679067dc66"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "6938ac8587e22e3c8f723dceeda801f9df7cf24a5ea4c8fda18a7b94b13a3c57",
+        "decoded_rgb_sha256": "d912812b871b3b97711b3a46eb898d1e9afc212efe25a4f9b09d9bf967d43c27"
+      }
+    },
+    "3128": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "cadfe9269e243e8785fc5b20f9ecbcff3816db3f69a56a03ed3e3e102dbc6432",
+        "decoded_rgb_sha256": "657266b6efc39debd65995c7c6db53b8f18e55898a13b5977183f96be6d1fc9a"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "86e72e578c68c57b3c3091b7d5130ebb7042a2130fa1aa11156d38e87d8bc6e7",
+        "decoded_rgb_sha256": "e6449d58e04f909c9be2e45a846f4f0fa8076c42f322358c5ae94c183a0380b8"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "35c81bfe5914e10955ce64bbc14269a8411a488bb0330bf6b15d4ae8f929eda3",
+        "decoded_rgb_sha256": "83c396281d863f398806e59191b1568592d9e08df8f422da789afad4e5d1a5b5"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "bd5996042a458d5fbb18bd85cb73b877117c6a2ca4675813015abc86b02acc28",
+        "decoded_rgb_sha256": "66080984d55f6a40fdae6b9e160e8011484d9606c60977965f28301619e8cb54"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "2ce6af653d112c873922f7f75f224cbeb1edb93525c0e78c7f289ae90bf5b34a",
+        "decoded_rgb_sha256": "add25fe2e1872327f3dfbc1dd8b6e3a4127f4554dd89a9e4c9093f001d00953a"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "844d78dc71a09684aa36e0051debef31813f71a8a326163a6e288941ddb2c0c7",
+        "decoded_rgb_sha256": "8c0d7bb857719095b2621e2de2b6b86456a8f45b216b04286b9afeedd4fce35c"
+      }
+    },
+    "3192": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "2568515071e1816d9d45585bd2e9e11b7e758572d3edfb97927b21a1fe7a4295",
+        "decoded_rgb_sha256": "f8a5a83bba7d4dba1ca44aff98143973cd3affb8f055fbde4cbfc7379ff328d5"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "ee0dea5417235199bbf7200ca191ffef7b69efdb3d0cd42cc79a7999b02321e7",
+        "decoded_rgb_sha256": "df898008f081bd7da0721efffbc76c953dbe7caf4fcfdfbb89a5181476e9e7d0"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "171a6a9f8ccb040d10b74077d48f5dabfb44ba4f272710430e6b1180275696a7",
+        "decoded_rgb_sha256": "8676ec15b9a34bff7a53d21fd837af5b3b2112e438756f88f114ee85ef62fed4"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "1796a09ec0eb14c5ecd4b71fd284945123eb692edda15e753594dd3caae21738",
+        "decoded_rgb_sha256": "3b751e07f5906ccea3e85839fa2a6306af93d88a701827283868a46dc6523256"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "52ce0476a1721e32c2f5323846d5d516ee83d5c601b346bad8e0000c10dedee7",
+        "decoded_rgb_sha256": "08238ff1f9e5540a657358c7004d3c59101f16d2247f7553349425115469f6d3"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "c5718b76d42a8937550f134558d0209a28a6462c461d76b3b361d3b2837db869",
+        "decoded_rgb_sha256": "c4893fc84392f5364ae9ed5548f4abaa1b704b16aa85e5fda9c6d7f346f03d52"
+      }
+    },
+    "3256": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "a0f12f3dc348cfdcea7e1a16f2783e04df5062a6fae6e8118a6e4faf5541b995",
+        "decoded_rgb_sha256": "92f3b613a369edbb993f4330c495fa5203c1a4a21b195d948507e4218f80a674"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "67b227072a3c44fb53995d2e4aa1c6b12e0f4f3116ef39e018bf78669b10ee8f",
+        "decoded_rgb_sha256": "3cad97591bf78da11e058883636146ee4bbcaf41a0251fa6b625ff45abd61e0f"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "4d846b44289f81c68c44ed72bd2c249f0612d4c77c0951308885409175350848",
+        "decoded_rgb_sha256": "c29743772451f366664f7f018d2ecefa970fe0cf1b249acb53a5f24de5783485"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "f1bb7f2156944da8d8ee86f3eea0354927c08b149acece74452b6296caf6ff0e",
+        "decoded_rgb_sha256": "ce860bd55da71e7cdf500289580ad0df2301056ee1a6ea061a2a08adde939df6"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "94810d896c0ed1cb635f5207d6d0c15315d4c988e573e634407f6615c35ab6f9",
+        "decoded_rgb_sha256": "05097b28814369d82b8aea002ada8c83ef92a729d7f2abe0043cd26a48cff7c7"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "676e6985f2b451cde0640ef47ef2876717791da8e08587ee523d7721d2af8327",
+        "decoded_rgb_sha256": "5f1c2d7ad56cb9dcb7986b658aff79d1eead83bc3e3ec33a4b4605f2e18eda97"
+      }
+    },
+    "3320": {
+      "CAM_FRONT": {
+        "jpeg_sha256": "3da32906922cb9bff78dc2696beef83a142bf864e26014333313598e1e7a3b16",
+        "decoded_rgb_sha256": "6fc8fce13a63224c1aa337d5552bf12b069521cccde64f372d3c37482cccd007"
+      },
+      "CAM_BACK": {
+        "jpeg_sha256": "4a8fb26e101306bc58063c44acf7859a977cc2ae66ba3ec48df78c4fb68c8a5b",
+        "decoded_rgb_sha256": "7c7e9f3ab953630cefa8fadca2bbdee10ec3d5a4101a53c0584e17acc5b6ed29"
+      },
+      "CAM_FRONT_LEFT": {
+        "jpeg_sha256": "f236883c89aa74ab111389c3069564eaf3f54ad65e1593175bb9fb879dce7248",
+        "decoded_rgb_sha256": "f270877a53221f17c2f4f90946917a8edac50c4508f8da83023a56b36729aa9e"
+      },
+      "CAM_BACK_LEFT": {
+        "jpeg_sha256": "44bcdd6900c3fffae291f6f55d70c12652d6c0d83fcc0eca7ab44a6ff0e582f4",
+        "decoded_rgb_sha256": "216d9d0a351205260be61511fb2982ab7930718e34f23eeb402dd49fefb82933"
+      },
+      "CAM_FRONT_RIGHT": {
+        "jpeg_sha256": "13977abc6d7d783a289a168549798a343832fdeb172302e642fc1d6e860915a3",
+        "decoded_rgb_sha256": "448cf02ad944e3328a3087b424a8cb8721b79ea1bd4a4a932fd39f65afab4d3d"
+      },
+      "CAM_BACK_RIGHT": {
+        "jpeg_sha256": "5a449bdd18754ed2d8abbcc6a424e9c9b6589c9d045eae428cccc5d7eccfc7d7",
+        "decoded_rgb_sha256": "89219f5f4f3daf064dfbb0d137bb09cf911519abb6c58a85207c1fe1724cef0b"
+      }
+    }
+  },
+  "input_sha256": {
+    "render_evidence.py": "7a8edbb0af109a7ed39997aadaec8a163f4098875e059a4448385300cb464d5c",
+    "02_ramp_B1/owner_result.json": "ae981fc60810476a7c0af5fac5643ad58de9bb413227a1f6d93fb7fa2c8beac3",
+    "02_ramp_B1/owner_plan.json": "2499a780f98f76f981573a79b6069d55504fdc28ee80726c0c739dfed4635dde",
+    "02_ramp_B1/lifecycle/stopped.json": "5fd08442e1ac6e56e3ee9c888de6504cf6e08d5ff9882c776288d9eb0b50e862",
+    "02_ramp_B1/provenance/scripts/e2e/run_owned_carla_expert_trial.sh": "53bf26688a0d668ff7a7f1e1cc61f4e49c092689f1bc4ca73e041f57c4c2f127",
+    "02_ramp_B1/provenance/scripts/e2e/run_carla_map.sh": "b8ccb5d954e9d54b6dcf4c056acde3260a4d84f490986524dfdfc4f0f0a90ff4",
+    "02_ramp_B1/provenance/scripts/e2e/process_group_cleanup.sh": "319752496808bf3013db68e4af39efeaf04d00027ecd6ec635ac7d5baa000c56",
+    "02_ramp_B1/provenance/scripts/e2e/workspace_runtime_lock.sh": "ba92c9ecf5ca3d60c2cb5a09c9ee291d79e458925bdcce793940e6699381f236",
+    "02_ramp_B1/provenance/scripts/e2e/probe_carla_server.py": "df28db8dadf36632066e74e690ef2cf1a7d2fbe34583179aba3a7166da4ca01c",
+    "02_ramp_B1/provenance/scripts/e2e/env.sh": "e6638246911ed4806a22631a6c43887947556367aecac86869c6b80a7017ee08",
+    "02_ramp_B1/provenance/scripts/e2e/collect_carla_vad_expert.py": "33e078e13c0219a0d4d57d1ffd5d67dfa76d6bd4c50ddeb4209af78876dfebe1",
+    "02_ramp_B1/provenance/scripts/e2e/carla_goal_stop_profile.py": "568127719912fa6ef3b716ad574769fbd0bf5a00d97fffcca4a05fa6331fcf28",
+    "02_ramp_B1/provenance/portable_e2e/model.py": "fbbedef10b97add830e0d887400107b2bcd6dfb5f0c5c4901e399d2e4717fd6e",
+    "02_ramp_B1/provenance/portable_e2e/runtime_contract.py": "38e993278ef84b149efc90931423cd90b1562d86c9eb1585260d50e03b2ae0d3",
+    "02_ramp_B1/episode/manifest.json": "65cda7dea12bfd6229ef1d76d1ce64e2430bdcc806cfeec5af7deefaf057e716",
+    "02_ramp_B1/episode/route.json": "8285e70a790d5e8ae75803db1aa538122b56e6fcfc3586e60eaa947d330417c9",
+    "02_ramp_B1/episode/states.jsonl": "0cc6a15ee24921fa107645da5a6516a03ccef62a9d2a112aee59525f3c8bcc5b",
+    "02_ramp_B1/episode/camera_frames.jsonl": "eda13f55eec60390faac8e8609c3f1b0d5cab01b9ab6d759e06561db3e61801d",
+    "02_ramp_B1/episode/images/CAM_FRONT/00001914.jpg": "7866b4076853d6c2beda69d09efcd5bceda526a5e5e4d80d3f25a7f4c7af1b5e",
+    "02_ramp_B1/episode/images/CAM_BACK/00001914.jpg": "c9409b7b817453d4d7806eac3a5d4fc9008bfa8523b85405feda6f7d8876e2a5",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00001914.jpg": "36e555143bc99b540441e76ded5254880295f97616890c2510e6fc1d2cd0a99c",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00001914.jpg": "0e7ebd6d972c3dd4508dfd93e1325e1b5e24838579522afd9de6c47a58c0b2ec",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00001914.jpg": "439620f0f6355212de05a22e159bea44f350fdaaaab53c61d35aaf85a447f3a3",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00001914.jpg": "8b2a008f730c963ee7bf580d30c226a21ea522f73f0f2722e832115c1530a9d9",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002020.jpg": "af38dee392955b3f469c61d95c5d18d1274095c36536a3b8ec7dd186e295d66c",
+    "02_ramp_B1/episode/images/CAM_BACK/00002020.jpg": "d93d1cfbb6c0e83f00688f08e90808ed82cf32f37a62f18a6a71b27d696c3894",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002020.jpg": "6cee6c5eac50882a590033d03c6363de793dea09387c3ba299fb45bf7382b49a",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002020.jpg": "ccd07be86c4a9196274818b28231c306a8eeed1ed9dd5701cb3a59c88ad6ce25",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002020.jpg": "fd2e39e3a783818faa303d21819e989c2b79036091c183f4ff7f23c5f3beeccd",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002020.jpg": "844dc6bddc15ec1af1c879e52d17bd640c60f3d2af40098d3dc56053df16d2cf",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002728.jpg": "14f4d7d6d982ab4dfcb848e4271e1366079b9e6023a9630c2508b59718f7840a",
+    "02_ramp_B1/episode/images/CAM_BACK/00002728.jpg": "a6ded62a0216279f412dbdda15add79dbfb6d056c3cd0560c3c30e3d22a82dbd",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002728.jpg": "a37cd670352e7e5821b514c1c026441822efb61ae1641c17d64d5f58e8786a60",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002728.jpg": "6094c4164a840be3edbd3248d8408e31c9e50731ca2ebfbad3e1c0fb6fa7656c",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002728.jpg": "49d6e16ad87f70bcd5cc78a808ea35ce9116dabd2e90925ae2ad152e2f12e7c4",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002728.jpg": "acd0ff0dbc6ac010090fb770b2e61a6ad8869f725a2f3e9de2651f5f1447828e",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003216.jpg": "73b2da92a17f219faec823b43eaf622558c5281bac261f1d329512a014967a62",
+    "02_ramp_B1/episode/images/CAM_BACK/00003216.jpg": "2043c2251d2c24ad46b908f183551e59f0d24e0029cbdad2c44b23085b0aaf26",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003216.jpg": "f9990f3653e06c7261f5cbc95c0254b9b3669a9e70de1782b5fee7d5c0cab02a",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003216.jpg": "6394f1e4e988194364172d7f9f920414dc7b93fcb97f1184cde2b36eb38668aa",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003216.jpg": "0a323cd83370ca122242540ec7f34a435c3338103230da14c858a9800fa91dfc",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003216.jpg": "90d8660d60566bc945d8ffe5921560466b6937167fb9d5d4c80e470a1eafac86",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003226.jpg": "1f7f6bd12d254e542321f63dc361e78fdc9a1452176d0d622c90bd57235675fe",
+    "02_ramp_B1/episode/images/CAM_BACK/00003226.jpg": "09927f4539d8962b72c92296c60ed7f1b833e7cf88aaa52516004de029757e82",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003226.jpg": "5dafc4b513384370a167cd81aa7017ecb04b3cf57dfed0804ce5c589cdaf8075",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003226.jpg": "5c741953436e2cda074dcea05a260e9b66dc9738db4d5edf2f15d1f35020dba3",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003226.jpg": "03ef6efa70f865cf7505fdbb903fe9c050310bf1fedfcf85513b034422990516",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003226.jpg": "3f4afa1e5397febc39a662d77d0aefb08572b986d5d4c0cf93b1c0776920fa5b",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003384.jpg": "12758d67e17db33a80496caaddea58c3259a833b036bfce81c3c67ef6f8ffc34",
+    "02_ramp_B1/episode/images/CAM_BACK/00003384.jpg": "b9454f086b41c76b4120c5c65db8afe743aae6de908b1b45bdc9a346e4b71d7e",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003384.jpg": "c2d5dbc77e0c5145c0f4b0168c18493b9eddd5a5d634d13343d8ade72dd1a100",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003384.jpg": "4cec3575ebfa5faf0c0f8ad67a44acf1085692325046c76b10f1e53b2ad76051",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003384.jpg": "6f7b7c70473e2177f2435b3c5ee6f8db2026847b5cd12bb2ba842d81af3a4005",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003384.jpg": "b103584dbcd12b58fc23becbdadb7929885a9bd1e24e14068f91f53fa23846c6",
+    "02_ramp_B1/episode/images/CAM_FRONT/00001978.jpg": "457ad0d7def389a78045620c54ea28284d7530dae2e989b55abb5889e02dbf50",
+    "02_ramp_B1/episode/images/CAM_BACK/00001978.jpg": "773401120292038916d045494cf86c0636f6028aa865566e244b9ad892bf6e28",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00001978.jpg": "fd0774057c1efc65d6ce9363ef936608c6c431a19fef0bc0b011e3ef3f2d53d1",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00001978.jpg": "cbe25473a199abbd45593f2b1d14ca0ff8443a18970587fa3dfa7880d16216e6",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00001978.jpg": "a1d2b6d7bdaf50158fbf5f62b907dba69684a17440595ea05102a52adefe0ac6",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00001978.jpg": "905b06ca1a8f9100e1639331464b6c4b03e1e529024b974e6099bcc03e8b4ec4",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002042.jpg": "a756416bfd09e49616030fb3be5aa722ed9a4f800e29c88ceba20a29cf81bc32",
+    "02_ramp_B1/episode/images/CAM_BACK/00002042.jpg": "48fbdcbe5d6b7fa368b90f9086ca9ec54bb79d65d882293a1f418e845cc059ff",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002042.jpg": "f643c11f7f4a279b588b87ab75d42fe25e26d4ae8d1a50451c97a21e8e3075c1",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002042.jpg": "87b04baa54cc332eb128f5fea90e0d37724ff5797761fd541fd4cb471b7a2271",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002042.jpg": "675b0db8759ac38d1978d391aab8c0b0b0e159cf379a88d61cd803a1827a6f10",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002042.jpg": "760946d700c243e652927032f1543c8de859e55ffbf912d984c43db855796067",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002106.jpg": "555d06d98bd221e011348c590da5985a261c72b88bb2a86e1fd71f7d6cf8be6a",
+    "02_ramp_B1/episode/images/CAM_BACK/00002106.jpg": "3138042dd8db8450d79193fbe81731524d98feb40c14521edca488a4483163e9",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002106.jpg": "72578bf15ab22725d94cb17910abf62e6116fb94202b92ec8f62adaf9ce2c4dd",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002106.jpg": "b9152843aeedcdf73cf8ee3dd13a547f4fc3918cc35f3bbcce51b5f30e3efc09",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002106.jpg": "c7c49d0063220b115b95bccb53d8d88557f7ec540b05cfb6a77dbc607343e362",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002106.jpg": "d540cb07b56c6376c28453e4779a67d0df9d139f254a2d7c6b3641633cee8949",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002170.jpg": "884a3cb391ed46603b95eaf42763b2f8daea8031837fa07576c04f80d94f9026",
+    "02_ramp_B1/episode/images/CAM_BACK/00002170.jpg": "6b720b3f46a19e3a1dba3a966ee4652237145dbab28886fc9047451082585013",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002170.jpg": "8a8ffe2804b895861fcf57173d6fe6cbe7a069b099207dbbbd50f8e5d310584b",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002170.jpg": "ba279d6d5ce552c700303f30d452821402adc84e09da0103932dfa52c5f5bad0",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002170.jpg": "88e67c1cf74a1168c0f9738bd7d4c5e30aa098ad38dee4984b4a3b728f725d80",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002170.jpg": "5ef324fea9dfc10a4c0eef018beed9d7f77e5075f998864d24c086ca25b5688f",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002234.jpg": "80baa962c292b5f001755cc38e1daa967ddffc23cd25b21b9881b514d41fd891",
+    "02_ramp_B1/episode/images/CAM_BACK/00002234.jpg": "d48e45bc905bd85488ef51c8209010259b3ca54db5e080252420c24ae556c3ee",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002234.jpg": "6ee9882d1b79396786e08428c5300b2afb236bae87846c101925d3e9df5a99a6",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002234.jpg": "08bf591f5254320e3bbdb2635f7ebc9cdcf6f72bb1c95ca7a2bdec4ce027e912",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002234.jpg": "990d79718a1ce9bc8fd4ab6b2aa683af3a6b62f08fc3a8443a10c3969510eb77",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002234.jpg": "26e88d7f9769536e02085a8cb17c230e7d89ce6c430e1e94e0f53aafde24c970",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002298.jpg": "3f53928b679dc49e9d053e2b28fd4ec312b527c229ca75d19a5b4a653bb448ca",
+    "02_ramp_B1/episode/images/CAM_BACK/00002298.jpg": "b9cf45e74db50751653ec21562033c320504cfbb9a41e558d45e884e685b353f",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002298.jpg": "c6399504e0feef83bd517b4ac9bcec0489acb23e8b0576fdd8e2b2596e7da071",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002298.jpg": "9cf085fec861beaba161f064562a73c3126f62ffb2f755b3300bb75ee2376013",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002298.jpg": "9ecd9768da97337cadf54a77f50de657f157ae98cbf3c860fbfbb2268a06c6a1",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002298.jpg": "2ac3fdea02c4a39f11cca76fe907fedc29b99c9a4021aa435d80f433e203a59f",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002362.jpg": "0a53f7250409bc85770d91c470effe0781f442b72090dc66696dcf994a68c122",
+    "02_ramp_B1/episode/images/CAM_BACK/00002362.jpg": "cd2985177608ec6f826aee6e2f19602a9aa9bcc1b62bb04d32971b690e02facf",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002362.jpg": "4b093a893bc492bd32aa6e71c957859b763c82da6bfdce1b94fb49e9a6fcb27d",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002362.jpg": "e5e6eeb3c0c105b8200576ce11209cdf46f192bf1e744c5adade945f94aeece2",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002362.jpg": "1a9215f1c00667d0a17a654d7426ba88875b56245862a1cd927da963bcc3049b",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002362.jpg": "e9528c747687066a9513bf4fae39f90b005464eca7815f89dd166f9d6913eb97",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002426.jpg": "0ade4a8d2baa0548f6f29891a96cf08b5cdd7f65ffd760db56a02ec49fb58f0c",
+    "02_ramp_B1/episode/images/CAM_BACK/00002426.jpg": "0a89d0f2035f2d28153e3e59a9a3878164ec682db9e60e75d026437266b2c046",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002426.jpg": "ce0d7541aac08f4fda7a06530143d2d1487b042b66a8f2f477ba2c85286aac1f",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002426.jpg": "a124a35d79b2de4d9209c1051b37836e929430f677391bec562e4ece5aa1227f",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002426.jpg": "8d7170ae84d7297cf87a7187559c07c520b43109b5a2a7bc7dc8ab661f805d80",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002426.jpg": "d7956743a9fdf55c9ef41cefcd3fd2eb4c39e9e52c3dd780c2ac5e3dac012a38",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002490.jpg": "0a40ce00e635be5139f5f68f3f73680e3023cf4641be78242fef7106e0d56c37",
+    "02_ramp_B1/episode/images/CAM_BACK/00002490.jpg": "cffafbf7b11cd710300c9f195b3233255d30d546bd50373fc8dff67b5e08bfb5",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002490.jpg": "6a509266614e156ccdceae95abfcdbbd40bc0f6f3f4d5d9b5d6e5053ac595c8f",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002490.jpg": "32fee2ec1498b502b688434831f24b51a7862a383dae6cea9051ac5b0a6db538",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002490.jpg": "aee1bd65c88d73e78edfd888008eb6ea581419867138af45de656e365e5fc852",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002490.jpg": "5172224a0f635f0dd5bfb6d5927a09de38aca2c06e9c0a20a59f2984a8a5f770",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002554.jpg": "43a256bf137e097c863efd5d39b9f72cc7b08237dd25f254f6007d58f1d2177f",
+    "02_ramp_B1/episode/images/CAM_BACK/00002554.jpg": "98c4af7378b8a284a926b5e45fc08c3e86f7b6cbcc2550bc061a8bd674b68a7b",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002554.jpg": "c8555d5cfae3828c6ec0725a5f9bda318ec9107a1c264168ab9a13c37e3e1423",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002554.jpg": "c508bc9968a6b2732143813faf53ede2206abb5fb2249406bccc5706cc062ff5",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002554.jpg": "c9f20b485f5154ee5d993858de465406dcc16bf3aeb1dc8cd58b90e460dc25f3",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002554.jpg": "c3fe20b4cb3ef01f0bb8eb93ebd05c63e07471547e83ce2d35a43e943ce88e9e",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002618.jpg": "228f3b78a930859e80e704fe07140ddb804df05de1668537a799442398a57c49",
+    "02_ramp_B1/episode/images/CAM_BACK/00002618.jpg": "f03c533d80dc5035e3d3c94dd9730c175d3f4c52f871fc1e61453a56cf628e0a",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002618.jpg": "853165e35171364710d40e4ddf6fc5869d1b177f716ed20b9f366e5fe03af38d",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002618.jpg": "9fb7c3b5001915bdf9a1ef9e71f28dcea82ff09ed0965263be6d2e57ac4e9c02",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002618.jpg": "0cbe57b9ef7a91baa5487bcbbe2545d3772bde451cf6b15b88758c988868ac8a",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002618.jpg": "0ada781ba7a379fed88090cf430cd1e77d1915c13e6f472283e70fc3423f3d03",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002680.jpg": "48cf3c9fa9ad45e6446cd22a99e10fe0be1a969af7ff553efdb8d80fac4c11f2",
+    "02_ramp_B1/episode/images/CAM_BACK/00002680.jpg": "9cc3f65f54548cb3c9cf753221f81d85cb33b0e3c2236357554b1a2084f48e9b",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002680.jpg": "257b9d433f049e2106497f401b4750a174f2e636ea04c81f44e028903185adf7",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002680.jpg": "9e09561eb3896d1b216247d891c3993a5b4d9f57c614dbe18ffb8747b785d136",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002680.jpg": "5a1c81f0b40bfe1f1eb6647e963dc65bc4aa2dc0f94ee8f8b74a527e2600ab23",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002680.jpg": "d6a75be55c5950aee9168b2f5d03a46792054a80cabc674f47e85e9948ecebcf",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002744.jpg": "5de6dc86a5fe0fc6222195b1062773959f462e3b6abe70fc53dc783370ca7cab",
+    "02_ramp_B1/episode/images/CAM_BACK/00002744.jpg": "73ef4c2688efe063797c318f7b9aa50ebf885e59648857063f69f6d572a00b4d",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002744.jpg": "39d3ff6bbd187b0247d93c3d2af99fdf8512383c9694c296625e40b383fe7cf5",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002744.jpg": "5518e36da04edf509e79632d9ea396a41d03ebd04c468c4b8ff953d8221b06c3",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002744.jpg": "f18a5874c36c9628fb4b348219af6e0872376c0645159e0f74ca6466fe1a2d56",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002744.jpg": "1647e2ddd80b4d18bab671de25582382b9950439a061c6a18da867edd045de62",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002808.jpg": "08ad079d1824c6401965c7d383609e0b5c7761b020f0bccd8611fc75776c3daa",
+    "02_ramp_B1/episode/images/CAM_BACK/00002808.jpg": "9e119142371ebde271980972f8bbb41be930fd9270a949ec578a42d22c2a0f78",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002808.jpg": "a6dcac013856bdc17366242ce58a0f09043233ea62b1335e288d852139baf04e",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002808.jpg": "7ef120cfae5a0cc6f0c5f535a554cdf6ab9b0d84c5a16a7014f64f6eb1617df5",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002808.jpg": "ffcebd0ab7d4e92bb4c177a78d9e82ba64b8a78421343f935b96bf470b31e789",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002808.jpg": "eb5a8c05a25788e1eb2d0ffd8b58d9e9d917da84f510abdfe7835a3e3851b2e1",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002872.jpg": "c08d3dc013c607a35d41198f1678f7843d1cb124af2fe49f4d2bf0247c24c606",
+    "02_ramp_B1/episode/images/CAM_BACK/00002872.jpg": "2daff52d6529d1bb92710f2bde5273eb6460053d7ffed37177f484c3f25ab8b8",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002872.jpg": "80038f9f9945314cd0d5a94f31514f21d036e346040150ba629c6f81852de947",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002872.jpg": "b2486fd54ded916e338aa51040fdeb61b1f18441eb04a7c23ec1b9a72c0d4df3",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002872.jpg": "f402ce9fb7c86d7a39a985ad867c461426e38983b4e7b1874c27258218c3e802",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002872.jpg": "543668a5f5981a0b5a86f1419bfd4799a3315d2da730e96f6af81e8cf25a58ab",
+    "02_ramp_B1/episode/images/CAM_FRONT/00002936.jpg": "b086b5f20ccb82d1203c03ee200d4df1583dce5a9eef9b7b337cda377d6665aa",
+    "02_ramp_B1/episode/images/CAM_BACK/00002936.jpg": "fe62e108e5ce4f6534347a78de6a0c9ffcba44db559e45c8c38170a760cf21ac",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00002936.jpg": "088437141449a41722571e49d400dcf74e722f2c127806b6823c583928226274",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00002936.jpg": "73fe2b5f5e6a81df01cc259f0c046a05e4b7969c951f0e615a4d9836cfa5cc19",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00002936.jpg": "74768e6b50ecfa427cbd011453cd8d14576547b6ad59e116926b7953a282cb5e",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00002936.jpg": "7709f570d781748cefa2ee7614f985759d7dd30674f890175a95ff1272e8e81e",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003000.jpg": "2e8f8f67ce8c73e6f044e9a2b41590a2df58c96c6f88e09254f323f411433c27",
+    "02_ramp_B1/episode/images/CAM_BACK/00003000.jpg": "f216229984265a38269cf561a0341e56fb7c3321552c2054bf156f563de473a1",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003000.jpg": "67d1926e71862bfb22c6a3a4acce802db7e9b8995702c18052fdff3b347f33fe",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003000.jpg": "330f9c09a8676f56780a01c2b3f4a7927a21ada66c1b85f82d688f39a79e5b2e",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003000.jpg": "6e16d60200ab161da9dfbd2fe9ee53063d289776e16afcaf8d47de2c383de058",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003000.jpg": "c016a684df1f73c2f8ada9721396c9f71839631f55aa78bb4f5cfcbcb89bbeea",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003064.jpg": "9a81a6d5ede5438e6763e21da3a18db4b7bd36d9d8d9e9d51283b583402407b8",
+    "02_ramp_B1/episode/images/CAM_BACK/00003064.jpg": "434a06da4ec1b5effc9a0ae33028bb9b22fdb7357b256a884739c3883a46942d",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003064.jpg": "71cb06ea17702de885a50f1623f3d9e57fb60ee99b6c1980fe0632191b2d547b",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003064.jpg": "ffbd91b119d0dc5aca6c7e7573692dd4ebeab9029b53640604a733bea954d260",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003064.jpg": "64f9fecc08030f23cb69226342596bb8dd69a571096fe5968d97d5af7aed8a64",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003064.jpg": "6938ac8587e22e3c8f723dceeda801f9df7cf24a5ea4c8fda18a7b94b13a3c57",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003128.jpg": "cadfe9269e243e8785fc5b20f9ecbcff3816db3f69a56a03ed3e3e102dbc6432",
+    "02_ramp_B1/episode/images/CAM_BACK/00003128.jpg": "86e72e578c68c57b3c3091b7d5130ebb7042a2130fa1aa11156d38e87d8bc6e7",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003128.jpg": "35c81bfe5914e10955ce64bbc14269a8411a488bb0330bf6b15d4ae8f929eda3",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003128.jpg": "bd5996042a458d5fbb18bd85cb73b877117c6a2ca4675813015abc86b02acc28",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003128.jpg": "2ce6af653d112c873922f7f75f224cbeb1edb93525c0e78c7f289ae90bf5b34a",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003128.jpg": "844d78dc71a09684aa36e0051debef31813f71a8a326163a6e288941ddb2c0c7",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003192.jpg": "2568515071e1816d9d45585bd2e9e11b7e758572d3edfb97927b21a1fe7a4295",
+    "02_ramp_B1/episode/images/CAM_BACK/00003192.jpg": "ee0dea5417235199bbf7200ca191ffef7b69efdb3d0cd42cc79a7999b02321e7",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003192.jpg": "171a6a9f8ccb040d10b74077d48f5dabfb44ba4f272710430e6b1180275696a7",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003192.jpg": "1796a09ec0eb14c5ecd4b71fd284945123eb692edda15e753594dd3caae21738",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003192.jpg": "52ce0476a1721e32c2f5323846d5d516ee83d5c601b346bad8e0000c10dedee7",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003192.jpg": "c5718b76d42a8937550f134558d0209a28a6462c461d76b3b361d3b2837db869",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003256.jpg": "a0f12f3dc348cfdcea7e1a16f2783e04df5062a6fae6e8118a6e4faf5541b995",
+    "02_ramp_B1/episode/images/CAM_BACK/00003256.jpg": "67b227072a3c44fb53995d2e4aa1c6b12e0f4f3116ef39e018bf78669b10ee8f",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003256.jpg": "4d846b44289f81c68c44ed72bd2c249f0612d4c77c0951308885409175350848",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003256.jpg": "f1bb7f2156944da8d8ee86f3eea0354927c08b149acece74452b6296caf6ff0e",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003256.jpg": "94810d896c0ed1cb635f5207d6d0c15315d4c988e573e634407f6615c35ab6f9",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003256.jpg": "676e6985f2b451cde0640ef47ef2876717791da8e08587ee523d7721d2af8327",
+    "02_ramp_B1/episode/images/CAM_FRONT/00003320.jpg": "3da32906922cb9bff78dc2696beef83a142bf864e26014333313598e1e7a3b16",
+    "02_ramp_B1/episode/images/CAM_BACK/00003320.jpg": "4a8fb26e101306bc58063c44acf7859a977cc2ae66ba3ec48df78c4fb68c8a5b",
+    "02_ramp_B1/episode/images/CAM_FRONT_LEFT/00003320.jpg": "f236883c89aa74ab111389c3069564eaf3f54ad65e1593175bb9fb879dce7248",
+    "02_ramp_B1/episode/images/CAM_BACK_LEFT/00003320.jpg": "44bcdd6900c3fffae291f6f55d70c12652d6c0d83fcc0eca7ab44a6ff0e582f4",
+    "02_ramp_B1/episode/images/CAM_FRONT_RIGHT/00003320.jpg": "13977abc6d7d783a289a168549798a343832fdeb172302e642fc1d6e860915a3",
+    "02_ramp_B1/episode/images/CAM_BACK_RIGHT/00003320.jpg": "5a449bdd18754ed2d8abbcc6a424e9c9b6589c9d045eae428cccc5d7eccfc7d7"
+  },
+  "scope": "Selected image bytes/decoded RGB and all camera/native frame-time metadata checked; no full pixel QA, scalar/future admission, ACK or physics re-audit. Missing transitions are NOT_OBSERVED."
+}

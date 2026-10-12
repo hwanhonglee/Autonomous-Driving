@@ -1,0 +1,75 @@
+{
+  "created_at_utc": "2026-09-30T18:10:37.268498+00:00",
+  "evaluator_sources": {
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_paired_appearance/PLAN.md": "0bef498f92512a79ff8c014b1acfeb54c3b72b1208ce0c7e2233aae677e6d3ca",
+    "/home/a/autoware_e2e/docs/assets/validation/2026-10-01/map_paired_appearance/RAW_TARGET_ATTRIBUTE_V2.md": "a2d3529d18c2017390fbed55713295ec9dca5d8fe47f4a5a7e521ab0bd7eecce",
+    "/home/a/autoware_e2e/tools/e2e/audit_ctrack_isolated_moving_20261001.py": "57c48b62849497aa895dc448d8ccc42291179b7214e4fe984d0a8311755aa6ce",
+    "/home/a/autoware_e2e/tools/e2e/audit_map_paired_rgb_20261001_v2.py": "a3afb0b23e8383cbdc18a06443caabe1672839ab88f4633ee24c380d2460076f",
+    "/home/a/autoware_e2e/tools/e2e/collect_map_paired_rgb_20261001_v2.py": "ed4f59a05d4823e9263da94ed847fe7defef1b31f8923b3c2145490389a0f7d9",
+    "/home/a/autoware_e2e/tools/e2e/evaluate_ctrack_fixed_maps_20261001.py": "fa210fbce9aefa99f4ffc13efbeae42e2a4fe9c7281d144e71f298a44700ed38",
+    "/home/a/autoware_e2e/tools/e2e/evaluate_map_paired_rgb_20261001_v2.py": "16d2eba300ef72ebf1862f30cc52ea7375bb7688dc7e54d95276ade078b7ba29"
+  },
+  "model_sources": {
+    "/home/a/autoware_e2e/storage/experiments/training/2026-09-29/map_town02_p00_route_holdout_data_v1/manifest.json": "f4764b9aa9d015f3d136a145f6194dd60bda8900c27dd2423de6145b9f472834",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/A/weights.npz": "dd212df685f6e46f4347df457c18f559785de5649128033068dd1fc9a770f9a6",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/B/weights.npz": "ff5d7d03a43b859d21a0a3f6b01d815054d89d78e850730121f326e5b79c023e",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/bundle.json": "1ed896e7f46909076553a37f97facde0546ffbe31f03bfba5c7857491e47a7ab",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/dual_recovery_objectives.py": "d10bcad9060c1f4bde40b20773fd4c18f1d4b6ba3861dd7cef55cd36cff4ad15",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_context_recovery.py": "c8e2a8f0026852cc2b68ff653f78ed4666a1d2d2bad81997d1f5c16798fbc50d",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_learning_balance.py": "57c9392d8b700f5cf628865042b66ae630961f35fb8858a5d0ead77fe5a7c73b",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/map_perception.py": "1b0076c8f9d34192ab5aedf6cdf96ce2c14458e2bb49986685a6811376b0750b",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/plan.md": "a9fbda9023812419c8c61476c116d613c269d78409ee970a4cda623b6cde24a6",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_context_recovery_20261001.py": "a5605f442abe83afa07b3ff8780b18588b5e210f7608d3c536f5cf91c2923500",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_photometric_pilot.py": "4de567323d3964ec877da831ec2acb08e445fe77c9da659f052edcf52ca53484",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/source/train_map_town02_p00_route_holdout.py": "7ca69282db68019c6c5a2d09145dfcb4426047cf69c3f8f9355072ac0d3cd108",
+    "/home/a/autoware_e2e/storage/experiments/training/2026-10-01/map_context_recovery_20261001_v1/summary.json": "127c15564bd2180eee4061fd6993f52f00bac0dcbc65aecc6505b5dae425b606"
+  },
+  "policy": {
+    "batch_size": 1,
+    "claim_limit": "Composite RGB postprocess appearance effect on familiar TRAIN corridors, not unseen-map generalization",
+    "ctrack_train_eligible": false,
+    "dataset_admitted": false,
+    "device": "cpu",
+    "fit_steps": 0,
+    "frames_per_model_condition": 240,
+    "frames_per_route": 240,
+    "inference_order": "frame: false A/B then true A/B",
+    "input": "RGB only, float32/255, no crop/resize/filter/dedup",
+    "latency": "forward+argmax only, cold first frame included, no unloaded-runtime claim",
+    "metrics": "full confusion/support/IoU; absent GT class IoU null; false-positive counts retained",
+    "model_promotion": false,
+    "models": [
+      "A",
+      "B"
+    ],
+    "performance_gates": null,
+    "raw_target_attribute_policy": "historical conditional; unsupported is absent/null",
+    "rgb_conditions": [
+      "false",
+      "true"
+    ],
+    "role": "known_train_routes_paired_appearance_diagnostic",
+    "routes": {
+      "town01_p01": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/map_paired_town01_p01_20261001_v2",
+      "town02_p00": "/home/a/autoware_e2e/storage/experiments/validation/2026-10-01/map_paired_town02_p00_20261001_v2"
+    },
+    "target": "one shared raw semantic sensor per frame, existing seven-class mapping",
+    "threads": 2,
+    "train_eligible": false,
+    "visual_indices": [
+      0,
+      119,
+      239
+    ],
+    "visual_native_wh": [
+      640,
+      360
+    ],
+    "weights_sha256": {
+      "A": "dd212df685f6e46f4347df457c18f559785de5649128033068dd1fc9a770f9a6",
+      "B": "ff5d7d03a43b859d21a0a3f6b01d815054d89d78e850730121f326e5b79c023e"
+    }
+  },
+  "predictions_made": false,
+  "schema": "portable_e2e.map_paired_fixed_preregistration.v2"
+}

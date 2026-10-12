@@ -1,4 +1,4 @@
-# Autonomous-Driving: Autoware VAD + CARLA E2E
+# Autonomous-Driving: Autoware 아키텍처 스캐폴드 개발
 
 <!-- HH_261012 - Distinguish the shared Autoware snapshot from the vehicle, simulation and architecture branch purposes. -->
 [이 브랜치의 목적](BRANCH_PURPOSE.md) · [실차 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
@@ -28,14 +28,15 @@ Python import 호환 처리는 명시적 실행 진입점에 남아 있으며 �
 [주행 모델 200m 전진·미완주 원인·전체 GIF](docs/assets/validation/2026-10-01/warmup_supervision_ab/README.md).
 지도 모델 개선은 확인했지만, 자체 주행 모델은 아직 기본 주행 복구 단계이며 실차·전체 기능 승인이 아닙니다.
 
-이 브랜치는 Autoware 1.9.0, TensorRT VAD, CARLA 0.9.15를 묶어 기본 Town과
-커스텀 맵에서 직진·회전 경로를 반복 검증하는 프로젝트다. 처음 사용하는 사람은
-아래 세 명령으로 저장소를 받은 뒤, 사전진단이 표시하는 다음 명령을 순서대로
-실행하면 된다.
+<!-- HH_261012 - Identify prospective scaffold work without claiming a completed architecture transformation. -->
+이 브랜치는 Autoware·자체 주행 모델·지도 모델의 인터페이스와 구조 개편을 준비합니다.
+공통 소스 기준선을 분리한 것이며 아직 새 구조 변환이나 주행 기능을 구현한 것은 아닙니다.
+이하 CARLA·모델 연구 자료와 canonical 경로를 유지하고 레거시 별칭은 복원하지 않습니다.
+아래 clone 명령은 이 스캐폴드 개발 브랜치를 선택하며 사전진단은 구동하지 않습니다.
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \
-  --branch autoware-e2e/v1.9.0-vad-carla \
+  --branch autoware-architecture/v1.9.0-scaffold \
   --single-branch \
   https://github.com/hwanhonglee/Autonomous-Driving.git
 cd Autonomous-Driving

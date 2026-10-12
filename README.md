@@ -1,8 +1,8 @@
 # Autonomous-Driving: Autoware VAD + CARLA E2E
 
-<!-- HH_261012 - Distinguish the shared Autoware snapshot from the vehicle, simulation and architecture branch purposes. -->
-[이 브랜치의 목적](BRANCH_PURPOSE.md) · [실차 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
-실차 플랫폼 브랜치는 통합 준비용이며 차량 구동 승인이 아닙니다. 현재 사용하는 중첩 Autoware 소스는 정확한 원본 커밋과 새 변경 패치로 별도 보존합니다.
+<!-- HH_261012 - Distinguish the future fixmoving platform from a vehicle model and retain separate simulation and architecture purposes. -->
+[이 브랜치의 목적](BRANCH_PURPOSE.md) · [fixmoving 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
+`fixmoving`은 차량 모델명이 아니라 앞으로 개발할 플랫폼 이름입니다. 플랫폼 브랜치는 그 개발 기준선이며 구체적인 구성·외부 인터페이스는 후속 설계에서 정합니다. 현재 사용하는 중첩 Autoware 소스는 정확한 원본 커밋과 새 변경 패치로 별도 보존합니다.
 
 <!-- HH_260906 - Use the canonical layout after verified removal of every root compatibility alias. -->
 **새 실제 구조:** `autonomy/` · `learning/` · `tools/` · `storage/` · `docs/`.

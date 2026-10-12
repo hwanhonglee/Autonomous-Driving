@@ -12,6 +12,9 @@ The evolving status and latest evidence are indexed in `docs/assets/validation/2
 
 ## Environment and safety limits
 
+<!-- HH_261012 - Preserve the user's clarification that fixmoving names a future platform rather than a vehicle model. -->
+
+- `fixmoving` is the name of the user's future platform, not a vehicle model or manufacturer. Keep its branch as a platform development baseline; do not infer hardware, CAN/DBW specifications or require a vehicle model to define this branch's purpose. Any later connection to an actual vehicle still requires its own specifications and safety authorization.
 - Local machine: CARLA collection, inference, closed-loop testing, and real visual evidence. Remote PRO6000: model training/evaluation under `/home/pro6000/personal/hwanhong`.
 - Use only physical GPU 0 on PRO6000. Verify availability immediately before a job; do not use GPU 1 or terminate another user's work.
 - Install packages only in the user's private `hwanhong` venv when installation is actually needed and within the user's authorization. No system/base-environment installation, arbitrary reboot, or remote Autoware build as a substitute for training.

@@ -1,4 +1,4 @@
-# Autonomous-Driving: Autoware VAD + CARLA E2E
+# Autonomous-Driving: Fix moving 플랫폼 Autoware 통합 준비
 
 <!-- HH_261012 - Distinguish the shared Autoware snapshot from the vehicle, simulation and architecture branch purposes. -->
 [이 브랜치의 목적](BRANCH_PURPOSE.md) · [실차 플랫폼과 CARLA와 아키텍처 세 브랜치 안내](docs/autoware-three-branch-guide.md).
@@ -28,14 +28,15 @@ Python import 호환 처리는 명시적 실행 진입점에 남아 있으며 �
 [주행 모델 200m 전진·미완주 원인·전체 GIF](docs/assets/validation/2026-10-01/warmup_supervision_ab/README.md).
 지도 모델 개선은 확인했지만, 자체 주행 모델은 아직 기본 주행 복구 단계이며 실차·전체 기능 승인이 아닙니다.
 
-이 브랜치는 Autoware 1.9.0, TensorRT VAD, CARLA 0.9.15를 묶어 기본 Town과
-커스텀 맵에서 직진·회전 경로를 반복 검증하는 프로젝트다. 처음 사용하는 사람은
-아래 세 명령으로 저장소를 받은 뒤, 사전진단이 표시하는 다음 명령을 순서대로
-실행하면 된다.
+<!-- HH_261012 - Identify platform commissioning separately from the inherited CARLA research history. -->
+이 브랜치는 Fix moving 플랫폼의 차량 인터페이스·센서·안전 통합을 준비합니다.
+실차 구동 설정이나 승인된 vehicle interface가 아직 구현된 것은 아닙니다.
+이하 CARLA·모델 연구 자료는 공통 개발 이력이며 실차 launch로 사용하지 않습니다.
+아래 clone 명령은 이 플랫폼 준비 브랜치를 선택하고, 사전진단은 구동하지 않습니다.
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \
-  --branch autoware-e2e/v1.9.0-vad-carla \
+  --branch autoware-platform/v1.9.0-fixmoving \
   --single-branch \
   https://github.com/hwanhonglee/Autonomous-Driving.git
 cd Autonomous-Driving

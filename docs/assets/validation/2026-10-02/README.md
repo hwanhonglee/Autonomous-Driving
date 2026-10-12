@@ -1,5 +1,9 @@
 # 10월 2일 주행과 지도 모델의 현재 목표
 
+<!-- HH_261012 - Apply the user's platform-name clarification without rewriting historical evidence or changing capability status. -->
+
+**브랜치 용어 정정:** `fixmoving`은 앞으로 개발할 플랫폼 이름이며 차량 모델명이 아닙니다. 해당 브랜치는 플랫폼 개발 기준선으로 유지하고 구성·외부 인터페이스는 후속 설계에서 정합니다. 아래의 이전 실차 플랫폼 표현은 당시 해석이며, [현재 브랜치 안내](../../../autoware-three-branch-guide.md)를 기준으로 합니다. 이번 정정은 문서만 변경하며 새 학습·주행·기능 승인은 아닙니다.
+
 <!-- HH_261012 - Prioritize the latest authenticated GPU failure and completed source publication preparation over older status snapshots. -->
 
 **10월 12일 후속:** SSH 인증은 해결됐지만 17:36 KST의 GPU 0 조회는 NVIDIA 580.173.02/580.178.04 불일치로 종료값 18에 실패해 **새 학습은 시작하지 않았습니다.** 로컬에서는 Autoware 영어 주석 110개와 봉인 설정 설명 23개, 32개 exact 소스·4개 전체 patch를 준비했고 격리된 실제 복원에서 **68/68개 파일**을 재현했습니다. launch 회귀 373개·snapshot 검사 33개·새 분할 경계 모의 검사 25개가 통과했습니다. 20,000행 모의 검사는 실제 학습이 아닙니다. 실차 플랫폼·시뮬레이션·스캐폴드 브랜치의 용도와 미구현 사항을 분리하며 차량 구동·모델 승격은 하지 않습니다. [이번 결과와 다음 학습](../2026-10-12/03_autoware_publication_and_training_handoff/README.md), [세 브랜치 안내](../../../autoware-three-branch-guide.md)를 먼저 보세요. 아래는 이전 시점 기록입니다.
